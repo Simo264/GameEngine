@@ -12,7 +12,7 @@ namespace Graphics
 		~Renderer() = delete;
 		
 		static void DrawIndexed(VertexArray& vertexArray);
-		static void DrawIndexedInstancing(VertexArray& vertexArray);
+		static void DrawIndexedInstancing(VertexArray& vertexArray, int nInstances);
 	
 		static uint32_t numRenderCallsPerFrame;
 	};

@@ -9,7 +9,7 @@ Camera::Camera(vec3f position) : position{ position }
   yaw     = -90.0f;
   pitch   = 0.0f;
 
-  movementSpeed    = 2.5f;  
+  movementSpeed    = 7.5f;  
   mouseSensitivity = 0.1f; 
   fov              = 45.0f;
 

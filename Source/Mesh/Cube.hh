@@ -19,6 +19,7 @@ public:
 	float rotationAngle;
 
 	Graphics::VertexArray vertexArray;
+	uint32_t instanceBuffer;
 
 private:
 	mat4f _model;

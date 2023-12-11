@@ -67,15 +67,37 @@ int main()
 
   // Mesh object
   // ---------------------------------------
-  Cube cubes[10];
-  for (int i = 0; i < 10; i++)
-    cubes[i].position = vec3f(i * 3.0f, 0.0f, 0.0f);
+  Cube cube;
+
+  constexpr uint32_t numInstances = 10;
+  mat4f models[numInstances];
+  for (int i = 0; i < numInstances; i++)
+    models[i] = glm::translate(mat4f(1.0f), vec3f(i * 3.f, 0.0f, 0.0f));
+
+  glBindVertexArray(cube.vertexArray.vao);
+  glBindBuffer(GL_ARRAY_BUFFER, cube.instanceBuffer);
+  glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(models), models);
+  glBindVertexArray(0);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 
   // Camera object
   // ---------------------------------------
   Camera camera;
- 
+
+
+  float rotations[numInstances] = {
+    0.f,
+    45.0f,
+    90.0f,
+    135.0f,
+    180.0f,
+    0.f,
+    45.0f,
+    90.0f,
+    135.0f,
+    180.0f
+  };
 
   // Loop
   // ---------------------------------------
@@ -110,12 +132,23 @@ int main()
       // ---------------------------------------
       glClearColor(0.1f, 0.4f, 0.4f, 1.0f);               // values for the color buffers
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear buffers to preset values
-       
+
       shader->Use();
       shader->SetMat4f("projection", projection);
       shader->SetMat4f("view",       view);
-      for (int i = 0; i < 10; i++)
-        cubes[i].Draw(*shader);
+
+      //for (int i = 0; i < 10; i++)
+      //{
+      //  models[i] = glm::translate(mat4f(1.0f), vec3f(i * 3.f, 0.0f, 0.0f)) * 
+      //              glm::rotate(mat4f(1.0f), rotations[i], vec3f(0.0f, 0.0f, 1.0f));
+      //  
+      //  rotations[i] += 0.05f;
+      //}
+      //glBindBuffer(GL_ARRAY_BUFFER, cube.instanceBuffer);
+      //glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(models), models);
+      
+      Graphics::Renderer::DrawIndexedInstancing(cube.vertexArray, numInstances);
+
     
       // only set lastFrameTime when you actually draw something
       lastFrameTime = now;
