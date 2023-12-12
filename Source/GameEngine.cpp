@@ -2,12 +2,14 @@
 
 #include "Window.hh"
 #include "Camera.hh"
+#include "Texture2D.hh"
 
 #include "Graphics/VertexArray.hh"
 #include "Graphics/Shader.hh"
 #include "Graphics/Renderer.hh"
 
 #include "Pool/ShaderPool.hh"
+#include "Pool/TexturePool.hh"
 
 #include "Mesh/Cube.hh"
 
@@ -16,9 +18,6 @@
 #include <imgui/imgui_impl_opengl3.h>
 
 #include <spdlog/spdlog.h>
-
-
-static vector<std::filesystem::path> shaderPaths;
 
 int main()
 {
@@ -45,12 +44,12 @@ int main()
   glEnable(GL_DEPTH_TEST);
   
   // blending/stencil buffer
-  //glDisable(GL_BLEND);
-  //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glDisable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   
   // face culling
-  //glDisable(GL_CULL_FACE);
-  //glCullFace(GL_BACK);
+  glDisable(GL_CULL_FACE);
+  glCullFace(GL_BACK);
   // ---------------------------------------
 
 
@@ -60,9 +59,17 @@ int main()
 
   auto shader = ShaderPool::LoadShader(
     "TestShader",
-    ShaderPool::GetShaderFilePathByName("TestShader.vert"),
-    ShaderPool::GetShaderFilePathByName("TestShader.frag")
+    ShaderPool::GetShaderFileByName("TestShader.vert"),
+    ShaderPool::GetShaderFileByName("TestShader.frag")
   );
+  shader->Use();
+  shader->SetInt("ourTexture", 0);
+
+
+  // Load textures from Textures directory
+  // ---------------------------------------
+  TexturePool::Init();
+  auto textureContainer = TexturePool::GetTextureByName("container.jpg");
 
 
   // Mesh object
@@ -71,14 +78,7 @@ int main()
 
   constexpr uint32_t numInstances = 10;
   mat4f models[numInstances];
-  for (int i = 0; i < numInstances; i++)
-    models[i] = glm::translate(mat4f(1.0f), vec3f(i * 3.f, 0.0f, 0.0f));
-
-  glBindVertexArray(cube.vertexArray.vao);
-  glBindBuffer(GL_ARRAY_BUFFER, cube.instanceBuffer);
-  glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(models), models);
-  glBindVertexArray(0);
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
+  
 
 
   // Camera object
@@ -137,18 +137,20 @@ int main()
       shader->SetMat4f("projection", projection);
       shader->SetMat4f("view",       view);
 
-      //for (int i = 0; i < 10; i++)
-      //{
-      //  models[i] = glm::translate(mat4f(1.0f), vec3f(i * 3.f, 0.0f, 0.0f)) * 
-      //              glm::rotate(mat4f(1.0f), rotations[i], vec3f(0.0f, 0.0f, 1.0f));
-      //  
-      //  rotations[i] += 0.05f;
-      //}
-      //glBindBuffer(GL_ARRAY_BUFFER, cube.instanceBuffer);
-      //glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(models), models);
+      for (int i = 0; i < numInstances; i++)
+      {
+        models[i] = glm::translate(mat4f(1.0f), vec3f(i * 3.f, 0.0f, 0.0f)) * 
+                    glm::rotate(mat4f(1.0f), rotations[i], vec3f(0.0f, 0.0f, 1.0f));
+        
+        rotations[i] += 0.05f;
+      }
+      glBindBuffer(GL_ARRAY_BUFFER, cube.instanceBuffer);
+      glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(models), models);
       
-      Graphics::Renderer::DrawIndexedInstancing(cube.vertexArray, numInstances);
+      glActiveTexture(GL_TEXTURE0); 
+      glBindTexture(GL_TEXTURE_2D, textureContainer->textureID);
 
+      Graphics::Renderer::DrawArraysInstanced(cube.vertexArray, numInstances);
     
       // only set lastFrameTime when you actually draw something
       lastFrameTime = now;

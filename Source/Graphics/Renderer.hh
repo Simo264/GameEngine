@@ -11,8 +11,11 @@ namespace Graphics
 		Renderer() = delete;
 		~Renderer() = delete;
 		
+		static void DrawArrays(VertexArray& vertexArray);
+		static void DrawArraysInstanced(VertexArray& vertexArray, int nInstances);
+
 		static void DrawIndexed(VertexArray& vertexArray);
-		static void DrawIndexedInstancing(VertexArray& vertexArray, int nInstances);
+		static void DrawIndexedInstanced(VertexArray& vertexArray, int nInstances);
 	
 		static uint32_t numRenderCallsPerFrame;
 	};

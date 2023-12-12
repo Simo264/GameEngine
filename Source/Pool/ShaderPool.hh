@@ -11,17 +11,17 @@ public:
 
 	static void Init();
 
-	static std::filesystem::path GetShadersDir();
-	
 	static Graphics::Shader* LoadShader(
 		const char* label, 
 		std::filesystem::path vertFilePath,
 		std::filesystem::path fragFilePath);
 	
-	static std::filesystem::path GetShaderFilePathByName(const char* filename);
+	static Graphics::Shader* GetShaderByLabel(const string& label);
+
+	static std::filesystem::path GetShaderFileByName(const char* filename);
 
 private:
-	static vector<std::filesystem::path> _shaderFilePaths;
-	static array<Graphics::Shader, 10>	 _shaderBuffer;
-	static uint32_t _numShaders;
+	static vector<std::filesystem::path> _shaderFiles; // all *.vert *.frag files
+	static array<Graphics::Shader, 10>	 _shaderProgramsBuffer;
+	static uint32_t _nShaderPrograms; 
 };

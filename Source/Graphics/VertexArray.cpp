@@ -54,6 +54,7 @@ namespace Graphics
 
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
+    numVertices = vertSize / (stride * sizeof(float));
   }
   
   void VertexArray::Init(uint32_t vertSize, float* vertData, uint32_t indSize, uint32_t* indData, VAConfiguration& config)
@@ -68,7 +69,7 @@ namespace Graphics
     glGenBuffers(1, &ebo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indSize, indData, GL_STATIC_DRAW);
-    numIndices = indSize / sizeof(uint32_t);
+    
 
     int stride = std::accumulate(config.layout.begin(), config.layout.end(), 0);
     int offset = 0;
@@ -82,6 +83,9 @@ namespace Graphics
     glBindVertexArray(0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    numIndices  = indSize / sizeof(uint32_t);
+    numVertices = vertSize / (stride * sizeof(float));
   }
 
   void VertexArray::Destroy()
