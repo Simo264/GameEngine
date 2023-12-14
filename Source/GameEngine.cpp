@@ -82,27 +82,16 @@ int main()
   auto textureContainer = TexturePool::GetTextureByName("container.jpg");
 
 
-  // Mesh object
+  // Mesh objects
   // ---------------------------------------
-#if 0
-  Cube cube;
-  constexpr uint32_t numInstances = 10;
-  mat4f models[numInstances];
-
-  float rotations[numInstances] = {
-    0.f,
-    45.0f,
-    90.0f,
-    135.0f,
-    180.0f,
-    0.f,
-    45.0f,
-    90.0f,
-    135.0f,
-    180.0f
-  };
-#endif
-
+  CubeMesh cubes[10];
+  for (int i = 0; i < 10; i++)
+  {
+    cubes[i].position.x = i * 3.0f;
+    cubes[i].position.y = 3.0f;
+  }
+  
+  
   float vertices[] = {
    1.0f,  1.0f, 0.0f,  1.0f, 1.0f, // top right front
    1.0f, -1.0f, 0.0f,  1.0f, 0.0f, // bottom right front
@@ -134,20 +123,23 @@ int main()
     1,2,5,
     1,5,6
   };
-
-
-  
-  CubeMesh cubes[10];
-  for (int i = 0; i < 10; i++)
-    cubes[i].position.x = i * 3.0f;
-
-
-
-  InstancedMesh instancedMeshes;
   Graphics::VAConfiguration config;
   config.PushAttribute(3);
   config.PushAttribute(2);
+  
+  InstancedMesh instancedMeshes;
   instancedMeshes.Init(sizeof(vertices), vertices, sizeof(indices), indices, config);
+
+  mat4f model5 = glm::translate(mat4f(1.0f), vec3f(12.0f, 0.0, 0.0f)) * 
+                 glm::rotate(mat4f(1.0f), glm::radians(45.0f), vec3f(1.0f, 0.0f, 1.0f));
+  instancedMeshes.SetModel(&model5, 4);
+
+  mat4f models123[3];
+  for (int i = 0; i < 3; i++)
+    models123[i] = glm::translate(mat4f(1.0f), vec3f(i * 3.0f, 0.0, 0.0f)) *
+                   glm::scale(mat4f(1.0f), vec3f(0.5f, 0.5f, 0.5f));
+  
+  instancedMeshes.SetModelsRange(0, 3, models123);
 
   // Camera object
   // ---------------------------------------
@@ -198,24 +190,7 @@ int main()
     instancingShader->SetMat4f("view", view);
 
     // render cubes instancing
-    Graphics::Renderer::DrawIndexedInstanced(instancedMeshes.vertexArray, instancedMeshes.MAX_NUM_INSTANCES);
-
-#if 0
-    for (int i = 0; i < numInstances; i++)
-    {
-      models[i] = glm::translate(mat4f(1.0f), vec3f(i * 3.f, 0.0f, 0.0f)) * 
-                  glm::rotate(mat4f(1.0f), rotations[i], vec3f(0.0f, 0.0f, 1.0f));
-        
-      rotations[i] += 0.05f;
-    }
-    glBindBuffer(GL_ARRAY_BUFFER, cube.instanceBuffer);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(models), models);
-      
-    glActiveTexture(GL_TEXTURE0); 
-    glBindTexture(GL_TEXTURE_2D, textureContainer->textureID);
-
-    Graphics::Renderer::DrawArraysInstanced(cube.vertexArray, numInstances);
-#endif
+    Graphics::Renderer::DrawIndexedInstanced(instancedMeshes.vertexArray, 10);
 
     window.SwapBuffers();
 

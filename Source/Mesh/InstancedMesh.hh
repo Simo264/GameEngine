@@ -6,16 +6,29 @@
 class InstancedMesh
 {
 public:
-	InstancedMesh() = default;
+	InstancedMesh();
 	~InstancedMesh() = default;
 
 	void Init(uint32_t vertSize, float* vertices, uint32_t indSize, uint32_t* indices, Graphics::VAConfiguration& config);
 	void Init(uint32_t vertSize, float* vertices, Graphics::VAConfiguration& config);
 	void Destroy();
 
-	Graphics::VertexArray vertexArray;
-	uint32_t instanceBuffer;
+	void SetInstances(uint32_t n);
+	uint32_t GetInstances() const { return _nInstancesToDraw; }
 
-	inline static const uint32_t MAX_NUM_INSTANCES = 10;
+	void SetModel(mat4f* model, uint32_t instance);
+	void SetModelsRange(uint32_t start, uint32_t end, mat4f* models);
+
+	Graphics::VertexArray vertexArray;
+	
+	const uint32_t MAX_NUM_INSTANCES;
+
+private:
+	void Instancing(Graphics::VAConfiguration& config);
+
+	uint32_t _instanceBuffer;
+	uint32_t _nInstancesToDraw;
+
+	vector<mat4f> _models;
 };
 
