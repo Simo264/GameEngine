@@ -11,7 +11,9 @@
 #include "Pool/ShaderPool.hh"
 #include "Pool/TexturePool.hh"
 
-#include "Mesh/Cube.hh"
+#include "Mesh/Mesh.hh"
+#include "Mesh/InstancedMesh.hh"
+#include "Mesh/CubeMesh.hh"
 
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_glfw.h>
@@ -57,13 +59,21 @@ int main()
   // ---------------------------------------
   ShaderPool::Init();
 
-  auto shader = ShaderPool::LoadShader(
-    "TestShader",
-    ShaderPool::GetShaderFileByName("TestShader.vert"),
-    ShaderPool::GetShaderFileByName("TestShader.frag")
+  auto instancingShader = ShaderPool::LoadShader(
+    "InstancingShader",
+    ShaderPool::GetShaderFileByName("Instancing.vert"),
+    ShaderPool::GetShaderFileByName("Default.frag")
   );
-  shader->Use();
-  shader->SetInt("ourTexture", 0);
+  instancingShader->Use();
+  instancingShader->SetInt("ourTexture", 0);
+
+  auto defaultShader = ShaderPool::LoadShader(
+    "InstancingShader",
+    ShaderPool::GetShaderFileByName("Default.vert"),
+    ShaderPool::GetShaderFileByName("Default.frag")
+  );
+  defaultShader->Use();
+  defaultShader->SetInt("ourTexture", 0);
 
 
   // Load textures from Textures directory
@@ -74,17 +84,10 @@ int main()
 
   // Mesh object
   // ---------------------------------------
+#if 0
   Cube cube;
-
   constexpr uint32_t numInstances = 10;
   mat4f models[numInstances];
-  
-
-
-  // Camera object
-  // ---------------------------------------
-  Camera camera;
-
 
   float rotations[numInstances] = {
     0.f,
@@ -98,12 +101,64 @@ int main()
     135.0f,
     180.0f
   };
+#endif
+
+  float vertices[] = {
+   1.0f,  1.0f, 0.0f,  1.0f, 1.0f, // top right front
+   1.0f, -1.0f, 0.0f,  1.0f, 0.0f, // bottom right front
+  -1.0f, -1.0f, 0.0f,  0.0f, 0.0f, // bottom left front
+  -1.0f,  1.0f, 0.0f,  0.0f, 1.0f, // top left front
+
+   1.0f,  1.0f, -1.0f, 1.0f, 1.0f, // top right back
+   1.0f, -1.0f, -1.0f, 1.0f, 0.0f, // bottom right back
+  -1.0f, -1.0f, -1.0f, 0.0f, 0.0f, // bottom left back
+  -1.0f,  1.0f, -1.0f, 0.0f, 1.0f, // top left back
+  };
+  uint32_t indices[] = { 
+    // front
+    0,1,3,
+    1,2,3,
+    // back
+    4,5,6,
+    6,7,4,
+    // right
+    0,1,5,
+    4,5,0,
+    // left
+    2,3,6,
+    6,3,7,
+    // top
+    0,3,4,
+    3,4,7,
+    // bottom
+    1,2,5,
+    1,5,6
+  };
+
+
+  
+  CubeMesh cubes[10];
+  for (int i = 0; i < 10; i++)
+    cubes[i].position.x = i * 3.0f;
+
+
+
+  InstancedMesh instancedMeshes;
+  Graphics::VAConfiguration config;
+  config.PushAttribute(3);
+  config.PushAttribute(2);
+  instancedMeshes.Init(sizeof(vertices), vertices, sizeof(indices), indices, config);
+
+  // Camera object
+  // ---------------------------------------
+  Camera camera;
+
+
+
 
   // Loop
   // ---------------------------------------
-  const double fpsLimit = 1.0 / 60.0;
   double lastUpdateTime = 0;  // number of seconds since the last loop
-  double lastFrameTime  = 0;  // number of seconds since the last frame
   while (window.Loop())
   {
     Graphics::Renderer::numRenderCallsPerFrame = 0;
@@ -124,39 +179,45 @@ int main()
 
     // render
     // ---------------------------------------
-#ifdef LOCK_FPS
-    if ((now - lastFrameTime) >= fpsLimit)
-#endif
+    glClearColor(0.1f, 0.4f, 0.4f, 1.0f);               // values for the color buffers
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear buffers to preset values
+
+    defaultShader->Use();
+    defaultShader->SetMat4f("projection", projection);
+    defaultShader->SetMat4f("view",       view);
+
+    // render cubes no instancing
+    for (int i = 0; i < 10; i++)
     {
-      // draw scene here
-      // ---------------------------------------
-      glClearColor(0.1f, 0.4f, 0.4f, 1.0f);               // values for the color buffers
-      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear buffers to preset values
-
-      shader->Use();
-      shader->SetMat4f("projection", projection);
-      shader->SetMat4f("view",       view);
-
-      for (int i = 0; i < numInstances; i++)
-      {
-        models[i] = glm::translate(mat4f(1.0f), vec3f(i * 3.f, 0.0f, 0.0f)) * 
-                    glm::rotate(mat4f(1.0f), rotations[i], vec3f(0.0f, 0.0f, 1.0f));
-        
-        rotations[i] += 0.05f;
-      }
-      glBindBuffer(GL_ARRAY_BUFFER, cube.instanceBuffer);
-      glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(models), models);
-      
-      glActiveTexture(GL_TEXTURE0); 
-      glBindTexture(GL_TEXTURE_2D, textureContainer->textureID);
-
-      Graphics::Renderer::DrawArraysInstanced(cube.vertexArray, numInstances);
-    
-      // only set lastFrameTime when you actually draw something
-      lastFrameTime = now;
-
-      window.SwapBuffers();
+      defaultShader->SetMat4f("model", cubes[i].Model());
+      Graphics::Renderer::DrawIndexed(cubes[i].vertexArray);
     }
+    
+    instancingShader->Use();
+    instancingShader->SetMat4f("projection", projection);
+    instancingShader->SetMat4f("view", view);
+
+    // render cubes instancing
+    Graphics::Renderer::DrawIndexedInstanced(instancedMeshes.vertexArray, instancedMeshes.MAX_NUM_INSTANCES);
+
+#if 0
+    for (int i = 0; i < numInstances; i++)
+    {
+      models[i] = glm::translate(mat4f(1.0f), vec3f(i * 3.f, 0.0f, 0.0f)) * 
+                  glm::rotate(mat4f(1.0f), rotations[i], vec3f(0.0f, 0.0f, 1.0f));
+        
+      rotations[i] += 0.05f;
+    }
+    glBindBuffer(GL_ARRAY_BUFFER, cube.instanceBuffer);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(models), models);
+      
+    glActiveTexture(GL_TEXTURE0); 
+    glBindTexture(GL_TEXTURE_2D, textureContainer->textureID);
+
+    Graphics::Renderer::DrawArraysInstanced(cube.vertexArray, numInstances);
+#endif
+
+    window.SwapBuffers();
 
     // set lastUpdateTime every iteration
     lastUpdateTime = now;
