@@ -1,13 +1,8 @@
 #include "Mesh.hh"
 
-void Mesh::Init(uint32_t vertSize, float* vertices, uint32_t indSize, uint32_t* indices, Graphics::VAConfiguration& config)
+void Mesh::Init(MeshData& data, Graphics::VAConfiguration& config)
 {
-	vertexArray.Init(vertSize, vertices, indSize, indices, config);
-}
-
-void Mesh::Init(uint32_t vertSize, float* vertices, Graphics::VAConfiguration& config)
-{
-	vertexArray.Init(vertSize, vertices, config);
+	vertexArray.Init(data.verticesDataSize, data.verticesData, data.indicesDataSize, data.indicesData, config);
 }
 
 void Mesh::Destroy()

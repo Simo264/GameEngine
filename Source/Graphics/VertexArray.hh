@@ -30,7 +30,6 @@ namespace Graphics
     VertexArray(const VertexArray&) = delete;            // delete copy constructor
     VertexArray& operator=(const VertexArray&) = delete; // delete assign op
 
-    void Init(uint32_t vertSize, float* vertData, VAConfiguration& config);
     void Init(uint32_t vertSize, float* vertData, uint32_t indSize, uint32_t* indData, VAConfiguration& config);
 
     void Destroy();

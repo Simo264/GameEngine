@@ -1,7 +1,6 @@
-#include "CubeMesh.hh"
+#include "InstancedCubeMesh.hh"
 
-
-CubeMesh::CubeMesh() : Mesh(), Actor()
+InstancedCubeMesh::InstancedCubeMesh(uint32_t nMaxInstances) : InstancedMesh(nMaxInstances)
 {
   // default vertices and indices
   // ---------------------------------
@@ -56,7 +55,7 @@ CubeMesh::CubeMesh() : Mesh(), Actor()
     -1.0f, -1.0f, -1.0f, 0.0f, 0.0f, // bottom left back
     -1.0f,  1.0f, -1.0f, 0.0f, 1.0f, // top left back
   };
-  uint32_t indices[] = { 
+  uint32_t indices[] = {
     // front
     0,1,3,
     1,2,3,
@@ -77,13 +76,12 @@ CubeMesh::CubeMesh() : Mesh(), Actor()
     1,5,6
   };
 
-
   // default configuration
   // ---------------------------------
   Graphics::VAConfiguration config;
   config.PushAttribute(3); // vec3 position   attribute 
   config.PushAttribute(2); // vec2 textCoords attribute 
-
+  
   MeshData data{ sizeof(vertices), vertices, sizeof(indices), indices };
 
   Init(data, config);
