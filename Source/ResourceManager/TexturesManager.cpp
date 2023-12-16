@@ -1,4 +1,4 @@
-#include "TexturePool.hh"
+#include "TexturesManager.hh"
 
 #include <spdlog/spdlog.h>
 
@@ -6,22 +6,22 @@
  *          PUBLIC METHODS
  * -----------------------------------------------------
 */
+std::filesystem::path TexturesManager::_texturesDir;
+array<Texture2D, 10>	TexturesManager::_textureBuffer;
+uint32_t	            TexturesManager::_numTextures = 0;
 
-array<Texture2D, 10>	TexturePool::_textureBuffer;
-uint32_t	            TexturePool::_numTextures = 0;
-
-void TexturePool::Init()
+void TexturesManager::Init()
 {
-  auto texturesDir = std::filesystem::current_path(); // VC++ solution path
-  texturesDir = texturesDir.parent_path();
-  texturesDir = texturesDir / "Textures";
+  _texturesDir = std::filesystem::current_path(); // VC++ solution path
+  _texturesDir = _texturesDir.parent_path();
+  _texturesDir = _texturesDir / "Textures";
 
-  // load all shader files in Shaders directory
-  for (const auto& entry : std::filesystem::directory_iterator(texturesDir))
+  // load all texture files in Textures directory
+  for (const auto& entry : std::filesystem::directory_iterator(_texturesDir))
     LoadTexture(entry);
 }
 
-Texture2D* TexturePool::LoadTexture(std::filesystem::path textureFilePath)
+Texture2D* TexturesManager::LoadTexture(std::filesystem::path textureFilePath)
 {
   if (_numTextures >= _textureBuffer.size())
   {
@@ -34,7 +34,7 @@ Texture2D* TexturePool::LoadTexture(std::filesystem::path textureFilePath)
   return texture;
 }
 
-Texture2D* TexturePool::GetTextureByName(const char* filename)
+Texture2D* TexturesManager::GetTextureByName(const char* filename)
 {
   for (uint32_t i = 0; i < _numTextures; i++)
   {

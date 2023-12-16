@@ -2,6 +2,7 @@
 
 #include "../Core.hh"
 #include "../Graphics/VertexArray.hh"
+#include "../Texture2D.hh"
 
 struct MeshData
 {

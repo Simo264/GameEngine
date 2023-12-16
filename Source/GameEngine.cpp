@@ -8,17 +8,22 @@
 #include "Graphics/Shader.hh"
 #include "Graphics/Renderer.hh"
 
-#include "Pool/ShaderPool.hh"
-#include "Pool/TexturePool.hh"
+#include "ResourceManager/ShadersManager.hh"
+#include "ResourceManager/TexturesManager.hh"
+#include "ResourceManager/FontsManager.hh"
 
 #include "Mesh/Mesh.hh"
 #include "Mesh/InstancedMesh.hh"
 #include "Mesh/CubeMesh.hh"
 #include "Mesh/InstancedCubeMesh.hh"
 
-#include <Imgui/imgui.h>
-#include <Imgui/imgui_impl_glfw.h>
-#include <Imgui/imgui_impl_opengl3.h>
+#include <imgui/imgui.h>
+#include <imgui/imgui_impl_glfw.h>
+#include <imgui/imgui_impl_opengl3.h>
+
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
 
 #include <spdlog/spdlog.h>
 
@@ -52,9 +57,13 @@ int main()
 
   // Init IMGui
   // ---------------------------------------
+  FontsManager::Init();
+  auto fontPath = FontsManager::GetFontByName("Karla-Regular.ttf");
+
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
   ImGuiIO& io = ImGui::GetIO(); (void)io;
+  io.Fonts->AddFontFromFileTTF(fontPath.string().c_str(), 18); // custom font
   io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
   io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
   ImGui::StyleColorsDark();
@@ -65,55 +74,37 @@ int main()
 
   // Load shader programs
   // ---------------------------------------
-  ShaderPool::Init();
-  auto instancingShader = ShaderPool::LoadShader(
+  ShadersManager::Init();
+  auto instancingShader = ShadersManager::LoadShaderProgram(
     "InstancingShader",
-    ShaderPool::GetShaderFileByName("Instancing.vert"),
-    ShaderPool::GetShaderFileByName("Default.frag")
+    ShadersManager::GetShaderFileByName("Instancing.vert"),
+    ShadersManager::GetShaderFileByName("Default.frag")
   );
   instancingShader->Use();
   instancingShader->SetInt("ourTexture", 0);
 
-  auto defaultShader = ShaderPool::LoadShader(
+  auto defaultShader = ShadersManager::LoadShaderProgram(
     "InstancingShader",
-    ShaderPool::GetShaderFileByName("Default.vert"),
-    ShaderPool::GetShaderFileByName("Default.frag")
+    ShadersManager::GetShaderFileByName("Default.vert"),
+    ShadersManager::GetShaderFileByName("Default.frag")
   );
   defaultShader->Use();
-  defaultShader->SetInt("ourTexture", 0);
+  defaultShader->SetInt("Texture", 0);
+  
   // ---------------------------------------
 
 
   // Load textures from Textures directory
   // ---------------------------------------
-  TexturePool::Init();
-  auto textureContainer = TexturePool::GetTextureByName("container.jpg");
+  TexturesManager::Init();
+  auto textureContainer = TexturesManager::GetTextureByName("container.jpg");
+  auto textureFloor = TexturesManager::GetTextureByName("floor-grass.png");
   // ---------------------------------------
 
 
   // Mesh objects
   // ---------------------------------------
-  CubeMesh cubes[10];
-  for (int i = 0; i < 10; i++)
-  {
-    cubes[i].position.x = i * 3.0f;
-    cubes[i].position.y = 3.0f;
-  }
-
-  InstancedCubeMesh instancedCubes(10);
-
-  mat4f models[10];
-  for (int i = 0; i < 10; i++)
-    models[i] = glm::translate(mat4f(1.0f), vec3f(i * 3.0f, 0.0, 0.0f));
-
-  instancedCubes.SetInstancesModelRange(0, 10, models);
-  
-  models[9] = glm::translate(mat4f(1.0f), vec3f(30.0f, 0.0, 0.0f)) * 
-              glm::rotate(mat4f(1.0f), glm::radians(45.0f), vec3f(0.0f, 0.0f, 1.0f));
-  
-  instancedCubes.SetInstanceModel(&models[9], 10);
-  
-  instancedCubes.SetInstanceNumber(10);
+  CubeMesh cubeMesh;
   // ---------------------------------------
 
 
@@ -160,19 +151,13 @@ int main()
 
     // render cubes no instancing
     defaultShader->Use();
-    defaultShader->SetMat4f("projection", projection);
-    defaultShader->SetMat4f("view",       view);
-    for (int i = 0; i < 10; i++)
-    {
-      defaultShader->SetMat4f("model", cubes[i].Model());
-      Graphics::Renderer::DrawIndexed(cubes[i].vertexArray);
-    }
+    defaultShader->SetMat4f("Projection", projection);
+    defaultShader->SetMat4f("View",       view);
     
-    // render cubes instancing
-    instancingShader->Use();
-    instancingShader->SetMat4f("projection", projection);
-    instancingShader->SetMat4f("view", view);
-    Graphics::Renderer::DrawIndexedInstanced(instancedCubes.vertexArray, instancedCubes.GetInstanceNumber());
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, textureContainer->textureID);
+    defaultShader->SetMat4f("Model", cubeMesh.Model());
+    Graphics::Renderer::DrawArrays(cubeMesh.vertexArray);
     // ---------------------------------------
 
 
@@ -218,9 +203,4 @@ int main()
 	
   return 0;
 }
-
-
-
-
-
 

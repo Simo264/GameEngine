@@ -18,12 +18,12 @@ out vec2 TexCoord;
 */
 
 
-uniform mat4 view;
-uniform mat4 projection;
+uniform mat4 View;
+uniform mat4 Projection;
 
 void main()
 {
   Color       = vec3(0.25, 0.50, 0.75);
   TexCoord    = aTexCoords;
-  gl_Position = projection * view * aModel * vec4(aPos, 1.0f);
+  gl_Position = Projection * View * aModel * vec4(aPos, 1.0f);
 }

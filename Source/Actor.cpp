@@ -11,8 +11,8 @@ Actor::Actor()
 mat4f Actor::Model()
 {
   mat4f model = mat4f(1.0f);
-  model = glm::scale(model, scaling);
   model = glm::rotate(model, glm::radians(rotationAngle), rotation);
   model = glm::translate(model, position);
+  model = glm::scale(model, scaling);
   return model;
 }

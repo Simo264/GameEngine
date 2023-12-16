@@ -3,11 +3,11 @@
 #include "../Core.hh"
 #include "../Texture2D.hh"
 
-class TexturePool
+class TexturesManager
 {
 public:
-	TexturePool() = delete;
-	~TexturePool() = delete;
+	TexturesManager() = delete;
+	~TexturesManager() = delete;
 
 	static void Init();
 	
@@ -15,6 +15,8 @@ public:
 	static Texture2D* GetTextureByName(const char* filename);
 
 private:
+	static std::filesystem::path _texturesDir;
+
 	static array<Texture2D, 10>	_textureBuffer;
 	static uint32_t	_numTextures;
 };
