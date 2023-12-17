@@ -17,6 +17,8 @@
 #include "Mesh/CubeMesh.hh"
 #include "Mesh/InstancedCubeMesh.hh"
 
+#include "Lighting/DirectionalLight.hh"
+
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_glfw.h>
 #include <imgui/imgui_impl_opengl3.h>
@@ -89,16 +91,18 @@ int main()
     ShadersManager::GetShaderFileByName("Default.frag")
   );
   defaultShader->Use();
-  defaultShader->SetInt("Texture", 0);
-  
+  defaultShader->SetInt("Material.diffuse",  0); // sampler2d
+  defaultShader->SetInt("Material.specular", 1); // sampler2d
+  defaultShader->SetFloat("Material.shininess", 64.0f);
   // ---------------------------------------
 
 
   // Load textures from Textures directory
   // ---------------------------------------
   TexturesManager::Init();
-  auto textureContainer = TexturesManager::GetTextureByName("container.jpg");
-  auto textureFloor = TexturesManager::GetTextureByName("floor-grass.png");
+  auto textureContainerDiff = TexturesManager::GetTextureByName("container_diffuse.png");
+  auto textureContainerSpec = TexturesManager::GetTextureByName("container_specular.png");
+  auto textureFloor   = TexturesManager::GetTextureByName("floor-grass.png");
   // ---------------------------------------
 
 
@@ -107,6 +111,12 @@ int main()
   CubeMesh cubeMesh;
   // ---------------------------------------
 
+
+  // Lighting
+  // ---------------------------------------
+  Lighting::DirectionalLight dirLight("DirLight");
+  // ---------------------------------------
+  
 
   // Camera object
   // ---------------------------------------
@@ -129,7 +139,6 @@ int main()
     // ---------------------------------------
     double now = glfwGetTime();
     double deltaTime = now - lastUpdateTime;
-    double start = glfwGetTime();
     // ---------------------------------------
 
 
@@ -153,16 +162,26 @@ int main()
     defaultShader->Use();
     defaultShader->SetMat4f("Projection", projection);
     defaultShader->SetMat4f("View",       view);
+    defaultShader->SetVec3f("ViewPos",    camera.position);
     
+    dirLight.Render(defaultShader);
+
+
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, textureContainer->textureID);
+    glBindTexture(GL_TEXTURE_2D, textureContainerDiff->textureID);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, textureContainerSpec->textureID);
+    
     defaultShader->SetMat4f("Model", cubeMesh.Model());
     Graphics::Renderer::DrawArrays(cubeMesh.vertexArray);
     // ---------------------------------------
+    auto time = glfwGetTime();
+    dirLight.direction.x = glm::sin(time) * 5;
+    
 
 
     double end = glfwGetTime();
-    double renderTimeMs = (end - start) * 10e3;
+    double renderTimeMs = (end - now) * 10e3;
 
     if (ImGui::Begin("Stats"))
     {
