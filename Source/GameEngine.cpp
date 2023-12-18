@@ -17,15 +17,14 @@
 #include "Mesh/CubeMesh.hh"
 #include "Mesh/InstancedCubeMesh.hh"
 
+#include "Model.hh"
+
 #include "Lighting/DirectionalLight.hh"
+#include "Lighting/PointLight.hh"
 
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_glfw.h>
 #include <imgui/imgui_impl_opengl3.h>
-
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
 
 #include <spdlog/spdlog.h>
 
@@ -102,13 +101,20 @@ int main()
   TexturesManager::Init();
   auto textureContainerDiff = TexturesManager::GetTextureByName("container_diffuse.png");
   auto textureContainerSpec = TexturesManager::GetTextureByName("container_specular.png");
-  auto textureFloor   = TexturesManager::GetTextureByName("floor-grass.png");
+  auto textureFloor = TexturesManager::GetTextureByName("floor-grass.png");
   // ---------------------------------------
 
 
   // Mesh objects
   // ---------------------------------------
+  const auto assetsDirPath = (std::filesystem::current_path().parent_path()) / "Assets";
+  
+  auto crateObjPath = assetsDirPath / "Crate" / "Crate.obj";
+  Model modelCrate(crateObjPath);
+  modelCrate.scaling  = vec3f(0.5f, 0.5f, 0.5f);
+
   CubeMesh cubeMesh;
+  cubeMesh.textureDiffuse = textureContainerDiff;
   // ---------------------------------------
 
 
@@ -165,21 +171,18 @@ int main()
     defaultShader->SetVec3f("ViewPos",    camera.position);
     
     dirLight.Render(defaultShader);
+    modelCrate.Draw(defaultShader);
 
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, textureContainerDiff->textureID);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, textureContainerSpec->textureID);
+    mat4f cubeMeshModel = glm::translate(mat4f(1.0f), vec3f(0.0f, 5.0f, 0.0f));
     
-    defaultShader->SetMat4f("Model", cubeMesh.Model());
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, cubeMesh.textureDiffuse->textureID);
+    //glActiveTexture(GL_TEXTURE1);
+    //glBindTexture(GL_TEXTURE_2D, textureContainerSpec->textureID);
+    defaultShader->SetMat4f("Model", cubeMeshModel);
     Graphics::Renderer::DrawArrays(cubeMesh.vertexArray);
     // ---------------------------------------
-    auto time = glfwGetTime();
-    dirLight.direction.x = glm::sin(time) * 5;
     
-
-
     double end = glfwGetTime();
     double renderTimeMs = (end - now) * 10e3;
 

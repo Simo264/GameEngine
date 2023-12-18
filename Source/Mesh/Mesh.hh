@@ -41,5 +41,8 @@ public:
 	void Destroy();
 
 	Graphics::VertexArray vertexArray;
+
+	Texture2D* textureDiffuse;
+	Texture2D* textureSpecular;
 };
 

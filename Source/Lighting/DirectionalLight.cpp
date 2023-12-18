@@ -10,16 +10,20 @@ namespace Lighting
   void DirectionalLight::Render(Graphics::Shader* shader)
   {
     const int UNameSize = uniformName.size();
+    const int rsize = 30 - UNameSize;
     char shaderUName[30] = { };
     
-    strcpy_s(shaderUName, 30, uniformName.c_str());   // shaderUName = "dirLight"
-    strcpy_s((shaderUName + UNameSize), (30 - UNameSize), ".direction"); // shaderUName = "dirLight.direction"
+    strcpy_s(shaderUName, 30, uniformName.c_str());             // shaderUName = "DirLight"
+    strcpy_s((shaderUName + UNameSize), rsize, ".direction");   // shaderUName = "DirLight.direction"
     shader->SetVec3f(shaderUName, direction);
-    strcpy_s((shaderUName + UNameSize), (30 - UNameSize), ".ambient");     // shaderUName = "dirLight.ambient"
+    
+    strcpy_s((shaderUName + UNameSize), rsize, ".ambient");     // shaderUName = "DirLight.ambient"
     shader->SetVec3f(shaderUName, color * ambient);
-    strcpy_s((shaderUName + UNameSize), (30 - UNameSize), ".diffuse");     // shaderUName = "dirLight.diffuse"
+    
+    strcpy_s((shaderUName + UNameSize), rsize, ".diffuse");     // shaderUName = "DirLight.diffuse"
     shader->SetVec3f(shaderUName, color * diffuse);
-    strcpy_s((shaderUName + UNameSize), (30 - UNameSize), ".specular");    // shaderUName = "dirLight.specular"
+    
+    strcpy_s((shaderUName + UNameSize), rsize, ".specular");    // shaderUName = "DirLight.specular"
     shader->SetVec3f(shaderUName, color * specular);
   }
 }

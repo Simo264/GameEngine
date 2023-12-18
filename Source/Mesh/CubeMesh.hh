@@ -1,9 +1,8 @@
 #pragma once
 
 #include "Mesh.hh"
-#include "../Actor.hh"
 
-class CubeMesh : public Mesh, public Actor
+class CubeMesh : public Mesh
 {
 public:
 	CubeMesh();
