@@ -3,6 +3,8 @@
 #include "../Core.hh"
 #include "../Graphics/Shader.hh"
 
+// Load and retrieve shader files located within the Shaders directory
+// ------------------------------------------------------------------------
 class ShadersManager
 {
 public:
@@ -18,7 +20,7 @@ public:
 	
 	static Graphics::Shader* GetShaderProgramByLabel(const string& label);
 
-	static std::filesystem::path GetShaderFileByName(const char* filename);
+	static std::filesystem::path GetShaderFile(std::filesystem::path filePath);
 
 private:
 	static std::filesystem::path _shadersDir;

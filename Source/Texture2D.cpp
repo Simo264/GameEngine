@@ -33,17 +33,22 @@ void Texture2D::Init(std::filesystem::path path)
 
 void Texture2D::LoadImageData()
 {
-  auto pathStr = texturePath.string();
-
+  string stringPath = texturePath.string();
+  
   //stbi_set_flip_vertically_on_load(true);
 
   int width, height, nrChannels;
-  auto data = stbi_load(pathStr.c_str(), &width, &height, &nrChannels, 0);
+  auto data = stbi_load(stringPath.c_str(), &width, &height, &nrChannels, 0);
   if (data)
   {
     int format = GL_RGB;
-    if (nrChannels == 4)
-      format = GL_RGBA;
+
+    switch (nrChannels) {
+      case 1: format = GL_RED;  break;
+      case 2: format = GL_RG;   break;
+      case 3: format = GL_RGB;  break;
+      case 4: format = GL_RGBA; break;
+    }
 
     // mutable storage
     glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
@@ -51,7 +56,7 @@ void Texture2D::LoadImageData()
   }
   else
   {
-    spdlog::error("Failed to load texture `{}`", pathStr);
+    spdlog::error("Failed to load texture `{}`", stringPath);
   }
   stbi_image_free(reinterpret_cast<void*>(data));
 }

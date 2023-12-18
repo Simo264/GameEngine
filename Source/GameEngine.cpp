@@ -59,11 +59,11 @@ int main()
   // Init IMGui
   // ---------------------------------------
   FontsManager::Init();
-  auto fontPath = FontsManager::GetFontByName("Karla-Regular.ttf");
+  auto fontPath = FontsManager::GetFont("Karla-Regular.ttf");
 
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
-  ImGuiIO& io = ImGui::GetIO(); (void)io;
+  ImGuiIO& io = ImGui::GetIO();
   io.Fonts->AddFontFromFileTTF(fontPath.string().c_str(), 18); // custom font
   io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
   io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
@@ -78,16 +78,16 @@ int main()
   ShadersManager::Init();
   auto instancingShader = ShadersManager::LoadShaderProgram(
     "InstancingShader",
-    ShadersManager::GetShaderFileByName("Instancing.vert"),
-    ShadersManager::GetShaderFileByName("Default.frag")
+    ShadersManager::GetShaderFile("Instancing.vert"),
+    ShadersManager::GetShaderFile("Default.frag")
   );
   instancingShader->Use();
   instancingShader->SetInt("ourTexture", 0);
 
   auto defaultShader = ShadersManager::LoadShaderProgram(
     "InstancingShader",
-    ShadersManager::GetShaderFileByName("Default.vert"),
-    ShadersManager::GetShaderFileByName("Default.frag")
+    ShadersManager::GetShaderFile("Default.vert"),
+    ShadersManager::GetShaderFile("Default.frag")
   );
   defaultShader->Use();
   defaultShader->SetInt("Material.diffuse",  0); // sampler2d
@@ -99,9 +99,9 @@ int main()
   // Load textures from Textures directory
   // ---------------------------------------
   TexturesManager::Init();
-  auto textureContainerDiff = TexturesManager::GetTextureByName("container_diffuse.png");
-  auto textureContainerSpec = TexturesManager::GetTextureByName("container_specular.png");
-  auto textureFloor = TexturesManager::GetTextureByName("floor-grass.png");
+  auto textureContainerDiff = TexturesManager::GetTexture("container_diffuse.png");
+  auto textureContainerSpec = TexturesManager::GetTexture("container_specular.png");
+  auto textureFloor = TexturesManager::GetTexture("floor-grass.png");
   // ---------------------------------------
 
 

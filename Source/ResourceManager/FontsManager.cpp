@@ -6,19 +6,17 @@ std::filesystem::path FontsManager::_fontsDir;
 
 void FontsManager::Init()
 {
-  _fontsDir = std::filesystem::current_path(); // VC++ solution path
-  _fontsDir = _fontsDir.parent_path();
-  _fontsDir = _fontsDir / "Fonts";
+  _fontsDir = std::filesystem::current_path().parent_path() / "Fonts"; // VC++ solution path
 }
 
-std::filesystem::path FontsManager::GetFontByName(const char* filename)
+std::filesystem::path FontsManager::GetFont(std::filesystem::path filePath)
 {
-  std::filesystem::path fontFilePath = _fontsDir / filename;
-  
-  if (!std::filesystem::exists(fontFilePath))
+  filePath = _fontsDir / filePath.lexically_normal();
+
+  if (!std::filesystem::exists(filePath))
   {
-    spdlog::error("Exception in GetShaderPathByName: {} not exists", fontFilePath.string());
+    spdlog::error("Exception in GetShaderPathByName: {} not exists", filePath.string());
     throw std::runtime_error("");
   }
-  return fontFilePath;
+  return filePath;
 }

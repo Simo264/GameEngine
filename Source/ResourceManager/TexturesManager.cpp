@@ -8,56 +8,54 @@
 */
 std::filesystem::path TexturesManager::_texturesDir;
 array<Texture2D, 10>	TexturesManager::_textureBuffer;
-uint32_t	            TexturesManager::_numTextures = 0;
+uint32_t	            TexturesManager::_numTextures;
 
 void TexturesManager::Init()
 {
   _texturesDir = std::filesystem::current_path().parent_path() / "Textures"; 
+  _numTextures = 0;
 
-  // load all texture files in Textures directory
-  for (const auto& entry : std::filesystem::directory_iterator(_texturesDir))
-    LoadTexture(entry);
+  // Load all texture files in Textures directory
+  for (const auto& entry : std::filesystem::recursive_directory_iterator(_texturesDir))
+  {
+    if (!std::filesystem::is_directory(entry))
+    {
+      LoadTexture(entry);
+    }
+  }
 }
 
-Texture2D* TexturesManager::LoadTexture(std::filesystem::path textureFilePath)
+Texture2D* TexturesManager::LoadTexture(std::filesystem::path filePath)
 {
   if (_numTextures >= _textureBuffer.size())
   {
-    spdlog::warn("Can't load more textures. Buffer is full");
-    throw std::runtime_error("");
-  }
-  if (!std::filesystem::exists(textureFilePath))
-  {
-    spdlog::warn("Exception in TexturesManager::LoadTexture: {} does not exists", textureFilePath.string());
+    spdlog::error("Can't load more textures. Buffer is full");
     throw std::runtime_error("");
   }
   
+  filePath = _texturesDir / filePath.lexically_normal();
+  if (!std::filesystem::exists(filePath))
+  {
+    spdlog::error("Exception in TexturesManager::LoadTexture: {} does not exists", filePath.string());
+    throw std::runtime_error("");
+  }
+
   Texture2D* texture = &_textureBuffer[_numTextures++];
-  texture->Init(textureFilePath);
+  texture->Init(filePath);
   return texture;
 }
 
-Texture2D* TexturesManager::GetTexture(std::filesystem::path textureFilePath)
+Texture2D* TexturesManager::GetTexture(std::filesystem::path filePath)
 {
+  filePath = _texturesDir / filePath.lexically_normal();
+
   for (uint32_t i = 0; i < _numTextures; i++)
   {
     auto texture = &_textureBuffer[i];
-    if (texture->texturePath.compare(textureFilePath) == 0)
+    if (texture->texturePath.compare(filePath) == 0)
       return texture;
   }
 
   return nullptr;
 }
 
-Texture2D* TexturesManager::GetTextureByName(const char* filename)
-{
-  for (uint32_t i = 0; i < _numTextures; i++)
-  {
-    auto texture = &_textureBuffer[i];
-    auto texFilename = texture->texturePath.filename().string();
-
-    if (texFilename.compare(filename) == 0)
-      return texture;
-  }
-  return nullptr;
-}

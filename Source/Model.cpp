@@ -152,13 +152,9 @@ Texture2D* Model::LoadTexture(const struct aiMaterial* material, const char* tex
     return nullptr;
 
   // Load textures from current model directory
-  Texture2D* texture = TexturesManager::LoadTexture(_modelDirPath / fileName.C_Str());
-
-  //Texture2D* texture = TexturesManager::GetTextureByName(fileName.C_Str());
-  //if (!texture) // If texture does not exists in default directory Textures/
-  //{
-  //  auto texturePath = _modelDirPath / fileName.C_Str();
-  //  texture = TexturesManager::LoadTexture(texturePath);
-  //}
+  Texture2D* texture = TexturesManager::GetTexture(fileName.C_Str());
+  if (!texture)
+    spdlog::warn("Model::LoadTexture: {} does not exists", fileName.C_Str());
+  
   return texture;
 }

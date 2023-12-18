@@ -14,25 +14,23 @@ std::filesystem::path         ShadersManager::_shadersDir;
 
 void ShadersManager::Init()
 {
-  _shadersDir = std::filesystem::current_path(); // VC++ solution path
-  _shadersDir = _shadersDir.parent_path();
-  _shadersDir = _shadersDir / "Shaders";
+  _shadersDir = std::filesystem::current_path().parent_path() / "Shaders"; // VC++ solution path
 
-  // init number of shaders to 0
+  // Set number of shader programs to 0
   _nShaderPrograms = 0;
 }
 
-std::filesystem::path ShadersManager::GetShaderFileByName(const char* filename)
+std::filesystem::path ShadersManager::GetShaderFile(std::filesystem::path filePath)
 {
-  std::filesystem::path shaderPath = _shadersDir / filename;
+  filePath = _shadersDir / filePath.lexically_normal();
 
-  if (!std::filesystem::exists(shaderPath))
+  if (!std::filesystem::exists(filePath))
   {
-    spdlog::error("Exception in GetShaderPathByName: {} not exists", shaderPath.string());
+    spdlog::error("Exception in GetShaderPathByName: {} not exists", filePath.string());
     throw std::runtime_error("");
   }
 
-  return shaderPath;
+  return filePath;
 }
 
 Graphics::Shader* ShadersManager::LoadShaderProgram(const char* label,

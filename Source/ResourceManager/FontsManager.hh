@@ -2,6 +2,8 @@
 
 #include "../Core.hh"
 
+// Load and retrieve font files located within the Fonts directory
+// ------------------------------------------------------------------------
 class FontsManager
 {
 public:
@@ -10,7 +12,7 @@ public:
 
 	static void Init();
 
-	static std::filesystem::path GetFontByName(const char* filename);
+	static std::filesystem::path GetFont(std::filesystem::path filePath);
 
 private:
 	static std::filesystem::path _fontsDir;
