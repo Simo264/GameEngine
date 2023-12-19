@@ -25,7 +25,8 @@ public:
 	Mesh& GetMesh(uint32_t i) { return _meshPool[i]; }
 
 private:
-	std::filesystem::path _modelDirPath;
+	static std::filesystem::path _assetsDirPath;
+
 	unique_ptr<Mesh[]> _meshPool;
 	uint32_t           _numMeshes;
 

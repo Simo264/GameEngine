@@ -4,6 +4,8 @@
 
 #include <spdlog/spdlog.h>
 
+std::filesystem::path Model::_assetsDirPath;
+
 /* -----------------------------------------------------
  *          PUBLIC METHODS
  * -----------------------------------------------------
@@ -11,8 +13,8 @@
 
 Model::Model(std::filesystem::path filePath)
 {
-  _modelDirPath = filePath.parent_path();
-
+  _assetsDirPath = std::filesystem::current_path().parent_path() / "Assets";
+  filePath       = _assetsDirPath / filePath.lexically_normal();
 	LoadModel(filePath);
 }
 

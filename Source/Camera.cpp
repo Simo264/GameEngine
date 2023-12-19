@@ -2,6 +2,9 @@
 
 #include <spdlog/spdlog.h>
 
+extern uint32_t WINDOW_WIDTH;
+extern uint32_t WINDOW_HEIGHT;
+
 Camera::Camera(vec3f position) : position{ position }
 {
   front   = vec3f(0.0f, 0.0f, -1.0f);
@@ -13,8 +16,8 @@ Camera::Camera(vec3f position) : position{ position }
   mouseSensitivity = 0.1f; 
   fov              = 45.0f;
 
-  _lastX = 720.f / 2.0f;
-  _lastY = 720.f / 2.0f;
+  _lastX = (float)(WINDOW_WIDTH / 2);
+  _lastY = (float)(WINDOW_HEIGHT / 2);
 
   _firstMouse     = false;
   _constrainPitch = true;
@@ -33,11 +36,11 @@ void Camera::ProcessInput(Window& window, double deltaTime)
   window.GetCursorPosition(mousePos);
 
   FreeCameraWalk(window, deltaTime);
-  FreeCameraRotation(mousePos, deltaTime);
-
-  //if (window.GetMouseKey(GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
-  //{
-  //}
+  
+  if (window.GetMouseKey(GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
+  {
+    FreeCameraRotation(mousePos, deltaTime);
+  }
 }
 
 
