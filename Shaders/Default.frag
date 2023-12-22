@@ -93,7 +93,7 @@ void main()
   // phase 2: Point lights
   // for(int i = 0; i < NR_POINT_LIGHTS; i++)
   //  result += CalcPointLight(pointLights[i]); 
-  //result += CalcPointLight(); 
+  result += CalcPointLight(); 
 
   // phase 3: Spot light
   //result += CalcSpotLight(spotLight);  

@@ -2,7 +2,6 @@
 
 #include "../Core.hh"
 
-
 namespace Graphics
 {
   class VAConfiguration
@@ -10,16 +9,15 @@ namespace Graphics
   public:
     VAConfiguration();
 
-    void PushAttribute(uint32_t attribute);
+    void PushAttribute(uint8_t attribute);
 
     // ex: layout = [3, 3, 2]
     // layout=0: in vec3 components (x,y,z)
     // layout=1: in vec3 components (x,y,z)
     // layout=2: in vec2 components (x,y)
-    array<uint32_t, 5> layout;
+    array<uint8_t, 16> layout;
     uint32_t numAttrs;
   };
-
 
 	class VertexArray
 	{
@@ -31,11 +29,17 @@ namespace Graphics
     VertexArray& operator=(const VertexArray&) = delete; // delete assign op
 
     void Init(uint32_t vertSize, float* vertData, uint32_t indSize, uint32_t* indData, VAConfiguration& config);
-
     void Destroy();
 
-    uint32_t vao; 
-    uint32_t vbo, numVertices;
-    uint32_t ebo, numIndices;
+    void Bind()   const { glBindVertexArray(_vao); };
+    void Unbind() const { glBindVertexArray(0); };
+
+    uint32_t numVertices;
+    uint32_t numIndices;
+
+  private:
+    uint32_t _vao; 
+    uint32_t _vbo;
+    uint32_t _ebo;
 	};
 }

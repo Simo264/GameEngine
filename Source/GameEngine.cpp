@@ -5,9 +5,12 @@
 #include "Texture2D.hh"
 #include "Model.hh"
 
+#include "Mesh/CubeMesh.hh"
+
 #include "Graphics/VertexArray.hh"
 #include "Graphics/Shader.hh"
 #include "Graphics/Renderer.hh"
+#include "Graphics/FrameBuffer.hh"
 
 #include "Lighting/DirectionalLight.hh"
 #include "Lighting/PointLight.hh"
@@ -24,11 +27,10 @@
 
 #include <spdlog/spdlog.h>
 
-uint32_t WINDOW_WIDTH  = 1080;
+uint32_t WINDOW_WIDTH  = 720;
 uint32_t WINDOW_HEIGHT = 720;
 
 void SetupImGuiStyle();
-
 
 int main()
 {
@@ -40,10 +42,10 @@ int main()
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_SAMPLES, 4); // enable 4x MSAA on GLFW framebuffer
   Window window;
-  window.Create(vec2u(WINDOW_WIDTH, WINDOW_HEIGHT), vec2u(650, 200), "OpenGL");
+  window.Create(vec2u(WINDOW_WIDTH, WINDOW_HEIGHT), vec2u(300, 50), "OpenGL");
   gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
   glfwSwapInterval(1); // v-sync on
-  //glfwSetInputMode(window.Get(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+  // glfwSetInputMode(window.Get(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
   
   // antialising
   glEnable(GL_MULTISAMPLE);
@@ -66,19 +68,24 @@ int main()
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
   ImGuiIO& io = ImGui::GetIO();
-  io.Fonts->AddFontFromFileTTF(fontPath.string().c_str(), 14); // custom font
+  io.Fonts->AddFontFromFileTTF(fontPath.string().c_str(), 16); // custom font
   io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
   io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
   SetupImGuiStyle();
   ImGui_ImplGlfw_InitForOpenGL(window.Get(), true);
   ImGui_ImplOpenGL3_Init("#version 130");
-  float alpha = 0.250f;
+  float alpha = 0.50f;
   // ---------------------------------------
 
 
   // Load shader programs
   // ---------------------------------------
   ShadersManager::Init();
+  auto testingShader = ShadersManager::LoadShaderProgram(
+    "TeestingShader",
+    ShadersManager::GetShaderFile("Testing.vert"),
+    ShadersManager::GetShaderFile("Testing.frag")
+  );
   auto instancingShader = ShadersManager::LoadShaderProgram(
     "InstancingShader",
     ShadersManager::GetShaderFile("Instancing.vert"),
@@ -86,7 +93,6 @@ int main()
   );
   instancingShader->Use();
   instancingShader->SetInt("ourTexture", 0);
-
   auto sceneShader = ShadersManager::LoadShaderProgram(
     "InstancingShader",
     ShadersManager::GetShaderFile("Default.vert"),
@@ -96,6 +102,13 @@ int main()
   sceneShader->SetInt("Material.diffuse",  0); // sampler2d
   sceneShader->SetInt("Material.specular", 1); // sampler2d
   sceneShader->SetFloat("Material.shininess", 64.0f);
+  auto framebufferShader = ShadersManager::LoadShaderProgram(
+    "FramebufferShader",
+    ShadersManager::GetShaderFile("Framebuffer.vert"),
+    ShadersManager::GetShaderFile("Framebuffer.frag")
+  );
+  framebufferShader->Use();
+  framebufferShader->SetInt("screenTexture", 0);
   // ---------------------------------------
 
 
@@ -108,18 +121,27 @@ int main()
 
   // Mesh objects
   // ---------------------------------------
-  Model cubeModel("Shapes/Cube/Cube.obj");
+  //Model cubeModel("Shapes/Cube/Cube.obj");
   //cubeModel.scaling = vec3f(0.5f, 0.5f, 0.5f);
   //cubeModel.position.y = -0.49f;
-  Model planeModel("Shapes/Plane/Plane.obj");
-  planeModel.position.y = -1.0f;
-  planeModel.scaling = vec3f(10.0f, 0.0f, 10.0f);
+  //
+  //Model planeModel("Shapes/Plane/Plane.obj");
+  //planeModel.position.y = -1.0f;
+  //planeModel.scaling = vec3f(10.0f, 0.0f, 10.0f);
+
+  CubeMesh cube;
   // ---------------------------------------
 
 
   // Lighting
   // ---------------------------------------
-  Lighting::DirectionalLight dirLight("DirLight");
+  //Lighting::DirectionalLight dirLight("DirLight");
+  //dirLight.ambient = 0.07f;
+  //dirLight.diffuse = 0.0f;
+  //dirLight.specular = 0.0f;
+
+  //Lighting::PointLight pointLight("PointLight");
+  //pointLight.position = vec3f(0.0f, 5.0f, 0.0f);
   // ---------------------------------------
   
 
@@ -127,6 +149,31 @@ int main()
   // ---------------------------------------
   Camera camera;
   // ---------------------------------------
+
+  float screenVertices[] = {
+    // positions   // texCoords
+    -1.0f,  1.0f,  0.0f, 1.0f,
+    -1.0f, -1.0f,  0.0f, 0.0f,
+     1.0f, -1.0f,  1.0f, 0.0f,
+
+    -1.0f,  1.0f,  0.0f, 1.0f,
+     1.0f, -1.0f,  1.0f, 0.0f,
+     1.0f,  1.0f,  1.0f, 1.0f
+  };
+  Graphics::VAConfiguration config;
+  config.PushAttribute(2); // positions
+  config.PushAttribute(2); // texCoords
+
+  MeshData data{ sizeof(screenVertices), screenVertices , 0, nullptr };
+  
+  Mesh screenQuad;
+  screenQuad.Init(data, config);
+
+  
+  // framebuffer configuration
+  // -------------------------
+  Graphics::FrameBuffer framebuffer(vec2f(WINDOW_WIDTH, WINDOW_HEIGHT));
+
 
 
   // Loop
@@ -138,7 +185,7 @@ int main()
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    Graphics::Renderer::numRenderCallsPerFrame = 0;
+    Graphics::Renderer::drawCalls = 0;
 
     // Per-frame time logic
     // ---------------------------------------
@@ -152,85 +199,55 @@ int main()
     glfwPollEvents();
     window.ProcessKeyboardInput();
     camera.ProcessInput(window, deltaTime);
-    
     const mat4f projection = glm::perspective(glm::radians(camera.fov), (float)(WINDOW_WIDTH/WINDOW_HEIGHT) , 0.1f, 100.0f);
     const mat4f view = camera.GetViewMatrix();
+    
+    vec2i framebufferSize;
+    window.GetFramebufferSize(framebufferSize);
+    glViewport(0, 0, framebufferSize.x, framebufferSize.y);
+    framebuffer.RescaleFrameBuffer(framebufferSize);
     // ---------------------------------------
 
 
     // render
     // ---------------------------------------
-    vec2i frameSize;
-    window.GetFramebufferSize(frameSize);
-    glViewport(0, 0, frameSize.x, frameSize.y);
-    glClearColor(0.1f, 0.4f, 0.4f, 1.0f);               // values for the color buffers
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear buffers to preset values
-
-    // render cubes no instancing
-    sceneShader->Use();
-    sceneShader->SetMat4f("Projection", projection);
-    sceneShader->SetMat4f("View",       view);
-    sceneShader->SetVec3f("ViewPos",    camera.position);
+    // bind to framebuffer and draw scene as we normally would to color texture 
+    framebuffer.Bind();
+    glEnable(GL_DEPTH_TEST); // enable depth testing (is disabled for rendering screen-space quad)
     
-    dirLight.Render(sceneShader);
-    cubeModel.Draw(sceneShader);
-    planeModel.Draw(sceneShader);
+    // make sure we clear the framebuffer's content
+    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    testingShader->Use();
+    testingShader->SetMat4f("Projection", projection);
+    testingShader->SetMat4f("View",       view);
+    testingShader->SetMat4f("Model",      glm::scale(mat4f(1.0f), vec3f(0.25f, 0.25f, 0.25f)));
+    Graphics::Renderer::DrawArrays(cube.vertexArray);
+    
+    // now bind back to default framebuffer and draw a quad plane with the attached framebuffer color texture
+    framebuffer.Unbind();
+
+    // clear all relevant buffers
+    glClearColor(1.0f, 1.0f, 1.0f, 1.0f); // set clear color to white (not really necessary actually, since we won't be able to see behind the quad anyways)
+    glClear(GL_COLOR_BUFFER_BIT);
+
+
+    ImGui::Begin("Scene");
+    {
+      //float width = ImGui::GetContentRegionAvail().x;
+      //float height = ImGui::GetContentRegionAvail().y;
+      ImGui::Image(
+        (ImTextureID) framebuffer.GetFramebufferTexture(), 
+        ImGui::GetContentRegionAvail(), 
+        ImVec2(0, 1), 
+        ImVec2(1, 0));
+    }
+    ImGui::End();
     // ---------------------------------------
     
     double end = glfwGetTime();
     double renderTimeMs = (end - now) * 10e3;
-
-    // Stats window
-    // -------------------------------------
-    ImGui::SetNextWindowBgAlpha(alpha);
-    if (ImGui::Begin("Stats"))
-    {
-      ImGui::SetWindowSize({ 300, 100 });
-      ImGui::SetWindowPos({ (float) WINDOW_WIDTH - 300, 0 });
-
-      string str;
-      str.append("numRenderCallsPerFrame: " + std::to_string(Graphics::Renderer::numRenderCallsPerFrame));
-      ImGui::Text(str.c_str());
-      str.clear();
-
-      str.append("RenderTime: " + std::to_string(renderTimeMs) + "ms");
-      ImGui::Text(str.c_str());
-      str.clear();
-    }
-    ImGui::End();
-    
-    // Directional light window
-    // -------------------------------------
-    ImGui::SetNextWindowBgAlpha(alpha);
-    if (ImGui::Begin("Directional light"))
-    {
-      ImGui::SetWindowSize({ 300, 300 });
-      ImGui::SetWindowPos({ (float) WINDOW_WIDTH - 300, 100 });
-
-      ImGui::SliderFloat3("Direction",  (float*)&dirLight.direction, -10.f, 10.f);
-      ImGui::SliderFloat3("Color",      (float*)&dirLight.color,      0.f, 1.f);
-      ImGui::SliderFloat("Ambient",     (float*)&dirLight.ambient,    0.f, 1.f);
-      ImGui::SliderFloat("Diffuse",     (float*)&dirLight.diffuse,    0.f, 1.f);
-      ImGui::SliderFloat("Specular",    (float*)&dirLight.specular,   0.f, 1.f);
-    }
-    ImGui::End();
-
-    // Log light window
-    // -------------------------------------
-    ImGui::SetNextWindowBgAlpha(alpha);
-    if (ImGui::Begin("Log"))
-    {
-      ImGui::SetWindowSize({ (float)WINDOW_WIDTH, 150 });
-      ImGui::SetWindowPos({ 0, (float)WINDOW_HEIGHT - 150 });
-
-      ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Some text in red");
-      ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Some text in green");
-      ImGui::TextColored(ImVec4(0.0f, 0.0f, 1.0f, 1.0f), "Some text in blue");
-      ImGui::TextColored(ImVec4(0.0f, 0.0f, 0.0f, 1.0f), "Some text");
-    }
-    ImGui::End();
-
-
     
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -269,7 +286,7 @@ void SetupImGuiStyle() {
   style->GrabRounding = 4.0f;
 
   ImVec4* colors = style->Colors;
-  colors[ImGuiCol_Text] = ColorConvertU32ToFloat4(Spectrum::GRAY800); // text on hovered controls is gray900
+  colors[ImGuiCol_Text] = ColorConvertU32ToFloat4(Spectrum::Static::BLACK); // text on hovered controls is gray900
   colors[ImGuiCol_TextDisabled] = ColorConvertU32ToFloat4(Spectrum::GRAY500);
   colors[ImGuiCol_WindowBg] = ColorConvertU32ToFloat4(Spectrum::GRAY100);
   colors[ImGuiCol_ChildBg] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);

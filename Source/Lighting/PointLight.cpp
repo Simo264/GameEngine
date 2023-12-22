@@ -3,8 +3,9 @@
 
 namespace Lighting
 {
-  PointLight::PointLight(string uniformName) : BaseLight(), uniformName{ uniformName }
+  PointLight::PointLight(string uniformName) : BaseLight()
   {
+    this->uniformName = uniformName;
     position = vec3f(0.0f, 0.0f, 0.0f);  // default on origin
   }
 

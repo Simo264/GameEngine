@@ -17,6 +17,6 @@ namespace Graphics
 		static void DrawIndexed(VertexArray& vertexArray);
 		static void DrawIndexedInstanced(VertexArray& vertexArray, int nInstances);
 	
-		static uint32_t numRenderCallsPerFrame;
+		static uint32_t drawCalls;
 	};
 }

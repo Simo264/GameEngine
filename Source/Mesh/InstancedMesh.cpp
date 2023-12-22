@@ -44,11 +44,10 @@ void InstancedMesh::SetInstanceModel(mat4f* model, uint32_t instance)
     spdlog::warn("InstancedMesh::SetModel invalid instance value!");
     return;
   }
-  glBindVertexArray(vertexArray.vao);
+  vertexArray.Bind();
   glBindBuffer(GL_ARRAY_BUFFER, _instanceBuffer);
   glBufferSubData(GL_ARRAY_BUFFER, instance * sizeof(mat4f), sizeof(mat4f), model);
-  glBindVertexArray(0);
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
+  vertexArray.Unbind();
 }
 
 void InstancedMesh::SetInstancesModelRange(uint32_t start, uint32_t n, mat4f* models)
@@ -59,11 +58,10 @@ void InstancedMesh::SetInstancesModelRange(uint32_t start, uint32_t n, mat4f* mo
     return;
   }
   
-  glBindVertexArray(vertexArray.vao);
+  vertexArray.Bind();
   glBindBuffer(GL_ARRAY_BUFFER, _instanceBuffer);
   glBufferSubData(GL_ARRAY_BUFFER, start * sizeof(mat4f), n * sizeof(mat4f), models);
-  glBindVertexArray(0);
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
+  vertexArray.Unbind();
 }
 
 /* --------------------------------------
@@ -72,7 +70,7 @@ void InstancedMesh::SetInstancesModelRange(uint32_t start, uint32_t n, mat4f* mo
 
 void InstancedMesh::Instancing(Graphics::VAConfiguration& config)
 {
-  glBindVertexArray(vertexArray.vao);
+  vertexArray.Bind();
 
   vector<mat4f> models(MAX_NUM_INSTANCES, mat4f(1.0f));
 
@@ -95,6 +93,5 @@ void InstancedMesh::Instancing(Graphics::VAConfiguration& config)
     glVertexAttribDivisor(nLayoutModel, 1);
   }
 
-  glBindVertexArray(0);
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
+  vertexArray.Unbind();
 }

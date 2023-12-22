@@ -18,18 +18,19 @@ set( GLFW_BUILD_EXAMPLES  OFF CACHE BOOL "" FORCE )
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/Externals/Include")
 
 
-
 # Aggiungere l'origine all'eseguibile di questo progetto.
+FILE(GLOB_RECURSE SRC_LIST "${CMAKE_CURRENT_SOURCE_DIR}/Source/*.cpp")
+
 add_executable (GameEngine 
-  "${CMAKE_CURRENT_SOURCE_DIR}/Externals/Include/glad/glad.c"
-	"${CMAKE_CURRENT_SOURCE_DIR}/Source/GameEngine.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/Externals/Include/Glad/glad.c"
+	${SRC_LIST}
 )
 
 
-# linking
+# linking libraries
 target_link_libraries(GameEngine "${CMAKE_CURRENT_SOURCE_DIR}/Externals/Libs/glfw3.lib") 
 target_link_libraries(GameEngine "${CMAKE_CURRENT_SOURCE_DIR}/Externals/Libs/spdlogd.lib")
-
+target_link_libraries(GameEngine "${CMAKE_CURRENT_SOURCE_DIR}/Externals/Libs/assimp.lib")
 
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)

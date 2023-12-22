@@ -7,6 +7,9 @@ public:
   Window() = default;
   ~Window() = default;
 
+  Window(const Window&) = delete;            // delete copy constructor
+  Window& operator=(const Window&) = delete; // delete assign op
+
   // creating a window and context
   void Create(vec2u dim, vec2u pos, const char* title);
 

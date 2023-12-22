@@ -1,42 +1,49 @@
 #include "Renderer.hh"
+#include <Spdlog/spdlog.h>
 
 namespace Graphics
 {
-	uint32_t Renderer::numRenderCallsPerFrame = 0;
+	uint32_t Renderer::drawCalls = 0;
 
 	void Renderer::DrawArrays(VertexArray& vertexArray)
 	{
-		glBindVertexArray(vertexArray.vao);
+		vertexArray.Bind();
 		glDrawArrays(GL_TRIANGLES, 0, vertexArray.numVertices);
-		numRenderCallsPerFrame++;
+		drawCalls++;
 
-		glBindVertexArray(0);
+		vertexArray.Unbind();
 	}
 
 	void Renderer::DrawArraysInstanced(VertexArray& vertexArray, int nInstances)
 	{
-		glBindVertexArray(vertexArray.vao);
+		vertexArray.Bind();
 		glDrawArraysInstanced(GL_TRIANGLES, 0, vertexArray.numVertices, nInstances);
-		numRenderCallsPerFrame++;
+		drawCalls++;
 
-		glBindVertexArray(0);
+		vertexArray.Unbind();
 	}
 
 	void Renderer::DrawIndexed(VertexArray& vertexArray)
 	{
-		glBindVertexArray(vertexArray.vao);
+		if(vertexArray.numIndices <= 0)
+			spdlog::warn("You called Renderer::DrawIndexed but with no indices");
+		
+		vertexArray.Bind();
 		glDrawElements(GL_TRIANGLES, vertexArray.numIndices, GL_UNSIGNED_INT, 0);
-		numRenderCallsPerFrame++;
+		drawCalls++;
 
-		glBindVertexArray(0);
+		vertexArray.Unbind();
 	}
 
 	void Renderer::DrawIndexedInstanced(VertexArray& vertexArray, int nInstances)
 	{
-		glBindVertexArray(vertexArray.vao);
-		glDrawElementsInstanced(GL_TRIANGLES, vertexArray.numIndices, GL_UNSIGNED_INT, 0, nInstances);
-		numRenderCallsPerFrame++;
+		if (vertexArray.numIndices <= 0)
+			spdlog::warn("You called Renderer::DrawIndexedInstanced but with no indices");
 
-		glBindVertexArray(0);
+		vertexArray.Bind();
+		glDrawElementsInstanced(GL_TRIANGLES, vertexArray.numIndices, GL_UNSIGNED_INT, 0, nInstances);
+		drawCalls++;
+
+		vertexArray.Unbind();
 	}
 }
