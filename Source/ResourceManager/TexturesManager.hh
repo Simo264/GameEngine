@@ -11,7 +11,7 @@ public:
 	TexturesManager() = delete;
 	~TexturesManager() = delete;
 
-	static void Init();
+	static void Initialize();
 	
 	static Texture2D* LoadTexture(std::filesystem::path filePath);
 	static Texture2D* GetTexture(std::filesystem::path	filePath);

@@ -8,7 +8,7 @@ namespace Lighting
     cutOff    = 12.0f;
   }
 
-  void SpotLight::Render(Graphics::Shader* shader)
+  void SpotLight::Render(Shader* shader)
   {
     const int UNameSize = uniformName.size();
     const int rsize = 30 - UNameSize;

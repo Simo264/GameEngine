@@ -7,13 +7,8 @@
 class FontsManager
 {
 public:
-	FontsManager() = delete;
+	FontsManager()  = delete;
 	~FontsManager() = delete;
 
-	static void Init();
-
 	static std::filesystem::path GetFont(std::filesystem::path filePath);
-
-private:
-	static std::filesystem::path _fontsDir;
 };

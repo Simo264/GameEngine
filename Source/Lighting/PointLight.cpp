@@ -9,7 +9,7 @@ namespace Lighting
     position = vec3f(0.0f, 0.0f, 0.0f);  // default on origin
   }
 
-  void PointLight::Render(Graphics::Shader* shader)
+  void PointLight::Render(Shader* shader)
   {
     const int UNameSize = uniformName.size();
     const int rsize = 30 - UNameSize;

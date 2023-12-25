@@ -1,6 +1,6 @@
 #include "Mesh.hh"
 
-void Mesh::Init(MeshData& data, Graphics::VAConfiguration& config)
+void Mesh::Init(MeshData& data, VAConfiguration& config)
 {
 	textureDiffuse	= nullptr;
 	textureSpecular = nullptr;

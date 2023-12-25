@@ -15,7 +15,7 @@ namespace Lighting
     DirectionalLight(string uniformName);
     ~DirectionalLight() = default;
 
-    void Render(Graphics::Shader* shader);
+    void Render(Shader* shader);
 
     vec3f direction;
 

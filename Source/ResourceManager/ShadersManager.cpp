@@ -1,18 +1,17 @@
 #include "ShadersManager.hh"
-
-#include <spdlog/spdlog.h>
+#include "../Logger.hh"
 
 /* -----------------------------------------------------
  *          PUBLIC METHODS
  * -----------------------------------------------------
 */
 
-array<Graphics::Shader, 10>	  ShadersManager::_shaderProgramsBuffer;
+array<Shader, 10>	  ShadersManager::_shaderProgramsBuffer;
 uint32_t                      ShadersManager::_nShaderPrograms;
 
 std::filesystem::path         ShadersManager::_shadersDir;
 
-void ShadersManager::Init()
+void ShadersManager::Initialize()
 {
   _shadersDir = std::filesystem::current_path().parent_path() / "Shaders"; // VC++ solution path
 
@@ -26,30 +25,30 @@ std::filesystem::path ShadersManager::GetShaderFile(std::filesystem::path filePa
 
   if (!std::filesystem::exists(filePath))
   {
-    spdlog::error("Exception in GetShaderPathByName: {} not exists", filePath.string());
+    CONSOLE_ERROR("Exception in GetShaderPathByName: {} not exists", filePath.string());
     throw std::runtime_error("");
   }
 
   return filePath;
 }
 
-Graphics::Shader* ShadersManager::LoadShaderProgram(const char* label,
+Shader* ShadersManager::LoadShaderProgram(const char* label,
   std::filesystem::path vertFilePath, 
   std::filesystem::path fragFilePath
 )
 {
   if (_nShaderPrograms >= _shaderProgramsBuffer.size())
   {
-    spdlog::warn("Can't load more shaders. Buffer is full");
+    CONSOLE_WARN("Can't load more shaders. Buffer is full");
     throw std::runtime_error("");
   }
 
-  Graphics::Shader* shader = &_shaderProgramsBuffer[_nShaderPrograms++];
+  Shader* shader = &_shaderProgramsBuffer[_nShaderPrograms++];
   shader->Init(label, vertFilePath.string().c_str(), fragFilePath.string().c_str());
   return shader;
 }
 
-Graphics::Shader* ShadersManager::GetShaderProgramByLabel(const string& label)
+Shader* ShadersManager::GetShader(const char* label)
 {
   for (uint32_t i = 0; i < _nShaderPrograms; i++)
   {

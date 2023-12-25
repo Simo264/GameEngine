@@ -1,22 +1,15 @@
 #include "Window.hh"
 
-void Window::Create(vec2u dim, vec2u pos, const char* title)
+vec2i Window::GetWindowSize()
 {
-  _width  = dim.x;
-  _height = dim.y;
-  _window = glfwCreateWindow(_width, _height, title, NULL, NULL);
-  glfwMakeContextCurrent(_window);
-  SetPosition(pos);
+  vec2i size;
+  glfwGetWindowSize(_window, &size.x, &size.y);
+  return size;
 }
 
-void Window::Destroy()
+vec2i Window::GetFramebufferSize()
 {
-  if (_window)
-    glfwDestroyWindow(_window);
-}
-
-void Window::ProcessKeyboardInput()
-{
-  if (GetKey(GLFW_KEY_ESCAPE) == GLFW_PRESS)
-    Close();
+  vec2i size;
+  glfwGetFramebufferSize(_window, &size.x, &size.y);
+  return size;
 }

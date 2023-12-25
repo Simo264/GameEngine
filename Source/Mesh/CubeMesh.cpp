@@ -47,7 +47,7 @@ CubeMesh::CubeMesh() : Mesh()
 
   // default configuration
   // ---------------------------------
-  Graphics::VAConfiguration config;
+  VAConfiguration config;
   config.PushAttribute(3); // vec3 position    
   config.PushAttribute(3); // vec3 normals 
   config.PushAttribute(2); // vec2 text coords

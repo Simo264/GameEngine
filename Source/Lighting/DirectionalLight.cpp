@@ -7,7 +7,7 @@ namespace Lighting
     direction = vec3f(0.0f, -1.0f, 0.0f);   // default from top to bottom
   }
 
-  void DirectionalLight::Render(Graphics::Shader* shader)
+  void DirectionalLight::Render(Shader* shader)
   {
     const int UNameSize = uniformName.size();
     const int rsize = 30 - UNameSize;

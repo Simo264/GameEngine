@@ -8,23 +8,23 @@
 class ShadersManager
 {
 public:
-	ShadersManager() = delete;
+	ShadersManager()	= delete;
 	~ShadersManager() = delete;
 
-	static void Init();
+	static void Initialize();
 
-	static Graphics::Shader* LoadShaderProgram(
+	static Shader* LoadShaderProgram(
 		const char* label, 
 		std::filesystem::path vertFilePath,
 		std::filesystem::path fragFilePath);
 	
-	static Graphics::Shader* GetShaderProgramByLabel(const string& label);
+	static Shader* GetShader(const char* label);
 
 	static std::filesystem::path GetShaderFile(std::filesystem::path filePath);
 
 private:
 	static std::filesystem::path _shadersDir;
 
-	static array<Graphics::Shader, 10> _shaderProgramsBuffer;
+	static array<Shader, 10> _shaderProgramsBuffer;
 	static uint32_t _nShaderPrograms;
 };

@@ -17,7 +17,7 @@ public:
 	Model(const Model&) = delete;            // delete copy constructor
 	Model& operator=(const Model&) = delete; // delete assign op
 	
-	void Draw(Graphics::Shader* shader);
+	void Draw(Shader* shader);
 	
 	void Destroy();
 
@@ -25,8 +25,6 @@ public:
 	Mesh& GetMesh(uint32_t i) { return _meshPool[i]; }
 
 private:
-	static std::filesystem::path _assetsDirPath;
-
 	unique_ptr<Mesh[]> _meshPool;
 	uint32_t           _numMeshes;
 

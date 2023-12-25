@@ -8,7 +8,7 @@ public:
 	InstancedMesh(uint32_t nMaxInstances);
 	~InstancedMesh() = default;
 
-	void Init(MeshData& data, Graphics::VAConfiguration& config);
+	void Init(MeshData& data, VAConfiguration& config);
 	void Destroy();
 
 	void		 SetInstanceNumber(uint32_t n);
@@ -17,12 +17,12 @@ public:
 	void SetInstanceModel(mat4f* model, uint32_t instance);
 	void SetInstancesModelRange(uint32_t start, uint32_t n, mat4f* models);
 
-	Graphics::VertexArray vertexArray;
+	VertexArray vertexArray;
 	
 	const uint32_t MAX_NUM_INSTANCES;
 
 private:
-	void Instancing(Graphics::VAConfiguration& config);
+	void Instancing(VAConfiguration& config);
 
 	uint32_t _instanceBuffer;
 	uint32_t _nInstancesToDraw;

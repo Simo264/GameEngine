@@ -1,10 +1,7 @@
 #include "Model.hh"
+#include "Logger.hh"
 #include "Graphics/Renderer.hh"
 #include "ResourceManager/TexturesManager.hh"
-
-#include <spdlog/spdlog.h>
-
-std::filesystem::path Model::_assetsDirPath;
 
 /* -----------------------------------------------------
  *          PUBLIC METHODS
@@ -13,12 +10,12 @@ std::filesystem::path Model::_assetsDirPath;
 
 Model::Model(std::filesystem::path filePath)
 {
-  _assetsDirPath = std::filesystem::current_path().parent_path() / "Assets";
-  filePath       = _assetsDirPath / filePath.lexically_normal();
+  std::filesystem::path assetsDirPath = std::filesystem::current_path().parent_path() / "Assets";
+  filePath = assetsDirPath / filePath.lexically_normal();
 	LoadModel(filePath);
 }
 
-void Model::Draw(Graphics::Shader* shader)
+void Model::Draw(Shader* shader)
 {
   mat4f model = Actor::Model();
   shader->SetMat4f("Model", model);
@@ -40,7 +37,7 @@ void Model::Draw(Graphics::Shader* shader)
       glBindTexture(GL_TEXTURE_2D, mesh.textureSpecular->textureID);
     }
 
-    Graphics::Renderer::DrawIndexed(mesh.vertexArray);
+    Renderer::DrawIndexed(mesh.vertexArray);
   }
 }
 
@@ -68,7 +65,7 @@ void Model::LoadModel(std::filesystem::path filePath)
 
   if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
   {
-    spdlog::error("ERROR::ASSIMP::{}", importer.GetErrorString());
+    CONSOLE_ERROR("ERROR::ASSIMP::{}", importer.GetErrorString());
     return;
   }
 
@@ -76,13 +73,12 @@ void Model::LoadModel(std::filesystem::path filePath)
   _numMeshes = scene->mNumMeshes;
   _meshPool  = std::make_unique<Mesh[]>(_numMeshes);
 
-  spdlog::info("Loading model {}: num meshes {}", filePath.string(), _numMeshes);
+  CONSOLE_TRACE("Loading model {}: num meshes {}", filePath.string(), _numMeshes);
   for (uint32_t i = 0; i < _numMeshes; i++)
   {
     aiMesh* aimesh = scene->mMeshes[i];
     LoadMesh(i, scene, aimesh);
   }
-  spdlog::info("Done!");
 }
 
 void Model::LoadMesh(uint32_t index, const struct aiScene* scene, const struct aiMesh* aimesh)
@@ -111,7 +107,7 @@ void Model::LoadMesh(uint32_t index, const struct aiScene* scene, const struct a
     indices.insert(indices.end(), { face.mIndices[0],face.mIndices[1],face.mIndices[2] });
   }
 
-  Graphics::VAConfiguration config;
+  VAConfiguration config;
   config.PushAttribute(3); //layout=0 vec3 aPos
   config.PushAttribute(3); //layout=1 vec3 aNormals
   config.PushAttribute(2); //layout=2 vec2 aTexCoords
@@ -156,7 +152,7 @@ Texture2D* Model::LoadTexture(const struct aiMaterial* material, const char* tex
   // Load textures from current model directory
   Texture2D* texture = TexturesManager::GetTexture(fileName.C_Str());
   if (!texture)
-    spdlog::warn("Model::LoadTexture: {} does not exists", fileName.C_Str());
+    CONSOLE_WARN("Model::LoadTexture: {} does not exists", fileName.C_Str());
   
   return texture;
 }

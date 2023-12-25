@@ -1,6 +1,5 @@
 #include "Texture2D.hh"
-
-#include <spdlog/spdlog.h>
+#include "Logger.hh"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
@@ -56,7 +55,8 @@ void Texture2D::LoadImageData()
   }
   else
   {
-    spdlog::error("Failed to load texture `{}`", stringPath);
+    CONSOLE_ERROR("Failed to load texture `{}`", stringPath);
   }
+
   stbi_image_free(reinterpret_cast<void*>(data));
 }

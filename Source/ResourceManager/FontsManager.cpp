@@ -1,21 +1,15 @@
 #include "FontsManager.hh"
-
-#include <spdlog/spdlog.h>
-
-std::filesystem::path FontsManager::_fontsDir;
-
-void FontsManager::Init()
-{
-  _fontsDir = std::filesystem::current_path().parent_path() / "Fonts"; // VC++ solution path
-}
+#include "../Logger.hh"
 
 std::filesystem::path FontsManager::GetFont(std::filesystem::path filePath)
 {
-  filePath = _fontsDir / filePath.lexically_normal();
+  const static std::filesystem::path fontsDir = std::filesystem::current_path().parent_path() / "Fonts"; // VC++ solution path
+
+  filePath = fontsDir / filePath.lexically_normal();
 
   if (!std::filesystem::exists(filePath))
   {
-    spdlog::error("Exception in GetShaderPathByName: {} not exists", filePath.string());
+    CONSOLE_ERROR("Exception in GetShaderPathByName: {} not exists", filePath.string());
     throw std::runtime_error("");
   }
   return filePath;

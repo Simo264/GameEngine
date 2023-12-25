@@ -36,11 +36,11 @@ public:
 	Mesh()  = default;
 	~Mesh() = default;
 
-	void Init(MeshData& data, Graphics::VAConfiguration& config);
+	void Init(MeshData& data, VAConfiguration& config);
 
 	void Destroy();
 
-	Graphics::VertexArray vertexArray;
+	VertexArray vertexArray;
 
 	Texture2D* textureDiffuse;
 	Texture2D* textureSpecular;

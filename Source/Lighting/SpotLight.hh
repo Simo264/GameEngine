@@ -12,7 +12,7 @@ namespace Lighting
   public:
     SpotLight(string uniformName);
 
-    void Render(Graphics::Shader* shader);
+    void Render(Shader* shader);
 
     vec3f direction;
 

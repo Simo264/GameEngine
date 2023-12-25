@@ -6,7 +6,7 @@
 class Camera
 {
 public:
-  Camera(vec3f position = vec3f(0.0f, 0.0f, 0.0f));
+  Camera(vec2i windowSize, vec3f position = vec3f(0.0f, 0.0f, 0.0f));
   ~Camera() = default;
 
   mat4f GetViewMatrix() const;

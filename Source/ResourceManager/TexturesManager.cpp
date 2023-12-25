@@ -1,16 +1,16 @@
 #include "TexturesManager.hh"
-
-#include <spdlog/spdlog.h>
+#include "../Logger.hh"
 
 /* -----------------------------------------------------
  *          PUBLIC METHODS
  * -----------------------------------------------------
 */
+
 std::filesystem::path TexturesManager::_texturesDir;
 array<Texture2D, 10>	TexturesManager::_textureBuffer;
 uint32_t	            TexturesManager::_numTextures;
 
-void TexturesManager::Init()
+void TexturesManager::Initialize()
 {
   _texturesDir = std::filesystem::current_path().parent_path() / "Textures"; 
   _numTextures = 0;
@@ -29,14 +29,14 @@ Texture2D* TexturesManager::LoadTexture(std::filesystem::path filePath)
 {
   if (_numTextures >= _textureBuffer.size())
   {
-    spdlog::error("Can't load more textures. Buffer is full");
+    CONSOLE_ERROR("Can't load more textures. Buffer is full");
     throw std::runtime_error("");
   }
   
   filePath = _texturesDir / filePath.lexically_normal();
   if (!std::filesystem::exists(filePath))
   {
-    spdlog::error("Exception in TexturesManager::LoadTexture: {} does not exists", filePath.string());
+    CONSOLE_ERROR("Exception in TexturesManager::LoadTexture: {} does not exists", filePath.string());
     throw std::runtime_error("");
   }
 

@@ -45,7 +45,7 @@ InstancedCubeMesh::InstancedCubeMesh(uint32_t nMaxInstances) : InstancedMesh(nMa
 
   // default configuration
   // ---------------------------------
-  Graphics::VAConfiguration config;
+  VAConfiguration config;
   config.PushAttribute(3); // vec3 position   attribute 
   config.PushAttribute(2); // vec2 textCoords attribute 
   

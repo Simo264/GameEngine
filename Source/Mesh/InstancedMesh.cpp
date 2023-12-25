@@ -1,6 +1,5 @@
 #include "InstancedMesh.hh"
-
-#include <spdlog/spdlog.h>
+#include "../Logger.hh"
 
 /* --------------------------------------
             PUBLIC METHODS
@@ -11,7 +10,7 @@ InstancedMesh::InstancedMesh(uint32_t nMaxInstances) : MAX_NUM_INSTANCES{ nMaxIn
   _nInstancesToDraw = 1;
 }
 
-void InstancedMesh::Init(MeshData& data, Graphics::VAConfiguration& config)
+void InstancedMesh::Init(MeshData& data, VAConfiguration& config)
 {
 	vertexArray.Init(data.verticesDataSize, data.verticesData, data.indicesDataSize, data.indicesData, config);
 
@@ -30,7 +29,7 @@ void InstancedMesh::SetInstanceNumber(uint32_t n)
 {
   if (n < 0 || n > MAX_NUM_INSTANCES)
   {
-    spdlog::warn("InstancedMesh::SetInstances invalid value");
+    CONSOLE_WARN("InstancedMesh::SetInstances invalid value");
     return;
   }
 
@@ -41,7 +40,7 @@ void InstancedMesh::SetInstanceModel(mat4f* model, uint32_t instance)
 {
   if (instance < 0 || instance >= MAX_NUM_INSTANCES)
   {
-    spdlog::warn("InstancedMesh::SetModel invalid instance value!");
+    CONSOLE_WARN("InstancedMesh::SetModel invalid instance value!");
     return;
   }
   vertexArray.Bind();
@@ -54,7 +53,7 @@ void InstancedMesh::SetInstancesModelRange(uint32_t start, uint32_t n, mat4f* mo
 {
   if (start < 0 || n > MAX_NUM_INSTANCES)
   {
-    spdlog::warn("InstancedMesh::SetModel invalid instance value!");
+    CONSOLE_WARN("InstancedMesh::SetModel invalid instance value!");
     return;
   }
   
@@ -68,7 +67,7 @@ void InstancedMesh::SetInstancesModelRange(uint32_t start, uint32_t n, mat4f* mo
             PRIVATE METHODS
    -------------------------------------- */
 
-void InstancedMesh::Instancing(Graphics::VAConfiguration& config)
+void InstancedMesh::Instancing(VAConfiguration& config)
 {
   vertexArray.Bind();
 

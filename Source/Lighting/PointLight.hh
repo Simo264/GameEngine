@@ -27,7 +27,7 @@ namespace Lighting
     PointLight(string uniformName);
     ~PointLight() = default;
     
-    void Render(Graphics::Shader* shader);
+    void Render(Shader* shader);
 
     string uniformName;
 

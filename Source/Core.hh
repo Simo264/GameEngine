@@ -17,13 +17,15 @@
 #include <numeric>
 #include <string>
 #include <sstream>
-#include <exception>
+#include <tuple>
 #include <vector>
 
 using std::string;
+using std::tuple;
 using std::array;
 using std::vector;
 using std::unique_ptr;
+using std::shared_ptr;
 using std::stringstream;
 using std::ifstream;
 
