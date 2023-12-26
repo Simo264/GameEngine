@@ -103,27 +103,27 @@ void Engine::Run()
   Model planeModel("Shapes/Plane/Plane.obj");
   planeModel.position.y = -1.0f;
   planeModel.scaling = vec3f(10.0f, 0.0f, 10.0f);
-
-  // CubeMesh cube;
   // ---------------------------------------
 
   // Lighting
   // ---------------------------------------
-  Lighting::DirectionalLight dirLight("DirLight");
+  DirectionalLight dirLight("DirLight");
   //dirLight.ambient = 0.07f;
   //dirLight.diffuse = 0.0f;
   //dirLight.specular = 0.0f;
 
-  //Lighting::PointLight pointLight("PointLight");
+  //PointLight pointLight("PointLight");
   //pointLight.position = vec3f(0.0f, 5.0f, 0.0f);
   // ---------------------------------------
   
 
   // Framebuffer object
   // ---------------------------------------
-  //Graphics::FrameBuffer framebuffer(window.GetFramebufferSize());
+  FrameBuffer framebuffer;
+  framebuffer.Create(window.GetFramebufferSize());
   // ---------------------------------------
   
+
   // Loop
   // ---------------------------------------
   double lastUpdateTime = 0;  // number of seconds since the last loop
@@ -147,18 +147,22 @@ void Engine::Run()
     // input
     // ---------------------------------------
     glfwPollEvents();
-    // framebuffer.RescaleFrameBuffer(windowFbSize);
+    if (window.GetKey(GLFW_KEY_ESCAPE) == GLFW_PRESS)
+      window.CloseWindow();
+
     camera.ProcessInput(window, deltaTime);
     const mat4f projection = glm::perspective(glm::radians(camera.fov), aspectRatio, 0.1f, 100.0f);
     const mat4f view = camera.GetViewMatrix();
 
-    if (window.GetKey(GLFW_KEY_ESCAPE) == GLFW_PRESS)
-      window.CloseWindow();
+
 
     // render
     // ---------------------------------------
-    //framebuffer.Bind();
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    framebuffer.RescaleFrameBuffer(windowFbSize);
+    framebuffer.Bind();      // bind to framebuffer and draw scene as we normally would to color texture 
+    glEnable(GL_DEPTH_TEST); // enable depth testing (is disabled for rendering screen-space quad)
+    
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // make sure we clear the framebuffer's content
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     sceneShader->Use();
@@ -168,18 +172,14 @@ void Engine::Run()
     dirLight.Render(sceneShader);
     cubeModel.Draw(sceneShader);
     planeModel.Draw(sceneShader);
-
     
-    //framebuffer.Unbind();                 // now bind back to default framebuffer 
-    //glClearColor(1.0f, 1.0f, 1.0f, 1.0f); // clear all relevant buffers
-    //glClear(GL_COLOR_BUFFER_BIT);
+    framebuffer.Unbind();                 // now bind back to default framebuffer 
+    glClearColor(1.0f, 1.0f, 1.0f, 1.0f); // clear all relevant buffers
+    glClear(GL_COLOR_BUFFER_BIT);
+    glDisable(GL_DEPTH_TEST);
 
-    //testingShader->Use();
-    //testingShader->SetMat4f("Projection", projection);
-    //testingShader->SetMat4f("View", view);
-    //testingShader->SetMat4f("Model", mat4f(1.0f));
-    //Graphics::Renderer::DrawArrays(cube.vertexArray);
-
+    framebufferShader->Use();
+    framebuffer.DrawFrame(framebufferShader);
 
     lastUpdateTime = now;
     

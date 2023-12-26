@@ -7,7 +7,7 @@
   * -----------------------------------------------------
 */
 
-void Shader::Init(const char* label, const char* vertFilePath, const char* fragFilePath)
+void Shader::Create(const char* label, const char* vertFilePath, const char* fragFilePath)
 {
   _label = label;
 

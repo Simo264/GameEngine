@@ -8,7 +8,6 @@ void Renderer::DrawArrays(VertexArray& vertexArray)
 	vertexArray.Bind();
 	glDrawArrays(GL_TRIANGLES, 0, vertexArray.numVertices);
 	drawCalls++;
-
 	vertexArray.Unbind();
 }
 

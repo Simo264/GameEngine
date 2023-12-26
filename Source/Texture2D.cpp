@@ -9,7 +9,7 @@
  * -----------------------------------------------------
 */
 
-void Texture2D::Init(std::filesystem::path path)
+void Texture2D::Create(std::filesystem::path path)
 {
   texturePath = path;
 

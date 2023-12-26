@@ -35,7 +35,7 @@ VertexArray::VertexArray()
   numIndices  = 0;
 }
   
-void VertexArray::Init(uint32_t vertSize, float* vertData, uint32_t indSize, uint32_t* indData, VAConfiguration& config)
+void VertexArray::Create(uint32_t vertSize, float* vertData, uint32_t indSize, uint32_t* indData, VAConfiguration& config)
 {
   glGenVertexArrays(1, &_vao);
   glBindVertexArray(_vao);

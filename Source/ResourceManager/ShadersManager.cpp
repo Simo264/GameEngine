@@ -44,7 +44,7 @@ Shader* ShadersManager::LoadShaderProgram(const char* label,
   }
 
   Shader* shader = &_shaderProgramsBuffer[_nShaderPrograms++];
-  shader->Init(label, vertFilePath.string().c_str(), fragFilePath.string().c_str());
+  shader->Create(label, vertFilePath.string().c_str(), fragFilePath.string().c_str());
   return shader;
 }
 

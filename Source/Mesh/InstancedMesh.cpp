@@ -12,7 +12,7 @@ InstancedMesh::InstancedMesh(uint32_t nMaxInstances) : MAX_NUM_INSTANCES{ nMaxIn
 
 void InstancedMesh::Init(MeshData& data, VAConfiguration& config)
 {
-	vertexArray.Init(data.verticesDataSize, data.verticesData, data.indicesDataSize, data.indicesData, config);
+	vertexArray.Create(data.verticesDataSize, data.verticesData, data.indicesDataSize, data.indicesData, config);
 
 	// instancing
 	// -------------------------

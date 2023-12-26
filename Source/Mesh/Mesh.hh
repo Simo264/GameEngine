@@ -33,11 +33,10 @@ struct MeshData
 class Mesh
 {
 public:
-	Mesh()  = default;
+	Mesh();
 	~Mesh() = default;
 
-	void Init(MeshData& data, VAConfiguration& config);
-
+	void Create(MeshData& data, VAConfiguration& config);
 	void Destroy();
 
 	VertexArray vertexArray;

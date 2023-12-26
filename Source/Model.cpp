@@ -120,7 +120,7 @@ void Model::LoadMesh(uint32_t index, const struct aiScene* scene, const struct a
   };
 
   Mesh& mesh = _meshPool[index];
-  mesh.Init(data, config);
+  mesh.Create(data, config);
 
   // load textures
   const aiMaterial* material = scene->mMaterials[aimesh->mMaterialIndex];

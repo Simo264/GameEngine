@@ -5,13 +5,13 @@
 class Shader
 {
 public:
-  Shader()  = default;
+  Shader() : _shaderID{ 0 } { }
   ~Shader() = default;
 
   Shader(const Shader&) = delete;            // delete copy constructor
   Shader& operator=(const Shader&) = delete; // delete assign op
 
-  void Init(const char* label, const char* vertFilePath, const char* fragFilePath);
+  void Create(const char* label, const char* vertFilePath, const char* fragFilePath);
   void Use() const { glUseProgram(_shaderID); }
   void Destroy() { glDeleteProgram(_shaderID); }
   const string& Label() const { return _label; }

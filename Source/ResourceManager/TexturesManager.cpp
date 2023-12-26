@@ -41,7 +41,7 @@ Texture2D* TexturesManager::LoadTexture(std::filesystem::path filePath)
   }
 
   Texture2D* texture = &_textureBuffer[_numTextures++];
-  texture->Init(filePath);
+  texture->Create(filePath);
   return texture;
 }
 

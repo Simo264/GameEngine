@@ -54,5 +54,5 @@ CubeMesh::CubeMesh() : Mesh()
 
   MeshData data{ sizeof(vertices), vertices, 0, nullptr};
 
-  Init(data, config);
+  Create(data, config);
 }

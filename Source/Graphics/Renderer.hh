@@ -3,6 +3,8 @@
 #include "../Core.hh"
 #include "VertexArray.hh"
 
+// Static class
+// -------------------------------
 class Renderer
 {
 public:
