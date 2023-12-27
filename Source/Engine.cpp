@@ -4,25 +4,17 @@
 #include "Camera.hh"
 #include "Model.hh"
 
-#include "Mesh/CubeMesh.hh"
-
 #include "Lighting/DirectionalLight.hh"
 #include "Lighting/PointLight.hh"
 #include "Lighting/SpotLight.hh"
 
 #include "ResourceManager/ShadersManager.hh"
 #include "ResourceManager/TexturesManager.hh"
-#include "ResourceManager/FontsManager.hh"
 
 #include "Graphics/Shader.hh"
 #include "Graphics/Renderer.hh"
 #include "Graphics/FrameBuffer.hh"
 
-#include "Imgui/imgui.h" 
-#include "Imgui/imgui_impl_glfw.h"
-#include "Imgui/imgui_impl_opengl3.h"
-#include "Imgui/imgui_internal.h"
-#include "Imgui/imgui_spectrum.h"
 
 /* -----------------------------------------------------
  *          PUBLIC METHODS
@@ -39,9 +31,9 @@ void Engine::Initialize()
   // ---------------------------------------
   InitOpenGL();
 
-  // Init IMGui
+  // Initialize Editor
   // ---------------------------------------
-  InitImGui();
+  editor.Initialize();
 
   // Load shaders 
   // ---------------------------------------
@@ -91,7 +83,7 @@ void Engine::Run()
 
   // Camera object
   // ---------------------------------------
-  Camera camera(window.GetWindowSize());
+  Camera camera(window.GetWindowSize(), vec3f(0.0f, 0.0f, 10.0f));
   // ---------------------------------------
 
   // Mesh objects
@@ -103,6 +95,8 @@ void Engine::Run()
   Model planeModel("Shapes/Plane/Plane.obj");
   planeModel.position.y = -1.0f;
   planeModel.scaling = vec3f(10.0f, 0.0f, 10.0f);
+
+  vector<Actor*> sceneActors = { &cubeModel, &planeModel };
   // ---------------------------------------
 
   // Lighting
@@ -129,10 +123,7 @@ void Engine::Run()
   double lastUpdateTime = 0;  // number of seconds since the last loop
   while (window.Loop())
   {
-    //Start the Dear ImGui frame
-    //ImGui_ImplOpenGL3_NewFrame();
-    //ImGui_ImplGlfw_NewFrame();
-    //ImGui::NewFrame();
+    editor.NewFrame();
 
     // Per-frame time logic
     // ---------------------------------------
@@ -156,12 +147,8 @@ void Engine::Run()
 
 
 
-    // render
+    // Render scene
     // ---------------------------------------
-    framebuffer.RescaleFrameBuffer(windowFbSize);
-    framebuffer.Bind();      // bind to framebuffer and draw scene as we normally would to color texture 
-    glEnable(GL_DEPTH_TEST); // enable depth testing (is disabled for rendering screen-space quad)
-    
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // make sure we clear the framebuffer's content
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -172,28 +159,27 @@ void Engine::Run()
     dirLight.Render(sceneShader);
     cubeModel.Draw(sceneShader);
     planeModel.Draw(sceneShader);
-    
-    framebuffer.Unbind();                 // now bind back to default framebuffer 
-    glClearColor(1.0f, 1.0f, 1.0f, 1.0f); // clear all relevant buffers
-    glClear(GL_COLOR_BUFFER_BIT);
-    glDisable(GL_DEPTH_TEST);
 
-    framebufferShader->Use();
-    framebuffer.DrawFrame(framebufferShader);
+    
+    // Render editor
+    // ---------------------------------------
+    editor.ShowDemo();
+    editor.ShowScenePanel(sceneActors, dirLight);
+    editor.RenderFrame();
+
+
+
+    window.SwapWindowBuffers();
 
     lastUpdateTime = now;
-    
-    window.SwapWindowBuffers();
   }
 }
 
 void Engine::ShutDown()
 {
-  // IMGui shutdown
+  // Shutdown Editor
   // -----------------------------------------------------------------
-  ImGui_ImplOpenGL3_Shutdown();
-  ImGui_ImplGlfw_Shutdown();
-  ImGui::DestroyContext();
+  editor.ShutDown();
 
 
   // GLFW: terminate, clearing all previously allocated GLFW resources.
@@ -202,6 +188,8 @@ void Engine::ShutDown()
   glfwDestroyWindow(window);
   glfwTerminate();
 }
+
+
 
 /* -----------------------------------------------------
  *          PRIVATE METHODS
@@ -249,19 +237,4 @@ void Engine::InitOpenGL()
   glCullFace(GL_BACK);
 }
 
-void Engine::InitImGui()
-{
-  auto fontPath = FontsManager::GetFont("Karla-Regular.ttf");
 
-  IMGUI_CHECKVERSION();
-  ImGui::CreateContext();
-  ImGuiIO& io = ImGui::GetIO();
-  io.Fonts->AddFontFromFileTTF(fontPath.string().c_str(), 16); // custom font
-  io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-  io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-  io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // Enable Docking
-  io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;       // Enable Multi-Viewport / Platform Windows
-  ImGui::StyleColorsDark();
-  ImGui_ImplGlfw_InitForOpenGL(glfwGetCurrentContext(), true);
-  ImGui_ImplOpenGL3_Init("#version 130");
-}

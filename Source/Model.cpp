@@ -17,7 +17,7 @@ Model::Model(std::filesystem::path filePath)
 
 void Model::Draw(Shader* shader)
 {
-  mat4f model = Actor::Model();
+  mat4f model = Actor::GetModel();
   shader->SetMat4f("Model", model);
   for (uint32_t i = 0; i < _numMeshes; i++)
   {

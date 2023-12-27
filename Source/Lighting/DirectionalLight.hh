@@ -10,7 +10,7 @@
 class DirectionalLight : public BaseLight
 {
 public:
-  DirectionalLight(string uniformName);
+  DirectionalLight(const char* uniformName);
   ~DirectionalLight() = default;
 
   void Render(Shader* shader);

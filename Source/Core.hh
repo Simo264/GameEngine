@@ -16,11 +16,13 @@
 #include <memory>
 #include <numeric>
 #include <string>
+#include <string_view>
 #include <sstream>
 #include <tuple>
 #include <vector>
 
 using std::string;
+using std::string_view;
 using std::tuple;
 using std::array;
 using std::vector;

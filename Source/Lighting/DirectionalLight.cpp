@@ -1,28 +1,32 @@
 #include "DirectionalLight.hh"
 
 
-DirectionalLight::DirectionalLight(string uniformName) : BaseLight()
+DirectionalLight::DirectionalLight(const char* uniformName) : BaseLight()
 {
-  this->uniformName = uniformName;
+  this->uniformName.reserve(50); // Pre-allocation memory
+  this->uniformName.append(uniformName);
+
   direction = vec3f(0.0f, -1.0f, 0.0f);   // default from top to bottom
 }
 
 void DirectionalLight::Render(Shader* shader)
 {
-  const int UNameSize = uniformName.size();
-  const int rsize = 30 - UNameSize;
-  char shaderUName[30] = { };
+  const int uniformNameSize = uniformName.size();
+
+  uniformName.append(".direction");                     // uniformName = "DirLight.direction"
+  shader->SetVec3f(uniformName.c_str(), direction);
     
-  strcpy_s(shaderUName, 30, uniformName.c_str());             // shaderUName = "DirLight"
-  strcpy_s((shaderUName + UNameSize), rsize, ".direction");   // shaderUName = "DirLight.direction"
-  shader->SetVec3f(shaderUName, direction);
+  uniformName.erase(uniformNameSize);
+  uniformName.append(".ambient");                       // uniformName = "DirLight.ambient"
+  shader->SetVec3f(uniformName.c_str(), color * ambient);
     
-  strcpy_s((shaderUName + UNameSize), rsize, ".ambient");     // shaderUName = "DirLight.ambient"
-  shader->SetVec3f(shaderUName, color * ambient);
+  uniformName.erase(uniformNameSize);
+  uniformName.append(".diffuse");                       // uniformName = "DirLight.diffuse"
+  shader->SetVec3f(uniformName.c_str(), color * diffuse);
     
-  strcpy_s((shaderUName + UNameSize), rsize, ".diffuse");     // shaderUName = "DirLight.diffuse"
-  shader->SetVec3f(shaderUName, color * diffuse);
-    
-  strcpy_s((shaderUName + UNameSize), rsize, ".specular");    // shaderUName = "DirLight.specular"
-  shader->SetVec3f(shaderUName, color * specular);
+  uniformName.erase(uniformNameSize);
+  uniformName.append(".specular");                      // uniformName = "DirLight.specular"
+  shader->SetVec3f(uniformName.c_str(), color * specular);
+
+  uniformName.erase(uniformNameSize);                   // uniformName = "DirLight"  
 }

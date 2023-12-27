@@ -23,7 +23,7 @@ struct Attenuation
 class PointLight : public BaseLight
 {
 public:
-  PointLight(string uniformName);
+  PointLight(const char* uniformName);
   ~PointLight() = default;
     
   void Render(Shader* shader);

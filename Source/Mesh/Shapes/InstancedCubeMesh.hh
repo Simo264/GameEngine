@@ -1,6 +1,6 @@
 #pragma once
 
-#include "InstancedMesh.hh"
+#include "../InstancedMesh.hh"
 
 class InstancedCubeMesh : public InstancedMesh
 {

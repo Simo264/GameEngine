@@ -1,4 +1,5 @@
 #include "Camera.hh"
+#include "Logger.hh"
 
 /* -----------------------------------------------------
  *          PUBLIC METHODS
@@ -37,7 +38,7 @@ void Camera::ProcessInput(Window& window, double deltaTime)
 
   FreeCameraWalk(window, deltaTime);
   
-  //if (window.GetMouseKey(GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
+  if (window.GetMouseKey(GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
   {
     FreeCameraRotation(mousePos, deltaTime);
   }
@@ -105,17 +106,20 @@ void Camera::FreeCameraRotation(vec2d& mousePos, double deltaTime)
     _firstMouse = false;
   }
 
-  float xoffset = mousePos.x - _lastX;
-  float yoffset = _lastY - mousePos.y; // reversed since y-coordinates go from bottom to top
+  const float xoffset = _lastX - mousePos.x;
+  if (xoffset < 0) // Right
+    yaw += 5.0f * mouseSensitivity;
+  else if (xoffset > 0) // Left
+    yaw -= 5.0f * mouseSensitivity;
+
+  const float yoffset = _lastY - mousePos.y;
+  if (yoffset > 0) // Up
+    pitch += 5.0f * mouseSensitivity;
+  else if (yoffset < 0) // Down
+    pitch -= 5.0f * mouseSensitivity;
 
   _lastX = mousePos.x;
   _lastY = mousePos.y;
-
-  xoffset *= mouseSensitivity;
-  yoffset *= mouseSensitivity;
-
-  yaw   += xoffset;
-  pitch += yoffset;
 
   // make sure that when pitch is out of bounds, screen doesn't get flipped
   if (_constrainPitch)

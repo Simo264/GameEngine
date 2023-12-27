@@ -8,7 +8,7 @@
 class SpotLight : public PointLight
 {
 public:
-  SpotLight(string uniformName);
+  SpotLight(const char* uniformName);
 
   void Render(Shader* shader);
 
