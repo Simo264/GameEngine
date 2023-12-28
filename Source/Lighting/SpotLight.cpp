@@ -1,11 +1,5 @@
 #include "SpotLight.hh"
 
-SpotLight::SpotLight(const char* uniformName) : PointLight(uniformName)
-{
-  direction = vec3f(0.0f, -1.0f, 0.0f);   // default from top to bottom
-  cutOff    = 12.0f;
-}
-
 void SpotLight::Render(Shader* shader)
 {
   const int uniformNameSize = uniformName.size();

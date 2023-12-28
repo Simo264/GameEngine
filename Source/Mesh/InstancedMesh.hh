@@ -5,7 +5,9 @@
 class InstancedMesh
 {
 public:
-	InstancedMesh(uint32_t nMaxInstances);
+	InstancedMesh(uint32_t nMaxInstances)
+		: MAX_NUM_INSTANCES{ nMaxInstances }, _nInstancesToDraw{ 1 }, _instanceBuffer{ 0 } {}
+
 	~InstancedMesh() = default;
 
 	void Init(MeshData& data, VAConfiguration& config);

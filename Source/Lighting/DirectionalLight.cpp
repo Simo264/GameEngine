@@ -1,14 +1,6 @@
 #include "DirectionalLight.hh"
 
 
-DirectionalLight::DirectionalLight(const char* uniformName) : BaseLight()
-{
-  this->uniformName.reserve(50); // Pre-allocation memory
-  this->uniformName.append(uniformName);
-
-  direction = vec3f(0.0f, -1.0f, 0.0f);   // default from top to bottom
-}
-
 void DirectionalLight::Render(Shader* shader)
 {
   const int uniformNameSize = uniformName.size();

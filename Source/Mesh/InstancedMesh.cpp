@@ -5,11 +5,6 @@
             PUBLIC METHODS
    -------------------------------------- */
 
-InstancedMesh::InstancedMesh(uint32_t nMaxInstances) : MAX_NUM_INSTANCES{ nMaxInstances }
-{
-  _nInstancesToDraw = 1;
-}
-
 void InstancedMesh::Init(MeshData& data, VAConfiguration& config)
 {
 	vertexArray.Create(data.verticesDataSize, data.verticesData, data.indicesDataSize, data.indicesData, config);

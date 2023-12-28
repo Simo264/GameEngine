@@ -1,14 +1,5 @@
 #include "PointLight.hh"
 
-PointLight::PointLight(const char* uniformName) : BaseLight()
-{
-  this->uniformName.reserve(50); // Pre-allocation memory
-  this->uniformName.append(uniformName);
-
-  this->uniformName = uniformName;
-  position = vec3f(0.0f, 0.0f, 0.0f);  // default on origin
-}
-
 void PointLight::Render(Shader* shader)
 {
   const int uniformNameSize = uniformName.size();

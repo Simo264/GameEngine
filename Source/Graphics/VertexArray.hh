@@ -21,7 +21,7 @@ public:
 class VertexArray
 {
 public:
-  VertexArray();
+  VertexArray() : _ebo{ 0 }, numVertices{ 0 }, numIndices{ 0 } {}
   ~VertexArray() = default;
 
   VertexArray(const VertexArray&) = delete;            // delete copy constructor

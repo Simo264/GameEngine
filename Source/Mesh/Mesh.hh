@@ -33,7 +33,7 @@ struct MeshData
 class Mesh
 {
 public:
-	Mesh();
+	Mesh() : textureDiffuse{ nullptr }, textureSpecular{ nullptr } {}
 	~Mesh() = default;
 
 	void Create(MeshData& data, VAConfiguration& config);

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "BaseLight.hh"
-#include "../Graphics/Shader.hh"
 
 
 struct Attenuation
@@ -23,12 +22,10 @@ struct Attenuation
 class PointLight : public BaseLight
 {
 public:
-  PointLight(const char* uniformName);
+  PointLight(const char* uniformName) : BaseLight(uniformName), position{ 0.0f, 0.0f, 0.0f } {}
   ~PointLight() = default;
     
   void Render(Shader* shader);
-
-  string uniformName;
 
   vec3f position;
 

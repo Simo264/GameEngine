@@ -1,7 +1,7 @@
-#include "CubeMesh.hh"
+#include "Cube.hh"
 
 
-CubeMesh::CubeMesh() : Mesh()
+Cube::Cube() : Mesh(), Actor()
 {
   // default vertices and indices
   // ---------------------------------

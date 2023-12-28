@@ -1,7 +1,6 @@
 #pragma once
 
 #include "BaseLight.hh"
-#include "../Graphics/Shader.hh"
 
 // When a light source is modeled to be infinitely far away it is called a directional light 
 // since all its light rays have the same direction; it is independent of the location of the light source. 
@@ -10,13 +9,11 @@
 class DirectionalLight : public BaseLight
 {
 public:
-  DirectionalLight(const char* uniformName);
+  DirectionalLight(const char* uniformName) : BaseLight(uniformName), direction{ 0.0f, -1.0f, 0.0f } {} 
   ~DirectionalLight() = default;
 
   void Render(Shader* shader);
 
   vec3f direction;
-
-  string uniformName;
 };
 

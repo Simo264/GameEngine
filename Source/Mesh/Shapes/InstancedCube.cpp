@@ -1,6 +1,6 @@
-#include "InstancedCubeMesh.hh"
+#include "InstancedCube.hh"
 
-InstancedCubeMesh::InstancedCubeMesh(uint32_t nMaxInstances) : InstancedMesh(nMaxInstances)
+InstancedCube::InstancedCube(uint32_t nMaxInstances) : InstancedMesh(nMaxInstances)
 {
   // default vertices and indices
   // ---------------------------------

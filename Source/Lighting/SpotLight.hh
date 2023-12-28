@@ -8,12 +8,11 @@
 class SpotLight : public PointLight
 {
 public:
-  SpotLight(const char* uniformName);
+  SpotLight(const char* uniformName) : PointLight(uniformName), direction{ 0.0f, -1.0f, 0.0f }, cutOff{ 12.0f }{ }
 
   void Render(Shader* shader);
 
   vec3f direction;
-
   float cutOff; // the cutoff angle that specifies the spotlight's radius.
 };
 

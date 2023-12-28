@@ -1,7 +1,10 @@
 #include "Editor.hh"
+
 #include "../Logger.hh"
+#include "../Model.hh"
 
 #include "../ResourceManager/FontsManager.hh"
+#include "../ResourceManager/TexturesManager.hh"
 
 #include "Imgui/imgui.h"
 #include "Imgui/imgui_impl_glfw.h"
@@ -14,7 +17,6 @@
  *          PUBLIC METHODS
  * -----------------------------------------------------
 */
-
 
 void Editor::Initialize()
 {
@@ -69,54 +71,86 @@ void Editor::RenderFrame()
   }
 }
 
-void Editor::ShowDemo()
+void Editor::MenuBar()
 {
-  ImGui::ShowDemoWindow(nullptr);
+  if (ImGui::BeginMainMenuBar())
+  {
+    if (ImGui::BeginMenu("View"))
+    {
+      if (ImGui::MenuItem("Demo "))
+        _demoOpen = true;
+
+      else if (ImGui::MenuItem("Scene"))
+        _scenePanelOpen = true;
+      
+      ImGui::EndMenu();
+    }
+    ImGui::EndMainMenuBar();
+  }
 }
 
-void Editor::ShowHelloWorld()
+void Editor::ShowDemo()
 {
-  ImGui::Begin("Hello world");
-  ImGui::Text("This is some useful text.");              
-  ImGui::End();
+  if (!_demoOpen) return;
+
+  ImGui::ShowDemoWindow(&_demoOpen);
 }
 
 void Editor::ShowScenePanel(vector<Actor*>& sceneActors, DirectionalLight& dirLight)
 {
-  ImGui::Begin("Scene");
-  
+  if (!_scenePanelOpen)
+    return;
+
+  static int treeNodeActorSelected = -1 ? sceneActors.empty() : 0;
+
+  ImGui::Begin("Scene", &_scenePanelOpen);
   if (ImGui::TreeNode("Actors"))
   { 
-    for (Actor* actor : sceneActors)
+    for (int i = 0; i < sceneActors.size(); i++)
     {
-      if (ImGui::TreeNode(actor->actorName.c_str()))
-      {
-        //ImGui::SeparatorText("Inputs");
-        //ImGui::InputText("Actor name", &actor->actorName, 50);
-
-        ImGui::SeparatorText("Transformations");
-        ImGui::DragFloat3("Translation", (float*)&actor->position, 0.005f, -FLT_MAX, +FLT_MAX);
-        ImGui::DragFloat3("Scaling", (float*)&actor->scaling, 0.005f, -FLT_MAX, +FLT_MAX);
-        
-        ImGui::TreePop();
-      }
+      if (ImGui::Selectable(sceneActors[i]->actorName.c_str(), treeNodeActorSelected == i))
+        treeNodeActorSelected = i;
     }
     ImGui::TreePop();
   }
 
   if (ImGui::TreeNode("Lighting"))
   {
-    ImGui::SeparatorText("Directional light");
-    ImGui::ColorEdit3("Light color", (float*)&dirLight.color);
-    ImGui::SliderFloat("Light ambient", &dirLight.ambient, 0.0f, 1.0f);
-    ImGui::SliderFloat("Light diffuse", &dirLight.diffuse, 0.0f, 1.0f);
-    ImGui::SliderFloat("Light specular", &dirLight.specular, 0.0f, 1.0f);
-    ImGui::DragFloat3("Light direction", (float*)&dirLight.direction, 0.005f, -FLT_MAX, +FLT_MAX);
-
+    if (ImGui::TreeNode("Directional light"))
+    {
+      ImGui::ColorEdit3("Light color", (float*)&dirLight.color);
+      ImGui::SliderFloat("Light ambient", &dirLight.ambient, 0.0f, 1.0f);
+      ImGui::SliderFloat("Light diffuse", &dirLight.diffuse, 0.0f, 1.0f);
+      ImGui::SliderFloat("Light specular", &dirLight.specular, 0.0f, 1.0f);
+      ImGui::DragFloat3("Light direction", (float*)&dirLight.direction, 0.005f, -FLT_MAX, +FLT_MAX);
+      ImGui::TreePop();
+    }
     ImGui::TreePop();
   }
-
   ImGui::End();
+
+  if (treeNodeActorSelected >= 0)
+    ShowPropertiesPanel(sceneActors[treeNodeActorSelected]);
+}
+
+void Editor::ShowViewportPanel(const uint32_t& framebufferTexture)
+{
+#if 0
+  ImGui::Begin("Viewport");
+
+  // Using a Child allow to fill all the space of the window.
+  // It also alows customization
+  ImGui::BeginChild("GameRender");
+  
+  // Get the size of the child (i.e. the whole draw size of the windows).
+  ImVec2 wsize = ImGui::GetWindowSize();
+
+  // Because I use the texture from OpenGL, I need to invert the V from the UV.
+  ImGui::Image((ImTextureID)framebufferTexture, wsize, ImVec2(0, 1), ImVec2(1, 0));
+  
+  ImGui::EndChild();
+  ImGui::End();
+#endif
 }
 
 /* -----------------------------------------------------
@@ -141,4 +175,44 @@ void Editor::Styling()
   }
 
   ImGui::StyleColorsClassic();
+}
+
+void Editor::ShowPropertiesPanel(Actor* target)
+{
+  ImGui::Begin("Properties");
+
+  char text[50] = "Actor name: ";
+  strcat_s(text, 50, target->actorName.c_str());
+  ImGui::Text(text);
+
+  ImGui::SeparatorText("Transformation");
+  ImGui::DragFloat3("Translation", (float*)&target->position, 0.005f, -FLT_MAX, +FLT_MAX);
+  ImGui::DragFloat3("Scaling", (float*)&target->scaling, 0.005f, -FLT_MAX, +FLT_MAX);
+  ImGui::DragFloat("Rotation angle", (float*)&target->rotationAngle, 0.5f, -180.0f, +180.0f);
+  ImGui::SliderFloat3("Rotation axis", (float*)&target->rotation, 0.0f, 1.0f);
+
+  ImGui::SeparatorText("Material");
+  ImGui::Text("Current texture");
+  
+  Model* modelTarget = static_cast<Model*>(target);
+  Mesh& meshTarget = modelTarget->GetMesh(0);
+  ImGui::Image(
+    (ImTextureID)meshTarget.textureDiffuse->textureID,
+    ImVec2(64.0f, 64.0f),
+    ImVec2(0.0f, 0.0f),
+    ImVec2(1.0f, 1.0f),
+    ImVec4(1.0f, 1.0f, 1.0f, 1.0f),
+    ImVec4(1.0f, 0.0f, 0.0f, 1.0f)
+  );
+
+  ImGui::SameLine();
+  ImGui::Text(meshTarget.textureDiffuse->texturePath.filename().string().c_str());
+
+
+  //const char* items[] = { "AAAA", "BBBB", "CCCC", "DDDD", "EEEE", "FFFF", "GGGG", "HHHH", "IIIIIII", "JJJJ", "KKKKKKK" };
+  //static int item_current = 0;
+  //ImGui::Combo("combo", &item_current, items, IM_ARRAYSIZE(items));
+  //ImGui::SameLine();
+
+  ImGui::End();
 }

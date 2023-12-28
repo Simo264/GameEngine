@@ -102,12 +102,6 @@ void Engine::Run()
   // Lighting
   // ---------------------------------------
   DirectionalLight dirLight("DirLight");
-  //dirLight.ambient = 0.07f;
-  //dirLight.diffuse = 0.0f;
-  //dirLight.specular = 0.0f;
-
-  //PointLight pointLight("PointLight");
-  //pointLight.position = vec3f(0.0f, 5.0f, 0.0f);
   // ---------------------------------------
   
 
@@ -140,11 +134,9 @@ void Engine::Run()
     glfwPollEvents();
     if (window.GetKey(GLFW_KEY_ESCAPE) == GLFW_PRESS)
       window.CloseWindow();
-
     camera.ProcessInput(window, deltaTime);
     const mat4f projection = glm::perspective(glm::radians(camera.fov), aspectRatio, 0.1f, 100.0f);
     const mat4f view = camera.GetViewMatrix();
-
 
 
     // Render scene
@@ -160,17 +152,14 @@ void Engine::Run()
     cubeModel.Draw(sceneShader);
     planeModel.Draw(sceneShader);
 
-    
+
     // Render editor
     // ---------------------------------------
+    editor.MenuBar();
     editor.ShowDemo();
     editor.ShowScenePanel(sceneActors, dirLight);
     editor.RenderFrame();
-
-
-
     window.SwapWindowBuffers();
-
     lastUpdateTime = now;
   }
 }

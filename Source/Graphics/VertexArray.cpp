@@ -28,13 +28,6 @@ void VAConfiguration::PushAttribute(uint8_t attribute)
  * -----------------------------------------------------
 */
 
-VertexArray::VertexArray()
-{
-  _ebo = 0;
-  numVertices = 0;
-  numIndices  = 0;
-}
-  
 void VertexArray::Create(uint32_t vertSize, float* vertData, uint32_t indSize, uint32_t* indData, VAConfiguration& config)
 {
   glGenVertexArrays(1, &_vao);
