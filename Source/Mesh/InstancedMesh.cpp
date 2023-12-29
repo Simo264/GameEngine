@@ -7,7 +7,7 @@
 
 void InstancedMesh::Init(MeshData& data, VAConfiguration& config)
 {
-	vertexArray.Create(data.verticesDataSize, data.verticesData, data.indicesDataSize, data.indicesData, config);
+	vertexArray.Create(data.vertDataSize, data.vertData, data.indDataSize, data.indData, config);
 
 	// instancing
 	// -------------------------

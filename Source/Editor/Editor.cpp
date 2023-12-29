@@ -3,8 +3,8 @@
 #include "../Logger.hh"
 #include "../Model.hh"
 
-#include "../ResourceManager/FontsManager.hh"
-#include "../ResourceManager/TexturesManager.hh"
+#include "../Subsystems/FontsManager.hh"
+#include "../Subsystems/TexturesManager.hh"
 
 #include "Imgui/imgui.h"
 #include "Imgui/imgui_impl_glfw.h"
@@ -179,6 +179,7 @@ void Editor::Styling()
 
 void Editor::ShowPropertiesPanel(Actor* target)
 {
+#if 0
   ImGui::Begin("Properties");
 
   char text[50] = "Actor name: ";
@@ -208,11 +209,6 @@ void Editor::ShowPropertiesPanel(Actor* target)
   ImGui::SameLine();
   ImGui::Text(meshTarget.textureDiffuse->texturePath.filename().string().c_str());
 
-
-  //const char* items[] = { "AAAA", "BBBB", "CCCC", "DDDD", "EEEE", "FFFF", "GGGG", "HHHH", "IIIIIII", "JJJJ", "KKKKKKK" };
-  //static int item_current = 0;
-  //ImGui::Combo("combo", &item_current, items, IM_ARRAYSIZE(items));
-  //ImGui::SameLine();
-
   ImGui::End();
+#endif
 }

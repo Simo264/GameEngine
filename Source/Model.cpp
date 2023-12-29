@@ -1,7 +1,7 @@
 #include "Model.hh"
 #include "Logger.hh"
 #include "Graphics/Renderer.hh"
-#include "ResourceManager/TexturesManager.hh"
+#include "Subsystems/TexturesManager.hh"
 
 /* -----------------------------------------------------
  *          PUBLIC METHODS
@@ -17,7 +17,7 @@ Model::Model(std::filesystem::path filePath)
 
 void Model::Draw(Shader* shader)
 {
-  mat4f model = Actor::GetModel();
+  mat4f model = mat4f(1.0f); //Actor::GetModel();
   shader->SetMat4f("Model", model);
   for (uint32_t i = 0; i < _numMeshes; i++)
   {
@@ -26,15 +26,15 @@ void Model::Draw(Shader* shader)
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    if (mesh.textureDiffuse)
+    if (mesh.diffuse)
     {
       glActiveTexture(GL_TEXTURE0);
-      glBindTexture(GL_TEXTURE_2D, mesh.textureDiffuse->textureID);
+      glBindTexture(GL_TEXTURE_2D, mesh.diffuse->textureID);
     }
-    if (mesh.textureSpecular)
+    if (mesh.specular)
     {
       glActiveTexture(GL_TEXTURE1);
-      glBindTexture(GL_TEXTURE_2D, mesh.textureSpecular->textureID);
+      glBindTexture(GL_TEXTURE_2D, mesh.specular->textureID);
     }
 
     Renderer::DrawIndexed(mesh.vertexArray);
@@ -46,7 +46,7 @@ void Model::Destroy()
   for (uint32_t i = 0; i < _numMeshes; i++)
   {
     auto& mesh = _meshPool[i];
-    mesh.Destroy();
+    mesh.DestroyMesh();
   }
 
   _meshPool.reset();
@@ -120,15 +120,15 @@ void Model::LoadMesh(uint32_t index, const struct aiScene* scene, const struct a
   };
 
   Mesh& mesh = _meshPool[index];
-  mesh.Create(data, config);
+  mesh.InitMesh(data, config);
 
   // load textures
   const aiMaterial* material = scene->mMaterials[aimesh->mMaterialIndex];
   Texture2D* diffuse  = LoadTexture(material, "diffuse");
   Texture2D* specular = LoadTexture(material, "specular");
   //Texture2D* normal   = LoadTexture(material, "normal");
-  mesh.textureDiffuse  = diffuse;
-  mesh.textureSpecular = specular;
+  mesh.diffuse  = diffuse;
+  mesh.specular = specular;
   //mesh.normal   = normal;
 }
 
@@ -149,7 +149,6 @@ Texture2D* Model::LoadTexture(const struct aiMaterial* material, const char* tex
   if (material->GetTexture(aiType, 0, &fileName) != AI_SUCCESS)
     return nullptr;
 
-  // Load textures from current model directory
   Texture2D* texture = TexturesManager::GetTexture(fileName.C_Str());
   if (!texture)
     CONSOLE_WARN("Model::LoadTexture: {} does not exists", fileName.C_Str());

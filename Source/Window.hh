@@ -1,4 +1,5 @@
 #pragma once
+
 #include "Core.hh"
 
 // Wrapper class for GLFWwindow

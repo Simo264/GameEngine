@@ -82,10 +82,11 @@ void main()
   viewDir = normalize(ViewPos - FragPos);
   diffuseColor  = texture(Material.diffuse,  TexCoords).rgb;
   specularColor = texture(Material.specular, TexCoords).rgb;
-  //texNorm = texture(material.normal,   TexCoords).rgb;
+  //texNorm       = texture(material.normal,   TexCoords).rgb;
 
+  // if no texture: set diffuse to default color gray
   if(length(diffuseColor) == 0)
-    diffuseColor = vec3(0.25f, 0.75f, 1.0f);
+    diffuseColor = vec3(0.2f, 0.2f, 0.2f);
 
   // phase 1: Directional lighting
   vec3 result = CalcDirLight();

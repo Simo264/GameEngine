@@ -26,7 +26,7 @@ FrameBuffer::FrameBuffer()
 
 	MeshData data{ sizeof(vertices),vertices,0,nullptr };
 
-	_screenFrame.Create(data, config);
+	_screenFrame.InitMesh(data, config);
 }
 
 void FrameBuffer::Create(vec2i size)

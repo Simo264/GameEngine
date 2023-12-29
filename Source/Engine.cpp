@@ -4,12 +4,16 @@
 #include "Camera.hh"
 #include "Model.hh"
 
+#include "Mesh/Shapes/Cube.hh"
+#include "Mesh/Shapes/Plane.hh"
+#include "Mesh/Shapes/Cylinder.hh"
+
 #include "Lighting/DirectionalLight.hh"
 #include "Lighting/PointLight.hh"
 #include "Lighting/SpotLight.hh"
 
-#include "ResourceManager/ShadersManager.hh"
-#include "ResourceManager/TexturesManager.hh"
+#include "Subsystems/ShadersManager.hh"
+#include "Subsystems/TexturesManager.hh"
 
 #include "Graphics/Shader.hh"
 #include "Graphics/Renderer.hh"
@@ -88,15 +92,29 @@ void Engine::Run()
 
   // Mesh objects
   // ---------------------------------------
-  Model cubeModel("Shapes/Cube/Cube.obj");
-  cubeModel.scaling = vec3f(0.5f, 0.5f, 0.5f);
-  cubeModel.position.y = -0.49f;
+  //Model cubeModel("Shapes/Cube/Cube.obj");
+  //cubeModel.scaling = vec3f(0.5f, 0.5f, 0.5f);
+  //cubeModel.position.y = -0.49f;
 
-  Model planeModel("Shapes/Plane/Plane.obj");
-  planeModel.position.y = -1.0f;
-  planeModel.scaling = vec3f(10.0f, 0.0f, 10.0f);
+  //Model planeModel("Shapes/Plane/Plane.obj");
+  //planeModel.position.y = -1.0f;
+  //planeModel.scaling = vec3f(10.0f, 0.0f, 10.0f);
 
-  vector<Actor*> sceneActors = { &cubeModel, &planeModel };
+  //vector<Actor*> sceneActors = { &planeModel };
+  
+  Plane plane;
+  plane.position.y = -1.0f;
+  plane.scaling = vec3f(10.0f, 0.0f, 10.0f);
+
+  Cube cube;
+  cube.scaling = vec3f(0.5f, 0.5f, 0.5f);
+  cube.position.y = -0.49f;
+
+
+  Cylinder cylinder;
+  cylinder.scaling = vec3f(0.5f, 0.5f, 0.5f);
+  cylinder.position.x = 5.0f;
+  cylinder.position.y = -0.49f;
   // ---------------------------------------
 
   // Lighting
@@ -149,15 +167,17 @@ void Engine::Run()
     sceneShader->SetMat4f("View", view);
     
     dirLight.Render(sceneShader);
-    cubeModel.Draw(sceneShader);
-    planeModel.Draw(sceneShader);
-
+    //cubeModel.Draw(sceneShader);
+    //planeModel.Draw(sceneShader);
+    cube.Draw(sceneShader);
+    plane.Draw(sceneShader);
+    cylinder.Draw(sceneShader);
 
     // Render editor
     // ---------------------------------------
-    editor.MenuBar();
-    editor.ShowDemo();
-    editor.ShowScenePanel(sceneActors, dirLight);
+    //editor.MenuBar();
+    //editor.ShowDemo();
+    //editor.ShowScenePanel(sceneActors, dirLight);
     editor.RenderFrame();
     window.SwapWindowBuffers();
     lastUpdateTime = now;

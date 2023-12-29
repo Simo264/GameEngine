@@ -1,14 +1,18 @@
 #pragma once
 
-#include "Core.hh"
+#include "Mesh/Mesh.hh"
 
-class Actor
+// Base class for the every object places in the world
+// ----------------------------------------------------
+class Actor : public Mesh
 {
 public:
 	Actor();
 	~Actor() = default;
 
 	mat4f GetModel();
+	
+	void Draw(Shader* shader);
 
 	vec3f position;
 	vec3f scaling;

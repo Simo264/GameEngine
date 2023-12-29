@@ -1,6 +1,6 @@
 #include "Actor.hh"
 
-Actor::Actor()
+Actor::Actor() : Mesh()
 {
   position  = vec3f(0.0f, 0.0f, 0.0f);
   scaling   = vec3f(1.0f, 1.0f, 1.0f);
@@ -20,3 +20,10 @@ mat4f Actor::GetModel()
   model = glm::scale(model, scaling);
   return model;
 }
+
+void Actor::Draw(Shader* shader)
+{
+  mat4f model = GetModel();
+  Mesh::Draw(shader, model); // call parent Draw method
+}
+

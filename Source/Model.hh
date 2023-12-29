@@ -8,7 +8,7 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
-class Model : public Actor
+class Model 
 {
 public:
 	Model(std::filesystem::path filePath);
@@ -18,7 +18,6 @@ public:
 	Model& operator=(const Model&) = delete; // delete assign op
 	
 	void Draw(Shader* shader);
-	
 	void Destroy();
 
 	const uint32_t& NumMeshes() const { return _numMeshes; }
@@ -32,5 +31,3 @@ private:
 	void LoadMesh(uint32_t index, const struct aiScene* scene, const struct aiMesh* aimesh);
 	Texture2D* LoadTexture(const struct aiMaterial* material, const char* textureType);
 };
-
-
