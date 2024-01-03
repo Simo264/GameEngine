@@ -2,7 +2,7 @@
 #include "Logger.hh"
 #include "Window.hh"
 #include "Camera.hh"
-#include "Model.hh"
+//#include "Model.hh"
 
 #include "Mesh/Shapes/Cube.hh"
 #include "Mesh/Shapes/Plane.hh"
@@ -42,35 +42,8 @@ void Engine::Initialize()
   // Load shaders 
   // ---------------------------------------
   ShadersManager::Initialize();
-  auto testingShader = ShadersManager::LoadShaderProgram(
-    "TestingShader", 
-    ShadersManager::GetShaderFile("Testing.vert"), 
-    ShadersManager::GetShaderFile("Testing.frag"));
+  LoadShaders();
   
-  auto instancingShader = ShadersManager::LoadShaderProgram(
-    "InstancingShader", 
-    ShadersManager::GetShaderFile("Instancing.vert"), 
-    ShadersManager::GetShaderFile("Scene.frag"));
-  instancingShader->Use();
-  instancingShader->SetInt("ourTexture", 0);
-  
-  auto sceneShader = ShadersManager::LoadShaderProgram(
-    "SceneShader",
-    ShadersManager::GetShaderFile("Scene.vert"),
-    ShadersManager::GetShaderFile("Scene.frag"));
-  sceneShader->Use();
-  sceneShader->SetInt("Material.diffuse", 0); // sampler2d
-  sceneShader->SetInt("Material.specular", 1); // sampler2d
-  sceneShader->SetFloat("Material.shininess", 64.0f);
-  
-  auto framebufferShader = ShadersManager::LoadShaderProgram(
-    "FramebufferShader",
-    ShadersManager::GetShaderFile("Framebuffer.vert"),
-    ShadersManager::GetShaderFile("Framebuffer.frag"));
-  framebufferShader->Use();
-  framebufferShader->SetInt("screenTexture", 0);
-  
-
   // Load textures from Textures directory
   // ---------------------------------------
   TexturesManager::Initialize();
@@ -92,16 +65,6 @@ void Engine::Run()
 
   // Mesh objects
   // ---------------------------------------
-  //Model cubeModel("Shapes/Cube/Cube.obj");
-  //cubeModel.scaling = vec3f(0.5f, 0.5f, 0.5f);
-  //cubeModel.position.y = -0.49f;
-
-  //Model planeModel("Shapes/Plane/Plane.obj");
-  //planeModel.position.y = -1.0f;
-  //planeModel.scaling = vec3f(10.0f, 0.0f, 10.0f);
-
-  //vector<Actor*> sceneActors = { &planeModel };
-  
   Plane plane;
   plane.position.y = -1.0f;
   plane.scaling = vec3f(10.0f, 0.0f, 10.0f);
@@ -110,11 +73,12 @@ void Engine::Run()
   cube.scaling = vec3f(0.5f, 0.5f, 0.5f);
   cube.position.y = -0.49f;
 
-
   Cylinder cylinder;
   cylinder.scaling = vec3f(0.5f, 0.5f, 0.5f);
   cylinder.position.x = 5.0f;
   cylinder.position.y = -0.49f;
+
+  vector<StaticMesh*> meshObjects = { &plane, &cube, &cylinder };
   // ---------------------------------------
 
   // Lighting
@@ -167,17 +131,19 @@ void Engine::Run()
     sceneShader->SetMat4f("View", view);
     
     dirLight.Render(sceneShader);
-    //cubeModel.Draw(sceneShader);
-    //planeModel.Draw(sceneShader);
-    cube.Draw(sceneShader);
-    plane.Draw(sceneShader);
-    cylinder.Draw(sceneShader);
+    for (auto mesh : meshObjects)
+      mesh->Draw(sceneShader);
+    
+    //cube.Draw(sceneShader);
+    //plane.Draw(sceneShader);
+    //cylinder.Draw(sceneShader);
 
     // Render editor
     // ---------------------------------------
     //editor.MenuBar();
     //editor.ShowDemo();
     //editor.ShowScenePanel(sceneActors, dirLight);
+    editor.ShowStats();
     editor.RenderFrame();
     window.SwapWindowBuffers();
     lastUpdateTime = now;
@@ -217,8 +183,8 @@ void Engine::InitOpenGL()
   glfwMakeContextCurrent(window);
   glfwSetWindowAspectRatio(window, 16, 9);  // aspect ratio 16:9
   glfwSetWindowPos(window, 300, 50);        // set default position
-  glfwSwapInterval(1);                      // v-sync on
-  // glfwSetInputMode(window.Get(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+  //glfwSwapInterval(1);                      // v-sync on
+  //glfwSetInputMode(window.Get(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
   
   // FramebufferSizeCallback
   glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int width, int height) {
@@ -246,4 +212,33 @@ void Engine::InitOpenGL()
   glCullFace(GL_BACK);
 }
 
+void Engine::LoadShaders()
+{
+  auto testingShader = ShadersManager::LoadShaderProgram(
+    "TestingShader",
+    ShadersManager::GetShaderFile("Testing.vert"),
+    ShadersManager::GetShaderFile("Testing.frag"));
 
+  auto instancingShader = ShadersManager::LoadShaderProgram(
+    "InstancingShader",
+    ShadersManager::GetShaderFile("Instancing.vert"),
+    ShadersManager::GetShaderFile("Scene.frag"));
+  instancingShader->Use();
+  instancingShader->SetInt("ourTexture", 0);
+
+  auto sceneShader = ShadersManager::LoadShaderProgram(
+    "SceneShader",
+    ShadersManager::GetShaderFile("Scene.vert"),
+    ShadersManager::GetShaderFile("Scene.frag"));
+  sceneShader->Use();
+  sceneShader->SetInt("Material.diffuse", 0); // sampler2d
+  sceneShader->SetInt("Material.specular", 1); // sampler2d
+  sceneShader->SetFloat("Material.shininess", 64.0f);
+
+  auto framebufferShader = ShadersManager::LoadShaderProgram(
+    "FramebufferShader",
+    ShadersManager::GetShaderFile("Framebuffer.vert"),
+    ShadersManager::GetShaderFile("Framebuffer.frag"));
+  framebufferShader->Use();
+  framebufferShader->SetInt("screenTexture", 0);
+}

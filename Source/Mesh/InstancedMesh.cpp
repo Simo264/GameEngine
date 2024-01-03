@@ -5,9 +5,9 @@
             PUBLIC METHODS
    -------------------------------------- */
 
-void InstancedMesh::Init(MeshData& data, VAConfiguration& config)
+void InstancedMesh::Init(VAData& data, VAConfig& config)
 {
-	vertexArray.Create(data.vertDataSize, data.vertData, data.indDataSize, data.indData, config);
+	vertexArray.Create(data, config);
 
 	// instancing
 	// -------------------------
@@ -62,7 +62,7 @@ void InstancedMesh::SetInstancesModelRange(uint32_t start, uint32_t n, mat4f* mo
             PRIVATE METHODS
    -------------------------------------- */
 
-void InstancedMesh::Instancing(VAConfiguration& config)
+void InstancedMesh::Instancing(VAConfig& config)
 {
   vertexArray.Bind();
 

@@ -9,6 +9,7 @@ FrameBuffer::FrameBuffer()
 	_texture = 0;
 	_postprocType = PostProcessingType::POST_PROC_NONE;
 
+
 	float vertices[] = {
 		// positions   // texCoords
 		-1.0f,  1.0f,  0.0f, 1.0f,
@@ -20,13 +21,13 @@ FrameBuffer::FrameBuffer()
 		 1.0f,  1.0f,  1.0f, 1.0f
 	};
 
-	VAConfiguration config;
+	VAConfig config;
 	config.PushAttribute(2); // vec2 position
 	config.PushAttribute(2); // vec2 textCoords
 
-	MeshData data{ sizeof(vertices),vertices,0,nullptr };
+	VAData data{ sizeof(vertices),vertices,0,nullptr };
 
-	_screenFrame.InitMesh(data, config);
+	_screenFrameVAO.Create(data, config);
 }
 
 void FrameBuffer::Create(vec2i size)
@@ -76,7 +77,7 @@ void FrameBuffer::DrawFrame(Shader* shader)
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, _texture);
-	Renderer::DrawArrays(_screenFrame.vertexArray);
+	Renderer::DrawArrays(_screenFrameVAO);
 }
 	
 void FrameBuffer::Destroy()
@@ -84,4 +85,5 @@ void FrameBuffer::Destroy()
 	glDeleteFramebuffers(1, &_fbo);
 	glDeleteRenderbuffers(1, &_rbo);
 	glDeleteTextures(1, &_texture);
+	_screenFrameVAO.Destroy();
 }

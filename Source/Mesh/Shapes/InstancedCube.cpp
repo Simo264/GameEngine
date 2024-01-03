@@ -45,11 +45,11 @@ InstancedCube::InstancedCube(uint32_t nMaxInstances) : InstancedMesh(nMaxInstanc
 
   // default configuration
   // ---------------------------------
-  VAConfiguration config;
+  VAConfig config;
   config.PushAttribute(3); // vec3 position   attribute 
   config.PushAttribute(2); // vec2 textCoords attribute 
   
-  MeshData data{ sizeof(vertices), vertices, 0, nullptr };
+  VAData data{ sizeof(vertices), vertices, 0, nullptr };
 
   Init(data, config);
 }

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../../Actor.hh"
+#include "../StaticMesh.hh"
 
-class Cylinder : public Actor
+class Cylinder : public StaticMesh
 {
 public:
 	Cylinder();

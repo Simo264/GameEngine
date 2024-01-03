@@ -20,4 +20,5 @@ public:
 
 private:
 	void InitOpenGL();
+	void LoadShaders();
 };

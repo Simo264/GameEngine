@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../../Actor.hh"
+#include "../StaticMesh.hh"
 
-class Plane : public Actor
+class Plane : public StaticMesh
 {
 public:
 	Plane();

@@ -5,6 +5,7 @@
 
 #include "../Subsystems/FontsManager.hh"
 #include "../Subsystems/TexturesManager.hh"
+#include "../Graphics/Renderer.hh"
 
 #include "Imgui/imgui.h"
 #include "Imgui/imgui_impl_glfw.h"
@@ -77,11 +78,12 @@ void Editor::MenuBar()
   {
     if (ImGui::BeginMenu("View"))
     {
-      if (ImGui::MenuItem("Demo "))
-        _demoOpen = true;
-
-      else if (ImGui::MenuItem("Scene"))
+      if (ImGui::MenuItem("Demo panel"))
+        _demoPanelOpen = true;
+      else if (ImGui::MenuItem("Scene panel"))
         _scenePanelOpen = true;
+      else if (ImGui::MenuItem("Stats panel"))
+        _statsPanelOpen = true;
       
       ImGui::EndMenu();
     }
@@ -91,13 +93,27 @@ void Editor::MenuBar()
 
 void Editor::ShowDemo()
 {
-  if (!_demoOpen) return;
+  if (!_demoPanelOpen) return;
 
-  ImGui::ShowDemoWindow(&_demoOpen);
+  ImGui::ShowDemoWindow(&_demoPanelOpen);
 }
 
-void Editor::ShowScenePanel(vector<Actor*>& sceneActors, DirectionalLight& dirLight)
+void Editor::ShowStats()
 {
+  if (!_statsPanelOpen)
+    return;
+
+  ImGui::Begin("Stats", &_statsPanelOpen);
+
+  ImGuiIO& io = ImGui::GetIO();
+  ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+  ImGui::Text("Draw calls: %d", Renderer::drawCalls);
+  ImGui::End();
+}
+
+void Editor::ShowScenePanel()
+{
+#if 0
   if (!_scenePanelOpen)
     return;
 
@@ -131,6 +147,7 @@ void Editor::ShowScenePanel(vector<Actor*>& sceneActors, DirectionalLight& dirLi
 
   if (treeNodeActorSelected >= 0)
     ShowPropertiesPanel(sceneActors[treeNodeActorSelected]);
+#endif
 }
 
 void Editor::ShowViewportPanel(const uint32_t& framebufferTexture)
@@ -177,7 +194,7 @@ void Editor::Styling()
   ImGui::StyleColorsClassic();
 }
 
-void Editor::ShowPropertiesPanel(Actor* target)
+void Editor::ShowPropertiesPanel()
 {
 #if 0
   ImGui::Begin("Properties");

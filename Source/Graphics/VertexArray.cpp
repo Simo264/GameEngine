@@ -1,48 +1,25 @@
 #include "VertexArray.hh"
-#include "../Logger.hh"
-
-/* -----------------------------------------------------
- *          VAConfiguration
- * -----------------------------------------------------
-*/
-
-VAConfiguration::VAConfiguration()
-{
-  layout.fill(0);
-  numAttrs = 0;
-}
-
-void VAConfiguration::PushAttribute(uint8_t attribute)
-{
-  if (numAttrs >= layout.size())
-  {
-    CONSOLE_ERROR("VAConfiguration::pushAttribute can't push more attributes");
-    return;
-  }
-
-  layout[numAttrs++] = attribute;
-}
 
 /* -----------------------------------------------------
  *          VertexArray
  * -----------------------------------------------------
 */
 
-void VertexArray::Create(uint32_t vertSize, float* vertData, uint32_t indSize, uint32_t* indData, VAConfiguration& config)
+void VertexArray::Create(VAData& data, VAConfig& config)
 {
   glGenVertexArrays(1, &_vao);
   glBindVertexArray(_vao);
 
   glGenBuffers(1, &_vbo);
   glBindBuffer(GL_ARRAY_BUFFER, _vbo);
-  glBufferData(GL_ARRAY_BUFFER, vertSize, vertData, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, data.vertDataSize, data.vertData, GL_STATIC_DRAW);
 
-  if (indSize > 0)
+  if (data.indDataSize > 0)
   {
     glGenBuffers(1, &_ebo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ebo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indSize, indData, GL_STATIC_DRAW);
-    numIndices = indSize / sizeof(uint32_t);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, data.indDataSize, data.indData, GL_STATIC_DRAW);
+    numIndices = data.indDataSize / sizeof(uint32_t);
   }
 
   int stride = std::accumulate(config.layout.begin(), config.layout.end(), 0);
@@ -57,7 +34,7 @@ void VertexArray::Create(uint32_t vertSize, float* vertData, uint32_t indSize, u
   glBindVertexArray(0);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
-  numVertices = vertSize / (stride * sizeof(float));
+  numVertices = data.vertDataSize / (stride * sizeof(float));
 }
 
 void VertexArray::Destroy()

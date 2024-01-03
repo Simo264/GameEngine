@@ -1,14 +1,29 @@
 #pragma once
 
 #include "../Core.hh"
+#include "../Logger.hh"
 
+#include <stack>
 
-class VAConfiguration
+// Vertex Array Configuration 
+// --------------------------------------
+struct VAConfig
 {
-public:
-  VAConfiguration();
+  VAConfig()
+  {
+    layout.fill(0);
+    numAttrs = 0;
+  }
 
-  void PushAttribute(uint8_t attribute);
+  void PushAttribute(uint8_t attribute)
+  {
+    if (numAttrs >= layout.size())
+    {
+      CONSOLE_ERROR("VAConfiguration::pushAttribute can't push more attributes");
+      return;
+    }
+    layout[numAttrs++] = attribute;
+  }
 
   // ex: layout = [3, 3, 2]
   // layout=0: in vec3 components (x,y,z)
@@ -18,6 +33,26 @@ public:
   uint32_t numAttrs;
 };
 
+
+// Vertex Array Data
+// ----------------------------------------
+struct VAData
+{
+  uint32_t	vertDataSize;
+  float*    vertData;
+
+  uint32_t	indDataSize;
+  uint32_t* indData;
+
+  VAData()
+    : vertDataSize{ 0 }, indDataSize{ 0 }, vertData{ nullptr }, indData{ nullptr } {}
+  VAData(uint32_t vSize, float* vData, uint32_t iSize, uint32_t* iData)
+    : vertDataSize{ vSize }, indDataSize{ iSize }, vertData{ vData }, indData{ iData } {}
+};
+
+
+// Vertex Array Object
+// -------------------------------------------------
 class VertexArray
 {
 public:
@@ -27,7 +62,7 @@ public:
   VertexArray(const VertexArray&) = delete;            // delete copy constructor
   VertexArray& operator=(const VertexArray&) = delete; // delete assign op
 
-  void Create(uint32_t vertSize, float* vertData, uint32_t indSize, uint32_t* indData, VAConfiguration& config);
+  void Create(VAData& data, VAConfig& config);
   void Destroy();
 
   void Bind()   const { glBindVertexArray(_vao); };

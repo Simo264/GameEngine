@@ -3,17 +3,19 @@
 #include "../../Subsystems/ObjectLoader.hh"
 #include "../../Subsystems/TexturesManager.hh"
 
-Cylinder::Cylinder() : Actor()
+Cylinder::Cylinder() : StaticMesh()
 {
   vector<float>     vertices;
   vector<uint32_t>  indices;
   array<std::filesystem::path, 2> texturePaths; // 2 -> [diffusePath, specularPath]
   ObjectLoader::LoadSingleMeshData("Mesh/Cylinder/Cylinder.obj", vertices, indices, texturePaths);
 
-  this->diffuse = (!texturePaths[0].empty()) ? TexturesManager::GetTexture(texturePaths[0]) : nullptr;
-  this->specular = (!texturePaths[1].empty()) ? TexturesManager::GetTexture(texturePaths[1]) : nullptr;
+  if (!texturePaths[0].empty())
+    this->diffuse = TexturesManager::GetTexture(texturePaths[0]);
+  if (!texturePaths[1].empty())
+    this->specular = TexturesManager::GetTexture(texturePaths[1]);
 
-  MeshData data{
+  VAData data{
     (uint32_t)(vertices.size() * sizeof(float)),
     vertices.data(),
     (uint32_t)(indices.size() * sizeof(uint32_t)),
@@ -21,7 +23,7 @@ Cylinder::Cylinder() : Actor()
 
   // default configuration
   // ---------------------------------
-  VAConfiguration config;
+  VAConfig config;
   config.PushAttribute(3); // vec3 position    
   config.PushAttribute(3); // vec3 normals 
   config.PushAttribute(2); // vec2 text coords

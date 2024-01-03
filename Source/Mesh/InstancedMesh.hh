@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Mesh.hh"
+#include "StaticMesh.hh"
 
 class InstancedMesh
 {
@@ -10,7 +10,7 @@ public:
 
 	~InstancedMesh() = default;
 
-	void Init(MeshData& data, VAConfiguration& config);
+	void Init(VAData& data, VAConfig& config);
 	void Destroy();
 
 	void		 SetInstanceNumber(uint32_t n);
@@ -24,7 +24,7 @@ public:
 	const uint32_t MAX_NUM_INSTANCES;
 
 private:
-	void Instancing(VAConfiguration& config);
+	void Instancing(VAConfig& config);
 
 	uint32_t _instanceBuffer;
 	uint32_t _nInstancesToDraw;

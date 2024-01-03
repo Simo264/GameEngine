@@ -1,8 +1,8 @@
 #pragma once
 
 #include "../Core.hh"
+#include "../Graphics/VertexArray.hh"
 #include "Shader.hh"
-#include "../Mesh/Mesh.hh"
 
 enum class PostProcessingType {
 	POST_PROC_NONE			= 0,
@@ -37,8 +37,8 @@ private:
 	uint32_t _fbo;
 	uint32_t _rbo;
 	uint32_t _texture;
-
-	Mesh _screenFrame;
+	
+	VertexArray _screenFrameVAO;
 
 	PostProcessingType _postprocType;
 };

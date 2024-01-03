@@ -1,8 +1,6 @@
 #pragma once
 
 #include "../Core.hh"
-#include "../Actor.hh"
-
 #include "../Lighting/BaseLight.hh"
 #include "../Lighting/DirectionalLight.hh"
 #include "../Lighting/PointLight.hh"
@@ -23,13 +21,15 @@ public:
 	void MenuBar();
 
 	void ShowDemo();
-	void ShowScenePanel(vector<Actor*>& sceneActors, DirectionalLight& dirLight);
+	void ShowStats();
+	void ShowScenePanel();
 	void ShowViewportPanel(const uint32_t& framebufferTexture);
 
 private:
-	bool _demoOpen = true;
+	bool _demoPanelOpen  = true;
 	bool _scenePanelOpen = true;
+	bool _statsPanelOpen = true;
 
 	void Styling();
-	void ShowPropertiesPanel(Actor* target);
+	void ShowPropertiesPanel();
 };
