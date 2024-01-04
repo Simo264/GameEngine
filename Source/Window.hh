@@ -24,10 +24,20 @@ public:
   void SwapWindowBuffers() { glfwSwapBuffers(_window); }
 
   // glfw: get window size
-  Vec2i GetWindowSize();
+  Vec2i GetWindowSize()
+  {
+    Vec2i size;
+    glfwGetWindowSize(_window, &size.x, &size.y);
+    return size;
+  }
   
   // glfw: retrieves the size, in pixels, of the framebuffer of the specified window
-  Vec2i GetFramebufferSize();
+  Vec2i GetFramebufferSize()
+  {
+    Vec2i size;
+    glfwGetFramebufferSize(_window, &size.x, &size.y);
+    return size;
+  }
 
   // glfw: keyboard key
   int GetKey(uint32_t key) const { return glfwGetKey(_window, key); }

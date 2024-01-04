@@ -14,7 +14,6 @@ void StaticMesh::DestroyMesh()
 void StaticMesh::Draw(Shader* shader)
 {
 	auto model = this->GetModel();
-
 	shader->SetMat4f("Model", model);
 
 	glActiveTexture(GL_TEXTURE0);

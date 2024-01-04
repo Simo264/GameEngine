@@ -2,9 +2,9 @@
 #include "Logger.hh"
 #include "Window.hh"
 #include "Camera.hh"
-#include "Model.hh"
 #include "ObjectLoader.hh"
 
+#include "Mesh/Model.hh"
 #include "Mesh/Shapes/Cube.hh"
 #include "Mesh/Shapes/Plane.hh"
 #include "Mesh/Shapes/Cylinder.hh"
@@ -19,8 +19,6 @@
 #include "Graphics/Shader.hh"
 #include "Graphics/Renderer.hh"
 #include "Graphics/FrameBuffer.hh"
-
-VertexArray meshVAO;
 
 /* -----------------------------------------------------
  *          PUBLIC METHODS
@@ -68,18 +66,18 @@ void Engine::Run()
   // ---------------------------------------
   //Plane plane;
   //plane.position.y = -1.0f;
-  //plane.scaling = vec3f(10.0f, 0.0f, 10.0f);
+  //plane.scaling = Vec3f(10.0f, 0.0f, 10.0f);
 
-  Cube cube;
-  cube.scaling = Vec3f(0.5f, 0.5f, 0.5f);
-  cube.position.y = -0.49f;
+  //Cube cube;
+  //cube.scaling = Vec3f(0.5f, 0.5f, 0.5f);
+  //cube.position.y = -0.49f;
 
   //Cylinder cylinder;
-  //cylinder.scaling = vec3f(0.5f, 0.5f, 0.5f);
+  //cylinder.scaling = Vec3f(0.5f, 0.5f, 0.5f);
   //cylinder.position.x = 5.0f;
   //cylinder.position.y = -0.49f;
 
-  //vector<StaticMesh*> meshObjects = { &plane, &cube, &cylinder };
+  Model lowpolyTree("Lowpoly_tree/Lowpoly_tree.obj");
   // ---------------------------------------
 
   // Lighting
@@ -90,8 +88,8 @@ void Engine::Run()
 
   // Framebuffer object
   // ---------------------------------------
-  FrameBuffer framebuffer;
-  framebuffer.Create(window.GetFramebufferSize());
+  //FrameBuffer framebuffer;
+  //framebuffer.Create(window.GetFramebufferSize());
   // ---------------------------------------
   
 
@@ -132,9 +130,13 @@ void Engine::Run()
     sceneShader->SetMat4f("View", view);
     
     dirLight.Render(sceneShader);
+    lowpolyTree.Draw(sceneShader);
+
     //plane.Draw(sceneShader);
-    cube.Draw(sceneShader);
+    //cube.Draw(sceneShader);
     //cylinder.Draw(sceneShader);
+
+
 
     // Render editor
     // ---------------------------------------
