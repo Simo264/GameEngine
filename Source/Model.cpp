@@ -1,20 +1,24 @@
-//#include "Model.hh"
-//#include "Logger.hh"
-//#include "Graphics/Renderer.hh"
-//#include "Subsystems/TexturesManager.hh"
-//
-///* -----------------------------------------------------
-// *          PUBLIC METHODS
-// * -----------------------------------------------------
-//*/
-//
+#include "Model.hh"
+#include "Graphics/Renderer.hh"
+#include "Subsystems/TexturesManager.hh"
+
+#include "Logger.hh"
+
+/* -----------------------------------------------------
+ *          PUBLIC METHODS
+ * -----------------------------------------------------
+*/
+
+Model::Model(std::filesystem::path filePath)
+{
+
+}
+
 //Model::Model(std::filesystem::path filePath)
 //{
-//  std::filesystem::path assetsDirPath = std::filesystem::current_path().parent_path() / "Assets";
-//  filePath = assetsDirPath / filePath.lexically_normal();
 //	LoadModel(filePath);
 //}
-//
+
 //void Model::Draw(Shader* shader)
 //{
 //  mat4f model = mat4f(1.0f); //Actor::GetModel();
@@ -51,11 +55,11 @@
 //
 //  _meshPool.reset();
 //}
-//
-///* -----------------------------------------------------
-// *          PRIVATE METHODS
-// * -----------------------------------------------------
-//*/
+
+/* -----------------------------------------------------
+ *          PRIVATE METHODS
+ * -----------------------------------------------------
+*/
 //
 //void Model::LoadModel(std::filesystem::path filePath)
 //{

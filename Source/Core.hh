@@ -19,40 +19,51 @@
 #include <sstream>
 #include <vector>
 
-using std::string;
-using std::array;
-using std::vector;
-using std::unique_ptr;
-using std::shared_ptr;
-using std::stringstream;
-using std::ifstream;
+/* -----------------------------
+			STL library aliases
+   ----------------------------- */
 
-using vec2f = glm::vec2;
-using vec2i = glm::ivec2;
-using vec2d = glm::dvec2;
-using vec2u = glm::uvec2;
+template<typename type, size_t size> 
+using Array					= std::array<type, size>;
+template<typename type>
+using Vector				= std::vector<type>;
+template<typename type>
+using UniquePointer = std::unique_ptr<type>;
+template<typename type>
+using SharedPointer = std::shared_ptr<type>;
 
-using vec3f = glm::vec3;
-using vec3i = glm::ivec3;
-using vec3d = glm::dvec3;
-using vec3u = glm::uvec3;
+using String				= std::string;
+using StringStream	= std::stringstream;
+using IFStream			= std::ifstream;
+using RuntimeError	= std::runtime_error;
+using Path					= std::filesystem::path;
 
-using vec4f = glm::vec4;
-using vec4i = glm::ivec4;
-using vec4d = glm::dvec4;
-using vec4u = glm::uvec4;
 
-using mat2f = glm::mat2x2;
-using mat2i = glm::imat2x2;
-using mat2d = glm::dmat2x2;
-using mat2u = glm::umat2x2;
+/* -----------------------------
+			GLM library aliases
+	 ----------------------------- */
 
-using mat3f = glm::mat3x3;
-using mat3i = glm::imat3x3;
-using mat3d = glm::dmat3x3;
-using mat3u = glm::umat3x3;
-
-using mat4f = glm::mat4x4;
-using mat4i = glm::imat4x4;
-using mat4d = glm::dmat4x4;
-using mat4u = glm::umat4x4;
+using Vec2f = glm::vec2;		// Vec2
+using Vec2i = glm::ivec2;
+using Vec2d = glm::dvec2;
+using Vec2u = glm::uvec2;
+using Vec3f = glm::vec3;		// Vec3
+using Vec3i = glm::ivec3;
+using Vec3d = glm::dvec3;
+using Vec3u = glm::uvec3;
+using Vec4f = glm::vec4;		// Vec4
+using Vec4i = glm::ivec4;
+using Vec4d = glm::dvec4;
+using Vec4u = glm::uvec4;
+using Mat2f = glm::mat2x2;	// Mat2
+using Mat2i = glm::imat2x2;
+using Mat2d = glm::dmat2x2;
+using Mat2u = glm::umat2x2;
+using Mat3f = glm::mat3x3;	// Mat3
+using Mat3i = glm::imat3x3;
+using Mat3d = glm::dmat3x3;
+using Mat3u = glm::umat3x3;
+using Mat4f = glm::mat4x4;	// Mat4
+using Mat4i = glm::imat4x4;
+using Mat4d = glm::dmat4x4;
+using Mat4u = glm::umat4x4;

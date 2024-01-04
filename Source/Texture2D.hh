@@ -11,11 +11,11 @@ public:
   Texture2D(const Texture2D&) = delete;            // delete copy constructor
   Texture2D& operator=(const Texture2D&) = delete; // delete assign op
 
-  void Create(std::filesystem::path path);
+  void Create(Path path);
   void Destroy() const { glDeleteTextures(1, &textureID); }
 
   uint32_t textureID;
-  std::filesystem::path texturePath;
+  Path texturePath;
 
 private:
   void LoadImageData();

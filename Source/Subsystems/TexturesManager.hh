@@ -14,14 +14,14 @@ public:
 	static void Initialize();
 	
 	// Load texture object by filename in Textures/...
-	static Texture2D* LoadTexture(std::filesystem::path filePath);
+	static Texture2D* LoadTexture(Path filePath);
 	
 	// Get texture object by filename in Textures/...
-	static Texture2D* GetTexture(std::filesystem::path filePath);
+	static Texture2D* GetTexture(Path filePath);
 
 private:
-	static std::filesystem::path _texturesDir;
+	inline static Path _texturesDir = std::filesystem::current_path().parent_path() / "Textures";
 
-	static array<Texture2D, 10>	_textureBuffer;
-	static uint32_t	_numTextures;
+	inline static Array<Texture2D, 10>	_textureBuffer = Array<Texture2D, 10>();
+	inline static uint32_t	_numTextures = 0;
 };

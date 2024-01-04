@@ -12,7 +12,7 @@ public:
 
   void Render(Shader* shader);
 
-  vec3f direction;
+  Vec3f direction;
   float cutOff; // the cutoff angle that specifies the spotlight's radius.
 };
 

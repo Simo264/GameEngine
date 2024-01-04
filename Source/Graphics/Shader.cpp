@@ -7,14 +7,14 @@
   * -----------------------------------------------------
 */
 
-void Shader::Create(const char* label, const char* vertFilePath, const char* fragFilePath)
+void Shader::Create(const char* label, const char* vertFile, const char* fragFile)
 {
   _label = label;
 
-  string vShaderSrc;
-  string fShaderSrc;
-  GetSourceFromFile(vertFilePath, vShaderSrc);
-  GetSourceFromFile(fragFilePath, fShaderSrc);
+  String vShaderSrc;
+  String fShaderSrc;
+  GetSourceFromFile(vertFile, vShaderSrc);
+  GetSourceFromFile(fragFile, fShaderSrc);
 
   char infoLog[512];
 
@@ -60,32 +60,32 @@ void Shader::SetFloat(const char* name, float value) const
   glUniform1f(glGetUniformLocation(_shaderID, name), value);
 }
 
-void Shader::SetVec2f(const char* name, const vec2f& value) const
+void Shader::SetVec2f(const char* name, const Vec2f& value) const
 {
   glUniform2fv(glGetUniformLocation(_shaderID, name), 1, &value[0]);
 }
 
-void Shader::SetVec3f(const char* name, const vec3f& value) const
+void Shader::SetVec3f(const char* name, const Vec3f& value) const
 {
   glUniform3fv(glGetUniformLocation(_shaderID, name), 1, &value[0]);
 }
 
-void Shader::SetVec4f(const char* name, const vec4f& value) const
+void Shader::SetVec4f(const char* name, const Vec4f& value) const
 {
   glUniform4fv(glGetUniformLocation(_shaderID, name), 1, &value[0]);
 }
 
-void Shader::SetMat2f(const char* name, const mat2f& mat) const
+void Shader::SetMat2f(const char* name, const Mat2f& mat) const
 {
   glUniformMatrix2fv(glGetUniformLocation(_shaderID, name), 1, GL_FALSE, &mat[0][0]);
 }
 
-void Shader::SetMat3f(const char* name, const mat3f& mat) const
+void Shader::SetMat3f(const char* name, const Mat3f& mat) const
 {
   glUniformMatrix3fv(glGetUniformLocation(_shaderID, name), 1, GL_FALSE, &mat[0][0]);
 }
 
-void Shader::SetMat4f(const char* name, const mat4f& mat) const
+void Shader::SetMat4f(const char* name, const Mat4f& mat) const
 {
   glUniformMatrix4fv(glGetUniformLocation(_shaderID, name), 1, GL_FALSE, &mat[0][0]);
 }
@@ -97,13 +97,13 @@ void Shader::SetMat4f(const char* name, const mat4f& mat) const
 */
 
 
-void Shader::GetSourceFromFile(const char* filePath, string& dest)
+void Shader::GetSourceFromFile(const char* sourceFile, String& dest)
 {
-  stringstream buffer;
-  ifstream file(filePath);
+  StringStream buffer;
+  IFStream file(sourceFile);
   if (!file.is_open())
   {
-    CONSOLE_ERROR("Shader::getSourceFromFile error on opening file {}", filePath);
+    CONSOLE_ERROR("Shader::getSourceFromFile error on opening file {}", sourceFile);
     return;
   }
 

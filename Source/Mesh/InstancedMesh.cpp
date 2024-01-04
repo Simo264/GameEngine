@@ -31,7 +31,7 @@ void InstancedMesh::SetInstanceNumber(uint32_t n)
   _nInstancesToDraw = n;
 }
 
-void InstancedMesh::SetInstanceModel(mat4f* model, uint32_t instance)
+void InstancedMesh::SetInstanceModel(Mat4f* model, uint32_t instance)
 {
   if (instance < 0 || instance >= MAX_NUM_INSTANCES)
   {
@@ -40,11 +40,11 @@ void InstancedMesh::SetInstanceModel(mat4f* model, uint32_t instance)
   }
   vertexArray.Bind();
   glBindBuffer(GL_ARRAY_BUFFER, _instanceBuffer);
-  glBufferSubData(GL_ARRAY_BUFFER, instance * sizeof(mat4f), sizeof(mat4f), model);
+  glBufferSubData(GL_ARRAY_BUFFER, instance * sizeof(Mat4f), sizeof(Mat4f), model);
   vertexArray.Unbind();
 }
 
-void InstancedMesh::SetInstancesModelRange(uint32_t start, uint32_t n, mat4f* models)
+void InstancedMesh::SetInstancesModelRange(uint32_t start, uint32_t n, Mat4f* models)
 {
   if (start < 0 || n > MAX_NUM_INSTANCES)
   {
@@ -54,7 +54,7 @@ void InstancedMesh::SetInstancesModelRange(uint32_t start, uint32_t n, mat4f* mo
   
   vertexArray.Bind();
   glBindBuffer(GL_ARRAY_BUFFER, _instanceBuffer);
-  glBufferSubData(GL_ARRAY_BUFFER, start * sizeof(mat4f), n * sizeof(mat4f), models);
+  glBufferSubData(GL_ARRAY_BUFFER, start * sizeof(Mat4f), n * sizeof(Mat4f), models);
   vertexArray.Unbind();
 }
 
@@ -66,12 +66,12 @@ void InstancedMesh::Instancing(VAConfig& config)
 {
   vertexArray.Bind();
 
-  vector<mat4f> models(MAX_NUM_INSTANCES, mat4f(1.0f));
+  Vector<Mat4f> models(MAX_NUM_INSTANCES, Mat4f(1.0f));
 
   // instance buffer for model matrices
   glGenBuffers(1, &_instanceBuffer);
   glBindBuffer(GL_ARRAY_BUFFER, _instanceBuffer);
-  glBufferData(GL_ARRAY_BUFFER, models.size() * sizeof(mat4f), models.data(), GL_DYNAMIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, models.size() * sizeof(Mat4f), models.data(), GL_DYNAMIC_DRAW);
 
   /* layout (location = 2) in mat4 aModel;
     mat4 = vec4 x 4 -> (layout 2) in vec4
@@ -82,7 +82,7 @@ void InstancedMesh::Instancing(VAConfig& config)
   uint32_t nLayoutModel = config.numAttrs;
   for (int i = 0; i < 4; i++, nLayoutModel++)
   {
-    glVertexAttribPointer(nLayoutModel, 4, GL_FLOAT, GL_FALSE, sizeof(mat4f), reinterpret_cast<void*>(i * sizeof(vec4f)));
+    glVertexAttribPointer(nLayoutModel, 4, GL_FLOAT, GL_FALSE, sizeof(Mat4f), reinterpret_cast<void*>(i * sizeof(Mat4f)));
     glEnableVertexAttribArray(nLayoutModel);
     glVertexAttribDivisor(nLayoutModel, 1);
   }

@@ -30,7 +30,7 @@ FrameBuffer::FrameBuffer()
 	_screenFrameVAO.Create(data, config);
 }
 
-void FrameBuffer::Create(vec2i size)
+void FrameBuffer::Create(Vec2i size)
 {
 	glGenFramebuffers(1, &_fbo);
 	glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
@@ -58,7 +58,7 @@ void FrameBuffer::Create(vec2i size)
 	glBindRenderbuffer(GL_RENDERBUFFER, 0);
 }
 	
-void FrameBuffer::RescaleFrameBuffer(vec2i newSize)
+void FrameBuffer::RescaleFrameBuffer(Vec2i newSize)
 {
 	glBindTexture(GL_TEXTURE_2D, _texture);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, newSize.x, newSize.y, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);

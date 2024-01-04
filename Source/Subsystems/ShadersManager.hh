@@ -11,20 +11,18 @@ public:
 	ShadersManager()	= delete;
 	~ShadersManager() = delete;
 
-	static void Initialize();
-
 	static Shader* LoadShaderProgram(
 		const char* label, 
-		std::filesystem::path vertFilePath,
-		std::filesystem::path fragFilePath);
+		Path vertFilePath,
+		Path fragFilePath);
 	
 	static Shader* GetShader(const char* label);
 
-	static std::filesystem::path GetShaderFile(std::filesystem::path filePath);
+	static Path GetShaderFile(Path filePath);
 
 private:
-	static std::filesystem::path _shadersDir;
+	inline static Path _shadersDir = std::filesystem::current_path().parent_path() / "Shaders";
 
-	static array<Shader, 10> _shaderProgramsBuffer;
-	static uint32_t _nShaderPrograms;
+	inline static Array<Shader, 10> _shaderProgramsBuffer = Array<Shader, 10>();
+	inline static uint32_t _nShaderPrograms = 0;
 };

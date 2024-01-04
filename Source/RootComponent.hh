@@ -10,16 +10,16 @@ class RootComponent
 
 public:
 	RootComponent() 
-		: position{ vec3f(0,0,0) }, scaling{ vec3f(1,1,1) }, rotationAxis{ vec3f(1,1,1) }, rotationAngle{ 0 } {}
+		: position{ Vec3f(0,0,0) }, scaling{ Vec3f(1,1,1) }, rotationAxis{ Vec3f(1,1,1) }, rotationAngle{ 0 } {}
 
-	vec3f position;
-	vec3f scaling;
-	vec3f rotationAxis;
+	Vec3f position;
+	Vec3f scaling;
+	Vec3f rotationAxis;
 	float rotationAngle;
 
-	const mat4f GetModel() const
+	const Mat4f GetModel() const
 	{
-		mat4f model = mat4f(1.0f);
+		Mat4f model = Mat4f(1.0f);
 		model = glm::rotate(model, glm::radians(rotationAngle), rotationAxis);
 		model = glm::translate(model, position);
 		model = glm::scale(model, scaling);

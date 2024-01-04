@@ -9,7 +9,7 @@
  * -----------------------------------------------------
 */
 
-void Texture2D::Create(std::filesystem::path path)
+void Texture2D::Create(Path path)
 {
   texturePath = path;
 
@@ -32,7 +32,7 @@ void Texture2D::Create(std::filesystem::path path)
 
 void Texture2D::LoadImageData()
 {
-  string stringPath = texturePath.string();
+  String stringPath = texturePath.string();
   
   //stbi_set_flip_vertically_on_load(true);
 

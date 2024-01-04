@@ -24,10 +24,10 @@ public:
   void SwapWindowBuffers() { glfwSwapBuffers(_window); }
 
   // glfw: get window size
-  vec2i GetWindowSize();
+  Vec2i GetWindowSize();
   
   // glfw: retrieves the size, in pixels, of the framebuffer of the specified window
-  vec2i GetFramebufferSize();
+  Vec2i GetFramebufferSize();
 
   // glfw: keyboard key
   int GetKey(uint32_t key) const { return glfwGetKey(_window, key); }
@@ -36,13 +36,13 @@ public:
   int GetMouseKey(uint32_t key) const { return glfwGetMouseButton(_window, key); }
 
   // glfw: mouse position 
-  void GetCursorPosition(vec2d& pos) { glfwGetCursorPos(_window, &pos.x, &pos.y); }
+  void GetCursorPosition(Vec2d& pos) { glfwGetCursorPos(_window, &pos.x, &pos.y); }
 
   // glfw: value = GLFW_CURSOR_NORMAL | GLFW_CURSOR_HIDDEN | GLFW_CURSOR_DISABLED
   void SetCursorMode(int value) { glfwSetInputMode(_window, GLFW_CURSOR, value); }
 
   // glfw: window position
-  void SetPosition(vec2i pos)  { glfwSetWindowPos(_window, pos.x, pos.y); }
+  void SetPosition(Vec2i pos)  { glfwSetWindowPos(_window, pos.x, pos.y); }
 
 private:
   GLFWwindow* _window;

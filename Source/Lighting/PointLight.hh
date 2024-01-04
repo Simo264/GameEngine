@@ -27,7 +27,7 @@ public:
     
   void Render(Shader* shader);
 
-  vec3f position;
+  Vec3f position;
 
   Attenuation attenuation;
 };

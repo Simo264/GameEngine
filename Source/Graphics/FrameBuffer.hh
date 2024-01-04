@@ -22,14 +22,14 @@ public:
 	FrameBuffer(const FrameBuffer&) = delete;            // delete copy constructor
 	FrameBuffer& operator=(const FrameBuffer&) = delete; // delete assign op
 
-	void Create(vec2i size);
+	void Create(Vec2i size);
 	void Bind()		const { glBindFramebuffer(GL_FRAMEBUFFER, _fbo); };
 	void Unbind() const { glBindFramebuffer(GL_FRAMEBUFFER, 0); };
 	void DrawFrame(Shader* shader);
 	void SetPostProcessing(PostProcessingType type) { _postprocType = type; }
 
 	const uint32_t& GetFramebufferTexture() const { return _texture; }
-	void RescaleFrameBuffer(vec2i newSize);
+	void RescaleFrameBuffer(Vec2i newSize);
 
 	void Destroy();
 	

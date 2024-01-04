@@ -6,15 +6,15 @@
  * -----------------------------------------------------
 */
 
-Camera::Camera(vec2i windowSize, vec3f position) : position{ position }
+Camera::Camera(Vec2i windowSize, Vec3f position) : position{ position }
 {
-  front   = vec3f(0.0f, 0.0f, -1.0f);
-  worldUp = vec3f(0.0f, 1.0f, 0.0f);
+  front   = Vec3f(0.0f, 0.0f, -1.0f);
+  worldUp = Vec3f(0.0f, 1.0f, 0.0f);
   yaw     = -90.0f;
   pitch   = 0.0f;
 
-  movementSpeed    = 7.5f;  
-  mouseSensitivity = 0.1f; 
+  movementSpeed    = 7.5f;  // [1.0f:10.0f]
+  mouseSensitivity = 0.25f; // [0.0f:1.0f]
   fov              = 45.0f;
 
   _lastX = (float)(windowSize.x / 2);
@@ -26,14 +26,14 @@ Camera::Camera(vec2i windowSize, vec3f position) : position{ position }
   UpdateCameraVectors();
 }
 
-mat4f Camera::GetViewMatrix() const
+Mat4f Camera::GetViewMatrix() const
 {
   return glm::lookAt(position, position + front, up); 
 }
 
 void Camera::ProcessInput(Window& window, double deltaTime)
 {
-  vec2d mousePos;
+  Vec2d mousePos;
   window.GetCursorPosition(mousePos);
 
   FreeCameraWalk(window, deltaTime);
@@ -52,7 +52,7 @@ void Camera::ProcessInput(Window& window, double deltaTime)
 
 void Camera::UpdateCameraVectors()
 {
-  vec3f calcFront;
+  Vec3f calcFront;
   calcFront.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
   calcFront.y = sin(glm::radians(pitch));
   calcFront.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
@@ -97,7 +97,7 @@ void Camera::FreeCameraWalk(const Window& window, double deltaTime)
   }
 }
 
-void Camera::FreeCameraRotation(vec2d& mousePos, double deltaTime)
+void Camera::FreeCameraRotation(Vec2d& mousePos, double deltaTime)
 {
   if (_firstMouse)
   {
@@ -108,15 +108,15 @@ void Camera::FreeCameraRotation(vec2d& mousePos, double deltaTime)
 
   const float xoffset = _lastX - mousePos.x;
   if (xoffset < 0) // Right
-    yaw += 5.0f * mouseSensitivity;
+    yaw += mouseSensitivity;
   else if (xoffset > 0) // Left
-    yaw -= 5.0f * mouseSensitivity;
+    yaw -= mouseSensitivity;
 
   const float yoffset = _lastY - mousePos.y;
   if (yoffset > 0) // Up
-    pitch += 5.0f * mouseSensitivity;
+    pitch += mouseSensitivity;
   else if (yoffset < 0) // Down
-    pitch -= 5.0f * mouseSensitivity;
+    pitch -= mouseSensitivity;
 
   _lastX = mousePos.x;
   _lastY = mousePos.y;

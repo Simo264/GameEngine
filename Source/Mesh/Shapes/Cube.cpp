@@ -1,14 +1,16 @@
 #include "Cube.hh"
 
-#include "../../Subsystems/ObjectLoader.hh"
+#include "../../ObjectLoader.hh"
 #include "../../Subsystems/TexturesManager.hh"
 
 Cube::Cube() : StaticMesh()
 {
-  vector<float>     vertices;
-  vector<uint32_t>  indices;
-  array<std::filesystem::path, 2> texturePaths; // 2 -> [diffusePath, specularPath]
-  ObjectLoader::LoadSingleMeshData("Mesh/Cube/Cube.obj", vertices, indices, texturePaths);
+  Vector<float>     vertices;
+  Vector<uint32_t>  indices;
+  Array<Path, 2>    texturePaths; // 2 -> [diffusePath, specularPath]
+  
+  ObjectLoader loader("Shapes/Cube/Cube.obj");
+  loader.LoadMesh(vertices, indices, texturePaths);
 
   if (!texturePaths[0].empty())
     this->diffuse = TexturesManager::GetTexture(texturePaths[0]);

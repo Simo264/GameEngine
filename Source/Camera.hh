@@ -6,19 +6,19 @@
 class Camera
 {
 public:
-  Camera(vec2i windowSize, vec3f position = vec3f(0.0f, 0.0f, 0.0f));
+  Camera(Vec2i windowSize, Vec3f position = Vec3f(0.0f, 0.0f, 0.0f));
   ~Camera() = default;
 
-  mat4f GetViewMatrix() const;
+  Mat4f GetViewMatrix() const;
 
   void ProcessInput(Window& window, double deltaTime);
 
   // camera Attributes
-  vec3f position;
-  vec3f front;
-  vec3f up;
-  vec3f right;
-  vec3f worldUp;
+  Vec3f position;
+  Vec3f front;
+  Vec3f up;
+  Vec3f right;
+  Vec3f worldUp;
 
   // euler Angles
   float yaw;
@@ -34,7 +34,7 @@ private:
   void UpdateCameraVectors();
 
   void FreeCameraWalk(const Window& window, double deltaTime);
-  void FreeCameraRotation(vec2d& mousePos, double deltaTime);
+  void FreeCameraRotation(Vec2d& mousePos, double deltaTime);
   
   float _lastX;
   float _lastY;

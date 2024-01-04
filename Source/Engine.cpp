@@ -2,7 +2,8 @@
 #include "Logger.hh"
 #include "Window.hh"
 #include "Camera.hh"
-//#include "Model.hh"
+#include "Model.hh"
+#include "ObjectLoader.hh"
 
 #include "Mesh/Shapes/Cube.hh"
 #include "Mesh/Shapes/Plane.hh"
@@ -19,6 +20,7 @@
 #include "Graphics/Renderer.hh"
 #include "Graphics/FrameBuffer.hh"
 
+VertexArray meshVAO;
 
 /* -----------------------------------------------------
  *          PUBLIC METHODS
@@ -41,7 +43,6 @@ void Engine::Initialize()
 
   // Load shaders 
   // ---------------------------------------
-  ShadersManager::Initialize();
   LoadShaders();
   
   // Load textures from Textures directory
@@ -60,25 +61,25 @@ void Engine::Run()
 
   // Camera object
   // ---------------------------------------
-  Camera camera(window.GetWindowSize(), vec3f(0.0f, 0.0f, 10.0f));
+  Camera camera(window.GetWindowSize(), Vec3f(0.0f, 0.0f, 10.0f));
   // ---------------------------------------
 
   // Mesh objects
   // ---------------------------------------
-  Plane plane;
-  plane.position.y = -1.0f;
-  plane.scaling = vec3f(10.0f, 0.0f, 10.0f);
+  //Plane plane;
+  //plane.position.y = -1.0f;
+  //plane.scaling = vec3f(10.0f, 0.0f, 10.0f);
 
   Cube cube;
-  cube.scaling = vec3f(0.5f, 0.5f, 0.5f);
+  cube.scaling = Vec3f(0.5f, 0.5f, 0.5f);
   cube.position.y = -0.49f;
 
-  Cylinder cylinder;
-  cylinder.scaling = vec3f(0.5f, 0.5f, 0.5f);
-  cylinder.position.x = 5.0f;
-  cylinder.position.y = -0.49f;
+  //Cylinder cylinder;
+  //cylinder.scaling = vec3f(0.5f, 0.5f, 0.5f);
+  //cylinder.position.x = 5.0f;
+  //cylinder.position.y = -0.49f;
 
-  vector<StaticMesh*> meshObjects = { &plane, &cube, &cylinder };
+  //vector<StaticMesh*> meshObjects = { &plane, &cube, &cylinder };
   // ---------------------------------------
 
   // Lighting
@@ -105,7 +106,7 @@ void Engine::Run()
     // ---------------------------------------
     double now = glfwGetTime();
     double deltaTime = now - lastUpdateTime;
-    const vec2i windowFbSize = window.GetFramebufferSize();
+    const Vec2i windowFbSize = window.GetFramebufferSize();
     const float aspectRatio = (float)(windowFbSize.x / windowFbSize.y);
     Renderer::drawCalls = 0;
     // ---------------------------------------
@@ -117,8 +118,8 @@ void Engine::Run()
     if (window.GetKey(GLFW_KEY_ESCAPE) == GLFW_PRESS)
       window.CloseWindow();
     camera.ProcessInput(window, deltaTime);
-    const mat4f projection = glm::perspective(glm::radians(camera.fov), aspectRatio, 0.1f, 100.0f);
-    const mat4f view = camera.GetViewMatrix();
+    const Mat4f projection = glm::perspective(glm::radians(camera.fov), aspectRatio, 0.1f, 100.0f);
+    const Mat4f view = camera.GetViewMatrix();
 
 
     // Render scene
@@ -131,11 +132,8 @@ void Engine::Run()
     sceneShader->SetMat4f("View", view);
     
     dirLight.Render(sceneShader);
-    for (auto mesh : meshObjects)
-      mesh->Draw(sceneShader);
-    
-    //cube.Draw(sceneShader);
     //plane.Draw(sceneShader);
+    cube.Draw(sceneShader);
     //cylinder.Draw(sceneShader);
 
     // Render editor

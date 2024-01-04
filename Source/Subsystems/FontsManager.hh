@@ -10,5 +10,8 @@ public:
 	FontsManager()  = delete;
 	~FontsManager() = delete;
 
-	static std::filesystem::path GetFont(std::filesystem::path filePath);
+	static Path GetFont(Path filePath);
+
+private:
+	inline static const Path _fontsDir = std::filesystem::current_path().parent_path() / "Fonts";
 };

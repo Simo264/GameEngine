@@ -11,8 +11,8 @@ struct VAConfig
 {
   VAConfig()
   {
-    layout.fill(0);
     numAttrs = 0;
+    layout.fill(0);
   }
 
   void PushAttribute(uint8_t attribute)
@@ -29,7 +29,7 @@ struct VAConfig
   // layout=0: in vec3 components (x,y,z)
   // layout=1: in vec3 components (x,y,z)
   // layout=2: in vec2 components (x,y)
-  array<uint8_t, 16> layout;
+  Array<uint8_t, 16> layout;
   uint32_t numAttrs;
 };
 

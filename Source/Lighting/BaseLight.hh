@@ -13,7 +13,7 @@ public:
     this->uniformName.reserve(50); // Pre-allocation memory
     this->uniformName.append(uniformName);
 
-    color     = vec3f(1.0f, 1.0f, 1.0f);  // default white color
+    color     = Vec3f(1.0f, 1.0f, 1.0f);  // default white color
     ambient   = 0.25f;                    // default ambient intensity
     diffuse   = 0.50f;                    // default diffuse intensity
     specular  = 0.75f;                    // default specular intensity
@@ -22,10 +22,10 @@ public:
 
   virtual void Render(Shader* shader) = 0;
 
-  vec3f color;    // light color
+  Vec3f color;    // light color
   float ambient;  // ambient intensity
   float diffuse;  // diffuse intensity
   float specular; // specular intensity
 
-  string uniformName;
+  String uniformName;
 };

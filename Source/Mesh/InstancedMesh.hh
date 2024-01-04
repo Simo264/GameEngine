@@ -16,8 +16,8 @@ public:
 	void		 SetInstanceNumber(uint32_t n);
 	uint32_t GetInstanceNumber() const { return _nInstancesToDraw; }
 
-	void SetInstanceModel(mat4f* model, uint32_t instance);
-	void SetInstancesModelRange(uint32_t start, uint32_t n, mat4f* models);
+	void SetInstanceModel(Mat4f* model, uint32_t instance);
+	void SetInstancesModelRange(uint32_t start, uint32_t n, Mat4f* models);
 
 	VertexArray vertexArray;
 	

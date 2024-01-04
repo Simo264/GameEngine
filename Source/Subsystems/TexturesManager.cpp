@@ -6,15 +6,8 @@
  * -----------------------------------------------------
 */
 
-std::filesystem::path TexturesManager::_texturesDir;
-array<Texture2D, 10>	TexturesManager::_textureBuffer;
-uint32_t	            TexturesManager::_numTextures;
-
 void TexturesManager::Initialize()
 {
-  _texturesDir = std::filesystem::current_path().parent_path() / "Textures"; 
-  _numTextures = 0;
-
   // Load all texture files in Textures directory
   for (const auto& entry : std::filesystem::recursive_directory_iterator(_texturesDir))
   {
@@ -25,19 +18,19 @@ void TexturesManager::Initialize()
   }
 }
 
-Texture2D* TexturesManager::LoadTexture(std::filesystem::path filePath)
+Texture2D* TexturesManager::LoadTexture(Path filePath)
 {
   if (_numTextures >= _textureBuffer.size())
   {
     CONSOLE_ERROR("Can't load more textures. Buffer is full");
-    throw std::runtime_error("");
+    throw RuntimeError("");
   }
   
   filePath = _texturesDir / filePath.lexically_normal();
   if (!std::filesystem::exists(filePath))
   {
     CONSOLE_ERROR("Exception in TexturesManager::LoadTexture: {} does not exists", filePath.string());
-    throw std::runtime_error("");
+    throw RuntimeError("");
   }
 
   Texture2D* texture = &_textureBuffer[_numTextures++];
@@ -45,7 +38,7 @@ Texture2D* TexturesManager::LoadTexture(std::filesystem::path filePath)
   return texture;
 }
 
-Texture2D* TexturesManager::GetTexture(std::filesystem::path filePath)
+Texture2D* TexturesManager::GetTexture(Path filePath)
 {
   filePath = _texturesDir / filePath.lexically_normal();
 
