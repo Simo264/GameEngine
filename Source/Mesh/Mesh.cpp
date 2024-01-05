@@ -14,10 +14,8 @@ void Mesh::DestroyMesh()
 	vertexArray.DestroyVertexArray();
 }
 
-void Mesh::Draw(Shader* shader, const Mat4f& model)
+void Mesh::Draw(Shader* shader)
 {
-	shader->SetMat4f("Model", model);
-
 	//glActiveTexture(GL_TEXTURE0);
 	//glBindTexture(GL_TEXTURE_2D, 0);
 

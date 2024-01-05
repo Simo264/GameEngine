@@ -5,7 +5,6 @@
 class Plane : public StaticMesh
 {
 public:
-	Plane();
-	~Plane() = default;
-};
+	Plane() : StaticMesh("Shapes/Plane/Plane.obj"){}
 
+};

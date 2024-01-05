@@ -12,19 +12,17 @@
 class Model : public RootComponent, public UncopyableObject
 {
 public:
-	Model(Path filePath);
+	// The objFilePath contains all vertices and indices needed to create a Mesh
+	Model(Path objFilePath);
 
 	// Allocate memory for mesh objects
-	void InitModel(uint32_t nMeshes);
+	void SetMeshNumber(uint32_t nMeshes);
 	
 	// Free memory and destroy all mesh objects
 	void DestroyModel();
 	
 	void Draw(class Shader* shader) const;
 
-	//const uint32_t& NumMeshes() const { return _nMeshes; }
-	//StaticMesh& GetMesh(uint32_t i) { return _meshPool[i]; }
-	
 	UniquePointer<Mesh[]> meshBuffer;
 
 private:

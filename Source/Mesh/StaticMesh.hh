@@ -9,8 +9,8 @@
 class StaticMesh : public RootComponent, public Mesh
 {
 public:
-	StaticMesh() : RootComponent(), Mesh() {}
-	~StaticMesh() = default;
-
+	// The objFilePath contains all vertices and indices needed to create a Mesh
+	StaticMesh(Path objFilePath);
+	
 	void Draw(class Shader* shader);
 };

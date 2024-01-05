@@ -32,7 +32,7 @@ Mat4f Camera::GetViewMatrix() const
   return glm::lookAt(position, position + front, up); 
 }
 
-void Camera::ProcessInput(Window* window, double deltaTime)
+void Camera::ProcessInput(Window* window, const double deltaTime)
 {
   Vec2d mousePos;
   window->GetCursorPosition(mousePos);
@@ -63,7 +63,7 @@ void Camera::UpdateCameraVectors()
   up    = glm::normalize(glm::cross(right, front));
 }
 
-void Camera::FreeCameraWalk(const Window* window, double deltaTime)
+void Camera::FreeCameraWalk(const Window* window, const double deltaTime)
 {
   const float velocity = movementSpeed * deltaTime;
 
@@ -98,7 +98,7 @@ void Camera::FreeCameraWalk(const Window* window, double deltaTime)
   }
 }
 
-void Camera::FreeCameraRotation(Vec2d& mousePos, double deltaTime)
+void Camera::FreeCameraRotation(Vec2d& mousePos, const double deltaTime)
 {
   if (_firstMouse)
   {

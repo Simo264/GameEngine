@@ -5,6 +5,5 @@
 class Cylinder : public StaticMesh
 {
 public:
-	Cylinder();
-	~Cylinder() = default;
+	Cylinder() : StaticMesh("Shapes/Cylinder/Cylinder.obj") {}
 };

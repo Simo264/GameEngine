@@ -104,8 +104,8 @@ void Engine::Run()
 
     // Per-frame time logic
     // ---------------------------------------
-    double now = glfwGetTime();
-    double deltaTime = now - lastUpdateTime;
+    const double now = glfwGetTime();
+    const double deltaTime = now - lastUpdateTime;
     const Vec2i windowFbSize = window.GetFramebufferSize();
     const float aspectRatio = (float)(windowFbSize.x / windowFbSize.y);
     Renderer::drawCalls = 0;
@@ -130,9 +130,11 @@ void Engine::Run()
     sceneShader->Use();
     sceneShader->SetMat4f("Projection", projection);
     sceneShader->SetMat4f("View", view);
+    sceneShader->SetMat4f("Model", Mat4f(1.0f));
     
     dirLight.Render(sceneShader);
     lowpolyTree.Draw(sceneShader);
+
 
     //plane.Draw(sceneShader);
     //cube.Draw(sceneShader);

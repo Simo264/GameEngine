@@ -35,7 +35,7 @@ void ObjectLoader::LoadStaticMesh(StaticMesh* staticMesh)
 void ObjectLoader::LoadModel(Model* model)
 {
   uint32_t nMeshes = _scene->mNumMeshes;
-  model->InitModel(nMeshes);
+  model->SetMeshNumber(nMeshes);
   for (int i = 0; i < nMeshes; i++)
   {
     aiMesh* aimesh = _scene->mMeshes[i];

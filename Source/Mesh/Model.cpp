@@ -6,16 +6,25 @@
 #include "../Logger.hh"
 
 
-Model::Model(Path filePath)
+Model::Model(Path objFilePath)
 {
 	_nMeshes = 0;
 
-	ObjectLoader loader(filePath);
+	ObjectLoader loader(objFilePath);
 	loader.LoadModel(this);
+}
+
+void Model::SetMeshNumber(uint32_t nMeshes)
+{
+	meshBuffer = std::make_unique<Mesh[]>(nMeshes);
+	_nMeshes = nMeshes;
 }
 
 void Model::Draw(Shader* shader) const
 {
+	auto model = this->GetModel();
+	shader->SetMat4f("Model", model);
+
 	for (int i = 0; i < _nMeshes; i++)
 	{
 		Mesh* mesh = &meshBuffer[i];
@@ -33,8 +42,3 @@ void Model::DestroyModel()
 	meshBuffer.reset();
 }
 
-void Model::InitModel(uint32_t nMeshes)
-{
-	meshBuffer = std::make_unique<Mesh[]>(nMeshes);
-	_nMeshes = nMeshes;
-}

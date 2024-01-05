@@ -13,7 +13,7 @@ public:
 
 	void InitMesh(VertexArrayData& data, VertexArrayConfig& config);
 	void DestroyMesh();
-	void Draw(class Shader* shader, const Mat4f& model = Mat4f(1.0f));
+	void Draw(class Shader* shader);
 
 	VertexArray vertexArray;
 	class Texture2D* diffuse;
