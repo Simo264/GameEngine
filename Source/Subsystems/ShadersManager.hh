@@ -3,8 +3,9 @@
 #include "../Core.hh"
 #include "../Graphics/Shader.hh"
 
-// Load and retrieve shader files located within the Shaders directory
-// ------------------------------------------------------------------------
+// Static class ShadersManager: 
+// load and retrieve shader programs located within the Shaders directory
+// ----------------------------------------------------------------------
 class ShadersManager
 {
 public:

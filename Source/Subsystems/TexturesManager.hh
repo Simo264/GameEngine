@@ -3,8 +3,9 @@
 #include "../Core.hh"
 #include "../Texture2D.hh"
 
-// Load and retrieve texture files located within the Textures directory
-// ------------------------------------------------------------------------
+// Static class TexturesManager:
+// load and retrieve texture files located within the Textures/ directory
+// ---------------------------------------------------------------------
 class TexturesManager
 {
 public:
@@ -13,10 +14,10 @@ public:
 
 	static void Initialize();
 	
-	// Load texture object by filename in Textures/...
+	// Load texture object by filename in Textures/
 	static Texture2D* LoadTexture(Path filePath);
 	
-	// Get texture object by filename in Textures/...
+	// Get texture object by filename in Textures/
 	static Texture2D* GetTexture(Path filePath);
 
 private:

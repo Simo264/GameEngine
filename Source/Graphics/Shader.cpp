@@ -1,13 +1,12 @@
 #include "Shader.hh"
 #include "../Logger.hh"
 
-
 /* -----------------------------------------------------
   *          PUBLIC METHODS
   * -----------------------------------------------------
 */
 
-void Shader::Create(const char* label, const char* vertFile, const char* fragFile)
+void Shader::InitShader(const char* label, const char* vertFile, const char* fragFile)
 {
   _label = label;
 

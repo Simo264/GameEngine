@@ -1,8 +1,9 @@
 #include "PointLight.hh"
+#include "../Graphics/Shader.hh"
 
 void PointLight::Render(Shader* shader)
 {
-  const int uniformNameSize = uniformName.size();
+  const uint64_t uniformNameSize = uniformName.size();
   
   uniformName.append(".position");                            // shaderUName = "PointLight.position"
   shader->SetVec3f(uniformName.c_str(), position);

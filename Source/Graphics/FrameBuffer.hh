@@ -1,8 +1,8 @@
 #pragma once
 
 #include "../Core.hh"
+#include "../UncopyableObject.hh"
 #include "../Graphics/VertexArray.hh"
-#include "Shader.hh"
 
 enum class PostProcessingType {
 	POST_PROC_NONE			= 0,
@@ -13,19 +13,15 @@ enum class PostProcessingType {
 };
 
 
-class FrameBuffer
+class FrameBuffer : public UncopyableObject
 {
 public:
 	FrameBuffer();
-	~FrameBuffer() = default;
 
-	FrameBuffer(const FrameBuffer&) = delete;            // delete copy constructor
-	FrameBuffer& operator=(const FrameBuffer&) = delete; // delete assign op
-
-	void Create(Vec2i size);
-	void Bind()		const { glBindFramebuffer(GL_FRAMEBUFFER, _fbo); };
-	void Unbind() const { glBindFramebuffer(GL_FRAMEBUFFER, 0); };
-	void DrawFrame(Shader* shader);
+	void CreateFrameBuffer(Vec2i size);
+	void BindFrameBuffer() const { glBindFramebuffer(GL_FRAMEBUFFER, _fbo); };
+	void UnbindFrameBuffer() const { glBindFramebuffer(GL_FRAMEBUFFER, 0); };
+	void DrawFrame(class Shader* shader);
 	void SetPostProcessing(PostProcessingType type) { _postprocType = type; }
 
 	const uint32_t& GetFramebufferTexture() const { return _texture; }
@@ -37,8 +33,6 @@ private:
 	uint32_t _fbo;
 	uint32_t _rbo;
 	uint32_t _texture;
-	
 	VertexArray _screenFrameVAO;
-
 	PostProcessingType _postprocType;
 };

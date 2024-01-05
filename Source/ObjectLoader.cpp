@@ -1,7 +1,9 @@
 #include "ObjectLoader.hh"
+#include "Texture2D.hh"
 #include "Logger.hh"
 
-#include "Graphics/VertexArray.hh"
+#include "Mesh/StaticMesh.hh"
+#include "Mesh/Model.hh"
 
 #include "Subsystems/TexturesManager.hh"
 
@@ -32,10 +34,8 @@ void ObjectLoader::LoadStaticMesh(StaticMesh* staticMesh)
 
 void ObjectLoader::LoadModel(Model* model)
 {
-  int nMeshes = _scene->mNumMeshes;
-
-  model->Initialize(nMeshes);
-
+  uint32_t nMeshes = _scene->mNumMeshes;
+  model->InitModel(nMeshes);
   for (int i = 0; i < nMeshes; i++)
   {
     aiMesh* aimesh = _scene->mMeshes[i];
@@ -48,15 +48,10 @@ void ObjectLoader::LoadModel(Model* model)
  * -----------------------------------------------------
 */
 
-void ObjectLoader::LoadMesh(const aiMesh* aimesh, StaticMesh* staticMesh)
+void ObjectLoader::LoadMesh(const aiMesh* aimesh, Mesh* mesh)
 {
-  const int nVertices = aimesh->mNumVertices;
-  const int nFaces = aimesh->mNumFaces;
-
   Vector<float> vertices;
   Vector<uint32_t> indices;
-  vertices.reserve(nVertices * 8); // 8 -> position(3)+normals(3)+textcoord(2)
-  indices.reserve(nFaces * 3);     // 3 -> 3 vertices per triangle 
   LoadVertices(aimesh, vertices);
   LoadIndices(aimesh, indices);
 
@@ -65,26 +60,26 @@ void ObjectLoader::LoadMesh(const aiMesh* aimesh, StaticMesh* staticMesh)
   auto specular = GetTexture(material, "specular");
 
   // default configuration
-  // ---------------------------------
-  VAConfig config;
-  config.PushAttribute(3); // vec3 position    
-  config.PushAttribute(3); // vec3 normals 
-  config.PushAttribute(2); // vec2 text coords
+  VertexArrayConfig config{ 3,3,2 }; //(3)position + (3)normal + (2)textCoords
 
-  VAData data;
-  data.vertData = vertices.data();
-  data.vertDataSize = vertices.size() * sizeof(float);
-  data.indData = indices.data();
-  data.indDataSize = indices.size() * sizeof(uint32_t);
-
-  staticMesh->InitMesh(data, config);
-  staticMesh->diffuse = diffuse;
-  staticMesh->specular = specular;
+  VertexArrayData data{
+    vertices.size() * sizeof(float),
+    vertices.data(),
+    indices.size() * sizeof(uint32_t),
+    indices.data()};
+  
+  mesh->InitMesh(data, config);
+  mesh->diffuse = diffuse;
+  mesh->specular = specular;
 }
 
 void ObjectLoader::LoadVertices(const aiMesh* aimesh, Vector<float>& vertDest)
 {
-  for (uint32_t i = 0; i < aimesh->mNumVertices; i++)
+  const uint32_t nVertices = aimesh->mNumVertices;
+  const uint64_t size = nVertices * 8; // 8: 3(position) + 3(normals) + 2(textcoord)
+  vertDest.reserve(size); 
+
+  for (uint32_t i = 0; i < nVertices; i++)
   {
     aiVector3D& vertPos = aimesh->mVertices[i];
     aiVector3D& vertNor = aimesh->mNormals[i];
@@ -98,14 +93,18 @@ void ObjectLoader::LoadVertices(const aiMesh* aimesh, Vector<float>& vertDest)
 
 void ObjectLoader::LoadIndices(const aiMesh* aimesh, Vector<uint32_t>& indDest)
 {
-  for (uint32_t i = 0; i < aimesh->mNumFaces; i++)
+  const uint32_t nFaces = aimesh->mNumFaces;
+  const uint64_t size = nFaces * 3; // 3: number of vertices per triangle 
+  indDest.reserve(size); 
+
+  for (uint32_t i = 0; i < nFaces; i++)
   {
     const aiFace& face = aimesh->mFaces[i];
     indDest.insert(indDest.end(), { face.mIndices[0],face.mIndices[1],face.mIndices[2] });
   }
 }
 
-Texture2D* ObjectLoader::GetTexture(const struct aiMaterial* material, const char* textureType)
+Texture2D* ObjectLoader::GetTexture(const aiMaterial* material, const char* textureType)
 {
   aiTextureType aiType = aiTextureType_NONE;
   if (std::strcmp(textureType, "diffuse") == 0)

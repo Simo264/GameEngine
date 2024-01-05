@@ -1,11 +1,11 @@
 #pragma once
 
 #include "../Core.hh"
-#include "../Graphics/Shader.hh"
+#include "../UncopyableObject.hh"
 
-// Interface lighting class
-// ----------------------------
-class BaseLight
+// Interface of base lighting class
+// ------------------------------------------
+class BaseLight : public UncopyableObject
 {
 public:
   BaseLight(const char* uniformName)
@@ -20,7 +20,7 @@ public:
   }
   ~BaseLight() = default;
 
-  virtual void Render(Shader* shader) = 0;
+  virtual void Render(class Shader* shader) = 0;
 
   Vec3f color;    // light color
   float ambient;  // ambient intensity

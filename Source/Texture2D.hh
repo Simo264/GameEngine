@@ -1,18 +1,16 @@
 #pragma once
 
 #include "Core.hh"
+#include "UncopyableObject.hh"
 
-class Texture2D
+class Texture2D : public UncopyableObject
 {
 public:
   Texture2D() : textureID{ 0 } {};
-  ~Texture2D() = default;
 
-  Texture2D(const Texture2D&) = delete;            // delete copy constructor
-  Texture2D& operator=(const Texture2D&) = delete; // delete assign op
-
-  void Create(Path path);
-  void Destroy() const { glDeleteTextures(1, &textureID); }
+  void InitTexture(Path path);
+  void DestroyTexture() const { glDeleteTextures(1, &textureID); }
+  void BindTexture() const { glBindTexture(GL_TEXTURE_2D, textureID); }
 
   uint32_t textureID;
   Path texturePath;

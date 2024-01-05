@@ -1,11 +1,28 @@
 #include "VertexArray.hh"
+#include "../Logger.hh"
 
 /* -----------------------------------------------------
- *          VertexArray
+ *          VertexArrayConfig class
  * -----------------------------------------------------
 */
 
-void VertexArray::Create(VAData& data, VAConfig& config)
+void VertexArrayConfig::PushAttribute(uint8_t attribute)
+{
+  if (numAttrs >= layout.size())
+  {
+    CONSOLE_ERROR("VAConfiguration::pushAttribute can't push more attributes");
+    return;
+  }
+  layout[numAttrs++] = attribute;
+}
+
+
+/* -----------------------------------------------------
+ *          VertexArray class
+ * -----------------------------------------------------
+*/
+
+void VertexArray::InitVertexArray(VertexArrayData& data, VertexArrayConfig& config)
 {
   glGenVertexArrays(1, &_vao);
   glBindVertexArray(_vao);
@@ -37,8 +54,11 @@ void VertexArray::Create(VAData& data, VAConfig& config)
   numVertices = data.vertDataSize / (stride * sizeof(float));
 }
 
-void VertexArray::Destroy()
+void VertexArray::DestroyVertexArray()
 {
+  glDeleteVertexArrays(1, &_vao);
+  glDeleteBuffers(1, &_vbo);
+
   if(_ebo != 0)
     glDeleteBuffers(1, &_ebo);
 }

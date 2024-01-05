@@ -5,8 +5,8 @@
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
 #include <spdlog/spdlog.h>
 
-// Logger: static class
-// --------------------------
+// Static class Logger
+// -----------------------------------------
 class Logger
 {
 public:

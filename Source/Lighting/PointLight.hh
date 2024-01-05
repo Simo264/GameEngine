@@ -2,7 +2,6 @@
 
 #include "BaseLight.hh"
 
-
 struct Attenuation
 {
   Attenuation()
@@ -23,9 +22,8 @@ class PointLight : public BaseLight
 {
 public:
   PointLight(const char* uniformName) : BaseLight(uniformName), position{ 0.0f, 0.0f, 0.0f } {}
-  ~PointLight() = default;
     
-  void Render(Shader* shader);
+  void Render(class Shader* shader);
 
   Vec3f position;
 

@@ -1,5 +1,7 @@
 #include "FrameBuffer.hh"
+#include "Shader.hh"
 #include "Renderer.hh"
+
 #include "../Logger.hh"
 
 FrameBuffer::FrameBuffer()
@@ -8,7 +10,6 @@ FrameBuffer::FrameBuffer()
 	_rbo = 0;
 	_texture = 0;
 	_postprocType = PostProcessingType::POST_PROC_NONE;
-
 
 	float vertices[] = {
 		// positions   // texCoords
@@ -21,16 +22,12 @@ FrameBuffer::FrameBuffer()
 		 1.0f,  1.0f,  1.0f, 1.0f
 	};
 
-	VAConfig config;
-	config.PushAttribute(2); // vec2 position
-	config.PushAttribute(2); // vec2 textCoords
-
-	VAData data{ sizeof(vertices),vertices,0,nullptr };
-
-	_screenFrameVAO.Create(data, config);
+	VertexArrayConfig config{ 2,2 }; // (2)position, (2)textCoords
+	VertexArrayData data{ sizeof(vertices),vertices,0,nullptr };
+	_screenFrameVAO.InitVertexArray(data, config);
 }
 
-void FrameBuffer::Create(Vec2i size)
+void FrameBuffer::CreateFrameBuffer(Vec2i size)
 {
 	glGenFramebuffers(1, &_fbo);
 	glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
@@ -77,7 +74,7 @@ void FrameBuffer::DrawFrame(Shader* shader)
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, _texture);
-	Renderer::DrawArrays(_screenFrameVAO);
+	Renderer::DrawArrays(&_screenFrameVAO);
 }
 	
 void FrameBuffer::Destroy()
@@ -85,5 +82,5 @@ void FrameBuffer::Destroy()
 	glDeleteFramebuffers(1, &_fbo);
 	glDeleteRenderbuffers(1, &_rbo);
 	glDeleteTextures(1, &_texture);
-	_screenFrameVAO.Destroy();
+	_screenFrameVAO.DestroyVertexArray();
 }

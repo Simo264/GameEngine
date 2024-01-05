@@ -109,11 +109,16 @@ void Editor::ShowStats()
   ImGui::End();
 }
 
-void Editor::ShowScenePanel()
-{
 #if 0
+void Editor::ShowScenePanel(DirectionalLight& light, Model& model)
+{
   if (!_scenePanelOpen)
     return;
+
+  ImGui::Begin("Scene", &_scenePanelOpen);
+
+  ImGui::End();
+
 
   static int treeNodeActorSelected = -1 ? sceneActors.empty() : 0;
 
@@ -145,9 +150,10 @@ void Editor::ShowScenePanel()
 
   if (treeNodeActorSelected >= 0)
     ShowPropertiesPanel(sceneActors[treeNodeActorSelected]);
-#endif
 }
+#endif
 
+#if 0
 void Editor::ShowViewportPanel(const uint32_t& framebufferTexture)
 {
 #if 0
@@ -167,6 +173,8 @@ void Editor::ShowViewportPanel(const uint32_t& framebufferTexture)
   ImGui::End();
 #endif
 }
+#endif
+
 
 /* -----------------------------------------------------
  *          PRIVATE METHODS

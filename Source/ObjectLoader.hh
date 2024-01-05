@@ -1,10 +1,7 @@
 #pragma once
 
 #include "Core.hh"
-#include "Texture2D.hh"
-
-#include "Mesh/StaticMesh.hh"
-#include "Mesh/Model.hh"
+#include "UncopyableObject.hh"
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -12,17 +9,16 @@
 
 // Load mesh data from .obj files inside Assets directory
 // -------------------------------------------------
-class ObjectLoader
+class ObjectLoader : public UncopyableObject
 {
 public:
 	ObjectLoader(Path filePath);
-	~ObjectLoader() = default;
-	
-	// Load single Static Mesh from object file
-	void LoadStaticMesh(StaticMesh* staticMesh);
 
-	// Load multiple Static Mesh from object file to create a Model object
-	void LoadModel(Model* model);
+	// Load Static Mesh object from file
+	void LoadStaticMesh(class StaticMesh* staticMesh);
+
+	// Load multiple Mesh objects from file to create a Model object
+	void LoadModel(class Model* model);
 	
 private:
 	inline static Path _assetsDirPath = std::filesystem::current_path().parent_path() / "Assets";
@@ -30,8 +26,8 @@ private:
 	Assimp::Importer _importer;
 	const aiScene* _scene;
 
-	void LoadMesh(const aiMesh* aimesh, StaticMesh* staticMesh);
+	void LoadMesh(const aiMesh* aimesh, class Mesh* mesh);
 	void LoadVertices(const aiMesh* aimesh, Vector<float>& vertDest);
 	void LoadIndices(const aiMesh* aimesh, Vector<uint32_t>& indDest);
-	Texture2D* GetTexture(const struct aiMaterial* material, const char* textureType);
+	class Texture2D* GetTexture(const aiMaterial* material, const char* textureType);
 };

@@ -12,6 +12,7 @@
 #include <chrono>
 #include <fstream>
 #include <filesystem>
+#include <initializer_list>
 #include <iostream>
 #include <memory>
 #include <numeric>

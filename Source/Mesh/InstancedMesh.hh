@@ -10,7 +10,7 @@ public:
 
 	~InstancedMesh() = default;
 
-	void Init(VAData& data, VAConfig& config);
+	void Init(VertexArrayData& data, VertexArrayConfig& config);
 	void Destroy();
 
 	void		 SetInstanceNumber(uint32_t n);
@@ -24,7 +24,7 @@ public:
 	const uint32_t MAX_NUM_INSTANCES;
 
 private:
-	void Instancing(VAConfig& config);
+	void Instancing(VertexArrayConfig& config);
 
 	uint32_t _instanceBuffer;
 	uint32_t _nInstancesToDraw;

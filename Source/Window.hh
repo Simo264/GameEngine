@@ -1,15 +1,14 @@
 #pragma once
 
 #include "Core.hh"
+#include "UncopyableObject.hh"
 
 // Wrapper class for GLFWwindow
 // ----------------------------------
-class Window
+class Window : public UncopyableObject
 {
 public:
-
   Window(GLFWwindow* window) : _window{ window } { };
-  ~Window() = default;
 
   // glfw: set close flag TRUE
   void CloseWindow() { glfwSetWindowShouldClose(_window, GLFW_TRUE); }

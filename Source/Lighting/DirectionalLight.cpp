@@ -1,9 +1,9 @@
 #include "DirectionalLight.hh"
-
+#include "../Graphics/Shader.hh"
 
 void DirectionalLight::Render(Shader* shader)
 {
-  const int uniformNameSize = uniformName.size();
+  const uint64_t uniformNameSize = uniformName.size();
 
   uniformName.append(".direction");                     // uniformName = "DirLight.direction"
   shader->SetVec3f(uniformName.c_str(), direction);

@@ -78,6 +78,8 @@ void Engine::Run()
   //cylinder.position.y = -0.49f;
 
   Model lowpolyTree("Lowpoly_tree/Lowpoly_tree.obj");
+  lowpolyTree.meshBuffer[0].diffuse = TexturesManager::GetTexture("green-texture.jpg");
+  lowpolyTree.meshBuffer[1].diffuse = TexturesManager::GetTexture("green-texture.jpg");
   // ---------------------------------------
 
   // Lighting
@@ -115,7 +117,7 @@ void Engine::Run()
     glfwPollEvents();
     if (window.GetKey(GLFW_KEY_ESCAPE) == GLFW_PRESS)
       window.CloseWindow();
-    camera.ProcessInput(window, deltaTime);
+    camera.ProcessInput(&window, deltaTime);
     const Mat4f projection = glm::perspective(glm::radians(camera.fov), aspectRatio, 0.1f, 100.0f);
     const Mat4f view = camera.GetViewMatrix();
 
@@ -143,7 +145,7 @@ void Engine::Run()
     //editor.MenuBar();
     //editor.ShowDemo();
     //editor.ShowScenePanel(sceneActors, dirLight);
-    editor.ShowStats();
+    //editor.ShowStats();
     editor.RenderFrame();
     window.SwapWindowBuffers();
     lastUpdateTime = now;

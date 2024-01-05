@@ -1,19 +1,16 @@
 #pragma once
 
 #include "../Core.hh"
+#include "../UncopyableObject.hh"
 
-class Shader
+class Shader : public UncopyableObject
 {
 public:
   Shader() : _shaderID{ 0 } { }
-  ~Shader() = default;
 
-  Shader(const Shader&) = delete;            // delete copy constructor
-  Shader& operator=(const Shader&) = delete; // delete assign op
-
-  void Create(const char* label, const char* vertFile, const char* fragFile);
+  void InitShader(const char* label, const char* vertFile, const char* fragFile);
   void Use() const { glUseProgram(_shaderID); }
-  void Destroy() { glDeleteProgram(_shaderID); }
+  void DestroyShader() { glDeleteProgram(_shaderID); }
   const String& Label() const { return _label; }
 
   void SetBool(const char* name, bool value) const;

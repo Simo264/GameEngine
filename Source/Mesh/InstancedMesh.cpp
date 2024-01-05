@@ -5,9 +5,9 @@
             PUBLIC METHODS
    -------------------------------------- */
 
-void InstancedMesh::Init(VAData& data, VAConfig& config)
+void InstancedMesh::Init(VertexArrayData& data, VertexArrayConfig& config)
 {
-	vertexArray.Create(data, config);
+	vertexArray.InitVertexArray(data, config);
 
 	// instancing
 	// -------------------------
@@ -16,7 +16,7 @@ void InstancedMesh::Init(VAData& data, VAConfig& config)
 
 void InstancedMesh::Destroy()
 {
-	vertexArray.Destroy();
+	vertexArray.DestroyVertexArray();
   glDeleteBuffers(1, &_instanceBuffer);
 }
 
@@ -38,10 +38,10 @@ void InstancedMesh::SetInstanceModel(Mat4f* model, uint32_t instance)
     CONSOLE_WARN("InstancedMesh::SetModel invalid instance value!");
     return;
   }
-  vertexArray.Bind();
+  vertexArray.BindVertexArray();
   glBindBuffer(GL_ARRAY_BUFFER, _instanceBuffer);
   glBufferSubData(GL_ARRAY_BUFFER, instance * sizeof(Mat4f), sizeof(Mat4f), model);
-  vertexArray.Unbind();
+  vertexArray.UnbindVertexArray();
 }
 
 void InstancedMesh::SetInstancesModelRange(uint32_t start, uint32_t n, Mat4f* models)
@@ -52,19 +52,19 @@ void InstancedMesh::SetInstancesModelRange(uint32_t start, uint32_t n, Mat4f* mo
     return;
   }
   
-  vertexArray.Bind();
+  vertexArray.BindVertexArray();
   glBindBuffer(GL_ARRAY_BUFFER, _instanceBuffer);
   glBufferSubData(GL_ARRAY_BUFFER, start * sizeof(Mat4f), n * sizeof(Mat4f), models);
-  vertexArray.Unbind();
+  vertexArray.UnbindVertexArray();
 }
 
 /* --------------------------------------
             PRIVATE METHODS
    -------------------------------------- */
 
-void InstancedMesh::Instancing(VAConfig& config)
+void InstancedMesh::Instancing(VertexArrayConfig& config)
 {
-  vertexArray.Bind();
+  vertexArray.BindVertexArray();
 
   Vector<Mat4f> models(MAX_NUM_INSTANCES, Mat4f(1.0f));
 
@@ -87,5 +87,5 @@ void InstancedMesh::Instancing(VAConfig& config)
     glVertexAttribDivisor(nLayoutModel, 1);
   }
 
-  vertexArray.Unbind();
+  vertexArray.UnbindVertexArray();
 }

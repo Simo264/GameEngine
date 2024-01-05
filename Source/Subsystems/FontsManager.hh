@@ -2,8 +2,9 @@
 
 #include "../Core.hh"
 
-// Load and retrieve font files located within the Fonts directory
-// ------------------------------------------------------------------------
+// Static class FontsManager: 
+// load and retrieve font files located within the Fonts directory
+// ---------------------------------------------------------------
 class FontsManager
 {
 public:

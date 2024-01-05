@@ -1,45 +1,45 @@
 #include "Renderer.hh"
+#include "VertexArray.hh"
+
 #include "../Logger.hh"
 
-uint32_t Renderer::drawCalls = 0;
-
-void Renderer::DrawArrays(VertexArray& vertexArray)
+void Renderer::DrawArrays(VertexArray* vertexArray)
 {
-	vertexArray.Bind();
-	glDrawArrays(GL_TRIANGLES, 0, vertexArray.numVertices);
+	vertexArray->BindVertexArray();
+	glDrawArrays(GL_TRIANGLES, 0, vertexArray->numVertices);
 	drawCalls++;
-	vertexArray.Unbind();
+	vertexArray->UnbindVertexArray();
 }
 
-void Renderer::DrawArraysInstanced(VertexArray& vertexArray, int nInstances)
+void Renderer::DrawArraysInstanced(VertexArray* vertexArray, int nInstances)
 {
-	vertexArray.Bind();
-	glDrawArraysInstanced(GL_TRIANGLES, 0, vertexArray.numVertices, nInstances);
+	vertexArray->BindVertexArray();
+	glDrawArraysInstanced(GL_TRIANGLES, 0, vertexArray->numVertices, nInstances);
 	drawCalls++;
 
-	vertexArray.Unbind();
+	vertexArray->UnbindVertexArray();
 }
 
-void Renderer::DrawIndexed(VertexArray& vertexArray)
+void Renderer::DrawIndexed(VertexArray* vertexArray)
 {
-	if(vertexArray.numIndices <= 0)
-		CONSOLE_WARN("You called Renderer::DrawIndexed but with no indices");
+	if(vertexArray->numIndices <= 0)
+		CONSOLE_WARN("Renderer::DrawIndexed called but no indices provided");
 		
-	vertexArray.Bind();
-	glDrawElements(GL_TRIANGLES, vertexArray.numIndices, GL_UNSIGNED_INT, 0);
+	vertexArray->BindVertexArray();
+	glDrawElements(GL_TRIANGLES, vertexArray->numIndices, GL_UNSIGNED_INT, 0);
 	drawCalls++;
 
-	vertexArray.Unbind();
+	vertexArray->UnbindVertexArray();
 }
 
-void Renderer::DrawIndexedInstanced(VertexArray& vertexArray, int nInstances)
+void Renderer::DrawIndexedInstanced(VertexArray* vertexArray, int nInstances)
 {
-	if (vertexArray.numIndices <= 0)
-		CONSOLE_WARN("You called Renderer::DrawIndexedInstanced but with no indices");
+	if (vertexArray->numIndices <= 0)
+		CONSOLE_WARN("Renderer::DrawIndexedInstanced called but no indices provided");
 
-	vertexArray.Bind();
-	glDrawElementsInstanced(GL_TRIANGLES, vertexArray.numIndices, GL_UNSIGNED_INT, 0, nInstances);
+	vertexArray->BindVertexArray();
+	glDrawElementsInstanced(GL_TRIANGLES, vertexArray->numIndices, GL_UNSIGNED_INT, 0, nInstances);
 	drawCalls++;
 
-	vertexArray.Unbind();
+	vertexArray->UnbindVertexArray();
 }

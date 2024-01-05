@@ -9,7 +9,7 @@
  * -----------------------------------------------------
 */
 
-void Texture2D::Create(Path path)
+void Texture2D::InitTexture(Path path)
 {
   texturePath = path;
 

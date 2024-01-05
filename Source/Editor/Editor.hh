@@ -22,8 +22,8 @@ public:
 
 	void ShowDemo();
 	void ShowStats();
-	void ShowScenePanel();
-	void ShowViewportPanel(const uint32_t& framebufferTexture);
+	//void ShowScenePanel(DirectionalLight& light, Model& model);
+	//void ShowViewportPanel(const uint32_t& framebufferTexture);
 
 private:
 	bool _demoPanelOpen  = true;

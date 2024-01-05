@@ -1,4 +1,6 @@
 #include "Model.hh"
+
+#include "../Graphics/Shader.hh"
 #include "../Graphics/Renderer.hh"
 #include "../ObjectLoader.hh"
 #include "../Logger.hh"
@@ -12,27 +14,27 @@ Model::Model(Path filePath)
 	loader.LoadModel(this);
 }
 
-void Model::Draw(Shader* shader)
+void Model::Draw(Shader* shader) const
 {
 	for (int i = 0; i < _nMeshes; i++)
 	{
-		StaticMesh* mesh = &meshBuffer[i];
+		Mesh* mesh = &meshBuffer[i];
 		mesh->Draw(shader);
 	}
 }
 
-void Model::Destroy()
+void Model::DestroyModel()
 {
 	for (int i = 0; i < _nMeshes; i++)
 	{
-		StaticMesh* mesh = &meshBuffer[i];
+		Mesh* mesh = &meshBuffer[i];
 		mesh->DestroyMesh();
 	}
 	meshBuffer.reset();
 }
 
-void Model::Initialize(uint32_t nMeshes)
+void Model::InitModel(uint32_t nMeshes)
 {
-	meshBuffer = std::make_unique<StaticMesh[]>(nMeshes);
+	meshBuffer = std::make_unique<Mesh[]>(nMeshes);
 	_nMeshes = nMeshes;
 }

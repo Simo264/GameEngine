@@ -1,29 +1,27 @@
 #pragma once
 
 #include "../Core.hh"
-#include "../Logger.hh"
-
-#include <stack>
+#include "../UncopyableObject.hh"
 
 // Vertex Array Configuration 
-// --------------------------------------
-struct VAConfig
+// -------------------------------------------------
+class VertexArrayConfig
 {
-  VAConfig()
+public:
+  VertexArrayConfig()
   {
     numAttrs = 0;
     layout.fill(0);
   }
 
-  void PushAttribute(uint8_t attribute)
+  VertexArrayConfig(std::initializer_list<uint8_t> values)
   {
-    if (numAttrs >= layout.size())
-    {
-      CONSOLE_ERROR("VAConfiguration::pushAttribute can't push more attributes");
-      return;
-    }
-    layout[numAttrs++] = attribute;
+    numAttrs = values.size();
+    layout.fill(0);
+    std::copy(values.begin(), values.end(), layout.begin());
   }
+
+  void PushAttribute(uint8_t attribute);
 
   // ex: layout = [3, 3, 2]
   // layout=0: in vec3 components (x,y,z)
@@ -35,38 +33,34 @@ struct VAConfig
 
 
 // Vertex Array Data
-// ----------------------------------------
-struct VAData
+// -------------------------------------------------
+struct VertexArrayData
 {
-  uint32_t	vertDataSize;
+  uint64_t	vertDataSize;
   float*    vertData;
 
-  uint32_t	indDataSize;
+  uint64_t	indDataSize;
   uint32_t* indData;
 
-  VAData()
+  VertexArrayData()
     : vertDataSize{ 0 }, indDataSize{ 0 }, vertData{ nullptr }, indData{ nullptr } {}
-  VAData(uint32_t vSize, float* vData, uint32_t iSize, uint32_t* iData)
+  VertexArrayData(uint64_t vSize, float* vData, uint64_t iSize, uint32_t* iData)
     : vertDataSize{ vSize }, indDataSize{ iSize }, vertData{ vData }, indData{ iData } {}
 };
 
 
 // Vertex Array Object
 // -------------------------------------------------
-class VertexArray
+class VertexArray : public UncopyableObject
 {
 public:
-  VertexArray() : _ebo{ 0 }, numVertices{ 0 }, numIndices{ 0 } {}
-  ~VertexArray() = default;
+  VertexArray() : _vao{ 0 }, _vbo{ 0 }, _ebo{ 0 }, numVertices{ 0 }, numIndices{ 0 } {}
 
-  VertexArray(const VertexArray&) = delete;            // delete copy constructor
-  VertexArray& operator=(const VertexArray&) = delete; // delete assign op
+  void InitVertexArray(VertexArrayData& data, VertexArrayConfig& config);
+  void DestroyVertexArray();
 
-  void Create(VAData& data, VAConfig& config);
-  void Destroy();
-
-  void Bind()   const { glBindVertexArray(_vao); };
-  void Unbind() const { glBindVertexArray(0); };
+  void BindVertexArray()   const { glBindVertexArray(_vao); };
+  void UnbindVertexArray() const { glBindVertexArray(0); };
 
   uint32_t numVertices;
   uint32_t numIndices;
