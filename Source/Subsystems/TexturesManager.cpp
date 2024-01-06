@@ -20,7 +20,7 @@ void TexturesManager::Initialize()
 
 Texture2D* TexturesManager::LoadTexture(Path filePath)
 {
-  if (_numTextures >= _textureBuffer.size())
+  if (_nTextures >= TEXTURES_MANAGER_MAX_SIZE)
   {
     CONSOLE_ERROR("Can't load more textures. Buffer is full");
     throw RuntimeError("");
@@ -33,7 +33,7 @@ Texture2D* TexturesManager::LoadTexture(Path filePath)
     throw RuntimeError("");
   }
 
-  Texture2D* texture = &_textureBuffer[_numTextures++];
+  Texture2D* texture = &_textureBuffer[_nTextures++];
   texture->InitTexture(filePath);
   return texture;
 }
@@ -42,7 +42,7 @@ Texture2D* TexturesManager::GetTexture(Path filePath)
 {
   filePath = _texturesDir / filePath.lexically_normal();
 
-  for (uint32_t i = 0; i < _numTextures; i++)
+  for (uint32_t i = 0; i < _nTextures; i++)
   {
     auto texture = &_textureBuffer[i];
     if (texture->texturePath.compare(filePath) == 0)
@@ -52,3 +52,9 @@ Texture2D* TexturesManager::GetTexture(Path filePath)
   return nullptr;
 }
 
+void TexturesManager::GetTextures(Vector<Texture2D*>& out)
+{
+  out.reserve(_nTextures);
+  for (int i = 0; i < _nTextures; i++)
+    out.push_back(&_textureBuffer[i]);
+}

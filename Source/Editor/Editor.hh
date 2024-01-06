@@ -1,10 +1,6 @@
 #pragma once
 
 #include "../Core.hh"
-#include "../Lighting/BaseLight.hh"
-#include "../Lighting/DirectionalLight.hh"
-#include "../Lighting/PointLight.hh"
-#include "../Lighting/SpotLight.hh"
 
 class Editor
 {
@@ -22,7 +18,7 @@ public:
 
 	void ShowDemo();
 	void ShowStats();
-	//void ShowScenePanel(DirectionalLight& light, Model& model);
+	void ShowScenePanel(class DirectionalLight* sceneLight, Vector<class StaticMesh*>& sceneMeshes);
 	//void ShowViewportPanel(const uint32_t& framebufferTexture);
 
 private:
@@ -31,5 +27,5 @@ private:
 	bool _statsPanelOpen = true;
 
 	void Styling();
-	void ShowPropertiesPanel();
+	void ShowPropertiesPanel(class StaticMesh* meshTarget);
 };

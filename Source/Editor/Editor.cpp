@@ -6,12 +6,17 @@
 #include "../Subsystems/TexturesManager.hh"
 #include "../Graphics/Renderer.hh"
 
+#include "../Lighting/DirectionalLight.hh"
+#include "../Mesh/StaticMesh.hh"
+
 #include "Imgui/imgui.h"
 #include "Imgui/imgui_impl_glfw.h"
 #include "Imgui/imgui_impl_opengl3.h"
 #include "Imgui/imgui_stdlib.h"
 #include "Imgui/imgui_internal.h"
 #include "Imgui/imgui_spectrum.h"
+
+
 
 /* -----------------------------------------------------
  *          PUBLIC METHODS
@@ -100,62 +105,69 @@ void Editor::ShowStats()
   if (!_statsPanelOpen)
     return;
 
+  ImGuiIO& io = ImGui::GetIO();
+
+  static float timeOld = 0.0f;
+  static float timeNew = 0.0f;
+  static float framerate = io.Framerate;
+
   ImGui::Begin("Stats", &_statsPanelOpen);
 
-  ImGuiIO& io = ImGui::GetIO();
-  ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+  timeNew = glfwGetTime();
+  if (timeNew - timeOld >= (1/8.0f)) // update every 1/4 seconds
+  {
+    timeOld = timeNew;
+    framerate = io.Framerate;
+  }
+  
+  ImGui::Text("Application average %.3f ms/frame (%d FPS)", 1000.0f / framerate, (int) framerate);
   ImGui::Text("Draw calls: %d", Renderer::drawCalls);
   ImGui::End();
 }
 
-#if 0
-void Editor::ShowScenePanel(DirectionalLight& light, Model& model)
+void Editor::ShowScenePanel(DirectionalLight* sceneLight, Vector<StaticMesh*>& sceneMeshes)
 {
   if (!_scenePanelOpen)
     return;
+  
+  static int treeNodeStaticMeshSelected = -1 ? sceneMeshes.empty() : 0;
 
   ImGui::Begin("Scene", &_scenePanelOpen);
-
-  ImGui::End();
-
-
-  static int treeNodeActorSelected = -1 ? sceneActors.empty() : 0;
-
-  ImGui::Begin("Scene", &_scenePanelOpen);
-  if (ImGui::TreeNode("Actors"))
-  { 
-    for (int i = 0; i < sceneActors.size(); i++)
-    {
-      if (ImGui::Selectable(sceneActors[i]->actorName.c_str(), treeNodeActorSelected == i))
-        treeNodeActorSelected = i;
-    }
-    ImGui::TreePop();
-  }
 
   if (ImGui::TreeNode("Lighting"))
   {
     if (ImGui::TreeNode("Directional light"))
     {
-      ImGui::ColorEdit3("Light color", (float*)&dirLight.color);
-      ImGui::SliderFloat("Light ambient", &dirLight.ambient, 0.0f, 1.0f);
-      ImGui::SliderFloat("Light diffuse", &dirLight.diffuse, 0.0f, 1.0f);
-      ImGui::SliderFloat("Light specular", &dirLight.specular, 0.0f, 1.0f);
-      ImGui::DragFloat3("Light direction", (float*)&dirLight.direction, 0.005f, -FLT_MAX, +FLT_MAX);
+      ImGui::ColorEdit3("Light color", (float*)&sceneLight->color);
+      ImGui::SliderFloat("Light ambient", &sceneLight->ambient, 0.0f, 1.0f);
+      ImGui::SliderFloat("Light diffuse", &sceneLight->diffuse, 0.0f, 1.0f);
+      ImGui::SliderFloat("Light specular", &sceneLight->specular, 0.0f, 1.0f);
+      ImGui::DragFloat3("Light direction", (float*)&sceneLight->direction, 0.005f, -FLT_MAX, +FLT_MAX);
       ImGui::TreePop();
+    }
+    ImGui::TreePop();
+  }
+  if (ImGui::TreeNode("StaticMesh"))
+  {
+    for (int i = 0; i < sceneMeshes.size(); i++)
+    {
+      char staticMeshName[30] = "StaticMesh";
+      std::strcat(staticMeshName, std::to_string(i).c_str());
+
+      if (ImGui::Selectable(staticMeshName, treeNodeStaticMeshSelected == i))
+        treeNodeStaticMeshSelected = i;
     }
     ImGui::TreePop();
   }
   ImGui::End();
 
-  if (treeNodeActorSelected >= 0)
-    ShowPropertiesPanel(sceneActors[treeNodeActorSelected]);
+  if (treeNodeStaticMeshSelected >= 0)
+    ShowPropertiesPanel(sceneMeshes[treeNodeStaticMeshSelected]);
 }
-#endif
 
 #if 0
 void Editor::ShowViewportPanel(const uint32_t& framebufferTexture)
 {
-#if 0
   ImGui::Begin("Viewport");
 
   // Using a Child allow to fill all the space of the window.
@@ -170,7 +182,6 @@ void Editor::ShowViewportPanel(const uint32_t& framebufferTexture)
   
   ImGui::EndChild();
   ImGui::End();
-#endif
 }
 #endif
 
@@ -199,38 +210,54 @@ void Editor::Styling()
   ImGui::StyleColorsClassic();
 }
 
-void Editor::ShowPropertiesPanel()
+void Editor::ShowPropertiesPanel(StaticMesh* meshTarget)
 {
-#if 0
-  ImGui::Begin("Properties");
+  Mesh* mesh = meshTarget->GetMesh(0);
 
-  char text[50] = "Actor name: ";
-  strcat_s(text, 50, target->actorName.c_str());
-  ImGui::Text(text);
+  ImGui::Begin("Properties");
+  ImGui::Text("(StaticMesh name)");
+  
+  //char text[50] = "Actor name: ";
+  //strcat_s(text, 50, target->actorName.c_str());
+  //ImGui::Text(text);
 
   ImGui::SeparatorText("Transformation");
-  ImGui::DragFloat3("Translation", (float*)&target->position, 0.005f, -FLT_MAX, +FLT_MAX);
-  ImGui::DragFloat3("Scaling", (float*)&target->scaling, 0.005f, -FLT_MAX, +FLT_MAX);
-  ImGui::DragFloat("Rotation angle", (float*)&target->rotationAngle, 0.5f, -180.0f, +180.0f);
-  ImGui::SliderFloat3("Rotation axis", (float*)&target->rotation, 0.0f, 1.0f);
+  ImGui::DragFloat3("Translation", (float*)&meshTarget->position, 0.005f, -FLT_MAX, +FLT_MAX);
+  ImGui::DragFloat3("Scaling", (float*)&meshTarget->scaling, 0.005f, -FLT_MAX, +FLT_MAX);
+  ImGui::DragFloat("Rotation angle", (float*)&meshTarget->rotationAngle, 0.5f, -180.0f, +180.0f);
+  ImGui::SliderFloat3("Rotation axis", (float*)&meshTarget->rotationAxis, 0.0f, 1.0f);
 
   ImGui::SeparatorText("Material");
-  ImGui::Text("Current texture");
-  
-  Model* modelTarget = static_cast<Model*>(target);
-  Mesh& meshTarget = modelTarget->GetMesh(0);
+  ImGui::Text(mesh->diffuse->texturePath.string().c_str());
   ImGui::Image(
-    (ImTextureID)meshTarget.textureDiffuse->textureID,
-    ImVec2(64.0f, 64.0f),
-    ImVec2(0.0f, 0.0f),
-    ImVec2(1.0f, 1.0f),
-    ImVec4(1.0f, 1.0f, 1.0f, 1.0f),
-    ImVec4(1.0f, 0.0f, 0.0f, 1.0f)
+    (ImTextureID)mesh->diffuse->textureID,
+    ImVec2(64.0f, 64.0f) // image size
   );
 
-  ImGui::SameLine();
-  ImGui::Text(meshTarget.textureDiffuse->texturePath.filename().string().c_str());
+  static Vector<Texture2D*> textures;
+  if(textures.empty())
+    TexturesManager::GetTextures(textures);
 
+  static char currentItem[100] = {};
+  if (std::strlen(currentItem) == 0)
+    std::strcpy(currentItem, mesh->diffuse->texturePath.string().c_str());
+
+  if (ImGui::BeginCombo("Textures", currentItem))
+  {
+    for (int i = 0; i < textures.size(); i++)
+    {
+      String textPathStr = textures[i]->texturePath.string();
+      bool isSelected = (std::strcmp(currentItem, textPathStr.c_str()) == 0);
+      if (ImGui::Selectable(textPathStr.c_str(), isSelected))
+      {
+        std::strcpy(currentItem, textPathStr.c_str());
+        mesh->diffuse = TexturesManager::GetTexture(currentItem);
+      }
+      if (isSelected)
+        ImGui::SetItemDefaultFocus();
+    }
+    ImGui::EndCombo();
+  }
+  
   ImGui::End();
-#endif
 }

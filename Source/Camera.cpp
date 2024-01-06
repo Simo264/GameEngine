@@ -15,7 +15,7 @@ Camera::Camera(Vec2i windowSize, Vec3f position) : position{ position }
   pitch   = 0.0f;
 
   movementSpeed    = 7.5f;  // [1.0f:10.0f]
-  mouseSensitivity = 0.25f; // [0.0f:1.0f]
+  mouseSensitivity = 25.0f; // [1.0f:100.0f]
   fov              = 45.0f;
 
   _lastX = (float)(windowSize.x / 2);
@@ -107,17 +107,19 @@ void Camera::FreeCameraRotation(Vec2d& mousePos, const double deltaTime)
     _firstMouse = false;
   }
 
+  const float velocity = mouseSensitivity * deltaTime * 10;
+
   const float xoffset = _lastX - mousePos.x;
   if (xoffset < 0) // Right
-    yaw += mouseSensitivity;
+    yaw += velocity;
   else if (xoffset > 0) // Left
-    yaw -= mouseSensitivity;
+    yaw -= velocity;
 
   const float yoffset = _lastY - mousePos.y;
   if (yoffset > 0) // Up
-    pitch += mouseSensitivity;
+    pitch += velocity;
   else if (yoffset < 0) // Down
-    pitch -= mouseSensitivity;
+    pitch -= velocity;
 
   _lastX = mousePos.x;
   _lastY = mousePos.y;

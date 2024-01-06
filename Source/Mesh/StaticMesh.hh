@@ -22,6 +22,7 @@ public:
 	void DestroyStaticMesh();
 
 	Mesh* GetMesh(uint32_t i) { return &_meshBuffer[i]; }
+	const uint32_t& GetNumMeshes() const { return _nMeshes; }
 
 private:
 	UniquePointer<Mesh[]> _meshBuffer;

@@ -4,7 +4,6 @@
 
 StaticMesh::StaticMesh(Path objFilePath) : RootComponent(), UncopyableObject()
 {
-	_meshBuffer = UniquePointer<Mesh[]>(nullptr);
 	_nMeshes = 0;
 
 	ObjectLoader loader(objFilePath);
@@ -14,7 +13,7 @@ StaticMesh::StaticMesh(Path objFilePath) : RootComponent(), UncopyableObject()
 void StaticMesh::SetMeshes(uint32_t nMeshes)
 {
 	_nMeshes = nMeshes;
-	_meshBuffer.reset(new Mesh[nMeshes]);
+	_meshBuffer = std::make_unique<Mesh[]>(nMeshes);
 }
 
 void StaticMesh::Draw(Shader* shader)
