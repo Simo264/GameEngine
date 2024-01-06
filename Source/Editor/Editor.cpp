@@ -1,7 +1,6 @@
 #include "Editor.hh"
 
 #include "../Logger.hh"
-#include "../Mesh/Model.hh"
 
 #include "../Subsystems/FontsManager.hh"
 #include "../Subsystems/TexturesManager.hh"

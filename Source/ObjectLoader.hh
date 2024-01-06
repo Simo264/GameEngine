@@ -16,9 +16,6 @@ public:
 
 	// Load Static Mesh object from file
 	void LoadStaticMesh(class StaticMesh* staticMesh);
-
-	// Load multiple Mesh objects from file to create a Model object
-	void LoadModel(class Model* model);
 	
 private:
 	inline static Path _assetsDirPath = std::filesystem::current_path().parent_path() / "Assets";

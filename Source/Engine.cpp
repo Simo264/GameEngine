@@ -4,7 +4,6 @@
 #include "Camera.hh"
 #include "ObjectLoader.hh"
 
-#include "Mesh/Model.hh"
 #include "Mesh/Shapes/Cube.hh"
 #include "Mesh/Shapes/Plane.hh"
 #include "Mesh/Shapes/Cylinder.hh"
@@ -77,9 +76,9 @@ void Engine::Run()
   //cylinder.position.x = 5.0f;
   //cylinder.position.y = -0.49f;
 
-  Model lowpolyTree("Lowpoly_tree/Lowpoly_tree.obj");
-  lowpolyTree.meshBuffer[0].diffuse = TexturesManager::GetTexture("green-texture.jpg");
-  lowpolyTree.meshBuffer[1].diffuse = TexturesManager::GetTexture("green-texture.jpg");
+  StaticMesh lowpolyTree("Lowpoly_tree/Lowpoly_tree.obj");
+  lowpolyTree.GetMesh(0)->diffuse = TexturesManager::GetTexture("green-texture.jpg");
+  lowpolyTree.GetMesh(1)->diffuse = TexturesManager::GetTexture("green-texture.jpg");
   // ---------------------------------------
 
   // Lighting

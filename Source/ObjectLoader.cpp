@@ -3,7 +3,6 @@
 #include "Logger.hh"
 
 #include "Mesh/StaticMesh.hh"
-#include "Mesh/Model.hh"
 
 #include "Subsystems/TexturesManager.hh"
 
@@ -28,18 +27,14 @@ ObjectLoader::ObjectLoader(Path filePath)
 
 void ObjectLoader::LoadStaticMesh(StaticMesh* staticMesh)
 {
-  aiMesh* aimesh = _scene->mMeshes[0];
-  LoadMesh(aimesh, staticMesh);
-}
-
-void ObjectLoader::LoadModel(Model* model)
-{
   uint32_t nMeshes = _scene->mNumMeshes;
-  model->SetMeshNumber(nMeshes);
+  staticMesh->SetMeshes(nMeshes);
+  
   for (int i = 0; i < nMeshes; i++)
   {
     aiMesh* aimesh = _scene->mMeshes[i];
-    LoadMesh(aimesh, &model->meshBuffer[i]);
+    Mesh* mesh = staticMesh->GetMesh(i);
+    LoadMesh(aimesh, mesh);
   }
 }
 
