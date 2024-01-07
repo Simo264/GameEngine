@@ -2,7 +2,7 @@
 #include "Logger.hh"
 #include "Window.hh"
 #include "Camera.hh"
-#include "ObjectLoader.hh"
+#include "Scene.hh"
 
 #include "Mesh/Shapes/Cube.hh"
 #include "Mesh/Shapes/Plane.hh"
@@ -63,32 +63,34 @@ void Engine::Run()
 
   // Mesh objects
   // ---------------------------------------
-  Plane plane;
-  plane.position.y = -1.0f;
-  plane.scaling = Vec3f(10.0f, 0.0f, 10.0f);
+  Plane plane1;
+  Plane plane2;
+  Plane plane3;
+  Plane plane4;
+  plane1.position = Vec3f(0.0f, 0.0f, 0.0f);
+  plane2.position = Vec3f(2.0f, 0.0f, 0.0f);
+  plane3.position = Vec3f(0.0f, 0.0f, 2.0f);
+  plane4.position = Vec3f(2.0f, 0.0f, 2.0f);
 
-  Cube cube;
-  cube.scaling = Vec3f(0.5f, 0.5f, 0.5f);
-  cube.position.y = -0.49f;
 
-  Cylinder cylinder;
-  cylinder.scaling = Vec3f(0.5f, 0.5f, 0.5f);
-  cylinder.position.x = 5.0f;
-  cylinder.position.y = -0.49f;
-
-  StaticMesh lowpolyTree("Lowpoly_tree/Lowpoly_tree.obj");
-
-  Vector<StaticMesh*> sceneMeshes = { &plane,&cube,&cylinder,&lowpolyTree };
-  
-  //lowpolyTree.GetMesh(0)->diffuse = TexturesManager::GetTexture("green-texture.jpg");
-  //lowpolyTree.GetMesh(1)->diffuse = TexturesManager::GetTexture("green-texture.jpg");
   // ---------------------------------------
 
   // Lighting
   // ---------------------------------------
   DirectionalLight dirLight("DirLight");
+  PointLight pointLight("PointLight");
   // ---------------------------------------
   
+  // Create scene
+  // ---------------------------------------
+  Scene scene;
+  scene.directionalLight = &dirLight;
+  scene.AddPointLight(&pointLight);
+  scene.AddStaticMesh(&plane1);
+  scene.AddStaticMesh(&plane2);
+  scene.AddStaticMesh(&plane3);
+  scene.AddStaticMesh(&plane4);
+  // ---------------------------------------
 
   // Framebuffer object
   // ---------------------------------------
@@ -122,29 +124,21 @@ void Engine::Run()
     camera.ProcessInput(&window, deltaTime);
     const Mat4f projection = glm::perspective(glm::radians(camera.fov), aspectRatio, 0.1f, 100.0f);
     const Mat4f view = camera.GetViewMatrix();
-
+    sceneShader->Use();
+    sceneShader->SetMat4f("Projection", projection);
+    sceneShader->SetMat4f("View", view);
 
     // Render scene
     // ---------------------------------------
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // make sure we clear the framebuffer's content
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    sceneShader->Use();
-    sceneShader->SetMat4f("Projection", projection);
-    sceneShader->SetMat4f("View", view);
-    sceneShader->SetMat4f("Model", Mat4f(1.0f));
-    
-    dirLight.Render(sceneShader);
-    
-    for (StaticMesh* mesh : sceneMeshes)
-      mesh->Draw(sceneShader);
-
+    scene.DrawScene(sceneShader);
 
     // Render editor
     // ---------------------------------------
     //editor.MenuBar();
-    editor.ShowDemo();
-    editor.ShowScenePanel(&dirLight, sceneMeshes);
+    //editor.ShowDemo();
+    editor.ShowScenePanel(&scene);
     editor.ShowStats();
     editor.RenderFrame();
     window.SwapWindowBuffers();

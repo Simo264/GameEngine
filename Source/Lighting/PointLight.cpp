@@ -1,32 +1,32 @@
 #include "PointLight.hh"
 #include "../Graphics/Shader.hh"
 
-void PointLight::Render(Shader* shader)
+void PointLight::RenderLight(Shader* shader)
 {
-  const uint64_t uniformNameSize = uniformName.size();
+  const uint64_t uniformNameSize = _uniformName.size();
   
-  uniformName.append(".position");                            // shaderUName = "PointLight.position"
-  shader->SetVec3f(uniformName.c_str(), position);
+  _uniformName.append(".position");                            // shaderUName = "PointLight.position"
+  shader->SetVec3f(_uniformName.c_str(), position);
     
-  uniformName.erase(uniformNameSize);
-  uniformName.append(".ambient");                             // shaderUName = "PointLight.ambient"
-  shader->SetVec3f(uniformName.c_str(), color * ambient);
+  _uniformName.erase(uniformNameSize);
+  _uniformName.append(".ambient");                             // shaderUName = "PointLight.ambient"
+  shader->SetVec3f(_uniformName.c_str(), color * ambient);
     
-  uniformName.erase(uniformNameSize);
-  uniformName.append(".diffuse");                             // shaderUName = "PointLight.diffuse"
-  shader->SetVec3f(uniformName.c_str(), color * diffuse);
+  _uniformName.erase(uniformNameSize);
+  _uniformName.append(".diffuse");                             // shaderUName = "PointLight.diffuse"
+  shader->SetVec3f(_uniformName.c_str(), color * diffuse);
     
-  uniformName.erase(uniformNameSize);
-  uniformName.append(".specular");                            // shaderUName = "PointLight.specular"
-  shader->SetVec3f(uniformName.c_str(), color * specular);
+  _uniformName.erase(uniformNameSize);
+  _uniformName.append(".specular");                            // shaderUName = "PointLight.specular"
+  shader->SetVec3f(_uniformName.c_str(), color * specular);
     
-  uniformName.erase(uniformNameSize);
-  uniformName.append(".linear");                              // shaderUName = "PointLight.linear"
-  shader->SetFloat(uniformName.c_str(), attenuation.linear);
+  _uniformName.erase(uniformNameSize);
+  _uniformName.append(".linear");                              // shaderUName = "PointLight.linear"
+  shader->SetFloat(_uniformName.c_str(), attenuation.linear);
     
-  uniformName.erase(uniformNameSize);
-  uniformName.append(".quadratic");                           // shaderUName = "PointLight.quadratic"
-  shader->SetFloat(uniformName.c_str(), attenuation.quadratic);
+  _uniformName.erase(uniformNameSize);
+  _uniformName.append(".quadratic");                           // shaderUName = "PointLight.quadratic"
+  shader->SetFloat(_uniformName.c_str(), attenuation.quadratic);
 
-  uniformName.erase(uniformNameSize);                         // shaderUName = "PointLight"
+  _uniformName.erase(uniformNameSize);                         // shaderUName = "PointLight"
 }

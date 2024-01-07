@@ -18,7 +18,7 @@ public:
 
 	void ShowDemo();
 	void ShowStats();
-	void ShowScenePanel(class DirectionalLight* sceneLight, Vector<class StaticMesh*>& sceneMeshes);
+	void ShowScenePanel(class Scene* scene);
 	//void ShowViewportPanel(const uint32_t& framebufferTexture);
 
 private:
@@ -28,4 +28,6 @@ private:
 
 	void Styling();
 	void ShowPropertiesPanel(class StaticMesh* meshTarget);
+	void ShowPropertiesPanel(class DirectionalLight* dirLight);
+	void ShowPropertiesPanel(class PointLight* pointLight);
 };

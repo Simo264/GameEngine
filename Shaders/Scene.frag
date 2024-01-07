@@ -86,7 +86,7 @@ void main()
 
   // if no texture: set diffuse to default color gray
   if(length(diffuseColor) == 0)
-    diffuseColor = vec3(0.2f, 0.2f, 0.2f);
+    diffuseColor = vec3(0.25f, 0.50f, 0.75f);
 
   // phase 1: Directional lighting
   vec3 result = CalcDirLight();

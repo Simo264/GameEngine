@@ -1,13 +1,14 @@
 #include "Editor.hh"
 
-#include "../Logger.hh"
-
-#include "../Subsystems/FontsManager.hh"
-#include "../Subsystems/TexturesManager.hh"
-#include "../Graphics/Renderer.hh"
-
 #include "../Lighting/DirectionalLight.hh"
+#include "../Lighting/PointLight.hh"
 #include "../Mesh/StaticMesh.hh"
+#include "../Scene.hh"
+
+#include "../Subsystems/TexturesManager.hh"
+#include "../Subsystems/FontsManager.hh"
+#include "../Graphics/Renderer.hh"
+#include "../Logger.hh"
 
 #include "Imgui/imgui.h"
 #include "Imgui/imgui_impl_glfw.h"
@@ -125,28 +126,52 @@ void Editor::ShowStats()
   ImGui::End();
 }
 
-void Editor::ShowScenePanel(DirectionalLight* sceneLight, Vector<StaticMesh*>& sceneMeshes)
+void Editor::ShowScenePanel(Scene* scene)
 {
   if (!_scenePanelOpen)
     return;
   
-  static int treeNodeStaticMeshSelected = -1 ? sceneMeshes.empty() : 0;
+  auto& dirLight = scene->directionalLight;
+  auto& pointLights = scene->pointLights;
+  auto& sceneMeshes = scene->meshes;
+
+  static bool treeNodeDirLightSelected = false;
+  static int treeNodePointLightSelected = -1; 
+  static int treeNodeStaticMeshSelected = -1;
 
   ImGui::Begin("Scene", &_scenePanelOpen);
 
   if (ImGui::TreeNode("Lighting"))
   {
-    if (ImGui::TreeNode("Directional light"))
+    if (ImGui::Selectable("Directional light", treeNodeDirLightSelected == true))
     {
-      ImGui::ColorEdit3("Light color", (float*)&sceneLight->color);
-      ImGui::SliderFloat("Light ambient", &sceneLight->ambient, 0.0f, 1.0f);
-      ImGui::SliderFloat("Light diffuse", &sceneLight->diffuse, 0.0f, 1.0f);
-      ImGui::SliderFloat("Light specular", &sceneLight->specular, 0.0f, 1.0f);
-      ImGui::DragFloat3("Light direction", (float*)&sceneLight->direction, 0.005f, -FLT_MAX, +FLT_MAX);
-      ImGui::TreePop();
+      treeNodeDirLightSelected = true;
+      treeNodeStaticMeshSelected = -1;
+      treeNodePointLightSelected = -1;
+    }
+
+    if (pointLights.size() > 0)
+    {
+      if (ImGui::TreeNode("Point lights"))
+      {
+        for (int i = 0; i < pointLights.size(); i++)
+        {
+          char pointLightName[50] = "Point light";
+          std::strcat(pointLightName, std::to_string(i).c_str());
+          if (ImGui::Selectable(pointLightName, treeNodePointLightSelected == i))
+          {
+            treeNodeDirLightSelected = false;
+            treeNodePointLightSelected = i;
+            treeNodeStaticMeshSelected = -1;
+          }
+        }
+        ImGui::TreePop();
+      }
     }
     ImGui::TreePop();
   }
+
+
   if (ImGui::TreeNode("StaticMesh"))
   {
     for (int i = 0; i < sceneMeshes.size(); i++)
@@ -155,13 +180,21 @@ void Editor::ShowScenePanel(DirectionalLight* sceneLight, Vector<StaticMesh*>& s
       std::strcat(staticMeshName, std::to_string(i).c_str());
 
       if (ImGui::Selectable(staticMeshName, treeNodeStaticMeshSelected == i))
+      {
+        treeNodeDirLightSelected = false;
+        treeNodePointLightSelected = -1;
         treeNodeStaticMeshSelected = i;
+      }
     }
     ImGui::TreePop();
   }
   ImGui::End();
 
-  if (treeNodeStaticMeshSelected >= 0)
+  if (treeNodeDirLightSelected) 
+    ShowPropertiesPanel(dirLight);
+  else if (treeNodePointLightSelected >= 0) 
+    ShowPropertiesPanel(pointLights[treeNodePointLightSelected]);
+  else if (treeNodeStaticMeshSelected >= 0)
     ShowPropertiesPanel(sceneMeshes[treeNodeStaticMeshSelected]);
 }
 
@@ -217,10 +250,6 @@ void Editor::ShowPropertiesPanel(StaticMesh* meshTarget)
   ImGui::Begin("Properties");
   ImGui::Text("(StaticMesh name)");
   
-  //char text[50] = "Actor name: ";
-  //strcat_s(text, 50, target->actorName.c_str());
-  //ImGui::Text(text);
-
   ImGui::SeparatorText("Transformation");
   ImGui::DragFloat3("Translation", (float*)&meshTarget->position, 0.005f, -FLT_MAX, +FLT_MAX);
   ImGui::DragFloat3("Scaling", (float*)&meshTarget->scaling, 0.005f, -FLT_MAX, +FLT_MAX);
@@ -258,6 +287,34 @@ void Editor::ShowPropertiesPanel(StaticMesh* meshTarget)
     }
     ImGui::EndCombo();
   }
+  
+  ImGui::End();
+}
+
+void Editor::ShowPropertiesPanel(DirectionalLight* dirLight)
+{
+  ImGui::Begin("Properties");
+  ImGui::SeparatorText("Directional light");
+
+  ImGui::ColorEdit3("Light color", (float*)&dirLight->color);
+  ImGui::SliderFloat("Light ambient", &dirLight->ambient, 0.0f, 1.0f);
+  ImGui::SliderFloat("Light diffuse", &dirLight->diffuse, 0.0f, 1.0f);
+  ImGui::SliderFloat("Light specular", &dirLight->specular, 0.0f, 1.0f);
+  ImGui::DragFloat3("Light direction", (float*)&dirLight->direction, 0.005f, -FLT_MAX, +FLT_MAX);
+  
+  ImGui::End();
+}
+
+void Editor::ShowPropertiesPanel(PointLight* pointLight)
+{
+  ImGui::Begin("Properties");
+  ImGui::SeparatorText("Point light");
+  
+  ImGui::ColorEdit3("Light color", (float*)&pointLight->color);
+  ImGui::SliderFloat("Light ambient", &pointLight->ambient, 0.0f, 1.0f);
+  ImGui::SliderFloat("Light diffuse", &pointLight->diffuse, 0.0f, 1.0f);
+  ImGui::SliderFloat("Light specular", &pointLight->specular, 0.0f, 1.0f);
+  ImGui::DragFloat3("Light position", (float*)&pointLight->position, 0.005f, -FLT_MAX, +FLT_MAX);
   
   ImGui::End();
 }

@@ -11,7 +11,7 @@ class DirectionalLight : public BaseLight
 public:
   DirectionalLight(const char* uniformName) : BaseLight(uniformName), direction{ 0.0f, -1.0f, 0.0f } {} 
 
-  void Render(class Shader* shader);
+  void RenderLight(class Shader* shader);
 
   Vec3f direction;
 };
