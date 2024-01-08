@@ -110,36 +110,37 @@ vec3 CalcDirLight()
   float diff = max(dot(normal, lightDir), 0.0);
   
   // specular shading
-  vec3  reflectDir = reflect(-lightDir, normal);
-  float spec      = pow(max(dot(viewDir, reflectDir), 0.0), Material.shininess);
+  vec3 reflectDir = reflect(-lightDir, normal);
+  float spec = pow(max(dot(viewDir, reflectDir), 0.0), Material.shininess);
   
   // combine results
-  vec3  ambient  = DirLight.ambient  * diffuseColor;
-  vec3  diffuse  = DirLight.diffuse  * diff * diffuseColor;
-  vec3  specular = DirLight.specular * spec * specularColor;
+  vec3 ambient  = DirLight.ambient  * diffuseColor;
+  vec3 diffuse  = DirLight.diffuse  * diff * diffuseColor;
+  vec3 specular = DirLight.specular * spec * specularColor;
   return (ambient + diffuse + specular);
 }
 
 vec3 CalcPointLight()
 {
-  vec3 lightDir = normalize(PointLight.position - FragPos);
+  vec3 lightDir   = normalize(PointLight.position - FragPos);
+  vec3 halfwayDir = normalize(lightDir + viewDir);
   
   // diffuse shading
   float diff = max(dot(normal, lightDir), 0.0);
-  
+
   // specular shading
   vec3 reflectDir = reflect(-lightDir, normal);
-  float spec = pow(max(dot(viewDir, reflectDir), 0.0), Material.shininess);
-  
+  float spec = pow(max(dot(normal, halfwayDir), 0.0), Material.shininess);
+
   // attenuation
   float distance    = length(PointLight.position - FragPos);
-  float attenuation = 1.0 / (1.0 + PointLight.linear * distance + PointLight.quadratic * (distance * distance));    
+  float attenuation = 1.0 / (1.0 + PointLight.linear * distance + PointLight.quadratic * (distance * distance)); 
   
   // combine results
   vec3 ambient  = PointLight.ambient  * diffuseColor;
   vec3 diffuse  = PointLight.diffuse  * diff * diffuseColor;
   vec3 specular = PointLight.specular * spec * specularColor;
-  
+
   ambient  *= attenuation;
   diffuse  *= attenuation;
   specular *= attenuation;
@@ -174,8 +175,6 @@ vec3 CalcSpotLight()
     diffuse  *= intensity;
     specular *= intensity;
 
-
-
     // attenuation
     float distance    = length(SpotLight.position - FragPos);
     float attenuation = 1.0 / (1.0 + SpotLight.linear * distance + SpotLight.quadratic * (distance * distance));    
@@ -188,8 +187,6 @@ vec3 CalcSpotLight()
     
     return vec3(ambient + diffuse + specular);
   }
-  else 
-  {
+  else
     return vec3(0.f,0.f,0.f);
-  }
 }
