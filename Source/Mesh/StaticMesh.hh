@@ -10,6 +10,8 @@
 class StaticMesh : public RootComponent, public UncopyableObject
 {
 public:
+	StaticMesh() = default;
+	
 	// The path of object file containing all vertices and indices 
 	StaticMesh(Path objFilePath);
 	

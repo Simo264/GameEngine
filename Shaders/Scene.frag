@@ -122,6 +122,30 @@ vec3 CalcDirLight()
 
 vec3 CalcPointLight()
 {
+  // ambient
+  vec3 ambient = PointLight.ambient * diffuseColor;
+  	
+  // diffuse 
+  vec3 lightDir = normalize(PointLight.position - FragPos);
+  float diff    = max(dot(normal, lightDir), 0.0);
+  vec3 diffuse  = PointLight.diffuse * diff * diffuseColor;  
+    
+  // specular
+  vec3 reflectDir = reflect(-lightDir, normal);  
+  float spec = pow(max(dot(viewDir, reflectDir), 0.0), Material.shininess);
+  vec3 specular = PointLight.specular * spec * specularColor;  
+    
+  // attenuation
+  float distance    = length(PointLight.position - FragPos);
+  float attenuation = 1.0 / (1.0f + PointLight.linear * distance + PointLight.quadratic * (distance * distance));    
+
+  ambient  *= attenuation;  
+  diffuse  *= attenuation;
+  specular *= attenuation;   
+        
+  return ambient + diffuse + specular;
+
+#if 0
   vec3 lightDir   = normalize(PointLight.position - FragPos);
   vec3 halfwayDir = normalize(lightDir + viewDir);
   
@@ -134,8 +158,8 @@ vec3 CalcPointLight()
 
   // attenuation
   float distance    = length(PointLight.position - FragPos);
-  float attenuation = 1.0 / (1.0 + PointLight.linear * distance + PointLight.quadratic * (distance * distance)); 
-  
+  float attenuation = 1.0f / (1.0f + PointLight.linear * distance + PointLight.quadratic * (distance * distance));    
+
   // combine results
   vec3 ambient  = PointLight.ambient  * diffuseColor;
   vec3 diffuse  = PointLight.diffuse  * diff * diffuseColor;
@@ -145,6 +169,7 @@ vec3 CalcPointLight()
   diffuse  *= attenuation;
   specular *= attenuation;
   return (ambient + diffuse + specular);
+#endif
 }
 
 vec3 CalcSpotLight()

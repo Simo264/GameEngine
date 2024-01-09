@@ -245,6 +245,10 @@ void Editor::Styling()
 
 void Editor::ShowPropertiesPanel(StaticMesh* meshTarget)
 {
+  static Vector<Texture2D*> textures;
+  if (textures.empty())
+    TexturesManager::GetTextures(textures);
+
   Mesh* mesh = meshTarget->GetMesh(0);
 
   ImGui::Begin("Properties");
@@ -257,37 +261,32 @@ void Editor::ShowPropertiesPanel(StaticMesh* meshTarget)
   ImGui::SliderFloat3("Rotation axis", (float*)&meshTarget->rotationAxis, 0.0f, 1.0f);
 
   ImGui::SeparatorText("Material");
-  ImGui::Text(mesh->diffuse->texturePath.string().c_str());
+
+  const String diffusePathStr = (mesh->diffuse ? mesh->diffuse->texturePath.string() : "");
+  const uint32_t diffuseID = (mesh->diffuse ? mesh->diffuse->textureID : 0);
+  if (mesh->diffuse)
+    ImGui::Text(diffusePathStr.c_str());
+  else
+    ImGui::Text("None");
+  
   ImGui::Image(
-    (ImTextureID)mesh->diffuse->textureID,
+    (ImTextureID)diffuseID,
     ImVec2(64.0f, 64.0f) // image size
   );
 
-  static Vector<Texture2D*> textures;
-  if(textures.empty())
-    TexturesManager::GetTextures(textures);
-
-  static char currentItem[100] = {};
-  if (std::strlen(currentItem) == 0)
-    std::strcpy(currentItem, mesh->diffuse->texturePath.string().c_str());
-
-  if (ImGui::BeginCombo("Textures", currentItem))
+  if (ImGui::BeginCombo("Textures", diffusePathStr.c_str()))
   {
     for (int i = 0; i < textures.size(); i++)
     {
       String textPathStr = textures[i]->texturePath.string();
-      bool isSelected = (std::strcmp(currentItem, textPathStr.c_str()) == 0);
+      bool isSelected = (std::strcmp(diffusePathStr.c_str(), textPathStr.c_str()) == 0);
       if (ImGui::Selectable(textPathStr.c_str(), isSelected))
-      {
-        std::strcpy(currentItem, textPathStr.c_str());
-        mesh->diffuse = TexturesManager::GetTexture(currentItem);
-      }
+        mesh->diffuse = TexturesManager::GetTexture(textPathStr.c_str());
       if (isSelected)
         ImGui::SetItemDefaultFocus();
     }
     ImGui::EndCombo();
   }
-  
   ImGui::End();
 }
 

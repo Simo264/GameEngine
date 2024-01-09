@@ -41,6 +41,17 @@ void Engine::Initialize()
   // Load shaders 
   // ---------------------------------------
   LoadShaders();
+  auto instancingShader = ShadersManager::GetShader("InstancingShader");
+  instancingShader->Use();
+  instancingShader->SetInt("ourTexture", 0);
+  auto framebufferShader = ShadersManager::GetShader("FramebufferShader");
+  framebufferShader->Use();
+  framebufferShader->SetInt("screenTexture", 0);
+  auto sceneShader = ShadersManager::GetShader("SceneShader");
+  sceneShader->Use();
+  sceneShader->SetInt("Material.diffuse", 0);
+  sceneShader->SetInt("Material.specular", 1);
+  sceneShader->SetFloat("Material.shininess", 32.0f);
   
   // Load textures from Textures directory
   // ---------------------------------------
@@ -49,10 +60,10 @@ void Engine::Initialize()
 
 void Engine::Run()
 {
-  auto testingShader      = ShadersManager::GetShader("TestingShader");
-  auto instancingShader   = ShadersManager::GetShader("InstancingShader");
-  auto sceneShader        = ShadersManager::GetShader("SceneShader");
-  auto framebufferShader  = ShadersManager::GetShader("FramebufferShader");
+  auto testingShader = ShadersManager::GetShader("TestingShader");
+  auto instancingShader = ShadersManager::GetShader("InstancingShader");
+  auto framebufferShader = ShadersManager::GetShader("FramebufferShader");
+  auto sceneShader = ShadersManager::GetShader("SceneShader");
 
   Window window(glfwGetCurrentContext());
 
@@ -63,22 +74,22 @@ void Engine::Run()
 
   // Mesh objects
   // ---------------------------------------
-  Plane plane1;
-  Plane plane2;
-  Plane plane3;
-  Plane plane4;
-  plane1.position = Vec3f(0.0f, 0.0f, 0.0f);
-  plane2.position = Vec3f(2.0f, 0.0f, 0.0f);
-  plane3.position = Vec3f(0.0f, 0.0f, 2.0f);
-  plane4.position = Vec3f(2.0f, 0.0f, 2.0f);
-
-
+  Cube cube;
+  cube.GetMesh(0)->diffuse  = TexturesManager::GetTexture("container_diffuse.png");
+  cube.GetMesh(0)->specular = TexturesManager::GetTexture("container_specular.png");
+  Cube cubeLight;
+  cubeLight.scaling *= 0.25f;
   // ---------------------------------------
 
   // Lighting
   // ---------------------------------------
   DirectionalLight dirLight("DirLight");
+  dirLight.ambient = 0.1f;
+  dirLight.diffuse = 0.2f;
+  dirLight.specular = 0.0f;
+
   PointLight pointLight("PointLight");
+  pointLight.position = Vec3f(0.0f, 2.0f, 0.0f);
   // ---------------------------------------
   
   // Create scene
@@ -86,18 +97,9 @@ void Engine::Run()
   Scene scene;
   scene.directionalLight = &dirLight;
   scene.AddPointLight(&pointLight);
-  scene.AddStaticMesh(&plane1);
-  scene.AddStaticMesh(&plane2);
-  scene.AddStaticMesh(&plane3);
-  scene.AddStaticMesh(&plane4);
+  scene.AddStaticMesh(&cube);
+  scene.AddStaticMesh(&cubeLight);
   // ---------------------------------------
-
-  // Framebuffer object
-  // ---------------------------------------
-  //FrameBuffer framebuffer;
-  //framebuffer.Create(window.GetFramebufferSize());
-  // ---------------------------------------
-  
 
   // Loop
   // ---------------------------------------
@@ -133,6 +135,11 @@ void Engine::Run()
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // make sure we clear the framebuffer's content
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     scene.DrawScene(sceneShader);
+    cubeLight.position = pointLight.position;
+
+    cube.Draw(sceneShader);
+    cubeLight.Draw(sceneShader);
+
 
     // Render editor
     // ---------------------------------------
@@ -210,31 +217,20 @@ void Engine::InitOpenGL()
 
 void Engine::LoadShaders()
 {
-  auto testingShader = ShadersManager::LoadShaderProgram(
+  ShadersManager::LoadShaderProgram(
     "TestingShader",
     ShadersManager::GetShaderFile("Testing.vert"),
     ShadersManager::GetShaderFile("Testing.frag"));
-
-  auto instancingShader = ShadersManager::LoadShaderProgram(
+  ShadersManager::LoadShaderProgram(
     "InstancingShader",
     ShadersManager::GetShaderFile("Instancing.vert"),
     ShadersManager::GetShaderFile("Scene.frag"));
-  instancingShader->Use();
-  instancingShader->SetInt("ourTexture", 0);
-
-  auto sceneShader = ShadersManager::LoadShaderProgram(
+  ShadersManager::LoadShaderProgram(
     "SceneShader",
     ShadersManager::GetShaderFile("Scene.vert"),
     ShadersManager::GetShaderFile("Scene.frag"));
-  sceneShader->Use();
-  sceneShader->SetInt("Material.diffuse", 0); // sampler2d
-  sceneShader->SetInt("Material.specular", 1); // sampler2d
-  sceneShader->SetFloat("Material.shininess", 64.0f);
-
-  auto framebufferShader = ShadersManager::LoadShaderProgram(
+  ShadersManager::LoadShaderProgram(
     "FramebufferShader",
     ShadersManager::GetShaderFile("Framebuffer.vert"),
     ShadersManager::GetShaderFile("Framebuffer.frag"));
-  framebufferShader->Use();
-  framebufferShader->SetInt("screenTexture", 0);
 }

@@ -5,6 +5,5 @@
 class Cube : public StaticMesh
 {
 public:
-	Cube() : StaticMesh("Shapes/Cube/Cube.obj") {}
-
+	Cube() : StaticMesh("Shapes/Cube/Cube.onj"){}
 };

@@ -16,9 +16,6 @@ void Mesh::DestroyMesh()
 
 void Mesh::Draw(Shader* shader)
 {
-	//glActiveTexture(GL_TEXTURE0);
-	//glBindTexture(GL_TEXTURE_2D, 0);
-
 	if (diffuse)
 	{
 		glActiveTexture(GL_TEXTURE0);
@@ -34,4 +31,10 @@ void Mesh::Draw(Shader* shader)
 		Renderer::DrawArrays(&vertexArray);
 	else
 		Renderer::DrawIndexed(&vertexArray);
+	
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, 0); // unbind specular
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, 0); // unbind diffuse
 }
