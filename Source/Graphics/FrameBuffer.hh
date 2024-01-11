@@ -18,16 +18,15 @@ class FrameBuffer : public UncopyableObject
 public:
 	FrameBuffer(Vec2i size);
 	
-	void BindFrameBuffer() const { glBindFramebuffer(GL_FRAMEBUFFER, _renderRelatedIds[NORMAL_FBO]); };
+	void BindMSAAFramebuffer() const { glBindFramebuffer(GL_FRAMEBUFFER, _renderRelatedIds[MULTISAMPLING_FBO]);  }
 	void UnbindFrameBuffer() const { glBindFramebuffer(GL_FRAMEBUFFER, 0); };
-	void DrawFrame(class Shader* shader);
 	void BlitFrameBuffer();
-
-	void SetPostProcessing(PostProcessingType type) { _postprocType = type; }
-
+	
 	uint32_t GetFramebufferTexture() const { return _renderRelatedIds[NORMAL_TEXTURE]; }
-	void RescaleFrameBuffer(Vec2i newSize);
 
+	void DrawFrame(class Shader* shader);
+	void SetPostProcessing(PostProcessingType type) { _postprocType = type; }
+	void ResizeFrameBuffer(Vec2i newSize);
 	void Destroy();
 
 private:
@@ -37,13 +36,12 @@ private:
 	{
 		NORMAL_FBO = 0,
 		NORMAL_TEXTURE,
-		NORMAL_RBO,
 
 		MULTISAMPLING_FBO,
 		MULTISAMPLING_TEXTURE,
 		MULTISAMPLING_RBO,
 	};
-	uint32_t _renderRelatedIds[8];
+	uint32_t _renderRelatedIds[5];
 	VertexArray _screenFrameVAO;
 	PostProcessingType _postprocType;
 

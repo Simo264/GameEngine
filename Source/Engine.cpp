@@ -19,6 +19,8 @@
 #include "Graphics/Renderer.hh"
 #include "Graphics/FrameBuffer.hh"
 
+static bool windowResized = false;
+
 /* -----------------------------------------------------
  *          PUBLIC METHODS
  * -----------------------------------------------------
@@ -102,7 +104,7 @@ void Engine::Run()
     const double deltaTime = now - lastUpdateTime;
     const Vec2i windowFbSize = window.GetFramebufferSize();
     const float aspectRatio = (float)(windowFbSize.x / windowFbSize.y);
-    framebuffer.RescaleFrameBuffer(windowFbSize);
+    
     Renderer::drawCalls = 0;
 
 
@@ -117,25 +119,33 @@ void Engine::Run()
     sceneShader->SetMat4f("Projection", projection);
     sceneShader->SetMat4f("View", view);
 
+    if (windowResized)
+    {
+      CONSOLE_TRACE("Resizing framebuffer...");
+      framebuffer.RescaleFrameBuffer(windowFbSize);
+      CONSOLE_TRACE("Done");
+      windowResized = false;
+    }
+
     /* Render scene */
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
-    framebuffer.BindFrameBuffer();
+    framebuffer.BindMSAAFramebuffer();
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
  
     scene.DrawScene(sceneShader);
 
+    framebuffer.BlitFrameBuffer();
     framebuffer.UnbindFrameBuffer();
-    glClearColor(1.0f, 1.0f, 1.0f, 1.0f); 
+    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
-    glDisable(GL_DEPTH_TEST); 
+    glDisable(GL_DEPTH_TEST);
     
     framebufferShader->Use();
     framebuffer.DrawFrame(framebufferShader);
-
 
 
     /* Render editor */
@@ -184,6 +194,7 @@ void Engine::InitOpenGL()
   
   glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
+    windowResized = true;
   });
   glfwSetWindowSizeCallback(window, [](GLFWwindow* window, int width, int height) {
     glfwSetWindowSize(window, width, height);

@@ -10,7 +10,6 @@ FrameBuffer::FrameBuffer(Vec2i size)
 
 	_renderRelatedIds[NORMAL_FBO] = 0;
 	_renderRelatedIds[NORMAL_TEXTURE] = 0;
-	_renderRelatedIds[NORMAL_RBO] = 0;
 	_renderRelatedIds[MULTISAMPLING_FBO] = 0;
 	_renderRelatedIds[MULTISAMPLING_TEXTURE] = 0;
 	_renderRelatedIds[MULTISAMPLING_RBO] = 0;
@@ -36,37 +35,50 @@ FrameBuffer::FrameBuffer(Vec2i size)
 
 void FrameBuffer::CreateFrameBuffer()
 {
-	glGenFramebuffers(1, &_renderRelatedIds[NORMAL_FBO]);
-	glBindFramebuffer(GL_FRAMEBUFFER, _renderRelatedIds[NORMAL_FBO]);
+	/* Create and bind the multisampling frame buffer */
+	glGenFramebuffers(1, &_renderRelatedIds[MULTISAMPLING_FBO]);
+	glBindFramebuffer(GL_FRAMEBUFFER, _renderRelatedIds[MULTISAMPLING_FBO]);
 	
-	/* Create a multisampling texture */
-	glGenTextures(1, &_renderRelatedIds[NORMAL_TEXTURE]);
-	glBindTexture(GL_TEXTURE_2D, _renderRelatedIds[NORMAL_TEXTURE]);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, _size.x, _size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+	/* Create and bind multisampling texture */
+	glGenTextures(1, &_renderRelatedIds[MULTISAMPLING_TEXTURE]);
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, _renderRelatedIds[MULTISAMPLING_TEXTURE]);
+	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, 4, GL_RGB, _size.x, _size.y, GL_TRUE);
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, _renderRelatedIds[MULTISAMPLING_TEXTURE], 0);
 	
-	/* Create a color renderbuffer object for both depth and stencil attachment */
-	glGenRenderbuffers(1, &_renderRelatedIds[NORMAL_RBO]);
-	glBindRenderbuffer(GL_RENDERBUFFER, _renderRelatedIds[NORMAL_RBO]);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, _size.x, _size.y);
-
-	/* Attach the texture and renderbuffer to the FBO */
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _renderRelatedIds[NORMAL_TEXTURE], 0);
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, _renderRelatedIds[NORMAL_RBO]);
+	/* Create and bind multisampling color render buffer object and a multisampling depth render buffer object. */
+	glGenRenderbuffers(1, &_renderRelatedIds[MULTISAMPLING_RBO]);
+	glBindRenderbuffer(GL_RENDERBUFFER, _renderRelatedIds[MULTISAMPLING_RBO]);
+	glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_DEPTH24_STENCIL8, _size.x, _size.y);
+	glBindRenderbuffer(GL_RENDERBUFFER, 0);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, _renderRelatedIds[MULTISAMPLING_RBO]);
 
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-		CONSOLE_ERROR("ERROR::FRAMEBUFFER:: Framebuffer is not complete!");
+		CONSOLE_ERROR("ERROR::FRAMEBUFFER MSAA Framebuffer is not complete!");
 	
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	/* Create and bind the normal frame buffer object */
+	glGenFramebuffers(1, &_renderRelatedIds[NORMAL_FBO]);
+	glBindFramebuffer(GL_FRAMEBUFFER, _renderRelatedIds[NORMAL_FBO]);
+
+	/* Create and bind normal texture */
+	glGenTextures(1, &_renderRelatedIds[NORMAL_TEXTURE]);
+	glBindTexture(GL_TEXTURE_2D, _renderRelatedIds[NORMAL_TEXTURE]);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, _size.x, _size.y, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _renderRelatedIds[NORMAL_TEXTURE], 0);
+
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		CONSOLE_ERROR("ERROR::FRAMEBUFFER Normal framebuffer is not complete!");
 }
 
 void FrameBuffer::BlitFrameBuffer()
 {
-
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, _renderRelatedIds[MULTISAMPLING_FBO]);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, _renderRelatedIds[NORMAL_FBO]);
+	glBlitFramebuffer(0, 0, _size.x, _size.y, 0, 0, _size.x, _size.y, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 }
 
 void FrameBuffer::DrawFrame(Shader* shader)
@@ -80,22 +92,26 @@ void FrameBuffer::DrawFrame(Shader* shader)
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 	
-void FrameBuffer::RescaleFrameBuffer(Vec2i newSize)
+void FrameBuffer::ResizeFrameBuffer(Vec2i newSize)
 {
-	_size = newSize;
-	glBindTexture(GL_TEXTURE_2D, _renderRelatedIds[NORMAL_TEXTURE]);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, newSize.x, newSize.y, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _renderRelatedIds[NORMAL_TEXTURE], 0);
-
-	glBindRenderbuffer(GL_RENDERBUFFER, _renderRelatedIds[NORMAL_TEXTURE]);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, newSize.x, newSize.y);
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, _renderRelatedIds[NORMAL_TEXTURE]);
+	//_size = newSize;
+	//glBindTexture(GL_TEXTURE_2D, _renderRelatedIds[NORMAL_TEXTURE]);
+	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, newSize.x, newSize.y, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _renderRelatedIds[NORMAL_TEXTURE], 0);
+	//
+	//glBindRenderbuffer(GL_RENDERBUFFER, _renderRelatedIds[NORMAL_TEXTURE]);
+	//glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, newSize.x, newSize.y);
+	//glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, _renderRelatedIds[NORMAL_TEXTURE]);
 }
 
 void FrameBuffer::Destroy()
 {
-
+	glDeleteFramebuffers(1, &_renderRelatedIds[MULTISAMPLING_FBO]);
+	glDeleteFramebuffers(1, &_renderRelatedIds[NORMAL_FBO]);
+	glDeleteTextures(1, &_renderRelatedIds[MULTISAMPLING_TEXTURE]);
+	glDeleteTextures(1, &_renderRelatedIds[NORMAL_TEXTURE]);
+	glDeleteRenderbuffers(1, &_renderRelatedIds[MULTISAMPLING_RBO]);
 	_screenFrameVAO.DestroyVertexArray();
 }
