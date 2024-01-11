@@ -65,61 +65,48 @@ void Engine::Run()
   auto framebufferShader = ShadersManager::GetShader("FramebufferShader");
   auto sceneShader = ShadersManager::GetShader("SceneShader");
 
+  /* Window object */
   Window window(glfwGetCurrentContext());
 
-  // Camera object
-  // ---------------------------------------
+  /* Camera object */
   Camera camera(window.GetWindowSize(), Vec3f(0.0f, 0.0f, 10.0f));
-  // ---------------------------------------
 
-  // Mesh objects
-  // ---------------------------------------
+  /* Mesh objects */ 
   Cube cube;
-  cube.GetMesh(0)->diffuse  = TexturesManager::GetTexture("container_diffuse.png");
-  cube.GetMesh(0)->specular = TexturesManager::GetTexture("container_specular.png");
-  Cube cubeLight;
-  cubeLight.scaling *= 0.25f;
-  // ---------------------------------------
 
-  // Lighting
-  // ---------------------------------------
+  /* Lighting */
   DirectionalLight dirLight("DirLight");
   dirLight.ambient = 0.1f;
   dirLight.diffuse = 0.2f;
   dirLight.specular = 0.0f;
-
   PointLight pointLight("PointLight");
   pointLight.position = Vec3f(0.0f, 2.0f, 0.0f);
-  // ---------------------------------------
   
-  // Create scene
-  // ---------------------------------------
+  /* Create scene */
   Scene scene;
   scene.directionalLight = &dirLight;
-  scene.AddPointLight(&pointLight);
   scene.AddStaticMesh(&cube);
-  scene.AddStaticMesh(&cubeLight);
-  // ---------------------------------------
 
-  // Loop
-  // ---------------------------------------
+  /* FrameBuffer object */
+  FrameBuffer framebuffer(window.GetFramebufferSize());
+
+
+  /* Loop  */
   double lastUpdateTime = 0;  // number of seconds since the last loop
   while (window.Loop())
   {
     editor.NewFrame();
 
-    // Per-frame time logic
-    // ---------------------------------------
+    /* Per - frame time logic */
     const double now = glfwGetTime();
     const double deltaTime = now - lastUpdateTime;
     const Vec2i windowFbSize = window.GetFramebufferSize();
     const float aspectRatio = (float)(windowFbSize.x / windowFbSize.y);
+    framebuffer.RescaleFrameBuffer(windowFbSize);
     Renderer::drawCalls = 0;
-    // ---------------------------------------
 
 
-    // input
-    // ---------------------------------------
+    /* input */
     glfwPollEvents();
     if (window.GetKey(GLFW_KEY_ESCAPE) == GLFW_PRESS)
       window.CloseWindow();
@@ -130,19 +117,28 @@ void Engine::Run()
     sceneShader->SetMat4f("Projection", projection);
     sceneShader->SetMat4f("View", view);
 
-    // Render scene
-    // ---------------------------------------
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // make sure we clear the framebuffer's content
+    /* Render scene */
+    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    
+    framebuffer.BindFrameBuffer();
+    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glEnable(GL_DEPTH_TEST);
+ 
     scene.DrawScene(sceneShader);
-    cubeLight.position = pointLight.position;
 
-    cube.Draw(sceneShader);
-    cubeLight.Draw(sceneShader);
+    framebuffer.UnbindFrameBuffer();
+    glClearColor(1.0f, 1.0f, 1.0f, 1.0f); 
+    glClear(GL_COLOR_BUFFER_BIT);
+    glDisable(GL_DEPTH_TEST); 
+    
+    framebufferShader->Use();
+    framebuffer.DrawFrame(framebufferShader);
 
 
-    // Render editor
-    // ---------------------------------------
+
+    /* Render editor */
     //editor.MenuBar();
     //editor.ShowDemo();
     editor.ShowScenePanel(&scene);
@@ -155,13 +151,10 @@ void Engine::Run()
 
 void Engine::ShutDown()
 {
-  // Shutdown Editor
-  // -----------------------------------------------------------------
+  /* Shutdown Editor */
   editor.ShutDown();
 
-
-  // GLFW: terminate, clearing all previously allocated GLFW resources.
-  // -----------------------------------------------------------------
+  /* GLFW: terminate, clearing all previously allocated GLFW resources */
   GLFWwindow* window = glfwGetCurrentContext();
   glfwDestroyWindow(window);
   glfwTerminate();
@@ -189,30 +182,27 @@ void Engine::InitOpenGL()
   //glfwSwapInterval(1);                      // v-sync on
   //glfwSetInputMode(window.Get(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
   
-  // FramebufferSizeCallback
   glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
   });
-  // WindowSizeCallback
   glfwSetWindowSizeCallback(window, [](GLFWwindow* window, int width, int height) {
     glfwSetWindowSize(window, width, height);
   });
   
   gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 
-  // antialising
+  /* antialising */
   glEnable(GL_MULTISAMPLE);
   
-  // depth buffer
+  /* depth buffer */
   glEnable(GL_DEPTH_TEST);
   
-  // blending/stencil buffer
+  /* blending / stencil buffer */
   glDisable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   
-  // face culling
+  /* face culling */
   glDisable(GL_CULL_FACE);
-  glCullFace(GL_BACK);
 }
 
 void Engine::LoadShaders()

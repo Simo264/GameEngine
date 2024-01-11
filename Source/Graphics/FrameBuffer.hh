@@ -16,23 +16,36 @@ enum class PostProcessingType {
 class FrameBuffer : public UncopyableObject
 {
 public:
-	FrameBuffer();
-
-	void CreateFrameBuffer(Vec2i size);
-	void BindFrameBuffer() const { glBindFramebuffer(GL_FRAMEBUFFER, _fbo); };
+	FrameBuffer(Vec2i size);
+	
+	void BindFrameBuffer() const { glBindFramebuffer(GL_FRAMEBUFFER, _renderRelatedIds[NORMAL_FBO]); };
 	void UnbindFrameBuffer() const { glBindFramebuffer(GL_FRAMEBUFFER, 0); };
 	void DrawFrame(class Shader* shader);
+	void BlitFrameBuffer();
+
 	void SetPostProcessing(PostProcessingType type) { _postprocType = type; }
 
-	const uint32_t& GetFramebufferTexture() const { return _texture; }
+	uint32_t GetFramebufferTexture() const { return _renderRelatedIds[NORMAL_TEXTURE]; }
 	void RescaleFrameBuffer(Vec2i newSize);
 
 	void Destroy();
-	
+
 private:
-	uint32_t _fbo;
-	uint32_t _rbo;
-	uint32_t _texture;
+	Vec2i _size;
+	
+	enum FBORenderTarget : int
+	{
+		NORMAL_FBO = 0,
+		NORMAL_TEXTURE,
+		NORMAL_RBO,
+
+		MULTISAMPLING_FBO,
+		MULTISAMPLING_TEXTURE,
+		MULTISAMPLING_RBO,
+	};
+	uint32_t _renderRelatedIds[8];
 	VertexArray _screenFrameVAO;
 	PostProcessingType _postprocType;
+
+	void CreateFrameBuffer();
 };
