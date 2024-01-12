@@ -30,7 +30,7 @@ void Texture2D::InitTexture(Path path)
  * -----------------------------------------------------
 */
 
-void Texture2D::LoadImageData()
+void Texture2D::LoadImageData() const
 {
   String stringPath = texturePath.string();
   

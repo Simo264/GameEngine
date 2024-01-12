@@ -6,7 +6,7 @@
 class Texture2D : public UncopyableObject
 {
 public:
-  Texture2D() : textureID{ 0 } {};
+  Texture2D() : textureID{ 0 } {}
 
   void InitTexture(Path path);
   void DestroyTexture() const { glDeleteTextures(1, &textureID); }
@@ -16,5 +16,5 @@ public:
   Path texturePath;
 
 private:
-  void LoadImageData();
+  void LoadImageData() const;
 };

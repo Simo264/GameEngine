@@ -54,7 +54,7 @@ struct VertexArrayData
 class VertexArray : public UncopyableObject
 {
 public:
-  VertexArray() : _vao{ 0 }, _vbo{ 0 }, _ebo{ 0 }, numVertices{ 0 }, numIndices{ 0 } {}
+  VertexArray();
 
   void InitVertexArray(VertexArrayData& data, VertexArrayConfig& config);
   void DestroyVertexArray();

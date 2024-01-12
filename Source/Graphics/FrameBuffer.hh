@@ -26,12 +26,12 @@ public:
 
 	void DrawFrame(class Shader* shader);
 	void SetPostProcessing(PostProcessingType type) { _postprocType = type; }
-	void ResizeFrameBuffer(Vec2i newSize);
+	void RescaleFrameBuffer(Vec2i newSize);
 	void Destroy();
 
 private:
-	Vec2i _size;
-	
+	Vec2i _size; 
+
 	enum FBORenderTarget : int
 	{
 		NORMAL_FBO = 0,
@@ -45,5 +45,5 @@ private:
 	VertexArray _screenFrameVAO;
 	PostProcessingType _postprocType;
 
-	void CreateFrameBuffer();
+	void InitializeFrameBuffer(Vec2i size);
 };
