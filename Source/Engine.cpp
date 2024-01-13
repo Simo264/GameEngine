@@ -91,8 +91,8 @@ void Engine::Run()
   /* Pre-loop */
   double lastUpdateTime = 0;  // number of seconds since the last loop
   Vec2i windowFbSize = window.GetFramebufferSize();
-  float aspectRatio = (float)(windowFbSize.x / windowFbSize.y);
-  
+  float aspectRatio = ((float)windowFbSize.x / (float)windowFbSize.y);
+
   /* Loop  */
   while (window.Loop())
   {
@@ -107,11 +107,6 @@ void Engine::Run()
     glfwPollEvents();
     if (window.GetKey(GLFW_KEY_ESCAPE) == GLFW_PRESS)
       window.CloseWindow();
-    //if (window.GetKey(GLFW_KEY_Q) == GLFW_PRESS)
-    //  aspectRatio += 0.0005f;
-    //if (window.GetKey(GLFW_KEY_E) == GLFW_PRESS)
-    //  aspectRatio -= 0.0005f;
-    //CONSOLE_TRACE("aspectRatio {}", aspectRatio);
 
     camera.ProcessInput(&window, deltaTime);
     const Mat4f projection = glm::perspective(glm::radians(camera.fov), aspectRatio, 0.1f, 100.0f);
@@ -123,7 +118,7 @@ void Engine::Run()
     if (windowResized)
     {
       windowFbSize = window.GetFramebufferSize();
-      aspectRatio = (float)(windowFbSize.x / windowFbSize.y);
+      aspectRatio = ((float)windowFbSize.x / (float)windowFbSize.y);
 
       framebuffer.RescaleFrameBuffer(windowFbSize);
       windowResized = false;
@@ -201,7 +196,7 @@ void Engine::InitOpenGL()
   GLFWwindow* window = glfwCreateWindow(INITIAL_WINDOW_SIZE_X, INITIAL_WINDOW_SIZE_Y, "OpenGL", nullptr, nullptr);
   glfwMakeContextCurrent(window);
   glfwSetWindowPos(window, 250, 50);        // set default position
-  //glfwSetWindowAspectRatio(window, 16, 9);  // aspect ratio 16:9
+  glfwSetWindowAspectRatio(window, 16, 9);  // aspect ratio 16:9
   //glfwSwapInterval(1);                      // v-sync on
   //glfwSetInputMode(window.Get(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
   
@@ -214,10 +209,6 @@ void Engine::InitOpenGL()
   });
   
   gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
-
-  int width, height;
-  glfwGetFramebufferSize(window, &width, &height);
-  glViewport(0, 0, width, height);
 
   /* antialising */
   glEnable(GL_MULTISAMPLE);
