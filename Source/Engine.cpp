@@ -28,20 +28,16 @@ static bool windowResized = false;
 
 void Engine::Initialize()
 {
-  // Init Logger
-  // ---------------------------------------
+  /* Init Logger */
   Logger::Initialize();
 
-  // init libraries and create GLFW window
-  // ---------------------------------------
+  /* Initialize GLFW, create window and initialize OpenGL context */
   InitOpenGL();
 
-  // Initialize Editor
-  // ---------------------------------------
+  /* Initialize Editor */
   editor.Initialize();
 
-  // Load shaders 
-  // ---------------------------------------
+  /* Load shaders */
   LoadShaders();
   auto instancingShader = ShadersManager::GetShader("InstancingShader");
   instancingShader->Use();
@@ -55,9 +51,12 @@ void Engine::Initialize()
   sceneShader->SetInt("Material.specular", 1);
   sceneShader->SetFloat("Material.shininess", 32.0f);
   
-  // Load textures from Textures directory
-  // ---------------------------------------
+  /* Load textures from Textures directory */
   TexturesManager::Initialize();
+
+  /* Initialize framebuffer object */
+  Window window(glfwGetCurrentContext());
+  framebuffer.InitializeFrameBuffer(window.GetFramebufferSize());
 }
 
 void Engine::Run()
@@ -72,7 +71,7 @@ void Engine::Run()
 
   /* Camera object */
   Camera camera(window.GetWindowSize(), Vec3f(0.0f, 0.0f, 10.0f));
-
+  
   /* Mesh objects */ 
   Cube cube;
 
@@ -88,9 +87,6 @@ void Engine::Run()
   Scene scene;
   scene.directionalLight = &dirLight;
   scene.AddStaticMesh(&cube);
-
-  /* FrameBuffer object */
-  FrameBuffer framebuffer(window.GetFramebufferSize());
 
   /* Pre-loop */
   double lastUpdateTime = 0;  // number of seconds since the last loop
@@ -157,7 +153,7 @@ void Engine::Run()
     /* Render editor */
     //editor.MenuBar();
     //editor.ShowDemo();
-    editor.ShowScenePanel(&scene);
+    //editor.ShowScenePanel(&scene);
     editor.ShowStats();
     editor.RenderFrame();
     window.SwapWindowBuffers();
@@ -167,7 +163,18 @@ void Engine::Run()
 
 void Engine::ShutDown()
 {
-  /* Shutdown Editor */
+  /* Destroy all meshes */
+  //for(auto mesh : meshes)
+  //  mesh->Destroy();
+
+  /* Destroy framebuffer */
+  framebuffer.DestroyFrameBuffer();
+
+  /* Shutdown subsystems */
+  ShadersManager::ShutDown();
+  TexturesManager::ShutDown();
+
+  /* Shutdown ImGui */
   editor.ShutDown();
 
   /* GLFW: terminate, clearing all previously allocated GLFW resources */
@@ -189,12 +196,12 @@ void Engine::InitOpenGL()
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-  glfwWindowHint(GLFW_SAMPLES, 4);          // enable 4x MSAA on GLFW framebuffer
+  glfwWindowHint(GLFW_SAMPLES, 4);          // enable 4x MSAA on GLFW frame buffer
 
   GLFWwindow* window = glfwCreateWindow(INITIAL_WINDOW_SIZE_X, INITIAL_WINDOW_SIZE_Y, "OpenGL", nullptr, nullptr);
   glfwMakeContextCurrent(window);
-  glfwSetWindowAspectRatio(window, 16, 9);  // aspect ratio 16:9
-  glfwSetWindowPos(window, 300, 50);        // set default position
+  glfwSetWindowPos(window, 250, 50);        // set default position
+  //glfwSetWindowAspectRatio(window, 16, 9);  // aspect ratio 16:9
   //glfwSwapInterval(1);                      // v-sync on
   //glfwSetInputMode(window.Get(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
   
@@ -208,13 +215,17 @@ void Engine::InitOpenGL()
   
   gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 
+  int width, height;
+  glfwGetFramebufferSize(window, &width, &height);
+  glViewport(0, 0, width, height);
+
   /* antialising */
   glEnable(GL_MULTISAMPLE);
   
   /* depth buffer */
   glEnable(GL_DEPTH_TEST);
   
-  /* blending / stencil buffer */
+  /* blending */
   glDisable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   

@@ -34,11 +34,20 @@ Shader* ShadersManager::LoadShaderProgram(const char* label, Path vertFilePath, 
 
 Shader* ShadersManager::GetShader(const char* label)
 {
-  for (uint32_t i = 0; i < _nShaderPrograms; i++)
-  {
-    Shader* shader = &_shaderProgramsBuffer[i];
-    if (shader->Label().compare(label) == 0)
-      return shader;
-  }
-  return nullptr;
+  auto start = &_shaderProgramsBuffer[0];
+  auto end = &_shaderProgramsBuffer[0] + _nShaderPrograms;
+  auto it = std::find_if(start, end, [&label](Shader& shader) {
+      return shader.Label().compare(label) == 0;
+    });
+  if (it == end)
+    return nullptr;
+  
+  return it;
+}
+
+void ShadersManager::ShutDown()
+{
+  std::for_each_n(&_shaderProgramsBuffer[0], _nShaderPrograms, [](Shader& shader) {
+    shader.DestroyShader();
+  });
 }

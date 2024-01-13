@@ -24,9 +24,13 @@ public:
 
 	static void GetTextures(Vector<Texture2D*>& out);
 
+	static void ShutDown();
+
 private:
 	inline static Path _texturesDir = std::filesystem::current_path().parent_path() / "Textures";
 
-	inline static UniquePointer<Texture2D[]> _textureBuffer = std::make_unique<Texture2D[]>(TEXTURES_MANAGER_MAX_SIZE);;
+	inline static UniquePointer<Texture2D[]> _textureBuffer = 
+		std::make_unique<Texture2D[]>(TEXTURES_MANAGER_MAX_SIZE);
+	
 	inline static uint32_t _nTextures = 0;
 };

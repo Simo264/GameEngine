@@ -2,9 +2,10 @@
 
 #include "Core.hh"
 #include "Editor/Editor.hh"
+#include "Graphics/FrameBuffer.hh"
 
-#define INITIAL_WINDOW_SIZE_X 1366 // 16:9 aspect ratio resolution
-#define INITIAL_WINDOW_SIZE_Y 768
+#define INITIAL_WINDOW_SIZE_X 1280
+#define INITIAL_WINDOW_SIZE_Y 720
 
 class Engine
 {
@@ -17,6 +18,7 @@ public:
 	void ShutDown();
 
 	Editor editor;
+	FrameBuffer framebuffer;
 
 private:
 	void InitOpenGL();

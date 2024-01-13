@@ -42,19 +42,29 @@ Texture2D* TexturesManager::GetTexture(Path filePath)
 {
   filePath = _texturesDir / filePath.lexically_normal();
 
-  for (uint32_t i = 0; i < _nTextures; i++)
-  {
-    auto texture = &_textureBuffer[i];
-    if (texture->texturePath.compare(filePath) == 0)
-      return texture;
-  }
-
-  return nullptr;
+  auto start = &_textureBuffer[0];
+  auto end = &_textureBuffer[0] + _nTextures;
+  auto it = std::find_if(start, end, [&filePath](Texture2D& texture) {
+    return texture.texturePath.compare(filePath) == 0;
+    });
+  
+  if (it == end)
+    return nullptr;
+  return it;
 }
 
 void TexturesManager::GetTextures(Vector<Texture2D*>& out)
 {
   out.reserve(_nTextures);
-  for (int i = 0; i < _nTextures; i++)
-    out.push_back(&_textureBuffer[i]);
+  std::for_each_n(&_textureBuffer[0], _nTextures, [&out](Texture2D& ptr) {
+    out.push_back(&ptr);
+    });
+}
+
+void TexturesManager::ShutDown()
+{
+  std::for_each_n(&_textureBuffer[0], _nTextures, [](Texture2D& texture) {
+    texture.DestroyTexture();
+    });
+  _textureBuffer.reset();
 }

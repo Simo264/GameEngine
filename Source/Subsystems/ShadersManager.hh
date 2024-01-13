@@ -18,8 +18,9 @@ public:
 		Path fragFilePath);
 	
 	static Shader* GetShader(const char* label);
-
 	static Path GetShaderFile(Path filePath);
+	
+	static void ShutDown();
 
 private:
 	inline static Path _shadersDir = std::filesystem::current_path().parent_path() / "Shaders";

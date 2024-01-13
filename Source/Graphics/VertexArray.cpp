@@ -24,16 +24,19 @@ void VertexArrayConfig::PushAttribute(uint8_t attribute)
 
 VertexArray::VertexArray()
 {
-  glGenVertexArrays(1, &_vao);
-  glGenBuffers(1, &_vbo);
-  glGenBuffers(1, &_ebo);
-
+  _vao = 0;
+  _vbo = 0;
+  _ebo = 0;
   numVertices = 0; 
   numIndices = 0;
 }
 
 void VertexArray::InitVertexArray(VertexArrayData& data, VertexArrayConfig& config)
 {
+  glGenVertexArrays(1, &_vao);
+  glGenBuffers(1, &_vbo);
+  glGenBuffers(1, &_ebo);
+
   /* Use vao */
   glBindVertexArray(_vao);
   

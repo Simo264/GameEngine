@@ -16,7 +16,8 @@ enum class PostProcessingType {
 class FrameBuffer : public UncopyableObject
 {
 public:
-	FrameBuffer(Vec2i size);
+	FrameBuffer();
+	void InitializeFrameBuffer(Vec2i size);
 	
 	void BindMSAAFramebuffer() const { glBindFramebuffer(GL_FRAMEBUFFER, _renderRelatedIds[MULTISAMPLING_FBO]);  }
 	void UnbindFrameBuffer() const { glBindFramebuffer(GL_FRAMEBUFFER, 0); };
@@ -27,7 +28,7 @@ public:
 	void DrawFrame(class Shader* shader);
 	void SetPostProcessing(PostProcessingType type) { _postprocType = type; }
 	void RescaleFrameBuffer(Vec2i newSize);
-	void Destroy();
+	void DestroyFrameBuffer();
 
 private:
 	Vec2i _size; 
@@ -42,8 +43,8 @@ private:
 		MULTISAMPLING_RBO,
 	};
 	uint32_t _renderRelatedIds[5];
-	VertexArray _screenFrameVAO;
+	VertexArray _frameBufferVAO;
 	PostProcessingType _postprocType;
 
-	void InitializeFrameBuffer(Vec2i size);
+	void InitFrameBufferVAO();
 };

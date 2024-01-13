@@ -14,8 +14,13 @@ void Scene::DrawScene(Shader* shader)
 	for (auto light : pointLights)
 		light->RenderLight(shader);
 
+	/* enable culling for meshes */
+	glEnable(GL_CULL_FACE);
+	
 	for (auto mesh : meshes)
 		mesh->Draw(shader);
+	
+	glDisable(GL_CULL_FACE);
 }
 
 void Scene::AddStaticMesh(StaticMesh* staticMesh)
