@@ -1,5 +1,5 @@
 #include "Scene.hh"
-#include "Graphics/Shader.hh"
+#include "Shader.hh"
 #include "Mesh/StaticMesh.hh"
 
 #include "Lighting/DirectionalLight.hh"

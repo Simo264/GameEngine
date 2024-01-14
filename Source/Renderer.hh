@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Core.hh"
+#include "Core.hh"
 
 
 // Static class Renderer:

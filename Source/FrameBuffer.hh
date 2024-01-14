@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../Core.hh"
-#include "../UncopyableObject.hh"
-#include "../Graphics/VertexArray.hh"
+#include "Core.hh"
+#include "UncopyableObject.hh"
+#include "VertexArray.hh"
 
 enum class PostProcessingType {
 	POST_PROC_NONE			= 0,

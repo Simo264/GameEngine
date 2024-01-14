@@ -1,5 +1,5 @@
 #include "VertexArray.hh"
-#include "../Logger.hh"
+#include "Logger.hh"
 
 /* -----------------------------------------------------
  *          VertexArrayConfig class

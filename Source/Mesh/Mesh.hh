@@ -2,7 +2,7 @@
 
 #include "../Core.hh"
 #include "../UncopyableObject.hh"
-#include "../Graphics/VertexArray.hh"
+#include "../VertexArray.hh"
 
 // The mesh class takes vertex data, binds VAOs, VBOs, drawing orders, etc, and draws it.
 // Other classes can inherit from this class.

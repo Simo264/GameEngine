@@ -1,5 +1,5 @@
 #include "DirectionalLight.hh"
-#include "../Graphics/Shader.hh"
+#include "../Shader.hh"
 
 void DirectionalLight::RenderLight(Shader* shader)
 {

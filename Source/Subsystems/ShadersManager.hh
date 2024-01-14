@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../Core.hh"
-#include "../Graphics/Shader.hh"
+#include "../Shader.hh"
 
 // Static class ShadersManager: 
 // load and retrieve shader programs located within the Shaders directory

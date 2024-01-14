@@ -1,7 +1,7 @@
 #include "Renderer.hh"
 #include "VertexArray.hh"
 
-#include "../Logger.hh"
+#include "Logger.hh"
 
 void Renderer::DrawArrays(VertexArray* vertexArray)
 {

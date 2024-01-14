@@ -1,8 +1,8 @@
 #include "Mesh.hh"
 
 #include "../Texture2D.hh"
-#include "../Graphics/Shader.hh"
-#include "../Graphics/Renderer.hh"
+#include "../Shader.hh"
+#include "../Renderer.hh"
 
 void Mesh::InitMesh(VertexArrayData& data, VertexArrayConfig& config)
 {

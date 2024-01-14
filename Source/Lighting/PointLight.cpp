@@ -1,5 +1,5 @@
 #include "PointLight.hh"
-#include "../Graphics/Shader.hh"
+#include "../Shader.hh"
 
 void PointLight::RenderLight(Shader* shader)
 {

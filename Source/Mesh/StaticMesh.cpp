@@ -1,6 +1,6 @@
 #include "StaticMesh.hh"
 #include "../ObjectLoader.hh"
-#include "../Graphics/Shader.hh"
+#include "../Shader.hh"
 
 StaticMesh::StaticMesh(Path objFilePath) : RootComponent(), UncopyableObject()
 {

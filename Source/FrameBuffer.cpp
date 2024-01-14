@@ -2,7 +2,7 @@
 #include "Shader.hh"
 #include "Renderer.hh"
 
-#include "../Logger.hh"
+#include "Logger.hh"
 
 /* -----------------------------------------------------
  *          PUBLIC METHODS

@@ -1,5 +1,5 @@
 #include "Shader.hh"
-#include "../Logger.hh"
+#include "Logger.hh"
 
 /* -----------------------------------------------------
   *          PUBLIC METHODS

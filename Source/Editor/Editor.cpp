@@ -7,7 +7,7 @@
 
 #include "../Subsystems/TexturesManager.hh"
 #include "../Subsystems/FontsManager.hh"
-#include "../Graphics/Renderer.hh"
+#include "../Renderer.hh"
 #include "../Logger.hh"
 
 #include "Imgui/imgui.h"

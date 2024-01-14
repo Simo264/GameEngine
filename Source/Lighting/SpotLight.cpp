@@ -1,5 +1,5 @@
 #include "SpotLight.hh"
-#include "../Graphics/Shader.hh"
+#include "../Shader.hh"
 
 void SpotLight::RenderLight(Shader* shader)
 {

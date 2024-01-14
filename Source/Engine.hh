@@ -2,7 +2,7 @@
 
 #include "Core.hh"
 #include "Editor/Editor.hh"
-#include "Graphics/FrameBuffer.hh"
+#include "FrameBuffer.hh"
 
 #define INITIAL_WINDOW_SIZE_X 1280 // default screen resolution for 16:9
 #define INITIAL_WINDOW_SIZE_Y 720

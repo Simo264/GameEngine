@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../Core.hh"
-#include "../UncopyableObject.hh"
+#include "Core.hh"
+#include "UncopyableObject.hh"
 
 // Vertex Array Configuration 
 // -------------------------------------------------

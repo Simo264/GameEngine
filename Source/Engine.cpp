@@ -2,7 +2,9 @@
 #include "Logger.hh"
 #include "Window.hh"
 #include "Camera.hh"
+#include "Shader.hh"
 #include "Scene.hh"
+#include "Renderer.hh"
 
 #include "Mesh/Shapes/Cube.hh"
 #include "Mesh/Shapes/Plane.hh"
@@ -15,9 +17,6 @@
 #include "Subsystems/ShadersManager.hh"
 #include "Subsystems/TexturesManager.hh"
 
-#include "Graphics/Shader.hh"
-#include "Graphics/Renderer.hh"
-#include "Graphics/FrameBuffer.hh"
 
 static bool windowResized = false;
 
