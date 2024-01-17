@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Core.hh"
-#include "UncopyableObject.hh"
+#include "NonCopyable.hh"
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -9,7 +9,7 @@
 
 // Load mesh data from .obj files inside Assets directory
 // -------------------------------------------------
-class ObjectLoader : public UncopyableObject
+class ObjectLoader : public NonCopyable
 {
 public:
 	ObjectLoader(Path filePath);

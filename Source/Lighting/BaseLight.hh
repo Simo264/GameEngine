@@ -1,11 +1,11 @@
 #pragma once
 
 #include "../Core.hh"
-#include "../UncopyableObject.hh"
+#include "../NonCopyable.hh"
 
 // Interface of base lighting class
 // ------------------------------------------
-class BaseLight : public UncopyableObject
+class BaseLight : public NonCopyable
 {
 public:
   BaseLight(const char* uniformName)

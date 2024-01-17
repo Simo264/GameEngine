@@ -6,9 +6,8 @@
 #include "Scene.hh"
 #include "Renderer.hh"
 
-#include "Mesh/Shapes/Cube.hh"
-#include "Mesh/Shapes/Plane.hh"
-#include "Mesh/Shapes/Cylinder.hh"
+#include "Mesh/StaticMesh.hh"
+#include "Mesh/InstancingMesh.hh"
 
 #include "Lighting/DirectionalLight.hh"
 #include "Lighting/PointLight.hh"
@@ -71,24 +70,30 @@ void Engine::Run()
   /* Camera object */
   Camera camera(window.GetWindowSize(), Vec3f(0.0f, 0.0f, 10.0f));
   
-  /* Mesh objects */ 
-  Cube cube;
+  /* Mesh objects */
+  StaticMesh cube("Shapes/Cube/Cube.obj");
+
+  InstancingMesh instancingcube(cube.GetMesh(0), 10);
+  instancingcube.AddInstance(Mat4f(1.0f));
+  //instancingcube.AddInstance(glm::translate(Mat4f(1.0f), Vec3f(0.0f, 2.0f, 0.0f)));
+
 
   /* Lighting */
   DirectionalLight dirLight("DirLight");
   dirLight.ambient = 0.1f;
-  dirLight.diffuse = 0.2f;
-  dirLight.specular = 0.0f;
-  PointLight pointLight("PointLight");
-  pointLight.position = Vec3f(0.0f, 2.0f, 0.0f);
+  dirLight.diffuse = 0.25f;
+  dirLight.specular = 0.75f;
+  //PointLight pointLight("PointLight");
+  //pointLight.position = Vec3f(0.0f, 5.0f, 0.0f);
   
   /* Create scene */
-  Scene scene;
-  scene.directionalLight = &dirLight;
-  scene.AddStaticMesh(&cube);
+  //Scene scene;
+  //scene.directionalLight = &dirLight;
+  //scene.AddPointLight(&pointLight);
+  //scene.AddStaticMesh(&plane);
 
   /* Pre-loop */
-  double lastUpdateTime = 0;  // number of seconds since the last loop
+  double lastUpdateTime = 0;
   Vec2i windowFbSize = window.GetFramebufferSize();
   float aspectRatio = ((float)windowFbSize.x / (float)windowFbSize.y);
 
@@ -101,19 +106,6 @@ void Engine::Run()
     const double now = glfwGetTime();
     const double deltaTime = now - lastUpdateTime;
     Renderer::drawCalls = 0;
-
-    /* input */
-    glfwPollEvents();
-    if (window.GetKey(GLFW_KEY_ESCAPE) == GLFW_PRESS)
-      window.CloseWindow();
-
-    camera.ProcessInput(&window, deltaTime);
-    const Mat4f projection = glm::perspective(glm::radians(camera.fov), aspectRatio, 0.1f, 100.0f);
-    const Mat4f view = camera.GetViewMatrix();
-    sceneShader->Use();
-    sceneShader->SetMat4f("Projection", projection);
-    sceneShader->SetMat4f("View", view);
-
     if (windowResized)
     {
       windowFbSize = window.GetFramebufferSize();
@@ -123,7 +115,14 @@ void Engine::Run()
       windowResized = false;
     }
 
-    /* Render scene */
+    /* input */
+    glfwPollEvents();
+    if (window.GetKey(GLFW_KEY_ESCAPE) == GLFW_PRESS)
+      window.CloseWindow();
+    camera.ProcessInput(&window, deltaTime);
+    const Mat4f projection = glm::perspective(glm::radians(camera.fov), aspectRatio, 0.1f, 100.0f);
+    const Mat4f view = camera.GetViewMatrix();
+    
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
@@ -131,8 +130,20 @@ void Engine::Run()
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
- 
-    scene.DrawScene(sceneShader);
+
+    /* Render scene */
+    //sceneShader->Use();
+    //sceneShader->SetMat4f("Projection", projection);
+    //sceneShader->SetMat4f("View", view);
+    //dirLight.RenderLight(sceneShader);
+    //cube.Draw(sceneShader);
+    //scene.DrawScene(sceneShader);
+    
+    instancingShader->Use();
+    instancingShader->SetMat4f("Projection", projection);
+    instancingShader->SetMat4f("View", view);
+    dirLight.RenderLight(instancingShader);
+    instancingcube.Draw();
 
     framebuffer.BlitFrameBuffer();
     framebuffer.UnbindFrameBuffer();

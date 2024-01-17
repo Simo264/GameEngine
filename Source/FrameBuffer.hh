@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Core.hh"
-#include "UncopyableObject.hh"
+#include "NonCopyable.hh"
 #include "VertexArray.hh"
 
 enum class PostProcessingType {
@@ -13,7 +13,7 @@ enum class PostProcessingType {
 };
 
 
-class FrameBuffer : public UncopyableObject
+class FrameBuffer : public NonCopyable
 {
 public:
 	FrameBuffer();

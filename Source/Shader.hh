@@ -1,9 +1,9 @@
 #pragma once
 
 #include "Core.hh"
-#include "UncopyableObject.hh"
+#include "NonCopyable.hh"
 
-class Shader : public UncopyableObject
+class Shader : public NonCopyable
 {
 public:
   Shader() : _shaderID{ 0 } { }

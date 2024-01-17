@@ -6,16 +6,22 @@
  * -----------------------------------------------------
 */
 
+VertexArrayConfig::VertexArrayConfig()
+{
+  numAttrs = 0;
+  layout.fill(0);
+}
+
 void VertexArrayConfig::PushAttribute(uint8_t attribute)
 {
-  if (numAttrs >= layout.size())
-  {
-    CONSOLE_ERROR("VAConfiguration::pushAttribute can't push more attributes");
-    return;
-  }
   layout[numAttrs++] = attribute;
 }
 
+void VertexArrayConfig::PushAttributes(std::initializer_list<uint8_t> values)
+{
+  for (int i = numAttrs; i < values.size(); i++, numAttrs++)
+    layout[i] = *(values.begin() + i);
+}
 
 /* -----------------------------------------------------
  *          VertexArray class
@@ -33,6 +39,8 @@ VertexArray::VertexArray()
 
 void VertexArray::InitVertexArray(VertexArrayData& data, VertexArrayConfig& config)
 {
+  _config = config;
+
   glGenVertexArrays(1, &_vao);
   glGenBuffers(1, &_vbo);
   glGenBuffers(1, &_ebo);

@@ -80,8 +80,9 @@ void FrameBuffer::DrawFrame(Shader* shader)
 	glBindTexture(GL_TEXTURE_2D, _renderRelatedIds[NORMAL_TEXTURE]);
 
 	shader->SetInt("postProcessingType", (int)_postprocType);
-	Renderer::DrawArrays(&_frameBufferVAO);
-
+	_frameBufferVAO.BindVertexArray();
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	_frameBufferVAO.UnbindVertexArray();
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 	
@@ -135,7 +136,8 @@ void FrameBuffer::InitFrameBufferVAO()
 		 1.0f,  1.0f,  1.0f, 1.0f
 	};
 
-	VertexArrayConfig config{ 2,2 }; // (2)position, (2)textCoords
+	VertexArrayConfig config; // (2)position, (2)textCoords
+	config.PushAttributes({ 2,2 });
 	VertexArrayData data{ sizeof(vertices),vertices,0,nullptr };
 	_frameBufferVAO.InitVertexArray(data, config);
 }

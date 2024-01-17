@@ -1,9 +1,9 @@
 #pragma once
 
 #include "Core.hh"
-#include "UncopyableObject.hh"
+#include "NonCopyable.hh"
 
-class Camera : public UncopyableObject
+class Camera : public NonCopyable
 {
 public:
   Camera(Vec2i windowSize, Vec3f position = Vec3f(0.0f, 0.0f, 0.0f));

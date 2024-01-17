@@ -54,7 +54,8 @@ void ObjectLoader::LoadMesh(const aiMesh* aimesh, Mesh* mesh)
   auto specular = GetTexture(material, "specular");
 
   // default configuration
-  VertexArrayConfig config{ 3,3,2 }; //(3)position + (3)normal + (2)textCoords
+  VertexArrayConfig config;
+  config.PushAttributes({ 3,3,2 }); //(3)position + (3)normal + (2)textCoords
 
   VertexArrayData data{
     vertices.size() * sizeof(float),

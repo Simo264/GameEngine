@@ -1,11 +1,11 @@
 #pragma once
 
 #include "Core.hh"
-#include "UncopyableObject.hh"
+#include "NonCopyable.hh"
 
 // Wrapper class for GLFWwindow
 // ----------------------------------
-class Window : public UncopyableObject
+class Window : public NonCopyable
 {
 public:
   Window(GLFWwindow* window) : _window{ window } { };

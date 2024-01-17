@@ -2,7 +2,7 @@
 #include "../ObjectLoader.hh"
 #include "../Shader.hh"
 
-StaticMesh::StaticMesh(Path objFilePath) : RootComponent(), UncopyableObject()
+StaticMesh::StaticMesh(Path objFilePath) : RootComponent(), NonCopyable()
 {
 	_nMeshes = 0;
 

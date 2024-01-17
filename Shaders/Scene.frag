@@ -4,7 +4,7 @@
 /* ----------------------------------- */
 in vec3 FragPos;  
 in vec3 Normals;
-in vec2 TexCoords; 
+in vec2 TexCoords;
 
 /* ---------- OUT attributes ---------- */
 /* ------------------------------------ */
@@ -84,7 +84,7 @@ void main()
   specularColor = texture(Material.specular, TexCoords).rgb;
   //texNorm       = texture(material.normal,   TexCoords).rgb;
 
-  // if no texture: set diffuse to default color gray
+  // if no texture: set diffuse to default color 
   if(length(diffuseColor) == 0)
     diffuseColor = vec3(0.25f, 0.50f, 0.75f);
 
@@ -122,38 +122,13 @@ vec3 CalcDirLight()
 
 vec3 CalcPointLight()
 {
-  // ambient
-  vec3 ambient = PointLight.ambient * diffuseColor;
-  	
-  // diffuse 
   vec3 lightDir = normalize(PointLight.position - FragPos);
-  float diff    = max(dot(normal, lightDir), 0.0);
-  vec3 diffuse  = PointLight.diffuse * diff * diffuseColor;  
-    
-  // specular
-  vec3 reflectDir = reflect(-lightDir, normal);  
-  float spec = pow(max(dot(viewDir, reflectDir), 0.0), Material.shininess);
-  vec3 specular = PointLight.specular * spec * specularColor;  
-    
-  // attenuation
-  float distance    = length(PointLight.position - FragPos);
-  float attenuation = 1.0 / (1.0f + PointLight.linear * distance + PointLight.quadratic * (distance * distance));    
-
-  ambient  *= attenuation;  
-  diffuse  *= attenuation;
-  specular *= attenuation;   
-        
-  return ambient + diffuse + specular;
-
-#if 0
-  vec3 lightDir   = normalize(PointLight.position - FragPos);
-  vec3 halfwayDir = normalize(lightDir + viewDir);
   
   // diffuse shading
   float diff = max(dot(normal, lightDir), 0.0);
 
-  // specular shading
-  vec3 reflectDir = reflect(-lightDir, normal);
+  // specular shading Blinn-Phong
+  vec3 halfwayDir = normalize(lightDir + viewDir);  
   float spec = pow(max(dot(normal, halfwayDir), 0.0), Material.shininess);
 
   // attenuation
@@ -169,7 +144,6 @@ vec3 CalcPointLight()
   diffuse  *= attenuation;
   specular *= attenuation;
   return (ambient + diffuse + specular);
-#endif
 }
 
 vec3 CalcSpotLight()

@@ -1,29 +1,27 @@
-/* ---------- Instancing ---------- */
-/* -------------------------------- */
-
 #version 330 core
 layout (location = 0) in vec3 aPos;
-layout (location = 1) in vec2 aTexCoords;
-layout (location = 2) in mat4 aModel;
-
-out vec3 Color;
-out vec2 TexCoord;
-
+layout (location = 1) in vec3 aNormals;
+layout (location = 2) in vec2 aTexCoords;
+layout (location = 3) in mat4 aModel;
 /*
-  layout (location = 2) in mat4 aModel; 
-  mat4 = vec4 x 4 = (layout 2) in vec4 
-                    (layout 3) in vec4 
-                    (layout 4) in vec4 
-                    (layout 5) in vec4 
+  layout (location = i) in mat4 aModel; 
+  mat4 = vec4 x 4 = (layout i) in vec4 
+                    (layout i+1) in vec4 
+                    (layout i+2) in vec4 
+                    (layout i+3) in vec4 
 */
 
+out vec3 Normals;
+out vec2 TexCoords;
+out vec3 FragPos;
 
 uniform mat4 View;
 uniform mat4 Projection;
 
 void main()
 {
-  Color       = vec3(0.25, 0.50, 0.75);
-  TexCoord    = aTexCoords;
+  FragPos     = vec3(aModel * vec4(aPos, 1.0));
+  Normals     = aNormals;
+  TexCoords   = aTexCoords;
   gl_Position = Projection * View * aModel * vec4(aPos, 1.0f);
 }

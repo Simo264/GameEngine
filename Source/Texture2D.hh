@@ -1,9 +1,9 @@
 #pragma once
 
 #include "Core.hh"
-#include "UncopyableObject.hh"
+#include "NonCopyable.hh"
 
-class Texture2D : public UncopyableObject
+class Texture2D : public NonCopyable
 {
 public:
   Texture2D() : textureID{ 0 } {}

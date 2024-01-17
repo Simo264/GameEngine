@@ -1,9 +1,9 @@
 #pragma once
 
 #include "Core.hh"
-#include "UncopyableObject.hh"
+#include "NonCopyable.hh"
 
-class Scene : public UncopyableObject
+class Scene : public NonCopyable
 {
 public:
 	Scene() : directionalLight{ nullptr } {}
