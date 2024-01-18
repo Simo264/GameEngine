@@ -5,6 +5,7 @@
 #include "Shader.hh"
 #include "Scene.hh"
 #include "Renderer.hh"
+#include "FrameBuffer.hh"
 
 #include "Mesh/StaticMesh.hh"
 #include "Mesh/InstancingMesh.hh"
@@ -36,7 +37,7 @@ void Engine::Initialize()
   editor.Initialize();
 
   /* Load shaders */
-  LoadShaders();
+  ShadersManager::Initialize();
   auto framebufferShader = ShadersManager::GetShader("FramebufferShader");
   framebufferShader->Use();
   framebufferShader->SetInt("screenTexture", 0);
@@ -54,9 +55,7 @@ void Engine::Initialize()
   /* Load textures from Textures directory */
   TexturesManager::Initialize();
 
-  /* Initialize framebuffer object */
-  Window window(glfwGetCurrentContext());
-  framebuffer.InitializeFrameBuffer(window.GetFramebufferSize());
+  
 }
 
 void Engine::Run()
@@ -68,6 +67,10 @@ void Engine::Run()
 
   /* Window object */
   Window window(glfwGetCurrentContext());
+
+  /* Initialize framebuffer object */
+  FrameBuffer framebuffer;
+  framebuffer.InitializeFrameBuffer(window.GetFramebufferSize());
 
   /* Camera object */
   Camera camera(window.GetWindowSize(), Vec3f(0.0f, 0.0f, 10.0f));
@@ -166,6 +169,9 @@ void Engine::Run()
     window.SwapWindowBuffers();
     lastUpdateTime = now;
   }
+  
+  /* Destroy framebuffer */
+  framebuffer.DestroyFrameBuffer();
 }
 
 void Engine::ShutDown()
@@ -173,9 +179,6 @@ void Engine::ShutDown()
   /* Destroy all meshes */
   //for(auto mesh : meshes)
   //  mesh->Destroy();
-
-  /* Destroy framebuffer */
-  framebuffer.DestroyFrameBuffer();
 
   /* Shutdown subsystems */
   ShadersManager::ShutDown();
@@ -236,22 +239,4 @@ void Engine::InitOpenGL()
   glDisable(GL_CULL_FACE);
 }
 
-void Engine::LoadShaders()
-{
-  ShadersManager::LoadShaderProgram(
-    "TestingShader",
-    ShadersManager::GetShaderFile("Testing.vert"),
-    ShadersManager::GetShaderFile("Testing.frag"));
-  ShadersManager::LoadShaderProgram(
-    "InstancingShader",
-    ShadersManager::GetShaderFile("Instancing.vert"),
-    ShadersManager::GetShaderFile("Scene.frag"));
-  ShadersManager::LoadShaderProgram(
-    "SceneShader",
-    ShadersManager::GetShaderFile("Scene.vert"),
-    ShadersManager::GetShaderFile("Scene.frag"));
-  ShadersManager::LoadShaderProgram(
-    "FramebufferShader",
-    ShadersManager::GetShaderFile("Framebuffer.vert"),
-    ShadersManager::GetShaderFile("Framebuffer.frag"));
-}
+

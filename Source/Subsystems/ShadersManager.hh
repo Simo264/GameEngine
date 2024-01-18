@@ -20,6 +20,7 @@ public:
 	static Shader* GetShader(const char* label);
 	static Path GetShaderFile(Path filePath);
 	
+	static void Initialize();
 	static void ShutDown();
 
 private:

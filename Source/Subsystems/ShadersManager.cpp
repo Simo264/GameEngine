@@ -45,6 +45,14 @@ Shader* ShadersManager::GetShader(const char* label)
   return it;
 }
 
+void ShadersManager::Initialize()
+{
+  LoadShaderProgram("TestingShader",GetShaderFile("Testing.vert"),GetShaderFile("Testing.frag"));
+  LoadShaderProgram("InstancingShader",GetShaderFile("Instancing.vert"),GetShaderFile("Scene.frag"));
+  LoadShaderProgram("SceneShader",GetShaderFile("Scene.vert"),GetShaderFile("Scene.frag"));
+  LoadShaderProgram("FramebufferShader",GetShaderFile("Framebuffer.vert"),GetShaderFile("Framebuffer.frag"));
+}
+
 void ShadersManager::ShutDown()
 {
   std::for_each_n(&_shaderProgramsBuffer[0], _nShaderPrograms, [](Shader& shader) {
