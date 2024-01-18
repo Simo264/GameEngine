@@ -72,11 +72,12 @@ void Engine::Run()
   
   /* Mesh objects */
   StaticMesh cube("Shapes/Cube/Cube.obj");
+  cube.position.x = -2.5f;
 
   InstancingMesh instancingcube(cube.GetMesh(0), 10);
+  instancingcube.diffuse = TexturesManager::GetTexture("default.png");
   instancingcube.AddInstance(Mat4f(1.0f));
-  //instancingcube.AddInstance(glm::translate(Mat4f(1.0f), Vec3f(0.0f, 2.0f, 0.0f)));
-
+  instancingcube.AddInstance(glm::translate(Mat4f(1.0f), Vec3f(0.0f, 2.5f, 0.0f)));
 
   /* Lighting */
   DirectionalLight dirLight("DirLight");
@@ -145,6 +146,12 @@ void Engine::Run()
     dirLight.RenderLight(instancingShader);
     instancingcube.Draw();
 
+    sceneShader->Use();
+    sceneShader->SetMat4f("Projection", projection);
+    sceneShader->SetMat4f("View", view);
+    dirLight.RenderLight(sceneShader);
+    cube.Draw(sceneShader);
+
     framebuffer.BlitFrameBuffer();
     framebuffer.UnbindFrameBuffer();
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
@@ -153,7 +160,6 @@ void Engine::Run()
     
     framebufferShader->Use();
     framebuffer.DrawFrame(framebufferShader);
-
 
     /* Render editor */
     //editor.MenuBar();

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../Core.hh"
+#include "../VertexArray.hh"
 
 class InstancingMesh
 {
@@ -19,10 +20,9 @@ public:
 	class Texture2D* specular;
 
 private:
-	//void InitializeInstance(VertexArrayData& data, VertexArrayConfig& config);
 	void InitializeInstance(class Mesh* mesh);
 
-	class VertexArray* _vertexArray;
+	VertexArray _vertexArray;
 	uint32_t _maxNumInstances;
 	uint32_t _instanceBuffer; // vertex buffer
 	uint32_t _nInstancesToDraw;

@@ -35,11 +35,13 @@ VertexArray::VertexArray()
   _ebo = 0;
   numVertices = 0; 
   numIndices = 0;
+  vboSize = 0;
 }
 
 void VertexArray::InitVertexArray(VertexArrayData& data, VertexArrayConfig& config)
 {
-  _config = config;
+  this->_config = config;
+  vboSize = data.vertDataSize;
 
   glGenVertexArrays(1, &_vao);
   glGenBuffers(1, &_vbo);
@@ -76,7 +78,32 @@ void VertexArray::InitVertexArray(VertexArrayData& data, VertexArrayConfig& conf
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void VertexArray::DestroyVertexArray()
+void VertexArray::CopyVertexBufferData(uint32_t writeBuffer)
+{
+  if (vboSize == 0)
+    return;
+
+  glBindBuffer(GL_COPY_READ_BUFFER, _vbo);
+  glBindBuffer(GL_COPY_WRITE_BUFFER, writeBuffer);
+  glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, vboSize);
+  glBindBuffer(GL_COPY_READ_BUFFER, 0);
+  glBindBuffer(GL_COPY_WRITE_BUFFER, 0);
+}
+
+void VertexArray::CopyIndexBufferData(uint32_t writeBuffer)
+{
+  uint32_t indexBufferSize = numIndices * sizeof(uint32_t);
+  if (indexBufferSize == 0)
+    return;
+
+  glBindBuffer(GL_COPY_READ_BUFFER, _ebo);
+  glBindBuffer(GL_COPY_WRITE_BUFFER, writeBuffer);
+  glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, indexBufferSize);
+  glBindBuffer(GL_COPY_READ_BUFFER, 0);
+  glBindBuffer(GL_COPY_WRITE_BUFFER, 0);
+}
+
+void VertexArray::DestroyVertexArray() const
 {
   glDeleteVertexArrays(1, &_vao);
   glDeleteBuffers(1, &_vbo);

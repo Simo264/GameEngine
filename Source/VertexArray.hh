@@ -54,20 +54,29 @@ public:
   VertexArray();
 
   void InitVertexArray(VertexArrayData& data, VertexArrayConfig& config);
-  void DestroyVertexArray();
+  void DestroyVertexArray() const;
 
   void BindVertexArray()   const { glBindVertexArray(_vao); };
   void UnbindVertexArray() const { glBindVertexArray(0); };
 
+  const uint32_t& VertexArrayID() const { return _vao; }
+  const uint32_t& VertexBufferID() const { return _vbo; }
+  const uint32_t& IndexBufferID() const { return _ebo; }
   const VertexArrayConfig& GetConfig() const { return _config; }
 
-  uint32_t numVertices;
-  uint32_t numIndices;
+  // Copy the vertex buffer data into writeBuffer
+  void CopyVertexBufferData(uint32_t writeBuffer);
 
+  // Copy the index buffer data into writeBuffer
+  void CopyIndexBufferData(uint32_t writeBuffer);
+
+  uint32_t numVertices; // used in renderer
+  uint32_t numIndices;  // used in renderer
+  uint32_t vboSize;     // cache the vertex buffer size (in byte)
+  
 private:
   VertexArrayConfig _config;
-  
-  uint32_t _vao; 
+  uint32_t _vao;
   uint32_t _vbo;
   uint32_t _ebo;
 };
