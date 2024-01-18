@@ -24,7 +24,8 @@ private:
 	const aiScene* _scene;
 
 	void LoadMesh(const aiMesh* aimesh, class Mesh* mesh);
-	void LoadVertices(const aiMesh* aimesh, Vector<float>& vertDest);
-	void LoadIndices(const aiMesh* aimesh, Vector<uint32_t>& indDest);
+	void LoadVertices(const aiMesh* aimesh, uint32_t writeBuffer);
+	void LoadIndices(const aiMesh* aimesh, uint32_t writeBuffer);
+	void LoadMaterials(const aiMesh* aimesh, class Mesh* mesh);
 	class Texture2D* GetTexture(const aiMaterial* material, const char* textureType);
 };

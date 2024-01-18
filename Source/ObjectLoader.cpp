@@ -44,59 +44,71 @@ void ObjectLoader::LoadStaticMesh(StaticMesh* staticMesh)
 
 void ObjectLoader::LoadMesh(const aiMesh* aimesh, Mesh* mesh)
 {
-  Vector<float> vertices;
-  Vector<uint32_t> indices;
-  LoadVertices(aimesh, vertices);
-  LoadIndices(aimesh, indices);
-
-  const aiMaterial* material = _scene->mMaterials[aimesh->mMaterialIndex];
-  auto diffuse = GetTexture(material, "diffuse");
-  auto specular = GetTexture(material, "specular");
-
-  // default configuration
+  const uint64_t vertDataSize = aimesh->mNumVertices * 8; // 8: 3(position) + 3(normals) + 2(textcoord)
+  const uint64_t indDatasize = aimesh->mNumFaces * 3; // 3: number of vertices per triangle 
+  
+  /* Create empty mesh */
+  VertexArrayData data;
+  data.vertDataSize = vertDataSize * sizeof(float);
+  data.vertData = nullptr;
+  data.indDataSize = indDatasize * sizeof(uint32_t);
+  data.indData = nullptr;
+  /* Default configuration */ 
   VertexArrayConfig config;
   config.PushAttributes({ 3,3,2 }); //(3)position + (3)normal + (2)textCoords
 
-  VertexArrayData data{
-    vertices.size() * sizeof(float),
-    vertices.data(),
-    indices.size() * sizeof(uint32_t),
-    indices.data()};
-  
   mesh->InitMesh(data, config);
-  mesh->diffuse = diffuse;
-  mesh->specular = specular;
+
+  /* Now fill mesh vertex buffer */
+  LoadVertices(aimesh, mesh->vertexArray.VertexBufferID());
+
+  /* Now fill mesh index buffer */
+  LoadIndices(aimesh, mesh->vertexArray.IndexBufferID());
+  
+  if (aimesh->mMaterialIndex >= 0)
+    LoadMaterials(aimesh, mesh);
 }
 
-void ObjectLoader::LoadVertices(const aiMesh* aimesh, Vector<float>& vertDest)
+void ObjectLoader::LoadVertices(const aiMesh* aimesh, uint32_t writeBuffer)
 {
-  const uint32_t nVertices = aimesh->mNumVertices;
-  const uint64_t size = nVertices * 8; // 8: 3(position) + 3(normals) + 2(textcoord)
-  vertDest.reserve(size); 
-
-  for (uint32_t i = 0; i < nVertices; i++)
+  glBindBuffer(GL_ARRAY_BUFFER, writeBuffer);
+  float* vboPtr = static_cast<float*>(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY));
+  for (uint32_t i = 0; i < aimesh->mNumVertices; i++)
   {
     aiVector3D& vertPos = aimesh->mVertices[i];
     aiVector3D& vertNor = aimesh->mNormals[i];
     aiVector3D& vertTc = aimesh->mTextureCoords[0][i];
-
-    vertDest.insert(vertDest.end(), { vertPos.x,vertPos.y,vertPos.z });
-    vertDest.insert(vertDest.end(), { vertNor.x,vertNor.y,vertNor.z });
-    vertDest.insert(vertDest.end(), { vertTc.x,vertTc.y });
+    *vboPtr = (float)vertPos.x; vboPtr++;
+    *vboPtr = (float)vertPos.y; vboPtr++;
+    *vboPtr = (float)vertPos.z; vboPtr++;
+    *vboPtr = (float)vertNor.x; vboPtr++;
+    *vboPtr = (float)vertNor.y; vboPtr++;
+    *vboPtr = (float)vertNor.z; vboPtr++;
+    *vboPtr = (float)vertTc.x;  vboPtr++;
+    *vboPtr = (float)vertTc.y;  vboPtr++;
   }
+  glUnmapBuffer(GL_ARRAY_BUFFER);
 }
 
-void ObjectLoader::LoadIndices(const aiMesh* aimesh, Vector<uint32_t>& indDest)
+void ObjectLoader::LoadIndices(const aiMesh* aimesh, uint32_t writeBuffer)
 {
-  const uint32_t nFaces = aimesh->mNumFaces;
-  const uint64_t size = nFaces * 3; // 3: number of vertices per triangle 
-  indDest.reserve(size); 
-
-  for (uint32_t i = 0; i < nFaces; i++)
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, writeBuffer);
+  uint32_t* eboPtr = static_cast<uint32_t*>(glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_WRITE_ONLY));
+  for (uint32_t i = 0; i < aimesh->mNumFaces; i++)
   {
     const aiFace& face = aimesh->mFaces[i];
-    indDest.insert(indDest.end(), { face.mIndices[0],face.mIndices[1],face.mIndices[2] });
+    *(eboPtr++) = (uint32_t)face.mIndices[0];
+    *(eboPtr++) = (uint32_t)face.mIndices[1];
+    *(eboPtr++) = (uint32_t)face.mIndices[2];
   }
+  glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
+}
+
+void ObjectLoader::LoadMaterials(const aiMesh* aimesh, Mesh* mesh)
+{
+  aiMaterial* material = _scene->mMaterials[aimesh->mMaterialIndex];
+  mesh->diffuse = GetTexture(material, "diffuse");
+  mesh->specular = GetTexture(material, "specular");
 }
 
 Texture2D* ObjectLoader::GetTexture(const aiMaterial* material, const char* textureType)

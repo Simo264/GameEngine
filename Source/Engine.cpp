@@ -37,12 +37,14 @@ void Engine::Initialize()
 
   /* Load shaders */
   LoadShaders();
-  auto instancingShader = ShadersManager::GetShader("InstancingShader");
-  instancingShader->Use();
-  instancingShader->SetInt("ourTexture", 0);
   auto framebufferShader = ShadersManager::GetShader("FramebufferShader");
   framebufferShader->Use();
   framebufferShader->SetInt("screenTexture", 0);
+  auto instancingShader = ShadersManager::GetShader("InstancingShader");
+  instancingShader->Use();
+  instancingShader->SetInt("Material.diffuse", 0);
+  instancingShader->SetInt("Material.specular", 1);
+  instancingShader->SetFloat("Material.shininess", 32.0f);
   auto sceneShader = ShadersManager::GetShader("SceneShader");
   sceneShader->Use();
   sceneShader->SetInt("Material.diffuse", 0);
@@ -73,6 +75,7 @@ void Engine::Run()
   /* Mesh objects */
   StaticMesh cube("Shapes/Cube/Cube.obj");
   cube.position.x = -2.5f;
+  cube.GetMesh(0)->diffuse = nullptr;
 
   InstancingMesh instancingcube(cube.GetMesh(0), 10);
   instancingcube.diffuse = TexturesManager::GetTexture("default.png");
@@ -133,13 +136,6 @@ void Engine::Run()
     glEnable(GL_DEPTH_TEST);
 
     /* Render scene */
-    //sceneShader->Use();
-    //sceneShader->SetMat4f("Projection", projection);
-    //sceneShader->SetMat4f("View", view);
-    //dirLight.RenderLight(sceneShader);
-    //cube.Draw(sceneShader);
-    //scene.DrawScene(sceneShader);
-    
     instancingShader->Use();
     instancingShader->SetMat4f("Projection", projection);
     instancingShader->SetMat4f("View", view);

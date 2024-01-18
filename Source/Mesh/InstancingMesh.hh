@@ -1,9 +1,10 @@
 #pragma once
 
 #include "../Core.hh"
+#include "../NonCopyable.hh"
 #include "../VertexArray.hh"
 
-class InstancingMesh
+class InstancingMesh : public NonCopyable
 {
 public:
 	InstancingMesh(class Mesh* mesh, uint32_t nMaxInstances);
