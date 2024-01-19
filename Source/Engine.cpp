@@ -36,26 +36,11 @@ void Engine::Initialize()
   /* Initialize Editor */
   editor.Initialize();
 
-  /* Load shaders */
+  /* Load and initialize shaders */
   ShadersManager::Initialize();
-  auto framebufferShader = ShadersManager::GetShader("FramebufferShader");
-  framebufferShader->Use();
-  framebufferShader->SetInt("screenTexture", 0);
-  auto instancingShader = ShadersManager::GetShader("InstancingShader");
-  instancingShader->Use();
-  instancingShader->SetInt("Material.diffuse", 0);
-  instancingShader->SetInt("Material.specular", 1);
-  instancingShader->SetFloat("Material.shininess", 32.0f);
-  auto sceneShader = ShadersManager::GetShader("SceneShader");
-  sceneShader->Use();
-  sceneShader->SetInt("Material.diffuse", 0);
-  sceneShader->SetInt("Material.specular", 1);
-  sceneShader->SetFloat("Material.shininess", 32.0f);
   
   /* Load textures from Textures directory */
   TexturesManager::Initialize();
-
-  
 }
 
 void Engine::Run()
@@ -76,14 +61,15 @@ void Engine::Run()
   Camera camera(window.GetWindowSize(), Vec3f(0.0f, 0.0f, 10.0f));
   
   /* Mesh objects */
+  StaticMesh plane("Shapes/Plane/Plane.obj");
   StaticMesh cube("Shapes/Cube/Cube.obj");
-  cube.position.x = -2.5f;
-  cube.GetMesh(0)->diffuse = nullptr;
+  StaticMesh cottage("Cottage/Cottage.obj");
 
-  InstancingMesh instancingcube(cube.GetMesh(0), 10);
-  instancingcube.diffuse = TexturesManager::GetTexture("default.png");
-  instancingcube.AddInstance(Mat4f(1.0f));
-  instancingcube.AddInstance(glm::translate(Mat4f(1.0f), Vec3f(0.0f, 2.5f, 0.0f)));
+  InstancingMesh instancingPlane(plane.GetMesh(0), 10);
+  instancingPlane.AddInstance(glm::translate(Mat4f(1.0f), Vec3f(0.0f, 0.0f, 0.0f)));
+  instancingPlane.AddInstance(glm::translate(Mat4f(1.0f), Vec3f(2.0f, 0.0f, 0.0f)));
+  instancingPlane.AddInstance(glm::translate(Mat4f(1.0f), Vec3f(0.0f, 0.0f, 2.0f)));
+  instancingPlane.AddInstance(glm::translate(Mat4f(1.0f), Vec3f(2.0f, 0.0f, 2.0f)));
 
   /* Lighting */
   DirectionalLight dirLight("DirLight");
@@ -139,17 +125,17 @@ void Engine::Run()
     glEnable(GL_DEPTH_TEST);
 
     /* Render scene */
-    instancingShader->Use();
-    instancingShader->SetMat4f("Projection", projection);
-    instancingShader->SetMat4f("View", view);
-    dirLight.RenderLight(instancingShader);
-    instancingcube.Draw();
+    //instancingShader->Use();
+    //instancingShader->SetMat4f("Projection", projection);
+    //instancingShader->SetMat4f("View", view);
+    //dirLight.RenderLight(instancingShader);
+    //instancingPlane.Draw();
 
     sceneShader->Use();
     sceneShader->SetMat4f("Projection", projection);
     sceneShader->SetMat4f("View", view);
     dirLight.RenderLight(sceneShader);
-    cube.Draw(sceneShader);
+    cottage.Draw(sceneShader);
 
     framebuffer.BlitFrameBuffer();
     framebuffer.UnbindFrameBuffer();

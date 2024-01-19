@@ -48,9 +48,31 @@ Shader* ShadersManager::GetShader(const char* label)
 void ShadersManager::Initialize()
 {
   LoadShaderProgram("TestingShader",GetShaderFile("Testing.vert"),GetShaderFile("Testing.frag"));
-  LoadShaderProgram("InstancingShader",GetShaderFile("Instancing.vert"),GetShaderFile("Scene.frag"));
-  LoadShaderProgram("SceneShader",GetShaderFile("Scene.vert"),GetShaderFile("Scene.frag"));
-  LoadShaderProgram("FramebufferShader",GetShaderFile("Framebuffer.vert"),GetShaderFile("Framebuffer.frag"));
+  auto instancingShader = LoadShaderProgram(
+    "InstancingShader",
+    GetShaderFile("Instancing.vert"),
+    GetShaderFile("Scene.frag"));
+  auto sceneShader = LoadShaderProgram(
+    "SceneShader",
+    GetShaderFile("Scene.vert"),
+    GetShaderFile("Scene.frag"));
+  auto framebufferShader = LoadShaderProgram(
+    "FramebufferShader",
+    GetShaderFile("Framebuffer.vert"),
+    GetShaderFile("Framebuffer.frag"));
+
+  framebufferShader->Use();
+  framebufferShader->SetInt("screenTexture", 0);
+  
+  instancingShader->Use();
+  instancingShader->SetInt("Material.diffuse", 0);
+  instancingShader->SetInt("Material.specular", 1);
+  instancingShader->SetFloat("Material.shininess", 32.0f);
+  
+  sceneShader->Use();
+  sceneShader->SetInt("Material.diffuse", 0);
+  sceneShader->SetInt("Material.specular", 1);
+  sceneShader->SetFloat("Material.shininess", 32.0f);
 }
 
 void ShadersManager::ShutDown()

@@ -21,19 +21,16 @@ void StaticMesh::Draw(Shader* shader)
 	auto model = this->GetModel();
 	shader->SetMat4f("Model", model);
 	
-	for (int i = 0; i < _nMeshes; i++)
-	{
-		Mesh* mesh = &_meshBuffer[i];
-		mesh->Draw(shader);
-	}
+	std::for_each_n(&_meshBuffer[0], _nMeshes, [&shader](Mesh& mesh) {
+		mesh.Draw(shader);
+		});
 }
 
 void StaticMesh::DestroyStaticMesh()
 {
-	for (int i = 0; i < _nMeshes; i++)
-	{
-		Mesh* mesh = &_meshBuffer[i];
-		mesh->DestroyMesh();
-	}
+	std::for_each_n(&_meshBuffer[0], _nMeshes, [](Mesh& mesh) {
+		mesh.DestroyMesh();
+		});
+	
 	_meshBuffer.reset();
 }

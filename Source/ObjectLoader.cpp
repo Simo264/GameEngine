@@ -16,7 +16,10 @@ ObjectLoader::ObjectLoader(Path filePath)
   filePath = _assetsDirPath / filePath.lexically_normal();
   
   _scene = _importer.ReadFile(filePath.string().c_str(),
-    aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_JoinIdenticalVertices);
+    aiProcess_Triangulate | 
+    aiProcess_GenSmoothNormals | 
+    aiProcess_FlipUVs | 
+    aiProcess_JoinIdenticalVertices);
 
   if (!_scene || _scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !_scene->mRootNode)
   {
@@ -27,13 +30,15 @@ ObjectLoader::ObjectLoader(Path filePath)
 
 void ObjectLoader::LoadStaticMesh(StaticMesh* staticMesh)
 {
+  CONSOLE_TRACE("ObjectLoader::LoadStaticMesh, mNumMeshes={}", _scene->mNumMeshes);
+
   uint32_t nMeshes = _scene->mNumMeshes;
   staticMesh->SetMeshes(nMeshes);
   for (int i = 0; i < nMeshes; i++)
   {
     aiMesh* aimesh = _scene->mMeshes[i];
     Mesh* mesh = staticMesh->GetMesh(i);
-    LoadMesh(aimesh, mesh);
+    LoadMeshData(aimesh, mesh);
   }
 }
 
@@ -42,7 +47,7 @@ void ObjectLoader::LoadStaticMesh(StaticMesh* staticMesh)
  * -----------------------------------------------------
 */
 
-void ObjectLoader::LoadMesh(const aiMesh* aimesh, Mesh* mesh)
+void ObjectLoader::LoadMeshData(const aiMesh* aimesh, Mesh* mesh)
 {
   const uint64_t vertDataSize = aimesh->mNumVertices * 8; // 8: 3(position) + 3(normals) + 2(textcoord)
   const uint64_t indDatasize = aimesh->mNumFaces * 3; // 3: number of vertices per triangle 
@@ -66,7 +71,11 @@ void ObjectLoader::LoadMesh(const aiMesh* aimesh, Mesh* mesh)
   LoadIndices(aimesh, mesh->vertexArray.IndexBufferID());
   
   if (aimesh->mMaterialIndex >= 0)
-    LoadMaterials(aimesh, mesh);
+  {
+    const aiMaterial* material = _scene->mMaterials[aimesh->mMaterialIndex];
+    mesh->diffuse = GetTexture(material, "diffuse");
+    mesh->specular = GetTexture(material, "specular");
+  }
 }
 
 void ObjectLoader::LoadVertices(const aiMesh* aimesh, uint32_t writeBuffer)
@@ -77,7 +86,12 @@ void ObjectLoader::LoadVertices(const aiMesh* aimesh, uint32_t writeBuffer)
   {
     aiVector3D& vertPos = aimesh->mVertices[i];
     aiVector3D& vertNor = aimesh->mNormals[i];
-    aiVector3D& vertTc = aimesh->mTextureCoords[0][i];
+    Vec2f vertTc;
+    if (aimesh->HasTextureCoords(0))
+      vertTc = { aimesh->mTextureCoords[0][i].x, aimesh->mTextureCoords[0][i].y };
+    else
+      vertTc = { 0.0f, 0.0f };
+    
     *vboPtr = (float)vertPos.x; vboPtr++;
     *vboPtr = (float)vertPos.y; vboPtr++;
     *vboPtr = (float)vertPos.z; vboPtr++;
@@ -102,13 +116,6 @@ void ObjectLoader::LoadIndices(const aiMesh* aimesh, uint32_t writeBuffer)
     *(eboPtr++) = (uint32_t)face.mIndices[2];
   }
   glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
-}
-
-void ObjectLoader::LoadMaterials(const aiMesh* aimesh, Mesh* mesh)
-{
-  aiMaterial* material = _scene->mMaterials[aimesh->mMaterialIndex];
-  mesh->diffuse = GetTexture(material, "diffuse");
-  mesh->specular = GetTexture(material, "specular");
 }
 
 Texture2D* ObjectLoader::GetTexture(const aiMaterial* material, const char* textureType)

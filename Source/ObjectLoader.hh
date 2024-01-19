@@ -14,7 +14,7 @@ class ObjectLoader : public NonCopyable
 public:
 	ObjectLoader(Path filePath);
 
-	// Load Static Mesh object from file
+	// Load Static Mesh (one or more meshes) object from file
 	void LoadStaticMesh(class StaticMesh* staticMesh);
 	
 private:
@@ -23,9 +23,8 @@ private:
 	Assimp::Importer _importer;
 	const aiScene* _scene;
 
-	void LoadMesh(const aiMesh* aimesh, class Mesh* mesh);
+	void LoadMeshData(const aiMesh* aimesh, class Mesh* mesh);
 	void LoadVertices(const aiMesh* aimesh, uint32_t writeBuffer);
 	void LoadIndices(const aiMesh* aimesh, uint32_t writeBuffer);
-	void LoadMaterials(const aiMesh* aimesh, class Mesh* mesh);
 	class Texture2D* GetTexture(const aiMaterial* material, const char* textureType);
 };

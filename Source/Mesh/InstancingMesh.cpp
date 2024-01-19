@@ -91,8 +91,11 @@ void InstancingMesh::InitializeInstance(Mesh* mesh)
   /* Now copy vertex buffer data and index buffer data */
   meshVao.CopyVertexBufferData(_vertexArray.VertexBufferID());
   meshVao.CopyIndexBufferData(_vertexArray.IndexBufferID());
+  this->diffuse = mesh->diffuse;
+  this->specular = mesh->specular;
 
   _vertexArray.BindVertexArray();
+  /* Initialize empty instance buffer */
   glGenBuffers(1, &_instanceBuffer);
   glBindBuffer(GL_ARRAY_BUFFER, _instanceBuffer);
   glBufferData(GL_ARRAY_BUFFER, _maxNumInstances * sizeof(Mat4f), nullptr, GL_DYNAMIC_DRAW);

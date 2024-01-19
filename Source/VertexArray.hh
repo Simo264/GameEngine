@@ -26,9 +26,9 @@ public:
 // -------------------------------------------------
 struct VertexArrayData
 {
-  uint64_t	vertDataSize;
+  uint64_t	vertDataSize; // size in bytes
   float*    vertData;
-  uint64_t	indDataSize;
+  uint64_t	indDataSize; // size in bytes
   uint32_t* indData;
 
   VertexArrayData() : 
