@@ -9,12 +9,12 @@ void Mesh::InitMesh(VertexArrayData& data, VertexArrayConfig& config)
 	vertexArray.InitVertexArray(data, config);
 }
 
-void Mesh::DestroyMesh()
+void Mesh::DestroyMesh() const
 {
 	vertexArray.DestroyVertexArray();
 }
 
-void Mesh::Draw(Shader* shader)
+void Mesh::DrawMesh(Shader* shader)
 {
 	if (diffuse)
 	{

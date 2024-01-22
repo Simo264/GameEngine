@@ -14,8 +14,8 @@ class ObjectLoader : public NonCopyable
 public:
 	ObjectLoader(Path filePath);
 
-	// Load Static Mesh (one or more meshes) object from file
-	void LoadStaticMesh(class StaticMesh* staticMesh);
+	// Load static Mesh data from file
+	void LoadStaticMesh(class StaticMesh* staticMesh, uint32_t meshIndex = 0);
 	
 private:
 	inline static Path _assetsDirPath = std::filesystem::current_path().parent_path() / "Assets";

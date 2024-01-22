@@ -249,8 +249,6 @@ void Editor::ShowPropertiesPanel(StaticMesh* meshTarget)
   if (textures.empty())
     TexturesManager::GetTextures(textures);
 
-  Mesh* mesh = meshTarget->GetMesh(0);
-
   ImGui::Begin("Properties");
   ImGui::Text("(StaticMesh name)");
   
@@ -262,9 +260,9 @@ void Editor::ShowPropertiesPanel(StaticMesh* meshTarget)
 
   ImGui::SeparatorText("Material");
 
-  const String diffusePathStr = (mesh->diffuse ? mesh->diffuse->texturePath.string() : "");
-  const uint32_t diffuseID = (mesh->diffuse ? mesh->diffuse->textureID : 0);
-  if (mesh->diffuse)
+  const String diffusePathStr = (meshTarget->diffuse ? meshTarget->diffuse->texturePath.string() : "");
+  const uint32_t diffuseID = (meshTarget->diffuse ? meshTarget->diffuse->textureID : 0);
+  if (meshTarget->diffuse)
     ImGui::Text(diffusePathStr.c_str());
   else
     ImGui::Text("None");
@@ -281,7 +279,7 @@ void Editor::ShowPropertiesPanel(StaticMesh* meshTarget)
       String textPathStr = textures[i]->texturePath.string();
       bool isSelected = (std::strcmp(diffusePathStr.c_str(), textPathStr.c_str()) == 0);
       if (ImGui::Selectable(textPathStr.c_str(), isSelected))
-        mesh->diffuse = TexturesManager::GetTexture(textPathStr.c_str());
+        meshTarget->diffuse = TexturesManager::GetTexture(textPathStr.c_str());
       if (isSelected)
         ImGui::SetItemDefaultFocus();
     }

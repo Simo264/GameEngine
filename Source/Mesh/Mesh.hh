@@ -12,8 +12,8 @@ public:
 	Mesh() : diffuse{ nullptr }, specular{ nullptr } {}
 
 	void InitMesh(VertexArrayData& data, VertexArrayConfig& config);
-	void DestroyMesh();
-	void Draw(class Shader* shader);
+	void DestroyMesh() const;
+	void DrawMesh(class Shader* shader);
 
 	VertexArray vertexArray;
 	class Texture2D* diffuse;

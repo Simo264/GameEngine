@@ -65,7 +65,7 @@ void Engine::Run()
   StaticMesh cube("Shapes/Cube/Cube.obj");
   StaticMesh cottage("Cottage/Cottage.obj");
 
-  InstancingMesh instancingPlane(plane.GetMesh(0), 10);
+  InstancingMesh instancingPlane(&plane, 10);
   instancingPlane.AddInstance(glm::translate(Mat4f(1.0f), Vec3f(0.0f, 0.0f, 0.0f)));
   instancingPlane.AddInstance(glm::translate(Mat4f(1.0f), Vec3f(2.0f, 0.0f, 0.0f)));
   instancingPlane.AddInstance(glm::translate(Mat4f(1.0f), Vec3f(0.0f, 0.0f, 2.0f)));
@@ -76,8 +76,8 @@ void Engine::Run()
   dirLight.ambient = 0.1f;
   dirLight.diffuse = 0.25f;
   dirLight.specular = 0.75f;
-  //PointLight pointLight("PointLight");
-  //pointLight.position = Vec3f(0.0f, 5.0f, 0.0f);
+  PointLight pointLight("PointLight");
+  pointLight.position = Vec3f(0.0f, 5.0f, 0.0f);
   
   /* Create scene */
   //Scene scene;
@@ -129,7 +129,7 @@ void Engine::Run()
     //instancingShader->SetMat4f("Projection", projection);
     //instancingShader->SetMat4f("View", view);
     //dirLight.RenderLight(instancingShader);
-    //instancingPlane.Draw();
+    //instancingPlane.DrawInstMesh();
 
     sceneShader->Use();
     sceneShader->SetMat4f("Projection", projection);

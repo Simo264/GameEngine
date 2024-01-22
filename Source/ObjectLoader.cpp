@@ -28,18 +28,10 @@ ObjectLoader::ObjectLoader(Path filePath)
   }
 }
 
-void ObjectLoader::LoadStaticMesh(StaticMesh* staticMesh)
+void ObjectLoader::LoadStaticMesh(StaticMesh* staticMesh, uint32_t meshIndex)
 {
-  CONSOLE_TRACE("ObjectLoader::LoadStaticMesh, mNumMeshes={}", _scene->mNumMeshes);
-
-  uint32_t nMeshes = _scene->mNumMeshes;
-  staticMesh->SetMeshes(nMeshes);
-  for (int i = 0; i < nMeshes; i++)
-  {
-    aiMesh* aimesh = _scene->mMeshes[i];
-    Mesh* mesh = staticMesh->GetMesh(i);
-    LoadMeshData(aimesh, mesh);
-  }
+  aiMesh* aimesh = _scene->mMeshes[meshIndex];
+  LoadMeshData(aimesh, staticMesh);
 }
 
 /* -----------------------------------------------------

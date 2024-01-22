@@ -13,8 +13,8 @@ InstancingMesh::InstancingMesh(Mesh* mesh, uint32_t nMaxInstances)
   _maxNumInstances = nMaxInstances;
   _nInstancesToDraw = 0;
   _instanceBuffer = 0;
-  diffuse = nullptr;
-  specular = nullptr;
+  diffuse = mesh->diffuse;
+  specular = mesh->specular;
 
   InitializeInstance(mesh);
 }
@@ -38,7 +38,7 @@ void InstancingMesh::SetInstanceModel(uint32_t instance, const Mat4f& model)
   _vertexArray.UnbindVertexArray();
 }
 
-void InstancingMesh::Draw()
+void InstancingMesh::DrawInstMesh()
 {
   if (_nInstancesToDraw <= 0)
     return;
@@ -65,7 +65,7 @@ void InstancingMesh::Draw()
   glBindTexture(GL_TEXTURE_2D, 0); // unbind diffuse
 }
 
-void InstancingMesh::DestroyInstance() const
+void InstancingMesh::DestroyInstMesh() const
 {
   _vertexArray.DestroyVertexArray();
   glDeleteBuffers(1, &_instanceBuffer);
@@ -91,8 +91,6 @@ void InstancingMesh::InitializeInstance(Mesh* mesh)
   /* Now copy vertex buffer data and index buffer data */
   meshVao.CopyVertexBufferData(_vertexArray.VertexBufferID());
   meshVao.CopyIndexBufferData(_vertexArray.IndexBufferID());
-  this->diffuse = mesh->diffuse;
-  this->specular = mesh->specular;
 
   _vertexArray.BindVertexArray();
   /* Initialize empty instance buffer */
