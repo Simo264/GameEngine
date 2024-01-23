@@ -62,7 +62,6 @@ uniform SpotLight_t   USpotLight;
 uniform vec3          UViewPos; 
 uniform float         UGamma;
 
-
 /* ---------- Globals variable ---------- */
 /* -------------------------------------- */
 vec3 normal;
@@ -70,6 +69,8 @@ vec3 viewDir;
 vec3 diffuseColor;
 vec3 specularColor;
 
+/* ---------- Functions ---------- */
+/* ------------------------------- */
 vec3 CalcDirLight();
 vec3 BlinnPhong(); /* Function to calcolate point lights */
 vec3 CalcSpotLight();
@@ -81,6 +82,7 @@ void main()
   normal  = normalize(Normals);
   viewDir = normalize(UViewPos - FragPos);
   diffuseColor  = texture(UMaterial.diffuse, TexCoords).rgb;
+
   specularColor = texture(UMaterial.specular, TexCoords).rgb;
   vec3 result = vec3(0.0f, 0.0f, 0.0f);
 
@@ -94,7 +96,6 @@ void main()
     per lamp. In the main() function we take all the calculated colors and sum them up for
     this fragment's final color.
   */
-
   /* Phase 1: Directional lighting */
   result += CalcDirLight();
 
@@ -112,11 +113,10 @@ void main()
   FragColor = vec4(result, 1.0);
 }
 
-
 vec3 ApplyGammaCorrection(vec3 inputValue)
 {
   if(UGamma != 0.0f)
-    return pow(inputValue, 1.0f/UGamma);
+    return pow(inputValue, vec3(1.0f/UGamma));
   else
     return inputValue;
 }

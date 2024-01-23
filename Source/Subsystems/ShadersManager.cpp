@@ -70,12 +70,13 @@ void ShadersManager::Initialize()
   instancingShader->SetInt("UMaterial.specular", 1);
   instancingShader->SetFloat("UMaterial.shininess", 32.0f);
   instancingShader->SetFloat("UGamma", 2.2f);
-  
+
   sceneShader->Use();
   sceneShader->SetInt("UMaterial.diffuse", 0);
   sceneShader->SetInt("UMaterial.specular", 1);
   sceneShader->SetFloat("UMaterial.shininess", 32.0f);
   sceneShader->SetFloat("UGamma", 2.2f);
+
 }
 
 void ShadersManager::ShutDown()
