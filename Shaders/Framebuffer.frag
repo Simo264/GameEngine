@@ -1,9 +1,9 @@
-#version 330 core
+#version 460
 
 in vec2 TextCoords;
 out vec4 FragColor;
 
-uniform sampler2D screenTexture;
+uniform sampler2D UScreenTexture;
 
 /*
 	POST_PROC_NONE			-> postProcessingType=0
@@ -12,7 +12,7 @@ uniform sampler2D screenTexture;
 	POST_PROC_KERNEL		-> postProcessingType=3
 	POST_PROC_BLUR			-> postProcessingType=4
 */
-uniform int postProcessingType;
+uniform int UPostProcessingType;
 
 /* ----------------------------
 			Post Processing
@@ -30,9 +30,9 @@ vec3 texColor;
 
 void main()
 {
-	texColor	= texture(screenTexture, TextCoords).rgb;
+	texColor	= texture(UScreenTexture, TextCoords).rgb;
 
-	switch(postProcessingType){
+	switch(UPostProcessingType){
 
 	case 0:
 		FragColor = vec4(texColor, 1.0);
@@ -88,7 +88,7 @@ vec4 KernelEffect()
 	);
 	vec3 sampleTex[9];
 	for(int i = 0; i < 9; i++)
-		sampleTex[i] = vec3(texture(screenTexture, TextCoords.st + offsets[i]));
+		sampleTex[i] = vec3(texture(UScreenTexture, TextCoords.st + offsets[i]));
 	
 	vec3 col = vec3(0.0);
 	for(int i = 0; i < 9; i++)
@@ -119,7 +119,7 @@ vec4 BlurEffect()
 
 	vec3 sampleTex[9];
 	for(int i = 0; i < 9; i++)
-		sampleTex[i] = vec3(texture(screenTexture, TextCoords.st + offsets[i]));
+		sampleTex[i] = vec3(texture(UScreenTexture, TextCoords.st + offsets[i]));
 	
 	vec3 col = vec3(0.0);
 	for(int i = 0; i < 9; i++)

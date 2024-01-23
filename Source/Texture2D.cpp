@@ -40,17 +40,24 @@ void Texture2D::LoadImageData() const
   auto data = stbi_load(stringPath.c_str(), &width, &height, &nrChannels, 0);
   if (data)
   {
+    int internalFormat = GL_SRGB;
     int format = GL_RGB;
 
+    /*
+      GL_RGB no gamma correction, no alpha component
+      GL_RGBA no gamma correction, with alpha component
+      GL_SRGB with gamma correction, no alpha component
+      GL_SRGB_ALPHA with gamma correction, with alpha component    
+     */
     switch (nrChannels) {
-      case 1: format = GL_RED;  break;
-      case 2: format = GL_RG;   break;
-      case 3: format = GL_RGB;  break;
-      case 4: format = GL_RGBA; break;
+    case 1: internalFormat = GL_SRGB; format = GL_RED; break;
+    case 2: internalFormat = GL_RG;  format = GL_RG;  break;
+    case 3: internalFormat = GL_SRGB; format = GL_RGB; break;
+    case 4: internalFormat = GL_SRGB_ALPHA; format = GL_RGBA; break;
     }
 
-    // mutable storage
-    glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+    /* Mutable storage */
+    glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, GL_UNSIGNED_BYTE, data);
     glGenerateMipmap(GL_TEXTURE_2D);
   }
   else

@@ -1,4 +1,4 @@
-#version 330 core
+#version 460
 
 /* ---------- IN attributes ---------- */
 /* ----------------------------------- */
@@ -55,11 +55,12 @@ struct SpotLight_t {
 
 /* ---------- Uniforms ---------- */
 /* ------------------------------ */
-uniform Material_t    Material;
-uniform DirLight_t    DirLight;
-uniform PointLight_t  PointLight;
-uniform SpotLight_t   SpotLight;
-uniform vec3          ViewPos; 
+uniform Material_t    UMaterial;
+uniform DirLight_t    UDirLight;
+uniform PointLight_t  UPointLight;
+uniform SpotLight_t   USpotLight;
+uniform vec3          UViewPos; 
+uniform float         UGamma;
 
 
 /* ---------- Globals variable ---------- */
@@ -68,77 +69,97 @@ vec3 normal;
 vec3 viewDir;
 vec3 diffuseColor;
 vec3 specularColor;
-//vec3 textureNormal;
-
 
 vec3 CalcDirLight();
-vec3 CalcPointLight();
+vec3 BlinnPhong(); /* Function to calcolate point lights */
 vec3 CalcSpotLight();
+vec3 ApplyGammaCorrection(vec3 inputValue);
 
 void main()
 {
-  // properties
+  /* Init globals */
   normal  = normalize(Normals);
-  viewDir = normalize(ViewPos - FragPos);
-  diffuseColor  = texture(Material.diffuse,  TexCoords).rgb;
-  specularColor = texture(Material.specular, TexCoords).rgb;
-  //texNorm       = texture(material.normal,   TexCoords).rgb;
+  viewDir = normalize(UViewPos - FragPos);
+  diffuseColor  = texture(UMaterial.diffuse, TexCoords).rgb;
+  specularColor = texture(UMaterial.specular, TexCoords).rgb;
+  vec3 result = vec3(0.0f, 0.0f, 0.0f);
 
-  // if no texture: set diffuse to default color 
+  /* If no texture: set diffuse to default color */
   if(length(diffuseColor) == 0)
     diffuseColor = vec3(0.25f, 0.50f, 0.75f);
 
-  // phase 1: Directional lighting
-  vec3 result = CalcDirLight();
+  /*
+    Our lighting is set up in 3 phases: directional, point lights and an optional flashlight
+    For each phase, a calculate function is defined that calculates the corresponding color
+    per lamp. In the main() function we take all the calculated colors and sum them up for
+    this fragment's final color.
+  */
 
-  // phase 2: Point lights
+  /* Phase 1: Directional lighting */
+  result += CalcDirLight();
+
+  /* Phase 2: Point lights */
   // for(int i = 0; i < NR_POINT_LIGHTS; i++)
-  //  result += CalcPointLight(pointLights[i]); 
-  result += CalcPointLight(); 
+  //  result += BlinnPhong(pointLights[i]); 
+  result += BlinnPhong(); 
 
-  // phase 3: Spot light
+  /* Phase 3: Spot light */
   //result += CalcSpotLight(spotLight);  
+
+  /* Apply gamma correction */
+  result = ApplyGammaCorrection(result);
 
   FragColor = vec4(result, 1.0);
 }
 
+
+vec3 ApplyGammaCorrection(vec3 inputValue)
+{
+  if(UGamma != 0.0f)
+    return pow(inputValue, 1.0f/UGamma);
+  else
+    return inputValue;
+}
+
 vec3 CalcDirLight()
 {
-  vec3 lightDir = normalize(-DirLight.direction);
+  vec3 lightDir = normalize(-UDirLight.direction);
   
   // diffuse shading
   float diff = max(dot(normal, lightDir), 0.0);
   
   // specular shading
   vec3 reflectDir = reflect(-lightDir, normal);
-  float spec = pow(max(dot(viewDir, reflectDir), 0.0), Material.shininess);
+  float spec = pow(max(dot(viewDir, reflectDir), 0.0), UMaterial.shininess);
   
   // combine results
-  vec3 ambient  = DirLight.ambient  * diffuseColor;
-  vec3 diffuse  = DirLight.diffuse  * diff * diffuseColor;
-  vec3 specular = DirLight.specular * spec * specularColor;
+  vec3 ambient  = UDirLight.ambient  * diffuseColor;
+  vec3 diffuse  = UDirLight.diffuse  * diff * diffuseColor;
+  vec3 specular = UDirLight.specular * spec * specularColor;
   return (ambient + diffuse + specular);
 }
 
-vec3 CalcPointLight()
+vec3 BlinnPhong()
 {
-  vec3 lightDir = normalize(PointLight.position - FragPos);
+  vec3 lightDir = normalize(UPointLight.position - FragPos);
   
   // diffuse shading
   float diff = max(dot(normal, lightDir), 0.0);
+  if(diff == 0.0f)
+    return vec3(0.0f);
 
-  // specular shading Blinn-Phong
+  // specular
   vec3 halfwayDir = normalize(lightDir + viewDir);  
-  float spec = pow(max(dot(normal, halfwayDir), 0.0), Material.shininess);
+  float spec = pow(max(dot(normal, halfwayDir), 0.0), UMaterial.shininess);
 
   // attenuation
-  float distance    = length(PointLight.position - FragPos);
-  float attenuation = 1.0f / (1.0f + PointLight.linear * distance + PointLight.quadratic * (distance * distance));    
+  float distance    = length(UPointLight.position - FragPos);
+  float attenuation = 1.0f / (1.0f + UPointLight.linear * distance + UPointLight.quadratic * (distance * distance));    
 
   // combine results
-  vec3 ambient  = PointLight.ambient  * diffuseColor;
-  vec3 diffuse  = PointLight.diffuse  * diff * diffuseColor;
-  vec3 specular = PointLight.specular * spec * specularColor;
+  vec3 ambient  = UPointLight.ambient  * diffuseColor;
+  vec3 diffuse  = UPointLight.diffuse  * diff * diffuseColor;
+  vec3 specular = UPointLight.specular * spec * specularColor;
 
   ambient  *= attenuation;
   diffuse  *= attenuation;
@@ -148,35 +169,35 @@ vec3 CalcPointLight()
 
 vec3 CalcSpotLight()
 {
-  vec3 lightDir = normalize(SpotLight.position - FragPos);
+  vec3 lightDir = normalize(USpotLight.position - FragPos);
 
   // check if lighting is inside the spotlight cone
-  float theta = dot(lightDir, normalize(-SpotLight.direction));
+  float theta = dot(lightDir, normalize(-USpotLight.direction));
 
   // remember that we're working with angles as cosines instead of degrees so a '>' is used.
-  if(theta > SpotLight.cutOff) 
+  if(theta > USpotLight.cutOff) 
   {
     // ambient
-    vec3 ambient = SpotLight.ambient * diffuseColor;
+    vec3 ambient = USpotLight.ambient * diffuseColor;
     
     // diffuse 
     vec3 norm     = normalize(normal);
     float diff    = max(dot(norm, lightDir), 0.0);
-    vec3 diffuse  = SpotLight.diffuse * diff * diffuseColor;  
+    vec3 diffuse  = USpotLight.diffuse * diff * diffuseColor;  
     
     // specular
     vec3 reflectDir = reflect(-lightDir, norm);  
-    float spec      = pow(max(dot(viewDir, reflectDir), 0.0), Material.shininess);
-    vec3 specular   = SpotLight.specular * spec * diffuseColor;  
+    float spec      = pow(max(dot(viewDir, reflectDir), 0.0), UMaterial.shininess);
+    vec3 specular   = USpotLight.specular * spec * diffuseColor;  
     
     // spotlight (soft edges)
-    float intensity = 1.0 - (1.0 - theta) / (1.0 - SpotLight.cutOff);
+    float intensity = 1.0 - (1.0 - theta) / (1.0 - USpotLight.cutOff);
     diffuse  *= intensity;
     specular *= intensity;
 
     // attenuation
-    float distance    = length(SpotLight.position - FragPos);
-    float attenuation = 1.0 / (1.0 + SpotLight.linear * distance + SpotLight.quadratic * (distance * distance));    
+    float distance    = length(USpotLight.position - FragPos);
+    float attenuation = 1.0 / (1.0 + USpotLight.linear * distance + USpotLight.quadratic * (distance * distance));    
 
     // remove attenuation from ambient, as otherwise at large distances the light would be 
     // darker inside than outside the spotlight due the ambient term in the else branch

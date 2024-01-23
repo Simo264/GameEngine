@@ -11,7 +11,7 @@ StaticMesh::StaticMesh(Path objFilePath) : RootComponent(), Mesh()
 void StaticMesh::Draw(Shader* shader)
 {
 	auto model = this->GetModel();
-	shader->SetMat4f("Model", model);
+	shader->SetMat4f("UModel", model);
 	
 	this->DrawMesh(shader);
 }

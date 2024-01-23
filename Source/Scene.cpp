@@ -1,6 +1,7 @@
 #include "Scene.hh"
 #include "Shader.hh"
 #include "Mesh/StaticMesh.hh"
+#include "Mesh/InstancingMesh.hh"
 
 #include "Lighting/DirectionalLight.hh"
 #include "Lighting/PointLight.hh"
@@ -14,18 +15,18 @@ void Scene::DrawScene(Shader* shader)
 	for (auto light : pointLights)
 		light->RenderLight(shader);
 
-	/* enable culling for meshes */
-	glEnable(GL_CULL_FACE);
+	/* Enable culling for meshes */
+	//glEnable(GL_CULL_FACE);
 	
-	for (auto mesh : meshes)
+	for (auto mesh : statMeshes)
 		mesh->Draw(shader);
-	
-	glDisable(GL_CULL_FACE);
+
+	//glDisable(GL_CULL_FACE);
 }
 
 void Scene::AddStaticMesh(StaticMesh* staticMesh)
 {
-	meshes.push_back(staticMesh);
+	statMeshes.push_back(staticMesh);
 }
 
 void Scene::AddPointLight(PointLight* pointLight)

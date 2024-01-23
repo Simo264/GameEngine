@@ -61,29 +61,27 @@ void Engine::Run()
   Camera camera(window.GetWindowSize(), Vec3f(0.0f, 0.0f, 10.0f));
   
   /* Mesh objects */
-  StaticMesh plane("Shapes/Plane/Plane.obj");
-  StaticMesh cube("Shapes/Cube/Cube.obj");
+  //StaticMesh plane("Shapes/Plane/Plane.obj");
   StaticMesh cottage("Cottage/Cottage.obj");
 
-  InstancingMesh instancingPlane(&plane, 10);
-  instancingPlane.AddInstance(glm::translate(Mat4f(1.0f), Vec3f(0.0f, 0.0f, 0.0f)));
-  instancingPlane.AddInstance(glm::translate(Mat4f(1.0f), Vec3f(2.0f, 0.0f, 0.0f)));
-  instancingPlane.AddInstance(glm::translate(Mat4f(1.0f), Vec3f(0.0f, 0.0f, 2.0f)));
-  instancingPlane.AddInstance(glm::translate(Mat4f(1.0f), Vec3f(2.0f, 0.0f, 2.0f)));
+  //InstancingMesh instancingPlane(&plane, 10);
+  //instancingPlane.AddInstance(glm::translate(Mat4f(1.0f), Vec3f(0.0f, 0.0f, 0.0f)));
+  //instancingPlane.AddInstance(glm::translate(Mat4f(1.0f), Vec3f(2.0f, 0.0f, 0.0f)));
+  //instancingPlane.AddInstance(glm::translate(Mat4f(1.0f), Vec3f(0.0f, 0.0f, 2.0f)));
+  //instancingPlane.AddInstance(glm::translate(Mat4f(1.0f), Vec3f(2.0f, 0.0f, 2.0f)));
 
   /* Lighting */
-  DirectionalLight dirLight("DirLight");
+  DirectionalLight dirLight("UDirLight");
   dirLight.ambient = 0.1f;
   dirLight.diffuse = 0.25f;
   dirLight.specular = 0.75f;
-  PointLight pointLight("PointLight");
+  PointLight pointLight("UPointLight");
   pointLight.position = Vec3f(0.0f, 5.0f, 0.0f);
   
   /* Create scene */
-  //Scene scene;
-  //scene.directionalLight = &dirLight;
-  //scene.AddPointLight(&pointLight);
-  //scene.AddStaticMesh(&plane);
+  Scene scene;
+  scene.directionalLight = &dirLight;
+  scene.AddStaticMesh(&cottage);
 
   /* Pre-loop */
   double lastUpdateTime = 0;
@@ -120,22 +118,21 @@ void Engine::Run()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
     framebuffer.BindMSAAFramebuffer();
-    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    glClearColor(pow(0.1f, 2.2f), pow(0.1f, 2.2f), pow(0.1f, 2.2f), 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
 
     /* Render scene */
     //instancingShader->Use();
-    //instancingShader->SetMat4f("Projection", projection);
-    //instancingShader->SetMat4f("View", view);
+    //instancingShader->SetMat4f("UProjection", projection);
+    //instancingShader->SetMat4f("UView", view);
     //dirLight.RenderLight(instancingShader);
     //instancingPlane.DrawInstMesh();
 
     sceneShader->Use();
-    sceneShader->SetMat4f("Projection", projection);
-    sceneShader->SetMat4f("View", view);
-    dirLight.RenderLight(sceneShader);
-    cottage.Draw(sceneShader);
+    sceneShader->SetMat4f("UProjection", projection);
+    sceneShader->SetMat4f("UView", view);
+    scene.DrawScene(sceneShader);
 
     framebuffer.BlitFrameBuffer();
     framebuffer.UnbindFrameBuffer();
@@ -149,7 +146,7 @@ void Engine::Run()
     /* Render editor */
     //editor.MenuBar();
     //editor.ShowDemo();
-    //editor.ShowScenePanel(&scene);
+    editor.ShowScenePanel(&scene);
     editor.ShowStats();
     editor.RenderFrame();
     window.SwapWindowBuffers();
@@ -189,16 +186,16 @@ void Engine::ShutDown()
 void Engine::InitOpenGL()
 {
   glfwInit();
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4); /* OpenGL 4.6 */
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6); 
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-  glfwWindowHint(GLFW_SAMPLES, 4);          // enable 4x MSAA on GLFW frame buffer
+  glfwWindowHint(GLFW_SAMPLES, 4);          /* enable 4x MSAA on GLFW frame buffer */ 
 
   GLFWwindow* window = glfwCreateWindow(INITIAL_WINDOW_SIZE_X, INITIAL_WINDOW_SIZE_Y, "OpenGL", nullptr, nullptr);
   glfwMakeContextCurrent(window);
-  glfwSetWindowPos(window, 250, 50);        // set default position
-  glfwSetWindowAspectRatio(window, 16, 9);  // aspect ratio 16:9
-  //glfwSwapInterval(1);                      // v-sync on
+  glfwSetWindowPos(window, 250, 50);        /* set default position */ 
+  glfwSetWindowAspectRatio(window, 16, 9);  /* aspect ratio 16:9 */
+  //glfwSwapInterval(1);                    /* v-sync on */
   //glfwSetInputMode(window.Get(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
   
   glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int width, int height) {
@@ -208,21 +205,30 @@ void Engine::InitOpenGL()
   glfwSetWindowSizeCallback(window, [](GLFWwindow* window, int width, int height) {
     glfwSetWindowSize(window, width, height);
   });
-  
-  gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 
-  /* antialising */
+  /* Load OpenGL functions, gladLoadGL returns the loaded version, 0 on error. */
+  int version = gladLoadGL(glfwGetProcAddress);
+  if (version == 0)
+  {
+    CONSOLE_ERROR("Failed to initialize OpenGL context");
+    exit(-1);
+  }
+  CONSOLE_INFO("Loaded OpenGL {}.{}", GLAD_VERSION_MAJOR(version), GLAD_VERSION_MINOR(version));
+  
+  /* Antialising */
   glEnable(GL_MULTISAMPLE);
   
-  /* depth buffer */
+  /* Depth buffer */
   glEnable(GL_DEPTH_TEST);
   
-  /* blending */
+  /* Blending */
   glDisable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   
-  /* face culling */
+  /* Face culling */
   glDisable(GL_CULL_FACE);
-}
 
+  /* Gamma correction */
+  //glEnable(GL_FRAMEBUFFER_SRGB);
+}
 

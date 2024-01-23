@@ -133,7 +133,7 @@ void Editor::ShowScenePanel(Scene* scene)
   
   auto& dirLight = scene->directionalLight;
   auto& pointLights = scene->pointLights;
-  auto& sceneMeshes = scene->meshes;
+  auto& sceneMeshes = scene->statMeshes;
 
   static bool treeNodeDirLightSelected = false;
   static int treeNodePointLightSelected = -1; 

@@ -62,17 +62,20 @@ void ShadersManager::Initialize()
     GetShaderFile("Framebuffer.frag"));
 
   framebufferShader->Use();
-  framebufferShader->SetInt("screenTexture", 0);
+  framebufferShader->SetInt("UScreenTexture", 0);
+  framebufferShader->SetInt("UPostProcessingType", 0);
   
   instancingShader->Use();
-  instancingShader->SetInt("Material.diffuse", 0);
-  instancingShader->SetInt("Material.specular", 1);
-  instancingShader->SetFloat("Material.shininess", 32.0f);
+  instancingShader->SetInt("UMaterial.diffuse", 0);
+  instancingShader->SetInt("UMaterial.specular", 1);
+  instancingShader->SetFloat("UMaterial.shininess", 32.0f);
+  instancingShader->SetFloat("UGamma", 2.2f);
   
   sceneShader->Use();
-  sceneShader->SetInt("Material.diffuse", 0);
-  sceneShader->SetInt("Material.specular", 1);
-  sceneShader->SetFloat("Material.shininess", 32.0f);
+  sceneShader->SetInt("UMaterial.diffuse", 0);
+  sceneShader->SetInt("UMaterial.specular", 1);
+  sceneShader->SetFloat("UMaterial.shininess", 32.0f);
+  sceneShader->SetFloat("UGamma", 2.2f);
 }
 
 void ShadersManager::ShutDown()

@@ -15,6 +15,7 @@ public:
 	void AddPointLight(class PointLight* pointLight);
 
 	class DirectionalLight* directionalLight;
-	Vector<class StaticMesh*> meshes;
+	Vector<class StaticMesh*> statMeshes;
+	Vector<class InstancingMesh*> instMeshes;
 	Vector<class PointLight*>	pointLights;
 };
