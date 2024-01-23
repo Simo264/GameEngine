@@ -1,6 +1,6 @@
 ﻿cmake_minimum_required (VERSION 3.8)
 
-# Abilita Ricaricamento rapido per i compilatori MSVC, se supportato.
+# Enable fast reload for MSVC compilers, if supported
 if (POLICY CMP0141)
   cmake_policy(SET CMP0141 NEW)
   set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<IF:$<AND:$<C_COMPILER_ID:MSVC>,$<CXX_COMPILER_ID:MSVC>>,$<$<CONFIG:Debug,RelWithDebInfo>:EditAndContinue>,$<$<CONFIG:Debug,RelWithDebInfo>:ProgramDatabase>>")
@@ -14,20 +14,24 @@ set( GLFW_BUILD_TESTS     OFF CACHE BOOL "" FORCE )
 set( GLFW_BUILD_EXAMPLES  OFF CACHE BOOL "" FORCE )
 
 
-# Aggiungere i percorsi di #include aggiuntivi
+# Add include directory path
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/Externals/Include")
 
 
-# Aggiungere l'origine all'eseguibile di questo progetto.
-FILE(GLOB_RECURSE SRC_LIST "${CMAKE_CURRENT_SOURCE_DIR}/Source/*.cpp")
+# List all .cpp and .hpp files into SOURCES variabile
+FILE(GLOB_RECURSE SOURCES 
+  ${CMAKE_CURRENT_SOURCE_DIR}/Source/**.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/Source/**.hpp
+)
 
+# Add source files
 add_executable (GameEngine 
-  "${CMAKE_CURRENT_SOURCE_DIR}/Externals/Include/Glad/glad.c"
-	${SRC_LIST}
+  "${CMAKE_CURRENT_SOURCE_DIR}/Externals/Include/Glad/gl.c"
+  ${SOURCES}
 )
 
 
-# linking libraries
+# Linking libraries
 target_link_libraries(GameEngine "${CMAKE_CURRENT_SOURCE_DIR}/Externals/Libs/glfw3.lib") 
 target_link_libraries(GameEngine "${CMAKE_CURRENT_SOURCE_DIR}/Externals/Libs/spdlogd.lib")
 target_link_libraries(GameEngine "${CMAKE_CURRENT_SOURCE_DIR}/Externals/Libs/assimp.lib")
