@@ -3,21 +3,25 @@
 #include "../Core.hh"
 #include "../Shader.hh"
 
-// Static class ShadersManager: 
-// load and retrieve shader programs located within the Shaders directory
-// ----------------------------------------------------------------------
+/* ------------------------------------------------
+	Static class ShadersManager:
+	load in and retrieve from memory shader programs 
+ -------------------------------------------------- */
 class ShadersManager
 {
 public:
 	ShadersManager()	= delete;
 	~ShadersManager() = delete;
 
+	/* Load in memory the shader program */
 	static Shader* LoadShaderProgram(
 		const char* label, 
 		Path vertFilePath,
 		Path fragFilePath);
 	
+	/* Retrieve from memory the shader program */
 	static Shader* GetShader(const char* label);
+	
 	static Path GetShaderFile(Path filePath);
 	
 	static void Initialize();

@@ -5,9 +5,10 @@
 
 #define TEXTURES_MANAGER_MAX_SIZE 100
 
-// Static class TexturesManager:
-// load and retrieve texture files located within the Textures/ directory
-// ---------------------------------------------------------------------
+/* ------------------------------------------------
+	Static class TexturesManager:
+	load in and retrieve from memory texture objects
+	------------------------------------------------- */
 class TexturesManager
 {
 public:
@@ -16,10 +17,10 @@ public:
 
 	static void Initialize();
 	
-	// Load texture object by filename in Textures/
-	static Texture2D* LoadTexture(Path filePath);
+	/* Load in memory the texture object by filename in Textures directory */
+	static Texture2D* LoadTexture(Path filePath, bool gammaCorrection = true);
 	
-	// Get texture object by filename in Textures/
+	/* Retrieve from memory texture object by filename in Textures */
 	static Texture2D* GetTexture(Path filePath);
 
 	static void GetTextures(Vector<Texture2D*>& out);

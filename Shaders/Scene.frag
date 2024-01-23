@@ -74,7 +74,7 @@ vec3 specularColor;
 vec3 CalcDirLight();
 vec3 BlinnPhong(); /* Function to calcolate point lights */
 vec3 CalcSpotLight();
-vec3 ApplyGammaCorrection(vec3 inputValue);
+void GammaCorrection(inout vec3 value); /* value to apply gamma correction */
 
 void main()
 {
@@ -82,7 +82,6 @@ void main()
   normal  = normalize(Normals);
   viewDir = normalize(UViewPos - FragPos);
   diffuseColor  = texture(UMaterial.diffuse, TexCoords).rgb;
-
   specularColor = texture(UMaterial.specular, TexCoords).rgb;
   vec3 result = vec3(0.0f, 0.0f, 0.0f);
 
@@ -108,17 +107,15 @@ void main()
   //result += CalcSpotLight(spotLight);  
 
   /* Apply gamma correction */
-  result = ApplyGammaCorrection(result);
+  if(UGamma != 0.0f)
+    GammaCorrection(result);
 
   FragColor = vec4(result, 1.0);
 }
 
-vec3 ApplyGammaCorrection(vec3 inputValue)
+void GammaCorrection(inout vec3 value)
 {
-  if(UGamma != 0.0f)
-    return pow(inputValue, vec3(1.0f/UGamma));
-  else
-    return inputValue;
+  value = pow(value, vec3(1.0f/UGamma));
 }
 
 vec3 CalcDirLight()
@@ -154,7 +151,14 @@ vec3 BlinnPhong()
 
   // attenuation
   float distance    = length(UPointLight.position - FragPos);
-  float attenuation = 1.0f / (1.0f + UPointLight.linear * distance + UPointLight.quadratic * (distance * distance));    
+  //float attenuation = 1.0f / (1.0f + UPointLight.linear * distance + UPointLight.quadratic * (distance * distance)); 
+  
+  float attenuation;
+  if(UGamma != 0.0f)
+    attenuation = 1.0f / (distance);    
+  else
+    attenuation = 1.0f / (distance*distance);
+  
 
   // combine results
   vec3 ambient  = UPointLight.ambient  * diffuseColor;

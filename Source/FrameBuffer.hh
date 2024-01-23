@@ -17,7 +17,7 @@ class FrameBuffer : public NonCopyable
 {
 public:
 	FrameBuffer();
-	void InitializeFrameBuffer(Vec2i size);
+	void InitFrameBuffer(Vec2i size);
 	
 	void BindMSAAFramebuffer() const { glBindFramebuffer(GL_FRAMEBUFFER, _renderRelatedIds[MULTISAMPLING_FBO]);  }
 	void UnbindFrameBuffer() const { glBindFramebuffer(GL_FRAMEBUFFER, 0); };

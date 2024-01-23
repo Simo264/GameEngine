@@ -55,14 +55,15 @@ void Engine::Run()
 
   /* Initialize framebuffer object */
   FrameBuffer framebuffer;
-  framebuffer.InitializeFrameBuffer(window.GetFramebufferSize());
+  framebuffer.InitFrameBuffer(window.GetFramebufferSize());
 
   /* Camera object */
   Camera camera(window.GetWindowSize(), Vec3f(0.0f, 0.0f, 10.0f));
   
   /* Mesh objects */
-  //StaticMesh plane("Shapes/Plane/Plane.obj");
+  StaticMesh plane("Shapes/Plane/Plane.obj");
   StaticMesh cottage("Cottage/Cottage.obj");
+  plane.scaling *= 10.f;
 
   //InstancingMesh instancingPlane(&plane, 10);
   //instancingPlane.AddInstance(glm::translate(Mat4f(1.0f), Vec3f(0.0f, 0.0f, 0.0f)));
@@ -82,6 +83,7 @@ void Engine::Run()
   Scene scene;
   scene.directionalLight = &dirLight;
   scene.AddStaticMesh(&cottage);
+  scene.AddStaticMesh(&plane);
 
   /* Pre-loop */
   double lastUpdateTime = 0;
@@ -101,7 +103,6 @@ void Engine::Run()
     {
       windowFbSize = window.GetFramebufferSize();
       aspectRatio = ((float)windowFbSize.x / (float)windowFbSize.y);
-
       framebuffer.RescaleFrameBuffer(windowFbSize);
       windowResized = false;
     }

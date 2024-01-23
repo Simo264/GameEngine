@@ -22,7 +22,7 @@ FrameBuffer::FrameBuffer()
 	_size = Vec2i(0,0);
 }
 
-void FrameBuffer::InitializeFrameBuffer(Vec2i size)
+void FrameBuffer::InitFrameBuffer(Vec2i size)
 {
 	_size = size;
 

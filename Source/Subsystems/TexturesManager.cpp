@@ -18,7 +18,7 @@ void TexturesManager::Initialize()
   }
 }
 
-Texture2D* TexturesManager::LoadTexture(Path filePath)
+Texture2D* TexturesManager::LoadTexture(Path filePath, bool gammaCorrection)
 {
   if (_nTextures >= TEXTURES_MANAGER_MAX_SIZE)
   {
@@ -34,7 +34,7 @@ Texture2D* TexturesManager::LoadTexture(Path filePath)
   }
 
   Texture2D* texture = &_textureBuffer[_nTextures++];
-  texture->InitTexture(filePath);
+  texture->InitTexture(filePath, gammaCorrection);
   return texture;
 }
 

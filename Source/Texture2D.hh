@@ -8,7 +8,7 @@ class Texture2D : public NonCopyable
 public:
   Texture2D() : textureID{ 0 } {}
 
-  void InitTexture(Path path);
+  void InitTexture(Path path, bool gammaCorrection);
   void DestroyTexture() const { glDeleteTextures(1, &textureID); }
   void BindTexture() const { glBindTexture(GL_TEXTURE_2D, textureID); }
 
@@ -16,5 +16,5 @@ public:
   Path texturePath;
 
 private:
-  void LoadImageData() const;
+  void LoadImageData(bool gammaCorrection) const;
 };

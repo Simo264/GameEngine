@@ -9,7 +9,7 @@
  * -----------------------------------------------------
 */
 
-void Texture2D::InitTexture(Path path)
+void Texture2D::InitTexture(Path path, bool gammaCorrection)
 {
   texturePath = path;
 
@@ -20,7 +20,7 @@ void Texture2D::InitTexture(Path path)
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-  LoadImageData();
+  LoadImageData(gammaCorrection);
 
   glBindTexture(GL_TEXTURE_2D, 0);
 }
@@ -30,7 +30,7 @@ void Texture2D::InitTexture(Path path)
  * -----------------------------------------------------
 */
 
-void Texture2D::LoadImageData() const
+void Texture2D::LoadImageData(bool gammaCorrection) const
 {
   String stringPath = texturePath.string();
   
@@ -40,7 +40,7 @@ void Texture2D::LoadImageData() const
   auto data = stbi_load(stringPath.c_str(), &width, &height, &nrChannels, 0);
   if (data)
   {
-    int internalFormat = GL_SRGB;
+    int internalFormat = GL_RGB;
     int format = GL_RGB;
 
     /*
@@ -48,12 +48,22 @@ void Texture2D::LoadImageData() const
       GL_RGBA no gamma correction, with alpha component
       GL_SRGB with gamma correction, no alpha component
       GL_SRGB_ALPHA with gamma correction, with alpha component    
-     */
+    */
     switch (nrChannels) {
-    case 1: internalFormat = GL_SRGB; format = GL_RED; break;
-    case 2: internalFormat = GL_RG;  format = GL_RG;  break;
-    case 3: internalFormat = GL_SRGB; format = GL_RGB; break;
-    case 4: internalFormat = GL_SRGB_ALPHA; format = GL_RGBA; break;
+    case 1: 
+      internalFormat = format = GL_RED;
+      break;
+    case 2: 
+      internalFormat = format = GL_RG;
+      break;
+    case 3: 
+      internalFormat = (gammaCorrection ? GL_SRGB : GL_RGB);
+      format = GL_RGB; 
+      break;
+    case 4: 
+      internalFormat = (gammaCorrection ? GL_SRGB_ALPHA : GL_RGBA);
+      format = GL_RGBA; 
+      break;
     }
 
     /* Mutable storage */
