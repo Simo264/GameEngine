@@ -10,26 +10,26 @@ public:
 
   Mat4f GetViewMatrix() const;
 
-  void ProcessInput(class Window* window, const double deltaTime);
+  void ProcessInput(const class Window* window, const double deltaTime);
 
-  // camera Attributes
+  /* Camera Attributes */
   Vec3f position;
   Vec3f front;
   Vec3f up;
   Vec3f right;
   Vec3f worldUp;
 
-  // euler Angles
+  /* Euler Angles */
   float yaw;
   float pitch;
   
-  // camera options
+  /* Camera options */
   float movementSpeed;
   float mouseSensitivity;
   float fov;
 
 private:
-  // calculates the front vector from the Camera's (updated) Euler Angles
+  /* Calculates the front vector from the Camera's (updated) Euler Angles */
   void UpdateCameraVectors();
 
   void FreeCameraWalk(const class Window* window, const double deltaTime);

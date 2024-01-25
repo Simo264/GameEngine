@@ -47,7 +47,10 @@ Shader* ShadersManager::GetShader(const char* label)
 
 void ShadersManager::Initialize()
 {
-  LoadShaderProgram("TestingShader",GetShaderFile("Testing.vert"),GetShaderFile("Testing.frag"));
+  auto testingShader = LoadShaderProgram(
+    "TestingShader",
+    GetShaderFile("Testing.vert"),
+    GetShaderFile("Testing.frag"));
   auto instancingShader = LoadShaderProgram(
     "InstancingShader",
     GetShaderFile("Instancing.vert"),
@@ -60,6 +63,14 @@ void ShadersManager::Initialize()
     "FramebufferShader",
     GetShaderFile("Framebuffer.vert"),
     GetShaderFile("Framebuffer.frag"));
+  auto shadowMapDepthShader = LoadShaderProgram(
+    "ShadowMapDepthShader",
+    GetShaderFile("ShadowMapDepth.vert"),
+    GetShaderFile("ShadowMapDepth.frag"));
+  auto shadowMapShader = LoadShaderProgram(
+    "ShadowMapShader",
+    GetShaderFile("ShadowMap.vert"),
+    GetShaderFile("ShadowMap.frag"));
 
   framebufferShader->Use();
   framebufferShader->SetInt("UScreenTexture", 0);
@@ -76,7 +87,6 @@ void ShadersManager::Initialize()
   sceneShader->SetInt("UMaterial.specular", 1);
   sceneShader->SetFloat("UMaterial.shininess", 32.0f);
   sceneShader->SetFloat("UGamma", 2.2f);
-
 }
 
 void ShadersManager::ShutDown()

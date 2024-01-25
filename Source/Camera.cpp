@@ -18,8 +18,8 @@ Camera::Camera(Vec2i windowSize, Vec3f position) : position{ position }
   mouseSensitivity = 25.0f; // [1.0f:100.0f]
   fov              = 45.0f;
 
-  _lastX = (float)(windowSize.x / 2);
-  _lastY = (float)(windowSize.y / 2);
+  _lastX = ((float)windowSize.x / 2.0f);
+  _lastY = ((float)windowSize.y / 2.0f);
 
   _firstMouse     = false;
   _constrainPitch = true;
@@ -32,7 +32,7 @@ Mat4f Camera::GetViewMatrix() const
   return glm::lookAt(position, position + front, up); 
 }
 
-void Camera::ProcessInput(Window* window, const double deltaTime)
+void Camera::ProcessInput(const Window* window, const double deltaTime)
 {
   Vec2d mousePos;
   window->GetCursorPosition(mousePos);

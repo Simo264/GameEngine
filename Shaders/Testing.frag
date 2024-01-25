@@ -1,8 +1,14 @@
 #version 460
+in vec2 TexCoords;
 
 out vec4 FragColor;
 
+uniform sampler2D UShadowMap;
+uniform float UNearPlane;
+uniform float UFarPlane;
+
 void main()
-{
-	FragColor = vec4(0.25f, 0.50f, 0.75f, 1.0f);
+{             
+  float depthValue = texture(UShadowMap, TexCoords).r;
+  FragColor = vec4(vec3(depthValue), 1.0); /* Orthographic */
 }

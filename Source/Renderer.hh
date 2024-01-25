@@ -19,4 +19,6 @@ public:
 	static void DrawIndexedInstanced(class VertexArray* vertexArray, int nInstances);
 	
 	inline static uint32_t drawCalls = 0;
+
+	inline static uint32_t drawMode = GL_TRIANGLES;
 };

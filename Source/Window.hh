@@ -9,6 +9,7 @@ class Window : public NonCopyable
 {
 public:
   Window(GLFWwindow* window) : _window{ window } { };
+  ~Window() = default;
 
   // glfw: set close flag TRUE
   void CloseWindow() { glfwSetWindowShouldClose(_window, GLFW_TRUE); }
@@ -23,7 +24,7 @@ public:
   void SwapWindowBuffers() { glfwSwapBuffers(_window); }
 
   // glfw: get window size
-  Vec2i GetWindowSize()
+  Vec2i GetWindowSize() const
   {
     Vec2i size;
     glfwGetWindowSize(_window, &size.x, &size.y);
@@ -31,7 +32,7 @@ public:
   }
   
   // glfw: retrieves the size, in pixels, of the framebuffer of the specified window
-  Vec2i GetFramebufferSize()
+  Vec2i GetFramebufferSize() const 
   {
     Vec2i size;
     glfwGetFramebufferSize(_window, &size.x, &size.y);
@@ -45,13 +46,13 @@ public:
   int GetMouseKey(uint32_t key) const { return glfwGetMouseButton(_window, key); }
 
   // glfw: mouse position 
-  void GetCursorPosition(Vec2d& pos) { glfwGetCursorPos(_window, &pos.x, &pos.y); }
+  void GetCursorPosition(Vec2d& pos) const { glfwGetCursorPos(_window, &pos.x, &pos.y); }
 
   // glfw: value = GLFW_CURSOR_NORMAL | GLFW_CURSOR_HIDDEN | GLFW_CURSOR_DISABLED
   void SetCursorMode(int value) { glfwSetInputMode(_window, GLFW_CURSOR, value); }
 
   // glfw: window position
-  void SetPosition(Vec2i pos)  { glfwSetWindowPos(_window, pos.x, pos.y); }
+  void SetPosition(Vec2i pos) { glfwSetWindowPos(_window, pos.x, pos.y); }
 
 private:
   GLFWwindow* _window;

@@ -3,7 +3,7 @@
 /* ---------- IN attributes ---------- */
 /* ----------------------------------- */
 in vec3 FragPos;  
-in vec3 Normals;
+in vec3 Normal;
 in vec2 TexCoords;
 
 /* ---------- OUT attributes ---------- */
@@ -79,7 +79,7 @@ void GammaCorrection(inout vec3 value); /* value to apply gamma correction */
 void main()
 {
   /* Init globals */
-  normal  = normalize(Normals);
+  normal  = normalize(Normal);
   viewDir = normalize(UViewPos - FragPos);
   diffuseColor  = texture(UMaterial.diffuse, TexCoords).rgb;
   specularColor = texture(UMaterial.specular, TexCoords).rgb;
