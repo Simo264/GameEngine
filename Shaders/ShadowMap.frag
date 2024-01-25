@@ -1,32 +1,45 @@
 #version 460
-out vec4 FragColor;
 
+
+/* ---------- IN attributes ---------- */
+/* ----------------------------------- */
 in vec3 FragPos;
 in vec3 Normal;
 in vec2 TexCoords;
 in vec4 FragPosLightSpace;
 
+/* ---------- OUT attributes ---------- */
+/* ------------------------------------ */
+out vec4 FragColor;
+
+/* ---------- Uniforms ---------- */
+/* ------------------------------ */
 uniform sampler2D UDiffuseTexture;  /* 0 */
 uniform sampler2D USpecularTexture; /* 1 */
 uniform sampler2D UShadowMap;       /* 2 */
-
 uniform vec3 ULightPos;
 uniform vec3 UViewPos;
+
+/* ---------- Globals variable ---------- */
+/* -------------------------------------- */
+vec3 diffuseColor;
+vec3 normal;
+vec3 lightDir;
 
 float ShadowCalculation();
 
 void main()
-{           
-  vec3 diffuseColor = texture(UDiffuseTexture, TexCoords).rgb;
-  
-  vec3 normal = normalize(Normal);
-  vec3 lightColor = vec3(1.0);
+{     
+  /* Init globals */
+  diffuseColor = texture(UDiffuseTexture, TexCoords).rgb;
+  normal = normalize(Normal);
+  lightDir = normalize(ULightPos - FragPos);
   
   /* Ambient */
+  vec3 lightColor = vec3(1.0);
   vec3 ambient = 0.3 * lightColor;
   
   /* Diffuse */
-  vec3 lightDir = normalize(ULightPos - FragPos);
   float diff = max(dot(lightDir, normal), 0.0);
   vec3 diffuse = diff * lightColor;
   
@@ -55,6 +68,7 @@ float ShadowCalculation()
   /* Get depth of current fragment from light's perspective */
   float currentDepth = projCoords.z;
   /* Check whether current frag pos is in shadow */
-  float shadow = currentDepth > closestDepth  ? 1.0 : 0.0;
+  float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);  
+  float shadow = currentDepth - bias > closestDepth  ? 1.0 : 0.0;
   return shadow;
 }

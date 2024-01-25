@@ -60,7 +60,7 @@ void Engine::Run()
   framebuffer.InitFrameBuffer(window.GetFramebufferSize());
 
   /* Camera object */
-  Camera camera(window.GetWindowSize(), Vec3f(0.0f, 0.0f, 10.0f));
+  Camera camera(window.GetWindowSize(), Vec3f(0.0f, 1.0f, 10.0f));
   
   /* Mesh objects */
   StaticMesh plane("Shapes/Plane/Plane.obj");
@@ -192,7 +192,7 @@ void Engine::Run()
     glViewport(0, 0, windowFbSize.x, windowFbSize.y);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    /* Render scene as normal using the generated shadow map   */
+    /* Render scene as normal using the generated shadow map */
     const Mat4f projection = glm::perspective(glm::radians(camera.fov), aspectRatio, 0.1f, 100.0f);
     const Mat4f view = camera.GetViewMatrix();
     shadowMapShader->Use();
