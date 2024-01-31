@@ -26,8 +26,7 @@
 
 void Editor::Initialize()
 {
-  // Init ImGui
-  // ---------------------------------------
+  /* Init ImGui */
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
   ImGuiIO& io = ImGui::GetIO();
@@ -35,11 +34,12 @@ void Editor::Initialize()
   io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
   io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // Enable Docking
   io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;       // Enable Multi-Viewport / Platform Windows
-
+  
+  /* Set ImGui style*/
   Styling();
 
   ImGui_ImplGlfw_InitForOpenGL(glfwGetCurrentContext(), true);
-  ImGui_ImplOpenGL3_Init("#version 130");
+  ImGui_ImplOpenGL3_Init("#version 460");
 }
 
 void Editor::ShutDown()
@@ -51,10 +51,13 @@ void Editor::ShutDown()
 
 void Editor::NewFrame()
 {
-  //Start the Dear ImGui frame
+  /* Start the Dear ImGui frame */
   ImGui_ImplOpenGL3_NewFrame();
   ImGui_ImplGlfw_NewFrame();
   ImGui::NewFrame();
+
+  /* Set Dockspace */
+  Dockspace();
 }
 
 void Editor::RenderFrame()
@@ -62,9 +65,9 @@ void Editor::RenderFrame()
   ImGui::Render();
   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-  // Update and Render additional Platform Windows
-  // (Platform functions may change the current OpenGL context, so we save/restore it to make it easier to paste this code elsewhere.
-  //  For this specific demo app we could also call glfwMakeContextCurrent(window) directly)
+  /* Update and Render additional Platform Windows (Platform functions may change 
+  the current OpenGL context, so we save/restore it to make it easier to paste this code elsewhere.
+  For this specific demo app we could also call glfwMakeContextCurrent(window) directly) */
   ImGuiIO& io = ImGui::GetIO();
   if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
   {
@@ -84,14 +87,23 @@ void Editor::MenuBar()
       if (ImGui::MenuItem("Demo panel"))
         _demoPanelOpen = true;
       else if (ImGui::MenuItem("Scene panel"))
-        _scenePanelOpen = true;
+        _hierarchyOpen = true;
       else if (ImGui::MenuItem("Stats panel"))
-        _statsPanelOpen = true;
+        _statsOpen = true;
       
       ImGui::EndMenu();
     }
     ImGui::EndMainMenuBar();
   }
+}
+
+void Editor::DebugValues(float* nearPlane, float* farPlane, Vec3f& lightPos)
+{
+  ImGui::Begin("Debugging");
+  ImGui::DragFloat("nearPlane", nearPlane, 0.01f);
+  ImGui::DragFloat("farPlane", farPlane, 0.01f);
+  ImGui::DragFloat3("lightPos", (float*)&lightPos, 0.01f);
+  ImGui::End();
 }
 
 void Editor::ShowDemo()
@@ -103,7 +115,7 @@ void Editor::ShowDemo()
 
 void Editor::ShowStats()
 {
-  if (!_statsPanelOpen)
+  if (!_statsOpen)
     return;
 
   ImGuiIO& io = ImGui::GetIO();
@@ -112,10 +124,10 @@ void Editor::ShowStats()
   static float timeNew = 0.0f;
   static float framerate = io.Framerate;
 
-  ImGui::Begin("Stats", &_statsPanelOpen);
+  ImGui::Begin("Stats", &_statsOpen);
 
   timeNew = glfwGetTime();
-  if (timeNew - timeOld >= (1/8.0f)) // update every 1/4 seconds
+  if (timeNew - timeOld >= (1/8.0f)) /* update every 1/4 seconds */
   {
     timeOld = timeNew;
     framerate = io.Framerate;
@@ -126,9 +138,9 @@ void Editor::ShowStats()
   ImGui::End();
 }
 
-void Editor::ShowScenePanel(Scene* scene)
+void Editor::ShowHierarchy(Scene* scene)
 {
-  if (!_scenePanelOpen)
+  if (!_hierarchyOpen) 
     return;
   
   auto& dirLight = scene->directionalLight;
@@ -139,7 +151,7 @@ void Editor::ShowScenePanel(Scene* scene)
   static int treeNodePointLightSelected = -1; 
   static int treeNodeStaticMeshSelected = -1;
 
-  ImGui::Begin("Scene", &_scenePanelOpen);
+  ImGui::Begin("Hierarchy", &_hierarchyOpen);
 
   if (ImGui::TreeNode("Lighting"))
   {
@@ -198,26 +210,42 @@ void Editor::ShowScenePanel(Scene* scene)
     ShowPropertiesPanel(sceneMeshes[treeNodeStaticMeshSelected]);
 }
 
-#if 0
-void Editor::ShowViewportPanel(const uint32_t& framebufferTexture)
+void Editor::ShowViewport(const uint32_t& framebufferTexture) const
 {
-  ImGui::Begin("Viewport");
+  if (!_viewportOpen)
+    return;
 
-  // Using a Child allow to fill all the space of the window.
-  // It also alows customization
+  ImGui::Begin("Viewport");
+  /* Using a Child allow to fill all the space of the window.
+  It also alows customization */
   ImGui::BeginChild("GameRender");
-  
-  // Get the size of the child (i.e. the whole draw size of the windows).
+
+  /* Get the size of the child(i.e.the whole draw size of the windows). */
   ImVec2 wsize = ImGui::GetWindowSize();
 
-  // Because I use the texture from OpenGL, I need to invert the V from the UV.
+  /* Because I use the texture from OpenGL, I need to invert the V from the UV. */
   ImGui::Image((ImTextureID)framebufferTexture, wsize, ImVec2(0, 1), ImVec2(1, 0));
   
   ImGui::EndChild();
   ImGui::End();
 }
-#endif
 
+void Editor::ShowBrowser() const
+{
+  if (!_browserOpen)
+    return;
+
+  ImGui::Begin("Browser");
+
+  ImGui::End();
+}
+
+void Editor::ShowInspector()
+{
+  ImGui::Begin("Inspector");
+
+  ImGui::End();
+}
 
 /* -----------------------------------------------------
  *          PRIVATE METHODS
@@ -233,7 +261,7 @@ void Editor::Styling()
   ImGuiStyle& style = ImGui::GetStyle();
   style.FrameRounding = 6;
 
-  // When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical to regular ones.
+  /* When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical to regular ones. */
   if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
   {
     style.WindowRounding = 0.0f;
@@ -241,6 +269,51 @@ void Editor::Styling()
   }
 
   ImGui::StyleColorsClassic();
+}
+
+void Editor::Dockspace()
+{
+  static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
+
+  /* We are using the ImGuiWindowFlags_NoDocking flag to make the parent window not dockable into,
+   because it would be confusing to have two docking targets within each others. */
+  ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
+  const ImGuiViewport* viewport = ImGui::GetMainViewport();
+  ImGui::SetNextWindowPos(viewport->WorkPos);
+  ImGui::SetNextWindowSize(viewport->WorkSize);
+  ImGui::SetNextWindowViewport(viewport->ID);
+  ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+  ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+  window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+  window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+
+
+  /* When using ImGuiDockNodeFlags_PassthruCentralNode, DockSpace() will render our background
+  and handle the pass-thru hole, so we ask Begin() to not render a background.*/
+  if (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode)
+    window_flags |= ImGuiWindowFlags_NoBackground;
+
+  /* Important: note that we proceed even if Begin() returns false (aka window is collapsed).
+  This is because we want to keep our DockSpace() active. If a DockSpace() is inactive,
+  all active windows docked into it will lose their parent and become undocked.
+  We cannot preserve the docking relationship between an active window and an inactive docking, otherwise
+  any change of dockspace/settings would lead to windows being stuck in limbo and never being visible.*/
+  ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+  
+  ImGui::Begin("DockSpace Demo", nullptr, window_flags);
+  
+  ImGui::PopStyleVar();
+  ImGui::PopStyleVar(2);
+
+  /* Submit the DockSpace */
+  ImGuiIO& io = ImGui::GetIO();
+  if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
+  {
+    ImGuiID dockspace_id = ImGui::GetID("DockSpace");
+    ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
+  }
+
+  ImGui::End();
 }
 
 void Editor::ShowPropertiesPanel(StaticMesh* meshTarget)
@@ -269,7 +342,7 @@ void Editor::ShowPropertiesPanel(StaticMesh* meshTarget)
   
   ImGui::Image(
     (ImTextureID)diffuseID,
-    ImVec2(64.0f, 64.0f) // image size
+    ImVec2(64.0f, 64.0f) /* image size */
   );
 
   if (ImGui::BeginCombo("Textures", diffusePathStr.c_str()))
@@ -293,11 +366,11 @@ void Editor::ShowPropertiesPanel(DirectionalLight* dirLight)
   ImGui::Begin("Properties");
   ImGui::SeparatorText("Directional light");
 
-  ImGui::ColorEdit3("Light color", (float*)&dirLight->color);
-  ImGui::SliderFloat("Light ambient", &dirLight->ambient, 0.0f, 1.0f);
-  ImGui::SliderFloat("Light diffuse", &dirLight->diffuse, 0.0f, 1.0f);
-  ImGui::SliderFloat("Light specular", &dirLight->specular, 0.0f, 1.0f);
-  ImGui::DragFloat3("Light direction", (float*)&dirLight->direction, 0.005f, -FLT_MAX, +FLT_MAX);
+  ImGui::ColorEdit3("Color", (float*)&dirLight->color);
+  ImGui::SliderFloat("Ambient", &dirLight->ambient, 0.0f, 1.0f);
+  ImGui::SliderFloat("Diffuse", &dirLight->diffuse, 0.0f, 1.0f);
+  ImGui::SliderFloat("Specular", &dirLight->specular, 0.0f, 1.0f);
+  ImGui::DragFloat3("Direction", (float*)&dirLight->direction, 0.005f, -FLT_MAX, +FLT_MAX);
   
   ImGui::End();
 }
@@ -307,11 +380,11 @@ void Editor::ShowPropertiesPanel(PointLight* pointLight)
   ImGui::Begin("Properties");
   ImGui::SeparatorText("Point light");
   
-  ImGui::ColorEdit3("Light color", (float*)&pointLight->color);
-  ImGui::SliderFloat("Light ambient", &pointLight->ambient, 0.0f, 1.0f);
-  ImGui::SliderFloat("Light diffuse", &pointLight->diffuse, 0.0f, 1.0f);
-  ImGui::SliderFloat("Light specular", &pointLight->specular, 0.0f, 1.0f);
-  ImGui::DragFloat3("Light position", (float*)&pointLight->position, 0.005f, -FLT_MAX, +FLT_MAX);
+  ImGui::ColorEdit3("Color", (float*)&pointLight->color);
+  ImGui::SliderFloat("Ambient", &pointLight->ambient, 0.0f, 1.0f);
+  ImGui::SliderFloat("Diffuse", &pointLight->diffuse, 0.0f, 1.0f);
+  ImGui::SliderFloat("Specular", &pointLight->specular, 0.0f, 1.0f);
+  ImGui::DragFloat3("Position", (float*)&pointLight->position, 0.005f, -FLT_MAX, +FLT_MAX);
   
   ImGui::End();
 }

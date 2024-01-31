@@ -17,10 +17,8 @@ void Scene::DrawScene(Shader* shader)
 
 	/* Enable culling for meshes */
 	//glEnable(GL_CULL_FACE);
-	
 	for (auto mesh : statMeshes)
 		mesh->Draw(shader);
-
 	//glDisable(GL_CULL_FACE);
 }
 

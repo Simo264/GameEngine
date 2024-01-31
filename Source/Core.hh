@@ -14,6 +14,7 @@
 #include <filesystem>
 #include <initializer_list>
 #include <iostream>
+#include <map>
 #include <memory>
 #include <numeric>
 #include <string>
@@ -28,6 +29,9 @@ template<typename type, size_t size>
 using Array					= std::array<type, size>;
 template<typename type>
 using Vector				= std::vector<type>;
+template<typename typeName, typename typeVal>
+using Map						= std::map<typeName, typeVal>;
+
 template<typename type>
 using UniquePointer = std::unique_ptr<type>;
 template<typename type>
@@ -38,7 +42,6 @@ using StringStream	= std::stringstream;
 using IFStream			= std::ifstream;
 using RuntimeError	= std::runtime_error;
 using Path					= std::filesystem::path;
-
 
 /* -----------------------------
 			GLM library aliases

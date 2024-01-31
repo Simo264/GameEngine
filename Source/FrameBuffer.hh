@@ -12,7 +12,35 @@ enum class PostProcessingType {
 	POST_PROC_BLUR			= 4,
 };
 
+/* How to use Framebuffer:
+	1. Create frame buffer object:
+		FrameBuffer framebuffer; 
+		framebuffer.InitFrameBuffer(buffersize);
+	
+	2. Use frame buffer object:
+		framebuffer.BindMSAAFramebuffer();
+		glClearColor(pow(0.1f, GAMMA_CORRECTION), pow(0.1f, GAMMA_CORRECTION), pow(0.1f, GAMMA_CORRECTION), 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glEnable(GL_DEPTH_TEST);
 
+	3. Render scene to frame buffer object
+		scene.draw()
+
+	4. Unbind frame buffer object
+		framebuffer.BlitFrameBuffer();		
+		framebuffer.UnbindFrameBuffer();
+	
+	5.1 Draw frame buffer image as texture
+		ImGui::Image((ImTextureID)framebuffer.GetImage(), 
+			wsize, 
+			ImVec2(0, 1), 
+			ImVec2(1, 0));
+		
+	5.2 Or draw on screen
+		framebufferShader->Use();
+		framebuffer.DrawFrame(framebufferShader);
+
+*/
 class FrameBuffer : public NonCopyable
 {
 public:
@@ -23,7 +51,7 @@ public:
 	void UnbindFrameBuffer() const { glBindFramebuffer(GL_FRAMEBUFFER, 0); };
 	void BlitFrameBuffer();
 	
-	uint32_t GetFramebufferTexture() const { return _renderRelatedIds[NORMAL_TEXTURE]; }
+	uint32_t GetImage() const { return _renderRelatedIds[NORMAL_TEXTURE]; }
 
 	void DrawFrame(class Shader* shader);
 	void SetPostProcessing(PostProcessingType type) { _postprocType = type; }
