@@ -1,4 +1,5 @@
 #version 460
+#define NR_POINT_LIGHTS 5
 
 /* ---------- IN attributes ---------- */
 /* ----------------------------------- */
@@ -57,7 +58,7 @@ struct SpotLight_t {
 /* ------------------------------ */
 uniform Material_t    UMaterial;
 uniform DirLight_t    UDirLight;
-uniform PointLight_t  UPointLight;
+uniform PointLight_t  UPointLight[NR_POINT_LIGHTS];
 uniform SpotLight_t   USpotLight;
 uniform vec3          UViewPos; 
 uniform float         UGamma;
@@ -72,7 +73,7 @@ vec3 specularColor;
 /* ---------- Functions ---------- */
 /* ------------------------------- */
 vec3 CalcDirLight();
-vec3 BlinnPhong(); /* Function to calcolate point lights */
+vec3 BlinnPhong(PointLight_t PointLight); /* Function to calcolate point lights */
 vec3 CalcSpotLight();
 void GammaCorrection(inout vec3 value); /* value to apply gamma correction */
 
@@ -99,9 +100,9 @@ void main()
   result += CalcDirLight();
 
   /* Phase 2: Point lights */
-  // for(int i = 0; i < NR_POINT_LIGHTS; i++)
-  //  result += BlinnPhong(pointLights[i]); 
-  result += BlinnPhong(); 
+  for(int i = 0; i < NR_POINT_LIGHTS; i++)
+    result += BlinnPhong(UPointLight[i]); 
+  
 
   /* Phase 3: Spot light */
   //result += CalcSpotLight(spotLight);  
@@ -136,9 +137,9 @@ vec3 CalcDirLight()
   return (ambient + diffuse + specular);
 }
 
-vec3 BlinnPhong()
+vec3 BlinnPhong(PointLight_t PointLight)
 {
-  vec3 lightDir = normalize(UPointLight.position - FragPos);
+  vec3 lightDir = normalize(PointLight.position - FragPos);
   
   // diffuse shading
   float diff = max(dot(normal, lightDir), 0.0);
@@ -150,7 +151,7 @@ vec3 BlinnPhong()
   float spec = pow(max(dot(normal, halfwayDir), 0.0), UMaterial.shininess);
 
   // attenuation
-  float distance    = length(UPointLight.position - FragPos);
+  float distance    = length(PointLight.position - FragPos);
   //float attenuation = 1.0f / (1.0f + UPointLight.linear * distance + UPointLight.quadratic * (distance * distance)); 
   
   float attenuation;
@@ -161,9 +162,9 @@ vec3 BlinnPhong()
   
 
   // combine results
-  vec3 ambient  = UPointLight.ambient  * diffuseColor;
-  vec3 diffuse  = UPointLight.diffuse  * diff * diffuseColor;
-  vec3 specular = UPointLight.specular * spec * specularColor;
+  vec3 ambient  = PointLight.ambient  * diffuseColor;
+  vec3 diffuse  = PointLight.diffuse  * diff * diffuseColor;
+  vec3 specular = PointLight.specular * spec * specularColor;
 
   ambient  *= attenuation;
   diffuse  *= attenuation;

@@ -30,7 +30,7 @@ vec3 texColor;
 
 void main()
 {
-	texColor	= texture(UScreenTexture, TextCoords).rgb;
+	texColor = texture(UScreenTexture, TextCoords).rgb;
 
 	switch(UPostProcessingType){
 

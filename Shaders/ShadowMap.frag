@@ -36,7 +36,7 @@ void main()
   lightDir = normalize(ULightPos - FragPos);
   
   /* Ambient */
-  vec3 lightColor = vec3(1.0);
+  vec3 lightColor = vec3(0.25f);
   vec3 ambient = 0.3 * lightColor;
   
   /* Diffuse */
@@ -47,7 +47,7 @@ void main()
   vec3 viewDir = normalize(UViewPos - FragPos);
   vec3 reflectDir = reflect(-lightDir, normal);
   vec3 halfwayDir = normalize(lightDir + viewDir);  
-  float spec = pow(max(dot(normal, halfwayDir), 0.0), 64.0);
+  float spec = pow(max(dot(normal, halfwayDir), 0.0), 32.0);
   vec3 specular = spec * lightColor;    
   
   /* Calculate shadow */
@@ -69,6 +69,22 @@ float ShadowCalculation()
   float currentDepth = projCoords.z;
   /* Check whether current frag pos is in shadow */
   float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);  
-  float shadow = currentDepth - bias > closestDepth  ? 1.0 : 0.0;
+  float shadow = 0.0f;
+
+  vec2 texelSize = 1.0 / textureSize(UShadowMap, 0);
+  for(int x = -1; x <= 1; ++x)
+  {
+    for(int y = -1; y <= 1; ++y)
+    {
+      float pcfDepth = texture(UShadowMap, projCoords.xy + vec2(x, y) * texelSize).r; 
+      shadow += currentDepth - bias > pcfDepth ? 1.0 : 0.0;        
+    }    
+  }
+  shadow /= 9.0;
+
+//  shadow = currentDepth - bias > closestDepth  ? 1.0 : 0.0;
+  if(projCoords.z > 1.0)
+    shadow = 0.0;
+
   return shadow;
 }
