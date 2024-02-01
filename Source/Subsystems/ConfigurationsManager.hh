@@ -2,11 +2,11 @@
 
 #include "../Core.hh"
 
-#define CONF_WINDOW_TITLE "window-title"
-#define CONF_WINDOW_SIZE	"window-size"
-#define CONF_WINDOW_POS		"window-pos"
-#define CONF_ASPECT_RATIO "aspect-ratio"
-#define CONF_VSYNC				"v-sync"
+#define CONF_WINDOW_TITLE				"window-title"
+#define CONF_WINDOW_RESOLUTION	"window-resolution"
+#define CONF_WINDOW_POS					"window-pos"
+#define CONF_ASPECT_RATIO				"aspect-ratio"
+#define CONF_VSYNC							"v-sync"
 
 /* -----------------------------------------------------------------------
 	Static class ConfigurationsManager:
@@ -23,6 +23,8 @@ public:
 	static void SetValue(const char* name, const char* value) { _mapConfig[name] = value; }
 
 	static void Save();
+
+	//static const Map<String, String>& GetMap() { return _mapConfig; }
 
 private:
 	inline static Path _filePath = std::filesystem::current_path().parent_path() / "app.txt";

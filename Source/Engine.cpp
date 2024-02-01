@@ -150,10 +150,7 @@ void Engine::Run()
 
   /* Pre-loop */
   double lastUpdateTime = 0;
-  Vec2i windowFbSize = window.GetFramebufferSize();
-  float aspectRatio = ((float)windowFbSize.x / (float)windowFbSize.y);
-  float near_plane = 0.0f;
-  float far_plane = 30.0f;
+  const Vec2f projPlane(0.1f, 100.0f);
   Vec3f lightPos = Vec3f(-2.0f, 10.0f, -2.0f);
   Mat4f lightSpaceMatrix;
 
@@ -166,20 +163,15 @@ void Engine::Run()
     const double now = glfwGetTime();
     const double deltaTime = now - lastUpdateTime;
     Renderer::drawCalls = 0;
-    if (windowResized)
-    {
-      windowFbSize = window.GetFramebufferSize();
-      aspectRatio = ((float)windowFbSize.x / (float)windowFbSize.y);
-      framebuffer.RescaleFrameBuffer(windowFbSize);
-      windowResized = false;
-    }
 
     /* Input */
     glfwPollEvents();
     if (window.GetKey(GLFW_KEY_ESCAPE) == GLFW_PRESS)
       window.CloseWindow();
     camera.ProcessInput(&window, deltaTime);
-    const Mat4f projection = glm::perspective(glm::radians(camera.fov), aspectRatio, 0.1f, 100.0f);
+    const Vec2i framebufferSize = framebuffer.GetSize();
+    const float aspectRatio = ((float)framebufferSize.x / (float)framebufferSize.y);
+    const Mat4f projection = glm::perspective(glm::radians(camera.fov), aspectRatio, projPlane.x, projPlane.y);
     const Mat4f view = camera.GetViewMatrix();
     
     /* Render: bind frame buffer */
@@ -262,7 +254,7 @@ void Engine::Run()
 
 
     /* Render editor */
-    editor.RenderFrame(&scene, framebuffer.GetImage());
+    editor.RenderFrame(&scene, &framebuffer);
     window.SwapWindowBuffers();
     lastUpdateTime = now;
   }
@@ -300,7 +292,7 @@ void Engine::ShutDown()
 void Engine::InitOpenGL()
 {
   /* Get window size */
-  String& windowSize = ConfigurationsManager::GetValue(CONF_WINDOW_SIZE);
+  String& windowSize = ConfigurationsManager::GetValue(CONF_WINDOW_RESOLUTION);
   int sep = windowSize.find('x');
   int windowWidth = std::stoi(windowSize.substr(0, sep));
   int windowHeight = std::stoi(windowSize.substr(sep + 1));
@@ -332,8 +324,7 @@ void Engine::InitOpenGL()
   glfwSwapInterval((std::strcmp(vsync.c_str(), "true") == 0 ? 1 : 0));
   
   glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int width, int height) {
-    glViewport(0, 0, width, height);
-    windowResized = true;
+    //glViewport(0, 0, width, height);
   });
   glfwSetWindowSizeCallback(window, [](GLFWwindow* window, int width, int height) {
     glfwSetWindowSize(window, width, height);
@@ -346,6 +337,8 @@ void Engine::InitOpenGL()
     CONSOLE_ERROR("Failed to initialize OpenGL context");
     exit(-1);
   }
+
+  glViewport(0, 0, windowWidth, windowHeight);
   
   /* Antialising */
   glEnable(GL_MULTISAMPLE);

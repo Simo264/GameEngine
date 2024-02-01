@@ -3,6 +3,7 @@
 #include "../Lighting/DirectionalLight.hh"
 #include "../Lighting/PointLight.hh"
 #include "../Mesh/StaticMesh.hh"
+#include "../FrameBuffer.hh"
 #include "../Scene.hh"
 
 #include "../Subsystems/TexturesManager.hh"
@@ -42,6 +43,16 @@ void Editor::Initialize()
 
   ImGui_ImplGlfw_InitForOpenGL(glfwGetCurrentContext(), true);
   ImGui_ImplOpenGL3_Init("#version 460");
+
+  String& resolution = ConfigurationsManager::GetValue(CONF_WINDOW_RESOLUTION);
+  String& aspectRatio = ConfigurationsManager::GetValue(CONF_ASPECT_RATIO);
+  for (aspectIndex = 0; aspectIndex < 3; aspectIndex++)
+    if (std::strcmp(aspectRatioValues[aspectIndex], aspectRatio.c_str()) == 0)
+      break;
+
+  for (resolutionIndex = 0; resolutionIndex < 12; resolutionIndex++)
+    if (std::strcmp(resolutionValues[resolutionIndex], resolution.c_str()) == 0)
+      break;
 }
 
 void Editor::ShutDown()
@@ -62,7 +73,7 @@ void Editor::NewFrame()
   Dockspace();
 }
 
-void Editor::RenderFrame(Scene* scene, uint32_t framebufferTexture)
+void Editor::RenderFrame(Scene* scene, FrameBuffer* framebuffer)
 {
   if (_demoOpen) 
     ImGui::ShowDemoWindow(&_demoOpen);
@@ -77,7 +88,7 @@ void Editor::RenderFrame(Scene* scene, uint32_t framebufferTexture)
     ShowHierarchy(scene);
   
   if (_viewportOpen)
-    ShowViewport(framebufferTexture);
+    ShowViewport(framebuffer);
   
   if (_browserOpen)
     ShowBrowser();
@@ -128,7 +139,7 @@ void Editor::Styling()
 
 void Editor::Dockspace()
 {
-  static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
+  static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None | ImGuiDockNodeFlags_NoResize;
 
   /* We are using the ImGuiWindowFlags_NoDocking flag to make the parent window not dockable into,
    because it would be confusing to have two docking targets within each others. */
@@ -167,7 +178,6 @@ void Editor::Dockspace()
     ImGuiID dockspace_id = ImGui::GetID("DockSpace");
     ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
   }
-
 
   if (ImGui::BeginMenuBar())
   {
@@ -284,7 +294,7 @@ void Editor::ShowHierarchy(Scene* scene)
     ShowPropertiesPanel(sceneMeshes[treeNodeStaticMeshSelected]);
 }
 
-void Editor::ShowViewport(uint32_t framebufferTexture)
+void Editor::ShowViewport(FrameBuffer* framebuffer)
 {
   ImGui::Begin("Viewport", &_viewportOpen);
   /* Using a Child allow to fill all the space of the window.
@@ -292,10 +302,17 @@ void Editor::ShowViewport(uint32_t framebufferTexture)
   ImGui::BeginChild("GameRender");
 
   /* Get the size of the child(i.e.the whole draw size of the windows). */
-  ImVec2 wsize = ImGui::GetWindowSize();
-
-  /* Because I use the texture from OpenGL, I need to invert the V from the UV. */
-  ImGui::Image((ImTextureID)framebufferTexture, wsize, ImVec2(0, 1), ImVec2(1, 0));
+  ImVec2 size = ImGui::GetWindowSize();
+  Vec2i framebufferSize = framebuffer->GetSize();
+  if((size.x != framebufferSize.x || size.y != framebufferSize.y))
+  {
+    framebuffer->RescaleFrameBuffer({size.x, size.y});
+  }
+  else
+  {
+    /* Because I use the texture from OpenGL, I need to invert the V from the UV. */
+    ImGui::Image((ImTextureID)framebuffer->GetImage(), size, ImVec2(0, 1), ImVec2(1, 0));
+  }
 
   ImGui::EndChild();
   ImGui::End();
@@ -393,38 +410,42 @@ void Editor::ShowPreferences()
   static bool buttonDisabled = true;
   ImGui::Begin("Preferences", &_preferencesOpen);
   ImGui::SeparatorText("Window properties");
+  
   /* Window title */
   static String& title = ConfigurationsManager::GetValue(CONF_WINDOW_TITLE);
   if (ImGui::InputText("Title", &title))
     buttonDisabled = false;
+  
   /* Window aspect ratio */
-  const char* aspectRatioValues[] = { "16:9" };
-  static int aspectIndex = 0;
-  ImGui::Combo("Aspect ratio", &aspectIndex, aspectRatioValues, IM_ARRAYSIZE(aspectRatioValues));
+  if (ImGui::Combo("Aspect ratio", &aspectIndex, aspectRatioValues, 3)) /* 3 aspect ratio availables */
+  {
+    ConfigurationsManager::SetValue(CONF_ASPECT_RATIO, aspectRatioValues[aspectIndex]);
+    buttonDisabled = false;
+  }
+  
   /* Window resolution */
-  const char* resolutionValues[] = { "1600x900" };
-  static int resolutionIndex = 0;
-  ImGui::Combo("Resolution", &resolutionIndex, resolutionValues, IM_ARRAYSIZE(resolutionValues));
-
+  if (ImGui::Combo("Resolution", &resolutionIndex, resolutionValues, 12)) /* 12 resolution availables */
+  {
+    ConfigurationsManager::SetValue(CONF_WINDOW_RESOLUTION, resolutionValues[resolutionIndex]);
+    buttonDisabled = false;
+  }
+  
   /* Disabling button */
   if (buttonDisabled)
   {
     ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
     ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
   }
-
   /* Button event */
   bool save = ImGui::Button("Save");
   if (save)
     ConfigurationsManager::Save();
-  
   /* Restore button */
   if (buttonDisabled)
   {
     ImGui::PopItemFlag();
     ImGui::PopStyleVar();
   }
-
   /* Tooltip */
   ImGui::SameLine();
   ImGui::TextDisabled("(?)");
@@ -435,9 +456,7 @@ void Editor::ShowPreferences()
     ImGui::PopTextWrapPos();
     ImGui::EndTooltip();
   }
-
   if(save)
     buttonDisabled = true;
-
   ImGui::End();
 }

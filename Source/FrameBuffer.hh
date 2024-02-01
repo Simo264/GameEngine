@@ -52,7 +52,7 @@ public:
 	void BlitFrameBuffer();
 	
 	uint32_t GetImage() const { return _renderRelatedIds[NORMAL_TEXTURE]; }
-
+	Vec2i GetSize() const { return _size; }
 	void DrawFrame(class Shader* shader);
 	void SetPostProcessing(PostProcessingType type) { _postprocType = type; }
 	void RescaleFrameBuffer(Vec2i newSize);
