@@ -32,10 +32,6 @@ void Engine::Initialize()
 
   /* Load configuration */
   ConfigurationsManager::LoadConfiguration();
-  String& val = ConfigurationsManager::GetValue("v-sync");
-  std::cout << val << "\n";
-  ConfigurationsManager::SetValue("v-sync", "off");
-  std::cout << val << "\n";
 
   /* Initialize GLFW, create window and initialize OpenGL context */
   InitOpenGL();
@@ -266,12 +262,7 @@ void Engine::Run()
 
 
     /* Render editor */
-    //editor.ShowStats();
-    editor.ShowHierarchy(&scene);
-    editor.ShowViewport(framebuffer.GetImage());
-    editor.ShowBrowser();
-    editor.ShowInspector();
-    editor.RenderFrame();
+    editor.RenderFrame(&scene, framebuffer.GetImage());
     window.SwapWindowBuffers();
     lastUpdateTime = now;
   }
@@ -308,18 +299,37 @@ void Engine::ShutDown()
 
 void Engine::InitOpenGL()
 {
-  glfwInit();
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4); /* OpenGL 4.6 */
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6); 
-  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-  glfwWindowHint(GLFW_SAMPLES, 4);          /* enable 4x MSAA on GLFW frame buffer */
+  /* Get window size */
+  String& windowSize = ConfigurationsManager::GetValue(CONF_WINDOW_SIZE);
+  int sep = windowSize.find('x');
+  int windowWidth = std::stoi(windowSize.substr(0, sep));
+  int windowHeight = std::stoi(windowSize.substr(sep + 1));
+  /* Get window pos */
+  String& windowPos = ConfigurationsManager::GetValue(CONF_WINDOW_POS);
+  sep = windowPos.find(',');
+  int windowPosx = std::stoi(windowPos.substr(0, sep));
+  int windowPosy = std::stoi(windowPos.substr(sep + 1));
+  /* Get window title */
+  String& windowTitle = ConfigurationsManager::GetValue(CONF_WINDOW_TITLE);
+  /* Get window aspect ratio */
+  String& aspectRatio = ConfigurationsManager::GetValue(CONF_ASPECT_RATIO);
+  sep = aspectRatio.find(':');
+  int aspectW = std::stoi(aspectRatio.substr(0, sep));
+  int aspectH = std::stoi(aspectRatio.substr(sep + 1));
+  /* V-sync on-off */
+  String& vsync = ConfigurationsManager::GetValue(CONF_VSYNC);
 
-  GLFWwindow* window = glfwCreateWindow(INITIAL_WINDOW_SIZE_X, INITIAL_WINDOW_SIZE_Y, "OpenGL", nullptr, nullptr);
+  glfwInit();
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);  /* Load OpenGL 4.6 */
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+  glfwWindowHint(GLFW_SAMPLES, 4);  /* Enable 4x MSAA on GLFW frame buffer */
+
+  GLFWwindow* window = glfwCreateWindow(windowWidth, windowHeight, windowTitle.c_str(), nullptr, nullptr);
   glfwMakeContextCurrent(window);
-  glfwSetWindowPos(window, INITIAL_WINDOW_POS_X, INITIAL_WINDOW_POS_Y); /* set default position */
-  glfwSetWindowAspectRatio(window, 16, 9);  /* Aspect ratio 16:9 */
-  //glfwSwapInterval(1);                    /* V-sync on */
-  //glfwSetInputMode(window.Get(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+  glfwSetWindowPos(window, windowPosx, windowPosy); /* Set window position */
+  glfwSetWindowAspectRatio(window, aspectW, aspectH);  /* Set aspect ratio */
+  glfwSwapInterval((std::strcmp(vsync.c_str(), "true") == 0 ? 1 : 0));
   
   glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);

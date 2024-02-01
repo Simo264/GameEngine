@@ -1,2 +1,11 @@
-# on enable, off disable
-v-sync=on
+window-title=GameEngine
+
+# window resolution
+window-size=1600x900
+
+# 16:9 aspect ratio
+aspect-ratio=16:9
+
+window-pos=50,50
+
+v-sync=false

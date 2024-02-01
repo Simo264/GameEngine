@@ -39,7 +39,10 @@ using SharedPointer = std::shared_ptr<type>;
 
 using String				= std::string;
 using StringStream	= std::stringstream;
+using IStringStream = std::istringstream;
+using OStringStream = std::ostringstream;
 using IFStream			= std::ifstream;
+using OFStream			= std::ofstream;
 using RuntimeError	= std::runtime_error;
 using Path					= std::filesystem::path;
 

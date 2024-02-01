@@ -98,7 +98,7 @@ void Shader::SetMat4f(const char* name, const Mat4f& mat) const
 
 void Shader::GetSourceFromFile(const char* sourceFile, String& dest)
 {
-  StringStream buffer;
+  OStringStream buffer;
   IFStream file(sourceFile);
   if (!file.is_open())
   {
