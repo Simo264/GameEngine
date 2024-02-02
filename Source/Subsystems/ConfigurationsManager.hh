@@ -22,6 +22,10 @@ public:
 	static String& GetValue(const char* name) { return _mapConfig.at(name); }
 	static void SetValue(const char* name, const char* value) { _mapConfig[name] = value; }
 
+	static Vec2i ParseResolution(String& resolution);
+	static Vec2i ParsePosition(String& position);
+	static Vec2i ParseAspectRatio(String& aspect);
+
 	static void Save();
 
 	//static const Map<String, String>& GetMap() { return _mapConfig; }

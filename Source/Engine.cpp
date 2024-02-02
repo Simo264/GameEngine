@@ -18,7 +18,7 @@
 #include "Subsystems/TexturesManager.hh"
 #include "Subsystems/ConfigurationsManager.hh"
 
-static bool windowResized = false;
+extern Vec2i VIEWPORT_SIZE;
 
 /* -----------------------------------------------------
  *          PUBLIC METHODS
@@ -60,7 +60,7 @@ void Engine::Run()
 
   /* Initialize framebuffer object */
   FrameBuffer framebuffer;
-  framebuffer.InitFrameBuffer(window.GetFramebufferSize());
+  framebuffer.InitFrameBuffer(VIEWPORT_SIZE);
 
   /* Camera object */
   Camera camera(window.GetWindowSize(), Vec3f(0.0f, 1.0f, 10.0f));
@@ -292,22 +292,16 @@ void Engine::ShutDown()
 void Engine::InitOpenGL()
 {
   /* Get window size */
-  String& windowSize = ConfigurationsManager::GetValue(CONF_WINDOW_RESOLUTION);
-  int sep = windowSize.find('x');
-  int windowWidth = std::stoi(windowSize.substr(0, sep));
-  int windowHeight = std::stoi(windowSize.substr(sep + 1));
+  String& windowRes = ConfigurationsManager::GetValue(CONF_WINDOW_RESOLUTION);
+  Vec2i resolution = ConfigurationsManager::ParseResolution(windowRes);
   /* Get window pos */
   String& windowPos = ConfigurationsManager::GetValue(CONF_WINDOW_POS);
-  sep = windowPos.find(',');
-  int windowPosx = std::stoi(windowPos.substr(0, sep));
-  int windowPosy = std::stoi(windowPos.substr(sep + 1));
+  Vec2i position = ConfigurationsManager::ParsePosition(windowPos);
   /* Get window title */
-  String& windowTitle = ConfigurationsManager::GetValue(CONF_WINDOW_TITLE);
+  String& title = ConfigurationsManager::GetValue(CONF_WINDOW_TITLE);
   /* Get window aspect ratio */
-  String& aspectRatio = ConfigurationsManager::GetValue(CONF_ASPECT_RATIO);
-  sep = aspectRatio.find(':');
-  int aspectW = std::stoi(aspectRatio.substr(0, sep));
-  int aspectH = std::stoi(aspectRatio.substr(sep + 1));
+  String& windowAR = ConfigurationsManager::GetValue(CONF_ASPECT_RATIO);
+  Vec2i aspectRatio = ConfigurationsManager::ParseAspectRatio(windowAR);
   /* V-sync on-off */
   String& vsync = ConfigurationsManager::GetValue(CONF_VSYNC);
 
@@ -317,15 +311,16 @@ void Engine::InitOpenGL()
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_SAMPLES, 4);  /* Enable 4x MSAA on GLFW frame buffer */
 
-  GLFWwindow* window = glfwCreateWindow(windowWidth, windowHeight, windowTitle.c_str(), nullptr, nullptr);
+  GLFWwindow* window = glfwCreateWindow(resolution.x, resolution.y, title.c_str(), nullptr, nullptr);
   glfwMakeContextCurrent(window);
-  glfwSetWindowPos(window, windowPosx, windowPosy); /* Set window position */
-  glfwSetWindowAspectRatio(window, aspectW, aspectH);  /* Set aspect ratio */
-  glfwSwapInterval((std::strcmp(vsync.c_str(), "true") == 0 ? 1 : 0));
+  glfwSetWindowPos(window, position.x, position.y); /* Set window position */
+  glfwSetWindowAspectRatio(window, aspectRatio.x, aspectRatio.y);  /* Set aspect ratio */
+  glfwSwapInterval((std::strcmp(vsync.c_str(), "true") == 0 ? 1 : 0)); /* V-sync */
   
-  glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int width, int height) {
+  //glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int width, int height) {
     //glViewport(0, 0, width, height);
-  });
+  //});
+
   glfwSetWindowSizeCallback(window, [](GLFWwindow* window, int width, int height) {
     glfwSetWindowSize(window, width, height);
   });
@@ -338,7 +333,7 @@ void Engine::InitOpenGL()
     exit(-1);
   }
 
-  glViewport(0, 0, windowWidth, windowHeight);
+  glViewport(0, 0, VIEWPORT_SIZE.x, VIEWPORT_SIZE.y);
   
   /* Antialising */
   glEnable(GL_MULTISAMPLE);

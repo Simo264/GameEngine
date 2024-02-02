@@ -76,3 +76,27 @@ void ConfigurationsManager::Save()
 
 	outFile.close();
 }
+
+Vec2i ConfigurationsManager::ParseResolution(String& resolution)
+{
+	int sep = resolution.find('x');
+	int w = std::stoi(resolution.substr(0, sep));
+	int h = std::stoi(resolution.substr(sep + 1));
+	return Vec2i(w, h);
+}
+
+Vec2i ConfigurationsManager::ParseAspectRatio(String& aspect)
+{
+	int sep = aspect.find(':');
+	int aspectW = std::stoi(aspect.substr(0, sep));
+	int aspectH = std::stoi(aspect.substr(sep + 1));
+	return Vec2i(aspectW, aspectH);
+}
+
+Vec2i ConfigurationsManager::ParsePosition(String& position)
+{
+	int sep = position.find(',');
+	int x = std::stoi(position.substr(0, sep));
+	int y = std::stoi(position.substr(sep + 1));
+	return Vec2i(x, y);
+}

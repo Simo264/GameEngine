@@ -20,6 +20,26 @@
 #include "Imgui/imgui_internal.h"
 #include "Imgui/imgui_spectrum.h"
 
+Vec2i VIEWPORT_SIZE   = Vec2i(960, 540);  /* 60% x 60%  */
+Vec2i HIERARCHY_SIZE  = Vec2i(320, 900);  /* 20% x 100% */
+Vec2i INSPECTOR_SIZE  = Vec2i(320, 900);  /* 20% x 100% */
+Vec2i BROWSER_SIZE    = Vec2i(960, 360);  /* 60% x 40%  */
+
+/* Editor layout 1600x900
+  
+  --------------------------------------
+  |        |                  |        |
+  |        |                  |        |
+  |20%x100%|    60% x 60%     |20%x100%|
+  |        |                  |        |
+  |        |                  |        |
+  |        |                  |        |
+  |        |------------------|        |
+  |        |    60% x 40%     |        |
+  |        |                  |        |
+  --------------------------------------
+*/
+
 
 
 /* -----------------------------------------------------
@@ -95,7 +115,7 @@ void Editor::RenderFrame(Scene* scene, FrameBuffer* framebuffer)
   
   if (_inspectorOpen)
     ShowInspector();
-
+  
   ImGui::Render();
   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
@@ -235,12 +255,14 @@ void Editor::ShowHierarchy(Scene* scene)
   static int treeNodePointLightSelected = -1;
   static int treeNodeStaticMeshSelected = -1;
 
+  ImGui::SetNextWindowSize(ImVec2(HIERARCHY_SIZE.x, HIERARCHY_SIZE.y));
   ImGui::Begin("Hierarchy", &_hierarchyOpen);
 
   if (ImGui::TreeNode("Lighting"))
   {
     if (ImGui::Selectable("Directional light", treeNodeDirLightSelected == true))
     {
+      _propertiesOpen = true;
       treeNodeDirLightSelected = true;
       treeNodeStaticMeshSelected = -1;
       treeNodePointLightSelected = -1;
@@ -256,6 +278,7 @@ void Editor::ShowHierarchy(Scene* scene)
           std::strcat(pointLightName, std::to_string(i).c_str());
           if (ImGui::Selectable(pointLightName, treeNodePointLightSelected == i))
           {
+            _propertiesOpen = true;
             treeNodeDirLightSelected = false;
             treeNodePointLightSelected = i;
             treeNodeStaticMeshSelected = -1;
@@ -267,7 +290,6 @@ void Editor::ShowHierarchy(Scene* scene)
     ImGui::TreePop();
   }
 
-
   if (ImGui::TreeNode("StaticMesh"))
   {
     for (int i = 0; i < sceneMeshes.size(); i++)
@@ -277,6 +299,7 @@ void Editor::ShowHierarchy(Scene* scene)
 
       if (ImGui::Selectable(staticMeshName, treeNodeStaticMeshSelected == i))
       {
+        _propertiesOpen = true;
         treeNodeDirLightSelected = false;
         treeNodePointLightSelected = -1;
         treeNodeStaticMeshSelected = i;
@@ -286,47 +309,51 @@ void Editor::ShowHierarchy(Scene* scene)
   }
   ImGui::End();
 
-  if (treeNodeDirLightSelected)
+  if (_propertiesOpen && treeNodeDirLightSelected)
     ShowPropertiesPanel(dirLight);
-  else if (treeNodePointLightSelected >= 0)
+  else if (_propertiesOpen && treeNodePointLightSelected >= 0)
     ShowPropertiesPanel(pointLights[treeNodePointLightSelected]);
-  else if (treeNodeStaticMeshSelected >= 0)
+  else if (_propertiesOpen && treeNodeStaticMeshSelected >= 0)
     ShowPropertiesPanel(sceneMeshes[treeNodeStaticMeshSelected]);
 }
 
 void Editor::ShowViewport(FrameBuffer* framebuffer)
 {
+  ImGui::SetNextWindowSize(ImVec2(VIEWPORT_SIZE.x, VIEWPORT_SIZE.y));
   ImGui::Begin("Viewport", &_viewportOpen);
+
   /* Using a Child allow to fill all the space of the window.
   It also alows customization */
   ImGui::BeginChild("GameRender");
-
   /* Get the size of the child(i.e.the whole draw size of the windows). */
-  ImVec2 size = ImGui::GetWindowSize();
+  ImVec2 drawSpace = ImGui::GetWindowSize();
+
   Vec2i framebufferSize = framebuffer->GetSize();
-  if((size.x != framebufferSize.x || size.y != framebufferSize.y))
+  if((drawSpace.x != framebufferSize.x || drawSpace.y != framebufferSize.y))
   {
-    framebuffer->RescaleFrameBuffer({size.x, size.y});
+    framebuffer->RescaleFrameBuffer({ drawSpace.x, drawSpace.y});
   }
   else
   {
     /* Because I use the texture from OpenGL, I need to invert the V from the UV. */
-    ImGui::Image((ImTextureID)framebuffer->GetImage(), size, ImVec2(0, 1), ImVec2(1, 0));
+    ImGui::Image((ImTextureID)framebuffer->GetImage(), drawSpace, ImVec2(0, 1), ImVec2(1, 0));
   }
-
+   
   ImGui::EndChild();
   ImGui::End();
 }
 
 void Editor::ShowBrowser()
 {
+  ImGui::SetNextWindowSize(ImVec2(BROWSER_SIZE.x, BROWSER_SIZE.y));
   ImGui::Begin("Browser", &_browserOpen);
-
+  
   ImGui::End();
 }
 
 void Editor::ShowInspector()
 {
+  ImGui::SetNextWindowSize(ImVec2(INSPECTOR_SIZE.x, INSPECTOR_SIZE.y));
   ImGui::Begin("Inspector", &_inspectorOpen);
 
   ImGui::End();
@@ -342,8 +369,8 @@ void Editor::ShowPropertiesPanel(StaticMesh* meshTarget)
   ImGui::Text("(StaticMesh name)");
   
   ImGui::SeparatorText("Transformation");
-  ImGui::DragFloat3("Translation", (float*)&meshTarget->position, 0.005f, -FLT_MAX, +FLT_MAX);
-  ImGui::DragFloat3("Scaling", (float*)&meshTarget->scaling, 0.005f, -FLT_MAX, +FLT_MAX);
+  ImGui::DragFloat3("Translation", (float*)&meshTarget->position, 0.1f, -FLT_MAX, +FLT_MAX);
+  ImGui::DragFloat3("Scaling", (float*)&meshTarget->scaling, 0.1f, -FLT_MAX, +FLT_MAX);
   ImGui::DragFloat("Rotation angle", (float*)&meshTarget->rotationAngle, 0.5f, -180.0f, +180.0f);
   ImGui::SliderFloat3("Rotation axis", (float*)&meshTarget->rotationAxis, 0.0f, 1.0f);
 
@@ -386,7 +413,7 @@ void Editor::ShowPropertiesPanel(DirectionalLight* dirLight)
   ImGui::SliderFloat("Ambient", &dirLight->ambient, 0.0f, 1.0f);
   ImGui::SliderFloat("Diffuse", &dirLight->diffuse, 0.0f, 1.0f);
   ImGui::SliderFloat("Specular", &dirLight->specular, 0.0f, 1.0f);
-  ImGui::DragFloat3("Direction", (float*)&dirLight->direction, 0.005f, -FLT_MAX, +FLT_MAX);
+  ImGui::DragFloat3("Direction", (float*)&dirLight->direction, 0.1f, -FLT_MAX, +FLT_MAX);
   
   ImGui::End();
 }
@@ -400,7 +427,7 @@ void Editor::ShowPropertiesPanel(PointLight* pointLight)
   ImGui::SliderFloat("Ambient", &pointLight->ambient, 0.0f, 1.0f);
   ImGui::SliderFloat("Diffuse", &pointLight->diffuse, 0.0f, 1.0f);
   ImGui::SliderFloat("Specular", &pointLight->specular, 0.0f, 1.0f);
-  ImGui::DragFloat3("Position", (float*)&pointLight->position, 0.005f, -FLT_MAX, +FLT_MAX);
+  ImGui::DragFloat3("Position", (float*)&pointLight->position, 0.1f, -FLT_MAX, +FLT_MAX);
   
   ImGui::End();
 }

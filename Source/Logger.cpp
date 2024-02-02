@@ -7,7 +7,7 @@ SharedPointer<spdlog::logger> Logger::_logger;
 
 void Logger::Initialize()
 {
-	spdlog::set_pattern("[%s %!] [%^%l%$] line %#: %v");
+	spdlog::set_pattern("[%s::%#] [%^%l%$]: %v");
 
 	_logger = spdlog::stdout_color_st("Logger");
 	_logger->set_level(spdlog::level::trace);
