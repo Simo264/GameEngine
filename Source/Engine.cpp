@@ -18,8 +18,6 @@
 #include "Subsystems/TexturesManager.hh"
 #include "Subsystems/ConfigurationsManager.hh"
 
-extern Vec2i VIEWPORT_SIZE;
-
 /* -----------------------------------------------------
  *          PUBLIC METHODS
  * -----------------------------------------------------
@@ -60,7 +58,8 @@ void Engine::Run()
 
   /* Initialize framebuffer object */
   FrameBuffer framebuffer;
-  framebuffer.InitFrameBuffer(VIEWPORT_SIZE);
+  framebuffer.InitFrameBuffer(editor.GetViewportSize());
+  glViewport(0, 0, framebuffer.GetSize().x, framebuffer.GetSize().y);
 
   /* Camera object */
   Camera camera(window.GetWindowSize(), Vec3f(0.0f, 1.0f, 10.0f));
@@ -166,9 +165,9 @@ void Engine::Run()
 
     /* Input */
     glfwPollEvents();
-    if (window.GetKey(GLFW_KEY_ESCAPE) == GLFW_PRESS)
-      window.CloseWindow();
-    camera.ProcessInput(&window, deltaTime);
+    if (editor.ViewportFocused())
+      camera.ProcessInput(&window, deltaTime);
+    
     const Vec2i framebufferSize = framebuffer.GetSize();
     const float aspectRatio = ((float)framebufferSize.x / (float)framebufferSize.y);
     const Mat4f projection = glm::perspective(glm::radians(camera.fov), aspectRatio, projPlane.x, projPlane.y);
@@ -333,7 +332,7 @@ void Engine::InitOpenGL()
     exit(-1);
   }
 
-  glViewport(0, 0, VIEWPORT_SIZE.x, VIEWPORT_SIZE.y);
+  
   
   /* Antialising */
   glEnable(GL_MULTISAMPLE);

@@ -20,28 +20,6 @@
 #include "Imgui/imgui_internal.h"
 #include "Imgui/imgui_spectrum.h"
 
-Vec2i VIEWPORT_SIZE   = Vec2i(960, 540);  /* 60% x 60%  */
-Vec2i HIERARCHY_SIZE  = Vec2i(320, 900);  /* 20% x 100% */
-Vec2i INSPECTOR_SIZE  = Vec2i(320, 900);  /* 20% x 100% */
-Vec2i BROWSER_SIZE    = Vec2i(960, 360);  /* 60% x 40%  */
-
-/* Editor layout 1600x900
-  
-  --------------------------------------
-  |        |                  |        |
-  |        |                  |        |
-  |20%x100%|    60% x 60%     |20%x100%|
-  |        |                  |        |
-  |        |                  |        |
-  |        |                  |        |
-  |        |------------------|        |
-  |        |    60% x 40%     |        |
-  |        |                  |        |
-  --------------------------------------
-*/
-
-
-
 /* -----------------------------------------------------
  *          PUBLIC METHODS
  * -----------------------------------------------------
@@ -64,15 +42,22 @@ void Editor::Initialize()
   ImGui_ImplGlfw_InitForOpenGL(glfwGetCurrentContext(), true);
   ImGui_ImplOpenGL3_Init("#version 460");
 
-  String& resolution = ConfigurationsManager::GetValue(CONF_WINDOW_RESOLUTION);
-  String& aspectRatio = ConfigurationsManager::GetValue(CONF_ASPECT_RATIO);
+  String& resolutionStr = ConfigurationsManager::GetValue(CONF_WINDOW_RESOLUTION);
+  String& aspectRatioStr = ConfigurationsManager::GetValue(CONF_ASPECT_RATIO);
   for (aspectIndex = 0; aspectIndex < 3; aspectIndex++)
-    if (std::strcmp(aspectRatioValues[aspectIndex], aspectRatio.c_str()) == 0)
+    if (std::strcmp(aspectRatioValues[aspectIndex], aspectRatioStr.c_str()) == 0)
       break;
 
   for (resolutionIndex = 0; resolutionIndex < 12; resolutionIndex++)
-    if (std::strcmp(resolutionValues[resolutionIndex], resolution.c_str()) == 0)
+    if (std::strcmp(resolutionValues[resolutionIndex], resolutionStr.c_str()) == 0)
       break;
+
+  Vec2i resolution = ConfigurationsManager::ParseResolution(resolutionStr);
+
+  _viewportSize  = Vec2i(resolution.x * 0.6, resolution.y * 0.6); /* 60% x 60%  */
+  _hierarchySize = Vec2i(resolution.x * 0.2, resolution.y * 1);   /* 20% x 100% */
+  _inspectorSize = Vec2i(resolution.x * 0.2, resolution.y * 1);   /* 20% x 100% */
+  _browserSize   = Vec2i(resolution.x * 0.6, resolution.y * 0.4); /* 60% x 40%  */
 }
 
 void Editor::ShutDown()
@@ -251,37 +236,52 @@ void Editor::ShowHierarchy(Scene* scene)
   auto& pointLights = scene->pointLights;
   auto& sceneMeshes = scene->statMeshes;
 
-  static bool treeNodeDirLightSelected = false;
-  static int treeNodePointLightSelected = -1;
-  static int treeNodeStaticMeshSelected = -1;
+  static bool dirLightSelected = false;
+  static int pointLightSelected = -1;
+  static int staticMeshSelected = -1;
+  
+  char digits[8]{};
+  static String treeName(32, 0);
+  static String treeNode(32, 0);
 
-  ImGui::SetNextWindowSize(ImVec2(HIERARCHY_SIZE.x, HIERARCHY_SIZE.y));
+  ImGui::SetNextWindowSize(ImVec2(_hierarchySize.x, _hierarchySize.y));
   ImGui::Begin("Hierarchy", &_hierarchyOpen);
 
+  /* Lighting Tree */
   if (ImGui::TreeNode("Lighting"))
   {
-    if (ImGui::Selectable("Directional light", treeNodeDirLightSelected == true))
+    /* Directional light node */
+    if (ImGui::Selectable("Directional light", dirLightSelected == true))
     {
       _propertiesOpen = true;
-      treeNodeDirLightSelected = true;
-      treeNodeStaticMeshSelected = -1;
-      treeNodePointLightSelected = -1;
+      dirLightSelected = true;
+      staticMeshSelected = -1;
+      pointLightSelected = -1;
     }
 
+    /* Point light nodes */
     if (pointLights.size() > 0)
     {
-      if (ImGui::TreeNode("Point lights"))
+      _itoa_s(pointLights.size(), digits, 10);
+      treeName.clear();
+      treeName.append("Point lights");
+      treeName.append(" (");
+      treeName.append(digits);
+      treeName.append(")");
+      if (ImGui::TreeNode(treeName.c_str()))
       {
         for (int i = 0; i < pointLights.size(); i++)
         {
-          char pointLightName[50] = "Point light";
-          std::strcat(pointLightName, std::to_string(i).c_str());
-          if (ImGui::Selectable(pointLightName, treeNodePointLightSelected == i))
+          _itoa_s(i, digits, 10);
+          treeNode.clear();
+          treeNode.append("Light");
+          treeNode.append(digits);
+          if (ImGui::Selectable(treeNode.c_str(), pointLightSelected == i))
           {
             _propertiesOpen = true;
-            treeNodeDirLightSelected = false;
-            treeNodePointLightSelected = i;
-            treeNodeStaticMeshSelected = -1;
+            dirLightSelected = false;
+            pointLightSelected = i;
+            staticMeshSelected = -1;
           }
         }
         ImGui::TreePop();
@@ -290,62 +290,77 @@ void Editor::ShowHierarchy(Scene* scene)
     ImGui::TreePop();
   }
 
-  if (ImGui::TreeNode("StaticMesh"))
+
+  /* Static mesh Tree */
+  _itoa_s(sceneMeshes.size(), digits, 10);
+  treeName.clear();
+  treeName.append("StaticMesh");
+  treeName.append(" (");
+  treeName.append(digits);
+  treeName.append(")");
+  if (ImGui::TreeNode(treeName.c_str()))
   {
+    /* Static mesh nodes */
     for (int i = 0; i < sceneMeshes.size(); i++)
     {
-      char staticMeshName[30] = "StaticMesh";
-      std::strcat(staticMeshName, std::to_string(i).c_str());
-
-      if (ImGui::Selectable(staticMeshName, treeNodeStaticMeshSelected == i))
+      _itoa_s(i, digits, 10);
+      treeNode.clear();
+      treeNode.append("StaticMesh");
+      treeNode.append(digits);
+      if (ImGui::Selectable(treeNode.c_str(), staticMeshSelected == i))
       {
         _propertiesOpen = true;
-        treeNodeDirLightSelected = false;
-        treeNodePointLightSelected = -1;
-        treeNodeStaticMeshSelected = i;
+        dirLightSelected = false;
+        pointLightSelected = -1;
+        staticMeshSelected = i;
       }
     }
     ImGui::TreePop();
   }
   ImGui::End();
 
-  if (_propertiesOpen && treeNodeDirLightSelected)
+  if (_propertiesOpen && dirLightSelected)
     ShowPropertiesPanel(dirLight);
-  else if (_propertiesOpen && treeNodePointLightSelected >= 0)
-    ShowPropertiesPanel(pointLights[treeNodePointLightSelected]);
-  else if (_propertiesOpen && treeNodeStaticMeshSelected >= 0)
-    ShowPropertiesPanel(sceneMeshes[treeNodeStaticMeshSelected]);
+  else if (_propertiesOpen && pointLightSelected >= 0)
+    ShowPropertiesPanel(pointLights[pointLightSelected]);
+  else if (_propertiesOpen && staticMeshSelected >= 0)
+    ShowPropertiesPanel(sceneMeshes[staticMeshSelected]);
 }
 
 void Editor::ShowViewport(FrameBuffer* framebuffer)
 {
-  ImGui::SetNextWindowSize(ImVec2(VIEWPORT_SIZE.x, VIEWPORT_SIZE.y));
+  ImGui::SetNextWindowSize(ImVec2(_viewportSize.x, _viewportSize.y));
   ImGui::Begin("Viewport", &_viewportOpen);
 
-  /* Using a Child allow to fill all the space of the window.
-  It also alows customization */
+  _isViewportFocused = ImGui::IsWindowFocused();
+
+  /* Using a Child allow to fill all the space of the window. It also alows customization */
   ImGui::BeginChild("GameRender");
+
+  _isViewportFocused = _isViewportFocused || ImGui::IsWindowFocused();
+ 
   /* Get the size of the child(i.e.the whole draw size of the windows). */
   ImVec2 drawSpace = ImGui::GetWindowSize();
-
   Vec2i framebufferSize = framebuffer->GetSize();
   if((drawSpace.x != framebufferSize.x || drawSpace.y != framebufferSize.y))
   {
     framebuffer->RescaleFrameBuffer({ drawSpace.x, drawSpace.y});
+    glViewport(0, 0, drawSpace.x, drawSpace.y);
+    _viewportSize.x = drawSpace.x;
+    _viewportSize.y = drawSpace.y;
   }
   else
   {
     /* Because I use the texture from OpenGL, I need to invert the V from the UV. */
     ImGui::Image((ImTextureID)framebuffer->GetImage(), drawSpace, ImVec2(0, 1), ImVec2(1, 0));
   }
-   
   ImGui::EndChild();
   ImGui::End();
 }
 
 void Editor::ShowBrowser()
 {
-  ImGui::SetNextWindowSize(ImVec2(BROWSER_SIZE.x, BROWSER_SIZE.y));
+  ImGui::SetNextWindowSize(ImVec2(_browserSize.x, _browserSize.y));
   ImGui::Begin("Browser", &_browserOpen);
   
   ImGui::End();
@@ -353,7 +368,7 @@ void Editor::ShowBrowser()
 
 void Editor::ShowInspector()
 {
-  ImGui::SetNextWindowSize(ImVec2(INSPECTOR_SIZE.x, INSPECTOR_SIZE.y));
+  ImGui::SetNextWindowSize(ImVec2(_inspectorSize.x, _inspectorSize.y));
   ImGui::Begin("Inspector", &_inspectorOpen);
 
   ImGui::End();

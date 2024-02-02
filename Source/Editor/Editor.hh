@@ -2,6 +2,23 @@
 
 #include "../Core.hh"
 
+
+
+/* Editor layout 1600x900
+
+	--------------------------------------
+	|        |                  |        |
+	|        |                  |        |
+	|20%x100%|    60% x 60%     |20%x100%|
+	|        |                  |        |
+	|        |                  |        |
+	|        |                  |        |
+	|        |------------------|        |
+	|        |    60% x 40%     |        |
+	|        |                  |        |
+	--------------------------------------
+*/
+
 class Editor
 {
 public:
@@ -10,6 +27,9 @@ public:
 
 	void Initialize();
 	void ShutDown();
+
+	Vec2i GetViewportSize() const { return _viewportSize; }
+	bool ViewportFocused() const { return _isViewportFocused; }
 
 	void NewFrame();
 	void RenderFrame(class Scene* scene, class FrameBuffer* framebuffer);
@@ -24,6 +44,13 @@ private:
 	bool _hierarchyOpen = true;
 	bool _browserOpen = true;
 	bool _inspectorOpen = true;
+	
+	bool _isViewportFocused = false;
+
+	Vec2i _viewportSize; 
+	Vec2i _hierarchySize;
+	Vec2i _inspectorSize; 
+	Vec2i _browserSize;
 	
 	inline static const char* aspectRatioValues[] = { "21:9", "16:9", "4:3" };
 	inline static const char* resolutionValues[] = { 
