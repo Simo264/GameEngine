@@ -46,6 +46,8 @@ using OFStream			= std::ofstream;
 using RuntimeError	= std::runtime_error;
 using Path					= std::filesystem::path;
 
+const Path ROOT_PATH = std::filesystem::current_path().parent_path();
+
 /* -----------------------------
 			GLM library aliases
 	 ----------------------------- */

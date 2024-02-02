@@ -1,7 +1,7 @@
 window-title=GameEngine
 
 # window resolution
-window-size=1600x900
+window-resolution=1600x900
 
 # 16:9 aspect ratio
 aspect-ratio=16:9

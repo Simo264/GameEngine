@@ -8,7 +8,8 @@
 
 Path ShadersManager::GetShaderFile(Path filePath)
 {
-  filePath = _shadersDir / filePath.lexically_normal();
+  auto shadersDir = ROOT_PATH / "Shaders";
+  filePath = shadersDir / filePath.lexically_normal();
 
   if (!std::filesystem::exists(filePath))
   {

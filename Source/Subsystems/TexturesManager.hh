@@ -28,7 +28,7 @@ public:
 	static void ShutDown();
 
 private:
-	inline static Path _texturesDir = std::filesystem::current_path().parent_path() / "Textures";
+	inline static Path _texturesDir = ROOT_PATH / "Textures";
 
 	inline static UniquePointer<Texture2D[]> _textureBuffer = 
 		std::make_unique<Texture2D[]>(TEXTURES_MANAGER_MAX_SIZE);

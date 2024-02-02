@@ -28,10 +28,8 @@ public:
 
 	static void Save();
 
-	//static const Map<String, String>& GetMap() { return _mapConfig; }
-
 private:
-	inline static Path _filePath = std::filesystem::current_path().parent_path() / "app.txt";
+	inline static Path _filePath = ROOT_PATH / "app.txt";
 	inline static Map<String, String> _mapConfig = Map<String, String>(); /* <attrName, attrValue> */
 };
 

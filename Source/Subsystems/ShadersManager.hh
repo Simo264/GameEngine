@@ -28,8 +28,6 @@ public:
 	static void ShutDown();
 
 private:
-	inline static Path _shadersDir = std::filesystem::current_path().parent_path() / "Shaders";
-
 	inline static Array<Shader, 10> _shaderProgramsBuffer = Array<Shader, 10>();
 	inline static uint32_t _nShaderPrograms = 0;
 };

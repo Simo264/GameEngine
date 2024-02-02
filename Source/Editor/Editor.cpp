@@ -7,7 +7,6 @@
 #include "../Scene.hh"
 
 #include "../Subsystems/TexturesManager.hh"
-#include "../Subsystems/FontsManager.hh"
 #include "../Subsystems/ConfigurationsManager.hh"
 
 #include "../Renderer.hh"
@@ -125,21 +124,22 @@ void Editor::RenderFrame(Scene* scene, FrameBuffer* framebuffer)
 
 void Editor::Styling()
 {
-  auto fontPath = FontsManager::GetFont("Karla-Regular.ttf");
+  Path fontPath = ROOT_PATH / "Fonts/Karla-Regular.ttf";
+
   ImGuiIO& io = ImGui::GetIO();
   io.Fonts->AddFontFromFileTTF(fontPath.string().c_str(), 16); // custom font
 
-  ImGuiStyle& style = ImGui::GetStyle();
-  style.FrameRounding = 6;
+  //ImGuiStyle& style = ImGui::GetStyle();
+  //style.FrameRounding = 6;
 
   /* When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical to regular ones. */
-  if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-  {
-    style.WindowRounding = 0.0f;
-    style.Colors[ImGuiCol_WindowBg].w = 1.0f;
-  }
+  //if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+  //{
+  //  style.WindowRounding = 0.0f;
+  //  style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+  //}
 
-  ImGui::StyleColorsClassic();
+  ImGui::StyleColorsDark();
 }
 
 void Editor::Dockspace()
