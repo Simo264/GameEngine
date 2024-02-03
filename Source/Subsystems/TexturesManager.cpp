@@ -1,6 +1,8 @@
 #include "TexturesManager.hh"
 #include "../Logger.hh"
 
+static constexpr uint32_t TEXTURES_MANAGER_MAX_SIZE = 100;
+
 /* -----------------------------------------------------
  *          PUBLIC METHODS
  * -----------------------------------------------------
@@ -8,42 +10,44 @@
 
 void TexturesManager::Initialize()
 {
-  // Load all texture files in Textures directory
-  for (const auto& entry : std::filesystem::recursive_directory_iterator(_texturesDir))
-  {
-    if (!std::filesystem::is_directory(entry))
-    {
-      LoadTexture(entry);
-    }
-  }
+	/* Reserve block of memory with TEXTURES_MANAGER_MAX_SIZE on the heap */
+	_textureBuffer = std::make_unique<Texture2D[]>(TEXTURES_MANAGER_MAX_SIZE);
+	_bufferSize = 0;
+}
+
+void TexturesManager::ShutDown()
+{
+	/* Destoy each texture objects */
+	std::for_each_n(&_textureBuffer[0], _bufferSize, [](Texture2D& texture) {
+    texture.DestroyTexture();
+    });
+	
+	/* Deallocate memory */
+  _textureBuffer.reset();
 }
 
 Texture2D* TexturesManager::LoadTexture(Path filePath, bool gammaCorrection)
 {
-  if (_nTextures >= TEXTURES_MANAGER_MAX_SIZE)
+  if (_bufferSize >= TEXTURES_MANAGER_MAX_SIZE)
   {
-    CONSOLE_ERROR("Can't load more textures. Buffer is full");
-    throw RuntimeError("");
+    CONSOLE_WARN("Can't load more textures. Buffer is full");
+    return nullptr;
   }
-  
-  filePath = _texturesDir / filePath.lexically_normal();
   if (!std::filesystem::exists(filePath))
   {
-    CONSOLE_ERROR("Exception in TexturesManager::LoadTexture: {} does not exists", filePath.string());
-    throw RuntimeError("");
+    CONSOLE_WARN("Texture '{}' does not exists", filePath.string());
+    return nullptr;
   }
 
-  Texture2D* texture = &_textureBuffer[_nTextures++];
-  texture->InitTexture(filePath, gammaCorrection);
-  return texture;
+  Texture2D& texture = _textureBuffer[_bufferSize++];
+  texture.InitTexture(filePath, gammaCorrection);
+  return &texture;
 }
 
 Texture2D* TexturesManager::GetTexture(Path filePath)
 {
-  filePath = _texturesDir / filePath.lexically_normal();
-
   auto start = &_textureBuffer[0];
-  auto end = &_textureBuffer[0] + _nTextures;
+  auto end = &_textureBuffer[0] + _bufferSize;
   auto it = std::find_if(start, end, [&filePath](Texture2D& texture) {
     return texture.texturePath.compare(filePath) == 0;
     });
@@ -55,16 +59,9 @@ Texture2D* TexturesManager::GetTexture(Path filePath)
 
 void TexturesManager::GetTextures(Vector<Texture2D*>& out)
 {
-  out.reserve(_nTextures);
-  std::for_each_n(&_textureBuffer[0], _nTextures, [&out](Texture2D& ptr) {
+  out.reserve(_bufferSize);
+  std::for_each_n(&_textureBuffer[0], _bufferSize, [&out](Texture2D& ptr) {
     out.push_back(&ptr);
     });
 }
 
-void TexturesManager::ShutDown()
-{
-  std::for_each_n(&_textureBuffer[0], _nTextures, [](Texture2D& texture) {
-    texture.DestroyTexture();
-    });
-  _textureBuffer.reset();
-}

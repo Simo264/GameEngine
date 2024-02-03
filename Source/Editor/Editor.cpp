@@ -329,14 +329,18 @@ void Editor::ShowHierarchy(Scene* scene)
 
 void Editor::ShowViewport(FrameBuffer* framebuffer)
 {
+  /* Set viewport window padding to 0 */
+  ImGuiStyle& style = ImGui::GetStyle();
+  Vec2i paddingTmp = Vec2i(style.WindowPadding.x, style.WindowPadding.y);
+  style.WindowPadding.x = 0;
+  style.WindowPadding.y = 0;
+
   ImGui::SetNextWindowSize(ImVec2(_viewportSize.x, _viewportSize.y));
   ImGui::Begin("Viewport", &_viewportOpen);
-
   _isViewportFocused = ImGui::IsWindowFocused();
 
   /* Using a Child allow to fill all the space of the window. It also alows customization */
   ImGui::BeginChild("GameRender");
-
   _isViewportFocused = _isViewportFocused || ImGui::IsWindowFocused();
  
   /* Get the size of the child(i.e.the whole draw size of the windows). */
@@ -356,6 +360,10 @@ void Editor::ShowViewport(FrameBuffer* framebuffer)
   }
   ImGui::EndChild();
   ImGui::End();
+
+  /* Restore padding */
+  style.WindowPadding.x = paddingTmp.x;
+  style.WindowPadding.y = paddingTmp.y;
 }
 
 void Editor::ShowBrowser()
@@ -378,7 +386,7 @@ void Editor::ShowPropertiesPanel(StaticMesh* meshTarget)
 {
   static Vector<Texture2D*> textures;
   if (textures.empty())
-    TexturesManager::GetTextures(textures);
+    TexturesManager::Instance().GetTextures(textures);
 
   ImGui::Begin("Properties", &_propertiesOpen);
   ImGui::Text("(StaticMesh name)");
@@ -410,7 +418,7 @@ void Editor::ShowPropertiesPanel(StaticMesh* meshTarget)
       String textPathStr = textures[i]->texturePath.string();
       bool isSelected = (std::strcmp(diffusePathStr.c_str(), textPathStr.c_str()) == 0);
       if (ImGui::Selectable(textPathStr.c_str(), isSelected))
-        meshTarget->diffuse = TexturesManager::GetTexture(textPathStr.c_str());
+        meshTarget->diffuse = TexturesManager::Instance().GetTexture(textPathStr.c_str());
       if (isSelected)
         ImGui::SetItemDefaultFocus();
     }

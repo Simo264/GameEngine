@@ -1,82 +1,48 @@
 #include "ShadersManager.hh"
 #include "../Logger.hh"
 
+static constexpr uint32_t SHADERS_MANAGER_MAX_SIZE = 10;
+
 /* -----------------------------------------------------
  *          PUBLIC METHODS
  * -----------------------------------------------------
 */
 
-Path ShadersManager::GetShaderFile(Path filePath)
-{
-  auto shadersDir = ROOT_PATH / "Shaders";
-  filePath = shadersDir / filePath.lexically_normal();
-
-  if (!std::filesystem::exists(filePath))
-  {
-    CONSOLE_ERROR("Exception in GetShaderPathByName: {} not exists", filePath.string());
-    throw RuntimeError("");
-  }
-
-  return filePath;
-}
-
-Shader* ShadersManager::LoadShaderProgram(const char* label, Path vertFilePath, Path fragFilePath)
-{
-  if (_nShaderPrograms >= _shaderProgramsBuffer.size())
-  {
-    CONSOLE_WARN("Can't load more shaders. Buffer is full");
-    throw RuntimeError("");
-  }
-
-  Shader* shader = &_shaderProgramsBuffer[_nShaderPrograms++];
-  shader->InitShader(label, vertFilePath.string().c_str(), fragFilePath.string().c_str());
-  return shader;
-}
-
-Shader* ShadersManager::GetShader(const char* label)
-{
-  auto start = &_shaderProgramsBuffer[0];
-  auto end = &_shaderProgramsBuffer[0] + _nShaderPrograms;
-  auto it = std::find_if(start, end, [&label](Shader& shader) {
-      return shader.Label().compare(label) == 0;
-    });
-  if (it == end)
-    return nullptr;
-  
-  return it;
-}
-
 void ShadersManager::Initialize()
 {
-  auto testingShader = LoadShaderProgram(
-    "TestingShader",
-    GetShaderFile("Testing.vert"),
-    GetShaderFile("Testing.frag"));
+  /* Reserve block of memory with TEXTURES_MANAGER_MAX_SIZE on the heap */
+  _shaderBuffer = std::make_unique<Shader[]>(SHADERS_MANAGER_MAX_SIZE);
+  _bufferSize = 0;
+
+  const Path shadersDir = ROOT_PATH / "Shaders";
+  auto testingShader = LoadShaderProgram("TestingShader",
+    shadersDir / "Testing.vert",
+    shadersDir / "Testing.frag");
   auto instancingShader = LoadShaderProgram(
     "InstancingShader",
-    GetShaderFile("Instancing.vert"),
-    GetShaderFile("Scene.frag"));
+    shadersDir / "Instancing.vert",
+    shadersDir / "Scene.frag");
   auto sceneShader = LoadShaderProgram(
     "SceneShader",
-    GetShaderFile("Scene.vert"),
-    GetShaderFile("Scene.frag"));
+    shadersDir / "Scene.vert",
+    shadersDir / "Scene.frag");
   auto framebufferShader = LoadShaderProgram(
     "FramebufferShader",
-    GetShaderFile("Framebuffer.vert"),
-    GetShaderFile("Framebuffer.frag"));
+    shadersDir / "Framebuffer.vert",
+    shadersDir / "Framebuffer.frag");
   auto shadowMapDepthShader = LoadShaderProgram(
     "ShadowMapDepthShader",
-    GetShaderFile("ShadowMapDepth.vert"),
-    GetShaderFile("ShadowMapDepth.frag"));
+    shadersDir / "ShadowMapDepth.vert",
+    shadersDir / "ShadowMapDepth.frag");
   auto shadowMapShader = LoadShaderProgram(
     "ShadowMapShader",
-    GetShaderFile("ShadowMap.vert"),
-    GetShaderFile("ShadowMap.frag"));
+    shadersDir / "ShadowMap.vert",
+    shadersDir / "ShadowMap.frag");
 
   framebufferShader->Use();
   framebufferShader->SetInt("UScreenTexture", 0);
   framebufferShader->SetInt("UPostProcessingType", 0);
-  
+
   instancingShader->Use();
   instancingShader->SetInt("UMaterial.diffuse", 0);
   instancingShader->SetInt("UMaterial.specular", 1);
@@ -92,7 +58,38 @@ void ShadersManager::Initialize()
 
 void ShadersManager::ShutDown()
 {
-  std::for_each_n(&_shaderProgramsBuffer[0], _nShaderPrograms, [](Shader& shader) {
+  /* Destoy each texture objects */
+  std::for_each_n(&_shaderBuffer[0], _bufferSize, [](Shader& shader) {
     shader.DestroyShader();
-  });
+    });
+  
+  /* Deallocate memory */
+  _shaderBuffer.reset();
 }
+
+Shader* ShadersManager::LoadShaderProgram(const char* label, Path vertFilePath, Path fragFilePath)
+{
+  if (_bufferSize >= SHADERS_MANAGER_MAX_SIZE)
+  {
+    CONSOLE_WARN("Can't load more shaders. Buffer is full");
+    return nullptr;
+  }
+
+  Shader& shader = _shaderBuffer[_bufferSize++];
+  shader.InitShader(label, vertFilePath.string().c_str(), fragFilePath.string().c_str());
+  return &shader;
+}
+
+Shader* ShadersManager::GetShader(const char* label)
+{
+  auto start = &_shaderBuffer[0];
+  auto end = &_shaderBuffer[0] + _bufferSize;
+  auto it = std::find_if(start, end, [&label](Shader& shader) {
+      return shader.Label().compare(label) == 0;
+    });
+  
+  if (it == end)
+    return nullptr;
+  return it;
+}
+

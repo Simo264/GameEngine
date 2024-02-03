@@ -38,20 +38,25 @@ void Engine::Initialize()
   editor.Initialize();
 
   /* Load and initialize shaders */
-  ShadersManager::Initialize();
+  ShadersManager::Instance().Initialize();
   
   /* Load textures from Textures directory */
-  TexturesManager::Initialize();
+  TexturesManager& instanceTm = TexturesManager::Instance();
+  instanceTm.Initialize();
+  for (auto& entry : std::filesystem::recursive_directory_iterator(ROOT_PATH / "Textures"))
+    if (!std::filesystem::is_directory(entry))
+      TexturesManager::Instance().LoadTexture(entry);
+
 }
 
 void Engine::Run()
 {
-  auto testingShader = ShadersManager::GetShader("TestingShader");
-  auto instancingShader = ShadersManager::GetShader("InstancingShader");
-  auto framebufferShader = ShadersManager::GetShader("FramebufferShader");
-  auto sceneShader = ShadersManager::GetShader("SceneShader");
-  auto shadowMapDepthShader = ShadersManager::GetShader("ShadowMapDepthShader");
-  auto shadowMapShader = ShadersManager::GetShader("ShadowMapShader");
+  auto testingShader = ShadersManager::Instance().GetShader("TestingShader");
+  auto instancingShader = ShadersManager::Instance().GetShader("InstancingShader");
+  auto framebufferShader = ShadersManager::Instance().GetShader("FramebufferShader");
+  auto sceneShader = ShadersManager::Instance().GetShader("SceneShader");
+  auto shadowMapDepthShader = ShadersManager::Instance().GetShader("ShadowMapDepthShader");
+  auto shadowMapShader = ShadersManager::Instance().GetShader("ShadowMapShader");
 
   /* Window object */
   Window window(glfwGetCurrentContext());
@@ -269,8 +274,9 @@ void Engine::ShutDown()
   //  mesh->Destroy();
 
   /* Shutdown subsystems */
-  ShadersManager::ShutDown();
-  TexturesManager::ShutDown();
+  ShadersManager::Instance().ShutDown();
+  TexturesManager::Instance().ShutDown();
+  
 
   /* Shutdown ImGui */
   editor.ShutDown();

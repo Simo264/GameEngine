@@ -127,5 +127,5 @@ Texture2D* ObjectLoader::GetTexture(const aiMaterial* material, const char* text
   if (material->GetTexture(aiType, 0, &fileName) != AI_SUCCESS)
     return nullptr;
 
-  return TexturesManager::GetTexture(fileName.C_Str());
+  return TexturesManager::Instance().GetTexture(ROOT_PATH / fileName.C_Str());
 }

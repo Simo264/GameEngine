@@ -1,33 +1,26 @@
 #pragma once
 
-#include "../Core.hh"
+#include "ResourceManager.hh"
 #include "../Shader.hh"
 
 /* ------------------------------------------------
-	Static class ShadersManager:
+	Resource manager class class ShadersManager:
 	load in and retrieve from memory shader programs 
  -------------------------------------------------- */
-class ShadersManager
+class ShadersManager : public ResourceManagerInterface<ShadersManager>
 {
 public:
-	ShadersManager()	= delete;
-	~ShadersManager() = delete;
+	void Initialize() override;
+	
+	void ShutDown() override;
 
 	/* Load in memory the shader program */
-	static Shader* LoadShaderProgram(
-		const char* label, 
-		Path vertFilePath,
-		Path fragFilePath);
+	class Shader* LoadShaderProgram(const char* label, Path vertFilePath, Path fragFilePath);
 	
 	/* Retrieve from memory the shader program */
-	static Shader* GetShader(const char* label);
-	
-	static Path GetShaderFile(Path filePath);
-	
-	static void Initialize();
-	static void ShutDown();
+	class Shader* GetShader(const char* label);
 
 private:
-	inline static Array<Shader, 10> _shaderProgramsBuffer = Array<Shader, 10>();
-	inline static uint32_t _nShaderPrograms = 0;
+	UniquePointer<Shader[]> _shaderBuffer;
+	uint32_t _bufferSize;
 };
