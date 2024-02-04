@@ -1,32 +1,51 @@
 #include "ConfigurationsManager.hh"
 #include "../Logger.hh"
 
+/* -----------------------------------------------------
+ *          PUBLIC METHODS
+ * -----------------------------------------------------
+*/
+
+void ConfigurationsManager::Initialize()
+{
+	_configPath = ROOT_PATH / "app.txt";
+	_mapConfig = Map<String, String>();
+
+	LoadConfiguration();
+}
+
+void ConfigurationsManager::ShutDown()
+{
+	_mapConfig.clear();
+}
+
 void ConfigurationsManager::LoadConfiguration()
 {
-	IFStream file(_filePath.string());
+	String filePathStr = _configPath.string();
+	IFStream file(filePathStr.c_str());
 	if (!file.is_open())
 	{
-		CONSOLE_ERROR("'{}' does not exist.", _filePath.string());
+		CONSOLE_ERROR("'{}' does not exist.", filePathStr.c_str());
 		exit(-1);
 	}
-	
+
 	String line;
 	char attrName[64]{};
 	char attrVal[64]{};
-	while (std::getline(file, line)) 
+	while (std::getline(file, line))
 	{
 		/* Ignore blank line */
 		if (line.empty())
 			continue;
 
 		/* Ignore comments */
-		if (line[0] == '#') 
+		if (line[0] == '#')
 			continue;
-		
+
 		auto sep = line.find('=');
 		std::copy(line.begin(), line.begin() + sep, attrName);
 		std::copy(line.begin() + sep + 1, line.end(), attrVal);
-		
+
 		_mapConfig.insert(std::make_pair(attrName, attrVal));
 
 		std::fill_n(attrName, 64, 0);
@@ -38,15 +57,16 @@ void ConfigurationsManager::LoadConfiguration()
 
 void ConfigurationsManager::Save()
 {
-	IFStream inFile(_filePath.string());
+	String filePathStr = _configPath.string();
+	IFStream inFile(filePathStr.c_str());
 	
-	/* Save file content in temporary buffer */
+	/* Save file content in a temporary buffer */
 	StringStream buffer;
 	buffer << inFile.rdbuf();
 	inFile.close();
 
 	/* Save new configurations */
-	OFStream outFile(_filePath.string());
+	OFStream outFile(filePathStr.c_str());
 	String line;
 	char attrName[64]{};
 	while (std::getline(buffer, line)) 
@@ -58,18 +78,14 @@ void ConfigurationsManager::Save()
 		}
 		if (line[0] == '#')
 		{
-			outFile << line;
-			outFile << "\n";
+			outFile << line << "\n";
 			continue;
 		}
 		
 		auto sep = line.find('=');
 		std::copy(line.begin(), line.begin() + sep, attrName);
 
-		outFile << attrName;
-		outFile << "=";
-		outFile << _mapConfig.at(attrName);
-		outFile << "\n";
+		outFile << attrName << "=" << _mapConfig.at(attrName) << "\n";
 
 		std::fill_n(attrName, 64, 0);
 	}
@@ -100,3 +116,5 @@ Vec2i ConfigurationsManager::ParsePosition(String& position)
 	int y = std::stoi(position.substr(sep + 1));
 	return Vec2i(x, y);
 }
+
+

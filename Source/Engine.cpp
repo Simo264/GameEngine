@@ -29,7 +29,7 @@ void Engine::Initialize()
   Logger::Initialize();
 
   /* Load configuration */
-  ConfigurationsManager::LoadConfiguration();
+  ConfigurationsManager::Instance().Initialize();
 
   /* Initialize GLFW, create window and initialize OpenGL context */
   InitOpenGL();
@@ -293,19 +293,20 @@ void Engine::ShutDown()
 
 void Engine::InitOpenGL()
 {
+  auto& instanceCM = ConfigurationsManager::Instance();
   /* Get window size */
-  String& windowRes = ConfigurationsManager::GetValue(CONF_WINDOW_RESOLUTION);
-  Vec2i resolution = ConfigurationsManager::ParseResolution(windowRes);
+  String& windowRes = instanceCM.GetValue(CONF_WINDOW_RESOLUTION);
+  Vec2i resolution = instanceCM.ParseResolution(windowRes);
   /* Get window pos */
-  String& windowPos = ConfigurationsManager::GetValue(CONF_WINDOW_POS);
-  Vec2i position = ConfigurationsManager::ParsePosition(windowPos);
+  String& windowPos = instanceCM.GetValue(CONF_WINDOW_POS);
+  Vec2i position = instanceCM.ParsePosition(windowPos);
   /* Get window title */
-  String& title = ConfigurationsManager::GetValue(CONF_WINDOW_TITLE);
+  String& title = instanceCM.GetValue(CONF_WINDOW_TITLE);
   /* Get window aspect ratio */
-  String& windowAR = ConfigurationsManager::GetValue(CONF_ASPECT_RATIO);
-  Vec2i aspectRatio = ConfigurationsManager::ParseAspectRatio(windowAR);
+  String& windowAR = instanceCM.GetValue(CONF_ASPECT_RATIO);
+  Vec2i aspectRatio = instanceCM.ParseAspectRatio(windowAR);
   /* V-sync on-off */
-  String& vsync = ConfigurationsManager::GetValue(CONF_VSYNC);
+  String& vsync = instanceCM.GetValue(CONF_VSYNC);
 
   glfwInit();
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);  /* Load OpenGL 4.6 */

@@ -41,8 +41,9 @@ void Editor::Initialize()
   ImGui_ImplGlfw_InitForOpenGL(glfwGetCurrentContext(), true);
   ImGui_ImplOpenGL3_Init("#version 460");
 
-  String& resolutionStr = ConfigurationsManager::GetValue(CONF_WINDOW_RESOLUTION);
-  String& aspectRatioStr = ConfigurationsManager::GetValue(CONF_ASPECT_RATIO);
+  auto& instanceCM = ConfigurationsManager::Instance();
+  String& resolutionStr = instanceCM.GetValue(CONF_WINDOW_RESOLUTION);
+  String& aspectRatioStr = instanceCM.GetValue(CONF_ASPECT_RATIO);
   for (aspectIndex = 0; aspectIndex < 3; aspectIndex++)
     if (std::strcmp(aspectRatioValues[aspectIndex], aspectRatioStr.c_str()) == 0)
       break;
@@ -51,7 +52,7 @@ void Editor::Initialize()
     if (std::strcmp(resolutionValues[resolutionIndex], resolutionStr.c_str()) == 0)
       break;
 
-  Vec2i resolution = ConfigurationsManager::ParseResolution(resolutionStr);
+  Vec2i resolution = instanceCM.ParseResolution(resolutionStr);
 
   _viewportSize  = Vec2i(resolution.x * 0.6, resolution.y * 0.6); /* 60% x 60%  */
   _hierarchySize = Vec2i(resolution.x * 0.2, resolution.y * 1);   /* 20% x 100% */
@@ -457,26 +458,28 @@ void Editor::ShowPropertiesPanel(PointLight* pointLight)
 
 void Editor::ShowPreferences()
 {
+  auto& instanceCM = ConfigurationsManager::Instance();
+
   static bool buttonDisabled = true;
   ImGui::Begin("Preferences", &_preferencesOpen);
   ImGui::SeparatorText("Window properties");
   
   /* Window title */
-  static String& title = ConfigurationsManager::GetValue(CONF_WINDOW_TITLE);
+  static String& title = instanceCM.GetValue(CONF_WINDOW_TITLE);
   if (ImGui::InputText("Title", &title))
     buttonDisabled = false;
   
   /* Window aspect ratio */
   if (ImGui::Combo("Aspect ratio", &aspectIndex, aspectRatioValues, 3)) /* 3 aspect ratio availables */
   {
-    ConfigurationsManager::SetValue(CONF_ASPECT_RATIO, aspectRatioValues[aspectIndex]);
+    instanceCM.SetValue(CONF_ASPECT_RATIO, aspectRatioValues[aspectIndex]);
     buttonDisabled = false;
   }
   
   /* Window resolution */
   if (ImGui::Combo("Resolution", &resolutionIndex, resolutionValues, 12)) /* 12 resolution availables */
   {
-    ConfigurationsManager::SetValue(CONF_WINDOW_RESOLUTION, resolutionValues[resolutionIndex]);
+    instanceCM.SetValue(CONF_WINDOW_RESOLUTION, resolutionValues[resolutionIndex]);
     buttonDisabled = false;
   }
   
@@ -489,7 +492,7 @@ void Editor::ShowPreferences()
   /* Button event */
   bool save = ImGui::Button("Save");
   if (save)
-    ConfigurationsManager::Save();
+    instanceCM.Save();
   /* Restore button */
   if (buttonDisabled)
   {

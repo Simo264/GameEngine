@@ -1,11 +1,14 @@
+# set title
 window-title=GameEngine
 
-# window resolution
+# set window size
 window-resolution=1600x900
 
-# 16:9 aspect ratio
+# set aspect ratio
 aspect-ratio=16:9
 
+# set position
 window-pos=50,50
 
+# set v-sync
 v-sync=false
