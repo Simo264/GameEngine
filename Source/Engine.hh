@@ -19,4 +19,10 @@ public:
 
 private:
 	void InitOpenGL();
+	
+	/* Load shaders program from Shaders/ directory */
+	void LoadShaders();
+	
+	/* Load all textures in Textures/ directory */
+	void LoadTextures();
 };

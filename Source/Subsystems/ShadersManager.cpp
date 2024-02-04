@@ -13,47 +13,6 @@ void ShadersManager::Initialize()
   /* Reserve block of memory with TEXTURES_MANAGER_MAX_SIZE on the heap */
   _shaderBuffer = std::make_unique<Shader[]>(SHADERS_MANAGER_MAX_SIZE);
   _bufferSize = 0;
-
-  const Path shadersDir = ROOT_PATH / "Shaders";
-  auto testingShader = LoadShaderProgram("TestingShader",
-    shadersDir / "Testing.vert",
-    shadersDir / "Testing.frag");
-  auto instancingShader = LoadShaderProgram(
-    "InstancingShader",
-    shadersDir / "Instancing.vert",
-    shadersDir / "Scene.frag");
-  auto sceneShader = LoadShaderProgram(
-    "SceneShader",
-    shadersDir / "Scene.vert",
-    shadersDir / "Scene.frag");
-  auto framebufferShader = LoadShaderProgram(
-    "FramebufferShader",
-    shadersDir / "Framebuffer.vert",
-    shadersDir / "Framebuffer.frag");
-  auto shadowMapDepthShader = LoadShaderProgram(
-    "ShadowMapDepthShader",
-    shadersDir / "ShadowMapDepth.vert",
-    shadersDir / "ShadowMapDepth.frag");
-  auto shadowMapShader = LoadShaderProgram(
-    "ShadowMapShader",
-    shadersDir / "ShadowMap.vert",
-    shadersDir / "ShadowMap.frag");
-
-  framebufferShader->Use();
-  framebufferShader->SetInt("UScreenTexture", 0);
-  framebufferShader->SetInt("UPostProcessingType", 0);
-
-  instancingShader->Use();
-  instancingShader->SetInt("UMaterial.diffuse", 0);
-  instancingShader->SetInt("UMaterial.specular", 1);
-  instancingShader->SetFloat("UMaterial.shininess", 32.0f);
-  instancingShader->SetFloat("UGamma", 2.2f);
-
-  sceneShader->Use();
-  sceneShader->SetInt("UMaterial.diffuse", 0);
-  sceneShader->SetInt("UMaterial.specular", 1);
-  sceneShader->SetFloat("UMaterial.shininess", 32.0f);
-  sceneShader->SetFloat("UGamma", 2.2f);
 }
 
 void ShadersManager::ShutDown()

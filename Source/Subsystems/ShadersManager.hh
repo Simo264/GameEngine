@@ -10,8 +10,10 @@
 class ShadersManager : public ResourceManagerInterface<ShadersManager>
 {
 public:
+	/* Initialize shader buffer */
 	void Initialize() override;
 	
+	/* Destroy all shader objects and free buffer */
 	void ShutDown() override;
 
 	/* Load in memory the shader program */

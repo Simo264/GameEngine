@@ -386,7 +386,7 @@ void Editor::ShowPropertiesPanel(StaticMesh* meshTarget)
 {
   static Vector<Texture2D*> textures;
   if (textures.empty())
-    TexturesManager::Instance().GetTextures(textures);
+    TexturesManager::Instance().CopyTextures(textures);
 
   ImGui::Begin("Properties", &_propertiesOpen);
   ImGui::Text("(StaticMesh name)");
@@ -418,7 +418,7 @@ void Editor::ShowPropertiesPanel(StaticMesh* meshTarget)
       String textPathStr = textures[i]->texturePath.string();
       bool isSelected = (std::strcmp(diffusePathStr.c_str(), textPathStr.c_str()) == 0);
       if (ImGui::Selectable(textPathStr.c_str(), isSelected))
-        meshTarget->diffuse = TexturesManager::Instance().GetTexture(textPathStr.c_str());
+        meshTarget->diffuse = TexturesManager::Instance().GetTextureByPath(textPathStr.c_str());
       if (isSelected)
         ImGui::SetItemDefaultFocus();
     }

@@ -34,29 +34,27 @@ void Engine::Initialize()
   /* Initialize GLFW, create window and initialize OpenGL context */
   InitOpenGL();
 
-  /* Initialize Editor */
-  editor.Initialize();
-
   /* Load and initialize shaders */
   ShadersManager::Instance().Initialize();
+  LoadShaders();
   
   /* Load textures from Textures directory */
-  TexturesManager& instanceTm = TexturesManager::Instance();
-  instanceTm.Initialize();
-  for (auto& entry : std::filesystem::recursive_directory_iterator(ROOT_PATH / "Textures"))
-    if (!std::filesystem::is_directory(entry))
-      TexturesManager::Instance().LoadTexture(entry);
+  TexturesManager::Instance().Initialize();
+  LoadTextures();
 
+  /* Initialize ImGui library */
+  editor.Initialize();
 }
 
 void Engine::Run()
 {
-  auto testingShader = ShadersManager::Instance().GetShader("TestingShader");
-  auto instancingShader = ShadersManager::Instance().GetShader("InstancingShader");
-  auto framebufferShader = ShadersManager::Instance().GetShader("FramebufferShader");
-  auto sceneShader = ShadersManager::Instance().GetShader("SceneShader");
-  auto shadowMapDepthShader = ShadersManager::Instance().GetShader("ShadowMapDepthShader");
-  auto shadowMapShader = ShadersManager::Instance().GetShader("ShadowMapShader");
+  auto& instanceSM          = ShadersManager::Instance();
+  auto testingShader        = instanceSM.GetShader("TestingShader");
+  auto instancingShader     = instanceSM.GetShader("InstancingShader");
+  auto framebufferShader    = instanceSM.GetShader("FramebufferShader");
+  auto sceneShader          = instanceSM.GetShader("SceneShader");
+  auto shadowMapDepthShader = instanceSM.GetShader("ShadowMapDepthShader");
+  auto shadowMapShader      = instanceSM.GetShader("ShadowMapShader");
 
   /* Window object */
   Window window(glfwGetCurrentContext());
@@ -105,6 +103,7 @@ void Engine::Run()
   scene.AddPointLight(&pointLight1);
   scene.AddPointLight(&pointLight2);
 
+#if 0
   /* Shadow mapping */
   uint32_t SHADOW_WIDTH = 1024;
   uint32_t SHADOW_HEIGHT = 1024;
@@ -151,12 +150,13 @@ void Engine::Run()
   shadowMapShader->SetInt("UDiffuseTexture", 0);
   shadowMapShader->SetInt("USpecularTexture", 1);
   shadowMapShader->SetInt("UShadowMap", 2);
+#endif
 
   /* Pre-loop */
   double lastUpdateTime = 0;
-  const Vec2f projPlane(0.1f, 100.0f);
-  Vec3f lightPos = Vec3f(-2.0f, 10.0f, -2.0f);
-  Mat4f lightSpaceMatrix;
+  const Vec2f perspectiveDistance(0.1f, 100.0f); 
+  //Vec3f lightPos = Vec3f(-2.0f, 10.0f, -2.0f); /* Shadows */
+  //Mat4f lightSpaceMatrix; /* Shadows */
 
   /* Loop  */
   while (window.Loop())
@@ -175,7 +175,7 @@ void Engine::Run()
     
     const Vec2i framebufferSize = framebuffer.GetSize();
     const float aspectRatio = ((float)framebufferSize.x / (float)framebufferSize.y);
-    const Mat4f projection = glm::perspective(glm::radians(camera.fov), aspectRatio, projPlane.x, projPlane.y);
+    const Mat4f projection = glm::perspective(glm::radians(camera.fov), aspectRatio, perspectiveDistance.x, perspectiveDistance.y);
     const Mat4f view = camera.GetViewMatrix();
     
     /* Render: bind frame buffer */
@@ -236,14 +236,12 @@ void Engine::Run()
     /* Draw frame buffer image to editor Viewport */
     framebuffer.BlitFrameBuffer();
     framebuffer.UnbindFrameBuffer();
-#endif
 
-    //const double time = glfwGetTime();
-    //lightPos.x = sin(time) * 10.f;
-    //lightPos.z = cos(time) * 10.f;
+    const double time = glfwGetTime();
+    lightPos.x = sin(time) * 10.f;
+    lightPos.z = cos(time) * 10.f;
 
     /* Render Depth map to quad for visual debugging */
-#if 0 
     {
       testingShader->Use();
       testingShader->SetFloat("UNearPlane", near_plane);
@@ -276,7 +274,6 @@ void Engine::ShutDown()
   /* Shutdown subsystems */
   ShadersManager::Instance().ShutDown();
   TexturesManager::Instance().ShutDown();
-  
 
   /* Shutdown ImGui */
   editor.ShutDown();
@@ -322,10 +319,6 @@ void Engine::InitOpenGL()
   glfwSetWindowAspectRatio(window, aspectRatio.x, aspectRatio.y);  /* Set aspect ratio */
   glfwSwapInterval((std::strcmp(vsync.c_str(), "true") == 0 ? 1 : 0)); /* V-sync */
   
-  //glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int width, int height) {
-    //glViewport(0, 0, width, height);
-  //});
-
   glfwSetWindowSizeCallback(window, [](GLFWwindow* window, int width, int height) {
     glfwSetWindowSize(window, width, height);
   });
@@ -337,8 +330,6 @@ void Engine::InitOpenGL()
     CONSOLE_ERROR("Failed to initialize OpenGL context");
     exit(-1);
   }
-
-  
   
   /* Antialising */
   glEnable(GL_MULTISAMPLE);
@@ -357,3 +348,55 @@ void Engine::InitOpenGL()
   //glEnable(GL_FRAMEBUFFER_SRGB);
 }
 
+void Engine::LoadShaders()
+{
+  auto& instanceSM = ShadersManager::Instance();
+  const Path shadersDir = ROOT_PATH / "Shaders";
+  auto testingShader = instanceSM.LoadShaderProgram(
+    "TestingShader",
+    shadersDir / "Testing.vert",
+    shadersDir / "Testing.frag");
+  auto instancingShader = instanceSM.LoadShaderProgram(
+    "InstancingShader",
+    shadersDir / "Instancing.vert",
+    shadersDir / "Scene.frag");
+  auto sceneShader = instanceSM.LoadShaderProgram(
+    "SceneShader",
+    shadersDir / "Scene.vert",
+    shadersDir / "Scene.frag");
+  auto framebufferShader = instanceSM.LoadShaderProgram(
+    "FramebufferShader",
+    shadersDir / "Framebuffer.vert",
+    shadersDir / "Framebuffer.frag");
+  auto shadowMapDepthShader = instanceSM.LoadShaderProgram(
+    "ShadowMapDepthShader",
+    shadersDir / "ShadowMapDepth.vert",
+    shadersDir / "ShadowMapDepth.frag");
+  auto shadowMapShader = instanceSM.LoadShaderProgram(
+    "ShadowMapShader",
+    shadersDir / "ShadowMap.vert",
+    shadersDir / "ShadowMap.frag");
+
+  framebufferShader->Use();
+  framebufferShader->SetInt("UScreenTexture", 0);
+  framebufferShader->SetInt("UPostProcessingType", 0);
+
+  instancingShader->Use();
+  instancingShader->SetInt("UMaterial.diffuse", 0);
+  instancingShader->SetInt("UMaterial.specular", 1);
+  instancingShader->SetFloat("UMaterial.shininess", 32.0f);
+  instancingShader->SetFloat("UGamma", 2.2f);
+
+  sceneShader->Use();
+  sceneShader->SetInt("UMaterial.diffuse", 0);
+  sceneShader->SetInt("UMaterial.specular", 1);
+  sceneShader->SetFloat("UMaterial.shininess", 32.0f);
+  sceneShader->SetFloat("UGamma", 2.2f);
+}
+
+void Engine::LoadTextures()
+{
+  for (auto& entry : std::filesystem::recursive_directory_iterator(ROOT_PATH / "Textures"))
+    if (!std::filesystem::is_directory(entry))
+      TexturesManager::Instance().LoadTexture(entry);
+}

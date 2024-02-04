@@ -44,7 +44,7 @@ Texture2D* TexturesManager::LoadTexture(Path filePath, bool gammaCorrection)
   return &texture;
 }
 
-Texture2D* TexturesManager::GetTexture(Path filePath)
+Texture2D* TexturesManager::GetTextureByPath(Path filePath)
 {
   auto start = &_textureBuffer[0];
   auto end = &_textureBuffer[0] + _bufferSize;
@@ -57,7 +57,7 @@ Texture2D* TexturesManager::GetTexture(Path filePath)
   return it;
 }
 
-void TexturesManager::GetTextures(Vector<Texture2D*>& out)
+void TexturesManager::CopyTextures(Vector<Texture2D*>& out)
 {
   out.reserve(_bufferSize);
   std::for_each_n(&_textureBuffer[0], _bufferSize, [&out](Texture2D& ptr) {
