@@ -58,6 +58,7 @@ Texture2D* TexturesManager::GetTextureByPath(Path filePath)
 
 void TexturesManager::CopyTextures(Vector<Texture2D*>& out)
 {
+  out.clear();
   out.reserve(_bufferSize);
   std::for_each_n(&_textureBuffer[0], _bufferSize, [&out](Texture2D& ptr) {
     out.push_back(&ptr);

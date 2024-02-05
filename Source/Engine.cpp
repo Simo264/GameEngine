@@ -61,21 +61,21 @@ void Engine::Run()
 
   /* Initialize framebuffer object */
   FrameBuffer framebuffer;
-  framebuffer.InitFrameBuffer(editor.GetViewportSize());
+  framebuffer.InitFrameBuffer(editor.viewport->viewportSize);
   glViewport(0, 0, framebuffer.GetSize().x, framebuffer.GetSize().y);
 
   /* Camera object */
   Camera camera(window.GetWindowSize(), Vec3f(0.0f, 1.0f, 10.0f));
   
   /* Mesh objects */
-  StaticMesh plane("Shapes/Plane/Plane.obj");
-  plane.scaling *= 10.f;
-  StaticMesh cube1("Shapes/Cube/Cube.obj");
-  cube1.position = Vec3f(0.0f, 2.0f, 0.0f);
-  cube1.scaling *= 0.5f;
-  StaticMesh cube2("Shapes/Cube/Cube.obj");
-  cube2.position = Vec3f(0.0f, 0.51f, 1.0f);
-  cube2.scaling *= 0.5f;
+  //StaticMesh plane("Shapes/Plane/Plane.obj");
+  //plane.scaling *= 10.f;
+  //StaticMesh cube1("Shapes/Cube/Cube.obj");
+  //cube1.position = Vec3f(0.0f, 2.0f, 0.0f);
+  //cube1.scaling *= 0.5f;
+  //StaticMesh cube2("Shapes/Cube/Cube.obj");
+  //cube2.position = Vec3f(0.0f, 0.51f, 1.0f);
+  //cube2.scaling *= 0.5f;
   //StaticMesh cottage("Cottage/Cottage.obj");
 
   //InstancingMesh instancingPlane(&plane, 10);
@@ -85,23 +85,23 @@ void Engine::Run()
   //instancingPlane.AddInstance(glm::translate(Mat4f(1.0f), Vec3f(2.0f, 0.0f, 2.0f)));
 
   /* Lighting */
-  DirectionalLight dirLight("UDirLight");
-  dirLight.ambient = 0.1f;
-  dirLight.diffuse = 0.25f;
-  dirLight.specular = 0.75f;
-  PointLight pointLight1("UPointLight[0]");
-  pointLight1.position = Vec3f(0.0f, 5.0f, 0.0f);
-  PointLight pointLight2("UPointLight[1]");
-  pointLight2.position = Vec3f(0.0f, 5.0f, 5.0f);
+  //DirectionalLight dirLight("UDirLight");
+  //dirLight.ambient = 0.1f;
+  //dirLight.diffuse = 0.25f;
+  //dirLight.specular = 0.75f;
+  //PointLight pointLight1("UPointLight[0]");
+  //pointLight1.position = Vec3f(0.0f, 5.0f, 0.0f);
+  //PointLight pointLight2("UPointLight[1]");
+  //pointLight2.position = Vec3f(0.0f, 5.0f, 5.0f);
   
   /* Create scene */
   Scene scene;
-  scene.directionalLight = &dirLight;
-  scene.AddStaticMesh(&cube1);
-  scene.AddStaticMesh(&cube2);
-  scene.AddStaticMesh(&plane);
-  scene.AddPointLight(&pointLight1);
-  scene.AddPointLight(&pointLight2);
+  //scene.directionalLight = &dirLight;
+  //scene.AddStaticMesh(&cube1);
+  //scene.AddStaticMesh(&cube2);
+  //scene.AddStaticMesh(&plane);
+  //scene.AddPointLight(&pointLight1);
+  //scene.AddPointLight(&pointLight2);
 
 #if 0
   /* Shadow mapping */
@@ -170,7 +170,7 @@ void Engine::Run()
 
     /* Input */
     glfwPollEvents();
-    if (editor.ViewportFocused())
+    if (editor.viewport->isFocused)
       camera.ProcessInput(&window, deltaTime);
     
     const Vec2i framebufferSize = framebuffer.GetSize();
@@ -180,7 +180,7 @@ void Engine::Run()
     
     /* Render: bind frame buffer */
     framebuffer.BindMSAAFramebuffer();
-    glClearColor(pow(0.1f, GAMMA_CORRECTION), pow(0.1f, GAMMA_CORRECTION), pow(0.1f, GAMMA_CORRECTION), 1.0f);
+    glClearColor(pow(0.3f, GAMMA_CORRECTION), pow(0.3f, GAMMA_CORRECTION), pow(0.3f, GAMMA_CORRECTION), 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
 
@@ -256,7 +256,7 @@ void Engine::Run()
 
 
     /* Render editor */
-    editor.RenderFrame(&scene, &framebuffer);
+    editor.RenderEditor(&scene, &framebuffer);
     window.SwapWindowBuffers();
     lastUpdateTime = now;
   }

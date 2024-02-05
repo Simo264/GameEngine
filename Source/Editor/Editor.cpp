@@ -54,11 +54,14 @@ void Editor::Initialize()
 
   Vec2i resolution = instanceCM.ParseResolution(resolutionStr);
 
-  _viewportSize  = Vec2i(resolution.x * 0.6, resolution.y * 0.6); /* 60% x 60%  */
-  _hierarchySize = Vec2i(resolution.x * 0.2, resolution.y * 1);   /* 20% x 100% */
+  Vec2i viewportSize  = Vec2i(resolution.x * 0.6, resolution.y * 0.6); /* 60% x 60%  */
+  Vec2i hierarchySize = Vec2i(resolution.x * 0.2, resolution.y * 1);   /* 20% x 100% */
   _inspectorSize = Vec2i(resolution.x * 0.2, resolution.y * 1);   /* 20% x 100% */
-  _browserSize   = Vec2i(resolution.x * 0.6, resolution.y * 0.4); /* 60% x 40%  */
-  _browserCurrentDir = ROOT_PATH;
+  Vec2i browserSize = Vec2i(resolution.x * 0.6, resolution.y * 0.4); /* 60% x 40%  */
+
+  contentBrowser = std::make_unique<ContentBrowserPanel>("Content Browser", browserSize);
+  viewport = std::make_unique<ViewportPanel>("Viewport", viewportSize);
+  hierarchy = std::make_unique<HierarchyPanel>("Hierarchy", hierarchySize);
 }
 
 void Editor::ShutDown()
@@ -79,7 +82,7 @@ void Editor::NewFrame()
   Dockspace();
 }
 
-void Editor::RenderFrame(Scene* scene, FrameBuffer* framebuffer)
+void Editor::RenderEditor(Scene* scene, FrameBuffer* framebuffer)
 {
   if (_demoOpen) 
     ImGui::ShowDemoWindow(&_demoOpen);
@@ -89,20 +92,17 @@ void Editor::RenderFrame(Scene* scene, FrameBuffer* framebuffer)
   
   if (_statsOpen)
     ShowStats();
-  
-  if (_hierarchyOpen)
-    ShowHierarchy(scene);
-  
-  if (_viewportOpen)
-    ShowViewport(framebuffer);
-  
-  if (_browserOpen)
-    ShowBrowser();
+
+  contentBrowser->RenderPanel();
+
+  viewport->RenderPanel(framebuffer);
+
+  hierarchy->RenderPanel(scene);
   
   if (_inspectorOpen)
     ShowInspector();
-  
-  ImGui::Render();
+
+  ImGui::RenderPanel();
   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
   /* Update and Render additional Platform Windows (Platform functions may change 
@@ -151,10 +151,10 @@ void Editor::Dockspace()
   /* We are using the ImGuiWindowFlags_NoDocking flag to make the parent window not dockable into,
    because it would be confusing to have two docking targets within each others. */
   ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
-  const ImGuiViewport* viewport = ImGui::GetMainViewport();
-  ImGui::SetNextWindowPos(viewport->WorkPos);
-  ImGui::SetNextWindowSize(viewport->WorkSize);
-  ImGui::SetNextWindowViewport(viewport->ID);
+  const ImGuiViewport* imViewport = ImGui::GetMainViewport();
+  ImGui::SetNextWindowPos(imViewport->WorkPos);
+  ImGui::SetNextWindowSize(imViewport->WorkSize);
+  ImGui::SetNextWindowViewport(imViewport->ID);
   ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
   ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
   window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
@@ -190,10 +190,10 @@ void Editor::Dockspace()
   {
     if (ImGui::BeginMenu("View"))
     {
-      ImGui::MenuItem("Hierarchy", nullptr, &_hierarchyOpen);
-      ImGui::MenuItem("Browser", nullptr, &_browserOpen);
+      ImGui::MenuItem("Hierarchy", nullptr, &hierarchy->isOpen);
+      ImGui::MenuItem("Browser", nullptr, &contentBrowser->isOpen);
       ImGui::MenuItem("Inspector", nullptr, &_inspectorOpen);
-      ImGui::MenuItem("Viewport", nullptr, &_viewportOpen);
+      ImGui::MenuItem("Viewport", nullptr, &viewport->isOpen);
       ImGui::MenuItem("Statistics", nullptr, &_statsOpen);
       ImGui::MenuItem("Demo", nullptr, &_demoOpen);
 
@@ -232,296 +232,11 @@ void Editor::ShowStats()
   ImGui::End();
 }
 
-void Editor::ShowHierarchy(Scene* scene)
-{
-  auto& dirLight = scene->directionalLight;
-  auto& pointLights = scene->pointLights;
-  auto& sceneMeshes = scene->statMeshes;
-
-  static bool dirLightSelected = false;
-  static int pointLightSelected = -1;
-  static int staticMeshSelected = -1;
-  
-  char digits[8]{};
-  static String treeName(32, 0);
-  static String treeNode(32, 0);
-
-  ImGui::SetNextWindowSize(ImVec2(_hierarchySize.x, _hierarchySize.y));
-  ImGui::Begin("Hierarchy", &_hierarchyOpen);
-
-  /* Lighting Tree */
-  if (ImGui::TreeNode("Lighting"))
-  {
-    /* Directional light node */
-    if (ImGui::Selectable("Directional light", dirLightSelected == true))
-    {
-      _propertiesOpen = true;
-      dirLightSelected = true;
-      staticMeshSelected = -1;
-      pointLightSelected = -1;
-    }
-
-    /* Point light nodes */
-    if (pointLights.size() > 0)
-    {
-      _itoa_s(pointLights.size(), digits, 10);
-      treeName.clear();
-      treeName.append("Point lights");
-      treeName.append(" (");
-      treeName.append(digits);
-      treeName.append(")");
-      if (ImGui::TreeNode(treeName.c_str()))
-      {
-        for (int i = 0; i < pointLights.size(); i++)
-        {
-          _itoa_s(i, digits, 10);
-          treeNode.clear();
-          treeNode.append("Light");
-          treeNode.append(digits);
-          if (ImGui::Selectable(treeNode.c_str(), pointLightSelected == i))
-          {
-            _propertiesOpen = true;
-            dirLightSelected = false;
-            pointLightSelected = i;
-            staticMeshSelected = -1;
-          }
-        }
-        ImGui::TreePop();
-      }
-    }
-    ImGui::TreePop();
-  }
-
-
-  /* Static mesh Tree */
-  _itoa_s(sceneMeshes.size(), digits, 10);
-  treeName.clear();
-  treeName.append("StaticMesh");
-  treeName.append(" (");
-  treeName.append(digits);
-  treeName.append(")");
-  if (ImGui::TreeNode(treeName.c_str()))
-  {
-    /* Static mesh nodes */
-    for (int i = 0; i < sceneMeshes.size(); i++)
-    {
-      _itoa_s(i, digits, 10);
-      treeNode.clear();
-      treeNode.append("StaticMesh");
-      treeNode.append(digits);
-      if (ImGui::Selectable(treeNode.c_str(), staticMeshSelected == i))
-      {
-        _propertiesOpen = true;
-        dirLightSelected = false;
-        pointLightSelected = -1;
-        staticMeshSelected = i;
-      }
-    }
-    ImGui::TreePop();
-  }
-  ImGui::End();
-
-  if (_propertiesOpen && dirLightSelected)
-    ShowPropertiesPanel(dirLight);
-  else if (_propertiesOpen && pointLightSelected >= 0)
-    ShowPropertiesPanel(pointLights[pointLightSelected]);
-  else if (_propertiesOpen && staticMeshSelected >= 0)
-    ShowPropertiesPanel(sceneMeshes[staticMeshSelected]);
-}
-
-void Editor::ShowViewport(FrameBuffer* framebuffer)
-{
-  /* Set viewport window padding to 0 */
-  ImGuiStyle& style = ImGui::GetStyle();
-  Vec2i paddingTmp = Vec2i(style.WindowPadding.x, style.WindowPadding.y);
-  style.WindowPadding.x = 0;
-  style.WindowPadding.y = 0;
-
-  ImGui::SetNextWindowSize(ImVec2(_viewportSize.x, _viewportSize.y));
-  ImGui::Begin("Viewport", &_viewportOpen);
-  _isViewportFocused = ImGui::IsWindowFocused();
-
-  /* Using a Child allow to fill all the space of the window. It also alows customization */
-  ImGui::BeginChild("GameRender");
-  _isViewportFocused = _isViewportFocused || ImGui::IsWindowFocused();
- 
-  /* Get the size of the child(i.e.the whole draw size of the windows). */
-  ImVec2 drawSpace = ImGui::GetWindowSize();
-  Vec2i framebufferSize = framebuffer->GetSize();
-  if((drawSpace.x != framebufferSize.x || drawSpace.y != framebufferSize.y))
-  {
-    framebuffer->RescaleFrameBuffer({ drawSpace.x, drawSpace.y});
-    glViewport(0, 0, drawSpace.x, drawSpace.y);
-    _viewportSize.x = drawSpace.x;
-    _viewportSize.y = drawSpace.y;
-  }
-  else
-  {
-    /* Because I use the texture from OpenGL, I need to invert the V from the UV. */
-    ImGui::Image((ImTextureID)framebuffer->GetImage(), drawSpace, ImVec2(0, 1), ImVec2(1, 0));
-  }
-  ImGui::EndChild();
-  ImGui::End();
-
-  /* Restore padding */
-  style.WindowPadding.x = paddingTmp.x;
-  style.WindowPadding.y = paddingTmp.y;
-}
-
-void Editor::ShowBrowser()
-{
-  ImGui::SetNextWindowSize(ImVec2(_browserSize.x, _browserSize.y));
-  ImGui::Begin("Browser", &_browserOpen);
-
-  Texture2D* imageIcon = nullptr;
-
-  if (_browserCurrentDir != ROOT_PATH)
-  {
-    imageIcon = TexturesManager::Instance().GetTextureByPath(ROOT_PATH / "Icons/icon-back.png");
-    if (ImGui::ImageButton((ImTextureID)imageIcon->textureID, { 32,32 }))
-      _browserCurrentDir = _browserCurrentDir.parent_path();
-  }
-
-  constexpr float padding = 16.0f;
-  constexpr float thumbSize = 64.0f;
-  constexpr float colSize = thumbSize + padding;
-  float panelWidth = ImGui::GetContentRegionAvail().x;
-  int columnCount = (int)(panelWidth / colSize);
-  ImGui::Columns(columnCount, 0, false);
-
-  for (auto& entry : std::filesystem::directory_iterator(_browserCurrentDir))
-  {
-    Path entryPath = entry.path();
-    String entryStr = entryPath.filename().string();
-
-    /* Ignore hidden file/directory */
-    if (entryStr[0] == '.')
-      continue; 
-
-    /* Is file */
-    if (entry.is_regular_file())
-    {
-      Path extension = entryPath.extension();
-      /* Is image */
-      if (extension == ".png" || extension == ".jpg")
-        imageIcon = TexturesManager::Instance().GetTextureByPath(_browserCurrentDir / entryStr);
-      /* Txt file */
-      else if (extension == ".txt")
-        imageIcon = TexturesManager::Instance().GetTextureByPath(ROOT_PATH / "Icons/icon-text.png");
-      /* TTf file */
-      else if (extension == ".ttf")
-        imageIcon = TexturesManager::Instance().GetTextureByPath(ROOT_PATH / "Icons/icon-font.png");
-      /* Cpp file*/
-      else if (extension == ".cpp")
-        imageIcon = TexturesManager::Instance().GetTextureByPath(ROOT_PATH / "Icons/icon-cpp.png");
-      /* Hpp file*/
-      else if (extension == ".hpp" || extension == ".h")
-        imageIcon = TexturesManager::Instance().GetTextureByPath(ROOT_PATH / "Icons/icon-hpp.png");
-      /* Vertex shader file*/
-      else if (extension == ".vert")
-        imageIcon = TexturesManager::Instance().GetTextureByPath(ROOT_PATH / "Icons/icon-vertex.png");
-      /* Fragment shader file*/
-      else if (extension == ".frag")
-        imageIcon = TexturesManager::Instance().GetTextureByPath(ROOT_PATH / "Icons/icon-fragment.png");
-      /* Other file */
-      else
-        imageIcon = TexturesManager::Instance().GetTextureByPath(ROOT_PATH / "Icons/icon-file.png");
-    }
-    /* Is directory */
-    else
-      imageIcon = TexturesManager::Instance().GetTextureByPath(ROOT_PATH / "Icons/icon-folder.png");
-    
-    /* Double click on thumb */
-    ImGui::ImageButton((ImTextureID)imageIcon->textureID, { thumbSize, thumbSize }, { 0,0 }, { 1,1 });
-    if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
-      if (entry.is_directory()) 
-        _browserCurrentDir /= entryStr;
-    
-    ImGui::TextWrapped(entryStr.c_str());
-    ImGui::NextColumn();
-  }
-  ImGui::Columns(1);
-  ImGui::End();
-}
-
 void Editor::ShowInspector()
 {
   ImGui::SetNextWindowSize(ImVec2(_inspectorSize.x, _inspectorSize.y));
   ImGui::Begin("Inspector", &_inspectorOpen);
 
-  ImGui::End();
-}
-
-void Editor::ShowPropertiesPanel(StaticMesh* meshTarget)
-{
-  static Vector<Texture2D*> textures;
-  if (textures.empty())
-    TexturesManager::Instance().CopyTextures(textures);
-
-  ImGui::Begin("Properties", &_propertiesOpen);
-  ImGui::Text("(StaticMesh name)");
-  
-  ImGui::SeparatorText("Transformation");
-  ImGui::DragFloat3("Translation", (float*)&meshTarget->position, 0.1f, -FLT_MAX, +FLT_MAX);
-  ImGui::DragFloat3("Scaling", (float*)&meshTarget->scaling, 0.1f, -FLT_MAX, +FLT_MAX);
-  ImGui::DragFloat("Rotation angle", (float*)&meshTarget->rotationAngle, 0.5f, -180.0f, +180.0f);
-  ImGui::SliderFloat3("Rotation axis", (float*)&meshTarget->rotationAxis, 0.0f, 1.0f);
-
-  ImGui::SeparatorText("Material");
-
-  const String diffusePathStr = (meshTarget->diffuse ? meshTarget->diffuse->texturePath.string() : "");
-  const uint32_t diffuseID = (meshTarget->diffuse ? meshTarget->diffuse->textureID : 0);
-  if (meshTarget->diffuse)
-    ImGui::Text(diffusePathStr.c_str());
-  else
-    ImGui::Text("None");
-  
-  ImGui::Image(
-    (ImTextureID)diffuseID,
-    ImVec2(64.0f, 64.0f) /* image size */
-  );
-
-  if (ImGui::BeginCombo("Textures", diffusePathStr.c_str()))
-  {
-    for (int i = 0; i < textures.size(); i++)
-    {
-      String textPathStr = textures[i]->texturePath.string();
-      bool isSelected = (std::strcmp(diffusePathStr.c_str(), textPathStr.c_str()) == 0);
-      if (ImGui::Selectable(textPathStr.c_str(), isSelected))
-        meshTarget->diffuse = TexturesManager::Instance().GetTextureByPath(textPathStr.c_str());
-      if (isSelected)
-        ImGui::SetItemDefaultFocus();
-    }
-    ImGui::EndCombo();
-  }
-  ImGui::End();
-}
-
-void Editor::ShowPropertiesPanel(DirectionalLight* dirLight)
-{
-  ImGui::Begin("Properties", &_propertiesOpen);
-  ImGui::SeparatorText("Directional light");
-
-  ImGui::ColorEdit3("Color", (float*)&dirLight->color);
-  ImGui::SliderFloat("Ambient", &dirLight->ambient, 0.0f, 1.0f);
-  ImGui::SliderFloat("Diffuse", &dirLight->diffuse, 0.0f, 1.0f);
-  ImGui::SliderFloat("Specular", &dirLight->specular, 0.0f, 1.0f);
-  ImGui::DragFloat3("Direction", (float*)&dirLight->direction, 0.1f, -FLT_MAX, +FLT_MAX);
-  
-  ImGui::End();
-}
-
-void Editor::ShowPropertiesPanel(PointLight* pointLight)
-{
-  ImGui::Begin("Properties", &_propertiesOpen);
-  ImGui::SeparatorText("Point light");
-  
-  ImGui::ColorEdit3("Color", (float*)&pointLight->color);
-  ImGui::SliderFloat("Ambient", &pointLight->ambient, 0.0f, 1.0f);
-  ImGui::SliderFloat("Diffuse", &pointLight->diffuse, 0.0f, 1.0f);
-  ImGui::SliderFloat("Specular", &pointLight->specular, 0.0f, 1.0f);
-  ImGui::DragFloat3("Position", (float*)&pointLight->position, 0.1f, -FLT_MAX, +FLT_MAX);
-  
   ImGui::End();
 }
 

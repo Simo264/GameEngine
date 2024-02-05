@@ -23,7 +23,7 @@ class PointLight : public BaseLight
 public:
   PointLight(const char* uniformName) : BaseLight(uniformName), position{ 0.0f, 0.0f, 0.0f } {}
     
-  void RenderLight(class Shader* shader);
+  void RenderLight(class Shader* shader) override;
 
   Vec3f position;
   Attenuation attenuation;

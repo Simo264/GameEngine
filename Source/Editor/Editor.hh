@@ -1,7 +1,8 @@
 #pragma once
 
-#include "../Core.hh"
-
+#include "ContentBrowserPanel.hh"
+#include "ViewportPanel.hh"
+#include "HierarchyPanel.hh"
 
 /* Editor layout 1600x900
 
@@ -9,12 +10,12 @@
 	|        |                  |        |
 	|        |                  |        |
 	|20%x100%|    60% x 60%     |20%x100%|
-	|        |                  |        |
+	|        |    viewport      |        |
 	|        |                  |        |
 	|        |                  |        |
 	|        |------------------|        |
 	|        |    60% x 40%     |        |
-	|        |                  |        |
+	|        | content browser  |        |
 	--------------------------------------
 */
 
@@ -27,32 +28,22 @@ public:
 	void Initialize();
 	void ShutDown();
 
-	Vec2i GetViewportSize() const { return _viewportSize; }
-	bool ViewportFocused() const { return _isViewportFocused; }
-
 	void NewFrame();
-	void RenderFrame(class Scene* scene, class FrameBuffer* framebuffer);
+	void RenderEditor(class Scene* scene, class FrameBuffer* framebuffer);
+
+	UniquePointer<ContentBrowserPanel> contentBrowser;
+	UniquePointer<ViewportPanel> viewport;
+	UniquePointer<HierarchyPanel> hierarchy;
 
 private:
-	bool _propertiesOpen = false;
 	bool _preferencesOpen = false;
 
 	bool _demoOpen = true;
 	bool _statsOpen = true;
-	bool _viewportOpen = true;
-	bool _hierarchyOpen = true;
-	bool _browserOpen = true;
 	bool _inspectorOpen = true;
-	
-	bool _isViewportFocused = false;
 
-	Vec2i _viewportSize; 
-	Vec2i _hierarchySize;
 	Vec2i _inspectorSize; 
-	Vec2i _browserSize;
 
-	Path _browserCurrentDir;
-	
 	inline static const char* aspectRatioValues[] = { "21:9", "16:9", "4:3" };
 	inline static const char* resolutionValues[] = { 
 		"1280x960", "1400x1050", "1600x1200", "1920x1440",	/* 4:3 resolutions */
@@ -67,13 +58,7 @@ private:
 	void Dockspace();
 
 	void ShowStats();
-	void ShowHierarchy(class Scene* scene);
-	void ShowViewport(class FrameBuffer* framebuffer);
-	void ShowBrowser(); /* TODO */
 	void ShowInspector(); /* TODO */
 
-	void ShowPropertiesPanel(class StaticMesh* meshTarget);
-	void ShowPropertiesPanel(class DirectionalLight* dirLight);
-	void ShowPropertiesPanel(class PointLight* pointLight);
 	void ShowPreferences();
 };
