@@ -400,4 +400,8 @@ void Engine::LoadTextures()
   for (auto& entry : std::filesystem::recursive_directory_iterator(ROOT_PATH / "Textures"))
     if (!std::filesystem::is_directory(entry))
       TexturesManager::Instance().LoadTexture(entry);
+  
+  for (auto& entry : std::filesystem::recursive_directory_iterator(ROOT_PATH / "Icons"))
+    if (!std::filesystem::is_directory(entry))
+      TexturesManager::Instance().LoadTexture(entry);
 }

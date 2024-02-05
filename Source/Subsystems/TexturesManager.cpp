@@ -38,7 +38,6 @@ Texture2D* TexturesManager::LoadTexture(Path filePath, bool gammaCorrection)
     CONSOLE_WARN("Texture '{}' does not exists", filePath.string());
     return nullptr;
   }
-
   Texture2D& texture = _textureBuffer[_bufferSize++];
   texture.InitTexture(filePath, gammaCorrection);
   return &texture;

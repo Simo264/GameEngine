@@ -3,7 +3,6 @@
 #include "../Core.hh"
 
 
-
 /* Editor layout 1600x900
 
 	--------------------------------------
@@ -35,11 +34,11 @@ public:
 	void RenderFrame(class Scene* scene, class FrameBuffer* framebuffer);
 
 private:
-	bool _demoOpen  = false;
-	bool _statsOpen = false;
 	bool _propertiesOpen = false;
 	bool _preferencesOpen = false;
 
+	bool _demoOpen = true;
+	bool _statsOpen = true;
 	bool _viewportOpen = true;
 	bool _hierarchyOpen = true;
 	bool _browserOpen = true;
@@ -51,6 +50,8 @@ private:
 	Vec2i _hierarchySize;
 	Vec2i _inspectorSize; 
 	Vec2i _browserSize;
+
+	Path _browserCurrentDir;
 	
 	inline static const char* aspectRatioValues[] = { "21:9", "16:9", "4:3" };
 	inline static const char* resolutionValues[] = { 
@@ -59,9 +60,8 @@ private:
 		"2560x1080", "3440x1440", "3840x1600", "5120x2160",	/* 21:9 resolutions */
 	};
 
-	int aspectIndex;
-	int resolutionIndex;
-
+	int _aspectIndex;
+	int _resolutionIndex;
 	
 	void Styling();
 	void Dockspace();

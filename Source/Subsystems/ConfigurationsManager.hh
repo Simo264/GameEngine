@@ -9,7 +9,7 @@
 #define CONF_VSYNC							"v-sync"
 
 /* -----------------------------------------------------------------------
-	Static class ConfigurationsManager:
+	Resource manager class ConfigurationsManager:
 	save and load the configuration of the application from file app.txt
  ----------------------------------------------------------------------- */
 class ConfigurationsManager : public ResourceManagerInterface<ConfigurationsManager>

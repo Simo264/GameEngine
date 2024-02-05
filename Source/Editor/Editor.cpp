@@ -44,12 +44,12 @@ void Editor::Initialize()
   auto& instanceCM = ConfigurationsManager::Instance();
   String& resolutionStr = instanceCM.GetValue(CONF_WINDOW_RESOLUTION);
   String& aspectRatioStr = instanceCM.GetValue(CONF_ASPECT_RATIO);
-  for (aspectIndex = 0; aspectIndex < 3; aspectIndex++)
-    if (std::strcmp(aspectRatioValues[aspectIndex], aspectRatioStr.c_str()) == 0)
+  for (_aspectIndex = 0; _aspectIndex < 3; _aspectIndex++)
+    if (std::strcmp(aspectRatioValues[_aspectIndex], aspectRatioStr.c_str()) == 0)
       break;
 
-  for (resolutionIndex = 0; resolutionIndex < 12; resolutionIndex++)
-    if (std::strcmp(resolutionValues[resolutionIndex], resolutionStr.c_str()) == 0)
+  for (_resolutionIndex = 0; _resolutionIndex < 12; _resolutionIndex++)
+    if (std::strcmp(resolutionValues[_resolutionIndex], resolutionStr.c_str()) == 0)
       break;
 
   Vec2i resolution = instanceCM.ParseResolution(resolutionStr);
@@ -58,6 +58,7 @@ void Editor::Initialize()
   _hierarchySize = Vec2i(resolution.x * 0.2, resolution.y * 1);   /* 20% x 100% */
   _inspectorSize = Vec2i(resolution.x * 0.2, resolution.y * 1);   /* 20% x 100% */
   _browserSize   = Vec2i(resolution.x * 0.6, resolution.y * 0.4); /* 60% x 40%  */
+  _browserCurrentDir = ROOT_PATH;
 }
 
 void Editor::ShutDown()
@@ -371,7 +372,75 @@ void Editor::ShowBrowser()
 {
   ImGui::SetNextWindowSize(ImVec2(_browserSize.x, _browserSize.y));
   ImGui::Begin("Browser", &_browserOpen);
-  
+
+  Texture2D* imageIcon = nullptr;
+
+  if (_browserCurrentDir != ROOT_PATH)
+  {
+    imageIcon = TexturesManager::Instance().GetTextureByPath(ROOT_PATH / "Icons/icon-back.png");
+    if (ImGui::ImageButton((ImTextureID)imageIcon->textureID, { 32,32 }))
+      _browserCurrentDir = _browserCurrentDir.parent_path();
+  }
+
+  constexpr float padding = 16.0f;
+  constexpr float thumbSize = 64.0f;
+  constexpr float colSize = thumbSize + padding;
+  float panelWidth = ImGui::GetContentRegionAvail().x;
+  int columnCount = (int)(panelWidth / colSize);
+  ImGui::Columns(columnCount, 0, false);
+
+  for (auto& entry : std::filesystem::directory_iterator(_browserCurrentDir))
+  {
+    Path entryPath = entry.path();
+    String entryStr = entryPath.filename().string();
+
+    /* Ignore hidden file/directory */
+    if (entryStr[0] == '.')
+      continue; 
+
+    /* Is file */
+    if (entry.is_regular_file())
+    {
+      Path extension = entryPath.extension();
+      /* Is image */
+      if (extension == ".png" || extension == ".jpg")
+        imageIcon = TexturesManager::Instance().GetTextureByPath(_browserCurrentDir / entryStr);
+      /* Txt file */
+      else if (extension == ".txt")
+        imageIcon = TexturesManager::Instance().GetTextureByPath(ROOT_PATH / "Icons/icon-text.png");
+      /* TTf file */
+      else if (extension == ".ttf")
+        imageIcon = TexturesManager::Instance().GetTextureByPath(ROOT_PATH / "Icons/icon-font.png");
+      /* Cpp file*/
+      else if (extension == ".cpp")
+        imageIcon = TexturesManager::Instance().GetTextureByPath(ROOT_PATH / "Icons/icon-cpp.png");
+      /* Hpp file*/
+      else if (extension == ".hpp" || extension == ".h")
+        imageIcon = TexturesManager::Instance().GetTextureByPath(ROOT_PATH / "Icons/icon-hpp.png");
+      /* Vertex shader file*/
+      else if (extension == ".vert")
+        imageIcon = TexturesManager::Instance().GetTextureByPath(ROOT_PATH / "Icons/icon-vertex.png");
+      /* Fragment shader file*/
+      else if (extension == ".frag")
+        imageIcon = TexturesManager::Instance().GetTextureByPath(ROOT_PATH / "Icons/icon-fragment.png");
+      /* Other file */
+      else
+        imageIcon = TexturesManager::Instance().GetTextureByPath(ROOT_PATH / "Icons/icon-file.png");
+    }
+    /* Is directory */
+    else
+      imageIcon = TexturesManager::Instance().GetTextureByPath(ROOT_PATH / "Icons/icon-folder.png");
+    
+    /* Double click on thumb */
+    ImGui::ImageButton((ImTextureID)imageIcon->textureID, { thumbSize, thumbSize }, { 0,0 }, { 1,1 });
+    if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+      if (entry.is_directory()) 
+        _browserCurrentDir /= entryStr;
+    
+    ImGui::TextWrapped(entryStr.c_str());
+    ImGui::NextColumn();
+  }
+  ImGui::Columns(1);
   ImGui::End();
 }
 
@@ -470,16 +539,24 @@ void Editor::ShowPreferences()
     buttonDisabled = false;
   
   /* Window aspect ratio */
-  if (ImGui::Combo("Aspect ratio", &aspectIndex, aspectRatioValues, 3)) /* 3 aspect ratio availables */
+  if (ImGui::Combo("Aspect ratio", &_aspectIndex, aspectRatioValues, 3)) /* 3 aspect ratio availables */
   {
-    instanceCM.SetValue(CONF_ASPECT_RATIO, aspectRatioValues[aspectIndex]);
+    instanceCM.SetValue(CONF_ASPECT_RATIO, aspectRatioValues[_aspectIndex]);
     buttonDisabled = false;
   }
   
   /* Window resolution */
-  if (ImGui::Combo("Resolution", &resolutionIndex, resolutionValues, 12)) /* 12 resolution availables */
+  if (ImGui::Combo("Resolution", &_resolutionIndex, resolutionValues, 12)) /* 12 resolution availables */
   {
-    instanceCM.SetValue(CONF_WINDOW_RESOLUTION, resolutionValues[resolutionIndex]);
+    instanceCM.SetValue(CONF_WINDOW_RESOLUTION, resolutionValues[_resolutionIndex]);
+    buttonDisabled = false;
+  }
+
+  /* V-sync */
+  static bool vsyncActive = (std::strcmp(instanceCM.GetValue(CONF_VSYNC).c_str(), "true") == 0);
+  if (ImGui::Checkbox("V-sync", &vsyncActive))
+  {
+    instanceCM.SetValue(CONF_VSYNC, (vsyncActive ? "true" : "false"));
     buttonDisabled = false;
   }
   
