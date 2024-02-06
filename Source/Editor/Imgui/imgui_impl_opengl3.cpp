@@ -952,15 +952,15 @@ void    ImGui_ImplOpenGL3_DestroyDeviceObjects()
 // If you are new to dear imgui or creating a new binding for dear imgui, it is recommended that you completely ignore this section first..
 //--------------------------------------------------------------------------------------------------------
 
-static void ImGui_ImplOpenGL3_RenderWindow(ImGuiViewport* viewport, void*)
+static void ImGui_ImplOpenGL3_RenderWindow(ImGuiViewport* viewportPanel, void*)
 {
-    if (!(viewport->Flags & ImGuiViewportFlags_NoRendererClear))
+    if (!(viewportPanel->Flags & ImGuiViewportFlags_NoRendererClear))
     {
         ImVec4 clear_color = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
         glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
         glClear(GL_COLOR_BUFFER_BIT);
     }
-    ImGui_ImplOpenGL3_RenderDrawData(viewport->DrawData);
+    ImGui_ImplOpenGL3_RenderDrawData(viewportPanel->DrawData);
 }
 
 static void ImGui_ImplOpenGL3_InitPlatformInterface()

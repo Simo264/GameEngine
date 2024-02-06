@@ -15,11 +15,11 @@
  * -----------------------------------------------------
 */
 
-ContentBrowserPanel::ContentBrowserPanel(const char* name, Vec2i size)
+ContentBrowserPanel::ContentBrowserPanel(const char* panelName, Vec2i panelSize)
 {
-  panelName = name;
 	isOpen = true;
-  _panelSize = size;
+  _panelName = panelName;
+  _panelSize = panelSize;
   _currentDir = ROOT_PATH;
   _thumbPadding = 16.0f;
   _thumbSize = 64.0f;
@@ -30,8 +30,7 @@ void ContentBrowserPanel::RenderPanel()
   if (!isOpen)
     return;
 
-  ImGui::SetNextWindowSize(ImVec2(_panelSize.x, _panelSize.y));
-  ImGui::Begin(panelName.c_str(), &isOpen);
+  ImGui::Begin(_panelName.c_str(), &isOpen);
 
   ImGui::PushStyleColor(ImGuiCol_Button, { 0,0,0,0 });
   ImGui::PushStyleColor(ImGuiCol_ButtonHovered, { 0.25f,0.25f,0.25f, 0.5f });

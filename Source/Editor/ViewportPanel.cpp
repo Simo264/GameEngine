@@ -8,13 +8,12 @@
 #include "Imgui/imgui_internal.h"
 #include "Imgui/imgui_spectrum.h"
 
-ViewportPanel::ViewportPanel(const char* name, Vec2i size)
+ViewportPanel::ViewportPanel(const char* panelName, Vec2i panelSize)
 {
 	isOpen = true;
 	isFocused = false;
-	viewportSize = size;
-  vewportPadding = Vec2i(0, 0);
-	panelName = name;
+	viewportSize = panelSize;
+	_panelName = panelName;
 }
 
 void ViewportPanel::RenderPanel(FrameBuffer* framebuffer)
@@ -25,11 +24,11 @@ void ViewportPanel::RenderPanel(FrameBuffer* framebuffer)
   /* Set viewport window padding to 0 */
   ImGuiStyle& style = ImGui::GetStyle();
   Vec2i paddingTmp = Vec2i(style.WindowPadding.x, style.WindowPadding.y);
-  style.WindowPadding.x = vewportPadding.x;
-  style.WindowPadding.y = vewportPadding.y;
+  style.WindowPadding.x = 0;
+  style.WindowPadding.y = 0;
 
   ImGui::SetNextWindowSize(ImVec2(viewportSize.x, viewportSize.y));
-  ImGui::Begin(panelName.c_str(), &isOpen);
+  ImGui::Begin(_panelName.c_str(), &isOpen);
   isFocused = ImGui::IsWindowFocused();
 
   /* Using a Child allow to fill all the space of the window. It also alows customization */

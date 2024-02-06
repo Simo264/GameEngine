@@ -5,17 +5,17 @@
 class ContentBrowserPanel
 {
 public:
-	ContentBrowserPanel(const char* name, Vec2i size);
+	ContentBrowserPanel(const char* panelName, Vec2i panelSize);
 	~ContentBrowserPanel() = default;
 
 	bool isOpen;
-	
-	String panelName;
 
 	void RenderPanel();
 	
 private:
+	String _panelName;
 	Vec2i _panelSize;
+
 	Path _currentDir;
 	float _thumbPadding;
 	float _thumbSize;

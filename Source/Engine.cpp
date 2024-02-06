@@ -61,19 +61,19 @@ void Engine::Run()
 
   /* Initialize framebuffer object */
   FrameBuffer framebuffer;
-  framebuffer.InitFrameBuffer(editor.viewport->viewportSize);
+  framebuffer.InitFrameBuffer(editor.viewportPanel->viewportSize);
   glViewport(0, 0, framebuffer.GetSize().x, framebuffer.GetSize().y);
 
   /* Camera object */
   Camera camera(window.GetWindowSize(), Vec3f(0.0f, 1.0f, 10.0f));
   
   /* Mesh objects */
-  //StaticMesh plane("Shapes/Plane/Plane.obj");
+  //StaticMesh plane(ROOT_PATH / "Assets/Shapes/Plane/Plane.obj");
   //plane.scaling *= 10.f;
-  //StaticMesh cube1("Shapes/Cube/Cube.obj");
-  //cube1.position = Vec3f(0.0f, 2.0f, 0.0f);
-  //cube1.scaling *= 0.5f;
-  //StaticMesh cube2("Shapes/Cube/Cube.obj");
+  StaticMesh cube1(ROOT_PATH / "Assets/Shapes/Cube/Cube.obj");
+  cube1.position = Vec3f(0.0f, 2.0f, 0.0f);
+  cube1.scaling *= 0.5f;
+  //StaticMesh cube2(ROOT_PATH / "Assets/Shapes/Cube/Cube.obj");
   //cube2.position = Vec3f(0.0f, 0.51f, 1.0f);
   //cube2.scaling *= 0.5f;
   //StaticMesh cottage("Cottage/Cottage.obj");
@@ -170,7 +170,7 @@ void Engine::Run()
 
     /* Input */
     glfwPollEvents();
-    if (editor.viewport->isFocused)
+    if (editor.viewportPanel->isFocused)
       camera.ProcessInput(&window, deltaTime);
     
     const Vec2i framebufferSize = framebuffer.GetSize();

@@ -5,15 +5,15 @@
 class ViewportPanel
 {
 public:
-	ViewportPanel(const char* name, Vec2i size);
+	ViewportPanel(const char* panelName, Vec2i panelSize);
 	~ViewportPanel() = default;
 
 	bool isOpen;
 	bool isFocused;
 	Vec2i viewportSize;
-	Vec2i vewportPadding;
-	String panelName;
 
 	void RenderPanel(class FrameBuffer* framebuffer);
 
+private:
+	String _panelName;
 };

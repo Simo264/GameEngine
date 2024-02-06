@@ -3,32 +3,29 @@
 #include "Mesh/StaticMesh.hh"
 #include "Mesh/InstancingMesh.hh"
 
-#include "Lighting/DirectionalLight.hh"
-#include "Lighting/PointLight.hh"
-#include "Lighting/SpotLight.hh"
-
 void Scene::DrawScene(Shader* shader)
 {
-	if (directionalLight)
-		directionalLight->RenderLight(shader);
+	if (dLight.object && dLight.visible)
+		dLight.object->RenderLight(shader);
 
-	for (auto light : pointLights)
-		light->RenderLight(shader);
+	for (auto& sceneObj : pLights)
+		if(sceneObj.visible)
+			sceneObj.object->RenderLight(shader);
 
 	/* Enable culling for meshes */
 	//glEnable(GL_CULL_FACE);
-	for (auto mesh : statMeshes)
-		mesh->Draw(shader);
+	for (auto& sceneObj : sMeshes)
+		if (sceneObj.visible)
+			sceneObj.object->Draw(shader);
 	//glDisable(GL_CULL_FACE);
 }
 
 void Scene::AddStaticMesh(StaticMesh* staticMesh)
 {
-	statMeshes.push_back(staticMesh);
+	sMeshes.push_back({ staticMesh, true });
 }
 
 void Scene::AddPointLight(PointLight* pointLight)
 {
-	pointLights.push_back(pointLight);
+	pLights.push_back({ pointLight, true} );
 }
-

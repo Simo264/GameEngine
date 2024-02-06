@@ -2,7 +2,7 @@
 
 #include "ContentBrowserPanel.hh"
 #include "ViewportPanel.hh"
-#include "HierarchyPanel.hh"
+#include "ScenePanel.hh"
 
 /* Editor layout 1600x900
 
@@ -31,9 +31,9 @@ public:
 	void NewFrame();
 	void RenderEditor(class Scene* scene, class FrameBuffer* framebuffer);
 
-	UniquePointer<ContentBrowserPanel> contentBrowser;
-	UniquePointer<ViewportPanel> viewport;
-	UniquePointer<HierarchyPanel> hierarchy;
+	UniquePointer<ContentBrowserPanel> contentBrowserPanel;
+	UniquePointer<ViewportPanel> viewportPanel;
+	UniquePointer<ScenePanel> scenePanel;
 
 private:
 	bool _preferencesOpen = false;
@@ -44,8 +44,8 @@ private:
 
 	Vec2i _inspectorSize; 
 
-	inline static const char* aspectRatioValues[] = { "21:9", "16:9", "4:3" };
-	inline static const char* resolutionValues[] = { 
+	inline static const char* _aspectRatioValues[] = { "21:9", "16:9", "4:3" };
+	inline static const char* _resolutionValues[] = { 
 		"1280x960", "1400x1050", "1600x1200", "1920x1440",	/* 4:3 resolutions */
 		"1280x720", "1366x768", "1600x900", "1920x1080",		/* 16:9 resolutions */
 		"2560x1080", "3440x1440", "3840x1600", "5120x2160",	/* 21:9 resolutions */

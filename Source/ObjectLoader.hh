@@ -7,20 +7,20 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
-// Load mesh data from .obj files inside Assets directory
-// -------------------------------------------------
+/* ----------------------------------------------------
+	Class ObjectLoader: 
+	load vertices, indices, materials data from .obj file
+ ----------------------------------------------------- */
 class ObjectLoader : public NonCopyable
 {
 public:
 	ObjectLoader(Path filePath);
+	~ObjectLoader() = default;
 
-	// Load static Mesh data from file
+	/* Load data from file and initializes object */
 	void LoadStaticMesh(class StaticMesh* staticMesh, uint32_t meshIndex = 0);
 	
 private:
-	inline static Path _assetsDirPath = std::filesystem::current_path().parent_path() / "Assets";
-
-	Assimp::Importer _importer;
 	const aiScene* _scene;
 
 	void LoadMeshData(const aiMesh* aimesh, class Mesh* mesh);

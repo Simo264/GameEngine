@@ -1085,7 +1085,7 @@ static void             WindowSettingsHandler_WriteAll(ImGuiContext*, ImGuiSetti
 // Platform Dependents default implementation for IO functions
 static const char*      GetClipboardTextFn_DefaultImpl(void* user_data_ctx);
 static void             SetClipboardTextFn_DefaultImpl(void* user_data_ctx, const char* text);
-static void             SetPlatformImeDataFn_DefaultImpl(ImGuiViewport* viewport, ImGuiPlatformImeData* data);
+static void             SetPlatformImeDataFn_DefaultImpl(ImGuiViewport* viewportPanel, ImGuiPlatformImeData* data);
 
 namespace ImGui
 {
@@ -1135,7 +1135,7 @@ static void             RenderDimmedBackgrounds();
 // Viewports
 const ImGuiID           IMGUI_VIEWPORT_DEFAULT_ID = 0x11111111; // Using an arbitrary constant instead of e.g. ImHashStr("ViewportDefault", 0); so it's easier to spot in the debugger. The exact value doesn't matter.
 static ImGuiViewportP*  AddUpdateViewport(ImGuiWindow* window, ImGuiID id, const ImVec2& platform_pos, const ImVec2& size, ImGuiViewportFlags flags);
-static void             DestroyViewport(ImGuiViewportP* viewport);
+static void             DestroyViewport(ImGuiViewportP* viewportPanel);
 static void             UpdateViewportsNewFrame();
 static void             UpdateViewportsEndFrame();
 static void             WindowSelectViewport(ImGuiWindow* window);
@@ -1145,7 +1145,7 @@ static bool             UpdateTryMergeWindowIntoHostViewports(ImGuiWindow* windo
 static bool             GetWindowAlwaysWantOwnViewport(ImGuiWindow* window);
 static int              FindPlatformMonitorForPos(const ImVec2& pos);
 static int              FindPlatformMonitorForRect(const ImRect& r);
-static void             UpdateViewportPlatformMonitor(ImGuiViewportP* viewport);
+static void             UpdateViewportPlatformMonitor(ImGuiViewportP* viewportPanel);
 
 }
 
@@ -3538,17 +3538,17 @@ void ImGui::RenderMouseCursor(ImVec2 base_pos, float base_scale, ImGuiMouseCurso
     ImGuiContext& g = *GImGui;
     IM_ASSERT(mouse_cursor > ImGuiMouseCursor_None && mouse_cursor < ImGuiMouseCursor_COUNT);
     ImFontAtlas* font_atlas = g.DrawListSharedData.Font->ContainerAtlas;
-    for (ImGuiViewportP* viewport : g.Viewports)
+    for (ImGuiViewportP* viewportPanel : g.Viewports)
     {
         // We scale cursor with current viewport/monitor, however Windows 10 for its own hardware cursor seems to be using a different scale factor.
         ImVec2 offset, size, uv[4];
         if (!font_atlas->GetMouseCursorTexData(mouse_cursor, &offset, &size, &uv[0], &uv[2]))
             continue;
         const ImVec2 pos = base_pos - offset;
-        const float scale = base_scale * viewport->DpiScale;
-        if (!viewport->GetMainRect().Overlaps(ImRect(pos, pos + ImVec2(size.x + 2, size.y + 2) * scale)))
+        const float scale = base_scale * viewportPanel->DpiScale;
+        if (!viewportPanel->GetMainRect().Overlaps(ImRect(pos, pos + ImVec2(size.x + 2, size.y + 2) * scale)))
             continue;
-        ImDrawList* draw_list = GetForegroundDrawList(viewport);
+        ImDrawList* draw_list = GetForegroundDrawList(viewportPanel);
         ImTextureID tex_id = font_atlas->TexID;
         draw_list->PushTextureID(tex_id);
         draw_list->AddImage(tex_id, pos + ImVec2(1, 0) * scale, pos + (ImVec2(1, 0) + size) * scale, uv[2], uv[3], col_shadow);
@@ -3661,12 +3661,12 @@ void ImGui::Initialize()
     g.IO.SetPlatformImeDataFn = SetPlatformImeDataFn_DefaultImpl;
 
     // Create default viewport
-    ImGuiViewportP* viewport = IM_NEW(ImGuiViewportP)();
-    viewport->ID = IMGUI_VIEWPORT_DEFAULT_ID;
-    viewport->Idx = 0;
-    viewport->PlatformWindowCreated = true;
-    viewport->Flags = ImGuiViewportFlags_OwnedByApp;
-    g.Viewports.push_back(viewport);
+    ImGuiViewportP* viewportPanel = IM_NEW(ImGuiViewportP)();
+    viewportPanel->ID = IMGUI_VIEWPORT_DEFAULT_ID;
+    viewportPanel->Idx = 0;
+    viewportPanel->PlatformWindowCreated = true;
+    viewportPanel->Flags = ImGuiViewportFlags_OwnedByApp;
+    g.Viewports.push_back(viewportPanel);
     g.TempBuffer.resize(1024 * 3 + 1, 0);
     g.ViewportCreatedCount++;
     g.PlatformIO.Viewports.push_back(g.Viewports[0]);
@@ -4381,8 +4381,8 @@ ImGuiPlatformIO& ImGui::GetPlatformIO()
 ImDrawData* ImGui::GetDrawData()
 {
     ImGuiContext& g = *GImGui;
-    ImGuiViewportP* viewport = g.Viewports[0];
-    return viewport->DrawDataP.Valid ? &viewport->DrawDataP : NULL;
+    ImGuiViewportP* viewportPanel = g.Viewports[0];
+    return viewportPanel->DrawDataP.Valid ? &viewportPanel->DrawDataP : NULL;
 }
 
 double ImGui::GetTime()
@@ -4395,33 +4395,33 @@ int ImGui::GetFrameCount()
     return GImGui->FrameCount;
 }
 
-static ImDrawList* GetViewportBgFgDrawList(ImGuiViewportP* viewport, size_t drawlist_no, const char* drawlist_name)
+static ImDrawList* GetViewportBgFgDrawList(ImGuiViewportP* viewportPanel, size_t drawlist_no, const char* drawlist_name)
 {
     // Create the draw list on demand, because they are not frequently used for all viewports
     ImGuiContext& g = *GImGui;
-    IM_ASSERT(drawlist_no < IM_ARRAYSIZE(viewport->BgFgDrawLists));
-    ImDrawList* draw_list = viewport->BgFgDrawLists[drawlist_no];
+    IM_ASSERT(drawlist_no < IM_ARRAYSIZE(viewportPanel->BgFgDrawLists));
+    ImDrawList* draw_list = viewportPanel->BgFgDrawLists[drawlist_no];
     if (draw_list == NULL)
     {
         draw_list = IM_NEW(ImDrawList)(&g.DrawListSharedData);
         draw_list->_OwnerName = drawlist_name;
-        viewport->BgFgDrawLists[drawlist_no] = draw_list;
+        viewportPanel->BgFgDrawLists[drawlist_no] = draw_list;
     }
 
     // Our ImDrawList system requires that there is always a command
-    if (viewport->BgFgDrawListsLastFrame[drawlist_no] != g.FrameCount)
+    if (viewportPanel->BgFgDrawListsLastFrame[drawlist_no] != g.FrameCount)
     {
         draw_list->_ResetForNewFrame();
         draw_list->PushTextureID(g.IO.Fonts->TexID);
-        draw_list->PushClipRect(viewport->Pos, viewport->Pos + viewport->Size, false);
-        viewport->BgFgDrawListsLastFrame[drawlist_no] = g.FrameCount;
+        draw_list->PushClipRect(viewportPanel->Pos, viewportPanel->Pos + viewportPanel->Size, false);
+        viewportPanel->BgFgDrawListsLastFrame[drawlist_no] = g.FrameCount;
     }
     return draw_list;
 }
 
-ImDrawList* ImGui::GetBackgroundDrawList(ImGuiViewport* viewport)
+ImDrawList* ImGui::GetBackgroundDrawList(ImGuiViewport* viewportPanel)
 {
-    return GetViewportBgFgDrawList((ImGuiViewportP*)viewport, 0, "##Background");
+    return GetViewportBgFgDrawList((ImGuiViewportP*)viewportPanel, 0, "##Background");
 }
 
 ImDrawList* ImGui::GetBackgroundDrawList()
@@ -4430,9 +4430,9 @@ ImDrawList* ImGui::GetBackgroundDrawList()
     return GetBackgroundDrawList(g.CurrentWindow->Viewport);
 }
 
-ImDrawList* ImGui::GetForegroundDrawList(ImGuiViewport* viewport)
+ImDrawList* ImGui::GetForegroundDrawList(ImGuiViewport* viewportPanel)
 {
-    return GetViewportBgFgDrawList((ImGuiViewportP*)viewport, 1, "##Foreground");
+    return GetViewportBgFgDrawList((ImGuiViewportP*)viewportPanel, 1, "##Foreground");
 }
 
 ImDrawList* ImGui::GetForegroundDrawList()
@@ -4766,8 +4766,8 @@ void ImGui::NewFrame()
     SetCurrentFont(GetDefaultFont());
     IM_ASSERT(g.Font->IsLoaded());
     ImRect virtual_space(FLT_MAX, FLT_MAX, -FLT_MAX, -FLT_MAX);
-    for (ImGuiViewportP* viewport : g.Viewports)
-        virtual_space.Add(viewport->GetMainRect());
+    for (ImGuiViewportP* viewportPanel : g.Viewports)
+        virtual_space.Add(viewportPanel->GetMainRect());
     g.DrawListSharedData.ClipRectFullscreen = virtual_space.ToVec4();
     g.DrawListSharedData.CurveTessellationTol = g.Style.CurveTessellationTol;
     g.DrawListSharedData.SetCircleTessellationMaxError(g.Style.CircleTessellationMaxError);
@@ -4782,10 +4782,10 @@ void ImGui::NewFrame()
         g.DrawListSharedData.InitialFlags |= ImDrawListFlags_AllowVtxOffset;
 
     // Mark rendering data as invalid to prevent user who may have a handle on it to use it.
-    for (ImGuiViewportP* viewport : g.Viewports)
+    for (ImGuiViewportP* viewportPanel : g.Viewports)
     {
-        viewport->DrawData = NULL;
-        viewport->DrawDataP.Valid = false;
+        viewportPanel->DrawData = NULL;
+        viewportPanel->DrawDataP.Valid = false;
     }
 
     // Drag and drop keep the source ID alive so even if the source disappear our state is consistent
@@ -5036,12 +5036,12 @@ static void AddWindowToSortBuffer(ImVector<ImGuiWindow*>* out_sorted_windows, Im
 static void AddWindowToDrawData(ImGuiWindow* window, int layer)
 {
     ImGuiContext& g = *GImGui;
-    ImGuiViewportP* viewport = window->Viewport;
-    IM_ASSERT(viewport != NULL);
+    ImGuiViewportP* viewportPanel = window->Viewport;
+    IM_ASSERT(viewportPanel != NULL);
     g.IO.MetricsRenderWindows++;
     if (window->DrawList->_Splitter._Count > 1)
         window->DrawList->ChannelsMerge(); // Merge if user forgot to merge back. Also required in Docking branch for ImGuiWindowFlags_DockNodeHost windows.
-    ImGui::AddDrawListToDrawDataEx(&viewport->DrawDataP, viewport->DrawDataBuilder.Layers[layer], window->DrawList);
+    ImGui::AddDrawListToDrawDataEx(&viewportPanel->DrawDataP, viewportPanel->DrawDataBuilder.Layers[layer], window->DrawList);
     for (ImGuiWindow* child : window->DC.ChildWindows)
         if (IsWindowActiveAndVisible(child)) // Clipped children may have been marked not active
             AddWindowToDrawData(child, layer);
@@ -5076,31 +5076,31 @@ static void FlattenDrawDataIntoSingleLayer(ImDrawDataBuilder* builder)
     }
 }
 
-static void InitViewportDrawData(ImGuiViewportP* viewport)
+static void InitViewportDrawData(ImGuiViewportP* viewportPanel)
 {
     ImGuiIO& io = ImGui::GetIO();
-    ImDrawData* draw_data = &viewport->DrawDataP;
+    ImDrawData* draw_data = &viewportPanel->DrawDataP;
 
-    viewport->DrawData = draw_data; // Make publicly accessible
-    viewport->DrawDataBuilder.Layers[0] = &draw_data->CmdLists;
-    viewport->DrawDataBuilder.Layers[1] = &viewport->DrawDataBuilder.LayerData1;
-    viewport->DrawDataBuilder.Layers[0]->resize(0);
-    viewport->DrawDataBuilder.Layers[1]->resize(0);
+    viewportPanel->DrawData = draw_data; // Make publicly accessible
+    viewportPanel->DrawDataBuilder.Layers[0] = &draw_data->CmdLists;
+    viewportPanel->DrawDataBuilder.Layers[1] = &viewportPanel->DrawDataBuilder.LayerData1;
+    viewportPanel->DrawDataBuilder.Layers[0]->resize(0);
+    viewportPanel->DrawDataBuilder.Layers[1]->resize(0);
 
     // When minimized, we report draw_data->DisplaySize as zero to be consistent with non-viewport mode,
     // and to allow applications/backends to easily skip rendering.
     // FIXME: Note that we however do NOT attempt to report "zero drawlist / vertices" into the ImDrawData structure.
     // This is because the work has been done already, and its wasted! We should fix that and add optimizations for
     // it earlier in the pipeline, rather than pretend to hide the data at the end of the pipeline.
-    const bool is_minimized = (viewport->Flags & ImGuiViewportFlags_IsMinimized) != 0;
+    const bool is_minimized = (viewportPanel->Flags & ImGuiViewportFlags_IsMinimized) != 0;
 
     draw_data->Valid = true;
     draw_data->CmdListsCount = 0;
     draw_data->TotalVtxCount = draw_data->TotalIdxCount = 0;
-    draw_data->DisplayPos = viewport->Pos;
-    draw_data->DisplaySize = is_minimized ? ImVec2(0.0f, 0.0f) : viewport->Size;
+    draw_data->DisplayPos = viewportPanel->Pos;
+    draw_data->DisplaySize = is_minimized ? ImVec2(0.0f, 0.0f) : viewportPanel->Size;
     draw_data->FramebufferScale = io.DisplayFramebufferScale; // FIXME-VIEWPORT: This may vary on a per-monitor/viewport basis?
-    draw_data->OwnerViewport = viewport;
+    draw_data->OwnerViewport = viewportPanel;
 }
 
 // Push a clipping rectangle for both ImGui logic (hit-testing etc.) and low-level ImDrawList rendering.
@@ -5136,8 +5136,8 @@ static void ImGui::RenderDimmedBackgroundBehindWindow(ImGuiWindow* window, ImU32
     if ((col & IM_COL32_A_MASK) == 0)
         return;
 
-    ImGuiViewportP* viewport = window->Viewport;
-    ImRect viewport_rect = viewport->GetMainRect();
+    ImGuiViewportP* viewportPanel = window->Viewport;
+    ImRect viewport_rect = viewportPanel->GetMainRect();
 
     // Draw behind window by moving the draw command at the FRONT of the draw list
     {
@@ -5219,30 +5219,30 @@ static void ImGui::RenderDimmedBackgrounds()
 
         // Draw border around CTRL+Tab target window
         ImGuiWindow* window = g.NavWindowingTargetAnim;
-        ImGuiViewport* viewport = window->Viewport;
+        ImGuiViewport* viewportPanel = window->Viewport;
         float distance = g.FontSize;
         ImRect bb = window->Rect();
         bb.Expand(distance);
-        if (bb.GetWidth() >= viewport->Size.x && bb.GetHeight() >= viewport->Size.y)
+        if (bb.GetWidth() >= viewportPanel->Size.x && bb.GetHeight() >= viewportPanel->Size.y)
             bb.Expand(-distance - 1.0f); // If a window fits the entire viewport, adjust its highlight inward
         window->DrawList->ChannelsMerge();
         if (window->DrawList->CmdBuffer.Size == 0)
             window->DrawList->AddDrawCmd();
-        window->DrawList->PushClipRect(viewport->Pos, viewport->Pos + viewport->Size);
+        window->DrawList->PushClipRect(viewportPanel->Pos, viewportPanel->Pos + viewportPanel->Size);
         window->DrawList->AddRect(bb.Min, bb.Max, GetColorU32(ImGuiCol_NavWindowingHighlight, g.NavWindowingHighlightAlpha), window->WindowRounding, 0, 3.0f);
         window->DrawList->PopClipRect();
     }
 
     // Draw dimming background on _other_ viewports than the ones our windows are in
-    for (ImGuiViewportP* viewport : g.Viewports)
+    for (ImGuiViewportP* viewportPanel : g.Viewports)
     {
-        if (viewport == viewports_already_dimmed[0] || viewport == viewports_already_dimmed[1])
+        if (viewportPanel == viewports_already_dimmed[0] || viewportPanel == viewports_already_dimmed[1])
             continue;
-        if (modal_window && viewport->Window && IsWindowAbove(viewport->Window, modal_window))
+        if (modal_window && viewportPanel->Window && IsWindowAbove(viewportPanel->Window, modal_window))
             continue;
-        ImDrawList* draw_list = GetForegroundDrawList(viewport);
+        ImDrawList* draw_list = GetForegroundDrawList(viewportPanel);
         const ImU32 dim_bg_col = GetColorU32(dim_bg_for_modal ? ImGuiCol_ModalWindowDimBg : ImGuiCol_NavWindowingDimBg, g.DimBgRatio);
-        draw_list->AddRectFilled(viewport->Pos, viewport->Pos + viewport->Size, dim_bg_col);
+        draw_list->AddRectFilled(viewportPanel->Pos, viewportPanel->Pos + viewportPanel->Size, dim_bg_col);
     }
 }
 
@@ -5265,21 +5265,21 @@ void ImGui::EndFrame()
     ImGuiPlatformImeData* ime_data = &g.PlatformImeData;
     if (g.IO.SetPlatformImeDataFn && memcmp(ime_data, &g.PlatformImeDataPrev, sizeof(ImGuiPlatformImeData)) != 0)
     {
-        ImGuiViewport* viewport = FindViewportByID(g.PlatformImeViewport);
+        ImGuiViewport* viewportPanel = FindViewportByID(g.PlatformImeViewport);
         IMGUI_DEBUG_LOG_IO("[io] Calling io.SetPlatformImeDataFn(): WantVisible: %d, InputPos (%.2f,%.2f)\n", ime_data->WantVisible, ime_data->InputPos.x, ime_data->InputPos.y);
-        if (viewport == NULL)
-            viewport = GetMainViewport();
+        if (viewportPanel == NULL)
+            viewportPanel = GetMainViewport();
 #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
-        if (viewport->PlatformHandleRaw == NULL && g.IO.ImeWindowHandle != NULL)
+        if (viewportPanel->PlatformHandleRaw == NULL && g.IO.ImeWindowHandle != NULL)
         {
-            viewport->PlatformHandleRaw = g.IO.ImeWindowHandle;
-            g.IO.SetPlatformImeDataFn(viewport, ime_data);
-            viewport->PlatformHandleRaw = NULL;
+            viewportPanel->PlatformHandleRaw = g.IO.ImeWindowHandle;
+            g.IO.SetPlatformImeDataFn(viewportPanel, ime_data);
+            viewportPanel->PlatformHandleRaw = NULL;
         }
         else
 #endif
         {
-            g.IO.SetPlatformImeDataFn(viewport, ime_data);
+            g.IO.SetPlatformImeDataFn(viewportPanel, ime_data);
         }
     }
 
@@ -5370,11 +5370,11 @@ void ImGui::RenderPanel()
     CallContextHooks(&g, ImGuiContextHookType_RenderPre);
 
     // Add background ImDrawList (for each active viewport)
-    for (ImGuiViewportP* viewport : g.Viewports)
+    for (ImGuiViewportP* viewportPanel : g.Viewports)
     {
-        InitViewportDrawData(viewport);
-        if (viewport->BgFgDrawLists[0] != NULL)
-            AddDrawListToDrawDataEx(&viewport->DrawDataP, viewport->DrawDataBuilder.Layers[0], GetBackgroundDrawList(viewport));
+        InitViewportDrawData(viewportPanel);
+        if (viewportPanel->BgFgDrawLists[0] != NULL)
+            AddDrawListToDrawDataEx(&viewportPanel->DrawDataP, viewportPanel->DrawDataBuilder.Layers[0], GetBackgroundDrawList(viewportPanel));
     }
 
     // Draw modal/window whitening backgrounds
@@ -5400,16 +5400,16 @@ void ImGui::RenderPanel()
 
     // Setup ImDrawData structures for end-user
     g.IO.MetricsRenderVertices = g.IO.MetricsRenderIndices = 0;
-    for (ImGuiViewportP* viewport : g.Viewports)
+    for (ImGuiViewportP* viewportPanel : g.Viewports)
     {
-        FlattenDrawDataIntoSingleLayer(&viewport->DrawDataBuilder);
+        FlattenDrawDataIntoSingleLayer(&viewportPanel->DrawDataBuilder);
 
         // Add foreground ImDrawList (for each active viewport)
-        if (viewport->BgFgDrawLists[1] != NULL)
-            AddDrawListToDrawDataEx(&viewport->DrawDataP, viewport->DrawDataBuilder.Layers[0], GetForegroundDrawList(viewport));
+        if (viewportPanel->BgFgDrawLists[1] != NULL)
+            AddDrawListToDrawDataEx(&viewportPanel->DrawDataP, viewportPanel->DrawDataBuilder.Layers[0], GetForegroundDrawList(viewportPanel));
 
         // We call _PopUnusedDrawCmd() last thing, as RenderDimmedBackgrounds() rely on a valid command being there (especially in docking branch).
-        ImDrawData* draw_data = &viewport->DrawDataP;
+        ImDrawData* draw_data = &viewportPanel->DrawDataP;
         IM_ASSERT(draw_data->CmdLists.Size == draw_data->CmdListsCount);
         for (ImDrawList* draw_list : draw_data->CmdLists)
             draw_list->_PopUnusedDrawCmd();
@@ -11391,8 +11391,8 @@ bool ImGui::BeginPopupModal(const char* name, bool* p_open, ImGuiWindowFlags fla
     // FIXME: Should test for (PosCond & window->SetWindowPosAllowFlags) with the upcoming window.
     if ((g.NextWindowData.Flags & ImGuiNextWindowDataFlags_HasPos) == 0)
     {
-        const ImGuiViewport* viewport = window->WasActive ? window->Viewport : GetMainViewport(); // FIXME-VIEWPORT: What may be our reference viewport?
-        SetNextWindowPos(viewport->GetCenter(), ImGuiCond_FirstUseEver, ImVec2(0.5f, 0.5f));
+        const ImGuiViewport* viewportPanel = window->WasActive ? window->Viewport : GetMainViewport(); // FIXME-VIEWPORT: What may be our reference viewport?
+        SetNextWindowPos(viewportPanel->GetCenter(), ImGuiCond_FirstUseEver, ImVec2(0.5f, 0.5f));
     }
 
     flags |= ImGuiWindowFlags_Popup | ImGuiWindowFlags_Modal | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking;
@@ -12234,8 +12234,8 @@ static ImVec2 ImGui::NavCalcPreferredRefPos()
             rect_rel.Translate(window->Scroll - next_scroll);
         }
         ImVec2 pos = ImVec2(rect_rel.Min.x + ImMin(g.Style.FramePadding.x * 4, rect_rel.GetWidth()), rect_rel.Max.y - ImMin(g.Style.FramePadding.y, rect_rel.GetHeight()));
-        ImGuiViewport* viewport = window->Viewport;
-        return ImTrunc(ImClamp(pos, viewport->Pos, viewport->Pos + viewport->Size)); // ImTrunc() is important because non-integer mouse position application in backend might be lossy and result in undesirable non-zero delta.
+        ImGuiViewport* viewportPanel = window->Viewport;
+        return ImTrunc(ImClamp(pos, viewportPanel->Pos, viewportPanel->Pos + viewportPanel->Size)); // ImTrunc() is important because non-integer mouse position application in backend might be lossy and result in undesirable non-zero delta.
     }
 }
 
@@ -13181,9 +13181,9 @@ void ImGui::NavUpdateWindowingOverlay()
 
     if (g.NavWindowingListWindow == NULL)
         g.NavWindowingListWindow = FindWindowByName("###NavWindowingList");
-    const ImGuiViewport* viewport = /*g.NavWindow ? g.NavWindow->Viewport :*/ GetMainViewport();
-    SetNextWindowSizeConstraints(ImVec2(viewport->Size.x * 0.20f, viewport->Size.y * 0.20f), ImVec2(FLT_MAX, FLT_MAX));
-    SetNextWindowPos(viewport->GetCenter(), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+    const ImGuiViewport* viewportPanel = /*g.NavWindow ? g.NavWindow->Viewport :*/ GetMainViewport();
+    SetNextWindowSizeConstraints(ImVec2(viewportPanel->Size.x * 0.20f, viewportPanel->Size.y * 0.20f), ImVec2(FLT_MAX, FLT_MAX));
+    SetNextWindowPos(viewportPanel->GetCenter(), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
     PushStyleVar(ImGuiStyleVar_WindowPadding, g.Style.WindowPadding * 2.0f);
     Begin("###NavWindowingList", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings);
     for (int n = g.WindowsFocusOrder.Size - 1; n >= 0; n--)
@@ -14237,32 +14237,32 @@ ImGuiViewport* ImGui::GetMainViewport()
 ImGuiViewport* ImGui::FindViewportByID(ImGuiID id)
 {
     ImGuiContext& g = *GImGui;
-    for (ImGuiViewportP* viewport : g.Viewports)
-        if (viewport->ID == id)
-            return viewport;
+    for (ImGuiViewportP* viewportPanel : g.Viewports)
+        if (viewportPanel->ID == id)
+            return viewportPanel;
     return NULL;
 }
 
 ImGuiViewport* ImGui::FindViewportByPlatformHandle(void* platform_handle)
 {
     ImGuiContext& g = *GImGui;
-    for (ImGuiViewportP* viewport : g.Viewports)
-        if (viewport->PlatformHandle == platform_handle)
-            return viewport;
+    for (ImGuiViewportP* viewportPanel : g.Viewports)
+        if (viewportPanel->PlatformHandle == platform_handle)
+            return viewportPanel;
     return NULL;
 }
 
-void ImGui::SetCurrentViewport(ImGuiWindow* current_window, ImGuiViewportP* viewport)
+void ImGui::SetCurrentViewport(ImGuiWindow* current_window, ImGuiViewportP* viewportPanel)
 {
     ImGuiContext& g = *GImGui;
     (void)current_window;
 
-    if (viewport)
-        viewport->LastFrameActive = g.FrameCount;
-    if (g.CurrentViewport == viewport)
+    if (viewportPanel)
+        viewportPanel->LastFrameActive = g.FrameCount;
+    if (g.CurrentViewport == viewportPanel)
         return;
-    g.CurrentDpiScale = viewport ? viewport->DpiScale : 1.0f;
-    g.CurrentViewport = viewport;
+    g.CurrentDpiScale = viewportPanel ? viewportPanel->DpiScale : 1.0f;
+    g.CurrentViewport = viewportPanel;
     //IMGUI_DEBUG_LOG_VIEWPORT("[viewport] SetCurrentViewport changed '%s' 0x%08X\n", current_window ? current_window->Name : NULL, viewport ? viewport->ID : 0);
 
     // Notify platform layer of viewport changes
@@ -14271,15 +14271,15 @@ void ImGui::SetCurrentViewport(ImGuiWindow* current_window, ImGuiViewportP* view
         g.PlatformIO.Platform_OnChangedViewport(g.CurrentViewport);
 }
 
-void ImGui::SetWindowViewport(ImGuiWindow* window, ImGuiViewportP* viewport)
+void ImGui::SetWindowViewport(ImGuiWindow* window, ImGuiViewportP* viewportPanel)
 {
     // Abandon viewport
     if (window->ViewportOwned && window->Viewport->Window == window)
         window->Viewport->Size = ImVec2(0.0f, 0.0f);
 
-    window->Viewport = viewport;
-    window->ViewportId = viewport->ID;
-    window->ViewportOwned = (viewport->Window == window);
+    window->Viewport = viewportPanel;
+    window->ViewportId = viewportPanel->ID;
+    window->ViewportOwned = (viewportPanel->Window == window);
 }
 
 static bool ImGui::GetWindowAlwaysWantOwnViewport(ImGuiWindow* window)
@@ -14295,16 +14295,16 @@ static bool ImGui::GetWindowAlwaysWantOwnViewport(ImGuiWindow* window)
     return false;
 }
 
-static bool ImGui::UpdateTryMergeWindowIntoHostViewport(ImGuiWindow* window, ImGuiViewportP* viewport)
+static bool ImGui::UpdateTryMergeWindowIntoHostViewport(ImGuiWindow* window, ImGuiViewportP* viewportPanel)
 {
     ImGuiContext& g = *GImGui;
-    if (window->Viewport == viewport)
+    if (window->Viewport == viewportPanel)
         return false;
-    if ((viewport->Flags & ImGuiViewportFlags_CanHostOtherWindows) == 0)
+    if ((viewportPanel->Flags & ImGuiViewportFlags_CanHostOtherWindows) == 0)
         return false;
-    if ((viewport->Flags & ImGuiViewportFlags_IsMinimized) != 0)
+    if ((viewportPanel->Flags & ImGuiViewportFlags_IsMinimized) != 0)
         return false;
-    if (!viewport->GetMainRect().Contains(window->Rect()))
+    if (!viewportPanel->GetMainRect().Contains(window->Rect()))
         return false;
     if (GetWindowAlwaysWantOwnViewport(window))
         return false;
@@ -14324,8 +14324,8 @@ static bool ImGui::UpdateTryMergeWindowIntoHostViewport(ImGuiWindow* window, ImG
     if (window->ViewportOwned)
         for (int n = 0; n < g.Windows.Size; n++)
             if (g.Windows[n]->Viewport == old_viewport)
-                SetWindowViewport(g.Windows[n], viewport);
-    SetWindowViewport(window, viewport);
+                SetWindowViewport(g.Windows[n], viewportPanel);
+    SetWindowViewport(window, viewportPanel);
     BringWindowToDisplayFront(window);
 
     return true;
@@ -14340,10 +14340,10 @@ static bool ImGui::UpdateTryMergeWindowIntoHostViewports(ImGuiWindow* window)
 
 // Translate Dear ImGui windows when a Host Viewport has been moved
 // (This additionally keeps windows at the same place when ImGuiConfigFlags_ViewportsEnable is toggled!)
-void ImGui::TranslateWindowsInViewport(ImGuiViewportP* viewport, const ImVec2& old_pos, const ImVec2& new_pos)
+void ImGui::TranslateWindowsInViewport(ImGuiViewportP* viewportPanel, const ImVec2& old_pos, const ImVec2& new_pos)
 {
     ImGuiContext& g = *GImGui;
-    IM_ASSERT(viewport->Window == NULL && (viewport->Flags & ImGuiViewportFlags_CanHostOtherWindows));
+    IM_ASSERT(viewportPanel->Window == NULL && (viewportPanel->Flags & ImGuiViewportFlags_CanHostOtherWindows));
 
     // 1) We test if ImGuiConfigFlags_ViewportsEnable was just toggled, which allows us to conveniently
     // translate imgui windows from OS-window-local to absolute coordinates or vice-versa.
@@ -14351,25 +14351,25 @@ void ImGui::TranslateWindowsInViewport(ImGuiViewportP* viewport, const ImVec2& o
     // One problem with this is that most Win32 applications doesn't update their render while dragging,
     // and so the window will appear to teleport when releasing the mouse.
     const bool translate_all_windows = (g.ConfigFlagsCurrFrame & ImGuiConfigFlags_ViewportsEnable) != (g.ConfigFlagsLastFrame & ImGuiConfigFlags_ViewportsEnable);
-    ImRect test_still_fit_rect(old_pos, old_pos + viewport->Size);
+    ImRect test_still_fit_rect(old_pos, old_pos + viewportPanel->Size);
     ImVec2 delta_pos = new_pos - old_pos;
     for (ImGuiWindow* window : g.Windows) // FIXME-OPT
-        if (translate_all_windows || (window->Viewport == viewport && test_still_fit_rect.Contains(window->Rect())))
+        if (translate_all_windows || (window->Viewport == viewportPanel && test_still_fit_rect.Contains(window->Rect())))
             TranslateWindow(window, delta_pos);
 }
 
 // Scale all windows (position, size). Use when e.g. changing DPI. (This is a lossy operation!)
-void ImGui::ScaleWindowsInViewport(ImGuiViewportP* viewport, float scale)
+void ImGui::ScaleWindowsInViewport(ImGuiViewportP* viewportPanel, float scale)
 {
     ImGuiContext& g = *GImGui;
-    if (viewport->Window)
+    if (viewportPanel->Window)
     {
-        ScaleWindow(viewport->Window, scale);
+        ScaleWindow(viewportPanel->Window, scale);
     }
     else
     {
         for (ImGuiWindow* window : g.Windows)
-            if (window->Viewport == viewport)
+            if (window->Viewport == viewportPanel)
                 ScaleWindow(window, scale);
     }
 }
@@ -14381,10 +14381,10 @@ ImGuiViewportP* ImGui::FindHoveredViewportFromPlatformWindowStack(const ImVec2& 
 {
     ImGuiContext& g = *GImGui;
     ImGuiViewportP* best_candidate = NULL;
-    for (ImGuiViewportP* viewport : g.Viewports)
-        if (!(viewport->Flags & (ImGuiViewportFlags_NoInputs | ImGuiViewportFlags_IsMinimized)) && viewport->GetMainRect().Contains(mouse_platform_pos))
-            if (best_candidate == NULL || best_candidate->LastFocusedStampCount < viewport->LastFocusedStampCount)
-                best_candidate = viewport;
+    for (ImGuiViewportP* viewportPanel : g.Viewports)
+        if (!(viewportPanel->Flags & (ImGuiViewportFlags_NoInputs | ImGuiViewportFlags_IsMinimized)) && viewportPanel->GetMainRect().Contains(mouse_platform_pos))
+            if (best_candidate == NULL || best_candidate->LastFocusedStampCount < viewportPanel->LastFocusedStampCount)
+                best_candidate = viewportPanel;
     return best_candidate;
 }
 
@@ -14401,29 +14401,29 @@ static void ImGui::UpdateViewportsNewFrame()
     if (viewports_enabled)
     {
         ImGuiViewportP* focused_viewport = NULL;
-        for (ImGuiViewportP* viewport : g.Viewports)
+        for (ImGuiViewportP* viewportPanel : g.Viewports)
         {
-            const bool platform_funcs_available = viewport->PlatformWindowCreated;
+            const bool platform_funcs_available = viewportPanel->PlatformWindowCreated;
             if (g.PlatformIO.Platform_GetWindowMinimized && platform_funcs_available)
             {
-                bool is_minimized = g.PlatformIO.Platform_GetWindowMinimized(viewport);
+                bool is_minimized = g.PlatformIO.Platform_GetWindowMinimized(viewportPanel);
                 if (is_minimized)
-                    viewport->Flags |= ImGuiViewportFlags_IsMinimized;
+                    viewportPanel->Flags |= ImGuiViewportFlags_IsMinimized;
                 else
-                    viewport->Flags &= ~ImGuiViewportFlags_IsMinimized;
+                    viewportPanel->Flags &= ~ImGuiViewportFlags_IsMinimized;
             }
 
             // Update our implicit z-order knowledge of platform windows, which is used when the backend cannot provide io.MouseHoveredViewport.
             // When setting Platform_GetWindowFocus, it is expected that the platform backend can handle calls without crashing if it doesn't have data stored.
             if (g.PlatformIO.Platform_GetWindowFocus && platform_funcs_available)
             {
-                bool is_focused = g.PlatformIO.Platform_GetWindowFocus(viewport);
+                bool is_focused = g.PlatformIO.Platform_GetWindowFocus(viewportPanel);
                 if (is_focused)
-                    viewport->Flags |= ImGuiViewportFlags_IsFocused;
+                    viewportPanel->Flags |= ImGuiViewportFlags_IsFocused;
                 else
-                    viewport->Flags &= ~ImGuiViewportFlags_IsFocused;
+                    viewportPanel->Flags &= ~ImGuiViewportFlags_IsFocused;
                 if (is_focused)
-                    focused_viewport = viewport;
+                    focused_viewport = viewportPanel;
             }
         }
 
@@ -14481,63 +14481,63 @@ static void ImGui::UpdateViewportsNewFrame()
     g.MouseViewport = NULL;
     for (int n = 0; n < g.Viewports.Size; n++)
     {
-        ImGuiViewportP* viewport = g.Viewports[n];
-        viewport->Idx = n;
+        ImGuiViewportP* viewportPanel = g.Viewports[n];
+        viewportPanel->Idx = n;
 
         // Erase unused viewports
-        if (n > 0 && viewport->LastFrameActive < g.FrameCount - 2)
+        if (n > 0 && viewportPanel->LastFrameActive < g.FrameCount - 2)
         {
-            DestroyViewport(viewport);
+            DestroyViewport(viewportPanel);
             n--;
             continue;
         }
 
-        const bool platform_funcs_available = viewport->PlatformWindowCreated;
+        const bool platform_funcs_available = viewportPanel->PlatformWindowCreated;
         if (viewports_enabled)
         {
             // Update Position and Size (from Platform Window to ImGui) if requested.
             // We do it early in the frame instead of waiting for UpdatePlatformWindows() to avoid a frame of lag when moving/resizing using OS facilities.
-            if (!(viewport->Flags & ImGuiViewportFlags_IsMinimized) && platform_funcs_available)
+            if (!(viewportPanel->Flags & ImGuiViewportFlags_IsMinimized) && platform_funcs_available)
             {
                 // Viewport->WorkPos and WorkSize will be updated below
-                if (viewport->PlatformRequestMove)
-                    viewport->Pos = viewport->LastPlatformPos = g.PlatformIO.Platform_GetWindowPos(viewport);
-                if (viewport->PlatformRequestResize)
-                    viewport->Size = viewport->LastPlatformSize = g.PlatformIO.Platform_GetWindowSize(viewport);
+                if (viewportPanel->PlatformRequestMove)
+                    viewportPanel->Pos = viewportPanel->LastPlatformPos = g.PlatformIO.Platform_GetWindowPos(viewportPanel);
+                if (viewportPanel->PlatformRequestResize)
+                    viewportPanel->Size = viewportPanel->LastPlatformSize = g.PlatformIO.Platform_GetWindowSize(viewportPanel);
             }
         }
 
         // Update/copy monitor info
-        UpdateViewportPlatformMonitor(viewport);
+        UpdateViewportPlatformMonitor(viewportPanel);
 
         // Lock down space taken by menu bars and status bars, reset the offset for functions like BeginMainMenuBar() to alter them again.
-        viewport->WorkOffsetMin = viewport->BuildWorkOffsetMin;
-        viewport->WorkOffsetMax = viewport->BuildWorkOffsetMax;
-        viewport->BuildWorkOffsetMin = viewport->BuildWorkOffsetMax = ImVec2(0.0f, 0.0f);
-        viewport->UpdateWorkRect();
+        viewportPanel->WorkOffsetMin = viewportPanel->BuildWorkOffsetMin;
+        viewportPanel->WorkOffsetMax = viewportPanel->BuildWorkOffsetMax;
+        viewportPanel->BuildWorkOffsetMin = viewportPanel->BuildWorkOffsetMax = ImVec2(0.0f, 0.0f);
+        viewportPanel->UpdateWorkRect();
 
         // Reset alpha every frame. Users of transparency (docking) needs to request a lower alpha back.
-        viewport->Alpha = 1.0f;
+        viewportPanel->Alpha = 1.0f;
 
         // Translate Dear ImGui windows when a Host Viewport has been moved
         // (This additionally keeps windows at the same place when ImGuiConfigFlags_ViewportsEnable is toggled!)
-        const ImVec2 viewport_delta_pos = viewport->Pos - viewport->LastPos;
-        if ((viewport->Flags & ImGuiViewportFlags_CanHostOtherWindows) && (viewport_delta_pos.x != 0.0f || viewport_delta_pos.y != 0.0f))
-            TranslateWindowsInViewport(viewport, viewport->LastPos, viewport->Pos);
+        const ImVec2 viewport_delta_pos = viewportPanel->Pos - viewportPanel->LastPos;
+        if ((viewportPanel->Flags & ImGuiViewportFlags_CanHostOtherWindows) && (viewport_delta_pos.x != 0.0f || viewport_delta_pos.y != 0.0f))
+            TranslateWindowsInViewport(viewportPanel, viewportPanel->LastPos, viewportPanel->Pos);
 
         // Update DPI scale
         float new_dpi_scale;
         if (g.PlatformIO.Platform_GetWindowDpiScale && platform_funcs_available)
-            new_dpi_scale = g.PlatformIO.Platform_GetWindowDpiScale(viewport);
-        else if (viewport->PlatformMonitor != -1)
-            new_dpi_scale = g.PlatformIO.Monitors[viewport->PlatformMonitor].DpiScale;
+            new_dpi_scale = g.PlatformIO.Platform_GetWindowDpiScale(viewportPanel);
+        else if (viewportPanel->PlatformMonitor != -1)
+            new_dpi_scale = g.PlatformIO.Monitors[viewportPanel->PlatformMonitor].DpiScale;
         else
-            new_dpi_scale = (viewport->DpiScale != 0.0f) ? viewport->DpiScale : 1.0f;
-        if (viewport->DpiScale != 0.0f && new_dpi_scale != viewport->DpiScale)
+            new_dpi_scale = (viewportPanel->DpiScale != 0.0f) ? viewportPanel->DpiScale : 1.0f;
+        if (viewportPanel->DpiScale != 0.0f && new_dpi_scale != viewportPanel->DpiScale)
         {
-            float scale_factor = new_dpi_scale / viewport->DpiScale;
+            float scale_factor = new_dpi_scale / viewportPanel->DpiScale;
             if (g.IO.ConfigFlags & ImGuiConfigFlags_DpiEnableScaleViewports)
-                ScaleWindowsInViewport(viewport, scale_factor);
+                ScaleWindowsInViewport(viewportPanel, scale_factor);
             //if (viewport == GetMainViewport())
             //    g.PlatformInterface.SetWindowSize(viewport, viewport->Size * scale_factor);
 
@@ -14547,7 +14547,7 @@ static void ImGui::UpdateViewportsNewFrame()
             //if (g.MovingWindow != NULL && g.MovingWindow->Viewport == viewport)
             //    g.ActiveIdClickOffset = ImTrunc(g.ActiveIdClickOffset * scale_factor);
         }
-        viewport->DpiScale = new_dpi_scale;
+        viewportPanel->DpiScale = new_dpi_scale;
     }
 
     // Update fallback monitor
@@ -14619,16 +14619,16 @@ static void ImGui::UpdateViewportsEndFrame()
     g.PlatformIO.Viewports.resize(0);
     for (int i = 0; i < g.Viewports.Size; i++)
     {
-        ImGuiViewportP* viewport = g.Viewports[i];
-        viewport->LastPos = viewport->Pos;
-        if (viewport->LastFrameActive < g.FrameCount || viewport->Size.x <= 0.0f || viewport->Size.y <= 0.0f)
+        ImGuiViewportP* viewportPanel = g.Viewports[i];
+        viewportPanel->LastPos = viewportPanel->Pos;
+        if (viewportPanel->LastFrameActive < g.FrameCount || viewportPanel->Size.x <= 0.0f || viewportPanel->Size.y <= 0.0f)
             if (i > 0) // Always include main viewport in the list
                 continue;
-        if (viewport->Window && !IsWindowActiveAndVisible(viewport->Window))
+        if (viewportPanel->Window && !IsWindowActiveAndVisible(viewportPanel->Window))
             continue;
         if (i > 0)
-            IM_ASSERT(viewport->Window != NULL);
-        g.PlatformIO.Viewports.push_back(viewport);
+            IM_ASSERT(viewportPanel->Window != NULL);
+        g.PlatformIO.Viewports.push_back(viewportPanel);
     }
     g.Viewports[0]->ClearRequestFlags(); // Clear main viewport flags because UpdatePlatformWindows() won't do it and may not even be called
 }
@@ -14650,75 +14650,75 @@ ImGuiViewportP* ImGui::AddUpdateViewport(ImGuiWindow* window, ImGuiID id, const 
             flags |= ImGuiViewportFlags_NoFocusOnAppearing;
     }
 
-    ImGuiViewportP* viewport = (ImGuiViewportP*)FindViewportByID(id);
-    if (viewport)
+    ImGuiViewportP* viewportPanel = (ImGuiViewportP*)FindViewportByID(id);
+    if (viewportPanel)
     {
         // Always update for main viewport as we are already pulling correct platform pos/size (see #4900)
-        if (!viewport->PlatformRequestMove || viewport->ID == IMGUI_VIEWPORT_DEFAULT_ID)
-            viewport->Pos = pos;
-        if (!viewport->PlatformRequestResize || viewport->ID == IMGUI_VIEWPORT_DEFAULT_ID)
-            viewport->Size = size;
-        viewport->Flags = flags | (viewport->Flags & (ImGuiViewportFlags_IsMinimized | ImGuiViewportFlags_IsFocused)); // Preserve existing flags
+        if (!viewportPanel->PlatformRequestMove || viewportPanel->ID == IMGUI_VIEWPORT_DEFAULT_ID)
+            viewportPanel->Pos = pos;
+        if (!viewportPanel->PlatformRequestResize || viewportPanel->ID == IMGUI_VIEWPORT_DEFAULT_ID)
+            viewportPanel->Size = size;
+        viewportPanel->Flags = flags | (viewportPanel->Flags & (ImGuiViewportFlags_IsMinimized | ImGuiViewportFlags_IsFocused)); // Preserve existing flags
     }
     else
     {
         // New viewport
-        viewport = IM_NEW(ImGuiViewportP)();
-        viewport->ID = id;
-        viewport->Idx = g.Viewports.Size;
-        viewport->Pos = viewport->LastPos = pos;
-        viewport->Size = size;
-        viewport->Flags = flags;
-        UpdateViewportPlatformMonitor(viewport);
-        g.Viewports.push_back(viewport);
+        viewportPanel = IM_NEW(ImGuiViewportP)();
+        viewportPanel->ID = id;
+        viewportPanel->Idx = g.Viewports.Size;
+        viewportPanel->Pos = viewportPanel->LastPos = pos;
+        viewportPanel->Size = size;
+        viewportPanel->Flags = flags;
+        UpdateViewportPlatformMonitor(viewportPanel);
+        g.Viewports.push_back(viewportPanel);
         g.ViewportCreatedCount++;
         IMGUI_DEBUG_LOG_VIEWPORT("[viewport] Add Viewport %08X '%s'\n", id, window ? window->Name : "<NULL>");
 
         // We normally setup for all viewports in NewFrame() but here need to handle the mid-frame creation of a new viewport.
         // We need to extend the fullscreen clip rect so the OverlayDrawList clip is correct for that the first frame
-        g.DrawListSharedData.ClipRectFullscreen.x = ImMin(g.DrawListSharedData.ClipRectFullscreen.x, viewport->Pos.x);
-        g.DrawListSharedData.ClipRectFullscreen.y = ImMin(g.DrawListSharedData.ClipRectFullscreen.y, viewport->Pos.y);
-        g.DrawListSharedData.ClipRectFullscreen.z = ImMax(g.DrawListSharedData.ClipRectFullscreen.z, viewport->Pos.x + viewport->Size.x);
-        g.DrawListSharedData.ClipRectFullscreen.w = ImMax(g.DrawListSharedData.ClipRectFullscreen.w, viewport->Pos.y + viewport->Size.y);
+        g.DrawListSharedData.ClipRectFullscreen.x = ImMin(g.DrawListSharedData.ClipRectFullscreen.x, viewportPanel->Pos.x);
+        g.DrawListSharedData.ClipRectFullscreen.y = ImMin(g.DrawListSharedData.ClipRectFullscreen.y, viewportPanel->Pos.y);
+        g.DrawListSharedData.ClipRectFullscreen.z = ImMax(g.DrawListSharedData.ClipRectFullscreen.z, viewportPanel->Pos.x + viewportPanel->Size.x);
+        g.DrawListSharedData.ClipRectFullscreen.w = ImMax(g.DrawListSharedData.ClipRectFullscreen.w, viewportPanel->Pos.y + viewportPanel->Size.y);
 
         // Store initial DpiScale before the OS platform window creation, based on expected monitor data.
         // This is so we can select an appropriate font size on the first frame of our window lifetime
-        if (viewport->PlatformMonitor != -1)
-            viewport->DpiScale = g.PlatformIO.Monitors[viewport->PlatformMonitor].DpiScale;
+        if (viewportPanel->PlatformMonitor != -1)
+            viewportPanel->DpiScale = g.PlatformIO.Monitors[viewportPanel->PlatformMonitor].DpiScale;
     }
 
-    viewport->Window = window;
-    viewport->LastFrameActive = g.FrameCount;
-    viewport->UpdateWorkRect();
-    IM_ASSERT(window == NULL || viewport->ID == window->ID);
+    viewportPanel->Window = window;
+    viewportPanel->LastFrameActive = g.FrameCount;
+    viewportPanel->UpdateWorkRect();
+    IM_ASSERT(window == NULL || viewportPanel->ID == window->ID);
 
     if (window != NULL)
         window->ViewportOwned = true;
 
-    return viewport;
+    return viewportPanel;
 }
 
-static void ImGui::DestroyViewport(ImGuiViewportP* viewport)
+static void ImGui::DestroyViewport(ImGuiViewportP* viewportPanel)
 {
     // Clear references to this viewport in windows (window->ViewportId becomes the master data)
     ImGuiContext& g = *GImGui;
     for (ImGuiWindow* window : g.Windows)
     {
-        if (window->Viewport != viewport)
+        if (window->Viewport != viewportPanel)
             continue;
         window->Viewport = NULL;
         window->ViewportOwned = false;
     }
-    if (viewport == g.MouseLastHoveredViewport)
+    if (viewportPanel == g.MouseLastHoveredViewport)
         g.MouseLastHoveredViewport = NULL;
 
     // Destroy
-    IMGUI_DEBUG_LOG_VIEWPORT("[viewport] Delete Viewport %08X '%s'\n", viewport->ID, viewport->Window ? viewport->Window->Name : "n/a");
-    DestroyPlatformWindow(viewport); // In most circumstances the platform window will already be destroyed here.
-    IM_ASSERT(g.PlatformIO.Viewports.contains(viewport) == false);
-    IM_ASSERT(g.Viewports[viewport->Idx] == viewport);
-    g.Viewports.erase(g.Viewports.Data + viewport->Idx);
-    IM_DELETE(viewport);
+    IMGUI_DEBUG_LOG_VIEWPORT("[viewport] Delete Viewport %08X '%s'\n", viewportPanel->ID, viewportPanel->Window ? viewportPanel->Window->Name : "n/a");
+    DestroyPlatformWindow(viewportPanel); // In most circumstances the platform window will already be destroyed here.
+    IM_ASSERT(g.PlatformIO.Viewports.contains(viewportPanel) == false);
+    IM_ASSERT(g.Viewports[viewportPanel->Idx] == viewportPanel);
+    g.Viewports.erase(g.Viewports.Data + viewportPanel->Idx);
+    IM_DELETE(viewportPanel);
 }
 
 // FIXME-VIEWPORT: This is all super messy and ought to be clarified or rewritten.
@@ -14963,90 +14963,90 @@ void ImGui::UpdatePlatformWindows()
     // Skip the main viewport (index 0), which is always fully handled by the application!
     for (int i = 1; i < g.Viewports.Size; i++)
     {
-        ImGuiViewportP* viewport = g.Viewports[i];
+        ImGuiViewportP* viewportPanel = g.Viewports[i];
 
         // Destroy platform window if the viewport hasn't been submitted or if it is hosting a hidden window
         // (the implicit/fallback Debug##Default window will be registering its viewport then be disabled, causing a dummy DestroyPlatformWindow to be made each frame)
         bool destroy_platform_window = false;
-        destroy_platform_window |= (viewport->LastFrameActive < g.FrameCount - 1);
-        destroy_platform_window |= (viewport->Window && !IsWindowActiveAndVisible(viewport->Window));
+        destroy_platform_window |= (viewportPanel->LastFrameActive < g.FrameCount - 1);
+        destroy_platform_window |= (viewportPanel->Window && !IsWindowActiveAndVisible(viewportPanel->Window));
         if (destroy_platform_window)
         {
-            DestroyPlatformWindow(viewport);
+            DestroyPlatformWindow(viewportPanel);
             continue;
         }
 
         // New windows that appears directly in a new viewport won't always have a size on their first frame
-        if (viewport->LastFrameActive < g.FrameCount || viewport->Size.x <= 0 || viewport->Size.y <= 0)
+        if (viewportPanel->LastFrameActive < g.FrameCount || viewportPanel->Size.x <= 0 || viewportPanel->Size.y <= 0)
             continue;
 
         // Create window
-        const bool is_new_platform_window = (viewport->PlatformWindowCreated == false);
+        const bool is_new_platform_window = (viewportPanel->PlatformWindowCreated == false);
         if (is_new_platform_window)
         {
-            IMGUI_DEBUG_LOG_VIEWPORT("[viewport] Create Platform Window %08X '%s'\n", viewport->ID, viewport->Window ? viewport->Window->Name : "n/a");
-            g.PlatformIO.Platform_CreateWindow(viewport);
+            IMGUI_DEBUG_LOG_VIEWPORT("[viewport] Create Platform Window %08X '%s'\n", viewportPanel->ID, viewportPanel->Window ? viewportPanel->Window->Name : "n/a");
+            g.PlatformIO.Platform_CreateWindow(viewportPanel);
             if (g.PlatformIO.Renderer_CreateWindow != NULL)
-                g.PlatformIO.Renderer_CreateWindow(viewport);
+                g.PlatformIO.Renderer_CreateWindow(viewportPanel);
             g.PlatformWindowsCreatedCount++;
-            viewport->LastNameHash = 0;
-            viewport->LastPlatformPos = viewport->LastPlatformSize = ImVec2(FLT_MAX, FLT_MAX); // By clearing those we'll enforce a call to Platform_SetWindowPos/Size below, before Platform_ShowWindow (FIXME: Is that necessary?)
-            viewport->LastRendererSize = viewport->Size;                                       // We don't need to call Renderer_SetWindowSize() as it is expected Renderer_CreateWindow() already did it.
-            viewport->PlatformWindowCreated = true;
+            viewportPanel->LastNameHash = 0;
+            viewportPanel->LastPlatformPos = viewportPanel->LastPlatformSize = ImVec2(FLT_MAX, FLT_MAX); // By clearing those we'll enforce a call to Platform_SetWindowPos/Size below, before Platform_ShowWindow (FIXME: Is that necessary?)
+            viewportPanel->LastRendererSize = viewportPanel->Size;                                       // We don't need to call Renderer_SetWindowSize() as it is expected Renderer_CreateWindow() already did it.
+            viewportPanel->PlatformWindowCreated = true;
         }
 
         // Apply Position and Size (from ImGui to Platform/Renderer backends)
-        if ((viewport->LastPlatformPos.x != viewport->Pos.x || viewport->LastPlatformPos.y != viewport->Pos.y) && !viewport->PlatformRequestMove)
-            g.PlatformIO.Platform_SetWindowPos(viewport, viewport->Pos);
-        if ((viewport->LastPlatformSize.x != viewport->Size.x || viewport->LastPlatformSize.y != viewport->Size.y) && !viewport->PlatformRequestResize)
-            g.PlatformIO.Platform_SetWindowSize(viewport, viewport->Size);
-        if ((viewport->LastRendererSize.x != viewport->Size.x || viewport->LastRendererSize.y != viewport->Size.y) && g.PlatformIO.Renderer_SetWindowSize)
-            g.PlatformIO.Renderer_SetWindowSize(viewport, viewport->Size);
-        viewport->LastPlatformPos = viewport->Pos;
-        viewport->LastPlatformSize = viewport->LastRendererSize = viewport->Size;
+        if ((viewportPanel->LastPlatformPos.x != viewportPanel->Pos.x || viewportPanel->LastPlatformPos.y != viewportPanel->Pos.y) && !viewportPanel->PlatformRequestMove)
+            g.PlatformIO.Platform_SetWindowPos(viewportPanel, viewportPanel->Pos);
+        if ((viewportPanel->LastPlatformSize.x != viewportPanel->Size.x || viewportPanel->LastPlatformSize.y != viewportPanel->Size.y) && !viewportPanel->PlatformRequestResize)
+            g.PlatformIO.Platform_SetWindowSize(viewportPanel, viewportPanel->Size);
+        if ((viewportPanel->LastRendererSize.x != viewportPanel->Size.x || viewportPanel->LastRendererSize.y != viewportPanel->Size.y) && g.PlatformIO.Renderer_SetWindowSize)
+            g.PlatformIO.Renderer_SetWindowSize(viewportPanel, viewportPanel->Size);
+        viewportPanel->LastPlatformPos = viewportPanel->Pos;
+        viewportPanel->LastPlatformSize = viewportPanel->LastRendererSize = viewportPanel->Size;
 
         // Update title bar (if it changed)
-        if (ImGuiWindow* window_for_title = GetWindowForTitleDisplay(viewport->Window))
+        if (ImGuiWindow* window_for_title = GetWindowForTitleDisplay(viewportPanel->Window))
         {
             const char* title_begin = window_for_title->Name;
             char* title_end = (char*)(intptr_t)FindRenderedTextEnd(title_begin);
             const ImGuiID title_hash = ImHashStr(title_begin, title_end - title_begin);
-            if (viewport->LastNameHash != title_hash)
+            if (viewportPanel->LastNameHash != title_hash)
             {
                 char title_end_backup_c = *title_end;
                 *title_end = 0; // Cut existing buffer short instead of doing an alloc/free, no small gain.
-                g.PlatformIO.Platform_SetWindowTitle(viewport, title_begin);
+                g.PlatformIO.Platform_SetWindowTitle(viewportPanel, title_begin);
                 *title_end = title_end_backup_c;
-                viewport->LastNameHash = title_hash;
+                viewportPanel->LastNameHash = title_hash;
             }
         }
 
         // Update alpha (if it changed)
-        if (viewport->LastAlpha != viewport->Alpha && g.PlatformIO.Platform_SetWindowAlpha)
-            g.PlatformIO.Platform_SetWindowAlpha(viewport, viewport->Alpha);
-        viewport->LastAlpha = viewport->Alpha;
+        if (viewportPanel->LastAlpha != viewportPanel->Alpha && g.PlatformIO.Platform_SetWindowAlpha)
+            g.PlatformIO.Platform_SetWindowAlpha(viewportPanel, viewportPanel->Alpha);
+        viewportPanel->LastAlpha = viewportPanel->Alpha;
 
         // Optional, general purpose call to allow the backend to perform general book-keeping even if things haven't changed.
         if (g.PlatformIO.Platform_UpdateWindow)
-            g.PlatformIO.Platform_UpdateWindow(viewport);
+            g.PlatformIO.Platform_UpdateWindow(viewportPanel);
 
         if (is_new_platform_window)
         {
             // On startup ensure new platform window don't steal focus (give it a few frames, as nested contents may lead to viewport being created a few frames late)
             if (g.FrameCount < 3)
-                viewport->Flags |= ImGuiViewportFlags_NoFocusOnAppearing;
+                viewportPanel->Flags |= ImGuiViewportFlags_NoFocusOnAppearing;
 
             // Show window
-            g.PlatformIO.Platform_ShowWindow(viewport);
+            g.PlatformIO.Platform_ShowWindow(viewportPanel);
 
             // Even without focus, we assume the window becomes front-most.
             // This is useful for our platform z-order heuristic when io.MouseHoveredViewport is not available.
-            if (viewport->LastFocusedStampCount != g.ViewportFocusedStampCount)
-                viewport->LastFocusedStampCount = ++g.ViewportFocusedStampCount;
+            if (viewportPanel->LastFocusedStampCount != g.ViewportFocusedStampCount)
+                viewportPanel->LastFocusedStampCount = ++g.ViewportFocusedStampCount;
         }
 
         // Clear request flags
-        viewport->ClearRequestFlags();
+        viewportPanel->ClearRequestFlags();
     }
 }
 
@@ -15068,19 +15068,19 @@ void ImGui::RenderPlatformWindowsDefault(void* platform_render_arg, void* render
     ImGuiPlatformIO& platform_io = ImGui::GetPlatformIO();
     for (int i = 1; i < platform_io.Viewports.Size; i++)
     {
-        ImGuiViewport* viewport = platform_io.Viewports[i];
-        if (viewport->Flags & ImGuiViewportFlags_IsMinimized)
+        ImGuiViewport* viewportPanel = platform_io.Viewports[i];
+        if (viewportPanel->Flags & ImGuiViewportFlags_IsMinimized)
             continue;
-        if (platform_io.Platform_RenderWindow) platform_io.Platform_RenderWindow(viewport, platform_render_arg);
-        if (platform_io.Renderer_RenderWindow) platform_io.Renderer_RenderWindow(viewport, renderer_render_arg);
+        if (platform_io.Platform_RenderWindow) platform_io.Platform_RenderWindow(viewportPanel, platform_render_arg);
+        if (platform_io.Renderer_RenderWindow) platform_io.Renderer_RenderWindow(viewportPanel, renderer_render_arg);
     }
     for (int i = 1; i < platform_io.Viewports.Size; i++)
     {
-        ImGuiViewport* viewport = platform_io.Viewports[i];
-        if (viewport->Flags & ImGuiViewportFlags_IsMinimized)
+        ImGuiViewport* viewportPanel = platform_io.Viewports[i];
+        if (viewportPanel->Flags & ImGuiViewportFlags_IsMinimized)
             continue;
-        if (platform_io.Platform_SwapBuffers) platform_io.Platform_SwapBuffers(viewport, platform_render_arg);
-        if (platform_io.Renderer_SwapBuffers) platform_io.Renderer_SwapBuffers(viewport, renderer_render_arg);
+        if (platform_io.Platform_SwapBuffers) platform_io.Platform_SwapBuffers(viewportPanel, platform_render_arg);
+        if (platform_io.Renderer_SwapBuffers) platform_io.Renderer_SwapBuffers(viewportPanel, renderer_render_arg);
     }
 }
 
@@ -15131,45 +15131,45 @@ static int ImGui::FindPlatformMonitorForRect(const ImRect& rect)
 }
 
 // Update monitor from viewport rectangle (we'll use this info to clamp windows and save windows lost in a removed monitor)
-static void ImGui::UpdateViewportPlatformMonitor(ImGuiViewportP* viewport)
+static void ImGui::UpdateViewportPlatformMonitor(ImGuiViewportP* viewportPanel)
 {
-    viewport->PlatformMonitor = (short)FindPlatformMonitorForRect(viewport->GetMainRect());
+    viewportPanel->PlatformMonitor = (short)FindPlatformMonitorForRect(viewportPanel->GetMainRect());
 }
 
 // Return value is always != NULL, but don't hold on it across frames.
 const ImGuiPlatformMonitor* ImGui::GetViewportPlatformMonitor(ImGuiViewport* viewport_p)
 {
     ImGuiContext& g = *GImGui;
-    ImGuiViewportP* viewport = (ImGuiViewportP*)(void*)viewport_p;
-    int monitor_idx = viewport->PlatformMonitor;
+    ImGuiViewportP* viewportPanel = (ImGuiViewportP*)(void*)viewport_p;
+    int monitor_idx = viewportPanel->PlatformMonitor;
     if (monitor_idx >= 0 && monitor_idx < g.PlatformIO.Monitors.Size)
         return &g.PlatformIO.Monitors[monitor_idx];
     return &g.FallbackMonitor;
 }
 
-void ImGui::DestroyPlatformWindow(ImGuiViewportP* viewport)
+void ImGui::DestroyPlatformWindow(ImGuiViewportP* viewportPanel)
 {
     ImGuiContext& g = *GImGui;
-    if (viewport->PlatformWindowCreated)
+    if (viewportPanel->PlatformWindowCreated)
     {
-        IMGUI_DEBUG_LOG_VIEWPORT("[viewport] Destroy Platform Window %08X '%s'\n", viewport->ID, viewport->Window ? viewport->Window->Name : "n/a");
+        IMGUI_DEBUG_LOG_VIEWPORT("[viewport] Destroy Platform Window %08X '%s'\n", viewportPanel->ID, viewportPanel->Window ? viewportPanel->Window->Name : "n/a");
         if (g.PlatformIO.Renderer_DestroyWindow)
-            g.PlatformIO.Renderer_DestroyWindow(viewport);
+            g.PlatformIO.Renderer_DestroyWindow(viewportPanel);
         if (g.PlatformIO.Platform_DestroyWindow)
-            g.PlatformIO.Platform_DestroyWindow(viewport);
-        IM_ASSERT(viewport->RendererUserData == NULL && viewport->PlatformUserData == NULL);
+            g.PlatformIO.Platform_DestroyWindow(viewportPanel);
+        IM_ASSERT(viewportPanel->RendererUserData == NULL && viewportPanel->PlatformUserData == NULL);
 
         // Don't clear PlatformWindowCreated for the main viewport, as we initially set that up to true in Initialize()
         // The righter way may be to leave it to the backend to set this flag all-together, and made the flag public.
-        if (viewport->ID != IMGUI_VIEWPORT_DEFAULT_ID)
-            viewport->PlatformWindowCreated = false;
+        if (viewportPanel->ID != IMGUI_VIEWPORT_DEFAULT_ID)
+            viewportPanel->PlatformWindowCreated = false;
     }
     else
     {
-        IM_ASSERT(viewport->RendererUserData == NULL && viewport->PlatformUserData == NULL && viewport->PlatformHandle == NULL);
+        IM_ASSERT(viewportPanel->RendererUserData == NULL && viewportPanel->PlatformUserData == NULL && viewportPanel->PlatformHandle == NULL);
     }
-    viewport->RendererUserData = viewport->PlatformUserData = viewport->PlatformHandle = NULL;
-    viewport->ClearRequestFlags();
+    viewportPanel->RendererUserData = viewportPanel->PlatformUserData = viewportPanel->PlatformHandle = NULL;
+    viewportPanel->ClearRequestFlags();
 }
 
 void ImGui::DestroyPlatformWindows()
@@ -15181,8 +15181,8 @@ void ImGui::DestroyPlatformWindows()
     // It is expected that the backend can handle calls to Renderer_DestroyWindow/Platform_DestroyWindow without
     // crashing if it doesn't have data stored.
     ImGuiContext& g = *GImGui;
-    for (ImGuiViewportP* viewport : g.Viewports)
-        DestroyPlatformWindow(viewport);
+    for (ImGuiViewportP* viewportPanel : g.Viewports)
+        DestroyPlatformWindow(viewportPanel);
 }
 
 
@@ -18129,14 +18129,14 @@ ImGuiID ImGui::DockSpace(ImGuiID id, const ImVec2& size_arg, ImGuiDockNodeFlags 
 // The limitation with this call is that your window won't have a menu bar.
 // Even though we could pass window flags, it would also require the user to be able to call BeginMenuBar() somehow meaning we can't Begin/End in a single function.
 // But you can also use BeginMainMenuBar(). If you really want a menu bar inside the same window as the one hosting the dockspace, you will need to copy this code somewhere and tweak it.
-ImGuiID ImGui::DockSpaceOverViewport(const ImGuiViewport* viewport, ImGuiDockNodeFlags dockspace_flags, const ImGuiWindowClass* window_class)
+ImGuiID ImGui::DockSpaceOverViewport(const ImGuiViewport* viewportPanel, ImGuiDockNodeFlags dockspace_flags, const ImGuiWindowClass* window_class)
 {
-    if (viewport == NULL)
-        viewport = GetMainViewport();
+    if (viewportPanel == NULL)
+        viewportPanel = GetMainViewport();
 
-    SetNextWindowPos(viewport->WorkPos);
-    SetNextWindowSize(viewport->WorkSize);
-    SetNextWindowViewport(viewport->ID);
+    SetNextWindowPos(viewportPanel->WorkPos);
+    SetNextWindowSize(viewportPanel->WorkSize);
+    SetNextWindowViewport(viewportPanel->ID);
 
     ImGuiWindowFlags host_window_flags = 0;
     host_window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDocking;
@@ -18145,7 +18145,7 @@ ImGuiID ImGui::DockSpaceOverViewport(const ImGuiViewport* viewport, ImGuiDockNod
         host_window_flags |= ImGuiWindowFlags_NoBackground;
 
     char label[32];
-    ImFormatString(label, IM_ARRAYSIZE(label), "DockSpaceViewport_%08X", viewport->ID);
+    ImFormatString(label, IM_ARRAYSIZE(label), "DockSpaceViewport_%08X", viewportPanel->ID);
 
     PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
     PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
@@ -19261,10 +19261,10 @@ static void SetClipboardTextFn_DefaultImpl(void* user_data_ctx, const char* text
 #pragma comment(lib, "imm32")
 #endif
 
-static void SetPlatformImeDataFn_DefaultImpl(ImGuiViewport* viewport, ImGuiPlatformImeData* data)
+static void SetPlatformImeDataFn_DefaultImpl(ImGuiViewport* viewportPanel, ImGuiPlatformImeData* data)
 {
     // Notify OS Input Method Editor of text input position
-    HWND hwnd = (HWND)viewport->PlatformHandleRaw;
+    HWND hwnd = (HWND)viewportPanel->PlatformHandleRaw;
     if (hwnd == 0)
         return;
 
@@ -19272,14 +19272,14 @@ static void SetPlatformImeDataFn_DefaultImpl(ImGuiViewport* viewport, ImGuiPlatf
     if (HIMC himc = ::ImmGetContext(hwnd))
     {
         COMPOSITIONFORM composition_form = {};
-        composition_form.ptCurrentPos.x = (LONG)(data->InputPos.x - viewport->Pos.x);
-        composition_form.ptCurrentPos.y = (LONG)(data->InputPos.y - viewport->Pos.y);
+        composition_form.ptCurrentPos.x = (LONG)(data->InputPos.x - viewportPanel->Pos.x);
+        composition_form.ptCurrentPos.y = (LONG)(data->InputPos.y - viewportPanel->Pos.y);
         composition_form.dwStyle = CFS_FORCE_POSITION;
         ::ImmSetCompositionWindow(himc, &composition_form);
         CANDIDATEFORM candidate_form = {};
         candidate_form.dwStyle = CFS_CANDIDATEPOS;
-        candidate_form.ptCurrentPos.x = (LONG)(data->InputPos.x - viewport->Pos.x);
-        candidate_form.ptCurrentPos.y = (LONG)(data->InputPos.y - viewport->Pos.y);
+        candidate_form.ptCurrentPos.x = (LONG)(data->InputPos.x - viewportPanel->Pos.x);
+        candidate_form.ptCurrentPos.y = (LONG)(data->InputPos.y - viewportPanel->Pos.y);
         ::ImmSetCandidateWindow(himc, &candidate_form);
         ::ImmReleaseContext(hwnd, himc);
     }
@@ -19317,20 +19317,20 @@ static void SetPlatformImeDataFn_DefaultImpl(ImGuiViewport*, ImGuiPlatformImeDat
 
 #ifndef IMGUI_DISABLE_DEBUG_TOOLS
 
-void ImGui::DebugRenderViewportThumbnail(ImDrawList* draw_list, ImGuiViewportP* viewport, const ImRect& bb)
+void ImGui::DebugRenderViewportThumbnail(ImDrawList* draw_list, ImGuiViewportP* viewportPanel, const ImRect& bb)
 {
     ImGuiContext& g = *GImGui;
     ImGuiWindow* window = g.CurrentWindow;
 
-    ImVec2 scale = bb.GetSize() / viewport->Size;
-    ImVec2 off = bb.Min - viewport->Pos * scale;
-    float alpha_mul = (viewport->Flags & ImGuiViewportFlags_IsMinimized) ? 0.30f : 1.00f;
+    ImVec2 scale = bb.GetSize() / viewportPanel->Size;
+    ImVec2 off = bb.Min - viewportPanel->Pos * scale;
+    float alpha_mul = (viewportPanel->Flags & ImGuiViewportFlags_IsMinimized) ? 0.30f : 1.00f;
     window->DrawList->AddRectFilled(bb.Min, bb.Max, GetColorU32(ImGuiCol_Border, alpha_mul * 0.40f));
     for (ImGuiWindow* thumb_window : g.Windows)
     {
         if (!thumb_window->WasActive || (thumb_window->Flags & ImGuiWindowFlags_ChildWindow))
             continue;
-        if (thumb_window->Viewport != viewport)
+        if (thumb_window->Viewport != viewportPanel)
             continue;
 
         ImRect thumb_r = thumb_window->Rect();
@@ -19356,14 +19356,14 @@ static void RenderViewportsThumbnails()
     // We don't display full monitor bounds (we could, but it often looks awkward), instead we display just enough to cover all of our viewports.
     float SCALE = 1.0f / 8.0f;
     ImRect bb_full(FLT_MAX, FLT_MAX, -FLT_MAX, -FLT_MAX);
-    for (ImGuiViewportP* viewport : g.Viewports)
-        bb_full.Add(viewport->GetMainRect());
+    for (ImGuiViewportP* viewportPanel : g.Viewports)
+        bb_full.Add(viewportPanel->GetMainRect());
     ImVec2 p = window->DC.CursorPos;
     ImVec2 off = p - bb_full.Min * SCALE;
-    for (ImGuiViewportP* viewport : g.Viewports)
+    for (ImGuiViewportP* viewportPanel : g.Viewports)
     {
-        ImRect viewport_draw_bb(off + (viewport->Pos) * SCALE, off + (viewport->Pos + viewport->Size) * SCALE);
-        ImGui::DebugRenderViewportThumbnail(window->DrawList, viewport, viewport_draw_bb);
+        ImRect viewport_draw_bb(off + (viewportPanel->Pos) * SCALE, off + (viewportPanel->Pos + viewportPanel->Size) * SCALE);
+        ImGui::DebugRenderViewportThumbnail(window->DrawList, viewportPanel, viewport_draw_bb);
     }
     ImGui::Dummy(bb_full.GetSize() * SCALE);
 }
@@ -19720,21 +19720,21 @@ void ImGui::ShowMetricsWindow(bool* p_open)
 
     // DrawLists
     int drawlist_count = 0;
-    for (ImGuiViewportP* viewport : g.Viewports)
-        drawlist_count += viewport->DrawDataP.CmdLists.Size;
+    for (ImGuiViewportP* viewportPanel : g.Viewports)
+        drawlist_count += viewportPanel->DrawDataP.CmdLists.Size;
     if (TreeNode("DrawLists", "DrawLists (%d)", drawlist_count))
     {
         Checkbox("Show ImDrawCmd mesh when hovering", &cfg->ShowDrawCmdMesh);
         Checkbox("Show ImDrawCmd bounding boxes when hovering", &cfg->ShowDrawCmdBoundingBoxes);
-        for (ImGuiViewportP* viewport : g.Viewports)
+        for (ImGuiViewportP* viewportPanel : g.Viewports)
         {
             bool viewport_has_drawlist = false;
-            for (ImDrawList* draw_list : viewport->DrawDataP.CmdLists)
+            for (ImDrawList* draw_list : viewportPanel->DrawDataP.CmdLists)
             {
                 if (!viewport_has_drawlist)
-                    Text("Active DrawLists in Viewport #%d, ID: 0x%08X", viewport->Idx, viewport->ID);
+                    Text("Active DrawLists in Viewport #%d, ID: 0x%08X", viewportPanel->Idx, viewportPanel->ID);
                 viewport_has_drawlist = true;
-                DebugNodeDrawList(NULL, viewport, draw_list, "DrawList");
+                DebugNodeDrawList(NULL, viewportPanel, draw_list, "DrawList");
             }
         }
         TreePop();
@@ -19771,15 +19771,15 @@ void ImGui::ShowMetricsWindow(bool* p_open)
             memcpy(viewports.Data, g.Viewports.Data, g.Viewports.size_in_bytes());
             if (viewports.Size > 1)
                 ImQsort(viewports.Data, viewports.Size, sizeof(ImGuiViewport*), ViewportComparerByLastFocusedStampCount);
-            for (ImGuiViewportP* viewport : viewports)
+            for (ImGuiViewportP* viewportPanel : viewports)
                 BulletText("Viewport #%d, ID: 0x%08X, LastFocused = %08d, PlatformFocused = %s, Window: \"%s\"",
-                    viewport->Idx, viewport->ID, viewport->LastFocusedStampCount,
-                    (g.PlatformIO.Platform_GetWindowFocus && viewport->PlatformWindowCreated) ? (g.PlatformIO.Platform_GetWindowFocus(viewport) ? "1" : "0") : "N/A",
-                    viewport->Window ? viewport->Window->Name : "N/A");
+                    viewportPanel->Idx, viewportPanel->ID, viewportPanel->LastFocusedStampCount,
+                    (g.PlatformIO.Platform_GetWindowFocus && viewportPanel->PlatformWindowCreated) ? (g.PlatformIO.Platform_GetWindowFocus(viewportPanel) ? "1" : "0") : "N/A",
+                    viewportPanel->Window ? viewportPanel->Window->Name : "N/A");
             TreePop();
         }
-        for (ImGuiViewportP* viewport : g.Viewports)
-            DebugNodeViewport(viewport);
+        for (ImGuiViewportP* viewportPanel : g.Viewports)
+            DebugNodeViewport(viewportPanel);
         TreePop();
     }
 
@@ -20260,7 +20260,7 @@ static void FormatTextureIDForDebugDisplay(char* buf, int buf_size, ImTextureID 
 
 // [DEBUG] Display contents of ImDrawList
 // Note that both 'window' and 'viewport' may be NULL here. Viewport is generally null of destroyed popups which previously owned a viewport.
-void ImGui::DebugNodeDrawList(ImGuiWindow* window, ImGuiViewportP* viewport, const ImDrawList* draw_list, const char* label)
+void ImGui::DebugNodeDrawList(ImGuiWindow* window, ImGuiViewportP* viewportPanel, const ImDrawList* draw_list, const char* label)
 {
     ImGuiContext& g = *GImGui;
     ImGuiMetricsConfig* cfg = &g.DebugMetricsConfig;
@@ -20277,7 +20277,7 @@ void ImGui::DebugNodeDrawList(ImGuiWindow* window, ImGuiViewportP* viewport, con
         return;
     }
 
-    ImDrawList* fg_draw_list = viewport ? GetForegroundDrawList(viewport) : NULL; // Render additional visuals into the top-most draw list
+    ImDrawList* fg_draw_list = viewportPanel ? GetForegroundDrawList(viewportPanel) : NULL; // Render additional visuals into the top-most draw list
     if (window && IsItemHovered() && fg_draw_list)
         fg_draw_list->AddRect(window->Pos, window->Pos + window->Size, IM_COL32(255, 255, 0, 255));
     if (!node_open)
@@ -20536,18 +20536,18 @@ void ImGui::DebugNodeTabBar(ImGuiTabBar* tab_bar, const char* label)
     }
 }
 
-void ImGui::DebugNodeViewport(ImGuiViewportP* viewport)
+void ImGui::DebugNodeViewport(ImGuiViewportP* viewportPanel)
 {
     SetNextItemOpen(true, ImGuiCond_Once);
-    if (TreeNode((void*)(intptr_t)viewport->ID, "Viewport #%d, ID: 0x%08X, Parent: 0x%08X, Window: \"%s\"", viewport->Idx, viewport->ID, viewport->ParentViewportId, viewport->Window ? viewport->Window->Name : "N/A"))
+    if (TreeNode((void*)(intptr_t)viewportPanel->ID, "Viewport #%d, ID: 0x%08X, Parent: 0x%08X, Window: \"%s\"", viewportPanel->Idx, viewportPanel->ID, viewportPanel->ParentViewportId, viewportPanel->Window ? viewportPanel->Window->Name : "N/A"))
     {
-        ImGuiWindowFlags flags = viewport->Flags;
+        ImGuiWindowFlags flags = viewportPanel->Flags;
         BulletText("Main Pos: (%.0f,%.0f), Size: (%.0f,%.0f)\nWorkArea Offset Left: %.0f Top: %.0f, Right: %.0f, Bottom: %.0f\nMonitor: %d, DpiScale: %.0f%%",
-            viewport->Pos.x, viewport->Pos.y, viewport->Size.x, viewport->Size.y,
-            viewport->WorkOffsetMin.x, viewport->WorkOffsetMin.y, viewport->WorkOffsetMax.x, viewport->WorkOffsetMax.y,
-            viewport->PlatformMonitor, viewport->DpiScale * 100.0f);
-        if (viewport->Idx > 0) { SameLine(); if (SmallButton("Reset Pos")) { viewport->Pos = ImVec2(200, 200); viewport->UpdateWorkRect(); if (viewport->Window) viewport->Window->Pos = viewport->Pos; } }
-        BulletText("Flags: 0x%04X =%s%s%s%s%s%s%s%s%s%s%s%s%s", viewport->Flags,
+            viewportPanel->Pos.x, viewportPanel->Pos.y, viewportPanel->Size.x, viewportPanel->Size.y,
+            viewportPanel->WorkOffsetMin.x, viewportPanel->WorkOffsetMin.y, viewportPanel->WorkOffsetMax.x, viewportPanel->WorkOffsetMax.y,
+            viewportPanel->PlatformMonitor, viewportPanel->DpiScale * 100.0f);
+        if (viewportPanel->Idx > 0) { SameLine(); if (SmallButton("Reset Pos")) { viewportPanel->Pos = ImVec2(200, 200); viewportPanel->UpdateWorkRect(); if (viewportPanel->Window) viewportPanel->Window->Pos = viewportPanel->Pos; } }
+        BulletText("Flags: 0x%04X =%s%s%s%s%s%s%s%s%s%s%s%s%s", viewportPanel->Flags,
             //(flags & ImGuiViewportFlags_IsPlatformWindow) ? " IsPlatformWindow" : "", // Omitting because it is the standard
             (flags & ImGuiViewportFlags_IsPlatformMonitor) ? " IsPlatformMonitor" : "",
             (flags & ImGuiViewportFlags_IsMinimized) ? " IsMinimized" : "",
@@ -20562,8 +20562,8 @@ void ImGui::DebugNodeViewport(ImGuiViewportP* viewport)
             (flags & ImGuiViewportFlags_NoAutoMerge) ? " NoAutoMerge" : "",
             (flags & ImGuiViewportFlags_TopMost) ? " TopMost" : "",
             (flags & ImGuiViewportFlags_CanHostOtherWindows) ? " CanHostOtherWindows" : "");
-        for (ImDrawList* draw_list : viewport->DrawDataP.CmdLists)
-            DebugNodeDrawList(NULL, viewport, draw_list, "DrawList");
+        for (ImDrawList* draw_list : viewportPanel->DrawDataP.CmdLists)
+            DebugNodeDrawList(NULL, viewportPanel, draw_list, "DrawList");
         TreePop();
     }
 }

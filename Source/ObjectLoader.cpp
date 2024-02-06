@@ -13,9 +13,8 @@
 
 ObjectLoader::ObjectLoader(Path filePath)
 {
-  filePath = _assetsDirPath / filePath.lexically_normal();
-  
-  _scene = _importer.ReadFile(filePath.string().c_str(),
+  Assimp::Importer importer;
+  _scene = importer.ReadFile(filePath.string().c_str(),
     aiProcess_Triangulate | 
     aiProcess_GenSmoothNormals | 
     aiProcess_FlipUVs | 
@@ -23,7 +22,7 @@ ObjectLoader::ObjectLoader(Path filePath)
 
   if (!_scene || _scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !_scene->mRootNode)
   {
-    CONSOLE_ERROR("ERROR::ASSIMP::{}", _importer.GetErrorString());
+    CONSOLE_ERROR("ERROR::ASSIMP::{}", importer.GetErrorString());
     throw RuntimeError("");
   }
 }

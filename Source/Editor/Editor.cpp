@@ -45,23 +45,23 @@ void Editor::Initialize()
   String& resolutionStr = instanceCM.GetValue(CONF_WINDOW_RESOLUTION);
   String& aspectRatioStr = instanceCM.GetValue(CONF_ASPECT_RATIO);
   for (_aspectIndex = 0; _aspectIndex < 3; _aspectIndex++)
-    if (std::strcmp(aspectRatioValues[_aspectIndex], aspectRatioStr.c_str()) == 0)
+    if (std::strcmp(_aspectRatioValues[_aspectIndex], aspectRatioStr.c_str()) == 0)
       break;
 
   for (_resolutionIndex = 0; _resolutionIndex < 12; _resolutionIndex++)
-    if (std::strcmp(resolutionValues[_resolutionIndex], resolutionStr.c_str()) == 0)
+    if (std::strcmp(_resolutionValues[_resolutionIndex], resolutionStr.c_str()) == 0)
       break;
 
   Vec2i resolution = instanceCM.ParseResolution(resolutionStr);
 
-  Vec2i viewportSize  = Vec2i(resolution.x * 0.6, resolution.y * 0.6); /* 60% x 60%  */
-  Vec2i hierarchySize = Vec2i(resolution.x * 0.2, resolution.y * 1);   /* 20% x 100% */
+  Vec2i viewportPanelSize  = Vec2i(resolution.x * 0.6, resolution.y * 0.6); /* 60% x 60%  */
+  Vec2i scenePanelSize = Vec2i(resolution.x * 0.2, resolution.y * 1);   /* 20% x 100% */
   _inspectorSize = Vec2i(resolution.x * 0.2, resolution.y * 1);   /* 20% x 100% */
-  Vec2i browserSize = Vec2i(resolution.x * 0.6, resolution.y * 0.4); /* 60% x 40%  */
+  Vec2i browserPanelSize = Vec2i(resolution.x * 0.6, resolution.y * 0.4); /* 60% x 40%  */
 
-  contentBrowser = std::make_unique<ContentBrowserPanel>("Content Browser", browserSize);
-  viewport = std::make_unique<ViewportPanel>("Viewport", viewportSize);
-  hierarchy = std::make_unique<HierarchyPanel>("Hierarchy", hierarchySize);
+  contentBrowserPanel = std::make_unique<ContentBrowserPanel>("Content Browser", browserPanelSize);
+  viewportPanel = std::make_unique<ViewportPanel>("Viewport", viewportPanelSize);
+  scenePanel = std::make_unique<ScenePanel>("Scene", scenePanelSize);
 }
 
 void Editor::ShutDown()
@@ -93,11 +93,11 @@ void Editor::RenderEditor(Scene* scene, FrameBuffer* framebuffer)
   if (_statsOpen)
     ShowStats();
 
-  contentBrowser->RenderPanel();
+  contentBrowserPanel->RenderPanel();
 
-  viewport->RenderPanel(framebuffer);
+  viewportPanel->RenderPanel(framebuffer);
 
-  hierarchy->RenderPanel(scene);
+  scenePanel->RenderPanel(scene);
   
   if (_inspectorOpen)
     ShowInspector();
@@ -190,10 +190,10 @@ void Editor::Dockspace()
   {
     if (ImGui::BeginMenu("View"))
     {
-      ImGui::MenuItem("Hierarchy", nullptr, &hierarchy->isOpen);
-      ImGui::MenuItem("Browser", nullptr, &contentBrowser->isOpen);
+      ImGui::MenuItem("Hierarchy", nullptr, &scenePanel->isOpen);
+      ImGui::MenuItem("Browser", nullptr, &contentBrowserPanel->isOpen);
       ImGui::MenuItem("Inspector", nullptr, &_inspectorOpen);
-      ImGui::MenuItem("Viewport", nullptr, &viewport->isOpen);
+      ImGui::MenuItem("Viewport", nullptr, &viewportPanel->isOpen);
       ImGui::MenuItem("Statistics", nullptr, &_statsOpen);
       ImGui::MenuItem("Demo", nullptr, &_demoOpen);
 
@@ -254,16 +254,16 @@ void Editor::ShowPreferences()
     buttonDisabled = false;
   
   /* Window aspect ratio */
-  if (ImGui::Combo("Aspect ratio", &_aspectIndex, aspectRatioValues, 3)) /* 3 aspect ratio availables */
+  if (ImGui::Combo("Aspect ratio", &_aspectIndex, _aspectRatioValues, 3)) /* 3 aspect ratio availables */
   {
-    instanceCM.SetValue(CONF_ASPECT_RATIO, aspectRatioValues[_aspectIndex]);
+    instanceCM.SetValue(CONF_ASPECT_RATIO, _aspectRatioValues[_aspectIndex]);
     buttonDisabled = false;
   }
   
   /* Window resolution */
-  if (ImGui::Combo("Resolution", &_resolutionIndex, resolutionValues, 12)) /* 12 resolution availables */
+  if (ImGui::Combo("Resolution", &_resolutionIndex, _resolutionValues, 12)) /* 12 resolution availables */
   {
-    instanceCM.SetValue(CONF_WINDOW_RESOLUTION, resolutionValues[_resolutionIndex]);
+    instanceCM.SetValue(CONF_WINDOW_RESOLUTION, _resolutionValues[_resolutionIndex]);
     buttonDisabled = false;
   }
 
