@@ -17,14 +17,15 @@ public:
 	ObjectLoader(Path filePath);
 	~ObjectLoader() = default;
 
-	/* Load data from file and initializes object */
-	void LoadStaticMesh(class StaticMesh* staticMesh, uint32_t meshIndex = 0);
+	/* Load data from file and initializes mesh */
+	void LoadMesh(class Mesh* mesh, uint32_t meshIndex = 0);
 	
 private:
+	Assimp::Importer _importer;
 	const aiScene* _scene;
-
-	void LoadMeshData(const aiMesh* aimesh, class Mesh* mesh);
+	
 	void LoadVertices(const aiMesh* aimesh, uint32_t writeBuffer);
 	void LoadIndices(const aiMesh* aimesh, uint32_t writeBuffer);
+	void LoadMaterials(const aiMesh* aimesh, class Mesh* mesh);
 	class Texture2D* GetTexture(const aiMaterial* material, const char* textureType);
 };

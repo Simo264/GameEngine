@@ -70,9 +70,9 @@ void Engine::Run()
   /* Mesh objects */
   //StaticMesh plane(ROOT_PATH / "Assets/Shapes/Plane/Plane.obj");
   //plane.scaling *= 10.f;
-  StaticMesh cube1(ROOT_PATH / "Assets/Shapes/Cube/Cube.obj");
-  cube1.position = Vec3f(0.0f, 2.0f, 0.0f);
-  cube1.scaling *= 0.5f;
+  //StaticMesh cube1(ROOT_PATH / "Assets/Shapes/Cube/Cube.obj");
+  //cube1.position = Vec3f(0.0f, 2.0f, 0.0f);
+  //cube1.scaling *= 0.5f;
   //StaticMesh cube2(ROOT_PATH / "Assets/Shapes/Cube/Cube.obj");
   //cube2.position = Vec3f(0.0f, 0.51f, 1.0f);
   //cube2.scaling *= 0.5f;

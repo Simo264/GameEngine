@@ -5,7 +5,7 @@
 StaticMesh::StaticMesh(Path objFilePath) : RootComponent(), Mesh()
 {
 	ObjectLoader loader(objFilePath);
-	loader.LoadStaticMesh(this);
+	loader.LoadMesh(this);
 }
 
 void StaticMesh::Draw(Shader* shader)
