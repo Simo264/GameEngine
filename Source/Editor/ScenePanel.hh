@@ -15,15 +15,18 @@ public:
 
 private:
 	Vector<class Texture2D*> _textures;
+	class Texture2D* _iconPlus;
 	class Texture2D* _iconSun;
 	class Texture2D* _iconLamp;
 	class Texture2D* _iconEye;
 	class Texture2D* _iconEyeHidden;
-	class Texture2D* _iconPlus;
+	class Texture2D* _iconMesh;
 
 	bool _dirLightSelected;
 	int _pointLightSelected;
 	int _staticMeshSelected;
+
+	float _iconSize;
 	
 	String _panelName;
 	Vec2i _panelSize;

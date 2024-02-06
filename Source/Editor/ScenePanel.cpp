@@ -30,12 +30,15 @@ ScenePanel::ScenePanel(const char* panelName, Vec2i panelSize)
   _dirLightSelected = false;
   _pointLightSelected = -1;
   _staticMeshSelected = -1;
+  
+  _iconSize = 16.0f;
 
   auto& instanceTM = TexturesManager::Instance();
   _iconSun  = instanceTM.GetTextureByPath(ROOT_PATH / "Icons/icon-sun.png");
   _iconLamp = instanceTM.GetTextureByPath(ROOT_PATH / "Icons/icon-lamp.png");
   _iconEye = instanceTM.GetTextureByPath(ROOT_PATH / "Icons/icon-eye.png");
   _iconEyeHidden = instanceTM.GetTextureByPath(ROOT_PATH / "Icons/icon-eye-hidden.png");
+  _iconMesh = instanceTM.GetTextureByPath(ROOT_PATH / "Icons/icon-mesh.png");
   _iconPlus = instanceTM.GetTextureByPath(ROOT_PATH / "Icons/icon-plus.png");
 }
 
@@ -77,7 +80,7 @@ void ScenePanel::RenderPanel(Scene* scene)
     {
       char label[32];
       sprintf_s(label, "Static_mesh_%d", i + 1);
-      //PointLightRow(label, i);
+      StaticMeshRow(label, i);
     }
 
     ImGui::EndTable();
@@ -106,7 +109,7 @@ void ScenePanel::DirLightRow(const char* label)
   ImGui::TableNextRow();
   
   ImGui::TableSetColumnIndex(0);
-  ImGui::Image((ImTextureID)_iconSun->textureID, { 16,16 });
+  ImGui::Image((ImTextureID)_iconSun->textureID, { _iconSize,_iconSize });
 
   ImGui::TableSetColumnIndex(1);
   if (ImGui::Selectable(label, _dirLightSelected == true))
@@ -118,7 +121,7 @@ void ScenePanel::DirLightRow(const char* label)
   }
 
   ImGui::TableSetColumnIndex(2);
-  ImGui::ImageButton((ImTextureID)_iconEye->textureID, { 16,16 });
+  ImGui::ImageButton((ImTextureID)_iconEye->textureID, { _iconSize,_iconSize });
 }
 
 void ScenePanel::PointLightRow(const char* label, int i)
@@ -126,7 +129,7 @@ void ScenePanel::PointLightRow(const char* label, int i)
   ImGui::TableNextRow();
 
   ImGui::TableSetColumnIndex(0);
-  ImGui::Image((ImTextureID)_iconLamp->textureID, { 16,16 });
+  ImGui::Image((ImTextureID)_iconLamp->textureID, { _iconSize,_iconSize });
 
   ImGui::TableSetColumnIndex(1);
   if (ImGui::Selectable(label, (_pointLightSelected == i), ImGuiSelectableFlags_SpanAvailWidth))
@@ -138,7 +141,7 @@ void ScenePanel::PointLightRow(const char* label, int i)
   }
   
   ImGui::TableSetColumnIndex(2);
-  ImGui::ImageButton((ImTextureID)_iconEye->textureID, { 16,16 });
+  ImGui::ImageButton((ImTextureID)_iconEye->textureID, { _iconSize,_iconSize });
 }
 
 void ScenePanel::StaticMeshRow(const char* label, int i)
@@ -146,7 +149,7 @@ void ScenePanel::StaticMeshRow(const char* label, int i)
   ImGui::TableNextRow();
 
   ImGui::TableSetColumnIndex(0);
-  ImGui::Image((ImTextureID)_iconSun->textureID, { 16,16 });
+  ImGui::Image((ImTextureID)_iconMesh->textureID, { _iconSize,_iconSize });
   
   ImGui::TableSetColumnIndex(1);
   if (ImGui::Selectable(label, _staticMeshSelected == i))
@@ -158,7 +161,7 @@ void ScenePanel::StaticMeshRow(const char* label, int i)
   }
 
   ImGui::TableSetColumnIndex(2);
-  ImGui::ImageButton((ImTextureID)_iconEye->textureID, { 16,16 });
+  ImGui::ImageButton((ImTextureID)_iconEye->textureID, { _iconSize,_iconSize });
 }
 
 void ScenePanel::ShowPropertiesPanel(StaticMesh* meshTarget)
@@ -244,12 +247,16 @@ void ScenePanel::ShowPropertiesPanel(PointLight* pointLight)
 
 void ScenePanel::AddSceneComponentButton(const char* labelPopup)
 {
-  ImGui::PushStyleColor(ImGuiCol_Button, { 0.1f,0.1f,0.1f,0.75f });
-  ImGui::PushStyleColor(ImGuiCol_ButtonHovered, { 0.75f,0.75f,0.75f,0.75f });
-  ImGui::PushStyleColor(ImGuiCol_ButtonActive, { 0.5f,0.5f,0.5f,0.75f });
+  ImGui::PushStyleColor(ImGuiCol_Button, { 1.f,1.f,1.f,1.f });
+  ImGui::PushStyleColor(ImGuiCol_ButtonHovered, { 0.75f,0.75f,0.75f,1.f });
+  ImGui::PushStyleColor(ImGuiCol_ButtonActive, { 0.5f,0.5f,0.5f,1.f });
 
-  if (ImGui::Button("Add"))
+  if (ImGui::ImageButton((ImTextureID)_iconPlus->textureID, { 24,24 }))
     ImGui::OpenPopup(labelPopup);
+
+  ImGui::InvisibleButton("##margin-bottom", { 8,8 });
+  ImGui::Separator();
+  ImGui::InvisibleButton("##margin-bottom", { 8,8 });
 
   ImGui::PopStyleColor();
   ImGui::PopStyleColor();

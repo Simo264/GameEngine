@@ -2,6 +2,7 @@
 
 #include "../Texture2D.hh"
 #include "../Subsystems/TexturesManager.hh"
+#include "../Logger.hh"
 
 #include "Imgui/imgui.h"
 #include "Imgui/imgui_impl_glfw.h"
@@ -61,7 +62,7 @@ void ContentBrowserPanel::RenderPanel()
     imageIcon = GetThumbIcon(entryPath, entryStr.c_str(), entry.is_directory());
 
     /* Double click on thumb */
-    ImGui::ImageButton((ImTextureID)imageIcon->textureID, { _thumbSize, _thumbSize }, { 0,0 }, { 1,1 });
+    ImGui::ImageButton((ImTextureID)imageIcon->textureID, { _thumbSize, _thumbSize });
     if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
       if (entry.is_directory())
         _currentDir /= entryStr;
@@ -85,33 +86,38 @@ void ContentBrowserPanel::RenderPanel()
 
 Texture2D* ContentBrowserPanel::GetThumbIcon(const Path& entryPath, const char* entryStr, bool isDirectory) const
 {
+  auto& instanceMT = TexturesManager::Instance();
+
   if(isDirectory)
-    return TexturesManager::Instance().GetTextureByPath(ROOT_PATH / "Icons/icon-folder.png");
+    return instanceMT.GetTextureByPath(ROOT_PATH / "Icons/icon-folder.png");
 
   Path extension = entryPath.extension();
   /* Is image */
   if (extension == ".png" || extension == ".jpg")
-    return TexturesManager::Instance().GetTextureByPath(_currentDir / entryStr);
+    return instanceMT.GetTextureByPath(ROOT_PATH / "Icons/icon-file-image.png");
   /* Txt file */
   else if (extension == ".txt")
-    return TexturesManager::Instance().GetTextureByPath(ROOT_PATH / "Icons/icon-text.png");
+    return instanceMT.GetTextureByPath(ROOT_PATH / "Icons/icon-text.png");
   /* TTf file */
   else if (extension == ".ttf")
-    return TexturesManager::Instance().GetTextureByPath(ROOT_PATH / "Icons/icon-font.png");
+    return instanceMT.GetTextureByPath(ROOT_PATH / "Icons/icon-font.png");
   /* Cpp file*/
   else if (extension == ".cpp")
-    return TexturesManager::Instance().GetTextureByPath(ROOT_PATH / "Icons/icon-cpp.png");
+    return instanceMT.GetTextureByPath(ROOT_PATH / "Icons/icon-cpp.png");
   /* Hpp file*/
-  else if (extension == ".hpp" || extension == ".h")
-    return TexturesManager::Instance().GetTextureByPath(ROOT_PATH / "Icons/icon-hpp.png");
+  else if (extension == ".hh" || extension == ".hpp" || extension == ".h")
+    return instanceMT.GetTextureByPath(ROOT_PATH / "Icons/icon-hpp.png");
   /* Vertex shader file*/
   else if (extension == ".vert")
-    return TexturesManager::Instance().GetTextureByPath(ROOT_PATH / "Icons/icon-vertex.png");
+    return instanceMT.GetTextureByPath(ROOT_PATH / "Icons/icon-vertex.png");
   /* Fragment shader file*/
   else if (extension == ".frag")
-    return TexturesManager::Instance().GetTextureByPath(ROOT_PATH / "Icons/icon-fragment.png");
+    return instanceMT.GetTextureByPath(ROOT_PATH / "Icons/icon-fragment.png");
+  /* Object file*/
+  else if (extension == ".obj")
+    return instanceMT.GetTextureByPath(ROOT_PATH / "Icons/icon-file-obj.png");
   /* Other file */
   else
-    return TexturesManager::Instance().GetTextureByPath(ROOT_PATH / "Icons/icon-file.png");
+    return instanceMT.GetTextureByPath(ROOT_PATH / "Icons/icon-file.png");
     
 }
