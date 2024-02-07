@@ -1,31 +1,66 @@
 #include "Scene.hh"
 #include "Shader.hh"
-#include "Mesh/StaticMesh.hh"
-#include "Mesh/InstancingMesh.hh"
 
 void Scene::DrawScene(Shader* shader)
 {
-	if (dLight.object && dLight.visible)
-		dLight.object->RenderLight(shader);
+	/* Render directional light */
+	if (HasDirLight() && sceneDLight->visible)
+		sceneDLight->object->RenderLight(shader);
 
-	for (auto& sceneObj : pLights)
-		if(sceneObj.visible)
-			sceneObj.object->RenderLight(shader);
-
-	/* Enable culling for meshes */
+	/* Render point lights */
+	for (auto ptr : scenePLights)
+		if (ptr->visible)
+			ptr->object->RenderLight(shader);
+	
+	/* Render static mesh objects */
 	//glEnable(GL_CULL_FACE);
-	for (auto& sceneObj : sMeshes)
-		if (sceneObj.visible)
-			sceneObj.object->Draw(shader);
+	for (auto ptr : sceneSMeshes)
+		if (ptr->visible)
+			ptr ->object->Draw(shader);
 	//glDisable(GL_CULL_FACE);
 }
 
-void Scene::AddStaticMesh(StaticMesh* staticMesh)
+void Scene::AddDirectionalLight(SceneObject<DirectionalLight>& dirLight)
 {
-	sMeshes.push_back({ staticMesh, true });
+	sceneDLight = &dirLight;
 }
 
-void Scene::AddPointLight(PointLight* pointLight)
+void Scene::RemoveDirectionalLight()
 {
-	pLights.push_back({ pointLight, true} );
+	sceneDLight = nullptr;
 }
+
+void Scene::AddPointLight(SceneObject<PointLight>& pointLight)
+{
+	scenePLights.push_back(&pointLight);
+}
+
+void Scene::RemovePointLight(SceneObject<PointLight>& pointLight)
+{
+	auto beg = scenePLights.begin();
+	auto end = scenePLights.end();
+	auto it = std::find_if(beg, end, [&](SceneObject<PointLight>* ptr) {
+		return ptr->Compare(pointLight);
+		});
+
+	if (it != end)
+		scenePLights.erase(it);
+}
+
+void Scene::AddStaticMesh(SceneObject<StaticMesh>& staticMesh)
+{
+	//_sMeshes.push_back(&staticMesh);
+}
+
+void Scene::RemoveStaticMesh(SceneObject<StaticMesh>& staticMesh)
+{
+	//auto beg = _pLights.begin();
+	//auto end = _pLights.end();
+	//auto it = std::find_if(beg, end, [&](SceneObject<StaticMesh>* ptr) {
+	//	return ptr->Compare(staticMesh);
+	//	});
+
+	//if (it != end)
+	//	_pLights.erase(it);
+}
+

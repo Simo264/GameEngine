@@ -3,6 +3,7 @@
 #include "Window.hh"
 #include "Camera.hh"
 #include "Shader.hh"
+#include "SceneObject.hh"
 #include "Scene.hh"
 #include "Renderer.hh"
 #include "FrameBuffer.hh"
@@ -96,12 +97,6 @@ void Engine::Run()
   
   /* Create scene */
   Scene scene;
-  //scene.directionalLight = &dirLight;
-  //scene.AddStaticMesh(&cube1);
-  //scene.AddStaticMesh(&cube2);
-  //scene.AddStaticMesh(&plane);
-  //scene.AddPointLight(&pointLight1);
-  //scene.AddPointLight(&pointLight2);
 
 #if 0
   /* Shadow mapping */

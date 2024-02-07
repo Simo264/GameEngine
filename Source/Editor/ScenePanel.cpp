@@ -1,9 +1,6 @@
 #include "ScenePanel.hh"
-#include "../Mesh/StaticMesh.hh"
-#include "../Lighting/DirectionalLight.hh"
-#include "../Lighting/PointLight.hh"
-#include "../Lighting/SpotLight.hh"
-#include "../Scene.hh"
+
+
 #include "../Logger.hh"
 #include "../Subsystems/TexturesManager.hh"
 
@@ -64,24 +61,31 @@ void ScenePanel::RenderPanel(Scene* scene)
     ImGui::TableSetupColumn("C3", ImGuiTableColumnFlags_WidthFixed, 0.2f * ImGui::GetContentRegionAvail().x);   // 20% width
 
     /* Directiona light row */
-    if (scene->dLight.object)
-      DirLightRow("Directional_light");
+    if (scene->HasDirLight())
+      DirLightRow(scene->sceneDLight);
 
     /* Point light rows */
-    for (int i = 0; i < scene->pLights.size(); i++)
+    if (scene->HasPointLights())
     {
-      char label[32];
-      sprintf_s(label, "Point_light_%d", i + 1);
-      PointLightRow(label, i);
+      for (auto scenePLight : scene->scenePLights)
+      {
+        //  char label[32];
+        //  sprintf_s(label, "Point_light_%d", i + 1);
+        //  PointLightRow(label, i);
+      }
     }
 
     /* Static mesh rows */
-    for (int i = 0; i < scene->sMeshes.size(); i++)
+    if (scene->HasStaticMeshes())
     {
-      char label[32];
-      sprintf_s(label, "Static_mesh_%d", i + 1);
-      StaticMeshRow(label, i);
+      for (auto sceneMesh : scene->sceneSMeshes)
+      {
+        //  char label[32];
+        //  sprintf_s(label, "Static_mesh_%d", i + 1);
+        //  StaticMeshRow(label, i);
+      }
     }
+
 
     ImGui::EndTable();
   }
@@ -92,11 +96,11 @@ void ScenePanel::RenderPanel(Scene* scene)
   ImGui::End();
 
   if (isPropertiesOpen && _dirLightSelected)
-    ShowPropertiesPanel(scene->dLight.object);
-  else if (isPropertiesOpen && _pointLightSelected >= 0)
-    ShowPropertiesPanel(scene->pLights.at(_pointLightSelected).object);
-  else if (isPropertiesOpen && _staticMeshSelected >= 0)
-    ShowPropertiesPanel(scene->sMeshes.at(_staticMeshSelected).object);
+    ShowPropertiesPanel(scene, scene->sceneDLight);
+  //else if (isPropertiesOpen && _pointLightSelected >= 0)
+  //  ShowPropertiesPanel(scene->pLights.at(_pointLightSelected).object);
+  //else if (isPropertiesOpen && _staticMeshSelected >= 0)
+  //  ShowPropertiesPanel(scene->sMeshes.at(_staticMeshSelected).object);
 }
 
 /* -----------------------------------------------------
@@ -104,7 +108,7 @@ void ScenePanel::RenderPanel(Scene* scene)
  * -----------------------------------------------------
 */
 
-void ScenePanel::DirLightRow(const char* label)
+void ScenePanel::DirLightRow(SceneObject<DirectionalLight>* sceneDirLight)
 {
   ImGui::TableNextRow();
   
@@ -112,7 +116,7 @@ void ScenePanel::DirLightRow(const char* label)
   ImGui::Image((ImTextureID)_iconSun->textureID, { _iconSize,_iconSize });
 
   ImGui::TableSetColumnIndex(1);
-  if (ImGui::Selectable(label, _dirLightSelected == true))
+  if (ImGui::Selectable(sceneDirLight->name.c_str(), _dirLightSelected == true))
   {
     isPropertiesOpen = true;
     _dirLightSelected = true;
@@ -121,7 +125,16 @@ void ScenePanel::DirLightRow(const char* label)
   }
 
   ImGui::TableSetColumnIndex(2);
-  ImGui::ImageButton((ImTextureID)_iconEye->textureID, { _iconSize,_iconSize });
+  if (sceneDirLight->visible)
+  {
+    if (ImGui::ImageButton((ImTextureID)_iconEye->textureID, { _iconSize,_iconSize }))
+      sceneDirLight->visible = false;
+  }
+  else
+  {
+    if (ImGui::ImageButton((ImTextureID)_iconEyeHidden->textureID, { _iconSize,_iconSize }))
+      sceneDirLight->visible = true;
+  }
 }
 
 void ScenePanel::PointLightRow(const char* label, int i)
@@ -164,7 +177,49 @@ void ScenePanel::StaticMeshRow(const char* label, int i)
   ImGui::ImageButton((ImTextureID)_iconEye->textureID, { _iconSize,_iconSize });
 }
 
-void ScenePanel::ShowPropertiesPanel(StaticMesh* meshTarget)
+void ScenePanel::ShowPropertiesPanel(Scene* scene, SceneObject<DirectionalLight>* sceneDirLight)
+{
+  if (!isPropertiesOpen)
+    return;
+
+  ImGui::Begin("Properties", &isPropertiesOpen);
+  ImGui::SeparatorText(sceneDirLight->name.c_str());
+
+  auto obj = sceneDirLight->object;
+  ImGui::ColorEdit3("Color", (float*)&obj->color);
+  ImGui::SliderFloat("Ambient", &obj->ambient, 0.0f, 1.0f);
+  ImGui::SliderFloat("Diffuse", &obj->diffuse, 0.0f, 1.0f);
+  ImGui::SliderFloat("Specular", &obj->specular, 0.0f, 1.0f);
+  ImGui::DragFloat3("Direction", (float*)&obj->direction, 0.1f, -FLT_MAX, +FLT_MAX);
+
+  //if (ImGui::Button("Delete"))
+  //{
+  //  scene->RemoveDirectionalLight();
+  //  isPropertiesOpen = false;
+  //}
+
+  ImGui::End();
+}
+
+void ScenePanel::ShowPropertiesPanel(SceneObject<PointLight>* scenePointLight)
+{
+  if (!isPropertiesOpen)
+    return;
+
+  ImGui::Begin("Properties", &isPropertiesOpen);
+  ImGui::SeparatorText(scenePointLight->name.c_str());
+
+  auto obj = scenePointLight->object;
+  ImGui::ColorEdit3("Color", (float*)&obj->color);
+  ImGui::SliderFloat("Ambient", &obj->ambient, 0.0f, 1.0f);
+  ImGui::SliderFloat("Diffuse", &obj->diffuse, 0.0f, 1.0f);
+  ImGui::SliderFloat("Specular", &obj->specular, 0.0f, 1.0f);
+  ImGui::DragFloat3("Position", (float*)&obj->position, 0.1f, -FLT_MAX, +FLT_MAX);
+
+  ImGui::End();
+}
+
+void ScenePanel::ShowPropertiesPanel(SceneObject<StaticMesh>* sceneMesh)
 {
   if (!isPropertiesOpen)
     return;
@@ -173,19 +228,20 @@ void ScenePanel::ShowPropertiesPanel(StaticMesh* meshTarget)
   TexturesManager::Instance().CopyTextures(_textures);
 
   ImGui::Begin("Properties", &isPropertiesOpen);
-  ImGui::Text("(StaticMesh name)");
+  ImGui::Text(sceneMesh->name.c_str());
 
+  auto obj = sceneMesh->object;
   ImGui::SeparatorText("Transformation");
-  ImGui::DragFloat3("Translation", (float*)&meshTarget->position, 0.1f, -FLT_MAX, +FLT_MAX);
-  ImGui::DragFloat3("Scaling", (float*)&meshTarget->scaling, 0.1f, -FLT_MAX, +FLT_MAX);
-  ImGui::DragFloat("Rotation angle", (float*)&meshTarget->rotationAngle, 0.5f, -180.0f, +180.0f);
-  ImGui::SliderFloat3("Rotation axis", (float*)&meshTarget->rotationAxis, 0.0f, 1.0f);
+  ImGui::DragFloat3("Translation", (float*)&obj->position, 0.1f, -FLT_MAX, +FLT_MAX);
+  ImGui::DragFloat3("Scaling", (float*)&obj->scaling, 0.1f, -FLT_MAX, +FLT_MAX);
+  ImGui::DragFloat("Rotation angle", (float*)&obj->rotationAngle, 0.5f, -180.0f, +180.0f);
+  ImGui::SliderFloat3("Rotation axis", (float*)&obj->rotationAxis, 0.0f, 1.0f);
 
   ImGui::SeparatorText("Material");
 
-  const String diffusePathStr = (meshTarget->diffuse ? meshTarget->diffuse->texturePath.string() : "");
-  const uint32_t diffuseID = (meshTarget->diffuse ? meshTarget->diffuse->textureID : 0);
-  if (meshTarget->diffuse)
+  const String diffusePathStr = (obj->diffuse ? obj->diffuse->texturePath.string() : "");
+  const uint32_t diffuseID = (obj->diffuse ? obj->diffuse->textureID : 0);
+  if (obj->diffuse)
     ImGui::Text(diffusePathStr.c_str());
   else
     ImGui::Text("None");
@@ -202,46 +258,12 @@ void ScenePanel::ShowPropertiesPanel(StaticMesh* meshTarget)
       String textPathStr = _textures[i]->texturePath.string();
       bool isSelected = (std::strcmp(diffusePathStr.c_str(), textPathStr.c_str()) == 0);
       if (ImGui::Selectable(textPathStr.c_str(), isSelected))
-        meshTarget->diffuse = TexturesManager::Instance().GetTextureByPath(textPathStr.c_str());
+        obj->diffuse = TexturesManager::Instance().GetTextureByPath(textPathStr.c_str());
       if (isSelected)
         ImGui::SetItemDefaultFocus();
     }
     ImGui::EndCombo();
   }
-  ImGui::End();
-}
-
-void ScenePanel::ShowPropertiesPanel(DirectionalLight* dirLight)
-{
-  if (!isPropertiesOpen)
-    return;
-
-  ImGui::Begin("Properties", &isPropertiesOpen);
-  ImGui::SeparatorText("Directional light");
-
-  ImGui::ColorEdit3("Color", (float*)&dirLight->color);
-  ImGui::SliderFloat("Ambient", &dirLight->ambient, 0.0f, 1.0f);
-  ImGui::SliderFloat("Diffuse", &dirLight->diffuse, 0.0f, 1.0f);
-  ImGui::SliderFloat("Specular", &dirLight->specular, 0.0f, 1.0f);
-  ImGui::DragFloat3("Direction", (float*)&dirLight->direction, 0.1f, -FLT_MAX, +FLT_MAX);
-
-  ImGui::End();
-}
-
-void ScenePanel::ShowPropertiesPanel(PointLight* pointLight)
-{
-  if (!isPropertiesOpen)
-    return;
-
-  ImGui::Begin("Properties", &isPropertiesOpen);
-  ImGui::SeparatorText("Point light");
-
-  ImGui::ColorEdit3("Color", (float*)&pointLight->color);
-  ImGui::SliderFloat("Ambient", &pointLight->ambient, 0.0f, 1.0f);
-  ImGui::SliderFloat("Diffuse", &pointLight->diffuse, 0.0f, 1.0f);
-  ImGui::SliderFloat("Specular", &pointLight->specular, 0.0f, 1.0f);
-  ImGui::DragFloat3("Position", (float*)&pointLight->position, 0.1f, -FLT_MAX, +FLT_MAX);
-
   ImGui::End();
 }
 
@@ -267,7 +289,7 @@ void ScenePanel::AddSceneComponentPopup(Scene* scene)
 {
   const char* lights[] = { "Directional light", "Point light", "Spot light", };
   const char* meshes[] = { "Cube", "Plane", "Cylinder", };
-  char buff[32];
+  char buff[32]{};
 
   ImGui::SeparatorText("Add lighting");
   for (int i = 0; i < IM_ARRAYSIZE(lights); i++)
@@ -276,13 +298,17 @@ void ScenePanel::AddSceneComponentPopup(Scene* scene)
     {
       if (i == 0) /* Directional light*/
       {
-        if (!scene->dLight.object)
-          scene->dLight = { new DirectionalLight("UDirLight"), true };
+        if (!scene->HasDirLight())
+        {
+          auto dirLight = new DirectionalLight("UDirLight");
+          auto sceneDirLight = SceneObject<DirectionalLight>::Create(dirLight, true, "Directional light");
+          scene->AddDirectionalLight(*sceneDirLight);
+        }
       }
       else if (i == 1) /* Point light */
       {
-        sprintf_s(buff, "UPointLight[%d]", scene->pLights.size());
-        scene->pLights.push_back({ new PointLight(buff), true } );
+        //sprintf_s(buff, "UPointLight[%d]", scene->pLights.size());
+        //scene->pLights.push_back({ new PointLight(buff), true } );
       }
       else if (i == 2) /* TODO: Spot light */
       {
@@ -300,15 +326,15 @@ void ScenePanel::AddSceneComponentPopup(Scene* scene)
       {
         /* Cube mesh */
       case 0:
-        scene->AddStaticMesh( new StaticMesh(ROOT_PATH / "Assets/Shapes/Cube/Cube.obj"));
+        //scene->AddStaticMesh( new StaticMesh(ROOT_PATH / "Assets/Shapes/Cube/Cube.obj"));
         break;
         /* Plane mesh */
       case 1:
-        scene->AddStaticMesh(new StaticMesh(ROOT_PATH / "Assets/Shapes/Plane/Plane.obj"));
+        //scene->AddStaticMesh(new StaticMesh(ROOT_PATH / "Assets/Shapes/Plane/Plane.obj"));
         break;
         /* Cylinder mesh */
       case 2:
-        scene->AddStaticMesh( new StaticMesh(ROOT_PATH / "Assets/Shapes/Cylinder/Cylinder.obj"));
+        //scene->AddStaticMesh( new StaticMesh(ROOT_PATH / "Assets/Shapes/Cylinder/Cylinder.obj"));
         break;
 
       default:

@@ -47,17 +47,15 @@ void Editor::Initialize()
   for (_aspectIndex = 0; _aspectIndex < 3; _aspectIndex++)
     if (std::strcmp(_aspectRatioValues[_aspectIndex], aspectRatioStr.c_str()) == 0)
       break;
-
   for (_resolutionIndex = 0; _resolutionIndex < 12; _resolutionIndex++)
     if (std::strcmp(_resolutionValues[_resolutionIndex], resolutionStr.c_str()) == 0)
       break;
 
   Vec2i resolution = instanceCM.ParseResolution(resolutionStr);
-
   Vec2i viewportPanelSize  = Vec2i(resolution.x * 0.6, resolution.y * 0.6); /* 60% x 60%  */
-  Vec2i scenePanelSize = Vec2i(resolution.x * 0.2, resolution.y * 1);   /* 20% x 100% */
-  _inspectorSize = Vec2i(resolution.x * 0.2, resolution.y * 1);   /* 20% x 100% */
-  Vec2i browserPanelSize = Vec2i(resolution.x * 0.6, resolution.y * 0.4); /* 60% x 40%  */
+  Vec2i scenePanelSize = Vec2i(resolution.x * 0.2, resolution.y * 1);       /* 20% x 100% */
+  _inspectorSize = Vec2i(resolution.x * 0.2, resolution.y * 1);             /* 20% x 100% */
+  Vec2i browserPanelSize = Vec2i(resolution.x * 0.6, resolution.y * 0.4);   /* 60% x 40%  */
 
   contentBrowserPanel = std::make_unique<ContentBrowserPanel>("Content Browser", browserPanelSize);
   viewportPanel = std::make_unique<ViewportPanel>("Viewport", viewportPanelSize);

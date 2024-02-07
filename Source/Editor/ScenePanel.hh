@@ -1,6 +1,11 @@
 #pragma once
 
-#include "../Core.hh"
+#include "../SceneObject.hh"
+#include "../Scene.hh"
+#include "../Mesh/StaticMesh.hh"
+#include "../Lighting/DirectionalLight.hh"
+#include "../Lighting/PointLight.hh"
+#include "../Lighting/SpotLight.hh"
 
 class ScenePanel
 {
@@ -11,7 +16,7 @@ public:
 	bool isOpen;
 	bool isPropertiesOpen;
 
-	void RenderPanel(class Scene* scene);
+	void RenderPanel(Scene* scene);
 
 private:
 	Vector<class Texture2D*> _textures;
@@ -31,15 +36,15 @@ private:
 	String _panelName;
 	Vec2i _panelSize;
 	
-	void ShowPropertiesPanel(class StaticMesh* meshTarget);
-	void ShowPropertiesPanel(class DirectionalLight* dirLight);
-	void ShowPropertiesPanel(class PointLight* pointLight);
+	void ShowPropertiesPanel(Scene* scene, SceneObject<DirectionalLight>* sceneDirLight);
+	void ShowPropertiesPanel(SceneObject<PointLight>* scenePointLight);
+	void ShowPropertiesPanel(SceneObject<StaticMesh>* sceneMesh);
 
 	void AddSceneComponentButton(const char* labelPopup);
-	void AddSceneComponentPopup(class Scene* scene);
+	void AddSceneComponentPopup(Scene* scene);
 
 	/* Show directional light row of the scene in the table */
-	void DirLightRow(const char* label);
+	void DirLightRow(SceneObject<DirectionalLight>* sceneDirLight);
 
 	/* List the point light of the scene in the table */
 	void PointLightRow(const char* label, int i);
