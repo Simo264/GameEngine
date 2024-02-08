@@ -59,10 +59,10 @@ void InstancingMesh::DrawInstMesh()
     Renderer::DrawIndexedInstanced(&_vertexArray, _nInstancesToDraw);
 
   glActiveTexture(GL_TEXTURE1);
-  glBindTexture(GL_TEXTURE_2D, 0); // unbind specular
+  glBindTexture(GL_TEXTURE_2D, 0); /* unbind specular */
 
   glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, 0); // unbind diffuse
+  glBindTexture(GL_TEXTURE_2D, 0); /* unbind diffuse */
 }
 
 void InstancingMesh::DestroyInstMesh() const

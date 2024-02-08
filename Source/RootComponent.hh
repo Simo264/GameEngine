@@ -2,12 +2,14 @@
 
 #include "Core.hh"
 
-// The component that defines the transform (location, rotation, scale) of this Actor in the world, 
-// all other components must be attached to this one somehow
-// ----------------------------------------------------------------------------------
+
+/* ----------------------------------------------------------------------
+	The component that defines the transform(location, rotation, scale) 
+	of this Actor in the world,
+	all other components must be attached to this one somehow
+ ------------------------------------------------------------------------ */
 class RootComponent
 {
-
 public:
 	RootComponent() 
 		: position{ Vec3f(0,0,0) }, scaling{ Vec3f(1,1,1) }, rotationAxis{ Vec3f(1,0,0) }, rotationAngle{ 0 } {}

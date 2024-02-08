@@ -4,14 +4,15 @@
 #include "../NonCopyable.hh"
 #include "../VertexArray.hh"
 
+/* -------------------------------------------------
+			InstancingMesh class 
+	------------------------------------------------- */
 class InstancingMesh : public NonCopyable
 {
 public:
 	/**
-	 * .
-	 * 
-	 * \param mesh: copy mesh data
-	 * \param nMaxInstances: used to initialize instance buffer
+	 * mesh: copy mesh data
+	 * nMaxInstances: used to initialize instance buffer
 	 */
 	InstancingMesh(class Mesh* mesh, uint32_t nMaxInstances);
 
@@ -28,7 +29,7 @@ private:
 	void InitializeInstance(class Mesh* mesh);
 
 	VertexArray _vertexArray;
-	uint32_t _instanceBuffer; // vertex buffer
+	uint32_t _instanceBuffer; /* vertex buffer */ 
 
 	uint32_t _maxNumInstances;
 	uint32_t _nInstancesToDraw;

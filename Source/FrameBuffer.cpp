@@ -136,7 +136,7 @@ void FrameBuffer::InitFrameBufferVAO()
 		 1.0f,  1.0f,  1.0f, 1.0f
 	};
 
-	VertexArrayConfig config; // (2)position, (2)textCoords
+	VertexArrayConfig config; /* (2)position, (2)textCoords */
 	config.PushAttributes({ 2,2 });
 	VertexArrayData data{ sizeof(vertices),vertices,0,nullptr };
 	_frameBufferVAO.InitVertexArray(data, config);

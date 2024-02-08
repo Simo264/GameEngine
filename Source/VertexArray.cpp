@@ -2,9 +2,8 @@
 #include "Logger.hh"
 
 /* -----------------------------------------------------
- *          VertexArrayConfig class
- * -----------------------------------------------------
-*/
+        VertexArrayConfig class
+  ----------------------------------------------------- */
 
 VertexArrayConfig::VertexArrayConfig()
 {
@@ -24,9 +23,8 @@ void VertexArrayConfig::PushAttributes(std::initializer_list<uint8_t> values)
 }
 
 /* -----------------------------------------------------
- *          VertexArray class
- * -----------------------------------------------------
-*/
+          VertexArray class
+  ----------------------------------------------------- */
 
 VertexArray::VertexArray()
 {

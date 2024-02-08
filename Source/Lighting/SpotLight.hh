@@ -2,9 +2,12 @@
 
 #include "PointLight.hh"
 
-// A spotlight is a light source that is located somewhere in the environment that, 
-// instead of shooting light rays in all directions, only shoots them in a specific direction.
-// A good example of a spotlight would be a street lamp or a flashlight. 
+/* ------------------------------------------------------------------------------
+  A spotlight is a light source that is located somewhere in the environment that, 
+  instead of shooting light rays in all directions, only shoots them in a specific direction.
+  A good example of a spotlight would be a street lamp or a flashlight.
+  ------------------------------------------------------------------------------ */
+
 class SpotLight : public PointLight
 {
 public:
@@ -13,6 +16,6 @@ public:
   void RenderLight(class Shader* shader) override;
 
   Vec3f direction;
-  float cutOff; // the cutoff angle that specifies the spotlight's radius.
+  float cutOff; /* the cutoff angle that specifies the spotlight's radius. */
 };
 

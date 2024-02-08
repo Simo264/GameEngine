@@ -12,11 +12,16 @@ enum class PostProcessingType {
 	POST_PROC_BLUR			= 4,
 };
 
+/* -------------------------------------------
+			Frame buffer class 
+	------------------------------------------- */
+class FrameBuffer : public NonCopyable
+{
 /* How to use Framebuffer:
 	1. Create frame buffer object:
-		FrameBuffer framebuffer; 
+		FrameBuffer framebuffer;
 		framebuffer.InitFrameBuffer(buffersize);
-	
+
 	2. Use frame buffer object:
 		framebuffer.BindMSAAFramebuffer();
 		glClearColor(pow(0.1f, GAMMA_CORRECTION), pow(0.1f, GAMMA_CORRECTION), pow(0.1f, GAMMA_CORRECTION), 1.0f);
@@ -27,22 +32,20 @@ enum class PostProcessingType {
 		scene.draw()
 
 	4. Unbind frame buffer object
-		framebuffer.BlitFrameBuffer();		
+		framebuffer.BlitFrameBuffer();
 		framebuffer.UnbindFrameBuffer();
-	
+
 	5.1 Draw frame buffer image as texture
-		ImGui::Image((ImTextureID)framebuffer.GetImage(), 
-			wsize, 
-			ImVec2(0, 1), 
+		ImGui::Image((ImTextureID)framebuffer.GetImage(),
+			wsize,
+			ImVec2(0, 1),
 			ImVec2(1, 0));
-		
+
 	5.2 Or draw on screen
 		framebufferShader->Use();
 		framebuffer.DrawFrame(framebufferShader);
-
 */
-class FrameBuffer : public NonCopyable
-{
+
 public:
 	FrameBuffer();
 	void InitFrameBuffer(Vec2i size);

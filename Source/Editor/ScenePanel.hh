@@ -7,6 +7,9 @@
 #include "../Lighting/PointLight.hh"
 #include "../Lighting/SpotLight.hh"
 
+/* ----------------------------------------
+			ScenePanel class
+	---------------------------------------- */
 class ScenePanel
 {
 public:
@@ -14,42 +17,30 @@ public:
 	~ScenePanel() = default;
 
 	bool isOpen;
-	bool isPropertiesOpen;
 
 	void RenderPanel(Scene* scene);
+	bool IsItemSelected() const { return _dLightSelected || _pLightSelected || _sMeshSelected; }
+	SceneObject<DirectionalLight>* DirLightSelected() const { return _dLightSelected; }
+	SceneObject<PointLight>* PointLightSelected() const { return _pLightSelected; }
+	SceneObject<StaticMesh>* StaticMeshSelected() const { return _sMeshSelected; }
 
 private:
-	Vector<class Texture2D*> _textures;
-	class Texture2D* _iconPlus;
-	class Texture2D* _iconSun;
-	class Texture2D* _iconLamp;
-	class Texture2D* _iconEye;
-	class Texture2D* _iconEyeHidden;
-	class Texture2D* _iconMesh;
-
-	bool _dirLightSelected;
-	int _pointLightSelected;
-	int _staticMeshSelected;
-
+	enum ICONS : int { PLUS = 0, SUN, LAMP, EYE, EYE_HIDDEN, MESH };
+	Array<class Texture2D*, 6> _icons;
 	float _iconSize;
-	
 	String _panelName;
 	Vec2i _panelSize;
-	
-	void ShowPropertiesPanel(Scene* scene, SceneObject<DirectionalLight>* sceneDirLight);
-	void ShowPropertiesPanel(SceneObject<PointLight>* scenePointLight);
-	void ShowPropertiesPanel(SceneObject<StaticMesh>* sceneMesh);
+	uint32_t _buttonEyeID;
 
+	SceneObject<DirectionalLight>* _dLightSelected;
+	SceneObject<PointLight>* _pLightSelected;
+	SceneObject<StaticMesh>* _sMeshSelected;
+	
+	void ToggleVisibility(bool& b);
+
+#if 0
 	void AddSceneComponentButton(const char* labelPopup);
 	void AddSceneComponentPopup(Scene* scene);
-
-	/* Show directional light row of the scene in the table */
-	void DirLightRow(SceneObject<DirectionalLight>* sceneDirLight);
-
-	/* List the point light of the scene in the table */
-	void PointLightRow(const char* label, int i);
-
-	/* List the static mesh of the scene in the table */
-	void StaticMeshRow(const char* label, int i);
+#endif
 };
 

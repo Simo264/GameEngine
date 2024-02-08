@@ -2,10 +2,10 @@
 
 #include "Core.hh"
 
-
-// Static class Renderer:
-// takes care of calling the drawing functions
-// --------------------------------------------
+/* -----------------------------------
+	Static class Renderer:  
+	takes care of calling the drawing functions
+	----------------------------------- */
 class Renderer
 {
 public:

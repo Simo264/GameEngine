@@ -1,7 +1,10 @@
 #pragma once
 
-/* Class noncopyable is a base class.
- Derive your own class from noncopyable when you want to prohibit copy construction and copy assignment. */
+/* ---------------------------------------------------------------- 
+	Class noncopyable is a base class.
+	Derive your own class from noncopyable when you want to prohibit 
+	copy construction and copy assignment. 
+	---------------------------------------------------------------- */
 class NonCopyable
 {
 public:

@@ -17,7 +17,7 @@ void Shader::InitShader(const char* label, const char* vertFile, const char* fra
 
   char infoLog[512];
 
-  // vertex shader
+  /* vertex shader */
   uint32_t vertexShader = glCreateShader(GL_VERTEX_SHADER);
   if (!Compile(vertexShader, vShaderSrc.c_str()))
   {
@@ -26,7 +26,7 @@ void Shader::InitShader(const char* label, const char* vertFile, const char* fra
     return;
   }
 
-  // fragment shader
+  /* fragment shader */
   uint32_t fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
   if (!Compile(fragmentShader, fShaderSrc.c_str()))
   {
@@ -35,7 +35,7 @@ void Shader::InitShader(const char* label, const char* vertFile, const char* fra
     return;
   }
 
-  // build and compile our shader program
+  /* build and compile our shader program */
   if (!CreateAndLink(vertexShader, fragmentShader))
   {
     glGetProgramInfoLog(_shaderID, 512, NULL, infoLog);

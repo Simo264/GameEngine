@@ -14,8 +14,8 @@ Camera::Camera(Vec2i windowSize, Vec3f position) : position{ position }
   yaw     = -90.0f;
   pitch   = 0.0f;
 
-  movementSpeed    = 7.5f;  // [1.0f:10.0f]
-  mouseSensitivity = 25.0f; // [1.0f:100.0f]
+  movementSpeed    = 7.5f;  /* [1.0f:10.0f] */
+  mouseSensitivity = 25.0f; /* [1.0f:100.0f] */
   fov              = 45.0f;
 
   _lastX = ((float)windowSize.x / 2.0f);
@@ -67,7 +67,7 @@ void Camera::FreeCameraWalk(const Window* window, const double deltaTime)
 {
   const float velocity = movementSpeed * deltaTime;
 
-  // W-S
+  /* W-S */
   if (window->GetKey(GLFW_KEY_W) == GLFW_PRESS)
   {
     position += front * velocity;
@@ -77,7 +77,7 @@ void Camera::FreeCameraWalk(const Window* window, const double deltaTime)
     position -= front * velocity;
   }
 
-  // A-D
+  /* A-D */
   if (window->GetKey(GLFW_KEY_A) == GLFW_PRESS)
   {
     position -= right * velocity;
@@ -87,7 +87,7 @@ void Camera::FreeCameraWalk(const Window* window, const double deltaTime)
     position += right * velocity;
   }
 
-  // SPACE-LCTRL
+  /* SPACE-LCTRL */
   if (window->GetKey(GLFW_KEY_SPACE) == GLFW_PRESS)
   {
     position += up * velocity;
@@ -110,21 +110,21 @@ void Camera::FreeCameraRotation(Vec2d& mousePos, const double deltaTime)
   const float velocity = mouseSensitivity * deltaTime * 10;
 
   const float xoffset = _lastX - mousePos.x;
-  if (xoffset < 0) // Right
+  if (xoffset < 0) /* Right */
     yaw += velocity;
-  else if (xoffset > 0) // Left
+  else if (xoffset > 0) /* Left */
     yaw -= velocity;
 
   const float yoffset = _lastY - mousePos.y;
-  if (yoffset > 0) // Up
+  if (yoffset > 0) /* Up */
     pitch += velocity;
-  else if (yoffset < 0) // Down
+  else if (yoffset < 0) /* Down */
     pitch -= velocity;
 
   _lastX = mousePos.x;
   _lastY = mousePos.y;
 
-  // make sure that when pitch is out of bounds, screen doesn't get flipped
+  /* make sure that when pitch is out of bounds, screen doesn't get flipped */
   if (_constrainPitch)
   {
     if (pitch > 89.0f)

@@ -3,6 +3,9 @@
 #include "Core.hh"
 #include "NonCopyable.hh"
 
+/* -----------------------------------
+      Texture 2D class
+  ----------------------------------- */
 class Texture2D : public NonCopyable
 {
 public:

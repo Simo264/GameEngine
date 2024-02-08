@@ -12,12 +12,10 @@ void Scene::DrawScene(Shader* shader)
 		if (ptr->visible)
 			ptr->object->RenderLight(shader);
 	
-	/* Render static mesh objects */
-	//glEnable(GL_CULL_FACE);
+	/* Render static mesh objects (enable cull face to improve performance) */
 	for (auto ptr : sceneSMeshes)
 		if (ptr->visible)
 			ptr ->object->Draw(shader);
-	//glDisable(GL_CULL_FACE);
 }
 
 void Scene::AddDirectionalLight(SceneObject<DirectionalLight>& dirLight)
@@ -49,18 +47,18 @@ void Scene::RemovePointLight(SceneObject<PointLight>& pointLight)
 
 void Scene::AddStaticMesh(SceneObject<StaticMesh>& staticMesh)
 {
-	//_sMeshes.push_back(&staticMesh);
+	sceneSMeshes.push_back(&staticMesh);
 }
 
 void Scene::RemoveStaticMesh(SceneObject<StaticMesh>& staticMesh)
 {
-	//auto beg = _pLights.begin();
-	//auto end = _pLights.end();
-	//auto it = std::find_if(beg, end, [&](SceneObject<StaticMesh>* ptr) {
-	//	return ptr->Compare(staticMesh);
-	//	});
+	auto beg = sceneSMeshes.begin();
+	auto end = sceneSMeshes.end();
+	auto it = std::find_if(beg, end, [&](SceneObject<StaticMesh>* ptr) {
+		return ptr->Compare(staticMesh);
+		});
 
-	//if (it != end)
-	//	_pLights.erase(it);
+	if (it != end)
+		sceneSMeshes.erase(it);
 }
 

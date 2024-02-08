@@ -29,8 +29,8 @@ ObjectLoader::ObjectLoader(Path filePath)
 void ObjectLoader::LoadMesh(Mesh* mesh, uint32_t meshIndex)
 {
   aiMesh* aimesh = _scene->mMeshes[meshIndex];
-  const uint64_t vertDataSize = aimesh->mNumVertices * 8; // 8: 3(position) + 3(normals) + 2(textcoord)
-  const uint64_t indDatasize = aimesh->mNumFaces * 3; // 3: number of vertices per triangle 
+  const uint64_t vertDataSize = aimesh->mNumVertices * 8; /* 8: 3(position)+3(normals)+2(textcoord) */
+  const uint64_t indDatasize = aimesh->mNumFaces * 3; /* 3: number of vertices per triangle */
 
   /* Create empty mesh */
   VertexArrayData data;
@@ -40,7 +40,7 @@ void ObjectLoader::LoadMesh(Mesh* mesh, uint32_t meshIndex)
   data.indData = nullptr;
   /* Default configuration */
   VertexArrayConfig config;
-  config.PushAttributes({ 3,3,2 }); //(3)position + (3)normal + (2)textCoords
+  config.PushAttributes({ 3,3,2 }); /* (3)position + (3)normal + (2)textCoords */
 
   mesh->InitMesh(data, config);
 

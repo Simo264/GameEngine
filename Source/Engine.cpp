@@ -68,35 +68,21 @@ void Engine::Run()
   /* Camera object */
   Camera camera(window.GetWindowSize(), Vec3f(0.0f, 1.0f, 10.0f));
   
-  /* Mesh objects */
-  //StaticMesh plane(ROOT_PATH / "Assets/Shapes/Plane/Plane.obj");
-  //plane.scaling *= 10.f;
-  //StaticMesh cube1(ROOT_PATH / "Assets/Shapes/Cube/Cube.obj");
-  //cube1.position = Vec3f(0.0f, 2.0f, 0.0f);
-  //cube1.scaling *= 0.5f;
-  //StaticMesh cube2(ROOT_PATH / "Assets/Shapes/Cube/Cube.obj");
-  //cube2.position = Vec3f(0.0f, 0.51f, 1.0f);
-  //cube2.scaling *= 0.5f;
-  //StaticMesh cottage("Cottage/Cottage.obj");
-
-  //InstancingMesh instancingPlane(&plane, 10);
-  //instancingPlane.AddInstance(glm::translate(Mat4f(1.0f), Vec3f(0.0f, 0.0f, 0.0f)));
-  //instancingPlane.AddInstance(glm::translate(Mat4f(1.0f), Vec3f(2.0f, 0.0f, 0.0f)));
-  //instancingPlane.AddInstance(glm::translate(Mat4f(1.0f), Vec3f(0.0f, 0.0f, 2.0f)));
-  //instancingPlane.AddInstance(glm::translate(Mat4f(1.0f), Vec3f(2.0f, 0.0f, 2.0f)));
-
-  /* Lighting */
-  //DirectionalLight dirLight("UDirLight");
-  //dirLight.ambient = 0.1f;
-  //dirLight.diffuse = 0.25f;
-  //dirLight.specular = 0.75f;
-  //PointLight pointLight1("UPointLight[0]");
-  //pointLight1.position = Vec3f(0.0f, 5.0f, 0.0f);
-  //PointLight pointLight2("UPointLight[1]");
-  //pointLight2.position = Vec3f(0.0f, 5.0f, 5.0f);
-  
   /* Create scene */
+  DirectionalLight dirLight("UDirLight");
+  PointLight pointLight1("UPointLight[0]");
+  PointLight pointLight2("UPointLight[1]");
+  StaticMesh cube(ROOT_PATH / "Assets/Shapes/Cube/Cube.obj");
+  auto sceneDirLight = SceneObject<DirectionalLight>::Create(&dirLight, true);
+  auto scenePointLight1 = SceneObject<PointLight>::Create(&pointLight1, true);
+  auto scenePointLight2 = SceneObject<PointLight>::Create(&pointLight2, true);
+  auto sceneCube = SceneObject<StaticMesh>::Create(&cube, true);
+
   Scene scene;
+  scene.AddDirectionalLight(*sceneDirLight);
+  scene.AddPointLight(*scenePointLight1);
+  scene.AddPointLight(*scenePointLight2);
+  scene.AddStaticMesh(*sceneCube);
 
 #if 0
   /* Shadow mapping */

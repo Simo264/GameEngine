@@ -6,7 +6,7 @@
 #include <spdlog/spdlog.h>
 
 /* ----------------------------------------- 
-	Static class Logger
+			Static class Logger
 	----------------------------------------- */
 class Logger
 {

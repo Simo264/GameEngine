@@ -3,6 +3,10 @@
 #include "Core.hh"
 #include "NonCopyable.hh"
 
+/* --------------------------------------- 
+      Camera class 
+  --------------------------------------- */
+
 class Camera : public NonCopyable
 {
 public:

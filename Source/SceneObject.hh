@@ -3,34 +3,16 @@
 #include "Core.hh"
 #include "NonCopyable.hh"
 
-/* SceneObject class represents a specific object placed in world */
-
-template <typename T>
+/* -------------------------------------------------------------
+	SceneObject class represents a specific object placed in world 
+	------------------------------------------------------------- */
+template <class T>
 class SceneObject : public NonCopyable {
 public:
-	SceneObject(const char* name)
+	SceneObject(T* obj = nullptr, bool visible = false) : object{ obj }, visible{ visible }
 	{
-		object = nullptr;
-		visible = false;
 		objectID = _id++;
-		this->name = name;
-	}
-	SceneObject(T* obj, bool b, const char* name)
-	{
-		object = obj;
-		visible = b;
-		objectID = _id++;
-		this->name = name;
-	}
-
-	String ToString()
-	{
-		OStringStream oss;
-		if (!object)
-			oss << "Object not valid!\n";
-		else
-			oss << "Name=" << name << "\nVisible: " << visible << "\nID=" << objectID << "\n";
-		return oss.str();
+		SetName();
 	}
 
 	bool Compare(const SceneObject& other)
@@ -39,9 +21,15 @@ public:
 	}
 
 	/* Allocate on heap memory new scene object of type T */
-	static SceneObject<T>* Create(T* t, bool visible, const char* name)
+	static SceneObject<T>* Create(T* t, bool visible)
 	{
-		return new SceneObject<T>(t, visible, name);
+		return new SceneObject<T>(t, visible);
+	}
+
+	/* Free memory */
+	static void DestroyObject(SceneObject<T>* o)
+	{
+		delete o;
 	}
 
 
@@ -52,5 +40,6 @@ public:
 
 private:
 	inline static uint32_t _id = 0;
-};
 
+	void SetName();
+};

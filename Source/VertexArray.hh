@@ -3,8 +3,9 @@
 #include "Core.hh"
 #include "NonCopyable.hh"
 
-// Vertex Array Configuration 
-// -------------------------------------------------
+/* ------------------------------------ 
+      Vertex array configuration class
+  ------------------------------------ */
 class VertexArrayConfig
 {
 public:
@@ -13,22 +14,24 @@ public:
   void PushAttribute(uint8_t attribute);
   void PushAttributes(std::initializer_list<uint8_t> values);
 
-  // ex: layout = [4, 3, 2]
-  // layout=0: in vec4 components (x,y,z,w)
-  // layout=1: in vec3 components (x,y,z)
-  // layout=2: in vec2 components (x,y)
+  /* 
+    ex: layout = [4, 3, 2]
+    layout=0: in vec4 components (x,y,z,w)
+    layout=1: in vec3 components (x,y,z)
+    layout=2: in vec2 components (x,y)
+  */
   Array<uint8_t, 16> layout;
   uint32_t numAttrs;
 };
 
-
-// Vertex Array Data
-// -------------------------------------------------
+/* ------------------------------------
+      Vertex array data class
+  ------------------------------------ */
 struct VertexArrayData
 {
-  uint64_t	vertDataSize; // size in bytes
+  uint64_t	vertDataSize; /* size in bytes */
   float*    vertData;
-  uint64_t	indDataSize; // size in bytes
+  uint64_t	indDataSize; /* size in bytes */
   uint32_t* indData;
 
   VertexArrayData() : 
@@ -46,8 +49,9 @@ struct VertexArrayData
 };
 
 
-// Vertex Array Object
-// -------------------------------------------------
+/* ------------------------------------
+      Vertex array class
+  ------------------------------------ */
 class VertexArray : public NonCopyable
 {
 public:
@@ -64,15 +68,15 @@ public:
   const uint32_t& IndexBufferID() const { return _ebo; }
   const VertexArrayConfig& GetConfig() const { return _config; }
 
-  // Copy the vertex buffer data into writeBuffer
+  /* Copy the vertex buffer data into writeBuffer */
   void CopyVertexBufferData(uint32_t writeBuffer);
 
-  // Copy the index buffer data into writeBuffer
+  /* Copy the index buffer data into writeBuffer */
   void CopyIndexBufferData(uint32_t writeBuffer);
 
-  uint32_t numVertices; // used in renderer
-  uint32_t numIndices;  // used in renderer
-  uint32_t vboSize;     // cache the vertex buffer size (in byte)
+  uint32_t numVertices; /* used in renderer */
+  uint32_t numIndices;  /* used in renderer */
+  uint32_t vboSize;     /* cache the vertex buffer size(in byte) */
   
 private:
   VertexArrayConfig _config;

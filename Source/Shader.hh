@@ -3,6 +3,9 @@
 #include "Core.hh"
 #include "NonCopyable.hh"
 
+/* -----------------------------------
+      Shader program class
+  ----------------------------------- */
 class Shader : public NonCopyable
 {
 public:

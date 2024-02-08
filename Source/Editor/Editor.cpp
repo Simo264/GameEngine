@@ -1,16 +1,8 @@
 #include "Editor.hh"
-
-#include "../Lighting/DirectionalLight.hh"
-#include "../Lighting/PointLight.hh"
-#include "../Mesh/StaticMesh.hh"
 #include "../FrameBuffer.hh"
 #include "../Scene.hh"
-
-#include "../Subsystems/TexturesManager.hh"
-#include "../Subsystems/ConfigurationsManager.hh"
-
 #include "../Renderer.hh"
-#include "../Logger.hh"
+#include "../Subsystems/ConfigurationsManager.hh"
 
 #include "Imgui/imgui.h"
 #include "Imgui/imgui_impl_glfw.h"
@@ -54,12 +46,14 @@ void Editor::Initialize()
   Vec2i resolution = instanceCM.ParseResolution(resolutionStr);
   Vec2i viewportPanelSize  = Vec2i(resolution.x * 0.6, resolution.y * 0.6); /* 60% x 60%  */
   Vec2i scenePanelSize = Vec2i(resolution.x * 0.2, resolution.y * 1);       /* 20% x 100% */
+  Vec2i propPanelSize = Vec2i(resolution.x * 0.2, resolution.y * 1);
   _inspectorSize = Vec2i(resolution.x * 0.2, resolution.y * 1);             /* 20% x 100% */
   Vec2i browserPanelSize = Vec2i(resolution.x * 0.6, resolution.y * 0.4);   /* 60% x 40%  */
 
   contentBrowserPanel = std::make_unique<ContentBrowserPanel>("Content Browser", browserPanelSize);
   viewportPanel = std::make_unique<ViewportPanel>("Viewport", viewportPanelSize);
   scenePanel = std::make_unique<ScenePanel>("Scene", scenePanelSize);
+  propertyPanel = std::make_unique<PropertyPanel>("Properties", propPanelSize);
 }
 
 void Editor::ShutDown()
@@ -96,6 +90,19 @@ void Editor::RenderEditor(Scene* scene, FrameBuffer* framebuffer)
   viewportPanel->RenderPanel(framebuffer);
 
   scenePanel->RenderPanel(scene);
+
+  if (scenePanel->IsItemSelected())
+  {
+    auto dLight = scenePanel->DirLightSelected();
+    auto pLight = scenePanel->PointLightSelected();
+    auto sMesh  = scenePanel->StaticMeshSelected();
+    if(dLight)
+      propertyPanel->RenderPanel(*dLight);
+    else if(pLight)
+      propertyPanel->RenderPanel(*pLight);
+    else if(sMesh)
+      propertyPanel->RenderPanel(*sMesh);
+  }
   
   if (_inspectorOpen)
     ShowInspector();
@@ -128,16 +135,6 @@ void Editor::Styling()
 
   ImGuiIO& io = ImGui::GetIO();
   io.Fonts->AddFontFromFileTTF(fontPath.string().c_str(), 16); // custom font
-
-  //ImGuiStyle& style = ImGui::GetStyle();
-  //style.FrameRounding = 6;
-
-  /* When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical to regular ones. */
-  //if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-  //{
-  //  style.WindowRounding = 0.0f;
-  //  style.Colors[ImGuiCol_WindowBg].w = 1.0f;
-  //}
 
   ImGui::StyleColorsDark();
 }

@@ -2,6 +2,9 @@
 
 #include "../Core.hh"
 
+/* ----------------------------------------
+			Viewport class 
+	---------------------------------------- */
 class ViewportPanel
 {
 public:

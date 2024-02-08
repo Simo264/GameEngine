@@ -4,8 +4,12 @@
 #include "../NonCopyable.hh"
 #include "../VertexArray.hh"
 
-// The mesh class takes vertex data, binds VAOs, VBOs, drawing orders, etc, and draws it.
-// Other classes can inherit from this class.
+
+/* -------------------------------------------------------------------------- 
+	The mesh class takes vertex data, binds VAOs, VBOs, drawing orders, etc, 
+	and draws it.
+	Other classes can inherit from this class.
+	-------------------------------------------------------------------------- */
 class Mesh : public NonCopyable
 {
 public:

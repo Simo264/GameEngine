@@ -7,7 +7,6 @@
 	Resource manager class TexturesManager:
 	load in and retrieve from memory texture objects
 	------------------------------------------------- */
-
 class TexturesManager : public ResourceManagerInterface<TexturesManager>
 {
 public:
