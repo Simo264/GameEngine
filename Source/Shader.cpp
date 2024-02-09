@@ -89,6 +89,17 @@ void Shader::SetMat4f(const char* name, const Mat4f& mat) const
   glUniformMatrix4fv(glGetUniformLocation(_shaderID, name), 1, GL_FALSE, &mat[0][0]);
 }
 
+void Shader::SetIntArray(const char* name, uint32_t count, int* value)
+{
+  glUniform1iv(glGetUniformLocation(_shaderID, name), count, value);
+}
+
+void Shader::SetFloatArray(const char* name, uint32_t count, float* value)
+{
+  glUniform1fv(glGetUniformLocation(_shaderID, name), count, value);
+}
+
+
 
 /* -----------------------------------------------------
   *          PRIVATE METHODS

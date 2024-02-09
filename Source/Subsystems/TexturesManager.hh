@@ -20,10 +20,10 @@ public:
 	Texture2D* LoadTexture(Path filePath, bool gammaCorrection = true);
 		
 	/* Retrieve from memory texture object */
-	Texture2D* GetTextureByPath(Path filePath);
+	Texture2D* GetTextureByPath(Path filePath) const;
 
-	/* Copy the address of Texture objects into the out vector */
-	void CopyTextures(Vector<Texture2D*>& out);
+	Texture2D* Begin() const { return &_textureBuffer[0]; }
+	Texture2D* End() const { return &_textureBuffer[0] + _bufferSize; }
 
 private:
 	UniquePointer<Texture2D[]> _textureBuffer;

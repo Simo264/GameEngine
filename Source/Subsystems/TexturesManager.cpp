@@ -18,7 +18,7 @@ void TexturesManager::Initialize()
 void TexturesManager::ShutDown()
 {
 	/* Destoy each texture objects */
-	std::for_each_n(&_textureBuffer[0], _bufferSize, [](Texture2D& texture) {
+	std::for_each(Begin(), End(), [](Texture2D& texture) {
     texture.DestroyTexture();
     });
 	
@@ -43,25 +43,15 @@ Texture2D* TexturesManager::LoadTexture(Path filePath, bool gammaCorrection)
   return &texture;
 }
 
-Texture2D* TexturesManager::GetTextureByPath(Path filePath)
+Texture2D* TexturesManager::GetTextureByPath(Path filePath) const
 {
-  auto start = &_textureBuffer[0];
-  auto end = &_textureBuffer[0] + _bufferSize;
-  auto it = std::find_if(start, end, [&filePath](Texture2D& texture) {
+  auto end = End();
+  auto it = std::find_if(Begin(), End(), [&filePath](Texture2D& texture) {
     return texture.texturePath.compare(filePath) == 0;
     });
   
   if (it == end)
     return nullptr;
   return it;
-}
-
-void TexturesManager::CopyTextures(Vector<Texture2D*>& out)
-{
-  out.clear();
-  out.reserve(_bufferSize);
-  std::for_each_n(&_textureBuffer[0], _bufferSize, [&out](Texture2D& ptr) {
-    out.push_back(&ptr);
-    });
 }
 

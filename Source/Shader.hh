@@ -27,6 +27,9 @@ public:
   void SetMat3f(const char* name, const Mat3f& mat) const;
   void SetMat4f(const char* name, const Mat4f& mat) const;
 
+  void SetIntArray(const char* name, uint32_t count, int* value);
+  void SetFloatArray(const char* name, uint32_t count, float* value);
+
 private:
   uint32_t _shaderID;
   String   _label;

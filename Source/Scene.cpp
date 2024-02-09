@@ -4,7 +4,8 @@
 void Scene::DrawScene(Shader* shader)
 {
 	/* Render directional light */
-	if (HasDirLight() && sceneDLight->visible)
+	if (HasDirLight())
+		if(sceneDLight->visible)
 		sceneDLight->object->RenderLight(shader);
 
 	/* Render point lights */

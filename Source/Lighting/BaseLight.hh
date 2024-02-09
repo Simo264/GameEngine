@@ -28,6 +28,8 @@ public:
   float diffuse;  /* diffuse intensity */
   float specular; /* specular intensity */
 
+  const char* GetUniformName() const { return _uniformName.c_str(); }
+
 protected:
   String _uniformName;
 };

@@ -20,9 +20,9 @@ public:
 
 	void RenderPanel(Scene* scene);
 	bool IsItemSelected() const { return _dLightSelected || _pLightSelected || _sMeshSelected; }
-	SceneObject<DirectionalLight>* DirLightSelected() const { return _dLightSelected; }
-	SceneObject<PointLight>* PointLightSelected() const { return _pLightSelected; }
-	SceneObject<StaticMesh>* StaticMeshSelected() const { return _sMeshSelected; }
+
+	template<class T>
+	SceneObject<T>* GetItemSelected();
 
 private:
 	enum ICONS : int { PLUS = 0, SUN, LAMP, EYE, EYE_HIDDEN, MESH };
@@ -36,11 +36,12 @@ private:
 	SceneObject<PointLight>* _pLightSelected;
 	SceneObject<StaticMesh>* _sMeshSelected;
 	
-	void ToggleVisibility(bool& b);
-
-#if 0
+	void ToggleVisibility(SceneObject<DirectionalLight>& sceneObj);
+	void ToggleVisibility(SceneObject<PointLight>& sceneObj);
+	void ToggleVisibility(SceneObject<StaticMesh>& sceneObj);
+	
+	
 	void AddSceneComponentButton(const char* labelPopup);
 	void AddSceneComponentPopup(Scene* scene);
-#endif
 };
 

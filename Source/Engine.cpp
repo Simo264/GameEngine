@@ -73,16 +73,22 @@ void Engine::Run()
   PointLight pointLight1("UPointLight[0]");
   PointLight pointLight2("UPointLight[1]");
   StaticMesh cube(ROOT_PATH / "Assets/Shapes/Cube/Cube.obj");
-  auto sceneDirLight = SceneObject<DirectionalLight>::Create(&dirLight, true);
-  auto scenePointLight1 = SceneObject<PointLight>::Create(&pointLight1, true);
-  auto scenePointLight2 = SceneObject<PointLight>::Create(&pointLight2, true);
-  auto sceneCube = SceneObject<StaticMesh>::Create(&cube, true);
+  StaticMesh plane(ROOT_PATH / "Assets/Shapes/Plane/Plane.obj");
+  plane.scaling += 10.0f;
+  plane.position.y = -1.f;
+
+  auto sceneDirLight = SceneObject<DirectionalLight>::Create(&dirLight);
+  auto scenePointLight1 = SceneObject<PointLight>::Create(&pointLight1);
+  auto scenePointLight2 = SceneObject<PointLight>::Create(&pointLight2);
+  auto sceneCube = SceneObject<StaticMesh>::Create(&cube);
+  auto scenePlane = SceneObject<StaticMesh>::Create(&plane);
 
   Scene scene;
   scene.AddDirectionalLight(*sceneDirLight);
   scene.AddPointLight(*scenePointLight1);
   scene.AddPointLight(*scenePointLight2);
   scene.AddStaticMesh(*sceneCube);
+  scene.AddStaticMesh(*scenePlane);
 
 #if 0
   /* Shadow mapping */
@@ -374,6 +380,8 @@ void Engine::LoadShaders()
   sceneShader->SetInt("UMaterial.specular", 1);
   sceneShader->SetFloat("UMaterial.shininess", 32.0f);
   sceneShader->SetFloat("UGamma", 2.2f);
+  sceneShader->SetFloat("UDirLightVisible", true);
+  sceneShader->SetIntArray("UPointLightVisible", 5, Array<int, 5>{1,1,1,1,1}.data());
 }
 
 void Engine::LoadTextures()

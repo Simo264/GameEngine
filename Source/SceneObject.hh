@@ -21,7 +21,7 @@ public:
 	}
 
 	/* Allocate on heap memory new scene object of type T */
-	static SceneObject<T>* Create(T* t, bool visible)
+	static SceneObject<T>* Create(T* t, bool visible = true)
 	{
 		return new SceneObject<T>(t, visible);
 	}

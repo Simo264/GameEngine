@@ -93,9 +93,9 @@ void Editor::RenderEditor(Scene* scene, FrameBuffer* framebuffer)
 
   if (scenePanel->IsItemSelected())
   {
-    auto dLight = scenePanel->DirLightSelected();
-    auto pLight = scenePanel->PointLightSelected();
-    auto sMesh  = scenePanel->StaticMeshSelected();
+    auto dLight = scenePanel->GetItemSelected<DirectionalLight>();
+    auto pLight = scenePanel->GetItemSelected<PointLight>();
+    auto sMesh = scenePanel->GetItemSelected<StaticMesh>();
     if(dLight)
       propertyPanel->RenderPanel(*dLight);
     else if(pLight)
