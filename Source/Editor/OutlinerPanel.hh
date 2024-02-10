@@ -10,11 +10,11 @@
 /* ----------------------------------------
 			ScenePanel class
 	---------------------------------------- */
-class ScenePanel
+class OutlinerPanel
 {
 public:
-	ScenePanel(const char* panelName, Vec2i panelSize);
-	~ScenePanel() = default;
+	OutlinerPanel(const char* panelName, Vec2i panelSize);
+	~OutlinerPanel() = default;
 
 	bool isOpen;
 

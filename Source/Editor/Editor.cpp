@@ -52,8 +52,8 @@ void Editor::Initialize()
 
   contentBrowserPanel = std::make_unique<ContentBrowserPanel>("Content Browser", browserPanelSize);
   viewportPanel = std::make_unique<ViewportPanel>("Viewport", viewportPanelSize);
-  scenePanel = std::make_unique<ScenePanel>("Scene", scenePanelSize);
-  propertyPanel = std::make_unique<PropertyPanel>("Properties", propPanelSize);
+  outlinerPanel = std::make_unique<OutlinerPanel>("Outliner", scenePanelSize);
+  detailsPanel = std::make_unique<DetailsPanel>("Details", propPanelSize);
 }
 
 void Editor::ShutDown()
@@ -89,19 +89,19 @@ void Editor::RenderEditor(Scene* scene, FrameBuffer* framebuffer)
 
   viewportPanel->RenderPanel(framebuffer);
 
-  scenePanel->RenderPanel(scene);
+  outlinerPanel->RenderPanel(scene);
 
-  if (scenePanel->IsItemSelected())
+  if (outlinerPanel->IsItemSelected())
   {
-    auto dLight = scenePanel->GetItemSelected<DirectionalLight>();
-    auto pLight = scenePanel->GetItemSelected<PointLight>();
-    auto sMesh = scenePanel->GetItemSelected<StaticMesh>();
+    auto dLight = outlinerPanel->GetItemSelected<DirectionalLight>();
+    auto pLight = outlinerPanel->GetItemSelected<PointLight>();
+    auto sMesh = outlinerPanel->GetItemSelected<StaticMesh>();
     if(dLight)
-      propertyPanel->RenderPanel(*dLight);
+      detailsPanel->RenderPanel(*dLight);
     else if(pLight)
-      propertyPanel->RenderPanel(*pLight);
+      detailsPanel->RenderPanel(*pLight);
     else if(sMesh)
-      propertyPanel->RenderPanel(*sMesh);
+      detailsPanel->RenderPanel(*sMesh);
   }
   
   if (_inspectorOpen)
@@ -141,7 +141,7 @@ void Editor::Styling()
 
 void Editor::Dockspace()
 {
-  static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None | ImGuiDockNodeFlags_NoResize;
+  static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
 
   /* We are using the ImGuiWindowFlags_NoDocking flag to make the parent window not dockable into,
    because it would be confusing to have two docking targets within each others. */
@@ -185,7 +185,7 @@ void Editor::Dockspace()
   {
     if (ImGui::BeginMenu("View"))
     {
-      ImGui::MenuItem("Hierarchy", nullptr, &scenePanel->isOpen);
+      ImGui::MenuItem("Hierarchy", nullptr, &outlinerPanel->isOpen);
       ImGui::MenuItem("Browser", nullptr, &contentBrowserPanel->isOpen);
       ImGui::MenuItem("Inspector", nullptr, &_inspectorOpen);
       ImGui::MenuItem("Viewport", nullptr, &viewportPanel->isOpen);

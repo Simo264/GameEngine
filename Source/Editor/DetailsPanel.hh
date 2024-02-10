@@ -2,11 +2,11 @@
 
 #include "../SceneObject.hh"
 
-class PropertyPanel
+class DetailsPanel
 {
 public:
-	PropertyPanel(const char* panelName, Vec2i panelSize);
-	~PropertyPanel() = default;
+	DetailsPanel(const char* panelName, Vec2i panelSize);
+	~DetailsPanel() = default;
 
 	bool isOpen;
 

@@ -1,4 +1,4 @@
-#include "ScenePanel.hh"
+#include "OutlinerPanel.hh"
 
 #include "../Shader.hh"
 #include "../Logger.hh"
@@ -17,7 +17,7 @@
  * -----------------------------------------------------
 */
 
-ScenePanel::ScenePanel(const char* panelName, Vec2i panelSize)
+OutlinerPanel::OutlinerPanel(const char* panelName, Vec2i panelSize)
 {
   isOpen = true;
   _panelName = panelName;
@@ -38,7 +38,7 @@ ScenePanel::ScenePanel(const char* panelName, Vec2i panelSize)
   _icons[PLUS] = instanceTM.GetTextureByPath(ROOT_PATH / "Icons/icon-plus.png");
 }
 
-void ScenePanel::RenderPanel(Scene* scene)
+void OutlinerPanel::RenderPanel(Scene* scene)
 {
   if (!isOpen)
     return;
@@ -54,9 +54,9 @@ void ScenePanel::RenderPanel(Scene* scene)
   ImGui::PushStyleColor(ImGuiCol_ButtonActive, { 0.25f,0.25f,0.25f, 0.75f });
   if (ImGui::BeginTable("Table", 3, ImGuiTableFlags_RowBg))
   {
-    ImGui::TableSetupColumn("C1", ImGuiTableColumnFlags_WidthFixed, 0.1f * ImGui::GetContentRegionAvail().x);   /* 10% width */
-    ImGui::TableSetupColumn("C2", ImGuiTableColumnFlags_WidthFixed, 0.7f * ImGui::GetContentRegionAvail().x);   /* 70% width */
-    ImGui::TableSetupColumn("C3", ImGuiTableColumnFlags_WidthFixed, 0.2f * ImGui::GetContentRegionAvail().x);   /* 20% width */
+    ImGui::TableSetupColumn("##C1", ImGuiTableColumnFlags_WidthFixed, 0.1f * ImGui::GetContentRegionAvail().x);   /* 10% width */
+    ImGui::TableSetupColumn("##C2", ImGuiTableColumnFlags_WidthFixed, 0.7f * ImGui::GetContentRegionAvail().x);   /* 70% width */
+    ImGui::TableSetupColumn("##C3", ImGuiTableColumnFlags_WidthFixed, 0.2f * ImGui::GetContentRegionAvail().x);   /* 20% width */
 
     _buttonEyeID = 1;
 
@@ -126,22 +126,22 @@ void ScenePanel::RenderPanel(Scene* scene)
 }
 
 template<class T>
-SceneObject<T>* ScenePanel::GetItemSelected() { return nullptr; }
+SceneObject<T>* OutlinerPanel::GetItemSelected() { return nullptr; }
 
 template<>
-SceneObject<DirectionalLight>* ScenePanel::GetItemSelected()
+SceneObject<DirectionalLight>* OutlinerPanel::GetItemSelected()
 {
   return _dLightSelected;
 }
 
 template<>
-SceneObject<PointLight>* ScenePanel::GetItemSelected()
+SceneObject<PointLight>* OutlinerPanel::GetItemSelected()
 {
   return _pLightSelected;
 }
 
 template<>
-SceneObject<StaticMesh>* ScenePanel::GetItemSelected()
+SceneObject<StaticMesh>* OutlinerPanel::GetItemSelected()
 {
   return _sMeshSelected;
 }
@@ -151,7 +151,7 @@ SceneObject<StaticMesh>* ScenePanel::GetItemSelected()
  * -----------------------------------------------------
 */
 
-void ScenePanel::AddSceneComponentButton(const char* labelPopup)
+void OutlinerPanel::AddSceneComponentButton(const char* labelPopup)
 {
   ImGui::PushStyleColor(ImGuiCol_Button, { 1.f,1.f,1.f,1.f });
   ImGui::PushStyleColor(ImGuiCol_ButtonHovered, { 0.75f,0.75f,0.75f,1.f });
@@ -169,7 +169,7 @@ void ScenePanel::AddSceneComponentButton(const char* labelPopup)
   ImGui::PopStyleColor();
 }
 
-void ScenePanel::AddSceneComponentPopup(Scene* scene)
+void OutlinerPanel::AddSceneComponentPopup(Scene* scene)
 {
   const char* lights[] = { "Directional light", "Point light", "Spot light", };
   const char* meshes[] = { "Cube", "Plane", "Cylinder", };
@@ -238,37 +238,8 @@ void ScenePanel::AddSceneComponentPopup(Scene* scene)
   ImGui::EndPopup();
 }
 
-
-//template<class T>
-//void ScenePanel::ToggleVisibility(SceneObject<T>& sceneObj)
-//{
-//  /* Toggle visibility */
-//  if (sceneObj.visible)
-//  {
-//    if (ImGui::ImageButtonEx(_buttonEyeID++, (ImTextureID)_icons[EYE]->textureID, { _iconSize,_iconSize }, { 0,0 }, { 1,1 }, { 0,0,0,0 }, { 1,1,1,1 }))
-//    {
-//      sceneObj.visible = false;
-//    }
-//  }
-//  else
-//  {
-//    if (ImGui::ImageButtonEx(_buttonEyeID++, (ImTextureID)_icons[EYE_HIDDEN]->textureID, { _iconSize,_iconSize }, { 0,0 }, { 1,1 }, { 0,0,0,0 }, { 1,1,1,1 }))
-//    {
-//      sceneObj.visible = true;
-//    }
-//  }
-//  
-//  if (uniformName)
-//  {
-//    auto shader = ShadersManager::Instance().GetShader("SceneShader");
-//    shader->SetBool(uniformName, sceneObj.visible);
-//  }
-//}
-
-
-void ScenePanel::ToggleVisibility(SceneObject<DirectionalLight>& sceneObj)
+void OutlinerPanel::ToggleVisibility(SceneObject<DirectionalLight>& sceneObj)
 {
-  /* Toggle visibility */
   if (sceneObj.visible)
   {
     if (ImGui::ImageButtonEx(_buttonEyeID++, (ImTextureID)_icons[EYE]->textureID, { _iconSize,_iconSize }, { 0,0 }, { 1,1 }, { 0,0,0,0 }, { 1,1,1,1 }))
@@ -284,9 +255,8 @@ void ScenePanel::ToggleVisibility(SceneObject<DirectionalLight>& sceneObj)
   shader->SetBool("UDirLightVisible", sceneObj.visible);
 }
 
-void ScenePanel::ToggleVisibility(SceneObject<PointLight>& sceneObj)
+void OutlinerPanel::ToggleVisibility(SceneObject<PointLight>& sceneObj)
 {
-  /* Toggle visibility */
   if (sceneObj.visible)
   {
     if (ImGui::ImageButtonEx(_buttonEyeID++, (ImTextureID)_icons[EYE]->textureID, { _iconSize,_iconSize }, { 0,0 }, { 1,1 }, { 0,0,0,0 }, { 1,1,1,1 }))
@@ -305,9 +275,8 @@ void ScenePanel::ToggleVisibility(SceneObject<PointLight>& sceneObj)
   shader->SetInt(uniform, (int) sceneObj.visible);
 }
 
-void ScenePanel::ToggleVisibility(SceneObject<StaticMesh>& sceneObj)
+void OutlinerPanel::ToggleVisibility(SceneObject<StaticMesh>& sceneObj)
 {
-  /* Toggle visibility */
   if (sceneObj.visible)
   {
     if (ImGui::ImageButtonEx(_buttonEyeID++, (ImTextureID)_icons[EYE]->textureID, { _iconSize,_iconSize }, { 0,0 }, { 1,1 }, { 0,0,0,0 }, { 1,1,1,1 }))

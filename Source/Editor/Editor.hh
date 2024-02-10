@@ -2,8 +2,8 @@
 
 #include "ContentBrowserPanel.hh"
 #include "ViewportPanel.hh"
-#include "ScenePanel.hh"
-#include "PropertyPanel.hh"
+#include "OutlinerPanel.hh"
+#include "DetailsPanel.hh"
 
 /* Editor layout 1600x900
 
@@ -34,8 +34,8 @@ public:
 
 	UniquePointer<ContentBrowserPanel> contentBrowserPanel;
 	UniquePointer<ViewportPanel> viewportPanel;
-	UniquePointer<ScenePanel> scenePanel;
-	UniquePointer<PropertyPanel> propertyPanel;
+	UniquePointer<OutlinerPanel> outlinerPanel;
+	UniquePointer<DetailsPanel> detailsPanel;
 
 private:
 	bool _preferencesOpen = false;
