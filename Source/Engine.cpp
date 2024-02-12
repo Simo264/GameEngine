@@ -62,7 +62,7 @@ void Engine::Run()
 
   /* Initialize framebuffer object */
   FrameBuffer framebuffer;
-  framebuffer.InitFrameBuffer(editor.viewportPanel->viewportSize);
+  framebuffer.InitFrameBuffer(window.GetFramebufferSize());
   glViewport(0, 0, framebuffer.GetSize().x, framebuffer.GetSize().y);
 
   /* Camera object */

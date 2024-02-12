@@ -161,9 +161,7 @@ void OutlinerPanel::AddSceneComponentButton(const char* labelPopup)
   ImGui::Separator();
   ImGui::InvisibleButton("##margin-bottom", { 8,8 });
 
-  ImGui::PopStyleColor();
-  ImGui::PopStyleColor();
-  ImGui::PopStyleColor();
+  ImGui::PopStyleColor(3);
 }
 
 void OutlinerPanel::AddSceneComponentPopup(Scene* scene)

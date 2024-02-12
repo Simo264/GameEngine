@@ -8,9 +8,8 @@
 #include "Imgui/imgui_internal.h"
 #include "Imgui/imgui_spectrum.h"
 
-ViewportPanel::ViewportPanel(const char* panelName, Vec2i viewportSize)
+ViewportPanel::ViewportPanel(const char* panelName)
 {
-  this->viewportSize = viewportSize;
   this->panelName = panelName;
   
   isOpen = true;
@@ -33,18 +32,18 @@ void ViewportPanel::RenderPanel(FrameBuffer* framebuffer)
   isFocused = isFocused || ImGui::IsWindowFocused();
 
   /* Get the size of the child(i.e.the whole draw size of the windows). */
-  ImVec2 drawSpace = ImGui::GetWindowSize();
+  ImVec2 viewport = ImGui::GetWindowSize();
   Vec2i framebufferSize = framebuffer->GetSize();
-  if (viewportSize.x != drawSpace.x || viewportSize.y != drawSpace.y)
+  viewportSize = { viewport.x, viewport.y };
+
+  if (framebufferSize.x != viewportSize.x || framebufferSize.y != viewportSize.y)
   {
-    viewportSize = Vec2i(drawSpace.x, drawSpace.y);
     framebuffer->RescaleFrameBuffer(viewportSize);
     glViewport(0, 0, viewportSize.x, viewportSize.y);
   }
   else
   {
-    /* Because I use the texture from OpenGL, I need to invert the V from the UV. */
-    ImGui::Image((ImTextureID)framebuffer->GetImage(), drawSpace, ImVec2(0, 1), ImVec2(1, 0));
+    ImGui::Image((ImTextureID)framebuffer->GetImage(), viewport, ImVec2(0, 1), ImVec2(1, 0));
   }
   ImGui::EndChild();
   ImGui::End();

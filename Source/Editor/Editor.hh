@@ -47,6 +47,7 @@ public:
 
 private:
 	bool _demoOpen = true;
+	bool _firstLoop = true;
 
 	void Styling();
 	void Dockspace() const;

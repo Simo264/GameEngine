@@ -29,7 +29,6 @@ ContentBrowserPanel::ContentBrowserPanel(const char* panelName)
 void ContentBrowserPanel::RenderPanel()
 {
   ImGui::Begin(panelName.c_str(), &isOpen);
-
   ImGui::PushStyleColor(ImGuiCol_Button, { 0,0,0,0 });
   ImGui::PushStyleColor(ImGuiCol_ButtonHovered, { 0.25f,0.25f,0.25f, 0.5f });
   ImGui::PushStyleColor(ImGuiCol_ButtonActive, { 0.5f,0.5f,0.5f,0.5f });
@@ -45,8 +44,10 @@ void ContentBrowserPanel::RenderPanel()
   float colSize = _thumbSize + _thumbPadding;
   float panelWidth = ImGui::GetContentRegionAvail().x;
   int columnCount = (int)(panelWidth / colSize);
-  ImGui::Columns(columnCount, 0, false);
+  if (columnCount <= 0)
+    columnCount = 1;
 
+  ImGui::Columns(columnCount, 0, false);
   for (auto& entry : std::filesystem::directory_iterator(_currentDir))
   {
     Path entryPath = entry.path();
@@ -68,9 +69,7 @@ void ContentBrowserPanel::RenderPanel()
     ImGui::NextColumn();
   }
 
-  ImGui::PopStyleColor();
-  ImGui::PopStyleColor();
-  ImGui::PopStyleColor();
+  ImGui::PopStyleColor(3);
 
   ImGui::Columns(1);
   ImGui::End();

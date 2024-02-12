@@ -1,4 +1,6 @@
 #include "Editor.hh"
+#include "ContentBrowserPanel.hh"
+
 #include "../FrameBuffer.hh"
 #include "../Scene.hh"
 #include "../Subsystems/ConfigurationsManager.hh"
@@ -32,16 +34,8 @@ void Editor::Initialize()
   /* Set ImGui style*/
   Styling();
 
-  auto& instanceCM = ConfigurationsManager::Instance();
-  String& resolutionStr = instanceCM.GetValue(CONF_WINDOW_RESOLUTION);
-  Vec2i resolution = instanceCM.ParseResolution(resolutionStr);
-  Vec2i viewportPanelSize  = Vec2i(resolution.x * 0.6, resolution.y * 0.6); /* 60% x 60%  */
-  Vec2i scenePanelSize = Vec2i(resolution.x * 0.2, resolution.y * 1);       /* 20% x 100% */
-  Vec2i propPanelSize = Vec2i(resolution.x * 0.2, resolution.y * 1);
-  Vec2i inspectorSize = Vec2i(resolution.x * 0.2, resolution.y * 1);        /* 20% x 100% */
-  Vec2i browserPanelSize = Vec2i(resolution.x * 0.6, resolution.y * 0.4);   /* 60% x 40%  */
   contentBrowserPanel = std::make_unique<ContentBrowserPanel>("Content Browser");
-  viewportPanel = std::make_unique<ViewportPanel>("Viewport", viewportPanelSize);
+  viewportPanel = std::make_unique<ViewportPanel>("Viewport");
   outlinerPanel = std::make_unique<OutlinerPanel>("Outliner");
   detailsPanel = std::make_unique<DetailsPanel>("Details");
   inspectorPanel = std::make_unique<InspectorPanel>("Inspector");
@@ -75,7 +69,57 @@ void Editor::NewFrame()
   ImGui::NewFrame();
 
   /* Set Dockspace */
-  Dockspace();
+  //Dockspace();
+  
+  ImGuiWindowFlags windowFlags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoBackground;
+  windowFlags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize;
+  windowFlags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoMove;
+
+  ImGuiDockNodeFlags dockspaceFlags = ImGuiDockNodeFlags_PassthruCentralNode;
+
+  const ImGuiViewport* viewport = ImGui::GetMainViewport();
+  ImGui::SetNextWindowPos(viewport->WorkPos);
+  ImGui::SetNextWindowSize(viewport->WorkSize);
+  ImGui::SetNextWindowViewport(viewport->ID);
+  ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f); 
+  ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f); 
+  ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+  
+  ImGui::Begin("DockSpace", nullptr, windowFlags);
+  {
+    ImGui::PopStyleVar(3);
+    ImGuiID dockspaceID = ImGui::GetID("DockSpace");
+    ImGui::DockSpace(dockspaceID, ImVec2(0.0f, 0.0f));
+
+    if (_firstLoop)
+    {
+      _firstLoop = false;
+
+      ImGui::DockBuilderRemoveNode(dockspaceID);   /* clear any previous layout */
+      ImGui::DockBuilderAddNode(dockspaceID, dockspaceFlags | ImGuiDockNodeFlags_DockSpace);
+      ImGui::DockBuilderSetNodeSize(dockspaceID, viewport->Size);
+
+      auto dockOutliner   = ImGui::DockBuilderSplitNode(dockspaceID, ImGuiDir_Left,  0.20f, nullptr, &dockspaceID);
+      auto dockInspector  = ImGui::DockBuilderSplitNode(dockspaceID, ImGuiDir_Right, 0.25f, nullptr, &dockspaceID);
+      auto dockBrowser    = ImGui::DockBuilderSplitNode(dockspaceID, ImGuiDir_Down,  0.40f, nullptr, &dockspaceID);
+      auto dockViewport   = ImGui::DockBuilderGetCentralNode(dockspaceID)->ID;
+      auto dockDemo       = ImGui::DockBuilderSplitNode(dockInspector, ImGuiDir_Down, 0.60f, nullptr, &dockInspector);
+      auto dockDetails    = ImGui::DockBuilderSplitNode(dockOutliner, ImGuiDir_Down, 0.60f, nullptr, &dockOutliner);
+
+      ImGui::DockBuilderDockWindow(outlinerPanel->panelName.c_str(), dockOutliner);
+      ImGui::DockBuilderDockWindow(inspectorPanel->panelName.c_str(), dockInspector);
+      ImGui::DockBuilderDockWindow(contentBrowserPanel->panelName.c_str(), dockBrowser);
+      ImGui::DockBuilderDockWindow(viewportPanel->panelName.c_str(), dockViewport);
+      ImGui::DockBuilderDockWindow(detailsPanel->panelName.c_str(), dockDetails);
+      ImGui::DockBuilderDockWindow("Dear ImGui Demo", dockDemo);
+      ImGui::DockBuilderFinish(dockspaceID);
+    }
+  }
+
+  /* Menu bar here */
+  menuBar->RenderMenuBar();
+
+  ImGui::End();
 }
 
 void Editor::RenderEditor(Scene* scene, FrameBuffer* framebuffer)
@@ -152,14 +196,15 @@ void Editor::Dockspace() const
 
   /* We are using the ImGuiWindowFlags_NoDocking flag to make the parent window not dockable into,
    because it would be confusing to have two docking targets within each others. */
-  ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
   const ImGuiViewport* imViewport = ImGui::GetMainViewport();
   ImGui::SetNextWindowPos(imViewport->WorkPos);
   ImGui::SetNextWindowSize(imViewport->WorkSize);
   ImGui::SetNextWindowViewport(imViewport->ID);
   ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
   ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-  window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+  ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
+  window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse;
+  window_flags |= ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
   window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
 
 

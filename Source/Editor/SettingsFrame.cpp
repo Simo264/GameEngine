@@ -30,7 +30,7 @@ void SettingsFrame::RenderFrame()
   auto& instanceCM = ConfigurationsManager::Instance();
 
   static bool buttonDisabled = true;
-  ImGui::Begin(frameName.c_str(), &isOpen);
+  ImGui::Begin(frameName.c_str(), &isOpen, ImGuiWindowFlags_NoDocking);
   ImGui::SeparatorText("Window properties");
 
   /* Window title */

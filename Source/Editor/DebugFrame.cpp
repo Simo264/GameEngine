@@ -25,7 +25,7 @@ void DebugFrame::RenderFrame()
 	ImGuiIO& io = ImGui::GetIO();
 
 	ImGui::SetNextWindowBgAlpha(0.15f); /* Transparent background */
-	ImGui::Begin(frameName.c_str(), &isOpen, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav);
+	ImGui::Begin(frameName.c_str(), &isOpen, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoDocking);
 
 	_timeNew = glfwGetTime();
 	if (_timeNew - _timeOld >= (1.0f / 8.0f)) /* update every 1/4 seconds */
