@@ -8,27 +8,24 @@
 #include "Imgui/imgui_internal.h"
 #include "Imgui/imgui_spectrum.h"
 
-ViewportPanel::ViewportPanel(const char* panelName, Vec2i panelSize)
+ViewportPanel::ViewportPanel(const char* panelName, Vec2i viewportSize)
 {
-	isOpen = true;
+  this->viewportSize = viewportSize;
+  this->panelName = panelName;
+  
+  isOpen = true;
 	isFocused = false;
-	viewportSize = panelSize;
-	_panelName = panelName;
 }
 
 void ViewportPanel::RenderPanel(FrameBuffer* framebuffer)
 {
-  if (!isOpen) 
-    return;
-
   /* Set viewport window padding to 0 */
   ImGuiStyle& style = ImGui::GetStyle();
   Vec2i paddingTmp = Vec2i(style.WindowPadding.x, style.WindowPadding.y);
   style.WindowPadding.x = 0;
   style.WindowPadding.y = 0;
 
-  ImGui::SetNextWindowSize(ImVec2(viewportSize.x, viewportSize.y));
-  ImGui::Begin(_panelName.c_str(), &isOpen);
+  ImGui::Begin(panelName.c_str(), &isOpen);
   isFocused = ImGui::IsWindowFocused();
 
   /* Using a Child allow to fill all the space of the window. It also alows customization */
@@ -38,11 +35,11 @@ void ViewportPanel::RenderPanel(FrameBuffer* framebuffer)
   /* Get the size of the child(i.e.the whole draw size of the windows). */
   ImVec2 drawSpace = ImGui::GetWindowSize();
   Vec2i framebufferSize = framebuffer->GetSize();
-  if ((drawSpace.x != framebufferSize.x || drawSpace.y != framebufferSize.y))
+  if (viewportSize.x != drawSpace.x || viewportSize.y != drawSpace.y)
   {
-    framebuffer->RescaleFrameBuffer({ drawSpace.x, drawSpace.y });
-    glViewport(0, 0, drawSpace.x, drawSpace.y);
     viewportSize = Vec2i(drawSpace.x, drawSpace.y);
+    framebuffer->RescaleFrameBuffer(viewportSize);
+    glViewport(0, 0, viewportSize.x, viewportSize.y);
   }
   else
   {

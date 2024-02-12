@@ -16,10 +16,9 @@
 #include "Imgui/imgui_internal.h"
 #include "Imgui/imgui_spectrum.h"
 
-DetailsPanel::DetailsPanel(const char* panelName, Vec2i panelSize)
+DetailsPanel::DetailsPanel(const char* panelName)
 {
-	_panelName = panelName;
-	_panelSize = panelSize;
+	this->panelName = panelName;
 }
 
 template<class T>
@@ -31,7 +30,7 @@ void DetailsPanel::RenderPanel(SceneObject<DirectionalLight>& sceneObject)
   if (!isOpen)
     return;
 
-  ImGui::Begin(_panelName.c_str(), &isOpen);
+  ImGui::Begin(panelName.c_str(), &isOpen);
   ImGui::SeparatorText(sceneObject.name.c_str());
 
   auto obj = sceneObject.object;
@@ -49,7 +48,7 @@ void DetailsPanel::RenderPanel(SceneObject<PointLight>& sceneObject)
   if (!isOpen)
     return;
 
-  ImGui::Begin("Properties", &isOpen);
+  ImGui::Begin(panelName.c_str(), &isOpen);
   ImGui::SeparatorText(sceneObject.name.c_str());
 
   auto obj = sceneObject.object;
@@ -64,10 +63,7 @@ void DetailsPanel::RenderPanel(SceneObject<PointLight>& sceneObject)
 template<>
 void DetailsPanel::RenderPanel(SceneObject<StaticMesh>& sceneObject)
 {
-  if (!isOpen)
-    return;
-
-  ImGui::Begin("Properties", &isOpen);
+  ImGui::Begin(panelName.c_str(), &isOpen);
 
   auto obj = sceneObject.object;
   if (ImGui::CollapsingHeader("Transform"))

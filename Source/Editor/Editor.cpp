@@ -1,7 +1,6 @@
 #include "Editor.hh"
 #include "../FrameBuffer.hh"
 #include "../Scene.hh"
-#include "../Renderer.hh"
 #include "../Subsystems/ConfigurationsManager.hh"
 
 #include "Imgui/imgui.h"
@@ -22,38 +21,43 @@ void Editor::Initialize()
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
   ImGuiIO& io = ImGui::GetIO();
-  io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-  io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-  io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // Enable Docking
-  io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;       // Enable Multi-Viewport / Platform Windows
+  io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     /* Enable Keyboard Controls */
+  io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      /* Enable Gamepad Controls */
+  io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         /* Enable Docking */
+  io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;       /* Enable Multi-Viewport / Platform Windows */
   
-  /* Set ImGui style*/
-  Styling();
-
   ImGui_ImplGlfw_InitForOpenGL(glfwGetCurrentContext(), true);
   ImGui_ImplOpenGL3_Init("#version 460");
 
+  /* Set ImGui style*/
+  Styling();
+
   auto& instanceCM = ConfigurationsManager::Instance();
   String& resolutionStr = instanceCM.GetValue(CONF_WINDOW_RESOLUTION);
-  String& aspectRatioStr = instanceCM.GetValue(CONF_ASPECT_RATIO);
-  for (_aspectIndex = 0; _aspectIndex < 3; _aspectIndex++)
-    if (std::strcmp(_aspectRatioValues[_aspectIndex], aspectRatioStr.c_str()) == 0)
-      break;
-  for (_resolutionIndex = 0; _resolutionIndex < 12; _resolutionIndex++)
-    if (std::strcmp(_resolutionValues[_resolutionIndex], resolutionStr.c_str()) == 0)
-      break;
-
   Vec2i resolution = instanceCM.ParseResolution(resolutionStr);
   Vec2i viewportPanelSize  = Vec2i(resolution.x * 0.6, resolution.y * 0.6); /* 60% x 60%  */
   Vec2i scenePanelSize = Vec2i(resolution.x * 0.2, resolution.y * 1);       /* 20% x 100% */
   Vec2i propPanelSize = Vec2i(resolution.x * 0.2, resolution.y * 1);
-  _inspectorSize = Vec2i(resolution.x * 0.2, resolution.y * 1);             /* 20% x 100% */
+  Vec2i inspectorSize = Vec2i(resolution.x * 0.2, resolution.y * 1);        /* 20% x 100% */
   Vec2i browserPanelSize = Vec2i(resolution.x * 0.6, resolution.y * 0.4);   /* 60% x 40%  */
-
-  contentBrowserPanel = std::make_unique<ContentBrowserPanel>("Content Browser", browserPanelSize);
+  contentBrowserPanel = std::make_unique<ContentBrowserPanel>("Content Browser");
   viewportPanel = std::make_unique<ViewportPanel>("Viewport", viewportPanelSize);
-  outlinerPanel = std::make_unique<OutlinerPanel>("Outliner", scenePanelSize);
-  detailsPanel = std::make_unique<DetailsPanel>("Details", propPanelSize);
+  outlinerPanel = std::make_unique<OutlinerPanel>("Outliner");
+  detailsPanel = std::make_unique<DetailsPanel>("Details");
+  inspectorPanel = std::make_unique<InspectorPanel>("Inspector");
+  settingsFrame = std::make_unique<SettingsFrame>("Settings");
+  debugFrame = std::make_unique<DebugFrame>("Debug");
+
+  Array<bool*, 7> items{};
+  items[PANEL_BROWSER] = &contentBrowserPanel->isOpen;
+  items[PANEL_INSPECTOR] = &inspectorPanel->isOpen;
+  items[PANEL_OUTLINER] = &outlinerPanel->isOpen;
+  items[PANEL_VIEWPORT] = &viewportPanel->isOpen;
+  items[FRAME_DEBUG] = &debugFrame->isOpen;
+  items[FRAME_DEMO] = &_demoOpen;
+  items[FRAME_SETTINGS] = &settingsFrame->isOpen;
+
+  menuBar = std::make_unique<MenuBar>(items);
 }
 
 void Editor::ShutDown()
@@ -78,18 +82,21 @@ void Editor::RenderEditor(Scene* scene, FrameBuffer* framebuffer)
 {
   if (_demoOpen) 
     ImGui::ShowDemoWindow(&_demoOpen);
+
+  if (settingsFrame->isOpen)
+    settingsFrame->RenderFrame();
+
+  if (debugFrame->isOpen)
+    debugFrame->RenderFrame();
+
+  if (contentBrowserPanel->isOpen)
+    contentBrowserPanel->RenderPanel();
+
+  if(viewportPanel->isOpen)
+    viewportPanel->RenderPanel(framebuffer);
   
-  if (_preferencesOpen)
-    ShowPreferences();
-  
-  if (_statsOpen)
-    ShowStats();
-
-  contentBrowserPanel->RenderPanel();
-
-  viewportPanel->RenderPanel(framebuffer);
-
-  outlinerPanel->RenderPanel(scene);
+  if(outlinerPanel->isOpen)
+    outlinerPanel->RenderPanel(scene);
 
   if (outlinerPanel->IsItemSelected())
   {
@@ -104,8 +111,8 @@ void Editor::RenderEditor(Scene* scene, FrameBuffer* framebuffer)
       detailsPanel->RenderPanel(*sMesh);
   }
   
-  if (_inspectorOpen)
-    ShowInspector();
+  if(inspectorPanel->isOpen)
+    inspectorPanel->RenderPanel();
 
   ImGui::RenderPanel();
   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -139,7 +146,7 @@ void Editor::Styling()
   ImGui::StyleColorsDark();
 }
 
-void Editor::Dockspace()
+void Editor::Dockspace() const
 {
   static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
 
@@ -181,122 +188,7 @@ void Editor::Dockspace()
     ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
   }
 
-  if (ImGui::BeginMenuBar())
-  {
-    if (ImGui::BeginMenu("View"))
-    {
-      ImGui::MenuItem("Hierarchy", nullptr, &outlinerPanel->isOpen);
-      ImGui::MenuItem("Browser", nullptr, &contentBrowserPanel->isOpen);
-      ImGui::MenuItem("Inspector", nullptr, &_inspectorOpen);
-      ImGui::MenuItem("Viewport", nullptr, &viewportPanel->isOpen);
-      ImGui::MenuItem("Statistics", nullptr, &_statsOpen);
-      ImGui::MenuItem("Demo", nullptr, &_demoOpen);
-
-      ImGui::EndMenu();
-    }
-
-    if (ImGui::MenuItem("Preferences"))
-    {
-      _preferencesOpen = true;
-    }
-
-    ImGui::EndMenuBar();
-  }
-  ImGui::End();
-}
-
-void Editor::ShowStats()
-{
-  ImGuiIO& io = ImGui::GetIO();
-
-  static float timeOld = 0.0f;
-  static float timeNew = 0.0f;
-  static float framerate = io.Framerate;
-
-  ImGui::Begin("Stats", &_statsOpen);
-
-  timeNew = glfwGetTime();
-  if (timeNew - timeOld >= (1 / 8.0f)) /* update every 1/4 seconds */
-  {
-    timeOld = timeNew;
-    framerate = io.Framerate;
-  }
-
-  ImGui::Text("Application average %.3f ms/frame (%d FPS)", 1000.0f / framerate, (int)framerate);
-  ImGui::Text("Draw calls: %d", Renderer::drawCalls);
-  ImGui::End();
-}
-
-void Editor::ShowInspector()
-{
-  ImGui::SetNextWindowSize(ImVec2(_inspectorSize.x, _inspectorSize.y));
-  ImGui::Begin("Inspector", &_inspectorOpen);
-
-  ImGui::End();
-}
-
-void Editor::ShowPreferences()
-{
-  auto& instanceCM = ConfigurationsManager::Instance();
-
-  static bool buttonDisabled = true;
-  ImGui::Begin("Preferences", &_preferencesOpen);
-  ImGui::SeparatorText("Window properties");
+  menuBar->RenderMenuBar();
   
-  /* Window title */
-  static String& title = instanceCM.GetValue(CONF_WINDOW_TITLE);
-  if (ImGui::InputText("Title", &title))
-    buttonDisabled = false;
-  
-  /* Window aspect ratio */
-  if (ImGui::Combo("Aspect ratio", &_aspectIndex, _aspectRatioValues, 3)) /* 3 aspect ratio availables */
-  {
-    instanceCM.SetValue(CONF_ASPECT_RATIO, _aspectRatioValues[_aspectIndex]);
-    buttonDisabled = false;
-  }
-  
-  /* Window resolution */
-  if (ImGui::Combo("Resolution", &_resolutionIndex, _resolutionValues, 12)) /* 12 resolution availables */
-  {
-    instanceCM.SetValue(CONF_WINDOW_RESOLUTION, _resolutionValues[_resolutionIndex]);
-    buttonDisabled = false;
-  }
-
-  /* V-sync */
-  static bool vsyncActive = (std::strcmp(instanceCM.GetValue(CONF_VSYNC).c_str(), "true") == 0);
-  if (ImGui::Checkbox("V-sync", &vsyncActive))
-  {
-    instanceCM.SetValue(CONF_VSYNC, (vsyncActive ? "true" : "false"));
-    buttonDisabled = false;
-  }
-  
-  /* Disabling button */
-  if (buttonDisabled)
-  {
-    ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-    ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
-  }
-  /* Button event */
-  bool save = ImGui::Button("Save");
-  if (save)
-    instanceCM.Save();
-  /* Restore button */
-  if (buttonDisabled)
-  {
-    ImGui::PopItemFlag();
-    ImGui::PopStyleVar();
-  }
-  /* Tooltip */
-  ImGui::SameLine();
-  ImGui::TextDisabled("(?)");
-  if (ImGui::BeginItemTooltip())
-  {
-    ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
-    ImGui::TextUnformatted("You have to restart the application to make the changes active");
-    ImGui::PopTextWrapPos();
-    ImGui::EndTooltip();
-  }
-  if(save)
-    buttonDisabled = true;
   ImGui::End();
 }

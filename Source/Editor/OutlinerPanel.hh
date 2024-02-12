@@ -8,15 +8,16 @@
 #include "../Lighting/SpotLight.hh"
 
 /* ----------------------------------------
-			ScenePanel class
+			OutlinerPanel class
 	---------------------------------------- */
 class OutlinerPanel
 {
 public:
-	OutlinerPanel(const char* panelName, Vec2i panelSize);
+	OutlinerPanel(const char* panelName);
 	~OutlinerPanel() = default;
 
 	bool isOpen;
+	String panelName;
 
 	void RenderPanel(Scene* scene);
 	bool IsItemSelected() const { return _dLightSelected || _pLightSelected || _sMeshSelected; }
@@ -26,10 +27,9 @@ public:
 
 private:
 	enum ICONS : int { PLUS = 0, SUN, LAMP, EYE, EYE_HIDDEN, MESH };
+
 	Array<class Texture2D*, 6> _icons;
 	float _iconSize;
-	String _panelName;
-	Vec2i _panelSize;
 	uint32_t _buttonEyeID;
 
 	SceneObject<DirectionalLight>* _dLightSelected;

@@ -2,19 +2,20 @@
 
 #include "../SceneObject.hh"
 
+/* ----------------------------------------
+			DetailsPanel class
+	---------------------------------------- */
 class DetailsPanel
 {
 public:
-	DetailsPanel(const char* panelName, Vec2i panelSize);
+	DetailsPanel(const char* panelName);
 	~DetailsPanel() = default;
 
 	bool isOpen;
+	String panelName;
 
 	template<class T>
 	void RenderPanel(SceneObject<T>& sceneObject);
 
-private:
-	String _panelName;
-	Vec2i _panelSize;
 };
 

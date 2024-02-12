@@ -17,11 +17,11 @@
  * -----------------------------------------------------
 */
 
-OutlinerPanel::OutlinerPanel(const char* panelName, Vec2i panelSize)
+OutlinerPanel::OutlinerPanel(const char* panelName)
 {
+  this->panelName = panelName;
   isOpen = true;
-  _panelName = panelName;
-  _panelSize = panelSize;
+  
   _iconSize = 16.0f;
   _buttonEyeID = 1;
 
@@ -40,10 +40,7 @@ OutlinerPanel::OutlinerPanel(const char* panelName, Vec2i panelSize)
 
 void OutlinerPanel::RenderPanel(Scene* scene)
 {
-  if (!isOpen)
-    return;
-
-  ImGui::Begin(_panelName.c_str(), &isOpen);
+  ImGui::Begin(panelName.c_str(), &isOpen);
 
   AddSceneComponentButton("PopupAddElement");
   if (ImGui::BeginPopup("PopupAddElement"))
