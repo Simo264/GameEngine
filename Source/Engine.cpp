@@ -175,7 +175,7 @@ void Engine::Run()
     sceneShader->SetMat4f("UProjection", projection);
     sceneShader->SetMat4f("UView", view);
     scene.DrawScene(sceneShader);
-
+    
     framebuffer.BlitFrameBuffer();
     framebuffer.UnbindFrameBuffer();
 
@@ -240,7 +240,6 @@ void Engine::Run()
       Renderer::drawMode = GL_TRIANGLES;
     }
 #endif
-
 
     /* Render editor */
     editor.RenderEditor(&scene, &framebuffer);

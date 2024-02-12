@@ -14,7 +14,7 @@ void Mesh::DestroyMesh() const
 	vertexArray.DestroyVertexArray();
 }
 
-void Mesh::DrawMesh(Shader* shader)
+void Mesh::DrawMesh()
 {
 	if (diffuse)
 	{

@@ -12,11 +12,10 @@ void StaticMesh::Draw(Shader* shader)
 {
 	auto model = this->GetModel();
 	shader->SetMat4f("UModel", model);
-	
-	this->DrawMesh(shader);
+	this->DrawMesh();
 }
 
-void StaticMesh::DestroyStaticMesh()
+void StaticMesh::DestroyStaticMesh() const
 {
 	this->DestroyMesh();
 }

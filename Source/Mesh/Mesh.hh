@@ -17,7 +17,7 @@ public:
 
 	void InitMesh(VertexArrayData& data, VertexArrayConfig& config);
 	void DestroyMesh() const;
-	void DrawMesh(class Shader* shader);
+	void DrawMesh();
 
 	VertexArray vertexArray;
 	class Texture2D* diffuse;

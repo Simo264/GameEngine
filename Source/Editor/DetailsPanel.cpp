@@ -69,10 +69,10 @@ void DetailsPanel::RenderPanel(SceneObject<StaticMesh>& sceneObject)
   if (ImGui::CollapsingHeader("Transform"))
   {
     auto& style = ImGui::GetStyle();
-    auto tmp = style.CellPadding;
-    style.CellPadding = ImVec2(5.0f, 5.0f);
+    auto tmpPadding = style.CellPadding;
+    style.CellPadding = ImVec2(5, 5);
 
-    ImGui::BeginTable("##table", 2, ImGuiTableFlags_BordersInnerH);
+    ImGui::BeginTable("##table", 4, ImGuiTableFlags_BordersInner);
 
     ImGui::TableNextRow();
     ImGui::TableNextColumn();
@@ -80,11 +80,13 @@ void DetailsPanel::RenderPanel(SceneObject<StaticMesh>& sceneObject)
     ImGui::Text("Translation");
     ImGui::TableNextColumn();
     ImGui::SetNextItemWidth(-1);
-    ImGui::DragFloat("##translate-X", &obj->position.x, 0.1f, -FLT_MAX, +FLT_MAX, "X: %.3f");
+    ImGui::DragFloat("##translate-X", &obj->position.x, 0.1f, -FLT_MAX, +FLT_MAX, "X: %.2f");
+    ImGui::TableNextColumn();
     ImGui::SetNextItemWidth(-1);
-    ImGui::DragFloat("##translate-Y", &obj->position.y, 0.1f, -FLT_MAX, +FLT_MAX, "Y: %.3f");
+    ImGui::DragFloat("##translate-Y", &obj->position.y, 0.1f, -FLT_MAX, +FLT_MAX, "Y: %.2f");
+    ImGui::TableNextColumn();
     ImGui::SetNextItemWidth(-1);
-    ImGui::DragFloat("##translate-Z", &obj->position.z, 0.1f, -FLT_MAX, +FLT_MAX, "Z: %.3f");
+    ImGui::DragFloat("##translate-Z", &obj->position.z, 0.1f, -FLT_MAX, +FLT_MAX, "Z: %.2f");
     
     ImGui::TableNextRow();
     ImGui::TableNextColumn();
@@ -92,11 +94,13 @@ void DetailsPanel::RenderPanel(SceneObject<StaticMesh>& sceneObject)
     ImGui::Text("Scaling");
     ImGui::TableNextColumn();
     ImGui::SetNextItemWidth(-1);
-    ImGui::DragFloat("##Scaling-X", &obj->scaling.x, 0.1f, -FLT_MAX, +FLT_MAX, "X: %.3f");
+    ImGui::DragFloat("##Scaling-X", &obj->scaling.x, 0.1f, -FLT_MAX, +FLT_MAX, "X: %.2f");
+    ImGui::TableNextColumn();
     ImGui::SetNextItemWidth(-1);
-    ImGui::DragFloat("##Scaling-Y", &obj->scaling.y, 0.1f, -FLT_MAX, +FLT_MAX, "Y: %.3f");
+    ImGui::DragFloat("##Scaling-Y", &obj->scaling.y, 0.1f, -FLT_MAX, +FLT_MAX, "Y: %.2f");
+    ImGui::TableNextColumn();
     ImGui::SetNextItemWidth(-1);
-    ImGui::DragFloat("##Scaling-Z", &obj->scaling.z, 0.1f, -FLT_MAX, +FLT_MAX, "Z: %.3f");
+    ImGui::DragFloat("##Scaling-Z", &obj->scaling.z, 0.1f, -FLT_MAX, +FLT_MAX, "Z: %.2f");
 
     ImGui::TableNextRow();
     ImGui::TableNextColumn();
@@ -104,16 +108,17 @@ void DetailsPanel::RenderPanel(SceneObject<StaticMesh>& sceneObject)
     ImGui::Text("Rotation");
     ImGui::TableNextColumn();
     ImGui::SetNextItemWidth(-1);
-    ImGui::DragFloat("##Roll", &obj->rotationAxis.x, 1.0f, 0.0f, 1.0f, "X: %.3f");
+    ImGui::DragFloat("##Roll", &obj->angleDegreeX, 1.0f, -180.0f, 180.0f, "X: %.2f");
+    ImGui::TableNextColumn();
     ImGui::SetNextItemWidth(-1);
-    ImGui::DragFloat("##Pitch", &obj->rotationAxis.y, 1.0f, 0.0f, 1.0f, "Y: %.3f");
+    ImGui::DragFloat("##Pitch", &obj->angleDegreeY, 1.0f, -180.0f, 180.0f, "Y: %.2f");
+    ImGui::TableNextColumn();
     ImGui::SetNextItemWidth(-1);
-    ImGui::DragFloat("##Yaw", &obj->rotationAxis.z, 1.0f, 0.0f, 1.0f, "Z: %.3f");
-    ImGui::SetNextItemWidth(-1);
-    ImGui::DragFloat("##Rotation-degree", &obj->rotationAngle, 0.5f, -180.0f, +180.0f, "Degree: %.3f");
+    ImGui::DragFloat("##Yaw", &obj->angleDegreeZ, 1.0f, -180.0f, 180.0f, "Z: %.2f");
+    //ImGui::SetNextItemWidth(-1);
+    //ImGui::DragFloat("##Rotation-degree", &obj->rotationAngle, 0.5f, -180.0f, +180.0f, "Degree: %.3f");
 
-    style.CellPadding = tmp;
-
+    style.CellPadding = tmpPadding;
     ImGui::EndTable();
   }
   if (ImGui::CollapsingHeader("Material"))
