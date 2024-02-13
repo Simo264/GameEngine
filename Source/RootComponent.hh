@@ -28,10 +28,10 @@ public:
 	const Mat4f GetModel() const
 	{
 		Mat4f model = Mat4f(1.0f);
+		model = glm::translate(model, position);
 		model = glm::rotate(model, glm::radians(angleDegreeX), Vec3f(1.0f, 0.0f, 0.0f));
 		model = glm::rotate(model, glm::radians(angleDegreeY), Vec3f(0.0f, 1.0f, 0.0f));
 		model = glm::rotate(model, glm::radians(angleDegreeZ), Vec3f(0.0f, 0.0f, 1.0f));
-		model = glm::translate(model, position);
 		model = glm::scale(model, scaling);
 		return model;
 	}

@@ -9,9 +9,9 @@ void Scene::DrawScene(Shader* shader)
 			sceneDLight->object->RenderLight(shader);
 
 	/* Render point lights */
-	//for (auto ptr : scenePLights)
-	//	if (ptr->visible)
-	//		ptr->object->RenderLight(shader);
+	for (auto ptr : scenePLights)
+		if (ptr->visible)
+			ptr->object->RenderLight(shader);
 	
 	/* Render static mesh objects (enable cull face to improve performance) */
 	for (auto ptr : sceneSMeshes)

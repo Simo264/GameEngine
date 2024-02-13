@@ -17,5 +17,7 @@ public:
 	template<class T>
 	void RenderPanel(SceneObject<T>& sceneObject);
 
+private:
+	void EditVec3(const char* label, float speed, Vec2f minMax, Array<float*, 3> coords, float colSize);
 };
 

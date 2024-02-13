@@ -4,7 +4,7 @@
 #include "NonCopyable.hh"
 
 /* -------------------------------------------------------------
-	SceneObject class represents a specific object placed in world 
+	SceneObject class represents a specific object placed in world
 	------------------------------------------------------------- */
 template <class T>
 class SceneObject : public NonCopyable {
