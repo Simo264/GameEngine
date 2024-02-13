@@ -131,6 +131,9 @@ vec3 CalcDirLight()
 
   /* diffuse shading */
   float diffuseFactor = max(dot(normal, lightDir), 0.0);
+  if(diffuseFactor == 0.0f)
+    return ambient;
+
   vec3 diffuse = UDirLight.diffuse * diffuseFactor * diffuseColor;
   
   /* specular shading */
@@ -144,35 +147,35 @@ vec3 CalcDirLight()
 
 vec3 BlinnPhong(PointLight_t PointLight)
 {
-  vec3 lightDir = normalize(PointLight.position - FragPos);
-  
-  /* diffuse shading */
-  float diff = max(dot(normal, lightDir), 0.0);
-  if(diff == 0.0f)
-    return vec3(0.0f);
-
-  /* specular shading */
-  vec3 halfwayDir = normalize(lightDir + viewDir);  
-  float spec = pow(max(dot(normal, halfwayDir), 0.0), UMaterial.shininess);
-
   /* attenuation */
-  float distance    = length(PointLight.position - FragPos);
-  //float attenuation = 1.0f / (1.0f + UPointLight.linear * distance + UPointLight.quadratic * (distance * distance)); 
+  float distance = length(PointLight.position - FragPos);
   float attenuation;
   if(UGamma != 0.0f)
     attenuation = 1.0f / (distance);    
   else
-    attenuation = 1.0f / (distance*distance);
-  
+    attenuation = 1.0f / (distance * distance);
 
-  // combine results
-  vec3 ambient  = PointLight.ambient  * diffuseColor;
-  vec3 diffuse  = PointLight.diffuse  * diff * diffuseColor;
-  vec3 specular = PointLight.specular * spec * specularColor;
 
-  ambient  *= attenuation;
-  diffuse  *= attenuation;
+  /* ambient shading */
+  vec3 ambient = PointLight.ambient  * diffuseColor;
+  ambient *= attenuation;
+
+  /* diffuse shading */
+  vec3 lightDir = normalize(PointLight.position - FragPos);
+  float diffuseFactor = max(dot(normal, lightDir), 0.0);
+  if(diffuseFactor == 0.0f)
+    return ambient;
+    
+  vec3 diffuse  = PointLight.diffuse * diffuseFactor * diffuseColor;
+  diffuse *= attenuation;
+
+  /* specular shading */
+  vec3 halfwayDir = normalize(lightDir + viewDir);  
+  float specularFactor = pow(max(dot(normal, halfwayDir), 0.0), UMaterial.shininess);
+  vec3 specular = PointLight.specular * specularFactor * specularColor;
   specular *= attenuation;
+
+  /* combine results */
   return (ambient + diffuse + specular);
 }
 
