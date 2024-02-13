@@ -21,7 +21,7 @@ void Renderer::DrawArraysInstanced(VertexArray* vertexArray, int nInstances)
 
 void Renderer::DrawIndexed(VertexArray* vertexArray)
 {
-	if(vertexArray->numIndices == 0)
+	if (vertexArray->numIndices == 0)
 		CONSOLE_WARN("Renderer::DrawIndexed called but no indices provided");
 		
 	vertexArray->BindVertexArray();

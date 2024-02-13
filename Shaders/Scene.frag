@@ -86,19 +86,17 @@ void main()
   viewDir = normalize(UViewPos - FragPos);
   diffuseColor  = texture(UMaterial.diffuse, TexCoords).rgb;
   specularColor = texture(UMaterial.specular, TexCoords).rgb;
-  vec3 result = vec3(0.0f, 0.0f, 0.0f);
+  vec3 result = vec3(0.0f);
 
   /* If no texture: set diffuse to default color */
   if(length(diffuseColor) == 0)
     diffuseColor = vec3(0.25f, 0.50f, 0.75f);
 
-  /*
-    Our lighting is set up in 3 phases: directional, point lights and an optional flashlight
+  /* Our lighting is set up in 3 phases: directional, point lights and an optional flashlight
     For each phase, a calculate function is defined that calculates the corresponding color
     per lamp. In the main() function we take all the calculated colors and sum them up for
-    this fragment's final color.
-  */
-  
+    this fragment's final color. */
+
   /* Phase 1: Directional lighting */
   if(UDirLightVisible)
     result += CalcDirLight();
@@ -128,17 +126,19 @@ vec3 CalcDirLight()
 {
   vec3 lightDir = normalize(-UDirLight.direction);
   
-  // diffuse shading
-  float diff = max(dot(normal, lightDir), 0.0);
+  /* ambient shading */
+  vec3 ambient  = UDirLight.ambient * diffuseColor;
+
+  /* diffuse shading */
+  float diffuseFactor = max(dot(normal, lightDir), 0.0);
+  vec3 diffuse = UDirLight.diffuse * diffuseFactor * diffuseColor;
   
-  // specular shading
+  /* specular shading */
   vec3 reflectDir = reflect(-lightDir, normal);
-  float spec = pow(max(dot(viewDir, reflectDir), 0.0), UMaterial.shininess);
-  
-  // combine results
-  vec3 ambient  = UDirLight.ambient  * diffuseColor;
-  vec3 diffuse  = UDirLight.diffuse  * diff * diffuseColor;
-  vec3 specular = UDirLight.specular * spec * specularColor;
+  float specularFactor = pow(max(dot(viewDir, reflectDir), 0.0), UMaterial.shininess);
+  vec3 specular = UDirLight.specular * specularFactor * specularColor;
+
+  /* combine results */
   return (ambient + diffuse + specular);
 }
 
@@ -146,19 +146,18 @@ vec3 BlinnPhong(PointLight_t PointLight)
 {
   vec3 lightDir = normalize(PointLight.position - FragPos);
   
-  // diffuse shading
+  /* diffuse shading */
   float diff = max(dot(normal, lightDir), 0.0);
   if(diff == 0.0f)
     return vec3(0.0f);
 
-  // specular
+  /* specular shading */
   vec3 halfwayDir = normalize(lightDir + viewDir);  
   float spec = pow(max(dot(normal, halfwayDir), 0.0), UMaterial.shininess);
 
-  // attenuation
+  /* attenuation */
   float distance    = length(PointLight.position - FragPos);
   //float attenuation = 1.0f / (1.0f + UPointLight.linear * distance + UPointLight.quadratic * (distance * distance)); 
-  
   float attenuation;
   if(UGamma != 0.0f)
     attenuation = 1.0f / (distance);    

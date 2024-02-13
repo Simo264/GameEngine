@@ -32,7 +32,7 @@ void ObjectLoader::LoadMesh(Mesh* mesh, uint32_t meshIndex)
   const uint64_t vertDataSize = aimesh->mNumVertices * 8; /* 8: 3(position)+3(normals)+2(textcoord) */
   const uint64_t indDatasize = aimesh->mNumFaces * 3; /* 3: number of vertices per triangle */
 
-  /* Create empty mesh */
+  /* Allocate memory for mesh data */
   VertexArrayData data;
   data.vertDataSize = vertDataSize * sizeof(float);
   data.vertData = nullptr;
@@ -65,6 +65,12 @@ void ObjectLoader::LoadVertices(const aiMesh* aimesh, uint32_t writeBuffer)
 {
   glBindBuffer(GL_ARRAY_BUFFER, writeBuffer);
   float* vboPtr = static_cast<float*>(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY));
+  if (!vboPtr)
+  {
+    CONSOLE_WARN("VertexBuffer pointer nullptr");
+    return;
+  }
+  
   for (uint32_t i = 0; i < aimesh->mNumVertices; i++)
   {
     aiVector3D& vertPos = aimesh->mVertices[i];
@@ -91,6 +97,12 @@ void ObjectLoader::LoadIndices(const aiMesh* aimesh, uint32_t writeBuffer)
 {
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, writeBuffer);
   uint32_t* eboPtr = static_cast<uint32_t*>(glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_WRITE_ONLY));
+  if (!eboPtr)
+  {
+    CONSOLE_WARN("ElementBuffer pointer nullptr");
+    return;
+  }
+  
   for (uint32_t i = 0; i < aimesh->mNumFaces; i++)
   {
     const aiFace& face = aimesh->mFaces[i];

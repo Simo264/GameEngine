@@ -1,24 +1,30 @@
 #include "DirectionalLight.hh"
 #include "../Shader.hh"
+#include "../Logger.hh"
 
 void DirectionalLight::RenderLight(Shader* shader)
 {
   const uint64_t uniformNameSize = _uniformName.size();
 
-  _uniformName.append(".direction");                     /* uniformName = "DirLight.direction" */ 
+  /* uniformName = "DirLight.direction" */ 
+  _uniformName.append(".direction");                     
   shader->SetVec3f(_uniformName.c_str(), direction);
     
+  /* uniformName = "DirLight.ambient" */ 
   _uniformName.erase(uniformNameSize);
-  _uniformName.append(".ambient");                       /* uniformName = "DirLight.ambient" */ 
+  _uniformName.append(".ambient"); 
   shader->SetVec3f(_uniformName.c_str(), color * ambient);
     
+  /* uniformName = "DirLight.diffuse" */ 
   _uniformName.erase(uniformNameSize);
-  _uniformName.append(".diffuse");                       /* uniformName = "DirLight.diffuse" */ 
+  _uniformName.append(".diffuse");    
   shader->SetVec3f(_uniformName.c_str(), color * diffuse);
     
+  /* uniformName = "DirLight.specular" */ 
   _uniformName.erase(uniformNameSize);
-  _uniformName.append(".specular");                      /* uniformName = "DirLight.specular" */ 
+  _uniformName.append(".specular");
   shader->SetVec3f(_uniformName.c_str(), color * specular);
 
-  _uniformName.erase(uniformNameSize);                   /* uniformName = "DirLight" */   
+  /* uniformName = "DirLight" */   
+  _uniformName.erase(uniformNameSize);
 }

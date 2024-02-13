@@ -115,8 +115,6 @@ void DetailsPanel::RenderPanel(SceneObject<StaticMesh>& sceneObject)
     ImGui::TableNextColumn();
     ImGui::SetNextItemWidth(-1);
     ImGui::DragFloat("##Yaw", &obj->angleDegreeZ, 1.0f, -180.0f, 180.0f, "Z: %.2f");
-    //ImGui::SetNextItemWidth(-1);
-    //ImGui::DragFloat("##Rotation-degree", &obj->rotationAngle, 0.5f, -180.0f, +180.0f, "Degree: %.3f");
 
     style.CellPadding = tmpPadding;
     ImGui::EndTable();
