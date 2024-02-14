@@ -3,43 +3,23 @@
 #include "Core.hh"
 #include "NonCopyable.hh"
 
-/* -------------------------------------------------------------
-	SceneObject class represents a specific object placed in world
-	------------------------------------------------------------- */
-template <class T>
-class SceneObject : public NonCopyable {
+/* ------------------------------------------------------------------
+	SceneObject class represents a specific object placed in world,
+	contains more necessary informations about an 
+	object that in scene like id, tag name, visibility...
+	------------------------------------------------------------------- */
+class SceneObject : public NonCopyable
+{
 public:
-	SceneObject(T* obj = nullptr, bool visible = false) : object{ obj }, visible{ visible }
-	{
-		objectID = _id++;
-		SetName();
-	}
+	SceneObject();
 
-	bool Compare(const SceneObject& other)
-	{
-		return this->objectID == other.objectID;
-	}
-
-	/* Allocate on heap memory new scene object of type T */
-	static SceneObject<T>* Create(T* t, bool visible = true)
-	{
-		return new SceneObject<T>(t, visible);
-	}
-
-	/* Free memory */
-	static void DestroyObject(SceneObject<T>* o)
-	{
-		delete o;
-	}
-
-
-	T* object;
-	String name;
 	bool visible;
-	uint32_t objectID;
+	String tagName;
+	
+	uint32_t GetID() const { return _instanceID; }
+	bool Compare(const SceneObject& other) const;
 
 private:
+	uint32_t _instanceID;
 	inline static uint32_t _id = 0;
-
-	void SetName();
 };

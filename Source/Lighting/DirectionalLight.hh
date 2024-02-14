@@ -13,7 +13,12 @@
 class DirectionalLight : public BaseLight
 {
 public:
-  DirectionalLight(const char* uniformName) : BaseLight(uniformName), direction{ 0.0f, -1.0f, 0.0f } {} 
+  DirectionalLight(const char* uniformName) : 
+    BaseLight(uniformName), 
+    direction{ 0.0f, -1.0f, 0.0f } 
+  {
+    this->tagName = "Directional light";
+  } 
 
   void RenderLight(class Shader* shader) override;
 

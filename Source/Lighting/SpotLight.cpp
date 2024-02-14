@@ -1,6 +1,7 @@
 #include "SpotLight.hh"
 #include "../Shader.hh"
 
+#if 0
 void SpotLight::RenderLight(Shader* shader)
 {
   const int uniformNameSize = _uniformName.size();
@@ -38,3 +39,4 @@ void SpotLight::RenderLight(Shader* shader)
 
   _uniformName.erase(uniformNameSize);
 }
+#endif

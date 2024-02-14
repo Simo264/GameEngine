@@ -1,12 +1,12 @@
 #pragma once
 
 #include "../Core.hh"
-#include "../NonCopyable.hh"
+#include "../SceneObject.hh"
 
 /* -------------------------------------
       Interface lighting class 
   ------------------------------------- */
-class BaseLight : public NonCopyable
+class BaseLight : public SceneObject
 {
 public:
   BaseLight(const char* uniformName)
@@ -15,11 +15,12 @@ public:
     this->_uniformName.append(uniformName);
 
     color     = Vec3f(1.0f, 1.0f, 1.0f);  /* default white color */ 
-    ambient   = 0.25f;                    /* default ambient intensity */
-    diffuse   = 0.50f;                    /* default diffuse intensity */
-    specular  = 0.75f;                    /* default specular intensity */
+    ambient   = 0.125f;                    /* default ambient intensity */
+    diffuse   = 0.25f;                    /* default diffuse intensity */
+    specular  = 0.25f;                    /* default specular intensity */
+    
+    this->tagName = "Light";
   }
-  ~BaseLight() = default;
 
   virtual void RenderLight(class Shader* shader) = 0;
 

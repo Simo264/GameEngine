@@ -4,35 +4,27 @@
 #include "Lighting/SpotLight.hh"
 #include "Mesh/StaticMesh.hh"
 
-/* Template specialization */
-template<class T>
-void SceneObject<T>::SetName()
+
+/* -----------------------------------------------------
+ *          PUBLIC METHODS
+ * -----------------------------------------------------
+*/
+
+SceneObject::SceneObject()
 {
-	char str[32];
-	sprintf_s(str, "Object_%d", objectID);
-	name = str;
+	visible = true;
+	_instanceID = _id++;
+	
+	tagName = "Scene object";
 }
 
-template<>
-void SceneObject<DirectionalLight>::SetName()
+bool SceneObject::Compare(const SceneObject& other) const
 {
-	char str[32];
-	sprintf_s(str, "Directional_light_%d", objectID);
-	name = str;
+	return (this->GetID() == other.GetID());
 }
 
-template<>
-void SceneObject<PointLight>::SetName()
-{
-	char str[32];
-	sprintf_s(str, "Point_light_%d", objectID);
-	name = str;
-}
+/* -----------------------------------------------------
+ *          PRIVATE METHODS
+ * -----------------------------------------------------
+*/
 
-template<>
-void SceneObject<StaticMesh>::SetName()
-{
-	char str[32];
-	sprintf_s(str, "Mesh_%d", objectID);
-	name = str;
-}

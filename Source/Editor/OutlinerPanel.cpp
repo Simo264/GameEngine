@@ -1,5 +1,13 @@
 #include "OutlinerPanel.hh"
 
+
+#include "../Scene.hh"
+
+#include "../Mesh/StaticMesh.hh"
+#include "../Lighting/DirectionalLight.hh"
+#include "../Lighting/PointLight.hh"
+#include "../Lighting/SpotLight.hh"
+
 #include "../Shader.hh"
 #include "../Logger.hh"
 #include "../Subsystems/TexturesManager.hh"
@@ -41,7 +49,7 @@ OutlinerPanel::OutlinerPanel(const char* panelName)
 void OutlinerPanel::RenderPanel(Scene* scene)
 {
   ImGui::Begin(panelName.c_str(), &isOpen);
-
+  
   AddSceneComponentButton("PopupAddElement");
   if (ImGui::BeginPopup("PopupAddElement"))
     AddSceneComponentPopup(scene);
@@ -64,14 +72,17 @@ void OutlinerPanel::RenderPanel(Scene* scene)
       ImGui::TableSetColumnIndex(0);
       ImGui::Image((ImTextureID)_icons[SUN]->textureID, { _iconSize,_iconSize });
       ImGui::TableSetColumnIndex(1);
-      if(ImGui::Selectable(scene->sceneDLight->name.c_str(), (_dLightSelected != nullptr)))
+      
+      ImGui::PushID(scene->sceneDLight->GetID());
+      if(ImGui::Selectable(scene->sceneDLight->tagName.c_str(), (_dLightSelected != nullptr)))
       {
         _dLightSelected = scene->sceneDLight;
         _pLightSelected = nullptr;
         _sMeshSelected = nullptr;
       }
+      ImGui::PopID();
       ImGui::TableSetColumnIndex(2);
-      ToggleVisibility(*scene->sceneDLight);
+      ToggleVisibility(static_cast<DirectionalLight*>(scene->sceneDLight));
     }
 
     /* Point light rows */
@@ -83,15 +94,16 @@ void OutlinerPanel::RenderPanel(Scene* scene)
         ImGui::TableSetColumnIndex(0);
         ImGui::Image((ImTextureID)_icons[LAMP]->textureID, {_iconSize,_iconSize});
         ImGui::TableSetColumnIndex(1);
-        if (ImGui::Selectable(scenePLight->name.c_str(), (_pLightSelected == scenePLight)))
+        ImGui::PushID(scenePLight->GetID());
+        if (ImGui::Selectable(scenePLight->tagName.c_str(), (_pLightSelected == scenePLight)))
         {
           _dLightSelected = nullptr;
           _pLightSelected = scenePLight;
           _sMeshSelected = nullptr;
         }
-        
+        ImGui::PopID();
         ImGui::TableSetColumnIndex(2);
-        ToggleVisibility(*scenePLight);
+        ToggleVisibility(static_cast<PointLight*>(scenePLight));
       }
     }
 
@@ -104,14 +116,16 @@ void OutlinerPanel::RenderPanel(Scene* scene)
         ImGui::TableSetColumnIndex(0);
         ImGui::Image((ImTextureID)_icons[MESH]->textureID, { _iconSize,_iconSize });
         ImGui::TableSetColumnIndex(1);
-        if (ImGui::Selectable(sceneMesh->name.c_str(), (_sMeshSelected == sceneMesh)))
+        ImGui::PushID(sceneMesh->GetID());
+        if (ImGui::Selectable(sceneMesh->tagName.c_str(), (_sMeshSelected == sceneMesh)))
         {
           _dLightSelected = nullptr;
           _pLightSelected = nullptr;
           _sMeshSelected = sceneMesh;
         }
+        ImGui::PopID();
         ImGui::TableSetColumnIndex(2);
-        ToggleVisibility(*sceneMesh);
+        ToggleVisibility(static_cast<StaticMesh*>(sceneMesh));
       }
     }
     ImGui::EndTable();
@@ -122,26 +136,14 @@ void OutlinerPanel::RenderPanel(Scene* scene)
   ImGui::End();
 }
 
-template<class T>
-SceneObject<T>* OutlinerPanel::GetItemSelected() { return nullptr; }
+template<>
+SceneObject* OutlinerPanel::GetItemSelected<DirectionalLight>() { return _dLightSelected; }
 
 template<>
-SceneObject<DirectionalLight>* OutlinerPanel::GetItemSelected()
-{
-  return _dLightSelected;
-}
+SceneObject* OutlinerPanel::GetItemSelected<PointLight>() { return _pLightSelected; }
 
 template<>
-SceneObject<PointLight>* OutlinerPanel::GetItemSelected()
-{
-  return _pLightSelected;
-}
-
-template<>
-SceneObject<StaticMesh>* OutlinerPanel::GetItemSelected()
-{
-  return _sMeshSelected;
-}
+SceneObject* OutlinerPanel::GetItemSelected<StaticMesh>() { return _sMeshSelected; }
 
 /* -----------------------------------------------------
  *          PRIVATE METHODS
@@ -233,53 +235,56 @@ void OutlinerPanel::AddSceneComponentPopup(Scene* scene)
   ImGui::EndPopup();
 }
 
-void OutlinerPanel::ToggleVisibility(SceneObject<DirectionalLight>& sceneObj)
+
+/* Toggle dir light visibility */
+void OutlinerPanel::ToggleVisibility(DirectionalLight* dLight)
 {
-  if (sceneObj.visible)
+  if (dLight->visible)
   {
     if (ImGui::ImageButtonEx(_buttonEyeID++, (ImTextureID)_icons[EYE]->textureID, { _iconSize,_iconSize }, { 0,0 }, { 1,1 }, { 0,0,0,0 }, { 1,1,1,1 }))
-      sceneObj.visible = false;
+      dLight->visible = false;
   }
   else
   {
     if (ImGui::ImageButtonEx(_buttonEyeID++, (ImTextureID)_icons[EYE_HIDDEN]->textureID, { _iconSize,_iconSize }, { 0,0 }, { 1,1 }, { 0,0,0,0 }, { 1,1,1,1 }))
-      sceneObj.visible = true;
+      dLight->visible = true;
   }
   
   auto shader = ShadersManager::Instance().GetShader("SceneShader");
-  shader->SetBool("UDirLightVisible", sceneObj.visible);
+  shader->SetBool("UDirLightVisible", dLight->visible);
 }
 
-void OutlinerPanel::ToggleVisibility(SceneObject<PointLight>& sceneObj)
+/* Toggle point light visibility */
+void OutlinerPanel::ToggleVisibility(PointLight* pLight)
 {
-  if (sceneObj.visible)
+  if (pLight->visible)
   {
     if (ImGui::ImageButtonEx(_buttonEyeID++, (ImTextureID)_icons[EYE]->textureID, { _iconSize,_iconSize }, { 0,0 }, { 1,1 }, { 0,0,0,0 }, { 1,1,1,1 }))
-      sceneObj.visible = false;
+      pLight->visible = false;
   }
   else
   {
     if (ImGui::ImageButtonEx(_buttonEyeID++, (ImTextureID)_icons[EYE_HIDDEN]->textureID, { _iconSize,_iconSize }, { 0,0 }, { 1,1 }, { 0,0,0,0 }, { 1,1,1,1 }))
-      sceneObj.visible = true;
+      pLight->visible = true;
   }
 
-  char uniform[32];
-  sprintf_s(uniform, "UPointLightVisible[%d]", sceneObj.objectID);
-
-  auto shader = ShadersManager::Instance().GetShader("SceneShader");
-  shader->SetInt(uniform, (int) sceneObj.visible);
+  //char uniform[32];
+  //sprintf_s(uniform, "UPointLightVisible[%d]", sceneObj->GetID());
+  //auto shader = ShadersManager::Instance().GetShader("SceneShader");
+  //shader->SetInt(uniform, (int) sceneObj->visible);
 }
 
-void OutlinerPanel::ToggleVisibility(SceneObject<StaticMesh>& sceneObj)
+/* Toggle static mesh visibility */
+void OutlinerPanel::ToggleVisibility(StaticMesh* sMesh)
 {
-  if (sceneObj.visible)
+  if (sMesh->visible)
   {
     if (ImGui::ImageButtonEx(_buttonEyeID++, (ImTextureID)_icons[EYE]->textureID, { _iconSize,_iconSize }, { 0,0 }, { 1,1 }, { 0,0,0,0 }, { 1,1,1,1 }))
-      sceneObj.visible = false;
+      sMesh->visible = false;
   }
   else
   {
     if (ImGui::ImageButtonEx(_buttonEyeID++, (ImTextureID)_icons[EYE_HIDDEN]->textureID, { _iconSize,_iconSize }, { 0,0 }, { 1,1 }, { 0,0,0,0 }, { 1,1,1,1 }))
-      sceneObj.visible = true;
+      sMesh->visible = true;
   }
 }

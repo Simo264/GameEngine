@@ -74,21 +74,21 @@ void Engine::Run()
   PointLight pointLight2("UPointLight[1]");
   StaticMesh cube(ROOT_PATH / "Assets/Shapes/Cube/Cube.obj");
   StaticMesh plane(ROOT_PATH / "Assets/Shapes/Plane/Plane.obj");
-  plane.scaling += 10.0f;
-  plane.position.y = -1.f;
+  plane.transform.scale += 10.0f;
+  plane.transform.position.y = -1.f;
 
-  auto sceneDirLight = SceneObject<DirectionalLight>::Create(&dirLight);
-  auto scenePointLight1 = SceneObject<PointLight>::Create(&pointLight1);
-  auto scenePointLight2 = SceneObject<PointLight>::Create(&pointLight2);
-  auto sceneCube = SceneObject<StaticMesh>::Create(&cube);
-  auto scenePlane = SceneObject<StaticMesh>::Create(&plane);
+  CONSOLE_TRACE("dirlight id = {}", dirLight.GetID());
+  CONSOLE_TRACE("pointLight1 id = {}", pointLight1.GetID());
+  CONSOLE_TRACE("pointLight2 id = {}", pointLight2.GetID());
+  CONSOLE_TRACE("cube id = {}", cube.GetID());
+  CONSOLE_TRACE("plane id = {}", plane.GetID());
 
   Scene scene;
-  scene.AddDirectionalLight(*sceneDirLight);
-  scene.AddPointLight(*scenePointLight1);
-  scene.AddPointLight(*scenePointLight2);
-  scene.AddStaticMesh(*sceneCube);
-  scene.AddStaticMesh(*scenePlane);
+  scene.AddSceneObject<DirectionalLight>(&dirLight);
+  scene.AddSceneObject<PointLight>(&pointLight1);
+  scene.AddSceneObject<PointLight>(&pointLight2);
+  scene.AddSceneObject<StaticMesh>(&cube);
+  scene.AddSceneObject<StaticMesh>(&plane);
 
 #if 0
   /* Shadow mapping */
@@ -179,9 +179,9 @@ void Engine::Run()
     framebuffer.BlitFrameBuffer();
     framebuffer.UnbindFrameBuffer();
 
-    cube.angleDegreeX += 0.05f;
-    if (cube.angleDegreeX >= 360.0f)
-      cube.angleDegreeX = 0;
+    cube.transform.degrees.x += 0.05f;
+    if (cube.transform.degrees.x >= 360.0f)
+      cube.transform.degrees.x = 0;
 
 
 #if 0

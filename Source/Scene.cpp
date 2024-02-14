@@ -1,65 +1,114 @@
 #include "Scene.hh"
 #include "Shader.hh"
+#include "Logger.hh"
+
+#include "SceneObject.hh"
+#include "Mesh/StaticMesh.hh"
+#include "Lighting/DirectionalLight.hh"
+#include "Lighting/PointLight.hh"
+#include "Lighting/SpotLight.hh"
+
+/* -----------------------------------------------------
+ *          PUBLIC METHODS
+ * -----------------------------------------------------
+*/
+
+#if 0
+void Scene::ClearScene() { /* TODO */ }
+
+void Scene::LoadScene(Path filePath)
+{
+	/* Clean previuos scene */
+	ClearScene();
+
+	IFStream file(filePath.string());
+	if (!file.is_open())
+	{
+		CONSOLE_WARN("Error on opening file '{}'", filePath.string());
+		return;
+	}
+}
+#endif
 
 void Scene::DrawScene(Shader* shader)
 {
 	/* Render directional light */
 	if (HasDirLight())
-		if(sceneDLight->visible)
-			sceneDLight->object->RenderLight(shader);
+		if (sceneDLight->visible)
+			static_cast<DirectionalLight*>(sceneDLight)->RenderLight(shader);
 
 	/* Render point lights */
-	for (auto ptr : scenePLights)
-		if (ptr->visible)
-			ptr->object->RenderLight(shader);
+	for (auto scenePLight : scenePLights)
+		if (scenePLight->visible)
+			static_cast<PointLight*>(scenePLight)->RenderLight(shader);
 	
 	/* Render static mesh objects (enable cull face to improve performance) */
-	for (auto ptr : sceneSMeshes)
-		if (ptr->visible)
-			ptr ->object->Draw(shader);
+	for (auto sceneSMesh : sceneSMeshes)
+		if (sceneSMesh->visible)
+			static_cast<StaticMesh*>(sceneSMesh)->Draw(shader);
 }
 
-void Scene::AddDirectionalLight(SceneObject<DirectionalLight>& dirLight)
+/* Add directional light in scene */
+template<>
+void Scene::AddSceneObject(DirectionalLight* dLight)
 {
-	sceneDLight = &dirLight;
+	sceneDLight = dLight;
 }
 
-void Scene::RemoveDirectionalLight()
+/* Add point light in scene */
+template<>
+void Scene::AddSceneObject(PointLight* pLight)
 {
-	sceneDLight = nullptr;
+	scenePLights.push_back(pLight);
 }
 
-void Scene::AddPointLight(SceneObject<PointLight>& pointLight)
+/* Add static mesh in scene */
+template<>
+void Scene::AddSceneObject(StaticMesh* sMesh)
 {
-	scenePLights.push_back(&pointLight);
+	sceneSMeshes.push_back(sMesh);
 }
 
-void Scene::RemovePointLight(SceneObject<PointLight>& pointLight)
+
+/* Remove directional light from scene */
+template<>
+void Scene::RemoveSceneObject(DirectionalLight*)
+{
+	this->sceneDLight = nullptr;
+}
+
+/* Remove point light from scene */
+template<>
+void Scene::RemoveSceneObject(PointLight* pLight)
 {
 	auto beg = scenePLights.begin();
 	auto end = scenePLights.end();
-	auto it = std::find_if(beg, end, [&](SceneObject<PointLight>* ptr) {
-		return ptr->Compare(pointLight);
+	auto it = std::find_if(beg, end, [&](SceneObject* o) {
+		return o->Compare(*pLight);
 		});
 
 	if (it != end)
 		scenePLights.erase(it);
 }
 
-void Scene::AddStaticMesh(SceneObject<StaticMesh>& staticMesh)
-{
-	sceneSMeshes.push_back(&staticMesh);
-}
-
-void Scene::RemoveStaticMesh(SceneObject<StaticMesh>& staticMesh)
+/* Remove static mesh from scene */
+template<>
+void Scene::RemoveSceneObject(StaticMesh* sMesh)
 {
 	auto beg = sceneSMeshes.begin();
 	auto end = sceneSMeshes.end();
-	auto it = std::find_if(beg, end, [&](SceneObject<StaticMesh>* ptr) {
-		return ptr->Compare(staticMesh);
+	auto it = std::find_if(beg, end, [&](SceneObject* o) {
+		return o->Compare(*sMesh);
 		});
 
 	if (it != end)
 		sceneSMeshes.erase(it);
 }
+
+/* -----------------------------------------------------
+ *          PRIVATE METHODS
+ * -----------------------------------------------------
+*/
+
+
 

@@ -1,6 +1,11 @@
 #include "Editor.hh"
 #include "ContentBrowserPanel.hh"
 
+#include "../Mesh/StaticMesh.hh"
+#include "../Lighting/DirectionalLight.hh"
+#include "../Lighting/PointLight.hh"
+#include "../Lighting/SpotLight.hh"
+
 #include "../FrameBuffer.hh"
 #include "../Scene.hh"
 #include "../Subsystems/ConfigurationsManager.hh"
@@ -42,11 +47,12 @@ void Editor::Initialize()
   settingsFrame = std::make_unique<SettingsFrame>("Settings");
   debugFrame = std::make_unique<DebugFrame>("Debug");
 
-  Array<bool*, 7> items{};
+  Array<bool*, 8> items{};
   items[PANEL_BROWSER] = &contentBrowserPanel->isOpen;
   items[PANEL_INSPECTOR] = &inspectorPanel->isOpen;
   items[PANEL_OUTLINER] = &outlinerPanel->isOpen;
   items[PANEL_VIEWPORT] = &viewportPanel->isOpen;
+  items[PANEL_DETAILS] = &detailsPanel->isOpen;
   items[FRAME_DEBUG] = &debugFrame->isOpen;
   items[FRAME_DEMO] = &_demoOpen;
   items[FRAME_SETTINGS] = &settingsFrame->isOpen;
@@ -147,12 +153,18 @@ void Editor::RenderEditor(Scene* scene, FrameBuffer* framebuffer)
     auto dLight = outlinerPanel->GetItemSelected<DirectionalLight>();
     auto pLight = outlinerPanel->GetItemSelected<PointLight>();
     auto sMesh = outlinerPanel->GetItemSelected<StaticMesh>();
-    if(dLight)
-      detailsPanel->RenderPanel(*dLight);
-    else if(pLight)
-      detailsPanel->RenderPanel(*pLight);
-    else if(sMesh)
-      detailsPanel->RenderPanel(*sMesh);
+    if (dLight)
+    {
+      detailsPanel->RenderPanel<DirectionalLight>(dLight);
+    }
+    else if (pLight)
+    {
+      detailsPanel->RenderPanel<PointLight>(pLight);
+    }
+    else if (sMesh)
+    {
+      detailsPanel->RenderPanel<StaticMesh>(sMesh);
+    }
   }
   
   if(inspectorPanel->isOpen)
@@ -241,7 +253,7 @@ void Editor::Styling()
   colors[ImGuiCol_NavHighlight] = ImVec4(1.00f, 0.00f, 0.00f, 1.00f);
   colors[ImGuiCol_NavWindowingHighlight] = ImVec4(1.00f, 0.00f, 0.00f, 0.70f);
   colors[ImGuiCol_NavWindowingDimBg] = ImVec4(1.00f, 0.00f, 0.00f, 0.20f);
-  colors[ImGuiCol_ModalWindowDimBg] = ImVec4(1.00f, 0.00f, 0.00f, 0.35f);
+  colors[ImGuiCol_ModalWindowDimBg] = ImVec4(1.00f, 1.00f, 1.00f, 0.35f);
 
   ImGuiStyle& style = ImGui::GetStyle();
   style.WindowPadding = ImVec2(8.00f, 8.00f);

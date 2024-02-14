@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../Core.hh"
-#include "../NonCopyable.hh"
 #include "../VertexArray.hh"
 
 
@@ -10,7 +9,7 @@
 	and draws it.
 	Other classes can inherit from this class.
 	-------------------------------------------------------------------------- */
-class Mesh : public NonCopyable
+class Mesh
 {
 public:
 	Mesh() : diffuse{ nullptr }, specular{ nullptr } {}

@@ -7,7 +7,7 @@
 #include "Imgui/imgui_internal.h"
 #include "Imgui/imgui_spectrum.h"
 
-MenuBar::MenuBar(const Array<bool*, 7>& menuItems)
+MenuBar::MenuBar(const Array<bool*, 8>& menuItems)
 {
   items = menuItems;
 }
@@ -22,6 +22,7 @@ void MenuBar::RenderMenuBar()
       ImGui::MenuItem("Content browser",  nullptr, items[PANEL_BROWSER]);
       ImGui::MenuItem("Inspector panel",  nullptr, items[PANEL_INSPECTOR]);
       ImGui::MenuItem("Viewport panel",   nullptr, items[PANEL_VIEWPORT]);
+      ImGui::MenuItem("Details panel",    nullptr, items[PANEL_DETAILS]);
       ImGui::MenuItem("Debug frame",      nullptr, items[FRAME_DEBUG]);
       ImGui::MenuItem("Demo",             nullptr, items[FRAME_DEMO]);
       ImGui::EndMenu();

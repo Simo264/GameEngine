@@ -7,6 +7,7 @@ enum MENU_ITEMS : int {
 	PANEL_BROWSER,
 	PANEL_INSPECTOR,
 	PANEL_VIEWPORT,
+	PANEL_DETAILS,
 	FRAME_DEBUG,
 	FRAME_DEMO,
 	FRAME_SETTINGS
@@ -18,10 +19,10 @@ enum MENU_ITEMS : int {
 class MenuBar
 {
 public:
-	MenuBar(const Array<bool*, 7>& menuItems);
+	MenuBar(const Array<bool*, 8>& menuItems);
 	~MenuBar() = default;
 
 	void RenderMenuBar();
 
-	Array<bool*, 7> items;
+	Array<bool*, 8> items;
 };

@@ -4,11 +4,10 @@
 
 struct Attenuation
 {
-  Attenuation()
-  {
-    linear = 0.14f; /* a distance of 32 to 100 is generally enough for most lights */
-    quadratic = 0.07f;
-  }
+  Attenuation(float linear = 0.14f, float quadratic = 0.07f) :
+    linear{ linear },
+    quadratic{ quadratic }
+  {}
 
   float linear;
   float quadratic;
@@ -22,7 +21,12 @@ struct Attenuation
 class PointLight : public BaseLight
 {
 public:
-  PointLight(const char* uniformName) : BaseLight(uniformName), position{ 0.0f, 0.0f, 0.0f } {}
+  PointLight(const char* uniformName) : 
+    BaseLight(uniformName), 
+    position{ 0.0f, 0.0f, 0.0f } 
+  {
+    this->tagName = "Point light";
+  }
     
   void RenderLight(class Shader* shader) override;
 
