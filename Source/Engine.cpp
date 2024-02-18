@@ -3,17 +3,13 @@
 #include "Window.hh"
 #include "Camera.hh"
 #include "Shader.hh"
-#include "SceneObject.hh"
 #include "Scene.hh"
 #include "Renderer.hh"
 #include "FrameBuffer.hh"
 
 #include "Mesh/StaticMesh.hh"
-#include "Mesh/InstancingMesh.hh"
-
 #include "Lighting/DirectionalLight.hh"
 #include "Lighting/PointLight.hh"
-#include "Lighting/SpotLight.hh"
 
 #include "Subsystems/ShadersManager.hh"
 #include "Subsystems/TexturesManager.hh"
@@ -69,26 +65,7 @@ void Engine::Run()
   Camera camera(window.GetWindowSize(), Vec3f(0.0f, 1.0f, 10.0f));
   
   /* Create scene */
-  DirectionalLight dirLight("UDirLight");
-  PointLight pointLight1("UPointLight[0]");
-  PointLight pointLight2("UPointLight[1]");
-  StaticMesh cube(ROOT_PATH / "Assets/Shapes/Cube/Cube.obj");
-  StaticMesh plane(ROOT_PATH / "Assets/Shapes/Plane/Plane.obj");
-  plane.transform.scale += 10.0f;
-  plane.transform.position.y = -1.f;
-
-  CONSOLE_TRACE("dirlight id = {}", dirLight.GetID());
-  CONSOLE_TRACE("pointLight1 id = {}", pointLight1.GetID());
-  CONSOLE_TRACE("pointLight2 id = {}", pointLight2.GetID());
-  CONSOLE_TRACE("cube id = {}", cube.GetID());
-  CONSOLE_TRACE("plane id = {}", plane.GetID());
-
   Scene scene;
-  scene.AddSceneObject<DirectionalLight>(&dirLight);
-  scene.AddSceneObject<PointLight>(&pointLight1);
-  scene.AddSceneObject<PointLight>(&pointLight2);
-  scene.AddSceneObject<StaticMesh>(&cube);
-  scene.AddSceneObject<StaticMesh>(&plane);
 
 #if 0
   /* Shadow mapping */
@@ -179,9 +156,9 @@ void Engine::Run()
     framebuffer.BlitFrameBuffer();
     framebuffer.UnbindFrameBuffer();
 
-    cube.transform.degrees.x += 0.05f;
-    if (cube.transform.degrees.x >= 360.0f)
-      cube.transform.degrees.x = 0;
+    //cube.transform.degrees.x += 0.05f;
+    //if (cube.transform.degrees.x >= 360.0f)
+    //  cube.transform.degrees.x = 0;
 
 
 #if 0

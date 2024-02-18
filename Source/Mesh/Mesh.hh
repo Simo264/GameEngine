@@ -13,12 +13,15 @@ class Mesh
 {
 public:
 	Mesh() : diffuse{ nullptr }, specular{ nullptr } {}
+	~Mesh();
 
 	void InitMesh(VertexArrayData& data, VertexArrayConfig& config);
-	void DestroyMesh() const;
 	void DrawMesh();
 
 	VertexArray vertexArray;
 	class Texture2D* diffuse;
 	class Texture2D* specular;
+
+private:
+	void DestroyMesh() const;
 };

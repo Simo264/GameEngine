@@ -2,6 +2,10 @@
 
 #include "../Core.hh"
 
+#include "../Lighting/DirectionalLight.hh"
+#include "../Lighting/PointLight.hh"
+#include "../Mesh/StaticMesh.hh"
+
 /* ----------------------------------------
 			DetailsPanel class
 	---------------------------------------- */
@@ -17,8 +21,9 @@ public:
 	bool isOpen;
 	String panelName;
 	
-	template<class T>
-	void RenderPanel(class SceneObject* sceneObject);
+	void RenderPanel(SharedPointer<DirectionalLight>& target, class Scene*);
+	void RenderPanel(SharedPointer<PointLight>& target, class Scene*);
+	void RenderPanel(SharedPointer<StaticMesh>& target, class Scene*);
 
 private:
 	void EditVec3(const char* label, float speed, Vec2f minMax, Vec3f& values, float colSize);

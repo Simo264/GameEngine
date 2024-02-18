@@ -6,7 +6,6 @@
 #include "Imgui/imgui_impl_opengl3.h"
 #include "Imgui/imgui_stdlib.h"
 #include "Imgui/imgui_internal.h"
-#include "Imgui/imgui_spectrum.h"
 
 ViewportPanel::ViewportPanel(const char* panelName)
 {

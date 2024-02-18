@@ -16,8 +16,3 @@ void StaticMesh::Draw(Shader* shader)
 	shader->SetMat4f("UModel", model);
 	this->DrawMesh();
 }
-
-void StaticMesh::DestroyStaticMesh() const
-{
-	this->DestroyMesh();
-}

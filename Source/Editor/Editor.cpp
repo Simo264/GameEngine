@@ -1,13 +1,12 @@
 #include "Editor.hh"
-#include "ContentBrowserPanel.hh"
+
+#include "../FrameBuffer.hh"
+#include "../Scene.hh"
 
 #include "../Mesh/StaticMesh.hh"
 #include "../Lighting/DirectionalLight.hh"
 #include "../Lighting/PointLight.hh"
-#include "../Lighting/SpotLight.hh"
 
-#include "../FrameBuffer.hh"
-#include "../Scene.hh"
 #include "../Subsystems/ConfigurationsManager.hh"
 
 #include "Imgui/imgui.h"
@@ -15,7 +14,6 @@
 #include "Imgui/imgui_impl_opengl3.h"
 #include "Imgui/imgui_stdlib.h"
 #include "Imgui/imgui_internal.h"
-#include "Imgui/imgui_spectrum.h"
 
 /* -----------------------------------------------------
  *          PUBLIC METHODS
@@ -150,21 +148,15 @@ void Editor::RenderEditor(Scene* scene, FrameBuffer* framebuffer)
 
   if (outlinerPanel->IsItemSelected())
   {
-    auto dLight = outlinerPanel->GetItemSelected<DirectionalLight>();
-    auto pLight = outlinerPanel->GetItemSelected<PointLight>();
-    auto sMesh = outlinerPanel->GetItemSelected<StaticMesh>();
+    auto& dLight = outlinerPanel->GetItemSelected<DirectionalLight>();
+    auto& pLight = outlinerPanel->GetItemSelected<PointLight>();
+    auto& sMesh = outlinerPanel->GetItemSelected<StaticMesh>();
     if (dLight)
-    {
-      detailsPanel->RenderPanel<DirectionalLight>(dLight);
-    }
+      detailsPanel->RenderPanel(dLight, scene);
     else if (pLight)
-    {
-      detailsPanel->RenderPanel<PointLight>(pLight);
-    }
+      detailsPanel->RenderPanel(pLight, scene);
     else if (sMesh)
-    {
-      detailsPanel->RenderPanel<StaticMesh>(sMesh);
-    }
+      detailsPanel->RenderPanel(sMesh, scene);
   }
   
   if(inspectorPanel->isOpen)

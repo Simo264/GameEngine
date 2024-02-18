@@ -1,12 +1,6 @@
 #include "OutlinerPanel.hh"
 
-
 #include "../Scene.hh"
-
-#include "../Mesh/StaticMesh.hh"
-#include "../Lighting/DirectionalLight.hh"
-#include "../Lighting/PointLight.hh"
-#include "../Lighting/SpotLight.hh"
 
 #include "../Shader.hh"
 #include "../Logger.hh"
@@ -18,7 +12,6 @@
 #include "Imgui/imgui_impl_opengl3.h"
 #include "Imgui/imgui_stdlib.h"
 #include "Imgui/imgui_internal.h"
-#include "Imgui/imgui_spectrum.h"
 
 /* -----------------------------------------------------
  *          PUBLIC METHODS
@@ -29,7 +22,7 @@ OutlinerPanel::OutlinerPanel(const char* panelName)
 {
   this->panelName = panelName;
   isOpen = true;
-  
+
   _iconSize = 16.0f;
   _buttonEyeID = 1;
 
@@ -46,10 +39,19 @@ OutlinerPanel::OutlinerPanel(const char* panelName)
   _icons[PLUS] = instanceTM.GetTextureByPath(ROOT_PATH / "Icons/icon-plus.png");
 }
 
+template<>
+SharedPointer<DirectionalLight>& OutlinerPanel::GetItemSelected() { return _dLightSelected; }
+
+template<>
+SharedPointer<PointLight>& OutlinerPanel::GetItemSelected() { return _pLightSelected; }
+
+template<>
+SharedPointer<StaticMesh>& OutlinerPanel::GetItemSelected() { return _sMeshSelected; }
+
 void OutlinerPanel::RenderPanel(Scene* scene)
 {
   ImGui::Begin(panelName.c_str(), &isOpen);
-  
+
   AddSceneComponentButton("PopupAddElement");
   if (ImGui::BeginPopup("PopupAddElement"))
     AddSceneComponentPopup(scene);
@@ -72,9 +74,9 @@ void OutlinerPanel::RenderPanel(Scene* scene)
       ImGui::TableSetColumnIndex(0);
       ImGui::Image((ImTextureID)_icons[SUN]->textureID, { _iconSize,_iconSize });
       ImGui::TableSetColumnIndex(1);
-      
+
       ImGui::PushID(scene->sceneDLight->GetID());
-      if(ImGui::Selectable(scene->sceneDLight->tagName.c_str(), (_dLightSelected != nullptr)))
+      if (ImGui::Selectable(scene->sceneDLight->tagName.c_str(), (_dLightSelected != nullptr)))
       {
         _dLightSelected = scene->sceneDLight;
         _pLightSelected = nullptr;
@@ -82,17 +84,17 @@ void OutlinerPanel::RenderPanel(Scene* scene)
       }
       ImGui::PopID();
       ImGui::TableSetColumnIndex(2);
-      ToggleVisibility(static_cast<DirectionalLight*>(scene->sceneDLight));
+      ToggleVisibility(scene->sceneDLight);
     }
 
     /* Point light rows */
     if (scene->HasPointLights())
     {
-      for (auto scenePLight : scene->scenePLights)
+      for (auto& scenePLight : scene->scenePLights)
       {
         ImGui::TableNextRow();
         ImGui::TableSetColumnIndex(0);
-        ImGui::Image((ImTextureID)_icons[LAMP]->textureID, {_iconSize,_iconSize});
+        ImGui::Image((ImTextureID)_icons[LAMP]->textureID, { _iconSize,_iconSize });
         ImGui::TableSetColumnIndex(1);
         ImGui::PushID(scenePLight->GetID());
         if (ImGui::Selectable(scenePLight->tagName.c_str(), (_pLightSelected == scenePLight)))
@@ -103,14 +105,14 @@ void OutlinerPanel::RenderPanel(Scene* scene)
         }
         ImGui::PopID();
         ImGui::TableSetColumnIndex(2);
-        ToggleVisibility(static_cast<PointLight*>(scenePLight));
+        ToggleVisibility(scenePLight);
       }
     }
 
     /* Static mesh rows */
     if (scene->HasStaticMeshes())
     {
-      for (auto sceneMesh : scene->sceneSMeshes)
+      for (auto& sceneMesh : scene->sceneSMeshes)
       {
         ImGui::TableNextRow();
         ImGui::TableSetColumnIndex(0);
@@ -125,7 +127,7 @@ void OutlinerPanel::RenderPanel(Scene* scene)
         }
         ImGui::PopID();
         ImGui::TableSetColumnIndex(2);
-        ToggleVisibility(static_cast<StaticMesh*>(sceneMesh));
+        ToggleVisibility(sceneMesh);
       }
     }
     ImGui::EndTable();
@@ -136,14 +138,6 @@ void OutlinerPanel::RenderPanel(Scene* scene)
   ImGui::End();
 }
 
-template<>
-SceneObject* OutlinerPanel::GetItemSelected<DirectionalLight>() { return _dLightSelected; }
-
-template<>
-SceneObject* OutlinerPanel::GetItemSelected<PointLight>() { return _pLightSelected; }
-
-template<>
-SceneObject* OutlinerPanel::GetItemSelected<StaticMesh>() { return _sMeshSelected; }
 
 /* -----------------------------------------------------
  *          PRIVATE METHODS
@@ -177,29 +171,29 @@ void OutlinerPanel::AddSceneComponentPopup(Scene* scene)
   {
     if (ImGui::Selectable(lights[i]))
     {
-      if (i == 0) /* Directional light*/
+      switch (i)
+      {
+      case 0: /* Directional lihght */
       {
         if (!scene->HasDirLight())
         {
-          CONSOLE_TRACE("ADD DIR LIGHT...");
-          //auto dirLight = new DirectionalLight("UDirLight");
-          //auto sceneDirLight = SceneObject<DirectionalLight>::Create(dirLight, true, "Directional light");
-          //scene->AddDirectionalLight(*sceneDirLight);
+          auto obj = std::make_shared<DirectionalLight>("UDirLight");
+          scene->AddSceneObject(obj);
         }
-        else
-        {
-          CONSOLE_TRACE("DIR LIGHT ALREADY EXISTS");
-        }
+        break;
       }
-      else if (i == 1) /* Point light */
+      case 1: /* Pointlight */
       {
-        CONSOLE_TRACE("ADD POINT LIGHT...");
-        //sprintf_s(buff, "UPointLight[%d]", scene->pLights.size());
-        //scene->pLights.push_back({ new PointLight(buff), true } );
+        char uname[32]{};
+        sprintf_s(uname, "UPointLight[%d]", (int) scene->scenePLights.size());
+        auto obj = std::make_shared<PointLight>(uname);
+        scene->AddSceneObject(obj);
+        break;
       }
-      else if (i == 2) /* TODO: Spot light */
+      case 2: /* TODO: Spotlight */
       {
-        CONSOLE_TRACE("ADD SPOT LIGHT...");
+        break;
+      }
       }
     }
   }
@@ -211,24 +205,24 @@ void OutlinerPanel::AddSceneComponentPopup(Scene* scene)
     {
       switch (i)
       {
-        /* Cube mesh */
-      case 0:
-        CONSOLE_TRACE("ADD CUBE MESH...");
-        //scene->AddStaticMesh( new StaticMesh(ROOT_PATH / "Assets/Shapes/Cube/Cube.obj"));
+      case 0: /* Cube mesh */
+      {
+        auto obj = std::make_shared<StaticMesh>(ROOT_PATH / "Assets/Shapes/Cube/Cube.obj");
+        scene->AddSceneObject(obj);
         break;
-        /* Plane mesh */
-      case 1:
-        CONSOLE_TRACE("ADD PLANE MESH...");
-        //scene->AddStaticMesh(new StaticMesh(ROOT_PATH / "Assets/Shapes/Plane/Plane.obj"));
+      }
+      case 1: /* Plane mesh */
+      {
+        auto obj = std::make_shared<StaticMesh>(ROOT_PATH / "Assets/Shapes/Plane/Plane.obj");
+        scene->AddSceneObject(obj);
         break;
-        /* Cylinder mesh */
-      case 2:
-        CONSOLE_TRACE("ADD CYLINDER MESH...");
-        //scene->AddStaticMesh( new StaticMesh(ROOT_PATH / "Assets/Shapes/Cylinder/Cylinder.obj"));
+      }
+      case 2: /* Cylinder mesh */
+      {
+        auto obj = std::make_shared<StaticMesh>(ROOT_PATH / "Assets/Shapes/Cylinder/Cylinder.obj");
+        scene->AddSceneObject(obj);
         break;
-
-      default:
-        break;
+      }
       }
     }
   }
@@ -236,8 +230,7 @@ void OutlinerPanel::AddSceneComponentPopup(Scene* scene)
 }
 
 
-/* Toggle dir light visibility */
-void OutlinerPanel::ToggleVisibility(DirectionalLight* dLight)
+void OutlinerPanel::ToggleVisibility(SharedPointer<DirectionalLight>& dLight)
 {
   if (dLight->visible)
   {
@@ -250,12 +243,11 @@ void OutlinerPanel::ToggleVisibility(DirectionalLight* dLight)
       dLight->visible = true;
   }
   
-  auto shader = ShadersManager::Instance().GetShader("SceneShader");
-  shader->SetBool("UDirLightVisible", dLight->visible);
+  //auto shader = ShadersManager::Instance().GetShader("SceneShader");
+  //shader->SetBool("UDirLightVisible", dLight->visible);
 }
 
-/* Toggle point light visibility */
-void OutlinerPanel::ToggleVisibility(PointLight* pLight)
+void OutlinerPanel::ToggleVisibility(SharedPointer<PointLight>& pLight)
 {
   if (pLight->visible)
   {
@@ -274,8 +266,7 @@ void OutlinerPanel::ToggleVisibility(PointLight* pLight)
   //shader->SetInt(uniform, (int) sceneObj->visible);
 }
 
-/* Toggle static mesh visibility */
-void OutlinerPanel::ToggleVisibility(StaticMesh* sMesh)
+void OutlinerPanel::ToggleVisibility(SharedPointer<StaticMesh>& sMesh)
 {
   if (sMesh->visible)
   {

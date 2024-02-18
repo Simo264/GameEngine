@@ -4,14 +4,19 @@
 #include "../Shader.hh"
 #include "../Renderer.hh"
 
+/* -----------------------------------------------------
+ *          PUBLIC METHODS
+ * -----------------------------------------------------
+*/
+
+Mesh::~Mesh()
+{
+	this->DestroyMesh();
+}
+
 void Mesh::InitMesh(VertexArrayData& data, VertexArrayConfig& config)
 {
 	vertexArray.InitVertexArray(data, config);
-}
-
-void Mesh::DestroyMesh() const
-{
-	vertexArray.DestroyVertexArray();
 }
 
 void Mesh::DrawMesh()
@@ -37,4 +42,14 @@ void Mesh::DrawMesh()
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, 0); /* unbind diffuse */
+}
+
+/* -----------------------------------------------------
+ *          PRIVATE METHODS
+ * -----------------------------------------------------
+*/
+
+void Mesh::DestroyMesh() const
+{
+	vertexArray.DestroyVertexArray();
 }

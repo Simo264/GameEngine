@@ -1,6 +1,7 @@
 #pragma once
 
 #include "BaseLight.hh"
+#include "../SceneObject.hh"
 
 struct Attenuation
 {
@@ -18,7 +19,7 @@ struct Attenuation
   that illuminates in all directions, where the light rays fade out over distance.
   Think of light bulbs and torches as light casters that act as a point light.
   ------------------------------------------------------------------------------ */
-class PointLight : public BaseLight
+class PointLight : public BaseLight, public SceneObject
 {
 public:
   PointLight(const char* uniformName) : 

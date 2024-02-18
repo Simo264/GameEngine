@@ -1,7 +1,10 @@
 #pragma once
 
 #include "../Core.hh"
-#include "../SceneObject.hh"
+
+#include "../Mesh/StaticMesh.hh"
+#include "../Lighting/DirectionalLight.hh"
+#include "../Lighting/PointLight.hh"
 
 /* ----------------------------------------
 			OutlinerPanel class
@@ -19,7 +22,7 @@ public:
 	bool IsItemSelected() const { return _dLightSelected || _pLightSelected || _sMeshSelected; }
 
 	template<class T>
-	SceneObject* GetItemSelected();
+	SharedPointer<T>& GetItemSelected();
 
 private:
 	enum ICONS : int { PLUS = 0, SUN, LAMP, EYE, EYE_HIDDEN, MESH };
@@ -28,13 +31,13 @@ private:
 	float _iconSize;
 	uint32_t _buttonEyeID;
 
-	SceneObject* _dLightSelected;
-	SceneObject* _pLightSelected;
-	SceneObject* _sMeshSelected;
-	
-	void ToggleVisibility(class DirectionalLight* dLight);
-	void ToggleVisibility(class PointLight* pLight);
-	void ToggleVisibility(class StaticMesh* sMesh);
+	SharedPointer<DirectionalLight> _dLightSelected;
+	SharedPointer<PointLight> _pLightSelected;
+	SharedPointer<StaticMesh> _sMeshSelected;
+
+	void ToggleVisibility(SharedPointer<DirectionalLight>& dLight);
+	void ToggleVisibility(SharedPointer<PointLight>& pLight);
+	void ToggleVisibility(SharedPointer<StaticMesh>& sMesh);
 	
 	void AddSceneComponentButton(const char* labelPopup);
 	void AddSceneComponentPopup(class Scene* scene);

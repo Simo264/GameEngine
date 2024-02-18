@@ -1,6 +1,7 @@
 #pragma once
 
 #include "BaseLight.hh"
+#include "../SceneObject.hh"
 
 /* ------------------------------------------------------------------------------------------------ 
   When a light source is modeled to be infinitely far away it is called a directional light
@@ -10,7 +11,7 @@
   The sun is not infinitely far away from us, but it is so far away that we can perceive it as 
   being infinitely far away in the lighting calculations
   ------------------------------------------------------------------------------------------------ */
-class DirectionalLight : public BaseLight
+class DirectionalLight : public BaseLight, public SceneObject
 {
 public:
   DirectionalLight(const char* uniformName) : 

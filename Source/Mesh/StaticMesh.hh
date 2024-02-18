@@ -19,7 +19,5 @@ public:
 	
 	void Draw(class Shader* shader);
 
-	void DestroyStaticMesh() const;
-
 	Transform transform;
 };

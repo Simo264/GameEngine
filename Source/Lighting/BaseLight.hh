@@ -1,12 +1,11 @@
 #pragma once
 
 #include "../Core.hh"
-#include "../SceneObject.hh"
 
 /* -------------------------------------
-      Interface lighting class 
+      BaseLight interface class 
   ------------------------------------- */
-class BaseLight : public SceneObject
+class BaseLight
 {
 public:
   BaseLight(const char* uniformName)
@@ -18,8 +17,6 @@ public:
     ambient   = 0.125f;                    /* default ambient intensity */
     diffuse   = 0.25f;                    /* default diffuse intensity */
     specular  = 0.25f;                    /* default specular intensity */
-    
-    this->tagName = "Light";
   }
 
   virtual void RenderLight(class Shader* shader) = 0;
@@ -28,7 +25,6 @@ public:
   float ambient;  /* ambient intensity */
   float diffuse;  /* diffuse intensity */
   float specular; /* specular intensity */
-
   const char* GetUniformName() const { return _uniformName.c_str(); }
 
 protected:
