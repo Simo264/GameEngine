@@ -48,9 +48,17 @@ public:
 private:
 	bool _demoOpen;
 	bool _firstLoop;
+	
+	bool _newScene;
 	bool _saveScene;
+	bool _saveAsScene;
 	bool _openScene;
 
 	void Styling();
 	void Dockspace() const;
+
+	void OnNewScene(class Scene* scene);
+	void OnOpenScene(class Scene* scene);
+	void OnSaveScene(class Scene* scene);
+	void OnSaveAsScene(class Scene* scene);
 };

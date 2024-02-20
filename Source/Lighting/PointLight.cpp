@@ -30,3 +30,16 @@ void PointLight::RenderLight(Shader* shader)
 
   _uniformName.erase(uniformNameSize);                         /* shaderUName = "PointLight" */
 }
+
+String PointLight::ToString() const
+{
+  OStringStream oss;
+  oss << "type=PointLight" << "\n";
+  oss << "tag=" << tagName << "\n";
+  oss << "color=" << color.x << "," << color.y << "," << color.z << "\n";
+  oss << "ambient=" << ambient << "\n";
+  oss << "diffuse=" << diffuse << "\n";
+  oss << "specular=" << specular << "\n";
+  oss << "position=" << position.x << "," << position.y << "," << position.z << "\n";
+  return oss.str();
+}

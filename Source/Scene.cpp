@@ -70,7 +70,21 @@ void Scene::LoadScene(Path filepath)
 
 void Scene::SaveScene(Path outfile)
 {
+	OFStream file(outfile.string());
+	if (!file.is_open())
+	{
+		CONSOLE_WARN("Error on opening file '{}'", outfile.string());
+		return;
+	}
 
+	if (HasDirLight())
+		file << sceneDLight->ToString() << "\n";
+	
+	for(const auto& pLight : scenePLights)
+		file << pLight->ToString() << "\n";
+	
+	for (const auto& sMesh : sceneSMeshes)
+		file << sMesh->ToString() << "\n";
 }
 
 void Scene::DrawScene(Shader* shader)
@@ -278,10 +292,10 @@ SharedPointer<StaticMesh> Scene::ParseStaticMesh(
 			tag = value;
 
 		else if (std::strcmp(name, "modelpath") == 0)
-			modelPath = ROOT_PATH / value;
+			modelPath = value;
 
 		else if (std::strcmp(name, "texture-diffuse") == 0)
-			textDiffuse = TexturesManager::Instance().GetTextureByPath(ROOT_PATH / value);
+			textDiffuse = TexturesManager::Instance().GetTextureByPath(value);
 
 		else if (std::strcmp(name, "scale") == 0)
 			scale = ParseVec3f(value);

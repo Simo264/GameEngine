@@ -32,32 +32,6 @@ public:
 
 	void ClearScene();
 
-	/* Example of scene file:
-	* objects=10
-	* 
-	type=DirectionalLight
-	color=0,0,0
-	ambient=0.0
-	diffuse=0.0
-	specular=0.0
-	direction=0,0,0
-	
-	type=PointLight
-	color=0,0,0
-	ambient=0.0
-	diffuse=0.0
-	specular=0.0
-	position=0,0,0
-
-	type=StaticMesh
-	modelpath="..."
-	position=0,0,0
-	scale=1,1,1
-	anglex=0.0
-	angley=0.0
-	anglez=0.0
-	
-	*/
 	void LoadScene(Path filepath);
 
 	void SaveScene(Path outfile);

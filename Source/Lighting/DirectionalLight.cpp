@@ -28,3 +28,16 @@ void DirectionalLight::RenderLight(Shader* shader)
   /* uniformName = "DirLight" */   
   _uniformName.erase(uniformNameSize);
 }
+
+String DirectionalLight::ToString() const
+{
+  OStringStream oss;
+  oss << "type=DirectionalLight" << "\n";
+  oss << "tag=" << tagName << "\n";
+  oss << "color=" << color.x << "," << color.y << "," << color.z << "\n";
+  oss << "ambient=" << ambient << "\n";
+  oss << "diffuse=" << diffuse << "\n";
+  oss << "specular=" << specular << "\n";
+  oss << "direction=" << direction.x << "," << direction.y << "," << direction.z << "\n";
+  return oss.str();
+}

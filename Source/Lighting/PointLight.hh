@@ -24,12 +24,13 @@ class PointLight : public BaseLight, public SceneObject
 public:
   PointLight(const char* uniformName) : 
     BaseLight(uniformName), 
-    position{ 0.0f, 0.0f, 0.0f } 
+    position{ 0.0f, 0.0f, 0.0f }
   {
     this->tagName = "Point light";
   }
     
   void RenderLight(class Shader* shader) override;
+  String ToString() const;
 
   Vec3f position;
   Attenuation attenuation;

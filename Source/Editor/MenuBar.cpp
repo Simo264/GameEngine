@@ -17,8 +17,10 @@ void MenuBar::RenderMenuBar()
   {
     if (ImGui::BeginMenu("File"))
     {
-      ImGui::MenuItem("Open", nullptr, items[OPEN_SCENE]);
+      ImGui::MenuItem("New", nullptr, items[NEW_SCENE]);
       ImGui::MenuItem("Save", nullptr, items[SAVE_SCENE]);
+      ImGui::MenuItem("Open...", nullptr, items[OPEN_SCENE]);
+      ImGui::MenuItem("Save as...", nullptr, items[SAVE_AS_SCENE]);
       ImGui::EndMenu();
     }
 

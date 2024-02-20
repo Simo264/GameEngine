@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../Transform.hh"
 #include "Mesh.hh"
 #include "../SceneObject.hh"
+#include "../Transform.hh"
 
 /* ------------------------------------------------------------------------ 
 	A Static Mesh is a piece of geometry with multiple textures.
@@ -18,6 +18,11 @@ public:
 	StaticMesh(Path objFilePath);
 	
 	void Draw(class Shader* shader);
+	
+	String ToString() const;
 
 	Transform transform;
+
+private:
+	Path _model;
 };

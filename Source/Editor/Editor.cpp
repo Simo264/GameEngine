@@ -47,7 +47,9 @@ void Editor::Initialize()
 
   _demoOpen = true;
   _firstLoop = true;
+  _newScene = false;
   _saveScene = false;
+  _saveAsScene = false;
   _openScene = false;
 
   Array<bool*, MENU_ITEMS_COUNT> items{};
@@ -59,7 +61,9 @@ void Editor::Initialize()
   items[FRAME_DEBUG] = &debugFrame->isOpen;
   items[FRAME_DEMO] = &_demoOpen;
   items[FRAME_SETTINGS] = &settingsFrame->isOpen;
+  items[NEW_SCENE] = &_newScene;
   items[SAVE_SCENE] = &_saveScene;
+  items[SAVE_AS_SCENE] = &_saveAsScene;
   items[OPEN_SCENE] = &_openScene;
 
   menuBar = std::make_unique<MenuBar>(items);
@@ -169,31 +173,17 @@ void Editor::RenderEditor(Scene* scene, FrameBuffer* framebuffer)
   if(inspectorPanel->isOpen)
     inspectorPanel->RenderPanel();
 
-  if (_saveScene)
-  {
-    _saveScene = false;
-    Path filePath = FileDialog::SaveFileDialog("Scene file\0.txt\0");
-    if(!filePath.empty())
-      scene->SaveScene(filePath);
-  }
-
-  if (_openScene)
-  {
-    _openScene = false;
-    Path filePath = FileDialog::OpenFileDialog("Scene file(*.txt)\0*.txt\0");
-    if (!filePath.empty())
-    {
-      scene->ClearScene();
-      scene->LoadScene(filePath);
-    }
-  }
+  if (_newScene)
+    OnNewScene(scene);
+  else if (_saveAsScene)
+    OnSaveAsScene(scene);
+  else if (_saveScene)
+    OnSaveScene(scene);
+  else if (_openScene)
+    OnOpenScene(scene);
 
   ImGui::RenderPanel();
   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-  /* Update and Render additional Platform Windows (Platform functions may change 
-  the current OpenGL context, so we save/restore it to make it easier to paste this code elsewhere.
-  For this specific demo app we could also call glfwMakeContextCurrent(window) directly) */
   ImGuiIO& io = ImGui::GetIO();
   if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
   {
@@ -346,3 +336,33 @@ void Editor::Dockspace() const
   ImGui::End();
 }
 
+void Editor::OnNewScene(Scene* scene)
+{
+  _newScene = false;
+  scene->ClearScene();
+}
+
+void Editor::OnOpenScene(Scene* scene)
+{
+  _openScene = false;
+  Path filePath = FileDialog::OpenFileDialog("Scene file(*.txt)\0*.txt\0");
+  if (!filePath.empty())
+  {
+    scene->ClearScene();
+    scene->LoadScene(filePath);
+  }
+}
+
+void Editor::OnSaveScene(Scene* scene)
+{
+  _saveScene = false;
+  CONSOLE_INFO("TODO OnSaveScene");
+}
+
+void Editor::OnSaveAsScene(Scene* scene)
+{
+  _saveAsScene = false;
+  Path filePath = FileDialog::SaveFileDialog("Scene file(*.txt)\0*.txt\0");
+  if (!filePath.empty())
+    scene->SaveScene(filePath);
+}

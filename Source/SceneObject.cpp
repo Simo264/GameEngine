@@ -23,6 +23,15 @@ bool SceneObject::Compare(const SceneObject& other) const
 	return (this->GetID() == other.GetID());
 }
 
+String SceneObject::ToString() const
+{
+	OStringStream oss;
+	oss << "type=SceneObject\n";
+	oss << "tag=" << tagName << "\n";
+	oss << "id=" << GetID() << "\n";
+	return oss.str();
+}
+
 /* -----------------------------------------------------
  *          PRIVATE METHODS
  * -----------------------------------------------------

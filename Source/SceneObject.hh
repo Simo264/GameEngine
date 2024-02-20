@@ -19,6 +19,8 @@ public:
 	uint32_t GetID() const { return _instanceID; }
 	bool Compare(const SceneObject& other) const;
 
+	String ToString() const;
+
 private:
 	uint32_t _instanceID;
 	inline static uint32_t _id = 0;

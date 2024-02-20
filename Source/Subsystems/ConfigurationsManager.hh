@@ -10,7 +10,7 @@
 
 /* -----------------------------------------------------------------------
 	Resource manager class ConfigurationsManager:
-	save and load the configuration of the application from file app.txt
+	save and load the configuration of the application from AppConfig.txt
  ----------------------------------------------------------------------- */
 class ConfigurationsManager : public ResourceManagerInterface<ConfigurationsManager>
 {
