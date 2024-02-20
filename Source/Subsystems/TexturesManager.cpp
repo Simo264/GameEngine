@@ -51,7 +51,11 @@ Texture2D* TexturesManager::GetTextureByPath(Path filePath) const
     });
   
   if (it == end)
+  {
+    CONSOLE_WARN("Texture '{}' does not exixts", filePath.string());
     return nullptr;
+  }
+  
   return it;
 }
 

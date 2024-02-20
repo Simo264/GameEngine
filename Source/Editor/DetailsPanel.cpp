@@ -117,11 +117,11 @@ void DetailsPanel::RenderPanel(SharedPointer<PointLight>& target, Scene* scene)
 
     ImGui::EndTable();
   }
-  if (ImGui::CollapsingHeader("Advanced"))
-  {
-    if (ImGui::Button("Delete"))
-      scene->RemoveSceneObject(target);
-  }
+  //if (ImGui::CollapsingHeader("Advanced"))
+  //{
+  //  if (ImGui::Button("Delete"))
+  //    scene->RemoveSceneObject(target);
+  //}
   
   ImGui::End();
 }

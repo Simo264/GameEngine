@@ -1,19 +1,19 @@
 #include "Editor.hh"
-
 #include "../FrameBuffer.hh"
 #include "../Scene.hh"
-
 #include "../Mesh/StaticMesh.hh"
 #include "../Lighting/DirectionalLight.hh"
 #include "../Lighting/PointLight.hh"
-
 #include "../Subsystems/ConfigurationsManager.hh"
+#include "../FileDialog.hh"
+#include "../Logger.hh"
 
 #include "Imgui/imgui.h"
 #include "Imgui/imgui_impl_glfw.h"
 #include "Imgui/imgui_impl_opengl3.h"
 #include "Imgui/imgui_stdlib.h"
 #include "Imgui/imgui_internal.h"
+
 
 /* -----------------------------------------------------
  *          PUBLIC METHODS
@@ -45,7 +45,12 @@ void Editor::Initialize()
   settingsFrame = std::make_unique<SettingsFrame>("Settings");
   debugFrame = std::make_unique<DebugFrame>("Debug");
 
-  Array<bool*, 8> items{};
+  _demoOpen = true;
+  _firstLoop = true;
+  _saveScene = false;
+  _openScene = false;
+
+  Array<bool*, MENU_ITEMS_COUNT> items{};
   items[PANEL_BROWSER] = &contentBrowserPanel->isOpen;
   items[PANEL_INSPECTOR] = &inspectorPanel->isOpen;
   items[PANEL_OUTLINER] = &outlinerPanel->isOpen;
@@ -54,6 +59,8 @@ void Editor::Initialize()
   items[FRAME_DEBUG] = &debugFrame->isOpen;
   items[FRAME_DEMO] = &_demoOpen;
   items[FRAME_SETTINGS] = &settingsFrame->isOpen;
+  items[SAVE_SCENE] = &_saveScene;
+  items[OPEN_SCENE] = &_openScene;
 
   menuBar = std::make_unique<MenuBar>(items);
 }
@@ -161,6 +168,25 @@ void Editor::RenderEditor(Scene* scene, FrameBuffer* framebuffer)
   
   if(inspectorPanel->isOpen)
     inspectorPanel->RenderPanel();
+
+  if (_saveScene)
+  {
+    _saveScene = false;
+    Path filePath = FileDialog::SaveFileDialog("Scene file\0.txt\0");
+    if(!filePath.empty())
+      scene->SaveScene(filePath);
+  }
+
+  if (_openScene)
+  {
+    _openScene = false;
+    Path filePath = FileDialog::OpenFileDialog("Scene file(*.txt)\0*.txt\0");
+    if (!filePath.empty())
+    {
+      scene->ClearScene();
+      scene->LoadScene(filePath);
+    }
+  }
 
   ImGui::RenderPanel();
   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -319,3 +345,4 @@ void Editor::Dockspace() const
   
   ImGui::End();
 }
+

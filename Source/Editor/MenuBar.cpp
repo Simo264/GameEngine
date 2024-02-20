@@ -6,7 +6,7 @@
 #include "Imgui/imgui_stdlib.h"
 #include "Imgui/imgui_internal.h"
 
-MenuBar::MenuBar(const Array<bool*, 8>& menuItems)
+MenuBar::MenuBar(const Array<bool*, MENU_ITEMS_COUNT>& menuItems)
 {
   items = menuItems;
 }
@@ -15,6 +15,13 @@ void MenuBar::RenderMenuBar()
 {
   if (ImGui::BeginMenuBar())
   {
+    if (ImGui::BeginMenu("File"))
+    {
+      ImGui::MenuItem("Open", nullptr, items[OPEN_SCENE]);
+      ImGui::MenuItem("Save", nullptr, items[SAVE_SCENE]);
+      ImGui::EndMenu();
+    }
+
     if (ImGui::BeginMenu("View"))
     {
       ImGui::MenuItem("Outliner panel",   nullptr, items[PANEL_OUTLINER]);

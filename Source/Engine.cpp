@@ -66,6 +66,7 @@ void Engine::Run()
   
   /* Create scene */
   Scene scene;
+  
 
 #if 0
   /* Shadow mapping */

@@ -17,11 +17,13 @@ public:
 
 	void DrawScene(class Shader* shader);
 	
-	template<class T>
-	void AddSceneObject(const SharedPointer<T>&);
+	void AddSceneObject(const SharedPointer<DirectionalLight>&);
+	void AddSceneObject(const SharedPointer<PointLight>&);
+	void AddSceneObject(const SharedPointer<StaticMesh>&);
 
-	template<class T>
-	void RemoveSceneObject(const SharedPointer<T>&);
+	void RemoveSceneObject(const SharedPointer<DirectionalLight>&);
+	void RemoveSceneObject(const SharedPointer<PointLight>&);
+	void RemoveSceneObject(const SharedPointer<StaticMesh>&);
 
 	const bool HasDirLight() const { return sceneDLight.get(); };
 	const bool HasPointLights() const { return !scenePLights.empty(); };
@@ -31,22 +33,34 @@ public:
 	void ClearScene();
 
 	/* Example of scene file:
-	[DirectionalLight]
-	uniformname="UDirLight"
+	* objects=10
+	* 
+	type=DirectionalLight
 	color=0,0,0
-	ambient=0,0,0
-	...
-
-	[PointLight]
-	uniformname="UPointLight[0]"
+	ambient=0.0
+	diffuse=0.0
+	specular=0.0
+	direction=0,0,0
+	
+	type=PointLight
 	color=0,0,0
-	ambient=0,0,0
-	...
+	ambient=0.0
+	diffuse=0.0
+	specular=0.0
+	position=0,0,0
 
-	[StaticMesh]
+	type=StaticMesh
 	modelpath="..."
+	position=0,0,0
+	scale=1,1,1
+	anglex=0.0
+	angley=0.0
+	anglez=0.0
+	
 	*/
-	//void LoadScene(Path filePath);
+	void LoadScene(Path filepath);
+
+	void SaveScene(Path outfile);
 
 	/* Can be there only ONE directional light in scene */
 	SharedPointer<DirectionalLight> sceneDLight;
@@ -56,4 +70,21 @@ public:
 
 	/* Can be there multiple static mesh in scene */
 	Vector<SharedPointer<StaticMesh>> sceneSMeshes;
+
+private:
+	SharedPointer<DirectionalLight> ParseDirectionalLight(
+		IFStream& file, String& line, char name[64], char value[64]);
+	
+	SharedPointer<PointLight> ParsePointLight(
+		IFStream& file, String& line, char name[64], char value[64]);
+	
+	//SharedPointer<SpotLight> ParseDirectionalLight();
+	
+	SharedPointer<StaticMesh> ParseStaticMesh(
+		IFStream& file, String& line, char name[64], char value[64]);
+
+	void ParseNameValue(const String& line, char name[64], char value[64]);
+	void ClearNameValue(char name[64], char value[64]);
+
+	Vec3f ParseVec3f(const String&);
 };

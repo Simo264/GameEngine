@@ -45,5 +45,7 @@ public:
 private:
 	Path _configPath;
 	Map<String, String> _mapConfig; /* <attrName, attrValue> */
+
+	void ParseNameValue(const String& line, char name[64], char value[64]);
 };
 

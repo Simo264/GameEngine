@@ -184,11 +184,14 @@ void OutlinerPanel::AddSceneComponentPopup(Scene* scene)
       }
       case 1: /* Pointlight */
       {
-        char uname[32]{};
-        sprintf_s(uname, "UPointLight[%d]", (int) scene->scenePLights.size());
-        auto obj = std::make_shared<PointLight>(uname);
-        scene->AddSceneObject(obj);
-        break;
+        if (scene->scenePLights.size() < 4)
+        {
+          char uname[32]{};
+          sprintf_s(uname, "UPointLight[%d]", (int)scene->scenePLights.size());
+          auto obj = std::make_shared<PointLight>(uname);
+          scene->AddSceneObject(obj);
+          break;
+        }
       }
       case 2: /* TODO: Spotlight */
       {

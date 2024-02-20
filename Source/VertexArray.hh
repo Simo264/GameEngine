@@ -67,19 +67,19 @@ public:
   const uint32_t& VertexBufferID() const { return _vbo; }
   const uint32_t& IndexBufferID() const { return _ebo; }
   const VertexArrayConfig& GetConfig() const { return _config; }
-
+  
   /* Copy the vertex buffer data into writeBuffer */
   void CopyVertexBufferData(uint32_t writeBuffer);
 
   /* Copy the index buffer data into writeBuffer */
   void CopyIndexBufferData(uint32_t writeBuffer);
 
-  uint32_t numVertices; /* used in renderer */
-  uint32_t numIndices;  /* used in renderer */
-  uint32_t vboSize;     /* cache the vertex buffer size(in byte) */
+  uint32_t numVertices; /* Used in renderer */
+  uint32_t numIndices;  /* Used in renderer */
+  uint32_t vboSize;     /* Cache the vertex buffer size (in byte) */
   
 private:
-  VertexArrayConfig _config;
+  VertexArrayConfig _config; /* Used in instancing */
   uint32_t _vao;
   uint32_t _vbo;
   uint32_t _ebo;

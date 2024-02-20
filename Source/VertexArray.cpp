@@ -79,7 +79,10 @@ void VertexArray::InitVertexArray(VertexArrayData& data, VertexArrayConfig& conf
 void VertexArray::CopyVertexBufferData(uint32_t writeBuffer)
 {
   if (vboSize == 0)
+  {
+    CONSOLE_WARN("Vertex buffer is empty");
     return;
+  }
 
   glBindBuffer(GL_COPY_READ_BUFFER, _vbo);
   glBindBuffer(GL_COPY_WRITE_BUFFER, writeBuffer);
@@ -92,7 +95,10 @@ void VertexArray::CopyIndexBufferData(uint32_t writeBuffer)
 {
   uint32_t indexBufferSize = numIndices * sizeof(uint32_t);
   if (indexBufferSize == 0)
+  {
+    CONSOLE_WARN("Index buffer is empty");
     return;
+  }
 
   glBindBuffer(GL_COPY_READ_BUFFER, _ebo);
   glBindBuffer(GL_COPY_WRITE_BUFFER, writeBuffer);

@@ -10,7 +10,11 @@ enum MENU_ITEMS : int {
 	PANEL_DETAILS,
 	FRAME_DEBUG,
 	FRAME_DEMO,
-	FRAME_SETTINGS
+	FRAME_SETTINGS,
+	SAVE_SCENE,
+	OPEN_SCENE,
+
+	MENU_ITEMS_COUNT
 };
 
 /* ----------------------------------------
@@ -19,10 +23,10 @@ enum MENU_ITEMS : int {
 class MenuBar
 {
 public:
-	MenuBar(const Array<bool*, 8>& menuItems);
+	MenuBar(const Array<bool*, MENU_ITEMS_COUNT>& menuItems);
 	~MenuBar() = default;
 
 	void RenderMenuBar();
 
-	Array<bool*, 8> items;
+	Array<bool*, MENU_ITEMS_COUNT> items;
 };

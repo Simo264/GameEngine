@@ -9,17 +9,12 @@
  * -----------------------------------------------------
 */
 
-Mesh::~Mesh()
-{
-	this->DestroyMesh();
-}
-
 void Mesh::InitMesh(VertexArrayData& data, VertexArrayConfig& config)
 {
 	vertexArray.InitVertexArray(data, config);
 }
 
-void Mesh::DrawMesh()
+void Mesh::Draw()
 {
 	if (diffuse)
 	{
@@ -44,12 +39,12 @@ void Mesh::DrawMesh()
 	glBindTexture(GL_TEXTURE_2D, 0); /* unbind diffuse */
 }
 
+void Mesh::Destroy() const
+{
+	vertexArray.DestroyVertexArray();
+}
+
 /* -----------------------------------------------------
  *          PRIVATE METHODS
  * -----------------------------------------------------
 */
-
-void Mesh::DestroyMesh() const
-{
-	vertexArray.DestroyVertexArray();
-}

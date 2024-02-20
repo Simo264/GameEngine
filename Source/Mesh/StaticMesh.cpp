@@ -14,5 +14,5 @@ void StaticMesh::Draw(Shader* shader)
 {
 	auto model = transform.GetTransformation();
 	shader->SetMat4f("UModel", model);
-	this->DrawMesh();
+	Mesh::Draw();
 }

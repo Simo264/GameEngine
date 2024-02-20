@@ -8,7 +8,7 @@
 
 void ConfigurationsManager::Initialize()
 {
-	_configPath = ROOT_PATH / "app.txt";
+	_configPath = ROOT_PATH / "AppConfig.txt";
 	_mapConfig = Map<String, String>();
 
 	LoadConfiguration();
@@ -42,10 +42,8 @@ void ConfigurationsManager::LoadConfiguration()
 		if (line[0] == '#')
 			continue;
 
-		auto sep = line.find('=');
-		std::copy(line.begin(), line.begin() + sep, attrName);
-		std::copy(line.begin() + sep + 1, line.end(), attrVal);
-
+		ParseNameValue(line, attrName, attrVal);
+		
 		_mapConfig.insert(std::make_pair(attrName, attrVal));
 
 		std::fill_n(attrName, 64, 0);
@@ -117,4 +115,14 @@ Vec2i ConfigurationsManager::ParsePosition(String& position)
 	return Vec2i(x, y);
 }
 
+/* -----------------------------------------------------
+ *          PUBLIC METHODS
+ * -----------------------------------------------------
+*/
 
+void ConfigurationsManager::ParseNameValue(const String& line, char name[64], char value[64])
+{
+	auto sep = line.find('=');
+	std::copy(line.begin(), line.begin() + sep, name);
+	std::copy(line.begin() + sep + 1, line.end(), value);
+}

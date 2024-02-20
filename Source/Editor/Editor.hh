@@ -46,8 +46,10 @@ public:
 	UniquePointer<MenuBar> menuBar;
 
 private:
-	bool _demoOpen = true;
-	bool _firstLoop = true;
+	bool _demoOpen;
+	bool _firstLoop;
+	bool _saveScene;
+	bool _openScene;
 
 	void Styling();
 	void Dockspace() const;
