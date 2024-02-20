@@ -16,17 +16,19 @@ set( GLFW_BUILD_EXAMPLES  OFF CACHE BOOL "" FORCE )
 
 # Add include directory path
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/Externals/Include")
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/Source/")
 
 
 # List all .cpp and .hpp files into SOURCES variabile
 FILE(GLOB_RECURSE SOURCES 
   ${CMAKE_CURRENT_SOURCE_DIR}/Source/**.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Source/**.hpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/Source/**.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/Externals/Include/Glad/gl.c
 )
 
 # Add source files
 add_executable (GameEngine 
-  "${CMAKE_CURRENT_SOURCE_DIR}/Externals/Include/Glad/gl.c"
   ${SOURCES}
 )
 

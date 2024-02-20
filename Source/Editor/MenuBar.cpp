@@ -1,4 +1,4 @@
-#include "MenuBar.hh"
+#include "MenuBar.hpp"
 
 #include "Imgui/imgui.h"
 #include "Imgui/imgui_impl_glfw.h"

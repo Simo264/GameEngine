@@ -1,6 +1,5 @@
-#include "DebugFrame.hh"
-
-#include "../Renderer.hh"
+#include "DebugFrame.hpp"
+#include "Engine/Renderer.hpp"
 
 #include "Imgui/imgui.h"
 #include "Imgui/imgui_impl_glfw.h"

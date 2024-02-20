@@ -1,6 +1,5 @@
-#include "SettingsFrame.hh"
-
-#include "../Subsystems/ConfigurationsManager.hh"
+#include "SettingsFrame.hpp"
+#include "Engine/Subsystems/ConfigurationsManager.hpp"
 
 #include "Imgui/imgui.h"
 #include "Imgui/imgui_impl_glfw.h"

@@ -1,7 +1,7 @@
-#include "DetailsPanel.hh"
-#include "../Scene.hh"
-#include "../Logger.hh"
-#include "../Subsystems/TexturesManager.hh"
+#include "DetailsPanel.hpp"
+#include "Engine/Scene.hpp"
+#include "Engine/Logger.hpp"
+#include "Engine/Subsystems/TexturesManager.hpp"
 
 #include "Imgui/imgui.h"
 #include "Imgui/imgui_impl_glfw.h"

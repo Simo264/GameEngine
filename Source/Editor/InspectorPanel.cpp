@@ -1,4 +1,4 @@
-#include "InspectorPanel.hh"
+#include "InspectorPanel.hpp"
 
 #include "Imgui/imgui.h"
 #include "Imgui/imgui_impl_glfw.h"

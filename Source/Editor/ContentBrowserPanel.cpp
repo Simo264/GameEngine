@@ -1,8 +1,8 @@
-#include "ContentBrowserPanel.hh"
+#include "ContentBrowserPanel.hpp"
 
-#include "../Texture2D.hh"
-#include "../Subsystems/TexturesManager.hh"
-#include "../Logger.hh"
+#include "Engine/Texture2D.hpp"
+#include "Engine/Subsystems/TexturesManager.hpp"
+#include "Engine/Logger.hpp"
 
 #include "Imgui/imgui.h"
 #include "Imgui/imgui_impl_glfw.h"

@@ -1,5 +1,5 @@
-#include "ViewportPanel.hh"
-#include "../FrameBuffer.hh"
+#include "ViewportPanel.hpp"
+#include "Engine/FrameBuffer.hpp"
 
 #include "Imgui/imgui.h"
 #include "Imgui/imgui_impl_glfw.h"
