@@ -15,7 +15,7 @@ enum MENU_ITEMS : int {
 	SAVE_SCENE,
 	SAVE_AS_SCENE,
 	OPEN_SCENE,
-
+	EXIT,
 	MENU_ITEMS_COUNT
 };
 
@@ -30,5 +30,6 @@ public:
 
 	void RenderMenuBar();
 
-	Array<bool*, MENU_ITEMS_COUNT> items;
+private:
+	Array<bool*, MENU_ITEMS_COUNT> _items;
 };

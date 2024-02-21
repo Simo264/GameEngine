@@ -30,7 +30,6 @@ public:
   }
     
   void RenderLight(class Shader* shader) override;
-  String ToString() const;
 
   Vec3f position;
   Attenuation attenuation;

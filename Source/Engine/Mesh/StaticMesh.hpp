@@ -19,10 +19,7 @@ public:
 	
 	void Draw(class Shader* shader);
 	
-	String ToString() const;
-
 	Transform transform;
 
-private:
-	Path _model;
+	Path modelPath;
 };

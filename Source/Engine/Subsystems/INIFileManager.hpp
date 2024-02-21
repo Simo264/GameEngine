@@ -12,6 +12,15 @@ public:
 
 	void PrintContent();
 
+	/* Return reference of ini data structure */
+	mINI::INIStructure& GetData() { return _iniData; }
+
+	/* Read data from file */
+	void ReadData()
+	{
+		_file->read(_iniData);
+	}
+
 	/* Returns a copy of the data and doesn't create new items in the structure */
 	String GetValue(const char* section, const char* key)
 	{

@@ -10,9 +10,6 @@ INIFileManager::INIFileManager(Path filepath)
 {
 	/* Create a file instance */
 	_file = std::make_unique<mINI::INIFile>(filepath.string());
-
-	/* Now we can read the file */ 
-	_file->read(_iniData);
 }
 
 template<>

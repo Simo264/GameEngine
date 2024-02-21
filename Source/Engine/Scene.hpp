@@ -33,7 +33,6 @@ public:
 	void ClearScene();
 
 	void LoadScene(Path filepath);
-
 	void SaveScene(Path outfile);
 
 	/* Can be there only ONE directional light in scene */
@@ -56,9 +55,4 @@ private:
 	
 	SharedPointer<StaticMesh> ParseStaticMesh(
 		IFStream& file, String& line, char name[64], char value[64]);
-
-	void ParseNameValue(const String& line, char name[64], char value[64]);
-	void ClearNameValue(char name[64], char value[64]);
-
-	Vec3f ParseVec3f(const String&);
 };

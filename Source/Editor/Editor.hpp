@@ -53,6 +53,7 @@ private:
 	bool _saveScene;
 	bool _saveAsScene;
 	bool _openScene;
+	bool _exit;
 
 	void Styling();
 	void Dockspace() const;

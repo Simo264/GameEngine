@@ -162,8 +162,6 @@ void OutlinerPanel::AddSceneComponentPopup(Scene* scene)
 {
   const char* lights[] = { "Directional light", "Point light", "Spot light", };
   const char* meshes[] = { "Cube", "Plane", "Cylinder", };
-  char buff[32]{};
-
   ImGui::SeparatorText("New light");
   for (int i = 0; i < IM_ARRAYSIZE(lights); i++)
   {
@@ -202,25 +200,32 @@ void OutlinerPanel::AddSceneComponentPopup(Scene* scene)
   ImGui::SeparatorText("New static mesh");
   for (int i = 0; i < IM_ARRAYSIZE(meshes); i++)
   {
+    Path model;
     if (ImGui::Selectable(meshes[i]))
     {
       switch (i)
       {
       case 0: /* Cube mesh */
       {
-        auto obj = std::make_shared<StaticMesh>(ROOT_PATH / "Assets/Shapes/Cube/Cube.obj");
+        model = "Assets/Shapes/Cube/Cube.obj";
+        model = model.lexically_normal();
+        auto obj = std::make_shared<StaticMesh>(ROOT_PATH / model);
         scene->AddSceneObject(obj);
         break;
       }
       case 1: /* Plane mesh */
       {
-        auto obj = std::make_shared<StaticMesh>(ROOT_PATH / "Assets/Shapes/Plane/Plane.obj");
+        model = "Assets/Shapes/Plane/Plane.obj";
+        model = model.lexically_normal();
+        auto obj = std::make_shared<StaticMesh>(ROOT_PATH / model);
         scene->AddSceneObject(obj);
         break;
       }
       case 2: /* Cylinder mesh */
       {
-        auto obj = std::make_shared<StaticMesh>(ROOT_PATH / "Assets/Shapes/Cylinder/Cylinder.obj");
+        model = "Assets/Shapes/Cylinder/Cylinder.obj";
+        model = model.lexically_normal();
+        auto obj = std::make_shared<StaticMesh>(ROOT_PATH / model);
         scene->AddSceneObject(obj);
         break;
       }
@@ -229,7 +234,6 @@ void OutlinerPanel::AddSceneComponentPopup(Scene* scene)
   }
   ImGui::EndPopup();
 }
-
 
 void OutlinerPanel::ToggleVisibility(SharedPointer<DirectionalLight>& dLight)
 {

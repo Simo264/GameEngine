@@ -32,6 +32,8 @@ SettingsFrame::~SettingsFrame()
 SettingsFrame::SettingsFrame()
 {
   _conf = std::make_unique<INIFileManager>(ROOT_PATH / CONFIG_FILENAME);
+  _conf->ReadData();
+
 	frameName = "Settings";
 	isOpen = false;
 

@@ -51,6 +51,7 @@ void Editor::Initialize()
   _saveScene = false;
   _saveAsScene = false;
   _openScene = false;
+  _exit = false;
 
   Array<bool*, MENU_ITEMS_COUNT> items{};
   items[PANEL_BROWSER] = &contentBrowserPanel->isOpen;
@@ -65,6 +66,7 @@ void Editor::Initialize()
   items[SAVE_SCENE] = &_saveScene;
   items[SAVE_AS_SCENE] = &_saveAsScene;
   items[OPEN_SCENE] = &_openScene;
+  items[EXIT] = &_exit;
 
   menuBar = std::make_unique<MenuBar>(items);
 }
@@ -181,6 +183,12 @@ void Editor::RenderEditor(Scene* scene, FrameBuffer* framebuffer)
     OnSaveScene(scene);
   else if (_openScene)
     OnOpenScene(scene);
+
+  if (_exit)
+  {
+    CONSOLE_INFO("Exit...");
+    _exit = false;
+  }
 
   ImGui::RenderPanel();
   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -345,7 +353,7 @@ void Editor::OnNewScene(Scene* scene)
 void Editor::OnOpenScene(Scene* scene)
 {
   _openScene = false;
-  Path filePath = FileDialog::OpenFileDialog("Scene file(*.txt)\0*.txt\0");
+  Path filePath = FileDialog::OpenFileDialog("Scene file(*.ini)\0*.ini\0");
   if (!filePath.empty())
   {
     scene->ClearScene();
@@ -362,7 +370,7 @@ void Editor::OnSaveScene(Scene* scene)
 void Editor::OnSaveAsScene(Scene* scene)
 {
   _saveAsScene = false;
-  Path filePath = FileDialog::SaveFileDialog("Scene file(*.txt)\0*.txt\0");
+  Path filePath = FileDialog::SaveFileDialog("Scene file(*.ini)\0*.ini\0");
   if (!filePath.empty())
     scene->SaveScene(filePath);
 }

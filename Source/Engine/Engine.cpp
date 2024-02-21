@@ -262,6 +262,7 @@ void Engine::ShutDown()
 void Engine::InitOpenGL()
 {
   INIFileManager conf(ROOT_PATH / CONFIG_FILENAME);
+  conf.ReadData();
 
   String title = conf.GetValue("window", "title");
 
