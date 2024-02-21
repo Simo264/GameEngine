@@ -4,7 +4,7 @@
 #include "Engine/Mesh/StaticMesh.hpp"
 #include "Engine/Lighting/DirectionalLight.hpp"
 #include "Engine/Lighting/PointLight.hpp"
-#include "Engine/Subsystems/ConfigurationsManager.hpp"
+#include "Engine/Subsystems/INIFileManager.hpp"
 #include "Engine/FileDialog.hpp"
 #include "Engine/Logger.hpp"
 
@@ -42,7 +42,7 @@ void Editor::Initialize()
   outlinerPanel = std::make_unique<OutlinerPanel>("Outliner");
   detailsPanel = std::make_unique<DetailsPanel>("Details");
   inspectorPanel = std::make_unique<InspectorPanel>("Inspector");
-  settingsFrame = std::make_unique<SettingsFrame>("Settings");
+  settingsFrame = std::make_unique<SettingsFrame>();
   debugFrame = std::make_unique<DebugFrame>("Debug");
 
   _demoOpen = true;

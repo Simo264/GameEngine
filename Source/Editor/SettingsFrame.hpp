@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Core/Core.hpp"
-
+#include "Engine/Subsystems/INIFileManager.hpp"
 
 /* ----------------------------------------
 			SettingsFrame class
@@ -9,8 +9,8 @@
 class SettingsFrame
 {
 public:
-	SettingsFrame(const char* frameName);
-	~SettingsFrame() = default;
+	SettingsFrame();
+	~SettingsFrame();
 
 	bool isOpen;
 	String frameName;
@@ -27,4 +27,9 @@ private:
 
 	int _aspectIndex;
 	int _resolutionIndex;
+
+	UniquePointer<INIFileManager> _conf;
+	struct WindowArgs* _windowArgs;
+
+	void OnSaveSettings();
 };

@@ -7,9 +7,6 @@
 
 #include <array>
 #include <algorithm>
-#include <cstdint>
-#include <cstring>
-#include <chrono>
 #include <fstream>
 #include <filesystem>
 #include <initializer_list>
@@ -19,7 +16,6 @@
 #include <numeric>
 #include <string>
 #include <sstream>
-#include <type_traits>
 #include <vector>
 
 /* -----------------------------
@@ -48,6 +44,7 @@ using RuntimeError	= std::runtime_error;
 using Path					= std::filesystem::path;
 
 const Path ROOT_PATH = std::filesystem::current_path().parent_path();
+const Path CONFIG_FILENAME = "AppConfig.ini";
 
 /* -----------------------------
 			GLM library aliases

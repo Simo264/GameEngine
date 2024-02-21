@@ -171,7 +171,6 @@ void Scene::ClearNameValue(char name[64], char value[64])
 Vec3f Scene::ParseVec3f(const String& str)
 {
 	Vec3f vec;
-	
 	IStringStream iss(str);
 	String seg;
 	std::getline(iss, seg, ',');

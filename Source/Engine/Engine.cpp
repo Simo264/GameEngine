@@ -13,7 +13,7 @@
 
 #include "Engine/Subsystems/ShadersManager.hpp"
 #include "Engine/Subsystems/TexturesManager.hpp"
-#include "Engine/Subsystems/ConfigurationsManager.hpp"
+#include "Engine/Subsystems/INIFileManager.hpp"
 
 #define GAMMA_CORRECTION 2.2f
 
@@ -26,9 +26,6 @@ void Engine::Initialize()
 {
   /* Init Logger */
   Logger::Initialize();
-
-  /* Load configuration */
-  ConfigurationsManager::Instance().Initialize();
 
   /* Initialize GLFW, create window and initialize OpenGL context */
   InitOpenGL();
@@ -232,8 +229,8 @@ void Engine::Run()
     lastUpdateTime = now;
   }
   
-  /* Destroy framebuffer */
-  framebuffer.DestroyFrameBuffer();
+    /* Destroy framebuffer */
+    framebuffer.DestroyFrameBuffer();
 }
 
 void Engine::ShutDown()
@@ -264,20 +261,20 @@ void Engine::ShutDown()
 
 void Engine::InitOpenGL()
 {
-  auto& instanceCM = ConfigurationsManager::Instance();
-  /* Get window size */
-  String& windowRes = instanceCM.GetValue(CONF_WINDOW_RESOLUTION);
-  Vec2i resolution = instanceCM.ParseResolution(windowRes);
-  /* Get window pos */
-  String& windowPos = instanceCM.GetValue(CONF_WINDOW_POS);
-  Vec2i position = instanceCM.ParsePosition(windowPos);
-  /* Get window title */
-  String& title = instanceCM.GetValue(CONF_WINDOW_TITLE);
-  /* Get window aspect ratio */
-  String& windowAR = instanceCM.GetValue(CONF_ASPECT_RATIO);
-  Vec2i aspectRatio = instanceCM.ParseAspectRatio(windowAR);
-  /* V-sync on-off */
-  String& vsync = instanceCM.GetValue(CONF_VSYNC);
+  INIFileManager conf(ROOT_PATH / CONFIG_FILENAME);
+
+  String title = conf.GetValue("window", "title");
+
+  String tmp;
+  tmp.reserve(32);
+  tmp = conf.GetValue("window", "resolution");
+  Vec2i resolution = INIFileManager::StringToVec2<Vec2i>(tmp, 'x');
+  tmp = conf.GetValue("window", "aspectratio");
+  Vec2i aspectratio = INIFileManager::StringToVec2<Vec2i>(tmp, ':');
+  tmp = conf.GetValue("window", "position");
+  Vec2i position = INIFileManager::StringToVec2<Vec2i>(tmp, ',');
+  tmp = conf.GetValue("window", "vsync");
+  bool vsync = INIFileManager::StringToBool(tmp);
 
   glfwInit();
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);  /* Load OpenGL 4.6 */
@@ -288,8 +285,8 @@ void Engine::InitOpenGL()
   GLFWwindow* window = glfwCreateWindow(resolution.x, resolution.y, title.c_str(), nullptr, nullptr);
   glfwMakeContextCurrent(window);
   glfwSetWindowPos(window, position.x, position.y); /* Set window position */
-  glfwSetWindowAspectRatio(window, aspectRatio.x, aspectRatio.y);  /* Set aspect ratio */
-  glfwSwapInterval((std::strcmp(vsync.c_str(), "true") == 0 ? 1 : 0)); /* V-sync */
+  glfwSetWindowAspectRatio(window, aspectratio.x, aspectratio.y);  /* Set aspect ratio */
+  glfwSwapInterval(vsync); /* V-sync */
   
   glfwSetWindowSizeCallback(window, [](GLFWwindow* window, int width, int height) {
     glfwSetWindowSize(window, width, height);
