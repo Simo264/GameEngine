@@ -10,6 +10,10 @@ class Shader
 public:
   Shader() : _shaderID{ 0 } { }
 
+  /* Disable copy constructor */
+  Shader(Shader const&) = delete;
+  Shader& operator=(Shader const&) = delete;
+
   void InitShader(const char* label, const char* vertFile, const char* fragFile);
   void Use() const { glUseProgram(_shaderID); }
   void DestroyShader() { glDeleteProgram(_shaderID); }

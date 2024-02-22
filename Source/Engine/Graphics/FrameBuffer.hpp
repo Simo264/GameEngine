@@ -47,6 +47,11 @@ class FrameBuffer
 
 public:
 	FrameBuffer();
+
+	/* Disable copy constructor */
+	FrameBuffer(FrameBuffer const&) = delete;
+	FrameBuffer& operator=(FrameBuffer const&) = delete;
+
 	void InitFrameBuffer(Vec2i size);
 	
 	void BindMSAAFramebuffer() const { glBindFramebuffer(GL_FRAMEBUFFER, _renderRelatedIds[MULTISAMPLING_FBO]);  }

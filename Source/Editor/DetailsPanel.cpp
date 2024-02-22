@@ -1,5 +1,6 @@
 #include "DetailsPanel.hpp"
 #include "Engine/Scene.hpp"
+#include "Engine/Graphics/Texture2D.hpp"
 #include "Engine/Subsystems/TexturesManager.hpp"
 #include "Logger.hpp"
 

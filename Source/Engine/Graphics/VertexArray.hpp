@@ -55,6 +55,10 @@ class VertexArray
 public:
   VertexArray();
 
+  /* Disable copy constructor */
+  VertexArray(VertexArray const&) = delete;
+  VertexArray& operator=(VertexArray const&) = delete;
+
   void InitVertexArray(VertexArrayData& data, VertexArrayConfig& config);
   void DestroyVertexArray() const;
 

@@ -1,6 +1,7 @@
 #include "OutlinerPanel.hpp"
 #include "Engine/Scene.hpp"
 #include "Engine/Graphics/Shader.hpp"
+#include "Engine/Graphics/Texture2D.hpp"
 #include "Engine/Subsystems/TexturesManager.hpp"
 #include "Engine/Subsystems/ShadersManager.hpp"
 #include "Logger.hpp"

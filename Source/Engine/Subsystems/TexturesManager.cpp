@@ -1,4 +1,5 @@
 #include "TexturesManager.hpp"
+#include "Engine/Graphics/Texture2D.hpp"
 
 #include "Logger.hpp"
 
@@ -12,7 +13,7 @@ static constexpr uint32_t TEXTURES_MANAGER_MAX_SIZE = 100;
 void TexturesManager::Initialize()
 {
 	/* Reserve block of memory with TEXTURES_MANAGER_MAX_SIZE on the heap */
-	_textureBuffer = std::make_unique<Texture2D[]>(TEXTURES_MANAGER_MAX_SIZE);
+	_textureBuffer = new Texture2D[TEXTURES_MANAGER_MAX_SIZE];
 	_bufferSize = 0;
 }
 
@@ -24,7 +25,7 @@ void TexturesManager::ShutDown()
     });
 	
 	/* Deallocate memory */
-  _textureBuffer.reset();
+  delete[] _textureBuffer;
 }
 
 Texture2D* TexturesManager::LoadTexture(Path filePath, bool gammaCorrection)
@@ -60,3 +61,12 @@ Texture2D* TexturesManager::GetTextureByPath(Path filePath) const
   return it;
 }
 
+Texture2D* TexturesManager::Begin() const
+{ 
+  return &_textureBuffer[0]; 
+}
+
+Texture2D* TexturesManager::End() const
+{
+  return &_textureBuffer[0] + _bufferSize;
+}

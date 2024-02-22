@@ -1,4 +1,5 @@
 #include "ShadersManager.hpp"
+#include "Engine/Graphics/Shader.hpp"
 #include "Logger.hpp"
 
 static constexpr uint32_t SHADERS_MANAGER_MAX_SIZE = 10;
@@ -11,7 +12,7 @@ static constexpr uint32_t SHADERS_MANAGER_MAX_SIZE = 10;
 void ShadersManager::Initialize()
 {
   /* Reserve block of memory with TEXTURES_MANAGER_MAX_SIZE on the heap */
-  _shaderBuffer = std::make_unique<Shader[]>(SHADERS_MANAGER_MAX_SIZE);
+  _shaderBuffer = new Shader[SHADERS_MANAGER_MAX_SIZE];
   _bufferSize = 0;
 }
 
@@ -23,7 +24,7 @@ void ShadersManager::ShutDown()
     });
   
   /* Deallocate memory */
-  _shaderBuffer.reset();
+  delete[] _shaderBuffer;
 }
 
 Shader* ShadersManager::LoadShaderProgram(const char* label, Path vertFilePath, Path fragFilePath)
@@ -39,11 +40,11 @@ Shader* ShadersManager::LoadShaderProgram(const char* label, Path vertFilePath, 
   return &shader;
 }
 
-Shader* ShadersManager::GetShader(const char* label)
+Shader* ShadersManager::GetShader(const char* label) const
 {
-  auto start = &_shaderBuffer[0];
-  auto end = &_shaderBuffer[0] + _bufferSize;
-  auto it = std::find_if(start, end, [&label](Shader& shader) {
+  auto beg = Begin();
+  auto end = End();
+  auto it = std::find_if(beg, end, [&label](Shader& shader) {
       return shader.Label().compare(label) == 0;
     });
   
@@ -52,3 +53,12 @@ Shader* ShadersManager::GetShader(const char* label)
   return it;
 }
 
+Shader* ShadersManager::Begin() const
+{
+  return &_shaderBuffer[0];
+}
+
+Shader* ShadersManager::End() const
+{
+  return &_shaderBuffer[0] + _bufferSize;
+}

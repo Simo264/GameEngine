@@ -19,19 +19,19 @@ include_directories("${CMAKE_CURRENT_SOURCE_DIR}/Externals/Include")
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/Source/")
 
 
+# Separate all .cpp .hpp files in different VS filters
 # List all .cpp and .hpp files into SOURCES variabile
 FILE(GLOB_RECURSE SOURCES 
   ${CMAKE_CURRENT_SOURCE_DIR}/Source/**.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Source/**.hpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/Source/**.c
   ${CMAKE_CURRENT_SOURCE_DIR}/Source/**.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/Externals/Include/Glad/gl.c
 )
 
 # Add source files
 add_executable (GameEngine 
   ${SOURCES}
 )
-
 
 # Linking libraries
 target_link_libraries(GameEngine "${CMAKE_CURRENT_SOURCE_DIR}/Externals/Libs/glfw3.lib") 

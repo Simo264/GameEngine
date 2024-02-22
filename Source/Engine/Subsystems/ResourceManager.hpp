@@ -1,7 +1,5 @@
 #pragma once
 
-#include "Core.hpp"
-
 /*  --------------------------------------------------------------
 	This class represents the interface of a resource manager class,
 	i.e TexturesManager, ShadersManager...
