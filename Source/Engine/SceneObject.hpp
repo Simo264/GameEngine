@@ -1,14 +1,13 @@
 #pragma once
 
-#include "Core/Core.hpp"
-#include "Engine/NonCopyable.hpp"
+#include "Core.hpp"
 
 /* ------------------------------------------------------------------
 	SceneObject class represents a specific object placed in world,
 	contains more necessary informations about an 
 	object that in scene like id, tag name, visibility...
 	------------------------------------------------------------------- */
-class SceneObject : public NonCopyable
+class SceneObject
 {
 public:
 	SceneObject();
@@ -18,8 +17,6 @@ public:
 	
 	uint32_t GetID() const { return _instanceID; }
 	bool Compare(const SceneObject& other) const;
-
-	String ToString() const;
 
 private:
 	uint32_t _instanceID;

@@ -1,5 +1,5 @@
 #include "SpotLight.hpp"
-#include "Engine/Shader.hpp"
+#include "Engine/Graphics/Shader.hpp"
 
 #if 0
 void SpotLight::RenderLight(Shader* shader)

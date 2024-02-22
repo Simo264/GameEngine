@@ -1,3 +1,4 @@
+#if 0
 #include "InstancingMesh.hpp"
 
 #include "Engine/Mesh/Mesh.hpp"
@@ -105,3 +106,5 @@ void InstancingMesh::InitializeInstance(Mesh* mesh)
     glVertexAttribDivisor(config.numAttrs + i, 1);
   }
 }
+
+#endif

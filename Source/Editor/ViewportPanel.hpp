@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core/Core.hpp"
+#include "Core.hpp"
 
 /* ----------------------------------------
 			Viewport class 
@@ -9,7 +9,6 @@ class ViewportPanel
 {
 public:
 	ViewportPanel(const char* panelName);
-	~ViewportPanel() = default;
 
 	bool isOpen;
 	bool isFocused;

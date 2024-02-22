@@ -1,16 +1,14 @@
 #pragma once
 
-#include "Core/Core.hpp"
-#include "Engine/NonCopyable.hpp"
+#include "Core.hpp"
 
 /* ----------------------------------------
       Wrapper class for GLFWwindow 
   ---------------------------------------- */
-class Window : public NonCopyable
+class Window
 {
 public:
   Window(GLFWwindow* window) : _window{ window } { };
-  ~Window() = default;
 
   /* glfw: set close flag TRUE */
   void CloseWindow() { glfwSetWindowShouldClose(_window, GLFW_TRUE); }

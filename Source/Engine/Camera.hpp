@@ -1,12 +1,11 @@
 #pragma once
 
-#include "Core/Core.hpp"
-#include "Engine/NonCopyable.hpp"
+#include "Core.hpp"
 
 /* --------------------------------------- 
       Camera class 
   --------------------------------------- */
-class Camera : public NonCopyable
+class Camera
 {
 public:
   Camera(Vec2i windowSize, Vec3f position = Vec3f(0.0f, 0.0f, 0.0f));

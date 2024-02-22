@@ -1,10 +1,10 @@
 #include "Scene.hpp"
-#include "Engine/Shader.hpp"
-#include "Engine/Logger.hpp"
-#include "Engine/Texture2D.hpp"
+#include "Engine/Graphics/Shader.hpp"
+#include "Engine/Graphics/Texture2D.hpp"
 #include "Engine/Subsystems/TexturesManager.hpp"
 
-#include "Engine/Subsystems/INIFileManager.hpp"
+#include "INIFileManager.hpp"
+#include "Logger.hpp"
 
 /* -----------------------------------------------------
  *          PUBLIC METHODS
@@ -71,7 +71,7 @@ void Scene::LoadScene(Path filepath)
 			if (collection.has("texture-diffuse"))
 			{
 				Path p = collection.get("texture-diffuse");
-				sMesh->diffuse = TexturesManager::Instance().GetTextureByPath(p);
+				sMesh->material.diffuse = TexturesManager::Instance().GetTextureByPath(p);
 			}
 
 			AddSceneObject(sMesh);
@@ -167,8 +167,8 @@ void Scene::SaveScene(Path outfile)
 		conf.Update(section, "scale", INIFileManager::Vec3ToString<Vec3f>(sMesh->transform.scale).c_str());
 		conf.Update(section, "degrees", INIFileManager::Vec3ToString<Vec3f>(sMesh->transform.degrees).c_str());
 
-		if(sMesh->diffuse)
-			conf.Update(section, "texture-diffuse", sMesh->diffuse->texturePath.string().c_str());
+		if(sMesh->material.diffuse)
+			conf.Update(section, "texture-diffuse", sMesh->material.diffuse->texturePath.string().c_str());
 	}
 
 	conf.Write();

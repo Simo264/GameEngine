@@ -1,6 +1,6 @@
 #include "VertexArray.hpp"
 
-#include "Engine/Logger.hpp"
+#include "Logger.hpp"
 
 /* -----------------------------------------------------
         VertexArrayConfig class

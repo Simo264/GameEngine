@@ -1,8 +1,11 @@
 #pragma once
 
-#include "Mesh.hpp"
+#include "Core.hpp"
+
+#include "Engine/Graphics/VertexArray.hpp"
 #include "Engine/SceneObject.hpp"
 #include "Engine/Transform.hpp"
+#include "Engine/Material.hpp"
 
 /* ------------------------------------------------------------------------ 
 	A Static Mesh is a piece of geometry with multiple textures.
@@ -11,15 +14,21 @@
 	These are 3D models created in external modeling applications 
 	(such as 3dsMax, Maya, Softimage, and so on) that are imported.
 	------------------------------------------------------------------------ */
-class StaticMesh : public Mesh, public SceneObject
+class StaticMesh : public SceneObject
 {
 public:
-	/* The path of object file containing all vertices and indices */
+	/* Create static mesh from raw data */
+	StaticMesh(VertexArrayData& data, VertexArrayConfig& config);
+	
+	/* Create static mesh from .obj file */
 	StaticMesh(Path objFilePath);
 	
 	void Draw(class Shader* shader);
+	void Destroy() const;
 	
+	VertexArray vertexArray;
 	Transform transform;
-
 	Path modelPath;
+
+	Material material;
 };

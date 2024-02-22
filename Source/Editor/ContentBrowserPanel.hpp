@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core/Core.hpp"
+#include "Core.hpp"
 
 /* ----------------------------------------
 			ContentBrowserPanel class
@@ -9,7 +9,6 @@ class ContentBrowserPanel
 {
 public:
 	ContentBrowserPanel(const char* panelName);
-	~ContentBrowserPanel() = default;
 
 	bool isOpen;
 	String panelName;

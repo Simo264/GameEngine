@@ -1,7 +1,7 @@
 #include "FrameBuffer.hpp"
-#include "Engine/Shader.hpp"
-#include "Engine/Renderer.hpp"
-#include "Engine/Logger.hpp"
+#include "Engine/Graphics/Shader.hpp"
+#include "Engine/Graphics/Renderer.hpp"
+#include "Logger.hpp"
 
 /* -----------------------------------------------------
  *          PUBLIC METHODS
@@ -126,7 +126,6 @@ void FrameBuffer::DestroyFrameBuffer()
 void FrameBuffer::InitFrameBufferVAO()
 {
 	float vertices[] = {
-		// positions   // texCoords
 		-1.0f,  1.0f,  0.0f, 1.0f,
 		-1.0f, -1.0f,  0.0f, 0.0f,
 		 1.0f, -1.0f,  1.0f, 0.0f,

@@ -1,7 +1,6 @@
 #pragma once
 
-#include "Core/Core.hpp"
-#include "Engine/NonCopyable.hpp"
+#include "Core.hpp"
 
 /*  --------------------------------------------------------------
 	This class represents the interface of a resource manager class,
@@ -9,7 +8,7 @@
 	This interface class implement the singleton design pattern.
 	 --------------------------------------------------------------- */
 template<typename T>
-class ResourceManagerInterface : public NonCopyable
+class ResourceManagerInterface 
 {
 public:
 	virtual void Initialize() = 0;

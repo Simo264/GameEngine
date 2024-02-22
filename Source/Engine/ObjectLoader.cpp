@@ -1,10 +1,10 @@
 #include "ObjectLoader.hpp"
 
-#include "Engine/Texture2D.hpp"
-#include "Engine/Logger.hpp"
-#include "Engine/Mesh/Mesh.hpp"
+#include "Engine/Graphics/VertexArray.hpp"
+#include "Engine/Graphics/Texture2D.hpp"
 #include "Engine/Subsystems/TexturesManager.hpp"
 
+#include "Logger.hpp"
 /* -----------------------------------------------------
  *          PUBLIC METHODS
  * -----------------------------------------------------
@@ -25,9 +25,9 @@ ObjectLoader::ObjectLoader(Path filePath)
   }
 }
 
-void ObjectLoader::LoadMesh(Mesh* mesh, uint32_t meshIndex)
+void ObjectLoader::LoadData(VertexArray* vao, VertexArrayConfig* conf)
 {
-  aiMesh* aimesh = _scene->mMeshes[meshIndex];
+  aiMesh* aimesh = _scene->mMeshes[0];
   const uint64_t vertDataSize = aimesh->mNumVertices * 8; /* 8: 3(position)+3(normals)+2(textcoord) */
   const uint64_t indDatasize = aimesh->mNumFaces * 3; /* 3: number of vertices per triangle */
 
@@ -37,28 +37,28 @@ void ObjectLoader::LoadMesh(Mesh* mesh, uint32_t meshIndex)
   data.vertData = nullptr;
   data.indDataSize = indDatasize * sizeof(uint32_t);
   data.indData = nullptr;
-  /* Default configuration */
-  VertexArrayConfig config;
-  config.PushAttributes({ 3,3,2 }); /* (3)position + (3)normal + (2)textCoords */
-
-  mesh->InitMesh(data, config);
+  
+  vao->InitVertexArray(data, *conf);
 
   /* Now fill mesh vertex buffer */
-  LoadVertices(aimesh, mesh->vertexArray.VertexBufferID());
+  LoadVertices(aimesh, vao->VertexBufferID());
 
   /* Now fill mesh index buffer */
-  LoadIndices(aimesh, mesh->vertexArray.IndexBufferID());
+  LoadIndices(aimesh, vao->IndexBufferID());
 
   /* Load materials */
   if (aimesh->mMaterialIndex >= 0)
-    LoadMaterials(aimesh, mesh);
+  {
+    const aiMaterial* material = _scene->mMaterials[aimesh->mMaterialIndex];
+    _material.diffuse = LoadTexture(material, "diffuse");
+    _material.specular = LoadTexture(material, "specular");
+  }
 }
 
 /* -----------------------------------------------------
  *          PRIVATE METHODS
  * -----------------------------------------------------
 */
-
 
 void ObjectLoader::LoadVertices(const aiMesh* aimesh, uint32_t writeBuffer)
 {
@@ -112,14 +112,7 @@ void ObjectLoader::LoadIndices(const aiMesh* aimesh, uint32_t writeBuffer)
   glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
 }
 
-void ObjectLoader::LoadMaterials(const aiMesh* aimesh, Mesh* mesh)
-{
-  const aiMaterial* material = _scene->mMaterials[aimesh->mMaterialIndex];
-  mesh->diffuse = GetTexture(material, "diffuse");
-  mesh->specular = GetTexture(material, "specular");
-}
-
-Texture2D* ObjectLoader::GetTexture(const aiMaterial* material, const char* textureType)
+Texture2D* ObjectLoader::LoadTexture(const aiMaterial* material, const char* textureType)
 {
   aiTextureType aiType = aiTextureType_NONE;
   if (std::strcmp(textureType, "diffuse") == 0)

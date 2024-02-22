@@ -1,7 +1,8 @@
 #pragma once
 
+#include "Core.hpp"
 #include "Engine/Subsystems/ResourceManager.hpp"
-#include "Engine/Texture2D.hpp"
+#include "Engine/Graphics/Texture2D.hpp"
 
 /* ------------------------------------------------
 	Resource manager class TexturesManager:

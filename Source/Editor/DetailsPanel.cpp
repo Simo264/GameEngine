@@ -1,13 +1,9 @@
 #include "DetailsPanel.hpp"
 #include "Engine/Scene.hpp"
-#include "Engine/Logger.hpp"
 #include "Engine/Subsystems/TexturesManager.hpp"
+#include "Logger.hpp"
 
 #include "Imgui/imgui.h"
-#include "Imgui/imgui_impl_glfw.h"
-#include "Imgui/imgui_impl_opengl3.h"
-#include "Imgui/imgui_stdlib.h"
-#include "Imgui/imgui_internal.h"
 
 /* -----------------------------------------------------
  *          PUBLIC METHODS
@@ -20,7 +16,6 @@ void DetailsPanel::RenderPanel(SharedPointer<DirectionalLight>& target, Scene* s
     return;
 
   ImGui::Begin(panelName.c_str(), &isOpen);
-
   if (ImGui::CollapsingHeader("Light properties"))
   {
     ImGui::BeginTable("##table", 2);
@@ -117,11 +112,11 @@ void DetailsPanel::RenderPanel(SharedPointer<PointLight>& target, Scene* scene)
 
     ImGui::EndTable();
   }
-  //if (ImGui::CollapsingHeader("Advanced"))
-  //{
-  //  if (ImGui::Button("Delete"))
-  //    scene->RemoveSceneObject(target);
-  //}
+  if (ImGui::CollapsingHeader("Advanced"))
+  {
+    if (ImGui::Button("Delete"))
+      scene->RemoveSceneObject(target);
+  }
   
   ImGui::End();
 }
@@ -153,8 +148,10 @@ void DetailsPanel::RenderPanel(SharedPointer<StaticMesh>& target, Scene* scene)
   }
   if (ImGui::CollapsingHeader("Material"))
   {
-    const String diffusePathStr = (target->diffuse ? target->diffuse->texturePath.string() : "");
-    const uint32_t diffuseID = (target->diffuse ? target->diffuse->textureID : 0);
+    const String diffusePathStr = (
+      target->material.diffuse ? target->material.diffuse->texturePath.string() : "");
+    const uint32_t diffuseID = (
+      target->material.diffuse ? target->material.diffuse->textureID : 0);
 
     ImGui::BeginTable("##table", 3, ImGuiTableFlags_BordersInnerH);
     ImGui::TableSetupColumn("##C1", ImGuiTableColumnFlags_WidthFixed, 0.5f * ImGui::GetContentRegionAvail().x);
@@ -174,7 +171,7 @@ void DetailsPanel::RenderPanel(SharedPointer<StaticMesh>& target, Scene* scene)
         String textPathStr = texture.texturePath.string();
         bool isSelected = (std::strcmp(diffusePathStr.c_str(), textPathStr.c_str()) == 0);
         if (ImGui::Selectable(textPathStr.c_str(), isSelected))
-          target->diffuse = instanceTM.GetTextureByPath(textPathStr.c_str());
+          target->material.diffuse = instanceTM.GetTextureByPath(textPathStr.c_str());
         if (isSelected)
           ImGui::SetItemDefaultFocus();
         });

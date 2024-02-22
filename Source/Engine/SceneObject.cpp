@@ -2,7 +2,7 @@
 #include "Engine/Lighting/DirectionalLight.hpp"
 #include "Engine/Lighting/PointLight.hpp"
 #include "Engine/Lighting/SpotLight.hpp"
-#include "Engine/Mesh/StaticMesh.hpp"
+#include "Engine/StaticMesh.hpp"
 
 
 /* -----------------------------------------------------
@@ -21,15 +21,6 @@ SceneObject::SceneObject()
 bool SceneObject::Compare(const SceneObject& other) const
 {
 	return (this->GetID() == other.GetID());
-}
-
-String SceneObject::ToString() const
-{
-	OStringStream oss;
-	oss << "type=SceneObject\n";
-	oss << "tag=" << tagName << "\n";
-	oss << "id=" << GetID() << "\n";
-	return oss.str();
 }
 
 /* -----------------------------------------------------

@@ -1,5 +1,5 @@
 #include "Shader.hpp"
-#include "Engine/Logger.hpp"
+#include "Logger.hpp"
 
 /* -----------------------------------------------------
   *          PUBLIC METHODS

@@ -1,7 +1,8 @@
 #include "Renderer.hpp"
 
-#include "Engine/VertexArray.hpp"
-#include "Engine/Logger.hpp"
+#include "Engine/Graphics/VertexArray.hpp"
+
+#include "Logger.hpp"
 
 void Renderer::DrawArrays(VertexArray* vertexArray)
 {

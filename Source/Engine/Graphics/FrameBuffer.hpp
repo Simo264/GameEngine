@@ -1,8 +1,7 @@
 #pragma once
 
-#include "Core/Core.hpp"
-#include "Engine/NonCopyable.hpp"
-#include "Engine/VertexArray.hpp"
+#include "Core.hpp"
+#include "Engine/Graphics/VertexArray.hpp"
 
 enum class PostProcessingType {
 	POST_PROC_NONE			= 0,
@@ -15,7 +14,7 @@ enum class PostProcessingType {
 /* -------------------------------------------
 			Frame buffer class 
 	------------------------------------------- */
-class FrameBuffer : public NonCopyable
+class FrameBuffer
 {
 /* How to use Framebuffer:
 	1. Create frame buffer object:

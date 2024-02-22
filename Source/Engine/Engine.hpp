@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core/Core.hpp"
+#include "Core.hpp"
 #include "Editor/Editor.hpp"
 
 class Engine
@@ -21,6 +21,9 @@ private:
 	/* Load shader programs from Shaders/ directory */
 	void LoadShaders();
 	
-	/* Load textures from Textures/, Icons/ directories */
+	/* Load textures from Textures/ directory */
 	void LoadTextures();
+
+	/* Load textures from Icons/ directory */
+	void LoadIcons();
 };

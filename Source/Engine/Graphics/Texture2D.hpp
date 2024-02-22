@@ -1,12 +1,11 @@
 #pragma once
 
-#include "Core/Core.hpp"
-#include "Engine/NonCopyable.hpp"
+#include "Core.hpp"
 
 /* -----------------------------------
       Texture 2D class
   ----------------------------------- */
-class Texture2D : public NonCopyable
+class Texture2D
 {
 public:
   Texture2D() : textureID{ 0 } {}

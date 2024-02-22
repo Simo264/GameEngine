@@ -1,7 +1,6 @@
 #pragma once
 
-#include "Core/Core.hpp"
-#include "Engine/NonCopyable.hpp"
+#include "Core.hpp"
 
 /* ------------------------------------ 
       Vertex array configuration class
@@ -10,7 +9,6 @@ class VertexArrayConfig
 {
 public:
   VertexArrayConfig();
-  ~VertexArrayConfig() = default;
   void PushAttribute(uint8_t attribute);
   void PushAttributes(std::initializer_list<uint8_t> values);
 
@@ -52,7 +50,7 @@ struct VertexArrayData
 /* ------------------------------------
       Vertex array class
   ------------------------------------ */
-class VertexArray : public NonCopyable
+class VertexArray
 {
 public:
   VertexArray();

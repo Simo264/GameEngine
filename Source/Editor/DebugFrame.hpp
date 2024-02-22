@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core/Core.hpp"
+#include "Core.hpp"
 
 /* ----------------------------------------
 			DebugFrame class
@@ -9,7 +9,6 @@ class DebugFrame
 {
 public:
 	DebugFrame(const char* frameName);
-	~DebugFrame() = default;
 
 	bool isOpen;
 	String frameName;

@@ -1,16 +1,15 @@
 #pragma once
 
-#include "Core/Core.hpp"
-#include "Engine/NonCopyable.hpp"
+#include "Core.hpp"
 
-#include "Engine/Mesh/StaticMesh.hpp"
+#include "Engine/StaticMesh.hpp"
 #include "Engine/Lighting/DirectionalLight.hpp"
 #include "Engine/Lighting/PointLight.hpp"
 
 /* ----------------------------------------------------------------------------
 	Scene class contains all of objects that are placed in world.	
 	---------------------------------------------------------------------------- */
-class Scene : public NonCopyable
+class Scene
 {
 public:
 	Scene() : sceneDLight{ nullptr } {}

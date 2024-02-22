@@ -1,5 +1,7 @@
 #pragma once
 
+#if 0
+
 #include "Core/Core.hpp"
 #include "Engine/NonCopyable.hpp"
 #include "Engine/VertexArray.hpp"
@@ -35,3 +37,4 @@ private:
 	uint32_t _nInstancesToDraw;
 };
 
+#endif

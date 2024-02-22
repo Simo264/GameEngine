@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Core/Core.hpp"
-#include "Engine/Subsystems/INIFileManager.hpp"
+#include "Core.hpp"
+#include "INIFileManager.hpp"
 
 /* ----------------------------------------
 			SettingsFrame class

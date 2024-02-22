@@ -1,9 +1,9 @@
 #pragma once
 
-#include "Core/Core.hpp"
-#include "Engine/Mesh/StaticMesh.hpp"
+#include "Core.hpp"
 #include "Engine/Lighting/DirectionalLight.hpp"
 #include "Engine/Lighting/PointLight.hpp"
+#include "Engine/StaticMesh.hpp"
 
 /* ----------------------------------------
 			OutlinerPanel class
@@ -12,8 +12,7 @@ class OutlinerPanel
 {
 public:
 	OutlinerPanel(const char* panelName);
-	~OutlinerPanel() = default;
-
+	
 	bool isOpen;
 	String panelName;
 

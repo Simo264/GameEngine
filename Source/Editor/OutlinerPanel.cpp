@@ -1,14 +1,11 @@
 #include "OutlinerPanel.hpp"
 #include "Engine/Scene.hpp"
-#include "Engine/Shader.hpp"
-#include "Engine/Logger.hpp"
+#include "Engine/Graphics/Shader.hpp"
 #include "Engine/Subsystems/TexturesManager.hpp"
 #include "Engine/Subsystems/ShadersManager.hpp"
+#include "Logger.hpp"
 
 #include "Imgui/imgui.h"
-#include "Imgui/imgui_impl_glfw.h"
-#include "Imgui/imgui_impl_opengl3.h"
-#include "Imgui/imgui_stdlib.h"
 #include "Imgui/imgui_internal.h"
 
 /* -----------------------------------------------------

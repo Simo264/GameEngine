@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Engine/Subsystems/ResourceManager.hpp"
-#include "Engine/Shader.hpp"
+#include "Engine/Graphics/Shader.hpp"
 
 /* ------------------------------------------------
 	Resource manager class class ShadersManager:

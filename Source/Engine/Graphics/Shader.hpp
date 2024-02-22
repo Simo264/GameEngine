@@ -1,12 +1,11 @@
 #pragma once
 
-#include "Core/Core.hpp"
-#include "Engine/NonCopyable.hpp"
+#include "Core.hpp"
 
 /* -----------------------------------
       Shader program class
   ----------------------------------- */
-class Shader : public NonCopyable
+class Shader
 {
 public:
   Shader() : _shaderID{ 0 } { }

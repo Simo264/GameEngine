@@ -1,19 +1,20 @@
 #include "Engine.hpp"
 
-#include "Engine/Logger.hpp"
+#include "Logger.hpp"
 #include "Engine/Window.hpp"
 #include "Engine/Camera.hpp"
-#include "Engine/Shader.hpp"
+#include "Engine/Graphics/Shader.hpp"
 #include "Engine/Scene.hpp"
-#include "Engine/Renderer.hpp"
-#include "Engine/FrameBuffer.hpp"
-#include "Engine/Mesh/StaticMesh.hpp"
+#include "Engine/Graphics/Renderer.hpp"
+#include "Engine/Graphics/FrameBuffer.hpp"
+#include "Engine/StaticMesh.hpp"
 #include "Engine/Lighting/DirectionalLight.hpp"
 #include "Engine/Lighting/PointLight.hpp"
 
 #include "Engine/Subsystems/ShadersManager.hpp"
 #include "Engine/Subsystems/TexturesManager.hpp"
-#include "Engine/Subsystems/INIFileManager.hpp"
+
+#include "INIFileManager.hpp"
 
 #define GAMMA_CORRECTION 2.2f
 
@@ -37,6 +38,7 @@ void Engine::Initialize()
   /* Load textures from Textures directory */
   TexturesManager::Instance().Initialize();
   LoadTextures();
+  LoadIcons();
 
   /* Initialize ImGui library */
   editor.Initialize();
@@ -371,7 +373,10 @@ void Engine::LoadTextures()
   for (auto& entry : std::filesystem::recursive_directory_iterator(ROOT_PATH / "Textures"))
     if (!std::filesystem::is_directory(entry))
       TexturesManager::Instance().LoadTexture(entry);
-  
+}
+
+void Engine::LoadIcons()
+{
   for (auto& entry : std::filesystem::recursive_directory_iterator(ROOT_PATH / "Icons"))
     if (!std::filesystem::is_directory(entry))
       TexturesManager::Instance().LoadTexture(entry);

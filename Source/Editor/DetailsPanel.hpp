@@ -1,10 +1,10 @@
 #pragma once
 
-#include "Core/Core.hpp"
+#include "Core.hpp"
 
 #include "Engine/Lighting/DirectionalLight.hpp"
 #include "Engine/Lighting/PointLight.hpp"
-#include "Engine/Mesh/StaticMesh.hpp"
+#include "Engine/StaticMesh.hpp"
 
 /* ----------------------------------------
 			DetailsPanel class
@@ -16,7 +16,6 @@ public:
 		panelName{ panelName },
 		isOpen{ true }
 	{}
-	~DetailsPanel() = default;
 
 	bool isOpen;
 	String panelName;

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core/Core.hpp"
+#include "Core.hpp"
 
 enum MENU_ITEMS : int {
 	PANEL_OUTLINER = 0,
@@ -26,7 +26,6 @@ class MenuBar
 {
 public:
 	MenuBar(const Array<bool*, MENU_ITEMS_COUNT>& menuItems);
-	~MenuBar() = default;
 
 	void RenderMenuBar();
 

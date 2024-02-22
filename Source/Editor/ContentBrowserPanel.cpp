@@ -1,14 +1,10 @@
 #include "ContentBrowserPanel.hpp"
 
-#include "Engine/Texture2D.hpp"
+#include "Engine/Graphics/Texture2D.hpp"
 #include "Engine/Subsystems/TexturesManager.hpp"
-#include "Engine/Logger.hpp"
+#include "Logger.hpp"
 
 #include "Imgui/imgui.h"
-#include "Imgui/imgui_impl_glfw.h"
-#include "Imgui/imgui_impl_opengl3.h"
-#include "Imgui/imgui_stdlib.h"
-#include "Imgui/imgui_internal.h"
 
 /* -----------------------------------------------------
  *          PUBLIC METHODS

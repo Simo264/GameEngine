@@ -1,17 +1,17 @@
 #include "Editor.hpp"
-#include "Engine/FrameBuffer.hpp"
 #include "Engine/Scene.hpp"
-#include "Engine/Mesh/StaticMesh.hpp"
+#include "Engine/Graphics/FrameBuffer.hpp"
 #include "Engine/Lighting/DirectionalLight.hpp"
 #include "Engine/Lighting/PointLight.hpp"
-#include "Engine/Subsystems/INIFileManager.hpp"
-#include "Engine/FileDialog.hpp"
-#include "Engine/Logger.hpp"
+#include "Engine/StaticMesh.hpp"
+
+#include "INIFileManager.hpp"
+#include "FileDialog.hpp"
+#include "Logger.hpp"
 
 #include "Imgui/imgui.h"
 #include "Imgui/imgui_impl_glfw.h"
 #include "Imgui/imgui_impl_opengl3.h"
-#include "Imgui/imgui_stdlib.h"
 #include "Imgui/imgui_internal.h"
 
 
