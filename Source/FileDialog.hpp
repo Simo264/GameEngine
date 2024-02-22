@@ -12,7 +12,10 @@ public:
 	~FileDialog() = delete;
 
 	/* Return empty path if cancelled */
-	static Path OpenFileDialog(const char* filter);
-	static Path SaveFileDialog(const char* filter);
+	static Path OpenFileDialog(
+		int numFilters, const char* filter[], const char* filterDescription, bool multipleSelects);
+	
+	static Path SaveFileDialog(
+		int numFilters, const char* filter[], const char* filterDescription);
 };
 

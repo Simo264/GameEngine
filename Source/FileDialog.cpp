@@ -1,49 +1,37 @@
 #include "FileDialog.hpp"
+#include "tinyfiledialogs.h"
 
-#include <Windows.h>
-#include <commdlg.h>
-#define GLFW_EXPOSE_NATIVE_WIN32
-#include <GLFW/glfw3native.h>
-
-Path FileDialog::OpenFileDialog(const char* filter)
+Path FileDialog::OpenFileDialog(
+	int numFilters, const char* filter[], const char* filterDescription, bool multipleSelects)
 {
-  OPENFILENAMEA ofn = { 0 };
-  TCHAR szFile[260] = { 0 };
-  ZeroMemory(&ofn, sizeof(OPENFILENAMEA));
-  ofn.lStructSize = sizeof(OPENFILENAMEA);
-  ofn.hwndOwner = glfwGetWin32Window(glfwGetCurrentContext());
-  ofn.lpstrFile = szFile;
-  ofn.nMaxFile = sizeof(szFile);
-  ofn.lpstrFilter = filter;
-  ofn.nFilterIndex = 1;
-  ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
+	const char* filename = tinyfd_openFileDialog(
+		"Tiny open file dialog",					/* title */
+		ROOT_PATH.string().c_str(),				/* aDefaultPathAndFile */
+		numFilters,												/* aNumOfFilterPatterns */
+		filter,														/* aFilterPatterns */
+		filterDescription,								/* aSingleFilterDescription */
+		(int) multipleSelects							/* aAllowMultipleSelects */
+	);
 
-  if (GetOpenFileNameA(&ofn) == TRUE)
-  {
-    return Path(ofn.lpstrFile);
-  }
-
-  return Path();
+	if(filename)
+		return Path(filename);
+	
+	return Path();
 }
 
-Path FileDialog::SaveFileDialog(const char* filter)
+Path FileDialog::SaveFileDialog(int numFilters, const char* filter[], const char* filterDescription)
 {
-  OPENFILENAMEA ofn = { 0 };
-  TCHAR szFile[260] = { 0 };
-  ZeroMemory(&ofn, sizeof(OPENFILENAMEA));
-  ofn.lStructSize = sizeof(OPENFILENAMEA);
-  ofn.hwndOwner = glfwGetWin32Window(glfwGetCurrentContext());
-  ofn.lpstrFile = szFile;
-  ofn.nMaxFile = sizeof(szFile);
-  ofn.lpstrFilter = filter;
-  ofn.nFilterIndex = 1;
-  ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
+	const char* filename = tinyfd_saveFileDialog(
+		"Tiny save file dialog",					/* title */
+		ROOT_PATH.string().c_str(),				/* aDefaultPathAndFile */
+		numFilters,												/* aNumOfFilterPatterns */	
+		filter,														/* aFilterPatterns */
+		filterDescription									/* aSingleFilterDescription */
+	);
 
-  if (GetSaveFileNameA(&ofn) == TRUE)
-  {
-    return Path(ofn.lpstrFile);
-  }
+	if (filename)
+		return Path(filename);
 
-  return Path();
+	return Path();
 }
 

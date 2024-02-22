@@ -353,7 +353,9 @@ void Editor::OnNewScene(Scene* scene)
 void Editor::OnOpenScene(Scene* scene)
 {
   _openScene = false;
-  Path filePath = FileDialog::OpenFileDialog("Scene file(*.ini)\0*.ini\0");
+  const char* filters[1] = { "*.ini" };
+  Path filePath = FileDialog::OpenFileDialog(1, filters, "Open scene (.ini)", false);
+  
   if (!filePath.empty())
   {
     scene->ClearScene();
@@ -370,7 +372,8 @@ void Editor::OnSaveScene(Scene* scene)
 void Editor::OnSaveAsScene(Scene* scene)
 {
   _saveAsScene = false;
-  Path filePath = FileDialog::SaveFileDialog("Scene file(*.ini)\0*.ini\0");
+  const char* filters[1] = { "*.ini" };
+  Path filePath = FileDialog::SaveFileDialog(1, filters, "Save scene (.ini)");
   if (!filePath.empty())
     scene->SaveScene(filePath);
 }
