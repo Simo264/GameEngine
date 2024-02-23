@@ -15,5 +15,5 @@ public:
 	String panelName;
 	Vec2i viewportSize;
 
-	void RenderPanel(class FrameBuffer* framebuffer);
+	void RenderPanel(class FrameBuffer* framebuffer, class SceneObject* objSelected);
 };

@@ -15,45 +15,54 @@ set( GLFW_BUILD_EXAMPLES  OFF CACHE BOOL "" FORCE )
 
 
 # Add include directory path
-include_directories("${CMAKE_CURRENT_SOURCE_DIR}/Externals/Include")
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/Externals/")
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/Source/")
 
 
-# List all .cpp and .hpp files into SOURCES variabile
-# FILE(GLOB_RECURSE SOURCES 
-#   ${CMAKE_CURRENT_SOURCE_DIR}/Source/**.cpp
-#   ${CMAKE_CURRENT_SOURCE_DIR}/Source/**.hpp
-#   ${CMAKE_CURRENT_SOURCE_DIR}/Source/**.c
-#   ${CMAKE_CURRENT_SOURCE_DIR}/Source/**.h
-# )
+# List external source files
+file(GLOB_RECURSE EXTERNAL_IMGUI_SOURCES
+  ${CMAKE_CURRENT_SOURCE_DIR}/Externals/imgui/*
+)
+set(EXTERNAL_GLAD_SOURCE 
+  ${CMAKE_CURRENT_SOURCE_DIR}/Externals/Glad/gl.c 
+)
+set(EXTERNAL_TINYFD_SOURCE 
+  ${CMAKE_CURRENT_SOURCE_DIR}/Externals/tinyfiledialogs/tinyfiledialogs.c
+) 
+set(EXTERNAL_SOURCES
+  ${EXTERNAL_IMGUI_SOURCES}
+  ${EXTERNAL_GLAD_SOURCE}
+  ${EXTERNAL_TINYFD_SOURCE}
+)
+# Group them in filters
+source_group("Externals\\imgui"           FILES ${EXTERNAL_IMGUI_SOURCES})  
+source_group("Externals\\glad"            FILES ${EXTERNAL_GLAD_SOURCE})  
+source_group("Externals\\tinyfiledialogs" FILES ${EXTERNAL_TINYFD_SOURCE})  
 
-# Add source files
-# add_executable (GameEngine 
-#   ${SOURCES}
-# )
-
-file(GLOB_RECURSE SOURCES 
+# List all Engine files
+file(GLOB_RECURSE ENGINE_SOURCES 
   ${CMAKE_CURRENT_SOURCE_DIR}/Source/**.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Source/**.hpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/Source/**.c
-  ${CMAKE_CURRENT_SOURCE_DIR}/Source/**.h
 )
-foreach(_source IN ITEMS ${SOURCES})
+# Group them in filters
+foreach(_source IN ITEMS ${ENGINE_SOURCES})
   get_filename_component(_source_path "${_source}" PATH)
   string(REPLACE "${CMAKE_CURRENT_SOURCE_DIR}" "" _group_path "${_source_path}")
   string(REPLACE "/" "\\" _group_path "${_group_path}")
   source_group("${_group_path}" FILES "${_source}")
 endforeach()
 
+# Link all files into executable
 add_executable (GameEngine 
-  ${SOURCES}
+  ${ENGINE_SOURCES}
+  ${EXTERNAL_SOURCES}
 )
 
 
 # Linking libraries
-target_link_libraries(GameEngine "${CMAKE_CURRENT_SOURCE_DIR}/Externals/Libs/glfw3.lib") 
-target_link_libraries(GameEngine "${CMAKE_CURRENT_SOURCE_DIR}/Externals/Libs/spdlogd.lib")
-target_link_libraries(GameEngine "${CMAKE_CURRENT_SOURCE_DIR}/Externals/Libs/assimp.lib")
+target_link_libraries(GameEngine "${CMAKE_CURRENT_SOURCE_DIR}/Libs/glfw3.lib") 
+target_link_libraries(GameEngine "${CMAKE_CURRENT_SOURCE_DIR}/Libs/spdlogd.lib")
+target_link_libraries(GameEngine "${CMAKE_CURRENT_SOURCE_DIR}/Libs/assimp.lib")
 
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)

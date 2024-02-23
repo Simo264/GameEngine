@@ -4,7 +4,7 @@
 #include "Engine/Subsystems/TexturesManager.hpp"
 #include "Logger.hpp"
 
-#include "Imgui/imgui.h"
+#include <imgui/imgui.h>
 
 /* -----------------------------------------------------
  *          PUBLIC METHODS

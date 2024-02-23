@@ -8,42 +8,42 @@
  * -----------------------------------------------------
 */
 
-Camera::Camera(Vec2i windowSize, Vec3f position) : position{ position }
+Camera::Camera(Vec3f position, float fov)
+  : position{ position },
+    fov{ fov },
+    yaw{ -90.0f },
+    pitch{ 0.0f },
+    movementSpeed{ 7.5f },        /* [1.0f:10.0f] */
+    mouseSensitivity{ 25.0f },    /* [1.0f:100.0f] */
+    _front{ 0.0f, 1.0f, 0.0f },
+    _worldUp{ 0.0f, 1.0f, 0.0f }
 {
-  front   = Vec3f(0.0f, 0.0f, -1.0f);
-  worldUp = Vec3f(0.0f, 1.0f, 0.0f);
-  yaw     = -90.0f;
-  pitch   = 0.0f;
-
-  movementSpeed    = 7.5f;  /* [1.0f:10.0f] */
-  mouseSensitivity = 25.0f; /* [1.0f:100.0f] */
-  fov              = 45.0f;
-
+  Window window(glfwGetCurrentContext());
+  Vec2i windowSize = window.GetWindowSize();
   _lastX = ((float)windowSize.x / 2.0f);
   _lastY = ((float)windowSize.y / 2.0f);
 
-  _firstMouse     = false;
-  _constrainPitch = true;
-  
   UpdateCameraVectors();
+
+  _viewMatrix = glm::lookAt(position, position + _front, _up);
 }
 
-Mat4f Camera::GetViewMatrix() const
+void Camera::ProcessInput(const double deltaTime)
 {
-  return glm::lookAt(position, position + front, up); 
-}
+  Window window(glfwGetCurrentContext());
 
-void Camera::ProcessInput(const Window* window, const double deltaTime)
-{
   Vec2d mousePos;
-  window->GetCursorPosition(mousePos);
+  window.GetCursorPosition(mousePos);
 
-  FreeCameraWalk(window, deltaTime);
+  FreeCameraWalk(&window, deltaTime);
   
-  if (window->GetMouseKey(GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
+  if (window.GetMouseKey(GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
   {
     FreeCameraRotation(mousePos, deltaTime);
   }
+
+  UpdateCameraVectors();
+  _viewMatrix = glm::lookAt(position, position + _front, _up);
 }
 
 
@@ -54,14 +54,14 @@ void Camera::ProcessInput(const Window* window, const double deltaTime)
 
 void Camera::UpdateCameraVectors()
 {
-  Vec3f calcFront;
-  calcFront.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-  calcFront.y = sin(glm::radians(pitch));
-  calcFront.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+  Vec3f calc_front;
+  calc_front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+  calc_front.y = sin(glm::radians(pitch));
+  calc_front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
   
-  front = glm::normalize(calcFront);
-  right = glm::normalize(glm::cross(front, worldUp));  
-  up    = glm::normalize(glm::cross(right, front));
+  _front = glm::normalize(calc_front);
+  _right = glm::normalize(glm::cross(_front, _worldUp));  
+  _up = glm::normalize(glm::cross(_right, _front));
 }
 
 void Camera::FreeCameraWalk(const Window* window, const double deltaTime)
@@ -71,41 +71,42 @@ void Camera::FreeCameraWalk(const Window* window, const double deltaTime)
   /* W-S */
   if (window->GetKey(GLFW_KEY_W) == GLFW_PRESS)
   {
-    position += front * velocity;
+    position += _front * velocity;
   }
   else if (window->GetKey(GLFW_KEY_S) == GLFW_PRESS)
   {
-    position -= front * velocity;
+    position -= _front * velocity;
   }
 
   /* A-D */
   if (window->GetKey(GLFW_KEY_A) == GLFW_PRESS)
   {
-    position -= right * velocity;
+    position -= _right * velocity;
   }
   else if (window->GetKey(GLFW_KEY_D) == GLFW_PRESS)
   {
-    position += right * velocity;
+    position += _right * velocity;
   }
 
   /* SPACE-LCTRL */
   if (window->GetKey(GLFW_KEY_SPACE) == GLFW_PRESS)
   {
-    position += up * velocity;
+    position += _up * velocity;
   }
   else if (window->GetKey(GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
   {
-    position -= up * velocity;
+    position -= _up * velocity;
   }
 }
 
 void Camera::FreeCameraRotation(Vec2d& mousePos, const double deltaTime)
 {
-  if (_firstMouse)
+  static bool firstMouse = true;
+  if (firstMouse)
   {
     _lastX = mousePos.x;
     _lastY = mousePos.y;
-    _firstMouse = false;
+    firstMouse = false;
   }
 
   const float velocity = mouseSensitivity * deltaTime * 10;
@@ -126,13 +127,12 @@ void Camera::FreeCameraRotation(Vec2d& mousePos, const double deltaTime)
   _lastY = mousePos.y;
 
   /* make sure that when pitch is out of bounds, screen doesn't get flipped */
-  if (_constrainPitch)
+  static bool constrainPitch = true;
+  if (constrainPitch)
   {
     if (pitch > 89.0f)
       pitch = 89.0f;
     if (pitch < -89.0f)
       pitch = -89.0f;
   }
-
-  UpdateCameraVectors();
 }

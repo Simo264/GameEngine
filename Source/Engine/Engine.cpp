@@ -18,6 +18,10 @@
 
 #define GAMMA_CORRECTION 2.2f
 
+Mat4f cameraProjectionMatrix;
+Mat4f cameraViewMatrix;
+
+
 /* -----------------------------------------------------
  *          PUBLIC METHODS
  * -----------------------------------------------------
@@ -54,20 +58,19 @@ void Engine::Run()
   auto shadowMapDepthShader = instanceSM.GetShader("ShadowMapDepthShader");
   auto shadowMapShader      = instanceSM.GetShader("ShadowMapShader");
 
-  /* Window object */
+  /* Initialize framebuffer object */
   Window window(glfwGetCurrentContext());
 
-  /* Initialize framebuffer object */
   FrameBuffer framebuffer;
   framebuffer.InitFrameBuffer(window.GetFramebufferSize());
   glViewport(0, 0, framebuffer.GetSize().x, framebuffer.GetSize().y);
 
   /* Camera object */
-  Camera camera(window.GetWindowSize(), Vec3f(0.0f, 1.0f, 10.0f));
+  Camera camera(Vec3f(0.0f, 1.0f, 10.0f), 45.0f);
   
   /* Create scene */
   Scene scene;
-  
+  scene.LoadScene(ROOT_PATH / "scene.ini");
 
 #if 0
   /* Shadow mapping */
@@ -127,7 +130,7 @@ void Engine::Run()
   /* Loop  */
   while (window.Loop())
   {
-    editor.NewFrame();
+    editor.Begin();
 
     /* Per-frame time logic */
     const double now = glfwGetTime();
@@ -137,12 +140,12 @@ void Engine::Run()
     /* Input */
     glfwPollEvents();
     if (editor.viewportPanel->isFocused)
-      camera.ProcessInput(&window, deltaTime);
+      camera.ProcessInput(deltaTime);
     
     const Vec2i framebufferSize = framebuffer.GetSize();
     const float aspectRatio = ((float)framebufferSize.x / (float)framebufferSize.y);
-    const Mat4f projection = glm::perspective(glm::radians(camera.fov), aspectRatio, perspectiveDistance.x, perspectiveDistance.y);
-    const Mat4f view = camera.GetViewMatrix();
+    cameraProjectionMatrix = glm::perspective(glm::radians(camera.fov), aspectRatio, 0.1f, 100.0f);
+    cameraViewMatrix = camera.GetViewMatrix();
     
     /* Render: bind frame buffer */
     framebuffer.BindMSAAFramebuffer();
@@ -151,17 +154,12 @@ void Engine::Run()
     glEnable(GL_DEPTH_TEST);
 
     sceneShader->Use();
-    sceneShader->SetMat4f("UProjection", projection);
-    sceneShader->SetMat4f("UView", view);
+    sceneShader->SetMat4f("UProjection", cameraProjectionMatrix);
+    sceneShader->SetMat4f("UView", cameraViewMatrix);
     scene.DrawScene(sceneShader);
     
     framebuffer.BlitFrameBuffer();
     framebuffer.UnbindFrameBuffer();
-
-    //cube.transform.degrees.x += 0.05f;
-    //if (cube.transform.degrees.x >= 360.0f)
-    //  cube.transform.degrees.x = 0;
-
 
 #if 0
     /* Fill the depth map framebuffer (from light's perspective) */
@@ -226,7 +224,8 @@ void Engine::Run()
 #endif
 
     /* Render editor */
-    editor.RenderEditor(&scene, &framebuffer);
+    editor.Render(&scene, &framebuffer);
+    editor.End();
     window.SwapWindowBuffers();
     lastUpdateTime = now;
   }

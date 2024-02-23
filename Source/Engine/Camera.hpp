@@ -8,18 +8,15 @@
 class Camera
 {
 public:
-  Camera(Vec2i windowSize, Vec3f position = Vec3f(0.0f, 0.0f, 0.0f));
+  Camera(Vec3f position, float fov);
 
-  Mat4f GetViewMatrix() const;
+  const Mat4f& GetViewMatrix() const{ return _viewMatrix; }
 
-  void ProcessInput(const class Window* window, const double deltaTime);
+  void ProcessInput(const double deltaTime);
 
   /* Camera Attributes */
   Vec3f position;
-  Vec3f front;
-  Vec3f up;
-  Vec3f right;
-  Vec3f worldUp;
+  float fov;
 
   /* Euler Angles */
   float yaw;
@@ -28,7 +25,6 @@ public:
   /* Camera options */
   float movementSpeed;
   float mouseSensitivity;
-  float fov;
 
 private:
   /* Calculates the front vector from the Camera's (updated) Euler Angles */
@@ -37,8 +33,14 @@ private:
   void FreeCameraWalk(const class Window* window, const double deltaTime);
   void FreeCameraRotation(Vec2d& mousePos, const double deltaTime);
   
+  Mat4f _viewMatrix;
+
+  /* Camera vectors */
+  Vec3f _front;
+  Vec3f _up;
+  Vec3f _right;
+  Vec3f _worldUp;
+
   float _lastX;
   float _lastY;
-  bool _firstMouse;
-  bool _constrainPitch;
 };

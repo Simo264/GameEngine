@@ -1,6 +1,6 @@
 #include "InspectorPanel.hpp"
 
-#include "Imgui/imgui.h"
+#include <imgui/imgui.h>
 
 InspectorPanel::InspectorPanel(const char* panelName)
 {

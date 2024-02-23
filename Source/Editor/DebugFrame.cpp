@@ -1,7 +1,7 @@
 #include "DebugFrame.hpp"
 #include "Engine/Graphics/Renderer.hpp"
 
-#include "Imgui/imgui.h"
+#include <imgui/imgui.h>
 
 DebugFrame::DebugFrame(const char* frameName)
 {

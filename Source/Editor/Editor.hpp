@@ -33,8 +33,9 @@ public:
 	void Initialize();
 	void ShutDown();
 
-	void NewFrame();
-	void RenderEditor(class Scene* scene, class FrameBuffer* framebuffer);
+	void Begin();
+	void End();
+	void Render(class Scene* scene, class FrameBuffer* framebuffer);
 
 	UniquePointer<ContentBrowserPanel> contentBrowserPanel;
 	UniquePointer<ViewportPanel> viewportPanel;
@@ -56,7 +57,7 @@ private:
 	bool _exit;
 
 	void Styling();
-	void Dockspace() const;
+	void Dockspace();
 
 	void OnNewScene(class Scene* scene);
 	void OnOpenScene(class Scene* scene);

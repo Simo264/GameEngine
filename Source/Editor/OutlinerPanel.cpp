@@ -6,8 +6,8 @@
 #include "Engine/Subsystems/ShadersManager.hpp"
 #include "Logger.hpp"
 
-#include "Imgui/imgui.h"
-#include "Imgui/imgui_internal.h"
+#include <imgui/imgui.h>
+#include <imgui/imgui_internal.h>
 
 /* -----------------------------------------------------
  *          PUBLIC METHODS

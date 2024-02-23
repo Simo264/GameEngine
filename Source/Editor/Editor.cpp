@@ -9,10 +9,11 @@
 #include "FileDialog.hpp"
 #include "Logger.hpp"
 
-#include "Imgui/imgui.h"
-#include "Imgui/imgui_impl_glfw.h"
-#include "Imgui/imgui_impl_opengl3.h"
-#include "Imgui/imgui_internal.h"
+#include <imgui/imgui.h>
+#include <imgui/imgui_impl_glfw.h>
+#include <imgui/imgui_impl_opengl3.h>
+#include <imgui/imgui_internal.h>
+#include <imgui/ImGuizmo.h>
 
 
 /* -----------------------------------------------------
@@ -78,68 +79,33 @@ void Editor::ShutDown()
   ImGui::DestroyContext();
 }
 
-void Editor::NewFrame()
+void Editor::Begin()
 {
   /* Start the Dear ImGui frame */
   ImGui_ImplOpenGL3_NewFrame();
   ImGui_ImplGlfw_NewFrame();
-  ImGui::NewFrame();
+  ImGui::Begin();
+  ImGuizmo::BeginFrame();
 
   /* Set Dockspace */
-  //Dockspace();
-  
-  ImGuiWindowFlags windowFlags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoBackground;
-  windowFlags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize;
-  windowFlags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoMove;
-
-  ImGuiDockNodeFlags dockspaceFlags = ImGuiDockNodeFlags_PassthruCentralNode;
-
-  const ImGuiViewport* viewport = ImGui::GetMainViewport();
-  ImGui::SetNextWindowPos(viewport->WorkPos);
-  ImGui::SetNextWindowSize(viewport->WorkSize);
-  ImGui::SetNextWindowViewport(viewport->ID);
-  ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f); 
-  ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f); 
-  ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-  
-  ImGui::Begin("DockSpace", nullptr, windowFlags);
-  {
-    ImGui::PopStyleVar(3);
-    ImGuiID dockspaceID = ImGui::GetID("DockSpace");
-    ImGui::DockSpace(dockspaceID, ImVec2(0.0f, 0.0f));
-
-    if (_firstLoop)
-    {
-      _firstLoop = false;
-
-      ImGui::DockBuilderRemoveNode(dockspaceID);   /* clear any previous layout */
-      ImGui::DockBuilderAddNode(dockspaceID, dockspaceFlags | ImGuiDockNodeFlags_DockSpace);
-      ImGui::DockBuilderSetNodeSize(dockspaceID, viewport->Size);
-
-      auto dockOutliner   = ImGui::DockBuilderSplitNode(dockspaceID, ImGuiDir_Left,  0.20f, nullptr, &dockspaceID);
-      auto dockInspector  = ImGui::DockBuilderSplitNode(dockspaceID, ImGuiDir_Right, 0.25f, nullptr, &dockspaceID);
-      auto dockBrowser    = ImGui::DockBuilderSplitNode(dockspaceID, ImGuiDir_Down,  0.40f, nullptr, &dockspaceID);
-      auto dockViewport   = ImGui::DockBuilderGetCentralNode(dockspaceID)->ID;
-      auto dockDemo       = ImGui::DockBuilderSplitNode(dockInspector, ImGuiDir_Down, 0.60f, nullptr, &dockInspector);
-      auto dockDetails    = ImGui::DockBuilderSplitNode(dockOutliner, ImGuiDir_Down, 0.60f, nullptr, &dockOutliner);
-
-      ImGui::DockBuilderDockWindow(outlinerPanel->panelName.c_str(), dockOutliner);
-      ImGui::DockBuilderDockWindow(inspectorPanel->panelName.c_str(), dockInspector);
-      ImGui::DockBuilderDockWindow(contentBrowserPanel->panelName.c_str(), dockBrowser);
-      ImGui::DockBuilderDockWindow(viewportPanel->panelName.c_str(), dockViewport);
-      ImGui::DockBuilderDockWindow(detailsPanel->panelName.c_str(), dockDetails);
-      ImGui::DockBuilderDockWindow("Dear ImGui Demo", dockDemo);
-      ImGui::DockBuilderFinish(dockspaceID);
-    }
-  }
-
-  /* Menu bar here */
-  menuBar->RenderMenuBar();
-
-  ImGui::End();
+  Dockspace();
 }
 
-void Editor::RenderEditor(Scene* scene, FrameBuffer* framebuffer)
+void Editor::End()
+{
+  ImGui::RenderPanel();
+  ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+  ImGuiIO& io = ImGui::GetIO();
+  if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+  {
+    GLFWwindow* backup_current_context = glfwGetCurrentContext();
+    ImGui::UpdatePlatformWindows();
+    ImGui::RenderPlatformWindowsDefault();
+    glfwMakeContextCurrent(backup_current_context);
+  }
+}
+
+void Editor::Render(Scene* scene, FrameBuffer* framebuffer)
 {
   if (_demoOpen) 
     ImGui::ShowDemoWindow(&_demoOpen);
@@ -152,18 +118,16 @@ void Editor::RenderEditor(Scene* scene, FrameBuffer* framebuffer)
 
   if (contentBrowserPanel->isOpen)
     contentBrowserPanel->RenderPanel();
-
-  if(viewportPanel->isOpen)
-    viewportPanel->RenderPanel(framebuffer);
   
   if(outlinerPanel->isOpen)
     outlinerPanel->RenderPanel(scene);
 
+  auto& dLight = outlinerPanel->GetItemSelected<DirectionalLight>();
+  auto& pLight = outlinerPanel->GetItemSelected<PointLight>();
+  auto& sMesh  = outlinerPanel->GetItemSelected<StaticMesh>();
+
   if (outlinerPanel->IsItemSelected())
   {
-    auto& dLight = outlinerPanel->GetItemSelected<DirectionalLight>();
-    auto& pLight = outlinerPanel->GetItemSelected<PointLight>();
-    auto& sMesh = outlinerPanel->GetItemSelected<StaticMesh>();
     if (dLight)
       detailsPanel->RenderPanel(dLight, scene);
     else if (pLight)
@@ -171,6 +135,9 @@ void Editor::RenderEditor(Scene* scene, FrameBuffer* framebuffer)
     else if (sMesh)
       detailsPanel->RenderPanel(sMesh, scene);
   }
+
+  if (viewportPanel->isOpen)
+    viewportPanel->RenderPanel(framebuffer, sMesh.get());
   
   if(inspectorPanel->isOpen)
     inspectorPanel->RenderPanel();
@@ -188,17 +155,6 @@ void Editor::RenderEditor(Scene* scene, FrameBuffer* framebuffer)
   {
     CONSOLE_INFO("Exit...");
     _exit = false;
-  }
-
-  ImGui::RenderPanel();
-  ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-  ImGuiIO& io = ImGui::GetIO();
-  if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-  {
-    GLFWwindow* backup_current_context = glfwGetCurrentContext();
-    ImGui::UpdatePlatformWindows();
-    ImGui::RenderPlatformWindowsDefault();
-    glfwMakeContextCurrent(backup_current_context);
   }
 }
 
@@ -296,51 +252,56 @@ void Editor::Styling()
   style.TabRounding = 4;
 }
 
-void Editor::Dockspace() const
+void Editor::Dockspace()
 {
-  static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
+  ImGuiWindowFlags windowFlags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoBackground;
+  windowFlags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize;
+  windowFlags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoMove;
 
-  /* We are using the ImGuiWindowFlags_NoDocking flag to make the parent window not dockable into,
-   because it would be confusing to have two docking targets within each others. */
-  const ImGuiViewport* imViewport = ImGui::GetMainViewport();
-  ImGui::SetNextWindowPos(imViewport->WorkPos);
-  ImGui::SetNextWindowSize(imViewport->WorkSize);
-  ImGui::SetNextWindowViewport(imViewport->ID);
+  ImGuiDockNodeFlags dockspaceFlags = ImGuiDockNodeFlags_PassthruCentralNode;
+
+  const ImGuiViewport* viewport = ImGui::GetMainViewport();
+  ImGui::SetNextWindowPos(viewport->WorkPos);
+  ImGui::SetNextWindowSize(viewport->WorkSize);
+  ImGui::SetNextWindowViewport(viewport->ID);
   ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
   ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-  ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
-  window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse;
-  window_flags |= ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
-  window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
-
-
-  /* When using ImGuiDockNodeFlags_PassthruCentralNode, DockSpace() will render our background
-  and handle the pass-thru hole, so we ask Begin() to not render a background.*/
-  if (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode)
-    window_flags |= ImGuiWindowFlags_NoBackground;
-
-  /* Important: note that we proceed even if Begin() returns false (aka window is collapsed).
-  This is because we want to keep our DockSpace() active. If a DockSpace() is inactive,
-  all active windows docked into it will lose their parent and become undocked.
-  We cannot preserve the docking relationship between an active window and an inactive docking, otherwise
-  any change of dockspace/settings would lead to windows being stuck in limbo and never being visible.*/
   ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-  
-  ImGui::Begin("DockSpace Demo", nullptr, window_flags);
-  
-  ImGui::PopStyleVar();
-  ImGui::PopStyleVar(2);
 
-  /* Submit the DockSpace */
-  ImGuiIO& io = ImGui::GetIO();
-  if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
+  ImGui::Begin("DockSpace", nullptr, windowFlags);
   {
-    ImGuiID dockspace_id = ImGui::GetID("DockSpace");
-    ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
+    ImGui::PopStyleVar(3);
+    ImGuiID dockspaceID = ImGui::GetID("DockSpace");
+    ImGui::DockSpace(dockspaceID, ImVec2(0.0f, 0.0f));
+
+    if (_firstLoop)
+    {
+      _firstLoop = false;
+
+      ImGui::DockBuilderRemoveNode(dockspaceID);   /* clear any previous layout */
+      ImGui::DockBuilderAddNode(dockspaceID, dockspaceFlags | ImGuiDockNodeFlags_DockSpace);
+      ImGui::DockBuilderSetNodeSize(dockspaceID, viewport->Size);
+
+      auto dockOutliner = ImGui::DockBuilderSplitNode(dockspaceID, ImGuiDir_Left, 0.20f, nullptr, &dockspaceID);
+      auto dockInspector = ImGui::DockBuilderSplitNode(dockspaceID, ImGuiDir_Right, 0.25f, nullptr, &dockspaceID);
+      auto dockBrowser = ImGui::DockBuilderSplitNode(dockspaceID, ImGuiDir_Down, 0.40f, nullptr, &dockspaceID);
+      auto dockViewport = ImGui::DockBuilderGetCentralNode(dockspaceID)->ID;
+      auto dockDemo = ImGui::DockBuilderSplitNode(dockInspector, ImGuiDir_Down, 0.60f, nullptr, &dockInspector);
+      auto dockDetails = ImGui::DockBuilderSplitNode(dockOutliner, ImGuiDir_Down, 0.60f, nullptr, &dockOutliner);
+      
+      ImGui::DockBuilderDockWindow(outlinerPanel->panelName.c_str(), dockOutliner); /* Outliner panel */
+      ImGui::DockBuilderDockWindow(inspectorPanel->panelName.c_str(), dockInspector); /* Inspector panel */
+      ImGui::DockBuilderDockWindow(contentBrowserPanel->panelName.c_str(), dockBrowser); /* Browser panel */
+      ImGui::DockBuilderDockWindow(viewportPanel->panelName.c_str(), dockViewport); /* Viewport panel */
+      ImGui::DockBuilderDockWindow(detailsPanel->panelName.c_str(), dockDetails); /* Details panel */
+      ImGui::DockBuilderDockWindow("Dear ImGui Demo", dockDemo); /* Demo panel*/
+      ImGui::DockBuilderFinish(dockspaceID);
+    }
   }
 
+  /* Menu bar here */
   menuBar->RenderMenuBar();
-  
+
   ImGui::End();
 }
 

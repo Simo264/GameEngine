@@ -1,6 +1,6 @@
 #include "MenuBar.hpp"
 
-#include "Imgui/imgui.h"
+#include <imgui/imgui.h>
 
 MenuBar::MenuBar(const Array<bool*, MENU_ITEMS_COUNT>& menuItems)
 {

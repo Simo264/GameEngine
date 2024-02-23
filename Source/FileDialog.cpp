@@ -1,5 +1,5 @@
 #include "FileDialog.hpp"
-#include "tinyfiledialogs.h"
+#include <tinyfiledialogs/tinyfiledialogs.h>
 
 Path FileDialog::OpenFileDialog(
 	int numFilters, const char* filter[], const char* filterDescription, bool multipleSelects)
