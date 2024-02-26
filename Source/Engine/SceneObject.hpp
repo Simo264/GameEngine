@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core.hpp"
+#include "Core/Core.hpp"
 
 /* ------------------------------------------------------------------
 	SceneObject class represents a specific object placed in world,

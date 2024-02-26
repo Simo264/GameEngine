@@ -1,6 +1,7 @@
 #pragma once
 
-#include "Core.hpp"
+#include "Core/Core.hpp"
+#include "Core/Math/Math.hpp"
 
 /* ----------------------------------------
 			Viewport class 
@@ -15,5 +16,5 @@ public:
 	String panelName;
 	Vec2i viewportSize;
 
-	void RenderPanel(class FrameBuffer* framebuffer, class SceneObject* objSelected);
+	void RenderPanel(class FrameBuffer* framebuffer);
 };

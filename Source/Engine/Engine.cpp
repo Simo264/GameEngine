@@ -1,6 +1,6 @@
 #include "Engine.hpp"
 
-#include "Logger.hpp"
+#include "Core/Log/Logger.hpp"
 #include "Engine/Window.hpp"
 #include "Engine/Camera.hpp"
 #include "Engine/Graphics/Shader.hpp"
@@ -14,7 +14,7 @@
 #include "Engine/Subsystems/ShadersManager.hpp"
 #include "Engine/Subsystems/TexturesManager.hpp"
 
-#include "INIFileManager.hpp"
+#include "Core/FileParser/INIFileParser.hpp"
 
 #define GAMMA_CORRECTION 2.2f
 
@@ -262,7 +262,7 @@ void Engine::ShutDown()
 
 void Engine::InitOpenGL()
 {
-  INIFileManager conf(ROOT_PATH / CONFIG_FILENAME);
+  INIFileParser conf(ROOT_PATH / CONFIG_FILENAME);
   conf.ReadData();
 
   String title = conf.GetValue("window", "title");
@@ -270,13 +270,13 @@ void Engine::InitOpenGL()
   String tmp;
   tmp.reserve(32);
   tmp = conf.GetValue("window", "resolution");
-  Vec2i resolution = INIFileManager::StringToVec2<Vec2i>(tmp, 'x');
+  Vec2i resolution = INIFileParser::StringToVec2<Vec2i>(tmp, 'x');
   tmp = conf.GetValue("window", "aspectratio");
-  Vec2i aspectratio = INIFileManager::StringToVec2<Vec2i>(tmp, ':');
+  Vec2i aspectratio = INIFileParser::StringToVec2<Vec2i>(tmp, ':');
   tmp = conf.GetValue("window", "position");
-  Vec2i position = INIFileManager::StringToVec2<Vec2i>(tmp, ',');
+  Vec2i position = INIFileParser::StringToVec2<Vec2i>(tmp, ',');
   tmp = conf.GetValue("window", "vsync");
-  bool vsync = INIFileManager::StringToBool(tmp);
+  bool vsync = INIFileParser::StringToBool(tmp);
 
   glfwInit();
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);  /* Load OpenGL 4.6 */
@@ -321,32 +321,35 @@ void Engine::InitOpenGL()
 
 void Engine::LoadShaders()
 {
+  Path shadersDir = "Resources/Shaders";
+  shadersDir = shadersDir.lexically_normal();
+  const Path shadersDirPath = ROOT_PATH / shadersDir;
+  
   auto& instanceSM = ShadersManager::Instance();
-  const Path shadersDir = ROOT_PATH / "Shaders";
   auto testingShader = instanceSM.LoadShaderProgram(
     "TestingShader",
-    shadersDir / "Testing.vert",
-    shadersDir / "Testing.frag");
+    shadersDirPath / "Testing.vert",
+    shadersDirPath / "Testing.frag");
   auto instancingShader = instanceSM.LoadShaderProgram(
     "InstancingShader",
-    shadersDir / "Instancing.vert",
-    shadersDir / "Scene.frag");
+    shadersDirPath / "Instancing.vert",
+    shadersDirPath / "Scene.frag");
   auto sceneShader = instanceSM.LoadShaderProgram(
     "SceneShader",
-    shadersDir / "Scene.vert",
-    shadersDir / "Scene.frag");
+    shadersDirPath / "Scene.vert",
+    shadersDirPath / "Scene.frag");
   auto framebufferShader = instanceSM.LoadShaderProgram(
     "FramebufferShader",
-    shadersDir / "Framebuffer.vert",
-    shadersDir / "Framebuffer.frag");
+    shadersDirPath / "Framebuffer.vert",
+    shadersDirPath / "Framebuffer.frag");
   auto shadowMapDepthShader = instanceSM.LoadShaderProgram(
     "ShadowMapDepthShader",
-    shadersDir / "ShadowMapDepth.vert",
-    shadersDir / "ShadowMapDepth.frag");
+    shadersDirPath / "ShadowMapDepth.vert",
+    shadersDirPath / "ShadowMapDepth.frag");
   auto shadowMapShader = instanceSM.LoadShaderProgram(
     "ShadowMapShader",
-    shadersDir / "ShadowMap.vert",
-    shadersDir / "ShadowMap.frag");
+    shadersDirPath / "ShadowMap.vert",
+    shadersDirPath / "ShadowMap.frag");
 
   framebufferShader->Use();
   framebufferShader->SetInt("UScreenTexture", 0);
@@ -369,14 +372,28 @@ void Engine::LoadShaders()
 
 void Engine::LoadTextures()
 {
-  for (auto& entry : std::filesystem::recursive_directory_iterator(ROOT_PATH / "Textures"))
+  Path texturesDir = "Resources/Textures";
+  texturesDir = texturesDir.lexically_normal();
+
+  for (auto& entry : std::filesystem::recursive_directory_iterator(ROOT_PATH / texturesDir))
+  {
     if (!std::filesystem::is_directory(entry))
+    {
       TexturesManager::Instance().LoadTexture(entry);
+    }
+  }
 }
 
 void Engine::LoadIcons()
 {
-  for (auto& entry : std::filesystem::recursive_directory_iterator(ROOT_PATH / "Icons"))
+  Path inconsDir = "Resources/Icons";
+  inconsDir = inconsDir.lexically_normal();
+
+  for (auto& entry : std::filesystem::recursive_directory_iterator(ROOT_PATH / inconsDir))
+  {
     if (!std::filesystem::is_directory(entry))
+    {
       TexturesManager::Instance().LoadTexture(entry);
+    }
+  }
 }

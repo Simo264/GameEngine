@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Core.hpp"
-#include "INIFileManager.hpp"
+#include "Core/Core.hpp"
+#include "Core/FileParser/INIFileParser.hpp"
 
 /* ----------------------------------------
 			SettingsFrame class
@@ -28,7 +28,7 @@ private:
 	int _aspectIndex;
 	int _resolutionIndex;
 
-	UniquePointer<INIFileManager> _conf;
+	UniquePointer<INIFileParser> _conf;
 	struct WindowArgs* _windowArgs;
 
 	void OnSaveSettings();

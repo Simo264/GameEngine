@@ -3,8 +3,8 @@
 #include "Engine/Graphics/Texture2D.hpp"
 #include "Engine/Subsystems/TexturesManager.hpp"
 
-#include "INIFileManager.hpp"
-#include "Logger.hpp"
+#include "Core/FileParser/INIFileParser.hpp"
+#include "Core/Log/Logger.hpp"
 
 /* -----------------------------------------------------
  *          PUBLIC METHODS
@@ -26,7 +26,7 @@ void Scene::ClearScene()
 
 void Scene::LoadScene(Path filepath)
 {
-	INIFileManager conf(filepath);
+	INIFileParser conf(filepath);
 	conf.ReadData();
 
 	for (auto const& it : conf.GetData())
@@ -38,11 +38,11 @@ void Scene::LoadScene(Path filepath)
 		{
 			SharedPointer<DirectionalLight> dLight = std::make_shared<DirectionalLight>("UDirLight");
 			dLight->tagName = collection.get("tag");
-			dLight->color = INIFileManager::StringToVec3<Vec3i>(collection.get("color"));
+			dLight->color = INIFileParser::StringToVec3<Vec3i>(collection.get("color"));
 			dLight->ambient = std::stof(collection.get("ambient"));
 			dLight->diffuse = std::stof(collection.get("diffuse"));
 			dLight->specular = std::stof(collection.get("specular"));
-			dLight->direction = INIFileManager::StringToVec3<Vec3f>(collection.get("direction"));
+			dLight->direction = INIFileParser::StringToVec3<Vec3f>(collection.get("direction"));
 			AddSceneObject(dLight);
 		}
 		else if (section.find("point_light") != std::string::npos)
@@ -52,11 +52,11 @@ void Scene::LoadScene(Path filepath)
 
 			SharedPointer<PointLight> pLight = std::make_shared<PointLight>(uname);
 			pLight->tagName = collection.get("tag");
-			pLight->color = INIFileManager::StringToVec3<Vec3i>(collection.get("color"));
+			pLight->color = INIFileParser::StringToVec3<Vec3i>(collection.get("color"));
 			pLight->ambient = std::stof(collection.get("ambient"));
 			pLight->diffuse = std::stof(collection.get("diffuse"));
 			pLight->specular = std::stof(collection.get("specular"));
-			pLight->position = INIFileManager::StringToVec3<Vec3f>(collection.get("position"));
+			pLight->position = INIFileParser::StringToVec3<Vec3f>(collection.get("position"));
 			AddSceneObject(pLight);
 		}
 		else if (section.find("static_mesh") != std::string::npos)
@@ -64,9 +64,9 @@ void Scene::LoadScene(Path filepath)
 			Path modelPath = collection.get("model-path");
 			SharedPointer<StaticMesh> sMesh = std::make_shared<StaticMesh>(modelPath);
 			sMesh->tagName = collection.get("tag");
-			sMesh->transform.position = INIFileManager::StringToVec3<Vec3f>(collection.get("position"));
-			sMesh->transform.scale = INIFileManager::StringToVec3<Vec3f>(collection.get("scale"));
-			sMesh->transform.degrees = INIFileManager::StringToVec3<Vec3f>(collection.get("degrees"));
+			sMesh->transform.position = INIFileParser::StringToVec3<Vec3f>(collection.get("position"));
+			sMesh->transform.scale = INIFileParser::StringToVec3<Vec3f>(collection.get("scale"));
+			sMesh->transform.degrees = INIFileParser::StringToVec3<Vec3f>(collection.get("degrees"));
 
 			if (collection.has("texture-diffuse"))
 			{
@@ -77,52 +77,6 @@ void Scene::LoadScene(Path filepath)
 			AddSceneObject(sMesh);
 		}
 	}
-
-
-#if 0
-	IFStream file(filepath.string());
-	if (!file.is_open())
-	{
-		CONSOLE_WARN("Error on opening file '{}'", filepath.string());
-		return;
-	}
-
-	String line;
-	char attrName[64]{};
-	char attrVal[64]{};
-	while (std::getline(file, line))
-	{
-		/* Ignore blank line */
-		if (line.empty())
-			continue;
-		
-		/* Ignore comments */
-		if (line[0] == '#')
-			continue;
-
-		/* Read type of object */
-		ParseNameValue(line, attrName, attrVal);
-		if (std::strcmp(attrVal, "DirectionalLight") == 0)
-		{
-			SharedPointer<DirectionalLight> dLight = ParseDirectionalLight(file, line, attrName, attrVal);
-			this->AddSceneObject(dLight);
-		}
-		else if (std::strcmp(attrVal, "PointLight") == 0)
-		{
-			SharedPointer<PointLight> pLight = ParsePointLight(file, line, attrName, attrVal);
-			this->AddSceneObject(pLight);
-		}
-		else if (std::strcmp(attrVal, "SpotLight") == 0)
-		{
-
-		}
-		else if (std::strcmp(attrVal, "StaticMesh") == 0)
-		{
-			SharedPointer<StaticMesh> sMesh = ParseStaticMesh(file, line, attrName, attrVal);
-			this->AddSceneObject(sMesh);
-		}
-	}
-#endif
 }
 
 void Scene::SaveScene(Path outfile)
@@ -133,29 +87,29 @@ void Scene::SaveScene(Path outfile)
 		return;
 	}
 
-	INIFileManager conf(outfile);
+	INIFileParser conf(outfile);
 	
 	char section[32]{};
 	if (HasDirLight())
 	{
 		sprintf_s(section, "directional_light_%d", sceneDLight->GetID());
 		conf.Update(section, "tag", sceneDLight->tagName.c_str());
-		conf.Update(section, "color", INIFileManager::Vec3ToString<Vec3i>(sceneDLight->color).c_str());
+		conf.Update(section, "color", INIFileParser::Vec3ToString<Vec3i>(sceneDLight->color).c_str());
 		conf.Update(section, "ambient", std::to_string(sceneDLight->ambient).c_str());
 		conf.Update(section, "diffuse", std::to_string(sceneDLight->diffuse).c_str());
 		conf.Update(section, "specular", std::to_string(sceneDLight->specular).c_str());
-		conf.Update(section, "direction", INIFileManager::Vec3ToString<Vec3f>(sceneDLight->direction).c_str());
+		conf.Update(section, "direction", INIFileParser::Vec3ToString<Vec3f>(sceneDLight->direction).c_str());
 	}
 
 	for (const auto& pLight : scenePLights)
 	{
 		sprintf_s(section, "point_light_%d", pLight->GetID());
 		conf.Update(section, "tag", pLight->tagName.c_str());
-		conf.Update(section, "color", INIFileManager::Vec3ToString<Vec3i>(pLight->color).c_str());
+		conf.Update(section, "color", INIFileParser::Vec3ToString<Vec3i>(pLight->color).c_str());
 		conf.Update(section, "ambient", std::to_string(pLight->ambient).c_str());
 		conf.Update(section, "diffuse", std::to_string(pLight->diffuse).c_str());
 		conf.Update(section, "specular", std::to_string(pLight->specular).c_str());
-		conf.Update(section, "position", INIFileManager::Vec3ToString<Vec3f>(pLight->position).c_str());
+		conf.Update(section, "position", INIFileParser::Vec3ToString<Vec3f>(pLight->position).c_str());
 	}
 	
 	for (const auto& sMesh : sceneSMeshes)
@@ -163,9 +117,9 @@ void Scene::SaveScene(Path outfile)
 		sprintf_s(section, "static_mesh_%d", sMesh->GetID());
 		conf.Update(section, "tag", sMesh->tagName.c_str());
 		conf.Update(section, "model-path", sMesh->modelPath.string().c_str());
-		conf.Update(section, "position", INIFileManager::Vec3ToString<Vec3f>(sMesh->transform.position).c_str());
-		conf.Update(section, "scale", INIFileManager::Vec3ToString<Vec3f>(sMesh->transform.scale).c_str());
-		conf.Update(section, "degrees", INIFileManager::Vec3ToString<Vec3f>(sMesh->transform.degrees).c_str());
+		conf.Update(section, "position", INIFileParser::Vec3ToString<Vec3f>(sMesh->transform.position).c_str());
+		conf.Update(section, "scale", INIFileParser::Vec3ToString<Vec3f>(sMesh->transform.scale).c_str());
+		conf.Update(section, "degrees", INIFileParser::Vec3ToString<Vec3f>(sMesh->transform.degrees).c_str());
 
 		if(sMesh->material.diffuse)
 			conf.Update(section, "texture-diffuse", sMesh->material.diffuse->texturePath.string().c_str());

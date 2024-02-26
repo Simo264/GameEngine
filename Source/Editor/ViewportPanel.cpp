@@ -3,7 +3,7 @@
 #include "Engine/SceneObject.hpp"
 #include "Engine/StaticMesh.hpp"
 #include "Engine/Window.hpp"
-#include "Logger.hpp"
+#include "Core/Log/Logger.hpp"
 
 #include <imgui/imgui.h>
 #include <imgui/ImGuizmo.h>
@@ -20,7 +20,7 @@ ViewportPanel::ViewportPanel(const char* panelName)
   viewportSize = Vec2i(0, 0); /* Set size on Render() function */
 }
 
-void ViewportPanel::RenderPanel(FrameBuffer* framebuffer, SceneObject* objSelected)
+void ViewportPanel::RenderPanel(FrameBuffer* framebuffer)
 {
   /* Set viewport window padding to 0 */
   ImGuiStyle& style = ImGui::GetStyle();
@@ -49,21 +49,21 @@ void ViewportPanel::RenderPanel(FrameBuffer* framebuffer, SceneObject* objSelect
   {
     ImGui::Image((ImTextureID)framebuffer->GetImage(), viewport, ImVec2(0, 1), ImVec2(1, 0));
     
-    StaticMesh* mesh = static_cast<StaticMesh*>(objSelected);
-    if (mesh)
-    {
-      ImGuizmo::SetOrthographic(false);
-      ImGuizmo::SetDrawlist();
+    //StaticMesh* mesh = static_cast<StaticMesh*>(objSelected);
+    //if (mesh)
+    //{
+    //  ImGuizmo::SetOrthographic(false);
+    //  ImGuizmo::SetDrawlist();
 
-      Window window(glfwGetCurrentContext());
-      Vec2f windowSize = window.GetWindowSize();
-      ImGuizmo::SetRect(mesh->transform.position.x, mesh->transform.position.y, windowSize.x, windowSize.y);
+    //  Window window(glfwGetCurrentContext());
+    //  Vec2f windowSize = window.GetWindowSize();
+    //  ImGuizmo::SetRect(mesh->transform.position.x, mesh->transform.position.y, windowSize.x, windowSize.y);
 
-      Mat4f transform = mesh->transform.GetTransformation();
+    //  Mat4f transform = mesh->transform.GetTransformation();
 
-      ImGuizmo::Manipulate(&cameraViewMatrix[0][0], &cameraProjectionMatrix[0][0], 
-        ImGuizmo::OPERATION::TRANSLATE, ImGuizmo::LOCAL, &transform[0][0]);
-    }
+    //  ImGuizmo::Manipulate(&cameraViewMatrix[0][0], &cameraProjectionMatrix[0][0], 
+    //    ImGuizmo::OPERATION::TRANSLATE, ImGuizmo::LOCAL, &transform[0][0]);
+    //}
   }
   ImGui::EndChild();
   ImGui::End();

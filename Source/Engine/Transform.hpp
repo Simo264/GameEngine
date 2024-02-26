@@ -1,10 +1,10 @@
 #pragma once
 
-#include "Core.hpp"
+#include "Core/Math/Math.hpp"
 
 /* ----------------------------------------------------------------------
 	This component defines the transform (location, rotation, scale) 
-	of this Actor in the world
+	of an Actor in world
  ------------------------------------------------------------------------ */
 class Transform
 {
@@ -20,14 +20,5 @@ public:
 	Vec3f scale;
 
 	/* Calculate the model matrix */
-	Mat4f GetTransformation()
-	{
-		Mat4f model = Mat4f(1.0f);
-		model = glm::translate(model, position);
-		model = glm::rotate(model, glm::radians(degrees.x), Vec3f(1.0f, 0.0f, 0.0f));
-		model = glm::rotate(model, glm::radians(degrees.y), Vec3f(0.0f, 1.0f, 0.0f));
-		model = glm::rotate(model, glm::radians(degrees.z), Vec3f(0.0f, 0.0f, 1.0f));
-		model = glm::scale(model, scale);
-		return model;
-	}
+	Mat4f GetTransformation() const;
 };

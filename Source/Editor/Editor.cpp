@@ -5,9 +5,9 @@
 #include "Engine/Lighting/PointLight.hpp"
 #include "Engine/StaticMesh.hpp"
 
-#include "INIFileManager.hpp"
-#include "FileDialog.hpp"
-#include "Logger.hpp"
+#include "Core/FileParser/INIFileParser.hpp"
+#include "Core/FileDialog.hpp"
+#include "Core/Log/Logger.hpp"
 
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_glfw.h>
@@ -122,12 +122,12 @@ void Editor::Render(Scene* scene, FrameBuffer* framebuffer)
   if(outlinerPanel->isOpen)
     outlinerPanel->RenderPanel(scene);
 
-  auto& dLight = outlinerPanel->GetItemSelected<DirectionalLight>();
-  auto& pLight = outlinerPanel->GetItemSelected<PointLight>();
-  auto& sMesh  = outlinerPanel->GetItemSelected<StaticMesh>();
-
   if (outlinerPanel->IsItemSelected())
   {
+    auto& dLight = outlinerPanel->GetItemSelected<DirectionalLight>();
+    auto& pLight = outlinerPanel->GetItemSelected<PointLight>();
+    auto& sMesh = outlinerPanel->GetItemSelected<StaticMesh>();
+
     if (dLight)
       detailsPanel->RenderPanel(dLight, scene);
     else if (pLight)
@@ -137,7 +137,7 @@ void Editor::Render(Scene* scene, FrameBuffer* framebuffer)
   }
 
   if (viewportPanel->isOpen)
-    viewportPanel->RenderPanel(framebuffer, sMesh.get());
+    viewportPanel->RenderPanel(framebuffer);
   
   if(inspectorPanel->isOpen)
     inspectorPanel->RenderPanel();
@@ -166,7 +166,7 @@ void Editor::Render(Scene* scene, FrameBuffer* framebuffer)
 
 void Editor::Styling()
 {
-  Path fontPath = ROOT_PATH / "Fonts/Karla-Regular.ttf";
+  Path fontPath = ROOT_PATH / "Resources/Fonts/Karla-Regular.ttf";
   ImGuiIO& io = ImGui::GetIO();
   io.Fonts->AddFontFromFileTTF(fontPath.string().c_str(), 16); 
 

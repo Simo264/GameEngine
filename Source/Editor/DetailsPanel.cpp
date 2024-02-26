@@ -2,7 +2,7 @@
 #include "Engine/Scene.hpp"
 #include "Engine/Graphics/Texture2D.hpp"
 #include "Engine/Subsystems/TexturesManager.hpp"
-#include "Logger.hpp"
+#include "Core/Log/Logger.hpp"
 
 #include <imgui/imgui.h>
 

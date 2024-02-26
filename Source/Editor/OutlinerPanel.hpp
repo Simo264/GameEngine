@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core.hpp"
+#include "Core/Core.hpp"
 #include "Engine/Lighting/DirectionalLight.hpp"
 #include "Engine/Lighting/PointLight.hpp"
 #include "Engine/StaticMesh.hpp"

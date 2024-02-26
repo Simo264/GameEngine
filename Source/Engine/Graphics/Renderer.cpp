@@ -2,7 +2,7 @@
 
 #include "Engine/Graphics/VertexArray.hpp"
 
-#include "Logger.hpp"
+#include "Core/Log/Logger.hpp"
 
 void Renderer::DrawArrays(VertexArray* vertexArray)
 {

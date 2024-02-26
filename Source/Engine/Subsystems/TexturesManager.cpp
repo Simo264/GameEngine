@@ -1,7 +1,7 @@
 #include "TexturesManager.hpp"
 #include "Engine/Graphics/Texture2D.hpp"
 
-#include "Logger.hpp"
+#include "Core/Log/Logger.hpp"
 
 static constexpr uint32_t TEXTURES_MANAGER_MAX_SIZE = 100;
 

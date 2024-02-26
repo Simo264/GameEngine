@@ -1,7 +1,7 @@
 #include "FrameBuffer.hpp"
 #include "Engine/Graphics/Shader.hpp"
 #include "Engine/Graphics/Renderer.hpp"
-#include "Logger.hpp"
+#include "Core/Log/Logger.hpp"
 
 /* -----------------------------------------------------
  *          PUBLIC METHODS

@@ -1,6 +1,7 @@
 #pragma once
 
-#include "Core.hpp"
+#include "Core/Core.hpp"
+#include "Core/Math/Math.hpp"
 
 /* -----------------------------------
       Shader program class

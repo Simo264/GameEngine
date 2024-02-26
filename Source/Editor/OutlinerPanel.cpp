@@ -4,7 +4,7 @@
 #include "Engine/Graphics/Texture2D.hpp"
 #include "Engine/Subsystems/TexturesManager.hpp"
 #include "Engine/Subsystems/ShadersManager.hpp"
-#include "Logger.hpp"
+#include "Core/Log/Logger.hpp"
 
 #include <imgui/imgui.h>
 #include <imgui/imgui_internal.h>
@@ -27,12 +27,12 @@ OutlinerPanel::OutlinerPanel(const char* panelName)
   _sMeshSelected = nullptr;
 
   auto& instanceTM = TexturesManager::Instance();
-  _icons[SUN] = instanceTM.GetTextureByPath(ROOT_PATH / "Icons/icon-sun.png");
-  _icons[LAMP] = instanceTM.GetTextureByPath(ROOT_PATH / "Icons/icon-lamp.png");
-  _icons[EYE] = instanceTM.GetTextureByPath(ROOT_PATH / "Icons/icon-eye.png");
-  _icons[EYE_HIDDEN] = instanceTM.GetTextureByPath(ROOT_PATH / "Icons/icon-eye-hidden.png");
-  _icons[MESH] = instanceTM.GetTextureByPath(ROOT_PATH / "Icons/icon-mesh.png");
-  _icons[PLUS] = instanceTM.GetTextureByPath(ROOT_PATH / "Icons/icon-plus.png");
+  _icons[SUN] = instanceTM.GetTextureByPath(ROOT_PATH / "Resources/Icons/icon-sun.png");
+  _icons[LAMP] = instanceTM.GetTextureByPath(ROOT_PATH / "Resources/Icons/icon-lamp.png");
+  _icons[EYE] = instanceTM.GetTextureByPath(ROOT_PATH / "Resources/Icons/icon-eye.png");
+  _icons[EYE_HIDDEN] = instanceTM.GetTextureByPath(ROOT_PATH / "Resources/Icons/icon-eye-hidden.png");
+  _icons[MESH] = instanceTM.GetTextureByPath(ROOT_PATH / "Resources/Icons/icon-mesh.png");
+  _icons[PLUS] = instanceTM.GetTextureByPath(ROOT_PATH / "Resources/Icons/icon-plus.png");
 }
 
 template<>

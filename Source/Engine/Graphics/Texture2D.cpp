@@ -1,5 +1,5 @@
 #include "Texture2D.hpp"
-#include "Logger.hpp"
+#include "Core/Log/Logger.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>

@@ -1,7 +1,7 @@
 #include "DirectionalLight.hpp"
 
 #include "Engine/Graphics/Shader.hpp"
-#include "Logger.hpp"
+#include "Core/Log/Logger.hpp"
 
 void DirectionalLight::RenderLight(Shader* shader)
 {

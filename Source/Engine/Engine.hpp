@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core.hpp"
+#include "Core/Core.hpp"
 #include "Editor/Editor.hpp"
 
 class Engine

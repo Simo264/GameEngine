@@ -1,10 +1,11 @@
 #include "ObjectLoader.hpp"
-
+#include "Core/Math/Math.hpp"
 #include "Engine/Graphics/VertexArray.hpp"
 #include "Engine/Graphics/Texture2D.hpp"
 #include "Engine/Subsystems/TexturesManager.hpp"
 
-#include "Logger.hpp"
+#include "Core/Log/Logger.hpp"
+
 /* -----------------------------------------------------
  *          PUBLIC METHODS
  * -----------------------------------------------------

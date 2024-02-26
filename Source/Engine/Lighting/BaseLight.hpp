@@ -1,6 +1,7 @@
 #pragma once
 
-#include "Core.hpp"
+#include "Core/Core.hpp"
+#include "Core/Math/Math.hpp"
 
 /* -------------------------------------
       BaseLight interface class 
@@ -14,7 +15,7 @@ public:
     this->_uniformName.append(uniformName);
 
     color     = Vec3f(1.0f, 1.0f, 1.0f);  /* default white color */ 
-    ambient   = 0.125f;                    /* default ambient intensity */
+    ambient   = 0.125f;                   /* default ambient intensity */
     diffuse   = 0.25f;                    /* default diffuse intensity */
     specular  = 0.25f;                    /* default specular intensity */
   }

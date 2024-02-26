@@ -1,10 +1,12 @@
 #include "SettingsFrame.hpp"
+#include "Core/Math/Math.hpp"
 
 #include <imgui/imgui.h>
 #include <imgui/imgui_stdlib.h>
 #include <imgui/imgui_internal.h>
 
-struct WindowArgs {
+struct WindowArgs 
+{
   String title;
   Vec2i position;
   Vec2i resolution;
@@ -29,7 +31,7 @@ SettingsFrame::~SettingsFrame()
 
 SettingsFrame::SettingsFrame()
 {
-  _conf = std::make_unique<INIFileManager>(ROOT_PATH / CONFIG_FILENAME);
+  _conf = std::make_unique<INIFileParser>(ROOT_PATH / CONFIG_FILENAME);
   _conf->ReadData();
 
 	frameName = "Settings";
@@ -37,10 +39,10 @@ SettingsFrame::SettingsFrame()
 
   _windowArgs = new WindowArgs;
   _windowArgs->title = _conf->GetValue("window", "title");
-  _windowArgs->position = INIFileManager::StringToVec2<Vec2i>(_conf->GetValue("window", "position"), ',');
-  _windowArgs->resolution = INIFileManager::StringToVec2<Vec2i>(_conf->GetValue("window", "resolution"), 'x');
-  _windowArgs->aspectratio = INIFileManager::StringToVec2<Vec2i>(_conf->GetValue("window", "aspectratio"), ':');
-  _windowArgs->vsync = INIFileManager::StringToBool(_conf->GetValue("window", "vsync"));
+  _windowArgs->position = INIFileParser::StringToVec2<Vec2i>(_conf->GetValue("window", "position"), ',');
+  _windowArgs->resolution = INIFileParser::StringToVec2<Vec2i>(_conf->GetValue("window", "resolution"), 'x');
+  _windowArgs->aspectratio = INIFileParser::StringToVec2<Vec2i>(_conf->GetValue("window", "aspectratio"), ':');
+  _windowArgs->vsync = INIFileParser::StringToBool(_conf->GetValue("window", "vsync"));
 
   String resolutionStr = _conf->GetValue("window", "resolution");
   String aspectRatioStr = _conf->GetValue("window", "aspectratio");
@@ -65,14 +67,14 @@ void SettingsFrame::RenderFrame()
   /* Window aspect ratio */
   if (ImGui::Combo("Aspect ratio", &_aspectIndex, &_aspectRatioValues[0], IM_ARRAYSIZE(_aspectRatioValues)))
   {
-    _windowArgs->aspectratio = INIFileManager::StringToVec2<Vec2i>(_aspectRatioValues[_aspectIndex], ':');
+    _windowArgs->aspectratio = INIFileParser::StringToVec2<Vec2i>(_aspectRatioValues[_aspectIndex], ':');
     buttonDisabled = false;
   }
 
   /* Window resolution */
   if (ImGui::Combo("Resolution", &_resolutionIndex, _resolutionValues, IM_ARRAYSIZE(_resolutionValues)))
   {
-    _windowArgs->resolution = INIFileManager::StringToVec2<Vec2i>(_resolutionValues[_resolutionIndex], 'x');
+    _windowArgs->resolution = INIFileParser::StringToVec2<Vec2i>(_resolutionValues[_resolutionIndex], 'x');
     buttonDisabled = false;
   }
 
@@ -127,9 +129,9 @@ void SettingsFrame::RenderFrame()
 void SettingsFrame::OnSaveSettings()
 {
   _conf->Update("window", "title", _windowArgs->title.c_str());
-  _conf->Update("window", "resolution", INIFileManager::Vec2ToString<Vec2i>(_windowArgs->resolution, 'x').c_str());
-  _conf->Update("window", "position", INIFileManager::Vec2ToString<Vec2i>(_windowArgs->position, ',').c_str());
-  _conf->Update("window", "aspectratio", INIFileManager::Vec2ToString<Vec2i>(_windowArgs->aspectratio, ':').c_str());
-  _conf->Update("window", "vsync", INIFileManager::BoolToString(_windowArgs->vsync).c_str());
+  _conf->Update("window", "resolution", INIFileParser::Vec2ToString<Vec2i>(_windowArgs->resolution, 'x').c_str());
+  _conf->Update("window", "position", INIFileParser::Vec2ToString<Vec2i>(_windowArgs->position, ',').c_str());
+  _conf->Update("window", "aspectratio", INIFileParser::Vec2ToString<Vec2i>(_windowArgs->aspectratio, ':').c_str());
+  _conf->Update("window", "vsync", INIFileParser::BoolToString(_windowArgs->vsync).c_str());
   _conf->Write();
 }

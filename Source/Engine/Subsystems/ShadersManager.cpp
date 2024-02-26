@@ -1,6 +1,6 @@
 #include "ShadersManager.hpp"
 #include "Engine/Graphics/Shader.hpp"
-#include "Logger.hpp"
+#include "Core/Log/Logger.hpp"
 
 static constexpr uint32_t SHADERS_MANAGER_MAX_SIZE = 10;
 

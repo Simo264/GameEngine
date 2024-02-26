@@ -15,19 +15,21 @@ set( GLFW_BUILD_EXAMPLES  OFF CACHE BOOL "" FORCE )
 
 
 # Add include directory path
-include_directories("${CMAKE_CURRENT_SOURCE_DIR}/Externals/")
-include_directories("${CMAKE_CURRENT_SOURCE_DIR}/Source/")
+set(EXT_INCLUDE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/Externals/Include/")  # externals include path directory
+set(INT_INCLUDE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/Source/")             # internal include path directory
+include_directories(${EXT_INCLUDE_PATH})
+include_directories(${INT_INCLUDE_PATH})
 
 
 # List external source files
 file(GLOB_RECURSE EXTERNAL_IMGUI_SOURCES
-  ${CMAKE_CURRENT_SOURCE_DIR}/Externals/imgui/*
+  ${EXT_INCLUDE_PATH}/imgui/*
 )
 set(EXTERNAL_GLAD_SOURCE 
-  ${CMAKE_CURRENT_SOURCE_DIR}/Externals/Glad/gl.c 
+  ${EXT_INCLUDE_PATH}/Glad/gl.c 
 )
 set(EXTERNAL_TINYFD_SOURCE 
-  ${CMAKE_CURRENT_SOURCE_DIR}/Externals/tinyfiledialogs/tinyfiledialogs.c
+  ${EXT_INCLUDE_PATH}/tinyfiledialogs/tinyfiledialogs.c
 ) 
 set(EXTERNAL_SOURCES
   ${EXTERNAL_IMGUI_SOURCES}
@@ -60,9 +62,10 @@ add_executable (GameEngine
 
 
 # Linking libraries
-target_link_libraries(GameEngine "${CMAKE_CURRENT_SOURCE_DIR}/Libs/glfw3.lib") 
-target_link_libraries(GameEngine "${CMAKE_CURRENT_SOURCE_DIR}/Libs/spdlogd.lib")
-target_link_libraries(GameEngine "${CMAKE_CURRENT_SOURCE_DIR}/Libs/assimp.lib")
+set(EXT_LIBS_PATH "${CMAKE_CURRENT_SOURCE_DIR}/Externals/Libs")
+target_link_libraries(GameEngine ${EXT_LIBS_PATH}/glfw3.lib) 
+target_link_libraries(GameEngine ${EXT_LIBS_PATH}/spdlogd.lib)
+target_link_libraries(GameEngine ${EXT_LIBS_PATH}/assimp.lib)
 
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)

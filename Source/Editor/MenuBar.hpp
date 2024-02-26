@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core.hpp"
+#include "Core/Core.hpp"
 
 enum MENU_ITEMS : int {
 	PANEL_OUTLINER = 0,

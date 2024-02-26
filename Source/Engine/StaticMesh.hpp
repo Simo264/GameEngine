@@ -1,7 +1,6 @@
 #pragma once
 
-#include "Core.hpp"
-
+#include "Core/Core.hpp"
 #include "Engine/Graphics/VertexArray.hpp"
 #include "Engine/SceneObject.hpp"
 #include "Engine/Transform.hpp"

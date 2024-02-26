@@ -1,6 +1,7 @@
 #pragma once
 
-#include "Core.hpp"
+#include "Core/Core.hpp"
+#include "Core/Math/Math.hpp"
 
 #include "Engine/Lighting/DirectionalLight.hpp"
 #include "Engine/Lighting/PointLight.hpp"
