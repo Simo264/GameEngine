@@ -31,7 +31,7 @@ public:
 	~Editor() = default;
 
 	void Initialize();
-	void ShutDown();
+	void CleanUp();
 
 	void Begin();
 	void End();

@@ -1,7 +1,7 @@
 #include "DetailsPanel.hpp"
 #include "Engine/Scene.hpp"
 #include "Engine/Graphics/Texture2D.hpp"
-#include "Engine/Subsystems/TexturesManager.hpp"
+#include "Engine/Subsystems/TextureManager.hpp"
 #include "Core/Log/Logger.hpp"
 
 #include <imgui/imgui.h>
@@ -20,8 +20,8 @@ void DetailsPanel::RenderPanel(SharedPointer<DirectionalLight>& target, Scene* s
   if (ImGui::CollapsingHeader("Light properties"))
   {
     ImGui::BeginTable("##table", 2);
-    int C1 = 0.30f * ImGui::GetContentRegionAvail().x;
-    int C2 = 0.70f * ImGui::GetContentRegionAvail().x;
+    float C1 = 0.30f * ImGui::GetContentRegionAvail().x;
+    float C2 = 0.70f * ImGui::GetContentRegionAvail().x;
     ImGui::TableSetupColumn("##C1", ImGuiTableColumnFlags_WidthFixed, C1);
     ImGui::TableSetupColumn("##C2", ImGuiTableColumnFlags_WidthFixed, C2);
 
@@ -167,7 +167,7 @@ void DetailsPanel::RenderPanel(SharedPointer<StaticMesh>& target, Scene* scene)
     ImGui::SetNextItemWidth(-1);
     if (ImGui::BeginCombo("##Textures", diffusePathStr.c_str()))
     {
-      auto& instanceTM = TexturesManager::Instance();
+      auto& instanceTM = TextureManager::Instance();
       std::for_each(instanceTM.Begin(), instanceTM.End(), [&](Texture2D& texture) {
         String textPathStr = texture.texturePath.string();
         bool isSelected = (std::strcmp(diffusePathStr.c_str(), textPathStr.c_str()) == 0);

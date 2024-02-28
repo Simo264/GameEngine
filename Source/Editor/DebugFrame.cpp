@@ -6,11 +6,11 @@
 DebugFrame::DebugFrame(const char* frameName)
 {
 	this->frameName = frameName;
-	isOpen = false;
+	isOpen = true;
 
 	ImGuiIO& io = ImGui::GetIO();
-	_timeOld = 0.0f;
-	_timeNew = 0.0f;
+	_t1 = SystemClock::now();
+	_t2 = SystemClock::now();
 	_framerate = io.Framerate;
 }
 
@@ -21,10 +21,11 @@ void DebugFrame::RenderFrame()
 	ImGui::SetNextWindowBgAlpha(0.15f); /* Transparent background */
 	ImGui::Begin(frameName.c_str(), &isOpen, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoDocking);
 
-	_timeNew = glfwGetTime();
-	if (_timeNew - _timeOld >= (1.0f / 8.0f)) /* update every 1/4 seconds */
+	_t2 = SystemClock::now();
+	const std::chrono::duration<double> diff = _t2 - _t1;
+	if (diff.count() >= 0.125f) /* display every 0.125s */
 	{
-		_timeOld = _timeNew;
+		_t1 = _t2;
 		_framerate = io.Framerate;
 	}
 

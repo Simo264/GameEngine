@@ -1149,7 +1149,7 @@ struct IMGUI_API ImGuiInputTextState
 struct ImGuiPopupData
 {
     ImGuiID             PopupId;        // Set on OpenPopup()
-    ImGuiWindow*        Window;         // Resolved on BeginPopup() - may stay unresolved if user never calls OpenPopup()
+    ImGuiWindow*        WindowManager;         // Resolved on BeginPopup() - may stay unresolved if user never calls OpenPopup()
     ImGuiWindow*        BackupNavWindow;// Set on OpenPopup(), a NavWindow that will be restored on popup close
     int                 ParentNavLayer; // Resolved on BeginPopup(). Actually a ImGuiNavLayer type (declared down below), initialized to -1 which is not part of an enum, but serves well-enough as "not any of layers" value
     int                 OpenFrameCount; // Set on OpenPopup()
@@ -1276,7 +1276,7 @@ struct IMGUI_API ImGuiStackSizes
 // Data saved for each window pushed into the stack
 struct ImGuiWindowStackData
 {
-    ImGuiWindow*        Window;
+    ImGuiWindow*        WindowManager;
     ImGuiLastItemData   ParentLastItemDataBackup;
     ImGuiStackSizes     StackSizesOnBegin;      // Store size of various stacks for asserting
 };
@@ -1566,7 +1566,7 @@ enum ImGuiNavLayer
 
 struct ImGuiNavItemData
 {
-    ImGuiWindow*        Window;         // Init,Move    // Best candidate window (result->ItemWindow->RootWindowForNav == request->Window)
+    ImGuiWindow*        WindowManager;         // Init,Move    // Best candidate window (result->ItemWindow->RootWindowForNav == request->Window)
     ImGuiID             ID;             // Init,Move    // Best candidate item ID
     ImGuiID             FocusScopeId;   // Init,Move    // Best candidate focus scope ID
     ImRect              RectRel;        // Init,Move    // Best candidate bounding box in window relative space
@@ -1577,7 +1577,7 @@ struct ImGuiNavItemData
     float               DistAxial;      //      Move    // Best candidate axial distance to current NavId
 
     ImGuiNavItemData()  { Clear(); }
-    void Clear()        { Window = NULL; ID = FocusScopeId = 0; InFlags = 0; SelectionUserData = -1; DistBox = DistCenter = DistAxial = FLT_MAX; }
+    void Clear()        { WindowManager = NULL; ID = FocusScopeId = 0; InFlags = 0; SelectionUserData = -1; DistBox = DistCenter = DistAxial = FLT_MAX; }
 };
 
 //-----------------------------------------------------------------------------
@@ -1840,7 +1840,7 @@ struct ImGuiDockContext
 // Every instance of ImGuiViewport is in fact a ImGuiViewportP.
 struct ImGuiViewportP : public ImGuiViewport
 {
-    ImGuiWindow*        Window;                 // Set when the viewport is owned by a window (and ImGuiViewportFlags_CanHostOtherWindows is NOT set)
+    ImGuiWindow*        WindowManager;                 // Set when the viewport is owned by a window (and ImGuiViewportFlags_CanHostOtherWindows is NOT set)
     int                 Idx;
     int                 LastFrameActive;        // Last frame number this viewport was activated by a window
     int                 LastFocusedStampCount;  // Last stamp number from when a window hosted by this viewport was focused (by comparing this value between two viewport we have an implicit viewport z-order we use as fallback)
@@ -1862,7 +1862,7 @@ struct ImGuiViewportP : public ImGuiViewport
     ImVec2              BuildWorkOffsetMin;     // Work Area: Offset being built during current frame. Generally >= 0.0f.
     ImVec2              BuildWorkOffsetMax;     // Work Area: Offset being built during current frame. Generally <= 0.0f.
 
-    ImGuiViewportP()                    { Window = NULL; Idx = -1; LastFrameActive = BgFgDrawListsLastFrame[0] = BgFgDrawListsLastFrame[1] = LastFocusedStampCount = -1; LastNameHash = 0; Alpha = LastAlpha = 1.0f; LastFocusedHadNavWindow = false; PlatformMonitor = -1; BgFgDrawLists[0] = BgFgDrawLists[1] = NULL; LastPlatformPos = LastPlatformSize = LastRendererSize = ImVec2(FLT_MAX, FLT_MAX); }
+    ImGuiViewportP()                    { WindowManager = NULL; Idx = -1; LastFrameActive = BgFgDrawListsLastFrame[0] = BgFgDrawListsLastFrame[1] = LastFocusedStampCount = -1; LastNameHash = 0; Alpha = LastAlpha = 1.0f; LastFocusedHadNavWindow = false; PlatformMonitor = -1; BgFgDrawLists[0] = BgFgDrawLists[1] = NULL; LastPlatformPos = LastPlatformSize = LastRendererSize = ImVec2(FLT_MAX, FLT_MAX); }
     ~ImGuiViewportP()                   { if (BgFgDrawLists[0]) IM_DELETE(BgFgDrawLists[0]); if (BgFgDrawLists[1]) IM_DELETE(BgFgDrawLists[1]); }
     void    ClearRequestFlags()         { PlatformRequestClose = PlatformRequestMove = PlatformRequestResize = false; }
 
@@ -2793,7 +2793,7 @@ struct ImGuiTabItem
 {
     ImGuiID             ID;
     ImGuiTabItemFlags   Flags;
-    ImGuiWindow*        Window;                 // When TabItem is part of a DockNode's TabBar, we hold on to a window.
+    ImGuiWindow*        WindowManager;                 // When TabItem is part of a DockNode's TabBar, we hold on to a window.
     int                 LastFrameVisible;
     int                 LastFrameSelected;      // This allows us to infer an ordered list of the last activated tabs with little maintenance
     float               Offset;                 // Position relative to beginning of tab

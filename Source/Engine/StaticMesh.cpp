@@ -2,13 +2,15 @@
 
 #include "Engine/ObjectLoader.hpp"
 #include "Engine/Graphics/Shader.hpp"
-#include "Engine/Graphics/Texture2D.hpp"
 #include "Engine/Graphics/Renderer.hpp"
+#include "Engine/Graphics/Texture2D.hpp"
+#include "Engine/Graphics/VertexArray.hpp"
+#include "Engine/Graphics/Core/GL_Core.hpp"
 
-StaticMesh::StaticMesh(VertexArrayData& data, VertexArrayConfig& config)
+StaticMesh::StaticMesh(VertexArrayData* data, class VertexBufferConfig* config)
 {
 	tagName = "Static mesh";
-	vertexArray.InitVertexArray(data, config);
+	vertexArray = new VertexArray(*data, *config);
 }
 
 StaticMesh::StaticMesh(Path objFilePath)
@@ -16,11 +18,11 @@ StaticMesh::StaticMesh(Path objFilePath)
 	tagName = "Static mesh";
   modelPath = objFilePath;
 
-	VertexArrayConfig conf;
+	VertexBufferConfig conf;
 	conf.PushAttributes({ 3,3,2 }); /* 3(position), 3(normals), 2(texCoords) */
 
 	ObjectLoader loader(modelPath);
-	loader.LoadData(&vertexArray, &conf);
+	loader.LoadData(vertexArray, &conf);
 	material = loader.GetMaterial();
 }
 
@@ -32,18 +34,18 @@ void StaticMesh::Draw(Shader* shader)
 	if (material.diffuse)
 	{
 		glActiveTexture(GL_TEXTURE0);
-		material.diffuse->BindTexture();
+		material.diffuse->Bind();
 	}
 	if (material.specular)
 	{
 		glActiveTexture(GL_TEXTURE1);
-		material.specular->BindTexture();
+		material.specular->Bind();
 	}
 
-	if (vertexArray.numIndices == 0)
-		Renderer::DrawArrays(&vertexArray);
+	if (vertexArray->numIndices == 0)
+		Renderer::DrawArrays(vertexArray);
 	else
-		Renderer::DrawIndexed(&vertexArray);
+		Renderer::DrawIndexed(vertexArray);
 
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, 0); /* unbind specular */
@@ -54,5 +56,6 @@ void StaticMesh::Draw(Shader* shader)
 
 void StaticMesh::Destroy() const
 {
-	vertexArray.DestroyVertexArray();
+	vertexArray->Destroy();
+	delete vertexArray;
 }

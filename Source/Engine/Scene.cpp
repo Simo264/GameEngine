@@ -1,7 +1,7 @@
 #include "Scene.hpp"
 #include "Engine/Graphics/Shader.hpp"
 #include "Engine/Graphics/Texture2D.hpp"
-#include "Engine/Subsystems/TexturesManager.hpp"
+#include "Engine/Subsystems/TextureManager.hpp"
 
 #include "Core/FileParser/INIFileParser.hpp"
 #include "Core/Log/Logger.hpp"
@@ -71,7 +71,7 @@ void Scene::LoadScene(Path filepath)
 			if (collection.has("texture-diffuse"))
 			{
 				Path p = collection.get("texture-diffuse");
-				sMesh->material.diffuse = TexturesManager::Instance().GetTextureByPath(p);
+				sMesh->material.diffuse = TextureManager::Instance().GetTextureByPath(p);
 			}
 
 			AddSceneObject(sMesh);

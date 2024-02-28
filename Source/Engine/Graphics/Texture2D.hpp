@@ -8,15 +8,14 @@
 class Texture2D
 {
 public:
-  Texture2D() : textureID{ 0 } {}
+  Texture2D(Path path, bool gammaCorrection);
 
   /* Disable copy constructor */
   Texture2D(Texture2D const&) = delete;
   Texture2D& operator=(Texture2D const&) = delete;
 
-  void InitTexture(Path path, bool gammaCorrection);
-  void DestroyTexture() const { glDeleteTextures(1, &textureID); }
-  void BindTexture() const { glBindTexture(GL_TEXTURE_2D, textureID); }
+  void Destroy() const;
+  void Bind() const;
 
   uint32_t textureID;
   Path texturePath;

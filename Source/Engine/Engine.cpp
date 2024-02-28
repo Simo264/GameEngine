@@ -1,22 +1,23 @@
 #include "Engine.hpp"
 
-#include "Core/Log/Logger.hpp"
-#include "Engine/Window.hpp"
 #include "Engine/Camera.hpp"
-#include "Engine/Graphics/Shader.hpp"
 #include "Engine/Scene.hpp"
+#include "Engine/Graphics/Core/GL_Core.hpp"
+#include "Engine/Graphics/Shader.hpp"
 #include "Engine/Graphics/Renderer.hpp"
 #include "Engine/Graphics/FrameBuffer.hpp"
 #include "Engine/StaticMesh.hpp"
 #include "Engine/Lighting/DirectionalLight.hpp"
 #include "Engine/Lighting/PointLight.hpp"
 
-#include "Engine/Subsystems/ShadersManager.hpp"
-#include "Engine/Subsystems/TexturesManager.hpp"
+#include "Engine/Subsystems/WindowManager.hpp"
+#include "Engine/Subsystems/ShaderManager.hpp"
+#include "Engine/Subsystems/TextureManager.hpp"
 
 #include "Core/FileParser/INIFileParser.hpp"
+#include "Core/Log/Logger.hpp"
 
-#define GAMMA_CORRECTION 2.2f
+constexpr float GAMMA_CORRECTION = 2.2f;
 
 Mat4f cameraProjectionMatrix;
 Mat4f cameraViewMatrix;
@@ -29,28 +30,24 @@ Mat4f cameraViewMatrix;
 
 void Engine::Initialize()
 {
-  /* Init Logger */
   Logger::Initialize();
 
-  /* Initialize GLFW, create window and initialize OpenGL context */
-  InitOpenGL();
+  WindowManager::Instance().Initialize();
+  LoadConfig();
 
-  /* Load and initialize shaders */
-  ShadersManager::Instance().Initialize();
+  editor.Initialize();
+
+  ShaderManager::Instance().Initialize();
   LoadShaders();
   
-  /* Load textures from Textures directory */
-  TexturesManager::Instance().Initialize();
+  TextureManager::Instance().Initialize();
   LoadTextures();
   LoadIcons();
-
-  /* Initialize ImGui library */
-  editor.Initialize();
 }
 
 void Engine::Run()
 {
-  auto& instanceSM          = ShadersManager::Instance();
+  auto& instanceSM          = ShaderManager::Instance();
   auto testingShader        = instanceSM.GetShader("TestingShader");
   auto instancingShader     = instanceSM.GetShader("InstancingShader");
   auto framebufferShader    = instanceSM.GetShader("FramebufferShader");
@@ -59,11 +56,12 @@ void Engine::Run()
   auto shadowMapShader      = instanceSM.GetShader("ShadowMapShader");
 
   /* Initialize framebuffer object */
-  Window window(glfwGetCurrentContext());
+  auto& window = WindowManager::Instance();
+  Vec2i framebufferSize;
+  window.GetFramebufferSize(framebufferSize.x, framebufferSize.y);
 
-  FrameBuffer framebuffer;
-  framebuffer.InitFrameBuffer(window.GetFramebufferSize());
-  glViewport(0, 0, framebuffer.GetSize().x, framebuffer.GetSize().y);
+  FrameBuffer framebuffer(framebufferSize.x, framebufferSize.y);
+  glViewport(0, 0, framebufferSize.x, framebufferSize.y);
 
   /* Camera object */
   Camera camera(Vec3f(0.0f, 1.0f, 10.0f), 45.0f);
@@ -122,25 +120,26 @@ void Engine::Run()
 #endif
 
   /* Pre-loop */
-  double lastUpdateTime = 0;
+  TimePoint lastUpdateTime = SystemClock::now();
   const Vec2f perspectiveDistance(0.1f, 100.0f); 
   //Vec3f lightPos = Vec3f(-2.0f, 10.0f, -2.0f); /* Shadows */
   //Mat4f lightSpaceMatrix; /* Shadows */
 
   /* Loop  */
-  while (window.Loop())
+  while (window.IsOpen())
   {
     editor.Begin();
 
     /* Per-frame time logic */
-    const double now = glfwGetTime();
-    const double deltaTime = now - lastUpdateTime;
+    const auto now = SystemClock::now();
+    const std::chrono::duration<double> diff = now - lastUpdateTime;
+    const double delta = diff.count();
     Renderer::drawCalls = 0;
 
     /* Input */
-    glfwPollEvents();
+    window.PoolEvents();
     if (editor.viewportPanel->isFocused)
-      camera.ProcessInput(deltaTime);
+      camera.ProcessInput(delta);
     
     const Vec2i framebufferSize = framebuffer.GetSize();
     const float aspectRatio = ((float)framebufferSize.x / (float)framebufferSize.y);
@@ -234,23 +233,19 @@ void Engine::Run()
     framebuffer.DestroyFrameBuffer();
 }
 
-void Engine::ShutDown()
+void Engine::CleanUp()
 {
-  /* Destroy all meshes */
-  //for(auto mesh : meshes)
-  //  mesh->Destroy();
+  /* Destroy scene ...*/
 
-  /* Shutdown subsystems */
-  ShadersManager::Instance().ShutDown();
-  TexturesManager::Instance().ShutDown();
+  /* Destroy framebuffer ... */
+  
+  ShaderManager::Instance().CleanUp();
+  
+  TextureManager::Instance().CleanUp();
 
-  /* Shutdown ImGui */
-  editor.ShutDown();
+  editor.CleanUp();
 
-  /* GLFW: terminate, clearing all previously allocated GLFW resources */
-  GLFWwindow* window = glfwGetCurrentContext();
-  glfwDestroyWindow(window);
-  glfwTerminate();
+  WindowManager::Instance().CleanUp();
 }
 
 
@@ -260,7 +255,7 @@ void Engine::ShutDown()
  * -----------------------------------------------------
 */
 
-void Engine::InitOpenGL()
+void Engine::LoadConfig()
 {
   INIFileParser conf(ROOT_PATH / CONFIG_FILENAME);
   conf.ReadData();
@@ -278,78 +273,41 @@ void Engine::InitOpenGL()
   tmp = conf.GetValue("window", "vsync");
   bool vsync = INIFileParser::StringToBool(tmp);
 
-  glfwInit();
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);  /* Load OpenGL 4.6 */
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
-  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-  glfwWindowHint(GLFW_SAMPLES, 4);  /* Enable 4x MSAA on GLFW frame buffer */
-
-  GLFWwindow* window = glfwCreateWindow(resolution.x, resolution.y, title.c_str(), nullptr, nullptr);
-  glfwMakeContextCurrent(window);
-  glfwSetWindowPos(window, position.x, position.y); /* Set window position */
-  glfwSetWindowAspectRatio(window, aspectratio.x, aspectratio.y);  /* Set aspect ratio */
-  glfwSwapInterval(vsync); /* V-sync */
-  
-  glfwSetWindowSizeCallback(window, [](GLFWwindow* window, int width, int height) {
-    glfwSetWindowSize(window, width, height);
-  });
-
-  /* Load OpenGL functions, gladLoadGL returns the loaded version, 0 on error. */
-  int version = gladLoadGL(glfwGetProcAddress);
-  if (version == 0)
-  {
-    CONSOLE_ERROR("Failed to initialize OpenGL context");
-    exit(-1);
-  }
-  
-  /* Antialising */
-  glEnable(GL_MULTISAMPLE);
-  
-  /* Depth buffer */
-  glEnable(GL_DEPTH_TEST);
-  
-  /* Blending */
-  glDisable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  
-  /* Face culling */
-  glDisable(GL_CULL_FACE);
-
-  /* Gamma correction */
-  //glEnable(GL_FRAMEBUFFER_SRGB);
+  auto& window = WindowManager::Instance();
+  window.SetWindowTitle(title.c_str());
+  window.SetWindowSize(resolution.x, resolution.y);
+  window.SetWindowPosition(position.x, position.y);
+  window.SetWindowAspectRatio(aspectratio.x, aspectratio.y);
+  window.SetWindowVsync(vsync);
 }
 
 void Engine::LoadShaders()
 {
-  Path shadersDir = "Resources/Shaders";
-  shadersDir = shadersDir.lexically_normal();
-  const Path shadersDirPath = ROOT_PATH / shadersDir;
-  
-  auto& instanceSM = ShadersManager::Instance();
-  auto testingShader = instanceSM.LoadShaderProgram(
+  auto& instanceSM = ShaderManager::Instance();
+  auto testingShader = instanceSM.LoadShader(
     "TestingShader",
-    shadersDirPath / "Testing.vert",
-    shadersDirPath / "Testing.frag");
-  auto instancingShader = instanceSM.LoadShaderProgram(
+    SHADERS_PATH / "Testing.vert",
+    SHADERS_PATH / "Testing.frag");
+  auto instancingShader = instanceSM.LoadShader(
     "InstancingShader",
-    shadersDirPath / "Instancing.vert",
-    shadersDirPath / "Scene.frag");
-  auto sceneShader = instanceSM.LoadShaderProgram(
+    SHADERS_PATH / "Instancing.vert",
+    SHADERS_PATH / "Scene.frag");
+  auto sceneShader = instanceSM.LoadShader(
     "SceneShader",
-    shadersDirPath / "Scene.vert",
-    shadersDirPath / "Scene.frag");
-  auto framebufferShader = instanceSM.LoadShaderProgram(
+    SHADERS_PATH / "Scene.vert",
+    SHADERS_PATH / "Scene.frag");
+  auto framebufferShader = instanceSM.LoadShader(
     "FramebufferShader",
-    shadersDirPath / "Framebuffer.vert",
-    shadersDirPath / "Framebuffer.frag");
-  auto shadowMapDepthShader = instanceSM.LoadShaderProgram(
+    SHADERS_PATH / "Framebuffer.vert",
+    SHADERS_PATH / "Framebuffer.frag");
+  auto shadowMapDepthShader = instanceSM.LoadShader(
     "ShadowMapDepthShader",
-    shadersDirPath / "ShadowMapDepth.vert",
-    shadersDirPath / "ShadowMapDepth.frag");
-  auto shadowMapShader = instanceSM.LoadShaderProgram(
+    SHADERS_PATH / "ShadowMapDepth.vert",
+    SHADERS_PATH / "ShadowMapDepth.frag");
+  auto shadowMapShader = instanceSM.LoadShader(
     "ShadowMapShader",
-    shadersDirPath / "ShadowMap.vert",
-    shadersDirPath / "ShadowMap.frag");
+    SHADERS_PATH / "ShadowMap.vert",
+    SHADERS_PATH / "ShadowMap.frag");
 
   framebufferShader->Use();
   framebufferShader->SetInt("UScreenTexture", 0);
@@ -372,28 +330,14 @@ void Engine::LoadShaders()
 
 void Engine::LoadTextures()
 {
-  Path texturesDir = "Resources/Textures";
-  texturesDir = texturesDir.lexically_normal();
-
-  for (auto& entry : std::filesystem::recursive_directory_iterator(ROOT_PATH / texturesDir))
-  {
+  for (auto& entry : std::filesystem::recursive_directory_iterator(TEXTURES_PATH))
     if (!std::filesystem::is_directory(entry))
-    {
-      TexturesManager::Instance().LoadTexture(entry);
-    }
-  }
+      TextureManager::Instance().LoadTexture(entry);
 }
 
 void Engine::LoadIcons()
 {
-  Path inconsDir = "Resources/Icons";
-  inconsDir = inconsDir.lexically_normal();
-
-  for (auto& entry : std::filesystem::recursive_directory_iterator(ROOT_PATH / inconsDir))
-  {
+  for (auto& entry : std::filesystem::recursive_directory_iterator(ICONS_PATH))
     if (!std::filesystem::is_directory(entry))
-    {
-      TexturesManager::Instance().LoadTexture(entry);
-    }
-  }
+      TextureManager::Instance().LoadTexture(entry);
 }

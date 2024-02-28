@@ -14,10 +14,10 @@
 class ObjectLoader
 {
 public:
-	ObjectLoader(Path filePath);
+	ObjectLoader(const Path& filePath);
 
 	/* Load data from file and initializes vertex array object */
-	void LoadData(class VertexArray* vao, class VertexArrayConfig* conf);
+	void LoadData(class VertexArray*& vao, class VertexBufferConfig* conf);
 	
 	Material& GetMaterial() { return _material; }
 

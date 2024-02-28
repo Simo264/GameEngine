@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Core/Core.hpp"
-#include "Engine/Graphics/VertexArray.hpp"
+
 #include "Engine/SceneObject.hpp"
 #include "Engine/Transform.hpp"
 #include "Engine/Material.hpp"
@@ -17,7 +17,7 @@ class StaticMesh : public SceneObject
 {
 public:
 	/* Create static mesh from raw data */
-	StaticMesh(VertexArrayData& data, VertexArrayConfig& config);
+	StaticMesh(class VertexArrayData* data, class VertexBufferConfig* config);
 	
 	/* Create static mesh from .obj file */
 	StaticMesh(Path objFilePath);
@@ -25,7 +25,7 @@ public:
 	void Draw(class Shader* shader);
 	void Destroy() const;
 	
-	VertexArray vertexArray;
+	class VertexArray* vertexArray;
 	Transform transform;
 	Path modelPath;
 

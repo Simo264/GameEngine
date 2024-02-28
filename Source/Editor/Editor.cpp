@@ -4,9 +4,10 @@
 #include "Engine/Lighting/DirectionalLight.hpp"
 #include "Engine/Lighting/PointLight.hpp"
 #include "Engine/StaticMesh.hpp"
+#include "Engine/Subsystems/WindowManager.hpp"
 
 #include "Core/FileParser/INIFileParser.hpp"
-#include "Core/FileDialog.hpp"
+#include "Core/Dialog/FileDialog.hpp"
 #include "Core/Log/Logger.hpp"
 
 #include <imgui/imgui.h>
@@ -32,7 +33,7 @@ void Editor::Initialize()
   io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         /* Enable Docking */
   io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;       /* Enable Multi-Viewport / Platform Windows */
   
-  ImGui_ImplGlfw_InitForOpenGL(glfwGetCurrentContext(), true);
+  ImGui_ImplGlfw_InitForOpenGL(WindowManager::Instance().GetContext(), true);
   ImGui_ImplOpenGL3_Init("#version 460");
 
   /* Set ImGui style*/
@@ -72,7 +73,7 @@ void Editor::Initialize()
   menuBar = std::make_unique<MenuBar>(items);
 }
 
-void Editor::ShutDown()
+void Editor::CleanUp()
 {
   ImGui_ImplOpenGL3_Shutdown();
   ImGui_ImplGlfw_Shutdown();
@@ -93,15 +94,17 @@ void Editor::Begin()
 
 void Editor::End()
 {
+  auto& window = WindowManager::Instance();
+
   ImGui::RenderPanel();
   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
   ImGuiIO& io = ImGui::GetIO();
   if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
   {
-    GLFWwindow* backup_current_context = glfwGetCurrentContext();
+    WindowManager::Context backup_current_context = window.GetContext();
     ImGui::UpdatePlatformWindows();
     ImGui::RenderPlatformWindowsDefault();
-    glfwMakeContextCurrent(backup_current_context);
+    window.SetContext(backup_current_context);
   }
 }
 

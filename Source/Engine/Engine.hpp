@@ -11,12 +11,12 @@ public:
 
 	void Initialize();
 	void Run();
-	void ShutDown();
+	void CleanUp();
 
 	Editor editor;
 
 private:
-	void InitOpenGL();
+	void LoadConfig();
 	
 	/* Load shader programs from Shaders/ directory */
 	void LoadShaders();

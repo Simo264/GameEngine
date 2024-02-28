@@ -7419,7 +7419,7 @@ static bool IsRootOfOpenMenuSet()
     const ImGuiPopupData* upper_popup = &g.OpenPopupStack[g.BeginPopupStack.Size];
     if (window->DC.NavLayerCurrent != upper_popup->ParentNavLayer)
         return false;
-    return upper_popup->Window && (upper_popup->Window->Flags & ImGuiWindowFlags_ChildMenu) && ImGui::IsWindowChildOf(upper_popup->Window, window, true, false);
+    return upper_popup->WindowManager && (upper_popup->WindowManager->Flags & ImGuiWindowFlags_ChildMenu) && ImGui::IsWindowChildOf(upper_popup->WindowManager, window, true, false);
 }
 
 bool ImGui::BeginMenuEx(const char* label, const char* icon, bool enabled)
@@ -7521,7 +7521,7 @@ bool ImGui::BeginMenuEx(const char* label, const char* icon, bool enabled)
         // Implement http://bjk5.com/post/44698559168/breaking-down-amazons-mega-dropdown to avoid using timers, so menus feels more reactive.
         bool moving_toward_child_menu = false;
         ImGuiPopupData* child_popup = (g.BeginPopupStack.Size < g.OpenPopupStack.Size) ? &g.OpenPopupStack[g.BeginPopupStack.Size] : NULL; // Popup candidate (testing below)
-        ImGuiWindow* child_menu_window = (child_popup && child_popup->Window && child_popup->Window->ParentWindow == window) ? child_popup->Window : NULL;
+        ImGuiWindow* child_menu_window = (child_popup && child_popup->WindowManager && child_popup->WindowManager->ParentWindow == window) ? child_popup->WindowManager : NULL;
         if (g.HoveredWindow == window && child_menu_window != NULL)
         {
             const float ref_unit = g.FontSize; // FIXME-DPI
@@ -8248,7 +8248,7 @@ ImGuiTabItem* ImGui::TabBarFindMostRecentlySelectedTabForActiveWindow(ImGuiTabBa
     {
         ImGuiTabItem* tab = &tab_bar->Tabs[tab_n];
         if (most_recently_selected_tab == NULL || most_recently_selected_tab->LastFrameSelected < tab->LastFrameSelected)
-            if (tab->Window && tab->Window->WasActive)
+            if (tab->WindowManager && tab->WindowManager->WasActive)
                 most_recently_selected_tab = tab;
     }
     return most_recently_selected_tab;
@@ -8263,8 +8263,8 @@ ImGuiTabItem* ImGui::TabBarGetCurrentTab(ImGuiTabBar* tab_bar)
 
 const char* ImGui::TabBarGetTabName(ImGuiTabBar* tab_bar, ImGuiTabItem* tab)
 {
-    if (tab->Window)
-        return tab->Window->Name;
+    if (tab->WindowManager)
+        return tab->WindowManager->Name;
     if (tab->NameOffset == -1)
         return "N/A";
     IM_ASSERT(tab->NameOffset < tab_bar->TabsNames.Buf.Size);
@@ -8288,7 +8288,7 @@ void ImGui::TabBarAddTab(ImGuiTabBar* tab_bar, ImGuiTabItemFlags tab_flags, ImGu
     new_tab.LastFrameVisible = tab_bar->CurrFrameVisible;   // Required so BeginTabBar() doesn't ditch the tab
     if (new_tab.LastFrameVisible == -1)
         new_tab.LastFrameVisible = g.FrameCount - 1;
-    new_tab.Window = window;                                // Required so tab bar layout can compute the tab width before tab submission
+    new_tab.WindowManager = window;                                // Required so tab bar layout can compute the tab width before tab submission
     tab_bar->Tabs.push_back(new_tab);
 }
 
@@ -8682,7 +8682,7 @@ bool    ImGui::TabItemEx(ImGuiTabBar* tab_bar, const char* label, bool* p_open, 
     const bool is_tab_button = (flags & ImGuiTabItemFlags_Button) != 0;
     tab->LastFrameVisible = g.FrameCount;
     tab->Flags = flags;
-    tab->Window = docked_window;
+    tab->WindowManager = docked_window;
 
     // Append name _WITH_ the zero-terminator
     // (regular tabs are permitted in a DockNode tab bar, but window tabs not permitted in a non-DockNode tab bar)

@@ -23,9 +23,6 @@ public:
 	SharedPointer<T>& GetItemSelected();
 
 private:
-	enum ICONS : int { PLUS = 0, SUN, LAMP, EYE, EYE_HIDDEN, MESH };
-
-	Array<class Texture2D*, 6> _icons;
 	float _iconSize;
 	uint32_t _buttonEyeID;
 

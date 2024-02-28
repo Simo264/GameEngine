@@ -1,4 +1,5 @@
 #include "Shader.hpp"
+#include "Engine/Graphics/Core/GL_Core.hpp"
 #include "Core/Log/Logger.hpp"
 
 /* -----------------------------------------------------
@@ -6,7 +7,8 @@
   * -----------------------------------------------------
 */
 
-void Shader::InitShader(const char* label, const char* vertFile, const char* fragFile)
+Shader::Shader(const char* label, const Path& vertFile, const Path& fragFile)
+  : _shaderID{ 0 }
 {
   _label = label;
 
@@ -43,6 +45,16 @@ void Shader::InitShader(const char* label, const char* vertFile, const char* fra
     return;
   }
 }
+void Shader::Use() const
+{ 
+  glUseProgram(_shaderID); 
+}
+
+void Shader::DestroyShader()
+{ 
+  glDeleteProgram(_shaderID); 
+}
+
 
 void Shader::SetBool(const char* name, bool value) const
 {
@@ -107,13 +119,13 @@ void Shader::SetFloatArray(const char* name, uint32_t count, float* value)
 */
 
 
-void Shader::GetSourceFromFile(const char* sourceFile, String& dest)
+void Shader::GetSourceFromFile(const Path& sourceFile, String& dest)
 {
   OStringStream buffer;
   IFStream file(sourceFile);
   if (!file.is_open())
   {
-    CONSOLE_ERROR("Shader::getSourceFromFile error on opening file {}", sourceFile);
+    CONSOLE_ERROR("Shader::getSourceFromFile error on opening file {}", sourceFile.string());
     return;
   }
 

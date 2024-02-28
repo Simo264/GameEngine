@@ -3,18 +3,31 @@
 #include "Core/Core.hpp"
 
 /* ------------------------------------ 
-      Vertex array configuration class
+      Vertex buffer configuration 
   ------------------------------------ */
-class VertexArrayConfig
+class VertexBufferConfig
 {
 public:
-  VertexArrayConfig();
-  void PushAttribute(uint8_t attribute);
-  void PushAttributes(std::initializer_list<uint8_t> values);
+  VertexBufferConfig()
+  {
+    numAttrs = 0;
+    layout.fill(0);
+  }
+  
+  void PushAttribute(uint8_t attribute)
+  {
+    layout[numAttrs++] = attribute;
+  }
+  
+  void PushAttributes(std::initializer_list<uint8_t> values) 
+  {
+    for (int i = numAttrs; i < values.size(); i++, numAttrs++)
+      layout[i] = *(values.begin() + i);
+  }
 
   /* 
-    ex: layout = [4, 3, 2]
-    layout=0: in vec4 components (x,y,z,w)
+    ex: layout = [3, 3, 2]
+    layout=0: in vec3 components (x,y,z)
     layout=1: in vec3 components (x,y,z)
     layout=2: in vec2 components (x,y)
   */
@@ -53,22 +66,20 @@ struct VertexArrayData
 class VertexArray
 {
 public:
-  VertexArray();
+  VertexArray(const VertexArrayData& data, const VertexBufferConfig& config);
 
   /* Disable copy constructor */
   VertexArray(VertexArray const&) = delete;
   VertexArray& operator=(VertexArray const&) = delete;
 
-  void InitVertexArray(VertexArrayData& data, VertexArrayConfig& config);
-  void DestroyVertexArray() const;
-
-  void BindVertexArray()   const { glBindVertexArray(_vao); };
-  void UnbindVertexArray() const { glBindVertexArray(0); };
+  void Bind() const;
+  void Unbind() const;
+  void Destroy() const;
 
   const uint32_t& VertexArrayID() const { return _vao; }
   const uint32_t& VertexBufferID() const { return _vbo; }
   const uint32_t& IndexBufferID() const { return _ebo; }
-  const VertexArrayConfig& GetConfig() const { return _config; }
+  const VertexBufferConfig& GetConfig() const { return _config; }
   
   /* Copy the vertex buffer data into writeBuffer */
   void CopyVertexBufferData(uint32_t writeBuffer);
@@ -81,8 +92,10 @@ public:
   uint32_t vboSize;     /* Cache the vertex buffer size (in byte) */
   
 private:
-  VertexArrayConfig _config; /* Used in instancing */
+  VertexBufferConfig _config; /* Used in instancing */
   uint32_t _vao;
   uint32_t _vbo;
   uint32_t _ebo;
+  
+  void InitVertexArray(const VertexArrayData& data, const VertexBufferConfig& config);
 };

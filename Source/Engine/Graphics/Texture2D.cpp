@@ -1,4 +1,5 @@
 #include "Texture2D.hpp"
+#include "Engine/Graphics/Core/GL_Core.hpp"
 #include "Core/Log/Logger.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -9,7 +10,8 @@
  * -----------------------------------------------------
 */
 
-void Texture2D::InitTexture(Path path, bool gammaCorrection)
+Texture2D::Texture2D(Path path, bool gammaCorrection)
+  : textureID{ 0 }
 {
   texturePath = path;
 
@@ -23,6 +25,16 @@ void Texture2D::InitTexture(Path path, bool gammaCorrection)
   LoadImageData(gammaCorrection);
 
   glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void Texture2D::Destroy() const 
+{ 
+  glDeleteTextures(1, &textureID); 
+}
+
+void Texture2D::Bind() const 
+{
+  glBindTexture(GL_TEXTURE_2D, textureID); 
 }
 
 /* -----------------------------------------------------

@@ -2,8 +2,8 @@
 #include "Engine/Scene.hpp"
 #include "Engine/Graphics/Shader.hpp"
 #include "Engine/Graphics/Texture2D.hpp"
-#include "Engine/Subsystems/TexturesManager.hpp"
-#include "Engine/Subsystems/ShadersManager.hpp"
+#include "Engine/Subsystems/TextureManager.hpp"
+#include "Engine/Subsystems/ShaderManager.hpp"
 #include "Core/Log/Logger.hpp"
 
 #include <imgui/imgui.h>
@@ -25,14 +25,6 @@ OutlinerPanel::OutlinerPanel(const char* panelName)
   _dLightSelected = nullptr;
   _pLightSelected = nullptr;
   _sMeshSelected = nullptr;
-
-  auto& instanceTM = TexturesManager::Instance();
-  _icons[SUN] = instanceTM.GetTextureByPath(ROOT_PATH / "Resources/Icons/icon-sun.png");
-  _icons[LAMP] = instanceTM.GetTextureByPath(ROOT_PATH / "Resources/Icons/icon-lamp.png");
-  _icons[EYE] = instanceTM.GetTextureByPath(ROOT_PATH / "Resources/Icons/icon-eye.png");
-  _icons[EYE_HIDDEN] = instanceTM.GetTextureByPath(ROOT_PATH / "Resources/Icons/icon-eye-hidden.png");
-  _icons[MESH] = instanceTM.GetTextureByPath(ROOT_PATH / "Resources/Icons/icon-mesh.png");
-  _icons[PLUS] = instanceTM.GetTextureByPath(ROOT_PATH / "Resources/Icons/icon-plus.png");
 }
 
 template<>
@@ -63,12 +55,15 @@ void OutlinerPanel::RenderPanel(Scene* scene)
 
     _buttonEyeID = 1;
 
+    auto& instanceTM = TextureManager::Instance();
+
     /* Directional light row */
     if (scene->HasDirLight())
     {
       ImGui::TableNextRow();
       ImGui::TableSetColumnIndex(0);
-      ImGui::Image((ImTextureID)_icons[SUN]->textureID, { _iconSize,_iconSize });
+      auto iconSun = instanceTM.GetTextureByPath(ICONS_PATH / "icon-sun.png");
+      ImGui::Image((ImTextureID)iconSun->textureID, { _iconSize,_iconSize });
       ImGui::TableSetColumnIndex(1);
 
       ImGui::PushID(scene->sceneDLight->GetID());
@@ -90,7 +85,8 @@ void OutlinerPanel::RenderPanel(Scene* scene)
       {
         ImGui::TableNextRow();
         ImGui::TableSetColumnIndex(0);
-        ImGui::Image((ImTextureID)_icons[LAMP]->textureID, { _iconSize,_iconSize });
+        auto iconLamp = instanceTM.GetTextureByPath(ICONS_PATH / "icon-lamp.png");
+        ImGui::Image((ImTextureID)iconLamp->textureID, { _iconSize,_iconSize });
         ImGui::TableSetColumnIndex(1);
         ImGui::PushID(scenePLight->GetID());
         if (ImGui::Selectable(scenePLight->tagName.c_str(), (_pLightSelected == scenePLight)))
@@ -112,7 +108,8 @@ void OutlinerPanel::RenderPanel(Scene* scene)
       {
         ImGui::TableNextRow();
         ImGui::TableSetColumnIndex(0);
-        ImGui::Image((ImTextureID)_icons[MESH]->textureID, { _iconSize,_iconSize });
+        auto iconMesh = instanceTM.GetTextureByPath(ICONS_PATH / "icon-mesh.png");
+        ImGui::Image((ImTextureID)iconMesh->textureID, { _iconSize,_iconSize });
         ImGui::TableSetColumnIndex(1);
         ImGui::PushID(sceneMesh->GetID());
         if (ImGui::Selectable(sceneMesh->tagName.c_str(), (_sMeshSelected == sceneMesh)))
@@ -146,7 +143,9 @@ void OutlinerPanel::AddSceneComponentButton(const char* labelPopup)
   ImGui::PushStyleColor(ImGuiCol_ButtonHovered, { 0.75f,0.75f,0.75f,1.f });
   ImGui::PushStyleColor(ImGuiCol_ButtonActive, { 0.5f,0.5f,0.5f,1.f });
 
-  if (ImGui::ImageButton((ImTextureID)_icons[PLUS]->textureID, { 24,24 }))
+  auto& instanceTM = TextureManager::Instance();
+  auto iconPlus = instanceTM.GetTextureByPath(ICONS_PATH / "icon-plus.png");
+  if (ImGui::ImageButton((ImTextureID)iconPlus->textureID, { 24,24 }))
     ImGui::OpenPopup(labelPopup);
 
   ImGui::InvisibleButton("##margin-bottom", { 8,8 });
@@ -205,24 +204,21 @@ void OutlinerPanel::AddSceneComponentPopup(Scene* scene)
       {
       case 0: /* Cube mesh */
       {
-        model = "Assets/Shapes/Cube/Cube.obj";
-        model = model.lexically_normal();
+        model = ASSETS_PATH / (Path("Shapes/Cube/Cube.obj").lexically_normal());
         auto obj = std::make_shared<StaticMesh>(ROOT_PATH / model);
         scene->AddSceneObject(obj);
         break;
       }
       case 1: /* Plane mesh */
       {
-        model = "Assets/Shapes/Plane/Plane.obj";
-        model = model.lexically_normal();
+        model = ASSETS_PATH / (Path("Shapes/Plane/Plane.obj").lexically_normal());
         auto obj = std::make_shared<StaticMesh>(ROOT_PATH / model);
         scene->AddSceneObject(obj);
         break;
       }
       case 2: /* Cylinder mesh */
       {
-        model = "Assets/Shapes/Cylinder/Cylinder.obj";
-        model = model.lexically_normal();
+        model = ASSETS_PATH / (Path("Shapes/Cylinder/Cylinder.obj").lexically_normal());
         auto obj = std::make_shared<StaticMesh>(ROOT_PATH / model);
         scene->AddSceneObject(obj);
         break;
@@ -235,50 +231,59 @@ void OutlinerPanel::AddSceneComponentPopup(Scene* scene)
 
 void OutlinerPanel::ToggleVisibility(SharedPointer<DirectionalLight>& dLight)
 {
+  auto& instanceTM = TextureManager::Instance();
   if (dLight->visible)
   {
-    if (ImGui::ImageButtonEx(_buttonEyeID++, (ImTextureID)_icons[EYE]->textureID, { _iconSize,_iconSize }, { 0,0 }, { 1,1 }, { 0,0,0,0 }, { 1,1,1,1 }))
+    auto iconEye = instanceTM.GetTextureByPath(ICONS_PATH / "icon-eye.png");
+    if (ImGui::ImageButtonEx(_buttonEyeID++, (ImTextureID)iconEye->textureID, { _iconSize,_iconSize }, { 0,0 }, { 1,1 }, { 0,0,0,0 }, { 1,1,1,1 }))
       dLight->visible = false;
   }
   else
   {
-    if (ImGui::ImageButtonEx(_buttonEyeID++, (ImTextureID)_icons[EYE_HIDDEN]->textureID, { _iconSize,_iconSize }, { 0,0 }, { 1,1 }, { 0,0,0,0 }, { 1,1,1,1 }))
+    auto iconHiddenEye = instanceTM.GetTextureByPath(ICONS_PATH / "icon-eye-hidden.png");
+    if (ImGui::ImageButtonEx(_buttonEyeID++, (ImTextureID)iconHiddenEye->textureID, { _iconSize,_iconSize }, { 0,0 }, { 1,1 }, { 0,0,0,0 }, { 1,1,1,1 }))
       dLight->visible = true;
   }
   
-  //auto shader = ShadersManager::Instance().GetShader("SceneShader");
+  //auto shader = ShaderManager::Instance().GetShader("SceneShader");
   //shader->SetBool("UDirLightVisible", dLight->visible);
 }
 
 void OutlinerPanel::ToggleVisibility(SharedPointer<PointLight>& pLight)
 {
+  auto& instanceTM = TextureManager::Instance();
   if (pLight->visible)
   {
-    if (ImGui::ImageButtonEx(_buttonEyeID++, (ImTextureID)_icons[EYE]->textureID, { _iconSize,_iconSize }, { 0,0 }, { 1,1 }, { 0,0,0,0 }, { 1,1,1,1 }))
+    auto iconEye = instanceTM.GetTextureByPath(ICONS_PATH / "icon-eye.png");
+    if (ImGui::ImageButtonEx(_buttonEyeID++, (ImTextureID)iconEye->textureID, { _iconSize,_iconSize }, { 0,0 }, { 1,1 }, { 0,0,0,0 }, { 1,1,1,1 }))
       pLight->visible = false;
   }
   else
   {
-    if (ImGui::ImageButtonEx(_buttonEyeID++, (ImTextureID)_icons[EYE_HIDDEN]->textureID, { _iconSize,_iconSize }, { 0,0 }, { 1,1 }, { 0,0,0,0 }, { 1,1,1,1 }))
+    auto iconHiddenEye = instanceTM.GetTextureByPath(ICONS_PATH / "icon-eye-hidden.png");
+    if (ImGui::ImageButtonEx(_buttonEyeID++, (ImTextureID)iconHiddenEye->textureID, { _iconSize,_iconSize }, { 0,0 }, { 1,1 }, { 0,0,0,0 }, { 1,1,1,1 }))
       pLight->visible = true;
   }
 
   //char uniform[32];
   //sprintf_s(uniform, "UPointLightVisible[%d]", sceneObj->GetID());
-  //auto shader = ShadersManager::Instance().GetShader("SceneShader");
+  //auto shader = ShaderManager::Instance().GetShader("SceneShader");
   //shader->SetInt(uniform, (int) sceneObj->visible);
 }
 
 void OutlinerPanel::ToggleVisibility(SharedPointer<StaticMesh>& sMesh)
 {
+  auto& instanceTM = TextureManager::Instance();
   if (sMesh->visible)
   {
-    if (ImGui::ImageButtonEx(_buttonEyeID++, (ImTextureID)_icons[EYE]->textureID, { _iconSize,_iconSize }, { 0,0 }, { 1,1 }, { 0,0,0,0 }, { 1,1,1,1 }))
+    auto iconEye = instanceTM.GetTextureByPath(ICONS_PATH / "icon-eye.png");
+    if (ImGui::ImageButtonEx(_buttonEyeID++, (ImTextureID)iconEye->textureID, { _iconSize,_iconSize }, { 0,0 }, { 1,1 }, { 0,0,0,0 }, { 1,1,1,1 }))
       sMesh->visible = false;
   }
   else
   {
-    if (ImGui::ImageButtonEx(_buttonEyeID++, (ImTextureID)_icons[EYE_HIDDEN]->textureID, { _iconSize,_iconSize }, { 0,0 }, { 1,1 }, { 0,0,0,0 }, { 1,1,1,1 }))
+    auto iconHiddenEye = instanceTM.GetTextureByPath(ICONS_PATH / "icon-eye-hidden.png");
+    if (ImGui::ImageButtonEx(_buttonEyeID++, (ImTextureID)iconHiddenEye->textureID, { _iconSize,_iconSize }, { 0,0 }, { 1,1 }, { 0,0,0,0 }, { 1,1,1,1 }))
       sMesh->visible = true;
   }
 }

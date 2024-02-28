@@ -1,7 +1,8 @@
 #include "Camera.hpp"
 
-#include "Engine/Window.hpp"
+#include "Engine/Subsystems/WindowManager.hpp"
 #include "Core/Log/Logger.hpp"
+#include <GLFW/glfw3.h>
 
 /* -----------------------------------------------------
  *          PUBLIC METHODS
@@ -18,8 +19,10 @@ Camera::Camera(Vec3f position, float fov)
     _front{ 0.0f, 1.0f, 0.0f },
     _worldUp{ 0.0f, 1.0f, 0.0f }
 {
-  Window window(glfwGetCurrentContext());
-  Vec2i windowSize = window.GetWindowSize();
+  ;
+  Vec2i windowSize; 
+  WindowManager::Instance().GetWindowSize(windowSize.x, windowSize.y);
+  
   _lastX = ((float)windowSize.x / 2.0f);
   _lastY = ((float)windowSize.y / 2.0f);
 
@@ -30,10 +33,10 @@ Camera::Camera(Vec3f position, float fov)
 
 void Camera::ProcessInput(const double deltaTime)
 {
-  Window window(glfwGetCurrentContext());
+  auto& window = WindowManager::Instance();
 
   Vec2d mousePos;
-  window.GetCursorPosition(mousePos);
+  window.GetCursorPosition(mousePos.x, mousePos.y);
 
   FreeCameraWalk(&window, deltaTime);
   
@@ -64,7 +67,7 @@ void Camera::UpdateCameraVectors()
   _up = glm::normalize(glm::cross(_right, _front));
 }
 
-void Camera::FreeCameraWalk(const Window* window, const double deltaTime)
+void Camera::FreeCameraWalk(const WindowManager* window, const double deltaTime)
 {
   const float velocity = movementSpeed * deltaTime;
 

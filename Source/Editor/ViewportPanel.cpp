@@ -2,7 +2,8 @@
 #include "Engine/Graphics/FrameBuffer.hpp"
 #include "Engine/SceneObject.hpp"
 #include "Engine/StaticMesh.hpp"
-#include "Engine/Window.hpp"
+#include "Engine/Subsystems/WindowManager.hpp"
+#include "Engine/Graphics/Core/GL_Core.hpp"
 #include "Core/Log/Logger.hpp"
 
 #include <imgui/imgui.h>
@@ -42,7 +43,7 @@ void ViewportPanel::RenderPanel(FrameBuffer* framebuffer)
 
   if (framebufferSize.x != viewportSize.x || framebufferSize.y != viewportSize.y)
   {
-    framebuffer->RescaleFrameBuffer(viewportSize);
+    framebuffer->RescaleFrameBuffer(viewportSize.x, viewportSize.y);
     glViewport(0, 0, viewportSize.x, viewportSize.y);
   }
   else

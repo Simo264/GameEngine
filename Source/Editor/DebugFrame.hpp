@@ -16,7 +16,7 @@ public:
 	void RenderFrame();
 
 private:
-	float _timeOld;
-	float _timeNew;
-	float _framerate;
+	TimePoint _t1;
+	TimePoint _t2;
+	double _framerate;
 };

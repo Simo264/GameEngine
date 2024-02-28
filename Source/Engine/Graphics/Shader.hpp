@@ -9,15 +9,14 @@
 class Shader
 {
 public:
-  Shader() : _shaderID{ 0 } { }
+  Shader(const char* label, const Path& vertFile, const Path& fragFile);
 
   /* Disable copy constructor */
   Shader(Shader const&) = delete;
   Shader& operator=(Shader const&) = delete;
 
-  void InitShader(const char* label, const char* vertFile, const char* fragFile);
-  void Use() const { glUseProgram(_shaderID); }
-  void DestroyShader() { glDeleteProgram(_shaderID); }
+  void Use() const; 
+  void DestroyShader();
   const String& Label() const { return _label; }
 
   void SetBool(const char* name, bool value) const;
@@ -38,7 +37,7 @@ private:
   uint32_t _shaderID;
   String   _label;
 
-  void GetSourceFromFile(const char* sourceFile, String& dest);
+  void GetSourceFromFile(const Path& sourceFile, String& dest);
   bool Compile(uint32_t& shader, const char* src);
   bool CreateAndLink(uint32_t vShader, uint32_t fShader);
 };

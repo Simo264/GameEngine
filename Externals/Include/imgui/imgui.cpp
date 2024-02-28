@@ -5238,7 +5238,7 @@ static void ImGui::RenderDimmedBackgrounds()
     {
         if (viewportPanel == viewports_already_dimmed[0] || viewportPanel == viewports_already_dimmed[1])
             continue;
-        if (modal_window && viewportPanel->Window && IsWindowAbove(viewportPanel->Window, modal_window))
+        if (modal_window && viewportPanel->WindowManager && IsWindowAbove(viewportPanel->WindowManager, modal_window))
             continue;
         ImDrawList* draw_list = GetForegroundDrawList(viewportPanel);
         const ImU32 dim_bg_col = GetColorU32(dim_bg_for_modal ? ImGuiCol_ModalWindowDimBg : ImGuiCol_NavWindowingDimBg, g.DimBgRatio);
@@ -6688,7 +6688,7 @@ ImGuiWindow* ImGui::FindBlockingModal(ImGuiWindow* window)
     // Find a modal that has common parent with specified window. Specified window should be positioned behind that modal.
     for (ImGuiPopupData& popup_data : g.OpenPopupStack)
     {
-        ImGuiWindow* popup_window = popup_data.Window;
+        ImGuiWindow* popup_window = popup_data.WindowManager;
         if (popup_window == NULL || !(popup_window->Flags & ImGuiWindowFlags_Modal))
             continue;
         if (!popup_window->Active && !popup_window->WasActive)      // Check WasActive, because this code may run before popup renders on current frame, also check Active to handle newly created windows.
@@ -6740,7 +6740,7 @@ bool ImGui::Begin(const char* name, bool* p_open, ImGuiWindowFlags flags)
     {
         ImGuiPopupData& popup_ref = g.OpenPopupStack[g.BeginPopupStack.Size];
         window_just_activated_by_user |= (window->PopupId != popup_ref.PopupId); // We recycle popups so treat window as activated if popup id changed
-        window_just_activated_by_user |= (window != popup_ref.Window);
+        window_just_activated_by_user |= (window != popup_ref.WindowManager);
     }
 
     // Update Flags, LastFrameActive, BeginOrderXXX fields
@@ -6799,7 +6799,7 @@ bool ImGui::Begin(const char* name, bool* p_open, ImGuiWindowFlags flags)
     }
 
     // Parent window is latched only on the first call to Begin() of the frame, so further append-calls can be done from a different window stack
-    ImGuiWindow* parent_window_in_stack = (window->DockIsActive && window->DockNode->HostWindow) ? window->DockNode->HostWindow : g.CurrentWindowStack.empty() ? NULL : g.CurrentWindowStack.back().Window;
+    ImGuiWindow* parent_window_in_stack = (window->DockIsActive && window->DockNode->HostWindow) ? window->DockNode->HostWindow : g.CurrentWindowStack.empty() ? NULL : g.CurrentWindowStack.back().WindowManager;
     ImGuiWindow* parent_window = first_begin_of_the_frame ? ((flags & (ImGuiWindowFlags_ChildWindow | ImGuiWindowFlags_Popup)) ? parent_window_in_stack : NULL) : window->ParentWindow;
     IM_ASSERT(parent_window != NULL || !(flags & ImGuiWindowFlags_ChildWindow));
 
@@ -6810,7 +6810,7 @@ bool ImGui::Begin(const char* name, bool* p_open, ImGuiWindowFlags flags)
     // Add to stack
     g.CurrentWindow = window;
     ImGuiWindowStackData window_stack_data;
-    window_stack_data.Window = window;
+    window_stack_data.WindowManager = window;
     window_stack_data.ParentLastItemDataBackup = g.LastItemData;
     window_stack_data.StackSizesOnBegin.SetToContextState(&g);
     g.CurrentWindowStack.push_back(window_stack_data);
@@ -6835,7 +6835,7 @@ bool ImGui::Begin(const char* name, bool* p_open, ImGuiWindowFlags flags)
     if (flags & ImGuiWindowFlags_Popup)
     {
         ImGuiPopupData& popup_ref = g.OpenPopupStack[g.BeginPopupStack.Size];
-        popup_ref.Window = window;
+        popup_ref.WindowManager = window;
         popup_ref.ParentNavLayer = parent_window_in_stack->DC.NavLayerCurrent;
         g.BeginPopupStack.push_back(popup_ref);
         window->PopupId = popup_ref.PopupId;
@@ -6922,7 +6922,7 @@ bool ImGui::Begin(const char* name, bool* p_open, ImGuiWindowFlags flags)
         // Update stored window name when it changes (which can _only_ happen with the "###" operator, so the ID would stay unchanged).
         // The title bar always display the 'name' parameter, so we only update the string storage if it needs to be visible to the end-user elsewhere.
         bool window_title_visible_elsewhere = false;
-        if ((window->Viewport && window->Viewport->Window == window) || (window->DockIsActive))
+        if ((window->Viewport && window->Viewport->WindowManager == window) || (window->DockIsActive))
             window_title_visible_elsewhere = true;
         else if (g.NavWindowingListWindow != NULL && (window->Flags & ImGuiWindowFlags_NoNavFocus) == 0)   // Window titles visible when using CTRL+TAB
             window_title_visible_elsewhere = true;
@@ -7611,7 +7611,7 @@ void ImGui::End()
         g.BeginPopupStack.pop_back();
     g.CurrentWindowStack.back().StackSizesOnBegin.CompareWithContextState(&g);
     g.CurrentWindowStack.pop_back();
-    SetCurrentWindow(g.CurrentWindowStack.Size == 0 ? NULL : g.CurrentWindowStack.back().Window);
+    SetCurrentWindow(g.CurrentWindowStack.Size == 0 ? NULL : g.CurrentWindowStack.back().WindowManager);
     if (g.CurrentWindow)
         SetCurrentViewport(g.CurrentWindow, g.CurrentWindow->Viewport);
 }
@@ -10077,7 +10077,7 @@ static void ImGui::ErrorCheckEndFrameSanityChecks()
     {
         if (g.CurrentWindowStack.Size > 1)
         {
-            ImGuiWindow* window = g.CurrentWindowStack.back().Window; // <-- This window was not Ended!
+            ImGuiWindow* window = g.CurrentWindowStack.back().WindowManager; // <-- This window was not Ended!
             IM_ASSERT_USER_ERROR(g.CurrentWindowStack.Size == 1, "Mismatched Begin/BeginChild vs End/EndChild calls: did you forget to call End/EndChild?");
             IM_UNUSED(window);
             while (g.CurrentWindowStack.Size > 1)
@@ -11137,7 +11137,7 @@ ImGuiWindow* ImGui::GetTopMostPopupModal()
 {
     ImGuiContext& g = *GImGui;
     for (int n = g.OpenPopupStack.Size - 1; n >= 0; n--)
-        if (ImGuiWindow* popup = g.OpenPopupStack.Data[n].Window)
+        if (ImGuiWindow* popup = g.OpenPopupStack.Data[n].WindowManager)
             if (popup->Flags & ImGuiWindowFlags_Modal)
                 return popup;
     return NULL;
@@ -11148,7 +11148,7 @@ ImGuiWindow* ImGui::GetTopMostAndVisiblePopupModal()
 {
     ImGuiContext& g = *GImGui;
     for (int n = g.OpenPopupStack.Size - 1; n >= 0; n--)
-        if (ImGuiWindow* popup = g.OpenPopupStack.Data[n].Window)
+        if (ImGuiWindow* popup = g.OpenPopupStack.Data[n].WindowManager)
             if ((popup->Flags & ImGuiWindowFlags_Modal) && IsWindowActiveAndVisible(popup))
                 return popup;
     return NULL;
@@ -11183,7 +11183,7 @@ void ImGui::OpenPopupEx(ImGuiID id, ImGuiPopupFlags popup_flags)
 
     ImGuiPopupData popup_ref; // Tagged as new ref as Window will be set back to NULL if we write this into OpenPopupStack.
     popup_ref.PopupId = id;
-    popup_ref.Window = NULL;
+    popup_ref.WindowManager = NULL;
     popup_ref.BackupNavWindow = g.NavWindow;            // When popup closes focus may be restored to NavWindow (depend on window type).
     popup_ref.OpenFrameCount = g.FrameCount;
     popup_ref.OpenParentId = parent_window->IDStack.back();
@@ -11234,10 +11234,10 @@ void ImGui::ClosePopupsOverWindow(ImGuiWindow* ref_window, bool restore_focus_to
         for (; popup_count_to_keep < g.OpenPopupStack.Size; popup_count_to_keep++)
         {
             ImGuiPopupData& popup = g.OpenPopupStack[popup_count_to_keep];
-            if (!popup.Window)
+            if (!popup.WindowManager)
                 continue;
-            IM_ASSERT((popup.Window->Flags & ImGuiWindowFlags_Popup) != 0);
-            if (popup.Window->Flags & ImGuiWindowFlags_ChildWindow)
+            IM_ASSERT((popup.WindowManager->Flags & ImGuiWindowFlags_Popup) != 0);
+            if (popup.WindowManager->Flags & ImGuiWindowFlags_ChildWindow)
                 continue;
 
             // Trim the stack unless the popup is a direct parent of the reference window (the reference window is often the NavWindow)
@@ -11247,7 +11247,7 @@ void ImGui::ClosePopupsOverWindow(ImGuiWindow* ref_window, bool restore_focus_to
             //     Window -> Popup1 -> Popup1_Child -> Popup2 -> Popup2_Child
             bool ref_window_is_descendent_of_popup = false;
             for (int n = popup_count_to_keep; n < g.OpenPopupStack.Size; n++)
-                if (ImGuiWindow* popup_window = g.OpenPopupStack[n].Window)
+                if (ImGuiWindow* popup_window = g.OpenPopupStack[n].WindowManager)
                     //if (popup_window->RootWindowDockTree == ref_window->RootWindowDockTree) // FIXME-MERGE
                     if (IsWindowWithinBeginStackOf(ref_window, popup_window))
                     {
@@ -11272,7 +11272,7 @@ void ImGui::ClosePopupsExceptModals()
     int popup_count_to_keep;
     for (popup_count_to_keep = g.OpenPopupStack.Size; popup_count_to_keep > 0; popup_count_to_keep--)
     {
-        ImGuiWindow* window = g.OpenPopupStack[popup_count_to_keep - 1].Window;
+        ImGuiWindow* window = g.OpenPopupStack[popup_count_to_keep - 1].WindowManager;
         if (!window || (window->Flags & ImGuiWindowFlags_Modal))
             break;
     }
@@ -11287,7 +11287,7 @@ void ImGui::ClosePopupToLevel(int remaining, bool restore_focus_to_window_under_
     IM_ASSERT(remaining >= 0 && remaining < g.OpenPopupStack.Size);
 
     // Trim open popup stack
-    ImGuiWindow* popup_window = g.OpenPopupStack[remaining].Window;
+    ImGuiWindow* popup_window = g.OpenPopupStack[remaining].WindowManager;
     ImGuiWindow* popup_backup_nav_window = g.OpenPopupStack[remaining].BackupNavWindow;
     g.OpenPopupStack.resize(remaining);
 
@@ -11312,8 +11312,8 @@ void ImGui::CloseCurrentPopup()
     // Closing a menu closes its top-most parent popup (unless a modal)
     while (popup_idx > 0)
     {
-        ImGuiWindow* popup_window = g.OpenPopupStack[popup_idx].Window;
-        ImGuiWindow* parent_popup_window = g.OpenPopupStack[popup_idx - 1].Window;
+        ImGuiWindow* popup_window = g.OpenPopupStack[popup_idx].WindowManager;
+        ImGuiWindow* parent_popup_window = g.OpenPopupStack[popup_idx - 1].WindowManager;
         bool close_parent = false;
         if (popup_window && (popup_window->Flags & ImGuiWindowFlags_ChildMenu))
             if (parent_popup_window && !(parent_popup_window->Flags & ImGuiWindowFlags_MenuBar))
@@ -11873,7 +11873,7 @@ static void ImGui::NavApplyItemToResult(ImGuiNavItemData* result)
 {
     ImGuiContext& g = *GImGui;
     ImGuiWindow* window = g.CurrentWindow;
-    result->Window = window;
+    result->WindowManager = window;
     result->ID = g.LastItemData.ID;
     result->FocusScopeId = g.CurrentFocusScopeId;
     result->InFlags = g.LastItemData.InFlags;
@@ -12136,7 +12136,7 @@ static ImGuiWindow* ImGui::NavRestoreLastChildNavWindow(ImGuiWindow* window)
         return window->NavLastChildNavWindow;
     if (window->DockNodeAsHost && window->DockNodeAsHost->TabBar)
         if (ImGuiTabItem* tab = TabBarFindMostRecentlySelectedTabForActiveWindow(window->DockNodeAsHost->TabBar))
-            return tab->Window;
+            return tab->WindowManager;
     return window;
 }
 
@@ -12650,29 +12650,29 @@ void ImGui::NavMoveRequestApplyResult()
             result = &g.NavMoveResultLocalVisible;
 
     // Maybe entering a flattened child from the outside? In this case solve the tie using the regular scoring rules.
-    if (result != &g.NavMoveResultOther && g.NavMoveResultOther.ID != 0 && g.NavMoveResultOther.Window->ParentWindow == g.NavWindow)
+    if (result != &g.NavMoveResultOther && g.NavMoveResultOther.ID != 0 && g.NavMoveResultOther.WindowManager->ParentWindow == g.NavWindow)
         if ((g.NavMoveResultOther.DistBox < result->DistBox) || (g.NavMoveResultOther.DistBox == result->DistBox && g.NavMoveResultOther.DistCenter < result->DistCenter))
             result = &g.NavMoveResultOther;
-    IM_ASSERT(g.NavWindow && result->Window);
+    IM_ASSERT(g.NavWindow && result->WindowManager);
 
     // Scroll to keep newly navigated item fully into view.
     if (g.NavLayer == ImGuiNavLayer_Main)
     {
-        ImRect rect_abs = WindowRectRelToAbs(result->Window, result->RectRel);
-        ScrollToRectEx(result->Window, rect_abs, g.NavMoveScrollFlags);
+        ImRect rect_abs = WindowRectRelToAbs(result->WindowManager, result->RectRel);
+        ScrollToRectEx(result->WindowManager, rect_abs, g.NavMoveScrollFlags);
 
         if (g.NavMoveFlags & ImGuiNavMoveFlags_ScrollToEdgeY)
         {
             // FIXME: Should remove this? Or make more precise: use ScrollToRectEx() with edge?
-            float scroll_target = (g.NavMoveDir == ImGuiDir_Up) ? result->Window->ScrollMax.y : 0.0f;
-            SetScrollY(result->Window, scroll_target);
+            float scroll_target = (g.NavMoveDir == ImGuiDir_Up) ? result->WindowManager->ScrollMax.y : 0.0f;
+            SetScrollY(result->WindowManager, scroll_target);
         }
     }
 
-    if (g.NavWindow != result->Window)
+    if (g.NavWindow != result->WindowManager)
     {
-        IMGUI_DEBUG_LOG_FOCUS("[focus] NavMoveRequest: SetNavWindow(\"%s\")\n", result->Window->Name);
-        g.NavWindow = result->Window;
+        IMGUI_DEBUG_LOG_FOCUS("[focus] NavMoveRequest: SetNavWindow(\"%s\")\n", result->WindowManager->Name);
+        g.NavWindow = result->WindowManager;
         g.NavLastValidSelectionUserData = ImGuiSelectionUserData_Invalid;
     }
     if (g.ActiveId != result->ID)
@@ -12754,7 +12754,7 @@ static void ImGui::NavUpdateCancelRequest()
         SetNavID(child_window->ChildId, ImGuiNavLayer_Main, 0, WindowRectAbsToRel(parent_window, child_rect));
         NavRestoreHighlightAfterMove();
     }
-    else if (g.OpenPopupStack.Size > 0 && g.OpenPopupStack.back().Window != NULL && !(g.OpenPopupStack.back().Window->Flags & ImGuiWindowFlags_Modal))
+    else if (g.OpenPopupStack.Size > 0 && g.OpenPopupStack.back().WindowManager != NULL && !(g.OpenPopupStack.back().WindowManager->Flags & ImGuiWindowFlags_Modal))
     {
         // Close open popup/menu
         ClosePopupToLevel(g.OpenPopupStack.Size - 1, true);
@@ -14274,12 +14274,12 @@ void ImGui::SetCurrentViewport(ImGuiWindow* current_window, ImGuiViewportP* view
 void ImGui::SetWindowViewport(ImGuiWindow* window, ImGuiViewportP* viewportPanel)
 {
     // Abandon viewport
-    if (window->ViewportOwned && window->Viewport->Window == window)
+    if (window->ViewportOwned && window->Viewport->WindowManager == window)
         window->Viewport->Size = ImVec2(0.0f, 0.0f);
 
     window->Viewport = viewportPanel;
     window->ViewportId = viewportPanel->ID;
-    window->ViewportOwned = (viewportPanel->Window == window);
+    window->ViewportOwned = (viewportPanel->WindowManager == window);
 }
 
 static bool ImGui::GetWindowAlwaysWantOwnViewport(ImGuiWindow* window)
@@ -14343,7 +14343,7 @@ static bool ImGui::UpdateTryMergeWindowIntoHostViewports(ImGuiWindow* window)
 void ImGui::TranslateWindowsInViewport(ImGuiViewportP* viewportPanel, const ImVec2& old_pos, const ImVec2& new_pos)
 {
     ImGuiContext& g = *GImGui;
-    IM_ASSERT(viewportPanel->Window == NULL && (viewportPanel->Flags & ImGuiViewportFlags_CanHostOtherWindows));
+    IM_ASSERT(viewportPanel->WindowManager == NULL && (viewportPanel->Flags & ImGuiViewportFlags_CanHostOtherWindows));
 
     // 1) We test if ImGuiConfigFlags_ViewportsEnable was just toggled, which allows us to conveniently
     // translate imgui windows from OS-window-local to absolute coordinates or vice-versa.
@@ -14362,9 +14362,9 @@ void ImGui::TranslateWindowsInViewport(ImGuiViewportP* viewportPanel, const ImVe
 void ImGui::ScaleWindowsInViewport(ImGuiViewportP* viewportPanel, float scale)
 {
     ImGuiContext& g = *GImGui;
-    if (viewportPanel->Window)
+    if (viewportPanel->WindowManager)
     {
-        ScaleWindow(viewportPanel->Window, scale);
+        ScaleWindow(viewportPanel->WindowManager, scale);
     }
     else
     {
@@ -14450,8 +14450,8 @@ static void ImGui::UpdateViewportsNewFrame()
             {
                 focused_viewport->LastFocusedHadNavWindow |= (g.NavWindow != NULL) && (g.NavWindow->Viewport == focused_viewport); // Update so a window changing viewport won't lose focus.
                 ImGuiFocusRequestFlags focus_request_flags = ImGuiFocusRequestFlags_UnlessBelowModal | ImGuiFocusRequestFlags_RestoreFocusedChild;
-                if (focused_viewport->Window != NULL)
-                    FocusWindow(focused_viewport->Window, focus_request_flags);
+                if (focused_viewport->WindowManager != NULL)
+                    FocusWindow(focused_viewport->WindowManager, focus_request_flags);
                 else if (focused_viewport->LastFocusedHadNavWindow)
                     FocusTopMostWindowUnderOne(NULL, NULL, focused_viewport, focus_request_flags); // Focus top most in viewport
                 else
@@ -14466,7 +14466,7 @@ static void ImGui::UpdateViewportsNewFrame()
     // FIXME-VIEWPORT: Size is driven by backend/user code for backward-compatibility but we should aim to make this more consistent.
     ImGuiViewportP* main_viewport = g.Viewports[0];
     IM_ASSERT(main_viewport->ID == IMGUI_VIEWPORT_DEFAULT_ID);
-    IM_ASSERT(main_viewport->Window == NULL);
+    IM_ASSERT(main_viewport->WindowManager == NULL);
     ImVec2 main_viewport_pos = viewports_enabled ? g.PlatformIO.Platform_GetWindowPos(main_viewport) : ImVec2(0.0f, 0.0f);
     ImVec2 main_viewport_size = g.IO.DisplaySize;
     if (viewports_enabled && (main_viewport->Flags & ImGuiViewportFlags_IsMinimized))
@@ -14624,10 +14624,10 @@ static void ImGui::UpdateViewportsEndFrame()
         if (viewportPanel->LastFrameActive < g.FrameCount || viewportPanel->Size.x <= 0.0f || viewportPanel->Size.y <= 0.0f)
             if (i > 0) // Always include main viewport in the list
                 continue;
-        if (viewportPanel->Window && !IsWindowActiveAndVisible(viewportPanel->Window))
+        if (viewportPanel->WindowManager && !IsWindowActiveAndVisible(viewportPanel->WindowManager))
             continue;
         if (i > 0)
-            IM_ASSERT(viewportPanel->Window != NULL);
+            IM_ASSERT(viewportPanel->WindowManager != NULL);
         g.PlatformIO.Viewports.push_back(viewportPanel);
     }
     g.Viewports[0]->ClearRequestFlags(); // Clear main viewport flags because UpdatePlatformWindows() won't do it and may not even be called
@@ -14687,7 +14687,7 @@ ImGuiViewportP* ImGui::AddUpdateViewport(ImGuiWindow* window, ImGuiID id, const 
             viewportPanel->DpiScale = g.PlatformIO.Monitors[viewportPanel->PlatformMonitor].DpiScale;
     }
 
-    viewportPanel->Window = window;
+    viewportPanel->WindowManager = window;
     viewportPanel->LastFrameActive = g.FrameCount;
     viewportPanel->UpdateWorkRect();
     IM_ASSERT(window == NULL || viewportPanel->ID == window->ID);
@@ -14713,7 +14713,7 @@ static void ImGui::DestroyViewport(ImGuiViewportP* viewportPanel)
         g.MouseLastHoveredViewport = NULL;
 
     // Destroy
-    IMGUI_DEBUG_LOG_VIEWPORT("[viewport] Delete Viewport %08X '%s'\n", viewportPanel->ID, viewportPanel->Window ? viewportPanel->Window->Name : "n/a");
+    IMGUI_DEBUG_LOG_VIEWPORT("[viewport] Delete Viewport %08X '%s'\n", viewportPanel->ID, viewportPanel->WindowManager ? viewportPanel->WindowManager->Name : "n/a");
     DestroyPlatformWindow(viewportPanel); // In most circumstances the platform window will already be destroyed here.
     IM_ASSERT(g.PlatformIO.Viewports.contains(viewportPanel) == false);
     IM_ASSERT(g.Viewports[viewportPanel->Idx] == viewportPanel);
@@ -14765,9 +14765,9 @@ static void ImGui::WindowSelectViewport(ImGuiWindow* window)
         // Code explicitly request a viewport
         window->Viewport = (ImGuiViewportP*)FindViewportByID(g.NextWindowData.ViewportId);
         window->ViewportId = g.NextWindowData.ViewportId; // Store ID even if Viewport isn't resolved yet.
-        if (window->Viewport && (window->Flags & ImGuiWindowFlags_DockNodeHost) != 0 && window->Viewport->Window != NULL)
+        if (window->Viewport && (window->Flags & ImGuiWindowFlags_DockNodeHost) != 0 && window->Viewport->WindowManager != NULL)
         {
-            window->Viewport->Window = window;
+            window->Viewport->WindowManager = window;
             window->Viewport->ID = window->ViewportId = window->ID; // Overwrite ID (always owned by node)
         }
         lock_viewport = true;
@@ -14794,7 +14794,7 @@ static void ImGui::WindowSelectViewport(ImGuiWindow* window)
     }
     else if (g.MovingWindow && g.MovingWindow->RootWindowDockTree == window && IsMousePosValid())
     {
-        if (window->Viewport != NULL && window->Viewport->Window == window)
+        if (window->Viewport != NULL && window->Viewport->WindowManager == window)
             window->Viewport = AddUpdateViewport(window, window->ID, window->Pos, window->Size, ImGuiViewportFlags_None);
     }
     else
@@ -14802,7 +14802,7 @@ static void ImGui::WindowSelectViewport(ImGuiWindow* window)
         // Merge into host viewport?
         // We cannot test window->ViewportOwned as it set lower in the function.
         // Testing (g.ActiveId == 0 || g.ActiveIdAllowOverlap) to avoid merging during a short-term widget interaction. Main intent was to avoid during resize (see #4212)
-        bool try_to_merge_into_host_viewport = (window->Viewport && window == window->Viewport->Window && (g.ActiveId == 0 || g.ActiveIdAllowOverlap));
+        bool try_to_merge_into_host_viewport = (window->Viewport && window == window->Viewport->WindowManager && (g.ActiveId == 0 || g.ActiveIdAllowOverlap));
         if (try_to_merge_into_host_viewport)
             UpdateTryMergeWindowIntoHostViewports(window);
     }
@@ -14827,15 +14827,15 @@ static void ImGui::WindowSelectViewport(ImGuiWindow* window)
             else
                 window->ViewportAllowPlatformMonitorExtend = window->Viewport->PlatformMonitor;
         }
-        else if (window->Viewport && window != window->Viewport->Window && window->Viewport->Window && !(flags & ImGuiWindowFlags_ChildWindow) && window->DockNode == NULL)
+        else if (window->Viewport && window != window->Viewport->WindowManager && window->Viewport->WindowManager && !(flags & ImGuiWindowFlags_ChildWindow) && window->DockNode == NULL)
         {
             // When called from Begin() we don't have access to a proper version of the Hidden flag yet, so we replicate this code.
             const bool will_be_visible = (window->DockIsActive && !window->DockTabIsVisible) ? false : true;
             if ((window->Flags & ImGuiWindowFlags_DockNodeHost) && window->Viewport->LastFrameActive < g.FrameCount && will_be_visible)
             {
                 // Steal/transfer ownership
-                IMGUI_DEBUG_LOG_VIEWPORT("[viewport] Window '%s' steal Viewport %08X from Window '%s'\n", window->Name, window->Viewport->ID, window->Viewport->Window->Name);
-                window->Viewport->Window = window;
+                IMGUI_DEBUG_LOG_VIEWPORT("[viewport] Window '%s' steal Viewport %08X from Window '%s'\n", window->Name, window->Viewport->ID, window->Viewport->WindowManager->Name);
+                window->Viewport->WindowManager = window;
                 window->Viewport->ID = window->ID;
                 window->Viewport->LastNameHash = 0;
             }
@@ -14854,7 +14854,7 @@ static void ImGui::WindowSelectViewport(ImGuiWindow* window)
     }
 
     // Update flags
-    window->ViewportOwned = (window == window->Viewport->Window);
+    window->ViewportOwned = (window == window->Viewport->WindowManager);
     window->ViewportId = window->Viewport->ID;
 
     // If the OS window has a title bar, hide our imgui title bar
@@ -14969,7 +14969,7 @@ void ImGui::UpdatePlatformWindows()
         // (the implicit/fallback Debug##Default window will be registering its viewport then be disabled, causing a dummy DestroyPlatformWindow to be made each frame)
         bool destroy_platform_window = false;
         destroy_platform_window |= (viewportPanel->LastFrameActive < g.FrameCount - 1);
-        destroy_platform_window |= (viewportPanel->Window && !IsWindowActiveAndVisible(viewportPanel->Window));
+        destroy_platform_window |= (viewportPanel->WindowManager && !IsWindowActiveAndVisible(viewportPanel->WindowManager));
         if (destroy_platform_window)
         {
             DestroyPlatformWindow(viewportPanel);
@@ -14984,7 +14984,7 @@ void ImGui::UpdatePlatformWindows()
         const bool is_new_platform_window = (viewportPanel->PlatformWindowCreated == false);
         if (is_new_platform_window)
         {
-            IMGUI_DEBUG_LOG_VIEWPORT("[viewport] Create Platform Window %08X '%s'\n", viewportPanel->ID, viewportPanel->Window ? viewportPanel->Window->Name : "n/a");
+            IMGUI_DEBUG_LOG_VIEWPORT("[viewport] Create Platform Window %08X '%s'\n", viewportPanel->ID, viewportPanel->WindowManager ? viewportPanel->WindowManager->Name : "n/a");
             g.PlatformIO.Platform_CreateWindow(viewportPanel);
             if (g.PlatformIO.Renderer_CreateWindow != NULL)
                 g.PlatformIO.Renderer_CreateWindow(viewportPanel);
@@ -15006,7 +15006,7 @@ void ImGui::UpdatePlatformWindows()
         viewportPanel->LastPlatformSize = viewportPanel->LastRendererSize = viewportPanel->Size;
 
         // Update title bar (if it changed)
-        if (ImGuiWindow* window_for_title = GetWindowForTitleDisplay(viewportPanel->Window))
+        if (ImGuiWindow* window_for_title = GetWindowForTitleDisplay(viewportPanel->WindowManager))
         {
             const char* title_begin = window_for_title->Name;
             char* title_end = (char*)(intptr_t)FindRenderedTextEnd(title_begin);
@@ -15152,7 +15152,7 @@ void ImGui::DestroyPlatformWindow(ImGuiViewportP* viewportPanel)
     ImGuiContext& g = *GImGui;
     if (viewportPanel->PlatformWindowCreated)
     {
-        IMGUI_DEBUG_LOG_VIEWPORT("[viewport] Destroy Platform Window %08X '%s'\n", viewportPanel->ID, viewportPanel->Window ? viewportPanel->Window->Name : "n/a");
+        IMGUI_DEBUG_LOG_VIEWPORT("[viewport] Destroy Platform Window %08X '%s'\n", viewportPanel->ID, viewportPanel->WindowManager ? viewportPanel->WindowManager->Name : "n/a");
         if (g.PlatformIO.Renderer_DestroyWindow)
             g.PlatformIO.Renderer_DestroyWindow(viewportPanel);
         if (g.PlatformIO.Platform_DestroyWindow)
@@ -16568,7 +16568,7 @@ static void ImGui::DockNodeUpdate(ImGuiDockNode* node)
                 if (node->HostWindow->ViewportOwned)
                 {
                     single_window->Viewport->ID = single_window->ID;
-                    single_window->Viewport->Window = single_window;
+                    single_window->Viewport->WindowManager = single_window;
                     single_window->ViewportOwned = true;
                 }
             }
@@ -16835,8 +16835,8 @@ static void ImGui::DockNodeUpdate(ImGuiDockNode* node)
 // Compare TabItem nodes given the last known DockOrder (will persist in .ini file as hint), used to sort tabs when multiple tabs are added on the same frame.
 static int IMGUI_CDECL TabItemComparerByDockOrder(const void* lhs, const void* rhs)
 {
-    ImGuiWindow* a = ((const ImGuiTabItem*)lhs)->Window;
-    ImGuiWindow* b = ((const ImGuiTabItem*)rhs)->Window;
+    ImGuiWindow* a = ((const ImGuiTabItem*)lhs)->WindowManager;
+    ImGuiWindow* b = ((const ImGuiTabItem*)rhs)->WindowManager;
     if (int d = ((a->DockOrder == -1) ? INT_MAX : a->DockOrder) - ((b->DockOrder == -1) ? INT_MAX : b->DockOrder))
         return d;
     return (a->BeginOrderWithinContext - b->BeginOrderWithinContext);
@@ -17054,7 +17054,7 @@ static void ImGui::DockNodeUpdateTabBar(ImGuiDockNode* node, ImGuiWindow* host_w
         for (int tab_n = tabs_unsorted_start; tab_n < tab_bar->Tabs.Size; tab_n++)
         {
             ImGuiTabItem* tab = &tab_bar->Tabs[tab_n];
-            IMGUI_DEBUG_LOG_DOCKING("[docking] - Tab 0x%08X '%s' Order %d\n", tab->ID, TabBarGetTabName(tab_bar, tab), tab->Window ? tab->Window->DockOrder : -1);
+            IMGUI_DEBUG_LOG_DOCKING("[docking] - Tab 0x%08X '%s' Order %d\n", tab->ID, TabBarGetTabName(tab_bar, tab), tab->WindowManager ? tab->WindowManager->DockOrder : -1);
         }
         IMGUI_DEBUG_LOG_DOCKING("[docking] SelectedTabId = 0x%08X, NavWindow->TabId = 0x%08X\n", node->SelectedTabId, g.NavWindow ? g.NavWindow->TabId : -1);
         if (tab_bar->Tabs.Size > tabs_unsorted_start + 1)
@@ -17069,7 +17069,7 @@ static void ImGui::DockNodeUpdateTabBar(ImGuiDockNode* node, ImGuiWindow* host_w
     if (tab_bar_is_recreated && TabBarFindTabByID(tab_bar, node->SelectedTabId) != NULL)
         tab_bar->SelectedTabId = tab_bar->NextSelectedTabId = node->SelectedTabId;
     else if (tab_bar->Tabs.Size > tabs_count_old)
-        tab_bar->SelectedTabId = tab_bar->NextSelectedTabId = tab_bar->Tabs.back().Window->TabId;
+        tab_bar->SelectedTabId = tab_bar->NextSelectedTabId = tab_bar->Tabs.back().WindowManager->TabId;
 
     // Begin tab bar
     ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_Reorderable | ImGuiTabBarFlags_AutoSelectNewTabs; // | ImGuiTabBarFlags_NoTabListScrollingButtons);
@@ -17182,7 +17182,7 @@ static void ImGui::DockNodeUpdateTabBar(ImGuiDockNode* node, ImGuiWindow* host_w
 
             // Forward moving request to selected window
             if (ImGuiTabItem* tab = TabBarFindTabByID(tab_bar, tab_bar->SelectedTabId))
-                StartMouseMovingWindowOrNode(tab->Window ? tab->Window : node->HostWindow, node, false); // Undock from tab bar empty space
+                StartMouseMovingWindowOrNode(tab->WindowManager ? tab->WindowManager : node->HostWindow, node, false); // Undock from tab bar empty space
         }
     }
 
@@ -17198,10 +17198,10 @@ static void ImGui::DockNodeUpdateTabBar(ImGuiDockNode* node, ImGuiWindow* host_w
     // Apply navigation focus
     if (focus_tab_id != 0)
         if (ImGuiTabItem* tab = TabBarFindTabByID(tab_bar, focus_tab_id))
-            if (tab->Window)
+            if (tab->WindowManager)
             {
-                FocusWindow(tab->Window);
-                NavInitWindow(tab->Window, false);
+                FocusWindow(tab->WindowManager);
+                NavInitWindow(tab->WindowManager, false);
             }
 
     EndTabBar();
@@ -17254,7 +17254,7 @@ static bool DockNodeIsDropAllowedOne(ImGuiWindow* payload, ImGuiWindow* host_win
     // and our ->ParentXXX and ->RootXXX pointers inside windows are currently mislading or lacking.
     ImGuiContext& g = *GImGui;
     for (int i = g.OpenPopupStack.Size - 1; i >= 0; i--)
-        if (ImGuiWindow* popup_window = g.OpenPopupStack[i].Window)
+        if (ImGuiWindow* popup_window = g.OpenPopupStack[i].WindowManager)
             if (ImGui::IsWindowWithinBeginStackOf(payload, popup_window))   // Payload is created from within a popup begin stack.
                 return false;
 
@@ -17546,7 +17546,7 @@ static void ImGui::DockNodePreviewDockRender(ImGuiWindow* host_window, ImGuiDock
         for (int payload_n = 0; payload_n < payload_count; payload_n++)
         {
             // DockNode's TabBar may have non-window Tabs manually appended by user
-            ImGuiWindow* payload_window = tab_bar_with_payload ? tab_bar_with_payload->Tabs[payload_n].Window : root_payload;
+            ImGuiWindow* payload_window = tab_bar_with_payload ? tab_bar_with_payload->Tabs[payload_n].WindowManager : root_payload;
             if (tab_bar_with_payload && payload_window == NULL)
                 continue;
             if (!DockNodeIsDropAllowedOne(payload_window, host_window))
@@ -18563,7 +18563,7 @@ void ImGui::DockBuilderCopyDockSpace(ImGuiID src_dockspace_id, ImGuiID dst_docks
     // Anything else in the source nodes of 'node_remap_pairs' are windows that are not included in the remapping list.
     // Find those windows and move to them to the cloned dock node. This may be optional?
     // Dock those are a second step as undocking would invalidate source dock nodes.
-    struct DockRemainingWindowTask { ImGuiWindow* Window; ImGuiID DockId; DockRemainingWindowTask(ImGuiWindow* window, ImGuiID dock_id) { Window = window; DockId = dock_id; } };
+    struct DockRemainingWindowTask { ImGuiWindow* WindowManager; ImGuiID DockId; DockRemainingWindowTask(ImGuiWindow* window, ImGuiID dock_id) { WindowManager = window; DockId = dock_id; } };
     ImVector<DockRemainingWindowTask> dock_remaining_windows;
     for (int dock_remap_n = 0; dock_remap_n < node_remap_pairs.Size; dock_remap_n += 2)
         if (ImGuiID src_dock_id = node_remap_pairs[dock_remap_n])
@@ -18582,7 +18582,7 @@ void ImGui::DockBuilderCopyDockSpace(ImGuiID src_dockspace_id, ImGuiID dst_docks
             }
         }
     for (const DockRemainingWindowTask& task : dock_remaining_windows)
-        DockBuilderDockWindow(task.Window->Name, task.DockId);
+        DockBuilderDockWindow(task.WindowManager->Name, task.DockId);
 }
 
 // FIXME-DOCK: This is awkward because in series of split user is likely to loose access to its root node.
@@ -19775,7 +19775,7 @@ void ImGui::ShowMetricsWindow(bool* p_open)
                 BulletText("Viewport #%d, ID: 0x%08X, LastFocused = %08d, PlatformFocused = %s, Window: \"%s\"",
                     viewportPanel->Idx, viewportPanel->ID, viewportPanel->LastFocusedStampCount,
                     (g.PlatformIO.Platform_GetWindowFocus && viewportPanel->PlatformWindowCreated) ? (g.PlatformIO.Platform_GetWindowFocus(viewportPanel) ? "1" : "0") : "N/A",
-                    viewportPanel->Window ? viewportPanel->Window->Name : "N/A");
+                    viewportPanel->WindowManager ? viewportPanel->WindowManager->Name : "N/A");
             TreePop();
         }
         for (ImGuiViewportP* viewportPanel : g.Viewports)
@@ -19789,7 +19789,7 @@ void ImGui::ShowMetricsWindow(bool* p_open)
         for (const ImGuiPopupData& popup_data : g.OpenPopupStack)
         {
             // As it's difficult to interact with tree nodes while popups are open, we display everything inline.
-            ImGuiWindow* window = popup_data.Window;
+            ImGuiWindow* window = popup_data.WindowManager;
             BulletText("PopupID: %08x, Window: '%s' (%s%s), BackupNavWindow '%s', ParentWindow '%s'",
                 popup_data.PopupId, window ? window->Name : "NULL", window && (window->Flags & ImGuiWindowFlags_ChildWindow) ? "Child;" : "", window && (window->Flags & ImGuiWindowFlags_ChildMenu) ? "Menu;" : "",
                 popup_data.BackupNavWindow ? popup_data.BackupNavWindow->Name : "NULL", window && window->ParentWindow ? window->ParentWindow->Name : "NULL");
@@ -20539,14 +20539,14 @@ void ImGui::DebugNodeTabBar(ImGuiTabBar* tab_bar, const char* label)
 void ImGui::DebugNodeViewport(ImGuiViewportP* viewportPanel)
 {
     SetNextItemOpen(true, ImGuiCond_Once);
-    if (TreeNode((void*)(intptr_t)viewportPanel->ID, "Viewport #%d, ID: 0x%08X, Parent: 0x%08X, Window: \"%s\"", viewportPanel->Idx, viewportPanel->ID, viewportPanel->ParentViewportId, viewportPanel->Window ? viewportPanel->Window->Name : "N/A"))
+    if (TreeNode((void*)(intptr_t)viewportPanel->ID, "Viewport #%d, ID: 0x%08X, Parent: 0x%08X, Window: \"%s\"", viewportPanel->Idx, viewportPanel->ID, viewportPanel->ParentViewportId, viewportPanel->WindowManager ? viewportPanel->WindowManager->Name : "N/A"))
     {
         ImGuiWindowFlags flags = viewportPanel->Flags;
         BulletText("Main Pos: (%.0f,%.0f), Size: (%.0f,%.0f)\nWorkArea Offset Left: %.0f Top: %.0f, Right: %.0f, Bottom: %.0f\nMonitor: %d, DpiScale: %.0f%%",
             viewportPanel->Pos.x, viewportPanel->Pos.y, viewportPanel->Size.x, viewportPanel->Size.y,
             viewportPanel->WorkOffsetMin.x, viewportPanel->WorkOffsetMin.y, viewportPanel->WorkOffsetMax.x, viewportPanel->WorkOffsetMax.y,
             viewportPanel->PlatformMonitor, viewportPanel->DpiScale * 100.0f);
-        if (viewportPanel->Idx > 0) { SameLine(); if (SmallButton("Reset Pos")) { viewportPanel->Pos = ImVec2(200, 200); viewportPanel->UpdateWorkRect(); if (viewportPanel->Window) viewportPanel->Window->Pos = viewportPanel->Pos; } }
+        if (viewportPanel->Idx > 0) { SameLine(); if (SmallButton("Reset Pos")) { viewportPanel->Pos = ImVec2(200, 200); viewportPanel->UpdateWorkRect(); if (viewportPanel->WindowManager) viewportPanel->WindowManager->Pos = viewportPanel->Pos; } }
         BulletText("Flags: 0x%04X =%s%s%s%s%s%s%s%s%s%s%s%s%s", viewportPanel->Flags,
             //(flags & ImGuiViewportFlags_IsPlatformWindow) ? " IsPlatformWindow" : "", // Omitting because it is the standard
             (flags & ImGuiViewportFlags_IsPlatformMonitor) ? " IsPlatformMonitor" : "",

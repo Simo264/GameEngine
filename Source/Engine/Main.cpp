@@ -5,6 +5,6 @@ int main()
   Engine engine;
   engine.Initialize();
   engine.Run();
-  engine.ShutDown();
+  engine.CleanUp();
   return 0;
 }

@@ -1,8 +1,9 @@
 #include "ObjectLoader.hpp"
 #include "Core/Math/Math.hpp"
+#include "Engine/Graphics/Core/GL_Core.hpp"
 #include "Engine/Graphics/VertexArray.hpp"
 #include "Engine/Graphics/Texture2D.hpp"
-#include "Engine/Subsystems/TexturesManager.hpp"
+#include "Engine/Subsystems/TextureManager.hpp"
 
 #include "Core/Log/Logger.hpp"
 
@@ -11,7 +12,7 @@
  * -----------------------------------------------------
 */
 
-ObjectLoader::ObjectLoader(Path filePath)
+ObjectLoader::ObjectLoader(const Path& filePath)
 {
   _scene = _importer.ReadFile(filePath.string().c_str(),
     aiProcess_Triangulate | 
@@ -22,11 +23,11 @@ ObjectLoader::ObjectLoader(Path filePath)
   if (!_scene || _scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !_scene->mRootNode)
   {
     CONSOLE_ERROR("ERROR::ASSIMP::{}", _importer.GetErrorString());
-    throw RuntimeError("");
+    return;
   }
 }
 
-void ObjectLoader::LoadData(VertexArray* vao, VertexArrayConfig* conf)
+void ObjectLoader::LoadData(VertexArray*& vao, VertexBufferConfig* conf)
 {
   aiMesh* aimesh = _scene->mMeshes[0];
   const uint64_t vertDataSize = aimesh->mNumVertices * 8; /* 8: 3(position)+3(normals)+2(textcoord) */
@@ -39,7 +40,7 @@ void ObjectLoader::LoadData(VertexArray* vao, VertexArrayConfig* conf)
   data.indDataSize = indDatasize * sizeof(uint32_t);
   data.indData = nullptr;
   
-  vao->InitVertexArray(data, *conf);
+  vao = new VertexArray(data, *conf);
 
   /* Now fill mesh vertex buffer */
   LoadVertices(aimesh, vao->VertexBufferID());
@@ -130,5 +131,5 @@ Texture2D* ObjectLoader::LoadTexture(const aiMaterial* material, const char* tex
   if (material->GetTexture(aiType, 0, &fileName) != AI_SUCCESS)
     return nullptr;
 
-  return TexturesManager::Instance().GetTextureByPath(ROOT_PATH / fileName.C_Str());
+  return TextureManager::Instance().GetTextureByPath(ROOT_PATH / fileName.C_Str());
 }

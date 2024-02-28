@@ -31,7 +31,7 @@ private:
   /* Calculates the front vector from the Camera's (updated) Euler Angles */
   void UpdateCameraVectors();
 
-  void FreeCameraWalk(const class Window* window, const double deltaTime);
+  void FreeCameraWalk(const class WindowManager* window, const double deltaTime);
   void FreeCameraRotation(Vec2d& mousePos, const double deltaTime);
   
   Mat4f _viewMatrix;
