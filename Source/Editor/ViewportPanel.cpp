@@ -1,9 +1,6 @@
 #include "ViewportPanel.hpp"
 #include "Engine/Graphics/FrameBuffer.hpp"
-#include "Engine/SceneObject.hpp"
-#include "Engine/StaticMesh.hpp"
-#include "Engine/Subsystems/WindowManager.hpp"
-#include "Engine/Graphics/Core/GL_Core.hpp"
+#include "Core/Platform/OpenGL/OpenGL.hpp"
 #include "Core/Log/Logger.hpp"
 
 #include <imgui/imgui.h>

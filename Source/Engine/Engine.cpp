@@ -2,13 +2,19 @@
 
 #include "Engine/Camera.hpp"
 #include "Engine/Scene.hpp"
-#include "Engine/Graphics/Core/GL_Core.hpp"
+
+#include "Engine/ObjectLoader.hpp"
+
 #include "Engine/Graphics/Shader.hpp"
 #include "Engine/Graphics/Renderer.hpp"
 #include "Engine/Graphics/FrameBuffer.hpp"
-#include "Engine/StaticMesh.hpp"
-#include "Engine/Lighting/DirectionalLight.hpp"
-#include "Engine/Lighting/PointLight.hpp"
+
+#include "Engine/ECS/GameObject.hpp"
+#include "Engine/ECS/LabelComponent.hpp"
+#include "Engine/ECS/TransformComponent.hpp"
+#include "Engine/ECS/MeshComponent.hpp"
+#include "Engine/ECS/Lighting/DirLightComponent.hpp"
+#include "Engine/ECS/Lighting/PointLightComponent.hpp"
 
 #include "Engine/Subsystems/WindowManager.hpp"
 #include "Engine/Subsystems/ShaderManager.hpp"
@@ -16,6 +22,10 @@
 
 #include "Core/FileParser/INIFileParser.hpp"
 #include "Core/Log/Logger.hpp"
+
+#include "Core/Platform/OpenGL/OpenGL.hpp"
+
+#include <entt/entt.hpp> /* Entity component system */
 
 constexpr float GAMMA_CORRECTION = 2.2f;
 
@@ -68,7 +78,10 @@ void Engine::Run()
   
   /* Create scene */
   Scene scene;
-  scene.LoadScene(ROOT_PATH / "scene.ini");
+  
+  GameObject object = scene.CreateObject();
+  object.AddComponent<TransformComponent>();
+  
 
 #if 0
   /* Shadow mapping */

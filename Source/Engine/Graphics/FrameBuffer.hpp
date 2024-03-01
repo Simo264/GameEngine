@@ -2,6 +2,7 @@
 
 #include "Core/Core.hpp"
 #include "Core/Math/Math.hpp"
+#include "Engine/Graphics/VertexArray.hpp"
 
 enum class PostProcessingType {
 	POST_PROC_NONE			= 0,
@@ -52,14 +53,24 @@ public:
 	FrameBuffer& operator=(FrameBuffer const&) = delete;
 
 	void BindMSAAFramebuffer() const;
+	
 	void UnbindFrameBuffer() const;
+	
 	void BlitFrameBuffer() const;
 	
 	uint32_t GetImage() const { return _renderRelatedIds[NORMAL_TEXTURE]; }
+	
 	Vec2i GetSize() const { return _size; }
+	
+	/* Render frame buffer texture */
 	void DrawFrame(class Shader* shader);
+
 	void SetPostProcessing(PostProcessingType type) { _postprocType = type; }
+	
+	/* Resize the frame buffer viewport */
 	void RescaleFrameBuffer(int w, int h);
+	
+	/* Free resources from GPU */
 	void DestroyFrameBuffer();
 
 private:
@@ -75,7 +86,8 @@ private:
 		MULTISAMPLING_RBO,
 	};
 	uint32_t _renderRelatedIds[5];
-	class VertexArray* _frameBufferVAO;
+	
+	UniquePointer<VertexArray> _frameBufferVAO;
 	PostProcessingType _postprocType;
 
 	void InitFrameBuffer();

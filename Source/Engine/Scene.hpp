@@ -1,10 +1,7 @@
 #pragma once
 
 #include "Core/Core.hpp"
-
-#include "Engine/StaticMesh.hpp"
-#include "Engine/Lighting/DirectionalLight.hpp"
-#include "Engine/Lighting/PointLight.hpp"
+#include <entt/entt.hpp> /* Entity component system */
 
 /* ----------------------------------------------------------------------------
 	Scene class contains all of objects that are placed in world.	
@@ -12,38 +9,30 @@
 class Scene
 {
 public:
-	Scene() : sceneDLight{ nullptr } {}
+	Scene() = default;
+
+	void LoadScene(const Path& filepath);
+	void SaveScene(const Path& filepath);
 
 	void DrawScene(class Shader* shader);
 	
-	void AddSceneObject(const SharedPointer<DirectionalLight>&);
-	void AddSceneObject(const SharedPointer<PointLight>&);
-	void AddSceneObject(const SharedPointer<StaticMesh>&);
-
-	void RemoveSceneObject(const SharedPointer<DirectionalLight>&);
-	void RemoveSceneObject(const SharedPointer<PointLight>&);
-	void RemoveSceneObject(const SharedPointer<StaticMesh>&);
-
-	const bool HasDirLight() const { return sceneDLight.get(); };
-	const bool HasPointLights() const { return !scenePLights.empty(); };
-	const bool HasStaticMeshes() const { return !sceneSMeshes.empty(); };
-	const bool IsEmpty() const { return !HasDirLight() && !HasPointLights() && !HasStaticMeshes(); }
-
+	/* Remove all objects from scene */
 	void ClearScene();
 
-	void LoadScene(Path filepath);
-	void SaveScene(Path outfile);
+	/* Create object in scene */
+	class GameObject CreateObject(/*const char* label, GameObjectType type*/);
 
-	/* Can be there only ONE directional light in scene */
-	SharedPointer<DirectionalLight> sceneDLight;
-	
-	/* Can be there multiple point light in scene */
-	Vector<SharedPointer<PointLight>> scenePLights;
+	/* Remove object from scene */
+	void DestroyObject(class GameObject* object);
 
-	/* Can be there multiple static mesh in scene */
-	Vector<SharedPointer<StaticMesh>> sceneSMeshes;
+	/* Return the reference of registry */
+	entt::registry& Reg() { return _registry; }
 
 private:
+	/* We can create a entt::registry to store our entities */
+	entt::registry _registry;
+
+#if 0
 	SharedPointer<DirectionalLight> ParseDirectionalLight(
 		IFStream& file, String& line, char name[64], char value[64]);
 	
@@ -54,4 +43,5 @@ private:
 	
 	SharedPointer<StaticMesh> ParseStaticMesh(
 		IFStream& file, String& line, char name[64], char value[64]);
+#endif
 };

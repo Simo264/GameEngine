@@ -1,13 +1,14 @@
 #include "VertexArray.hpp"
-#include "Engine/Graphics/Core/GL_Core.hpp"
 #include "Core/Log/Logger.hpp"
+
+#include "Core/Platform/OpenGL/OpenGL.hpp"
 
 /* -----------------------------------------------------
  *          PUBLIC METHODS
  * -----------------------------------------------------
 */
 
-VertexArray::VertexArray(const VertexArrayData& data, const VertexBufferConfig& config)
+VertexArray::VertexArray()
   : _vao{ 0 },
     _vbo{ 0 },
     _ebo{ 0 },
@@ -15,7 +16,44 @@ VertexArray::VertexArray(const VertexArrayData& data, const VertexBufferConfig& 
     numIndices{ 0 },
     vboSize{ 0 }
 {
-  InitVertexArray(data, config);
+  glGenVertexArrays(1, &_vao);
+  glGenBuffers(1, &_vbo);
+  glGenBuffers(1, &_ebo);
+}
+
+void VertexArray::InitializeBuffers(const VertexBufferLayout& layout, const VertexBufferData& data)
+{
+  _layout = layout;
+  vboSize = data.vertexDataSize;
+
+  /* Bind current VAO object */
+  glBindVertexArray(_vao);
+
+  /* Initialize vertex buffer (mutable storage) */
+  glBindBuffer(GL_ARRAY_BUFFER, _vbo);
+  glBufferData(GL_ARRAY_BUFFER, data.vertexDataSize, data.vertextDataPtr, GL_STATIC_DRAW);
+
+  /* Initialize index buffer (mutable storage) */
+  if (data.indexDataSize > 0)
+  {
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, data.indexDataSize, data.indexDataPtr, GL_STATIC_DRAW);
+    numIndices = data.indexDataSize / sizeof(uint32_t);
+  }
+
+  int stride = std::accumulate(layout.attributes.begin(), layout.attributes.end(), 0);
+  for (uint32_t i = 0, offset = 0; i < layout.numAttrs; i++)
+  {
+    /* Set vertex buffer layout */
+    glVertexAttribPointer(i, layout.attributes[i], GL_FLOAT, GL_FALSE, stride * sizeof(float), (void*)offset);
+    glEnableVertexAttribArray(i);
+    offset += layout.attributes[i] * sizeof(float);
+  }
+  numVertices = data.vertexDataSize / (stride * sizeof(float));
+
+  glBindVertexArray(0);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 void VertexArray::Bind() const
@@ -63,51 +101,10 @@ void VertexArray::Destroy() const
 {
   glDeleteVertexArrays(1, &_vao);
   glDeleteBuffers(1, &_vbo);
-  if(numIndices > 0)
-    glDeleteBuffers(1, &_ebo);
+  glDeleteBuffers(1, &_ebo);
 }
 
 /* -----------------------------------------------------
  *          PRIVATE METHODS
  * -----------------------------------------------------
 */
-
-void VertexArray::InitVertexArray(const VertexArrayData& data, const VertexBufferConfig& config)
-{
-  this->_config = config;
-  vboSize = data.vertDataSize;
-
-  glGenVertexArrays(1, &_vao);
-  glGenBuffers(1, &_vbo);
-  glGenBuffers(1, &_ebo);
-
-  /* Use vao */
-  glBindVertexArray(_vao);
-
-  /* Initialize vbo */
-  glBindBuffer(GL_ARRAY_BUFFER, _vbo);
-  glBufferData(GL_ARRAY_BUFFER, data.vertDataSize, data.vertData, GL_STATIC_DRAW);
-
-  if (data.indDataSize > 0)
-  {
-    /* Initialize ebo */
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ebo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, data.indDataSize, data.indData, GL_STATIC_DRAW);
-    numIndices = data.indDataSize / sizeof(uint32_t);
-  }
-
-  int stride = std::accumulate(config.layout.begin(), config.layout.end(), 0);
-  int offset = 0;
-  for (uint32_t i = 0; i < config.numAttrs; i++)
-  {
-    /* Set vao attributes */
-    glVertexAttribPointer(i, config.layout[i], GL_FLOAT, GL_FALSE, stride * sizeof(float), (void*)offset);
-    glEnableVertexAttribArray(i);
-    offset += config.layout[i] * sizeof(float);
-  }
-  numVertices = data.vertDataSize / (stride * sizeof(float));
-
-  glBindVertexArray(0);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
-}

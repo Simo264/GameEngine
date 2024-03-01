@@ -35,7 +35,7 @@ Shader* ShaderManager::GetShader(const char* label) const
   auto beg = _shaders.begin();
   auto end = _shaders.end();
   auto it = std::find_if(beg, end, [&label](Shader* shader) {
-      return shader->Label().compare(label) == 0;
+      return shader->GetLabel().compare(label) == 0;
     });
   
   if (it == end)

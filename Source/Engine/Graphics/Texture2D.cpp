@@ -1,6 +1,7 @@
 #include "Texture2D.hpp"
-#include "Engine/Graphics/Core/GL_Core.hpp"
 #include "Core/Log/Logger.hpp"
+
+#include "Core/Platform/OpenGL/OpenGL.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>

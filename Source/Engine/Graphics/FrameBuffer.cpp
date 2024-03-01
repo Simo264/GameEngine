@@ -1,9 +1,10 @@
 #include "FrameBuffer.hpp"
-#include "Engine/Graphics/Core/GL_Core.hpp"
 #include "Engine/Graphics/Shader.hpp"
 #include "Engine/Graphics/Renderer.hpp"
-#include "Engine/Graphics/VertexArray.hpp"
+
 #include "Core/Log/Logger.hpp"
+
+#include "Core/Platform/OpenGL/OpenGL.hpp"
 
 /* -----------------------------------------------------
  *          PUBLIC METHODS
@@ -83,7 +84,6 @@ void FrameBuffer::DestroyFrameBuffer()
 	glDeleteTextures(1, &_renderRelatedIds[MULTISAMPLING_TEXTURE]);
 	glDeleteRenderbuffers(1, &_renderRelatedIds[MULTISAMPLING_RBO]);
 	_frameBufferVAO->Destroy();
-	delete _frameBufferVAO;
 }
 
 
@@ -146,8 +146,16 @@ void FrameBuffer::InitFrameBufferVAO()
 		 1.0f,  1.0f,  1.0f, 1.0f
 	};
 
-	VertexBufferConfig config; /* (2)position, (2)textCoords */
-	config.PushAttributes({ 2,2 });
-	VertexArrayData data{ sizeof(vertices),vertices,0,nullptr };
-	_frameBufferVAO = new VertexArray(data, config);
+	VertexBufferLayout layout; /* (2)position, (2)textCoords */
+	layout.PushAttributes({ 2,2 });
+	
+	VertexBufferData data{
+		sizeof(vertices),
+		vertices,
+		0,
+		nullptr 
+	};
+	
+	_frameBufferVAO = std::make_unique<VertexArray>();
+	_frameBufferVAO->InitializeBuffers(layout, data);
 }

@@ -14,7 +14,9 @@ public:
   Texture2D(Texture2D const&) = delete;
   Texture2D& operator=(Texture2D const&) = delete;
 
+  /* Free resources from GPU */
   void Destroy() const;
+
   void Bind() const;
 
   uint32_t textureID;

@@ -1,9 +1,6 @@
 #include "Editor.hpp"
 #include "Engine/Scene.hpp"
 #include "Engine/Graphics/FrameBuffer.hpp"
-#include "Engine/Lighting/DirectionalLight.hpp"
-#include "Engine/Lighting/PointLight.hpp"
-#include "Engine/StaticMesh.hpp"
 #include "Engine/Subsystems/WindowManager.hpp"
 
 #include "Core/FileParser/INIFileParser.hpp"
@@ -125,6 +122,7 @@ void Editor::Render(Scene* scene, FrameBuffer* framebuffer)
   if(outlinerPanel->isOpen)
     outlinerPanel->RenderPanel(scene);
 
+#if 0
   if (outlinerPanel->IsItemSelected())
   {
     auto& dLight = outlinerPanel->GetItemSelected<DirectionalLight>();
@@ -138,6 +136,7 @@ void Editor::Render(Scene* scene, FrameBuffer* framebuffer)
     else if (sMesh)
       detailsPanel->RenderPanel(sMesh, scene);
   }
+#endif
 
   if (viewportPanel->isOpen)
     viewportPanel->RenderPanel(framebuffer);

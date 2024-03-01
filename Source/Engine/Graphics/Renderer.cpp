@@ -1,7 +1,7 @@
 #include "Renderer.hpp"
-#include "Engine/Graphics/Core/GL_Core.hpp"
 #include "Engine/Graphics/VertexArray.hpp"
 
+#include "Core/Platform/OpenGL/OpenGL.hpp"
 #include "Core/Log/Logger.hpp"
 
 uint32_t Renderer::drawMode = GL_TRIANGLES;

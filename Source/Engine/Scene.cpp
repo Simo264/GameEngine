@@ -1,9 +1,13 @@
 #include "Scene.hpp"
 #include "Engine/Graphics/Shader.hpp"
 #include "Engine/Graphics/Texture2D.hpp"
+#include "Engine/ECS/GameObject.hpp"
+#include "Engine/ECS/LabelComponent.hpp"
+
 #include "Engine/Subsystems/TextureManager.hpp"
 
 #include "Core/FileParser/INIFileParser.hpp"
+
 #include "Core/Log/Logger.hpp"
 
 /* -----------------------------------------------------
@@ -11,6 +15,39 @@
  * -----------------------------------------------------
 */
 
+void Scene::DrawScene(Shader* shader)
+{
+
+}
+
+void Scene::ClearScene()
+{
+	_registry.clear();
+}
+
+void Scene::LoadScene(const Path& filepath)
+{
+
+}
+
+void Scene::SaveScene(const Path& filepath)
+{
+
+}
+
+GameObject Scene::CreateObject(/*const char* label, GameObjectType type*/)
+{
+	GameObject object = GameObject(_registry.create(), (uint32_t)GameObjectType::NONE, this);
+	//object.AddComponent<LabelComponent>(label);
+	return object;
+}
+
+void Scene::DestroyObject(GameObject* object)
+{
+	_registry.destroy(object->GetEntity());
+}
+
+#if 0
 void Scene::ClearScene() 
 { 
 	sceneDLight.reset();
@@ -189,6 +226,8 @@ void Scene::RemoveSceneObject(const SharedPointer<StaticMesh>& obj)
 	if (it != end)
 		sceneSMeshes.erase(it);
 }
+
+#endif
 
 /* -----------------------------------------------------
  *          PRIVATE METHODS

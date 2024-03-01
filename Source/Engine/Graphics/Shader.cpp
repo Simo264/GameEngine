@@ -1,6 +1,7 @@
 #include "Shader.hpp"
-#include "Engine/Graphics/Core/GL_Core.hpp"
 #include "Core/Log/Logger.hpp"
+
+#include "Core/Platform/OpenGL/OpenGL.hpp"
 
 /* -----------------------------------------------------
   *          PUBLIC METHODS

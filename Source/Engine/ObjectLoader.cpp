@@ -1,10 +1,12 @@
 #include "ObjectLoader.hpp"
 #include "Core/Math/Math.hpp"
-#include "Engine/Graphics/Core/GL_Core.hpp"
 #include "Engine/Graphics/VertexArray.hpp"
 #include "Engine/Graphics/Texture2D.hpp"
 #include "Engine/Subsystems/TextureManager.hpp"
 
+#include "Engine/ECS/MeshComponent.hpp"
+
+#include "Core/Platform/OpenGL/OpenGL.hpp"
 #include "Core/Log/Logger.hpp"
 
 /* -----------------------------------------------------
@@ -27,33 +29,39 @@ ObjectLoader::ObjectLoader(const Path& filePath)
   }
 }
 
-void ObjectLoader::LoadData(VertexArray*& vao, VertexBufferConfig* conf)
+void ObjectLoader::LoadMesh(MeshComponent* mesh)
 {
   aiMesh* aimesh = _scene->mMeshes[0];
-  const uint64_t vertDataSize = aimesh->mNumVertices * 8; /* 8: 3(position)+3(normals)+2(textcoord) */
-  const uint64_t indDatasize = aimesh->mNumFaces * 3; /* 3: number of vertices per triangle */
+  const uint64_t vertexDataSize = aimesh->mNumVertices * 8; /* 8: 3(position), 3(normals), 2(uv/text coords) */
+  const uint64_t indDatasize = aimesh->mNumFaces * 3;       /* 3: number of vertices per triangle */
 
-  /* Allocate memory for mesh data */
-  VertexArrayData data;
-  data.vertDataSize = vertDataSize * sizeof(float);
-  data.vertData = nullptr;
-  data.indDataSize = indDatasize * sizeof(uint32_t);
-  data.indData = nullptr;
+  /* Store the sizes for the vertex array buffers */
+  VertexBufferData data;
+  data.vertexDataSize = vertexDataSize * sizeof(float);
+  data.vertextDataPtr = nullptr;
+  data.indexDataSize = indDatasize * sizeof(uint32_t);
+  data.indexDataPtr = nullptr;
   
-  vao = new VertexArray(data, *conf);
+  /* By default layout is 3(position), 3(normals), 2(uv/text coords) */
+  VertexBufferLayout layout;
+  layout.PushAttributes({ 3,3,2 }); 
 
-  /* Now fill mesh vertex buffer */
+  /* Initialize empty buffers with calculated size */
+  SharedPointer<VertexArray>& vao = mesh->vertexArray;
+  vao->InitializeBuffers(layout, data);
+
+  /* Now fill vertex buffer with data */
   LoadVertices(aimesh, vao->VertexBufferID());
 
-  /* Now fill mesh index buffer */
+  /* Now fill index buffer with data */
   LoadIndices(aimesh, vao->IndexBufferID());
 
   /* Load materials */
   if (aimesh->mMaterialIndex >= 0)
   {
-    const aiMaterial* material = _scene->mMaterials[aimesh->mMaterialIndex];
-    _material.diffuse = LoadTexture(material, "diffuse");
-    _material.specular = LoadTexture(material, "specular");
+    const aiMaterial* aimaterial = _scene->mMaterials[aimesh->mMaterialIndex];
+    material.diffuse = LoadTexture(aimaterial, "diffuse");
+    material.specular = LoadTexture(aimaterial, "specular");
   }
 }
 
@@ -68,7 +76,7 @@ void ObjectLoader::LoadVertices(const aiMesh* aimesh, uint32_t writeBuffer)
   float* vboPtr = static_cast<float*>(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY));
   if (!vboPtr)
   {
-    CONSOLE_WARN("VertexBuffer pointer nullptr");
+    CONSOLE_WARN("VertexBuffer pointer is null");
     return;
   }
   
@@ -114,7 +122,7 @@ void ObjectLoader::LoadIndices(const aiMesh* aimesh, uint32_t writeBuffer)
   glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
 }
 
-Texture2D* ObjectLoader::LoadTexture(const aiMaterial* material, const char* textureType)
+Texture2D* ObjectLoader::LoadTexture(const aiMaterial* aimaterial, const char* textureType)
 {
   aiTextureType aiType = aiTextureType_NONE;
   if (std::strcmp(textureType, "diffuse") == 0)
@@ -124,11 +132,11 @@ Texture2D* ObjectLoader::LoadTexture(const aiMaterial* material, const char* tex
   else if (std::strcmp(textureType, "specular") == 0)
     aiType = aiTextureType_SPECULAR;
 
-  if (material->GetTextureCount(aiType) <= 0)
+  if (aimaterial->GetTextureCount(aiType) <= 0)
     return nullptr;
 
   aiString fileName;
-  if (material->GetTexture(aiType, 0, &fileName) != AI_SUCCESS)
+  if (aimaterial->GetTexture(aiType, 0, &fileName) != AI_SUCCESS)
     return nullptr;
 
   return TextureManager::Instance().GetTextureByPath(ROOT_PATH / fileName.C_Str());

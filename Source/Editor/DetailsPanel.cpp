@@ -11,6 +11,7 @@
  * -----------------------------------------------------
 */
 
+#if 0
 void DetailsPanel::RenderPanel(SharedPointer<DirectionalLight>& target, Scene* scene)
 {
   if (!isOpen)
@@ -195,7 +196,7 @@ void DetailsPanel::RenderPanel(SharedPointer<StaticMesh>& target, Scene* scene)
 
   ImGui::End();
 }
-
+#endif
 
 /* -----------------------------------------------------
  *          PRIVATE METHODS

@@ -17,16 +17,15 @@ public:
 	ObjectLoader(const Path& filePath);
 
 	/* Load data from file and initializes vertex array object */
-	void LoadData(class VertexArray*& vao, class VertexBufferConfig* conf);
+	void LoadMesh(class MeshComponent* mesh);
 	
-	Material& GetMaterial() { return _material; }
+	Material material;
 
 private:
 	Assimp::Importer _importer;
 	const aiScene* _scene;
-	Material _material;
 
 	void LoadVertices(const aiMesh* aimesh, uint32_t writeBuffer);
 	void LoadIndices(const aiMesh* aimesh, uint32_t writeBuffer);
-	class Texture2D* LoadTexture(const aiMaterial* material, const char* textureType);
+	class Texture2D* LoadTexture(const aiMaterial* aimaterial, const char* textureType);
 };

@@ -21,20 +21,7 @@ OutlinerPanel::OutlinerPanel(const char* panelName)
 
   _iconSize = 16.0f;
   _buttonEyeID = 1;
-
-  _dLightSelected = nullptr;
-  _pLightSelected = nullptr;
-  _sMeshSelected = nullptr;
 }
-
-template<>
-SharedPointer<DirectionalLight>& OutlinerPanel::GetItemSelected() { return _dLightSelected; }
-
-template<>
-SharedPointer<PointLight>& OutlinerPanel::GetItemSelected() { return _pLightSelected; }
-
-template<>
-SharedPointer<StaticMesh>& OutlinerPanel::GetItemSelected() { return _sMeshSelected; }
 
 void OutlinerPanel::RenderPanel(Scene* scene)
 {
@@ -57,6 +44,7 @@ void OutlinerPanel::RenderPanel(Scene* scene)
 
     auto& instanceTM = TextureManager::Instance();
 
+#if 0
     /* Directional light row */
     if (scene->HasDirLight())
     {
@@ -123,6 +111,8 @@ void OutlinerPanel::RenderPanel(Scene* scene)
         ToggleVisibility(sceneMesh);
       }
     }
+#endif
+
     ImGui::EndTable();
   }
   ImGui::PopStyleColor();
@@ -157,6 +147,7 @@ void OutlinerPanel::AddSceneComponentButton(const char* labelPopup)
 
 void OutlinerPanel::AddSceneComponentPopup(Scene* scene)
 {
+#if 0
   const char* lights[] = { "Directional light", "Point light", "Spot light", };
   const char* meshes[] = { "Cube", "Plane", "Cylinder", };
   ImGui::SeparatorText("New light");
@@ -227,8 +218,10 @@ void OutlinerPanel::AddSceneComponentPopup(Scene* scene)
     }
   }
   ImGui::EndPopup();
+#endif
 }
 
+#if 0
 void OutlinerPanel::ToggleVisibility(SharedPointer<DirectionalLight>& dLight)
 {
   auto& instanceTM = TextureManager::Instance();
@@ -287,3 +280,4 @@ void OutlinerPanel::ToggleVisibility(SharedPointer<StaticMesh>& sMesh)
       sMesh->visible = true;
   }
 }
+#endif

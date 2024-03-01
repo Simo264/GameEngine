@@ -19391,7 +19391,7 @@ void ImGui::DebugRenderKeyboardPreview(ImDrawList* draw_list)
     ImVec2 board_max = ImVec2(board_min.x + 3 * key_step.x + 2 * key_row_offset + 10.0f, board_min.y + 3 * key_step.y + 10.0f);
     ImVec2 start_pos = ImVec2(board_min.x + 5.0f - key_step.x, board_min.y);
 
-    struct KeyLayoutData { int Row, Col; const char* Label; ImGuiKey Key; };
+    struct KeyLayoutData { int Row, Col; const char* GetLabel; ImGuiKey Key; };
     const KeyLayoutData keys_to_display[] =
     {
         { 0, 0, "", ImGuiKey_Tab },      { 0, 1, "Q", ImGuiKey_Q }, { 0, 2, "W", ImGuiKey_W }, { 0, 3, "E", ImGuiKey_E }, { 0, 4, "R", ImGuiKey_R },
@@ -19417,7 +19417,7 @@ void ImGui::DebugRenderKeyboardPreview(ImDrawList* draw_list)
         draw_list->AddRect(face_min, face_max, IM_COL32(193, 193, 193, 255), key_face_rounding, ImDrawFlags_None, 2.0f);
         draw_list->AddRectFilled(face_min, face_max, IM_COL32(252, 252, 252, 255), key_face_rounding);
         ImVec2 label_min = ImVec2(key_min.x + key_label_pos.x, key_min.y + key_label_pos.y);
-        draw_list->AddText(label_min, IM_COL32(64, 64, 64, 255), key_data->Label);
+        draw_list->AddText(label_min, IM_COL32(64, 64, 64, 255), key_data->GetLabel);
         if (IsKeyDown(key_data->Key))
             draw_list->AddRectFilled(key_min, key_max, IM_COL32(255, 0, 0, 128), key_rounding);
     }

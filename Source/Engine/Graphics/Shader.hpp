@@ -9,15 +9,20 @@
 class Shader
 {
 public:
+  /* Construct a shader program from vertex shader, fragment shader */
   Shader(const char* label, const Path& vertFile, const Path& fragFile);
 
   /* Disable copy constructor */
   Shader(Shader const&) = delete;
   Shader& operator=(Shader const&) = delete;
 
+  /* Use current shader program to render */
   void Use() const; 
+
+  /* Free resources from GPU */
   void DestroyShader();
-  const String& Label() const { return _label; }
+
+  const String& GetLabel() const { return _label; }
 
   void SetBool(const char* name, bool value) const;
   void SetInt(const char* name, int value) const;
