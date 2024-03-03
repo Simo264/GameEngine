@@ -1,21 +1,18 @@
 #pragma once
 
-#include "Core/Core.hpp"
+#include "Editor/Panel.hpp"
 #include "Core/Math/Math.hpp"
 
 /* ----------------------------------------
 			DetailsPanel class
 	---------------------------------------- */
-class DetailsPanel
+class DetailsPanel : public Panel
 {
 public:
-	DetailsPanel(const char* panelName) : 
-		panelName{ panelName },
-		isOpen{ true }
+	DetailsPanel(const char* panelName, bool visible) 
+		: Panel(panelName, visible)
 	{}
 
-	bool isOpen;
-	String panelName;
 
 #if 0
 	void RenderPanel(SharedPointer<DirectionalLight>& target, class Scene*);

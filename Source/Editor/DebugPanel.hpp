@@ -1,17 +1,14 @@
 #pragma once
 
-#include "Core/Core.hpp"
+#include "Editor/Panel.hpp"
 
 /* ----------------------------------------
 			DebugFrame class
 	---------------------------------------- */
-class DebugFrame
+class DebugPanel : public Panel
 {
 public:
-	DebugFrame(const char* frameName);
-
-	bool isOpen;
-	String frameName;
+	DebugPanel(const char* panelName, bool visible);
 
 	void RenderFrame();
 

@@ -1,13 +1,13 @@
 #pragma once
 
-#include "ContentBrowserPanel.hpp"
-#include "ViewportPanel.hpp"
-#include "OutlinerPanel.hpp"
-#include "DetailsPanel.hpp"
-#include "InspectorPanel.hpp"
-#include "SettingsFrame.hpp"
-#include "DebugFrame.hpp"
-#include "MenuBar.hpp"
+#include "Editor/ContentBrowserPanel.hpp"
+#include "Editor/ViewportPanel.hpp"
+#include "Editor/OutlinerPanel.hpp"
+#include "Editor/DetailsPanel.hpp"
+#include "Editor/InspectorPanel.hpp"
+#include "Editor/SettingsPanel.hpp"
+#include "Editor/DebugPanel.hpp"
+#include "Editor/MenuBar.hpp"
 
 /* Editor layout 1600x900
 
@@ -42,8 +42,8 @@ public:
 	UniquePointer<OutlinerPanel> outlinerPanel;
 	UniquePointer<DetailsPanel> detailsPanel;
 	UniquePointer<InspectorPanel> inspectorPanel;
-	UniquePointer<SettingsFrame> settingsFrame;
-	UniquePointer<DebugFrame> debugFrame;
+	UniquePointer<SettingsPanel> settingsPanel;
+	UniquePointer<DebugPanel> debugPanel;
 	UniquePointer<MenuBar> menuBar;
 
 private:

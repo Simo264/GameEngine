@@ -1,4 +1,4 @@
-#include "SettingsFrame.hpp"
+#include "SettingsPanel.hpp"
 #include "Core/Math/Math.hpp"
 
 #include <imgui/imgui.h>
@@ -24,18 +24,13 @@ struct WindowArgs
  * -----------------------------------------------------
 */
 
-SettingsFrame::~SettingsFrame()
-{
-  delete _windowArgs;
-}
 
-SettingsFrame::SettingsFrame()
+
+SettingsPanel::SettingsPanel(const char* panelName, bool visible)
+  : Panel(panelName, visible)
 {
   _conf = std::make_unique<INIFileParser>(ROOT_PATH / CONFIG_FILENAME);
   _conf->ReadData();
-
-	frameName = "Settings";
-	isOpen = false;
 
   _windowArgs = new WindowArgs;
   _windowArgs->title = _conf->GetValue("window", "title");
@@ -54,10 +49,15 @@ SettingsFrame::SettingsFrame()
       break;
 }
 
-void SettingsFrame::RenderFrame()
+SettingsPanel::~SettingsPanel()
+{
+  delete _windowArgs;
+}
+
+void SettingsPanel::RenderFrame()
 {
   static bool buttonDisabled = true;
-  ImGui::Begin(frameName.c_str(), &isOpen, ImGuiWindowFlags_NoDocking);
+  ImGui::Begin(panelName.c_str(), &visible, ImGuiWindowFlags_NoDocking);
   ImGui::SeparatorText("Window properties");
 
   /* Window title */
@@ -126,7 +126,7 @@ void SettingsFrame::RenderFrame()
  * -----------------------------------------------------
 */
 
-void SettingsFrame::OnSaveSettings()
+void SettingsPanel::OnSaveSettings()
 {
   _conf->Update("window", "title", _windowArgs->title.c_str());
   _conf->Update("window", "resolution", INIFileParser::Vec2ToString<Vec2i>(_windowArgs->resolution, 'x').c_str());

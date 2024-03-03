@@ -1,17 +1,16 @@
 #pragma once
 
-#include "Core/Core.hpp"
+#include "Editor/Panel.hpp"
 
 /* ----------------------------------------
 			InspectorPanel class
 	---------------------------------------- */
-class InspectorPanel
+class InspectorPanel : public Panel
 {
 public:
-	InspectorPanel(const char* panelName);
-
-	bool isOpen;
-	String panelName;
+	InspectorPanel(const char* panelName, bool visible)
+		: Panel(panelName, visible)
+	{}
 
 	void RenderPanel();
 };

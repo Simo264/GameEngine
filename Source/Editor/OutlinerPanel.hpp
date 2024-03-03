@@ -1,17 +1,19 @@
 #pragma once
 
-#include "Core/Core.hpp"
+#include "Editor/Panel.hpp"
+#include "Engine/GameObjectType.hpp"
 
 /* ----------------------------------------
 			OutlinerPanel class
 	---------------------------------------- */
-class OutlinerPanel
+class OutlinerPanel : public Panel
 {
 public:
-	OutlinerPanel(const char* panelName);
-	
-	bool isOpen;
-	String panelName;
+	OutlinerPanel(const char* panelName, bool visible)
+		: Panel(panelName, visible),
+		_iconSize{ 16.0f },
+		_buttonEyeID{ 1 }
+	{}
 
 	void RenderPanel(class Scene* scene);
 	bool IsItemSelected() const { return false; }
@@ -22,6 +24,8 @@ public:
 private:
 	float _iconSize;
 	uint32_t _buttonEyeID;
+
+	class Texture2D* GetObjectIcon(GameObjectType type);
 
 #if 0
 	SharedPointer<DirectionalLight> _dLightSelected;

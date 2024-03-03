@@ -1,14 +1,16 @@
 #include "Scene.hpp"
-#include "Engine/Graphics/Shader.hpp"
-#include "Engine/Graphics/Texture2D.hpp"
-#include "Engine/ECS/GameObject.hpp"
-#include "Engine/ECS/LabelComponent.hpp"
-
-#include "Engine/Subsystems/TextureManager.hpp"
-
-#include "Core/FileParser/INIFileParser.hpp"
-
 #include "Core/Log/Logger.hpp"
+#include "Engine/GameObject.hpp"
+
+#include "Engine/ECS/LabelComponent.hpp"
+#include "Engine/ECS/TypeComponent.hpp"
+
+//#include "Engine/Graphics/Shader.hpp"
+//#include "Engine/Graphics/Texture2D.hpp"
+//#include "Engine/Subsystems/TextureManager.hpp"
+//#include "Core/FileParser/INIFileParser.hpp"
+
+
 
 /* -----------------------------------------------------
  *          PUBLIC METHODS
@@ -27,18 +29,21 @@ void Scene::ClearScene()
 
 void Scene::LoadScene(const Path& filepath)
 {
-
+	/* TODO */
+	assert(false, && "TODO");
 }
 
 void Scene::SaveScene(const Path& filepath)
 {
-
+	/* TODO */
+	assert(false, && "TODO");
 }
 
-GameObject Scene::CreateObject(/*const char* label, GameObjectType type*/)
+GameObject Scene::CreateObject(const char* label, GameObjectType type)
 {
-	GameObject object = GameObject(_registry.create(), (uint32_t)GameObjectType::NONE, this);
-	//object.AddComponent<LabelComponent>(label);
+	GameObject object = GameObject(_registry.create(), &_registry);
+	object.AddComponent<LabelComponent>(label);
+	object.AddComponent<TypeComponent>(type);
 	return object;
 }
 

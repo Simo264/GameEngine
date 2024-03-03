@@ -2,7 +2,6 @@
 
 #include "Engine/Graphics/Texture2D.hpp"
 #include "Engine/Subsystems/TextureManager.hpp"
-#include "Core/Log/Logger.hpp"
 
 #include <imgui/imgui.h>
 
@@ -11,11 +10,9 @@
  * -----------------------------------------------------
 */
 
-ContentBrowserPanel::ContentBrowserPanel(const char* panelName)
+ContentBrowserPanel::ContentBrowserPanel(const char* panelName, bool visible)
+  : Panel(panelName, visible)
 {
-  this->panelName = panelName;
-	isOpen = true;
-  
   _currentDir = ROOT_PATH;
   _thumbPadding = 16.0f;
   _thumbSize = 64.0f;
@@ -23,7 +20,7 @@ ContentBrowserPanel::ContentBrowserPanel(const char* panelName)
 
 void ContentBrowserPanel::RenderPanel()
 {
-  ImGui::Begin(panelName.c_str(), &isOpen);
+  ImGui::Begin(panelName.c_str(), &visible);
   ImGui::PushStyleColor(ImGuiCol_Button, { 0,0,0,0 });
   ImGui::PushStyleColor(ImGuiCol_ButtonHovered, { 0.25f,0.25f,0.25f, 0.5f });
   ImGui::PushStyleColor(ImGuiCol_ButtonActive, { 0.5f,0.5f,0.5f,0.5f });

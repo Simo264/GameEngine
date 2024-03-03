@@ -1,10 +1,14 @@
 #include "OutlinerPanel.hpp"
+
+#include "Core/Log/Logger.hpp"
+
 #include "Engine/Scene.hpp"
-#include "Engine/Graphics/Shader.hpp"
 #include "Engine/Graphics/Texture2D.hpp"
 #include "Engine/Subsystems/TextureManager.hpp"
-#include "Engine/Subsystems/ShaderManager.hpp"
-#include "Core/Log/Logger.hpp"
+
+#include "Engine/ECS/LabelComponent.hpp"
+#include "Engine/ECS/TypeComponent.hpp"
+#include "Engine/ECS/Lighting/DirLightComponent.hpp"
 
 #include <imgui/imgui.h>
 #include <imgui/imgui_internal.h>
@@ -14,18 +18,9 @@
  * -----------------------------------------------------
 */
 
-OutlinerPanel::OutlinerPanel(const char* panelName)
-{
-  this->panelName = panelName;
-  isOpen = true;
-
-  _iconSize = 16.0f;
-  _buttonEyeID = 1;
-}
-
 void OutlinerPanel::RenderPanel(Scene* scene)
 {
-  ImGui::Begin(panelName.c_str(), &isOpen);
+  ImGui::Begin(panelName.c_str(), &visible);
 
   AddSceneComponentButton("PopupAddElement");
   if (ImGui::BeginPopup("PopupAddElement"))
@@ -41,10 +36,30 @@ void OutlinerPanel::RenderPanel(Scene* scene)
     ImGui::TableSetupColumn("##C3", ImGuiTableColumnFlags_WidthFixed, 0.2f * ImGui::GetContentRegionAvail().x);   /* 20% width */
 
     _buttonEyeID = 1;
-
     auto& instanceTM = TextureManager::Instance();
+    
+    auto view = scene->Reg().view<LabelComponent, TypeComponent>();
+    for (auto& e : view)
+    {
+      const String& label = view.get<LabelComponent>(e).label;
+      const GameObjectType& type = view.get<TypeComponent>(e).type;
+
+      ImGui::TableNextRow();
+      ImGui::TableSetColumnIndex(0);
+      
+      Texture2D* icon = GetObjectIcon(type);
+      ImGui::Image((ImTextureID)icon->textureID, { _iconSize,_iconSize });
+
+      ImGui::TableSetColumnIndex(1);
+      ImGui::Selectable(label.c_str());
+
+      ImGui::TableSetColumnIndex(2);
+      icon = instanceTM.GetTextureByPath(ICONS_PATH / "icon-eye.png");
+      ImGui::Image((ImTextureID)icon->textureID, { _iconSize,_iconSize });
+    }
 
 #if 0
+    
     /* Directional light row */
     if (scene->HasDirLight())
     {
@@ -126,6 +141,30 @@ void OutlinerPanel::RenderPanel(Scene* scene)
  *          PRIVATE METHODS
  * -----------------------------------------------------
 */
+
+Texture2D* OutlinerPanel::GetObjectIcon(GameObjectType type)
+{
+  auto& instanceTM = TextureManager::Instance();
+
+  switch (type)
+  {
+  case GameObjectType::DIRECTIONAL_LIGHT:
+    return instanceTM.GetTextureByPath(ICONS_PATH / "icon-sun.png");
+
+  case GameObjectType::POINT_LIGHT:
+    return instanceTM.GetTextureByPath(ICONS_PATH / "icon-lamp.png");
+
+  case GameObjectType::SPOT_LIGHT:
+    assert(false && "TODO");
+    return nullptr;
+  
+  case GameObjectType::STATIC_MESH:
+    return instanceTM.GetTextureByPath(ICONS_PATH / "icon-mesh.png");
+
+  default:
+    return nullptr;
+  }
+}
 
 void OutlinerPanel::AddSceneComponentButton(const char* labelPopup)
 {

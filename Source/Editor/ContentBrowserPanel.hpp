@@ -1,17 +1,14 @@
 #pragma once
 
-#include "Core/Core.hpp"
+#include "Editor/Panel.hpp"
 
 /* ----------------------------------------
 			ContentBrowserPanel class
 	---------------------------------------- */
-class ContentBrowserPanel
+class ContentBrowserPanel : public Panel
 {
 public:
-	ContentBrowserPanel(const char* panelName);
-
-	bool isOpen;
-	String panelName;
+	ContentBrowserPanel(const char* panelName, bool visible);
 
 	void RenderPanel();
 	

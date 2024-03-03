@@ -1,25 +1,23 @@
-#include "DebugFrame.hpp"
+#include "DebugPanel.hpp"
 #include "Engine/Graphics/Renderer.hpp"
 
 #include <imgui/imgui.h>
 
-DebugFrame::DebugFrame(const char* frameName)
+DebugPanel::DebugPanel(const char* panelName, bool visible)
+	: Panel(panelName, visible)
 {
-	this->frameName = frameName;
-	isOpen = true;
-
 	ImGuiIO& io = ImGui::GetIO();
 	_t1 = SystemClock::now();
 	_t2 = SystemClock::now();
 	_framerate = io.Framerate;
 }
 
-void DebugFrame::RenderFrame()
+void DebugPanel::RenderFrame()
 {
 	ImGuiIO& io = ImGui::GetIO();
 
 	ImGui::SetNextWindowBgAlpha(0.15f); /* Transparent background */
-	ImGui::Begin(frameName.c_str(), &isOpen, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoDocking);
+	ImGui::Begin(panelName.c_str(), &visible, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoDocking);
 
 	_t2 = SystemClock::now();
 	const std::chrono::duration<double> diff = _t2 - _t1;

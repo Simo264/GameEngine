@@ -1,7 +1,4 @@
 #include "DetailsPanel.hpp"
-#include "Engine/Scene.hpp"
-#include "Engine/Graphics/Texture2D.hpp"
-#include "Engine/Subsystems/TextureManager.hpp"
 #include "Core/Log/Logger.hpp"
 
 #include <imgui/imgui.h>

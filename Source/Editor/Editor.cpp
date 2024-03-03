@@ -36,13 +36,13 @@ void Editor::Initialize()
   /* Set ImGui style*/
   Styling();
 
-  contentBrowserPanel = std::make_unique<ContentBrowserPanel>("Content Browser");
-  viewportPanel = std::make_unique<ViewportPanel>("Viewport");
-  outlinerPanel = std::make_unique<OutlinerPanel>("Outliner");
-  detailsPanel = std::make_unique<DetailsPanel>("Details");
-  inspectorPanel = std::make_unique<InspectorPanel>("Inspector");
-  settingsFrame = std::make_unique<SettingsFrame>();
-  debugFrame = std::make_unique<DebugFrame>("Debug");
+  contentBrowserPanel = std::make_unique<ContentBrowserPanel>("Content Browser", true);
+  viewportPanel = std::make_unique<ViewportPanel>("Viewport", true);
+  outlinerPanel = std::make_unique<OutlinerPanel>("Outliner", true);
+  detailsPanel = std::make_unique<DetailsPanel>("Details", false);
+  inspectorPanel = std::make_unique<InspectorPanel>("Inspector", true);
+  settingsPanel = std::make_unique<SettingsPanel>("Settings", false);
+  debugPanel = std::make_unique<DebugPanel>("Debug", true);
 
   _demoOpen = true;
   _firstLoop = true;
@@ -53,14 +53,14 @@ void Editor::Initialize()
   _exit = false;
 
   Array<bool*, MENU_ITEMS_COUNT> items{};
-  items[PANEL_BROWSER] = &contentBrowserPanel->isOpen;
-  items[PANEL_INSPECTOR] = &inspectorPanel->isOpen;
-  items[PANEL_OUTLINER] = &outlinerPanel->isOpen;
-  items[PANEL_VIEWPORT] = &viewportPanel->isOpen;
-  items[PANEL_DETAILS] = &detailsPanel->isOpen;
-  items[FRAME_DEBUG] = &debugFrame->isOpen;
+  items[PANEL_BROWSER] = &contentBrowserPanel->visible;
+  items[PANEL_INSPECTOR] = &inspectorPanel->visible;
+  items[PANEL_OUTLINER] = &outlinerPanel->visible;
+  items[PANEL_VIEWPORT] = &viewportPanel->visible;
+  items[PANEL_DETAILS] = &detailsPanel->visible;
+  items[FRAME_DEBUG] = &debugPanel->visible;
   items[FRAME_DEMO] = &_demoOpen;
-  items[FRAME_SETTINGS] = &settingsFrame->isOpen;
+  items[FRAME_SETTINGS] = &settingsPanel->visible;
   items[NEW_SCENE] = &_newScene;
   items[SAVE_SCENE] = &_saveScene;
   items[SAVE_AS_SCENE] = &_saveAsScene;
@@ -110,16 +110,16 @@ void Editor::Render(Scene* scene, FrameBuffer* framebuffer)
   if (_demoOpen) 
     ImGui::ShowDemoWindow(&_demoOpen);
 
-  if (settingsFrame->isOpen)
-    settingsFrame->RenderFrame();
+  if (settingsPanel->visible)
+    settingsPanel->RenderFrame();
 
-  if (debugFrame->isOpen)
-    debugFrame->RenderFrame();
+  if (debugPanel->visible)
+    debugPanel->RenderFrame();
 
-  if (contentBrowserPanel->isOpen)
+  if (contentBrowserPanel->visible)
     contentBrowserPanel->RenderPanel();
   
-  if(outlinerPanel->isOpen)
+  if(outlinerPanel->visible)
     outlinerPanel->RenderPanel(scene);
 
 #if 0
@@ -138,10 +138,10 @@ void Editor::Render(Scene* scene, FrameBuffer* framebuffer)
   }
 #endif
 
-  if (viewportPanel->isOpen)
+  if (viewportPanel->visible)
     viewportPanel->RenderPanel(framebuffer);
   
-  if(inspectorPanel->isOpen)
+  if(inspectorPanel->visible)
     inspectorPanel->RenderPanel();
 
   if (_newScene)

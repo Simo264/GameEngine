@@ -1,22 +1,13 @@
 #include "ViewportPanel.hpp"
+#include "Core/Log/Logger.hpp"
 #include "Engine/Graphics/FrameBuffer.hpp"
 #include "Core/Platform/OpenGL/OpenGL.hpp"
-#include "Core/Log/Logger.hpp"
 
 #include <imgui/imgui.h>
 #include <imgui/ImGuizmo.h>
 
 extern Mat4f cameraProjectionMatrix;
 extern Mat4f cameraViewMatrix;
-
-ViewportPanel::ViewportPanel(const char* panelName)
-{
-  this->panelName = panelName;
-  
-  isOpen = true;
-	isFocused = false;
-  viewportSize = Vec2i(0, 0); /* Set size on Render() function */
-}
 
 void ViewportPanel::RenderPanel(FrameBuffer* framebuffer)
 {
@@ -26,7 +17,7 @@ void ViewportPanel::RenderPanel(FrameBuffer* framebuffer)
   style.WindowPadding.x = 0;
   style.WindowPadding.y = 0;
 
-  ImGui::Begin(panelName.c_str(), &isOpen);
+  ImGui::Begin(panelName.c_str(), &visible);
   isFocused = ImGui::IsWindowFocused();
 
   /* Using a Child allow to fill all the space of the window. It also alows customization */
