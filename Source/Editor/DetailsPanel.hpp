@@ -13,6 +13,7 @@ public:
 		: Panel(panelName, visible)
 	{}
 
+	void RenderPanel(class GameObject& object);
 
 #if 0
 	void RenderPanel(SharedPointer<DirectionalLight>& target, class Scene*);

@@ -12,11 +12,11 @@
 	The sun is not infinitely far away from us, but it is so far away that we can perceive it as
 	being infinitely far away in the lighting calculations
 	------------------------------------------------------------------------------------------------ */
-class DirLightComponent : public LightComponent
+class DirLightComponent : public ILightComponent
 {
 public:
 	DirLightComponent(const char* uniform)
-		: LightComponent(uniform),
+		: ILightComponent(uniform),
 			direction{ 0.0f, -1.0f, 0.0f }
 	{}
 	

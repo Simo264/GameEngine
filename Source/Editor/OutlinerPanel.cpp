@@ -6,9 +6,14 @@
 #include "Engine/Graphics/Texture2D.hpp"
 #include "Engine/Subsystems/TextureManager.hpp"
 
+#include "Engine/GameObjectType.hpp"
 #include "Engine/ECS/LabelComponent.hpp"
 #include "Engine/ECS/TypeComponent.hpp"
+#include "Engine/ECS/StaticMeshComponent.hpp"
+#include "Engine/ECS/TransformComponent.hpp"
 #include "Engine/ECS/Lighting/DirLightComponent.hpp"
+#include "Engine/ECS/Lighting/PointLightComponent.hpp"
+#include "Engine/ECS/Lighting/SpotLightComponent.hpp"
 
 #include <imgui/imgui.h>
 #include <imgui/imgui_internal.h>
@@ -18,6 +23,20 @@
  * -----------------------------------------------------
 */
 
+OutlinerPanel::OutlinerPanel(const char* panelName, bool visible)
+  : Panel(panelName, visible),
+    _iconSize{ 16.0f },
+    _selected{} /* null entity */
+{
+  auto& instanceTM = TextureManager::Instance();
+  _icons[static_cast<int>(ICON_TYPE::DIR_LIGHT)]    = instanceTM.GetTextureByPath(ICONS_PATH / "icon-dirlight.png");
+  _icons[static_cast<int>(ICON_TYPE::POINT_LIGHT)]  = instanceTM.GetTextureByPath(ICONS_PATH / "icon-pointlight.png");
+  _icons[static_cast<int>(ICON_TYPE::SPOT_LIGHT)]   = instanceTM.GetTextureByPath(ICONS_PATH / "icon-spotlight.png");
+  _icons[static_cast<int>(ICON_TYPE::STATIC_MESH)]  = instanceTM.GetTextureByPath(ICONS_PATH / "icon-staticmesh.png");
+  _icons[static_cast<int>(ICON_TYPE::VISIBLE)]      = instanceTM.GetTextureByPath(ICONS_PATH / "icon-visible.png");
+  _icons[static_cast<int>(ICON_TYPE::HIDDEN)]       = instanceTM.GetTextureByPath(ICONS_PATH / "icon-hidden.png");
+}
+
 void OutlinerPanel::RenderPanel(Scene* scene)
 {
   ImGui::Begin(panelName.c_str(), &visible);
@@ -26,113 +45,40 @@ void OutlinerPanel::RenderPanel(Scene* scene)
   if (ImGui::BeginPopup("PopupAddElement"))
     AddSceneComponentPopup(scene);
 
-  ImGui::PushStyleColor(ImGuiCol_Button, { 0,0,0,0 });
-  ImGui::PushStyleColor(ImGuiCol_ButtonHovered, { 0.25f,0.25f,0.25f, 0.75f });
-  ImGui::PushStyleColor(ImGuiCol_ButtonActive, { 0.25f,0.25f,0.25f, 0.75f });
-  if (ImGui::BeginTable("Table", 3, ImGuiTableFlags_RowBg))
+  if (ImGui::BeginTable("Table", 3, ImGuiTableFlags_BordersV))
   {
-    ImGui::TableSetupColumn("##C1", ImGuiTableColumnFlags_WidthFixed, 0.1f * ImGui::GetContentRegionAvail().x);   /* 10% width */
-    ImGui::TableSetupColumn("##C2", ImGuiTableColumnFlags_WidthFixed, 0.7f * ImGui::GetContentRegionAvail().x);   /* 70% width */
-    ImGui::TableSetupColumn("##C3", ImGuiTableColumnFlags_WidthFixed, 0.2f * ImGui::GetContentRegionAvail().x);   /* 20% width */
+    ImGui::TableSetupColumn("Type", ImGuiTableColumnFlags_WidthFixed, 0.1f * ImGui::GetContentRegionAvail().x);   /* 10% width */
+    ImGui::TableSetupColumn("Label", ImGuiTableColumnFlags_WidthFixed, 0.7f * ImGui::GetContentRegionAvail().x);   /* 70% width */
+    ImGui::TableSetupColumn("##Visible", ImGuiTableColumnFlags_WidthFixed, 0.2f * ImGui::GetContentRegionAvail().x);   /* 20% width */
+    ImGui::TableHeadersRow();
 
-    _buttonEyeID = 1;
-    auto& instanceTM = TextureManager::Instance();
-    
+    /* Every object has LabelComponent and TypeComponent */
     auto view = scene->Reg().view<LabelComponent, TypeComponent>();
-    for (auto& e : view)
+    for(auto [entity, labelComp, typeComp] : view.each())
     {
-      const String& label = view.get<LabelComponent>(e).label;
-      const GameObjectType& type = view.get<TypeComponent>(e).type;
+      const String& label = labelComp.label;
+      const uint32_t itype = typeComp.type;
+      const GameObjectType type = static_cast<GameObjectType>(itype);
+      GameObject object{ entity, &scene->Reg() };
 
       ImGui::TableNextRow();
       ImGui::TableSetColumnIndex(0);
-      
-      Texture2D* icon = GetObjectIcon(type);
+      Texture2D* icon = GetObjectIcon(itype);
       ImGui::Image((ImTextureID)icon->textureID, { _iconSize,_iconSize });
+      SetIconTooltip(itype);
 
       ImGui::TableSetColumnIndex(1);
-      ImGui::Selectable(label.c_str());
-
-      ImGui::TableSetColumnIndex(2);
-      icon = instanceTM.GetTextureByPath(ICONS_PATH / "icon-eye.png");
-      ImGui::Image((ImTextureID)icon->textureID, { _iconSize,_iconSize });
-    }
-
-#if 0
-    
-    /* Directional light row */
-    if (scene->HasDirLight())
-    {
-      ImGui::TableNextRow();
-      ImGui::TableSetColumnIndex(0);
-      auto iconSun = instanceTM.GetTextureByPath(ICONS_PATH / "icon-sun.png");
-      ImGui::Image((ImTextureID)iconSun->textureID, { _iconSize,_iconSize });
-      ImGui::TableSetColumnIndex(1);
-
-      ImGui::PushID(scene->sceneDLight->GetID());
-      if (ImGui::Selectable(scene->sceneDLight->tagName.c_str(), (_dLightSelected != nullptr)))
-      {
-        _dLightSelected = scene->sceneDLight;
-        _pLightSelected = nullptr;
-        _sMeshSelected = nullptr;
-      }
+      ImGui::PushID((uint32_t)entity);
+      if (ImGui::Selectable(label.c_str(), _selected.GetObjectID() == entity))
+        _selected = object;
       ImGui::PopID();
+
       ImGui::TableSetColumnIndex(2);
-      ToggleVisibility(scene->sceneDLight);
+      ImGui::ImageButton((ImTextureID)_icons[static_cast<int>(ICON_TYPE::VISIBLE)]->textureID, 
+        { _iconSize,_iconSize });
     }
-
-    /* Point light rows */
-    if (scene->HasPointLights())
-    {
-      for (auto& scenePLight : scene->scenePLights)
-      {
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        auto iconLamp = instanceTM.GetTextureByPath(ICONS_PATH / "icon-lamp.png");
-        ImGui::Image((ImTextureID)iconLamp->textureID, { _iconSize,_iconSize });
-        ImGui::TableSetColumnIndex(1);
-        ImGui::PushID(scenePLight->GetID());
-        if (ImGui::Selectable(scenePLight->tagName.c_str(), (_pLightSelected == scenePLight)))
-        {
-          _dLightSelected = nullptr;
-          _pLightSelected = scenePLight;
-          _sMeshSelected = nullptr;
-        }
-        ImGui::PopID();
-        ImGui::TableSetColumnIndex(2);
-        ToggleVisibility(scenePLight);
-      }
-    }
-
-    /* Static mesh rows */
-    if (scene->HasStaticMeshes())
-    {
-      for (auto& sceneMesh : scene->sceneSMeshes)
-      {
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        auto iconMesh = instanceTM.GetTextureByPath(ICONS_PATH / "icon-mesh.png");
-        ImGui::Image((ImTextureID)iconMesh->textureID, { _iconSize,_iconSize });
-        ImGui::TableSetColumnIndex(1);
-        ImGui::PushID(sceneMesh->GetID());
-        if (ImGui::Selectable(sceneMesh->tagName.c_str(), (_sMeshSelected == sceneMesh)))
-        {
-          _dLightSelected = nullptr;
-          _pLightSelected = nullptr;
-          _sMeshSelected = sceneMesh;
-        }
-        ImGui::PopID();
-        ImGui::TableSetColumnIndex(2);
-        ToggleVisibility(sceneMesh);
-      }
-    }
-#endif
-
     ImGui::EndTable();
   }
-  ImGui::PopStyleColor();
-  ImGui::PopStyleColor();
-  ImGui::PopStyleColor();
   ImGui::End();
 }
 
@@ -142,122 +88,155 @@ void OutlinerPanel::RenderPanel(Scene* scene)
  * -----------------------------------------------------
 */
 
-Texture2D* OutlinerPanel::GetObjectIcon(GameObjectType type)
+Texture2D* OutlinerPanel::GetObjectIcon(uint32_t objectType)
 {
-  auto& instanceTM = TextureManager::Instance();
-
+  GameObjectType type = static_cast<GameObjectType>(objectType);
   switch (type)
   {
   case GameObjectType::DIRECTIONAL_LIGHT:
-    return instanceTM.GetTextureByPath(ICONS_PATH / "icon-sun.png");
+    return _icons[static_cast<int>(ICON_TYPE::DIR_LIGHT)];
 
   case GameObjectType::POINT_LIGHT:
-    return instanceTM.GetTextureByPath(ICONS_PATH / "icon-lamp.png");
+    return _icons[static_cast<int>(ICON_TYPE::POINT_LIGHT)];
 
   case GameObjectType::SPOT_LIGHT:
-    assert(false && "TODO");
-    return nullptr;
+    return _icons[static_cast<int>(ICON_TYPE::SPOT_LIGHT)];
   
   case GameObjectType::STATIC_MESH:
-    return instanceTM.GetTextureByPath(ICONS_PATH / "icon-mesh.png");
+    return _icons[static_cast<int>(ICON_TYPE::STATIC_MESH)];
 
   default:
+    CONSOLE_WARN("Object type %d does not have icon", objectType);
     return nullptr;
+  }
+}
+
+void OutlinerPanel::SetIconTooltip(uint32_t objectType)
+{
+  GameObjectType type = static_cast<GameObjectType>(objectType);
+  char text[32]{};
+  if (ImGui::BeginItemTooltip())
+  {
+    switch (type)
+    {
+    case GameObjectType::DIRECTIONAL_LIGHT:
+      sprintf_s(text, "Directional light");
+      break;
+    
+    case GameObjectType::POINT_LIGHT:
+      sprintf_s(text, "Point light");
+      break;
+
+    case GameObjectType::SPOT_LIGHT:
+      sprintf_s(text, "Spot light");
+      break;
+    
+    case GameObjectType::STATIC_MESH:
+      sprintf_s(text, "Static mesh");
+      break;
+    }
+    ImGui::TextUnformatted(text);
+    ImGui::EndTooltip();
   }
 }
 
 void OutlinerPanel::AddSceneComponentButton(const char* labelPopup)
 {
-  ImGui::PushStyleColor(ImGuiCol_Button, { 1.f,1.f,1.f,1.f });
-  ImGui::PushStyleColor(ImGuiCol_ButtonHovered, { 0.75f,0.75f,0.75f,1.f });
-  ImGui::PushStyleColor(ImGuiCol_ButtonActive, { 0.5f,0.5f,0.5f,1.f });
-
-  auto& instanceTM = TextureManager::Instance();
-  auto iconPlus = instanceTM.GetTextureByPath(ICONS_PATH / "icon-plus.png");
-  if (ImGui::ImageButton((ImTextureID)iconPlus->textureID, { 24,24 }))
+  if (ImGui::Button("Add item", { ImGui::GetContentRegionAvail().x, 24 }))
     ImGui::OpenPopup(labelPopup);
 
-  ImGui::InvisibleButton("##margin-bottom", { 8,8 });
+  ImGui::InvisibleButton("##margin-bottom", { 4,4 });
   ImGui::Separator();
-  ImGui::InvisibleButton("##margin-bottom", { 8,8 });
-
-  ImGui::PopStyleColor(3);
+  ImGui::InvisibleButton("##margin-bottom", { 4,4 });
 }
 
 void OutlinerPanel::AddSceneComponentPopup(Scene* scene)
 {
-#if 0
-  const char* lights[] = { "Directional light", "Point light", "Spot light", };
-  const char* meshes[] = { "Cube", "Plane", "Cylinder", };
-  ImGui::SeparatorText("New light");
+  static const char* lights[] = { "Directional light", "Point light", "Spot light", };
+  static const char* meshes[] = { "Cube", "Plane", "Cylinder", };
+  
+  ImGui::SeparatorText("Lighting");
   for (int i = 0; i < IM_ARRAYSIZE(lights); i++)
   {
     if (ImGui::Selectable(lights[i]))
     {
       switch (i)
       {
-      case 0: /* Directional lihght */
+      case 0: /* Directional light */
       {
-        if (!scene->HasDirLight())
+        if (scene->Reg().view<DirLightComponent>().size() == 0)
         {
-          auto obj = std::make_shared<DirectionalLight>("UDirLight");
-          scene->AddSceneObject(obj);
+          GameObject dLight = scene->CreateObject(
+            "Directional light",
+            static_cast<uint32_t>(GameObjectType::DIRECTIONAL_LIGHT));
+
+          dLight.AddComponent<DirLightComponent>(SHADER_UNIFORM_DIRLIGHT);
         }
+        else
+          CONSOLE_WARN("Can't create more dir light objects");
+
         break;
       }
       case 1: /* Pointlight */
       {
-        if (scene->scenePLights.size() < 4)
+        uint32_t size = scene->Reg().view<PointLightComponent>().size();
+        if (size < MAX_NUM_POINTLIGHTS)
         {
-          char uname[32]{};
-          sprintf_s(uname, "UPointLight[%d]", (int)scene->scenePLights.size());
-          auto obj = std::make_shared<PointLight>(uname);
-          scene->AddSceneObject(obj);
-          break;
+          GameObject pLight = scene->CreateObject(
+            "Point light",
+            static_cast<uint32_t>(GameObjectType::POINT_LIGHT));
+
+          pLight.AddComponent<PointLightComponent>(SHADER_UNIFORM_POINTLIGHT(size));
         }
+        else
+          CONSOLE_WARN("Can't create more point light objects");
+        break;
       }
       case 2: /* TODO: Spotlight */
       {
+        CONSOLE_WARN("TODO");
         break;
       }
       }
     }
   }
 
-  ImGui::SeparatorText("New static mesh");
+  ImGui::SeparatorText("Static mesh");
   for (int i = 0; i < IM_ARRAYSIZE(meshes); i++)
   {
-    Path model;
+    
     if (ImGui::Selectable(meshes[i]))
     {
       switch (i)
       {
       case 0: /* Cube mesh */
       {
-        model = ASSETS_PATH / (Path("Shapes/Cube/Cube.obj").lexically_normal());
-        auto obj = std::make_shared<StaticMesh>(ROOT_PATH / model);
-        scene->AddSceneObject(obj);
+        Path model = ASSETS_PATH / (Path("Shapes/Cube/Cube.obj").lexically_normal());
+        GameObject cube = scene->CreateObject("Cube", static_cast<uint32_t>(GameObjectType::STATIC_MESH));
+        cube.AddComponent<StaticMeshComponent>(model);
+        cube.AddComponent<TransformComponent>();
         break;
       }
       case 1: /* Plane mesh */
       {
-        model = ASSETS_PATH / (Path("Shapes/Plane/Plane.obj").lexically_normal());
-        auto obj = std::make_shared<StaticMesh>(ROOT_PATH / model);
-        scene->AddSceneObject(obj);
+        Path model = ASSETS_PATH / (Path("Shapes/Plane/Plane.obj").lexically_normal());
+        GameObject cube = scene->CreateObject("Plane", static_cast<uint32_t>(GameObjectType::STATIC_MESH));
+        cube.AddComponent<StaticMeshComponent>(model);
+        cube.AddComponent<TransformComponent>();
         break;
       }
       case 2: /* Cylinder mesh */
       {
-        model = ASSETS_PATH / (Path("Shapes/Cylinder/Cylinder.obj").lexically_normal());
-        auto obj = std::make_shared<StaticMesh>(ROOT_PATH / model);
-        scene->AddSceneObject(obj);
+        Path model = ASSETS_PATH / (Path("Shapes/Cylinder/Cylinder.obj").lexically_normal());
+        GameObject cube = scene->CreateObject("Cylinder", static_cast<uint32_t>(GameObjectType::STATIC_MESH));
+        cube.AddComponent<StaticMeshComponent>(model);
+        cube.AddComponent<TransformComponent>();
         break;
       }
       }
     }
   }
   ImGui::EndPopup();
-#endif
 }
 
 #if 0

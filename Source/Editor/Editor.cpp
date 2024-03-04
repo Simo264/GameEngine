@@ -39,7 +39,7 @@ void Editor::Initialize()
   contentBrowserPanel = std::make_unique<ContentBrowserPanel>("Content Browser", true);
   viewportPanel = std::make_unique<ViewportPanel>("Viewport", true);
   outlinerPanel = std::make_unique<OutlinerPanel>("Outliner", true);
-  detailsPanel = std::make_unique<DetailsPanel>("Details", false);
+  detailsPanel = std::make_unique<DetailsPanel>("Details", true);
   inspectorPanel = std::make_unique<InspectorPanel>("Inspector", true);
   settingsPanel = std::make_unique<SettingsPanel>("Settings", false);
   debugPanel = std::make_unique<DebugPanel>("Debug", true);
@@ -121,6 +121,10 @@ void Editor::Render(Scene* scene, FrameBuffer* framebuffer)
   
   if(outlinerPanel->visible)
     outlinerPanel->RenderPanel(scene);
+  
+  if (detailsPanel->visible)
+    detailsPanel->RenderPanel(outlinerPanel->GetItemSelected());
+
 
 #if 0
   if (outlinerPanel->IsItemSelected())
@@ -168,7 +172,7 @@ void Editor::Render(Scene* scene, FrameBuffer* framebuffer)
 
 void Editor::Styling()
 {
-  Path fontPath = ROOT_PATH / "Resources/Fonts/Karla-Regular.ttf";
+  Path fontPath = FONTS_PATH / "Karla-Regular.ttf";
   ImGuiIO& io = ImGui::GetIO();
   io.Fonts->AddFontFromFileTTF(fontPath.string().c_str(), 16); 
 

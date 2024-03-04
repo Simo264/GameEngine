@@ -1,7 +1,6 @@
 #include "Scene.hpp"
 #include "Core/Log/Logger.hpp"
 #include "Engine/GameObject.hpp"
-
 #include "Engine/ECS/LabelComponent.hpp"
 #include "Engine/ECS/TypeComponent.hpp"
 
@@ -39,7 +38,7 @@ void Scene::SaveScene(const Path& filepath)
 	assert(false, && "TODO");
 }
 
-GameObject Scene::CreateObject(const char* label, GameObjectType type)
+GameObject Scene::CreateObject(const char* label, uint32_t type)
 {
 	GameObject object = GameObject(_registry.create(), &_registry);
 	object.AddComponent<LabelComponent>(label);
@@ -49,7 +48,7 @@ GameObject Scene::CreateObject(const char* label, GameObjectType type)
 
 void Scene::DestroyObject(GameObject* object)
 {
-	_registry.destroy(object->GetEntity());
+	_registry.destroy(object->GetObjectID());
 }
 
 #if 0

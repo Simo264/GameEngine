@@ -1,5 +1,11 @@
 #include "DetailsPanel.hpp"
 #include "Core/Log/Logger.hpp"
+#include "Engine/GameObject.hpp"
+
+#include "Engine/ECS/TransformComponent.hpp"
+#include "Engine/ECS/StaticMeshComponent.hpp"
+#include "Engine/ECS/Lighting/DirLightComponent.hpp"
+#include "Engine/ECS/Lighting/PointLightComponent.hpp"
 
 #include <imgui/imgui.h>
 
@@ -11,9 +17,6 @@
 #if 0
 void DetailsPanel::RenderPanel(SharedPointer<DirectionalLight>& target, Scene* scene)
 {
-  if (!isOpen)
-    return;
-
   ImGui::Begin(panelName.c_str(), &isOpen);
   if (ImGui::CollapsingHeader("Light properties"))
   {
@@ -194,6 +197,43 @@ void DetailsPanel::RenderPanel(SharedPointer<StaticMesh>& target, Scene* scene)
   ImGui::End();
 }
 #endif
+
+void DetailsPanel::RenderPanel(GameObject& object)
+{
+  ImGui::Begin(panelName.c_str(), &visible);
+  if (object.IsValid())
+  {
+    if (auto dLightComp = object.GetComponent<DirLightComponent>())
+    {
+      if (ImGui::CollapsingHeader("DirLightComponent properties"))
+      {
+
+      }
+    }
+    if (auto pLightComp = object.GetComponent<PointLightComponent>())
+    {
+      if (ImGui::CollapsingHeader("PointLightComponent properties"))
+      {
+
+      }
+    }
+    if (auto transComp = object.GetComponent<TransformComponent>())
+    {
+      if (ImGui::CollapsingHeader("Transform properties"))
+      {
+
+      }
+    }
+    if (auto meshComp = object.GetComponent<StaticMeshComponent>())
+    {
+      if (ImGui::CollapsingHeader("Mesh properties"))
+      {
+
+      }
+    }
+  }
+  ImGui::End();
+}
 
 /* -----------------------------------------------------
  *          PRIVATE METHODS

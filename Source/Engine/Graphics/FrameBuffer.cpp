@@ -157,5 +157,5 @@ void FrameBuffer::InitFrameBufferVAO()
 	};
 	
 	_frameBufferVAO = std::make_unique<VertexArray>();
-	_frameBufferVAO->InitializeBuffers(layout, data);
+	_frameBufferVAO->InitializeBuffers(layout, data, GL_STATIC_DRAW);
 }

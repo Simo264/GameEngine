@@ -70,15 +70,31 @@ struct VertexBufferData
 class VertexArray
 {
 public:
-  /* Generates vertex array, vertex buffer and index buffer objects */
+  /* Create buffer objects.
+    
+    usage: specifies the expected usage pattern of the data store. 
+    The symbolic constant must be one of these:
+      GL_STREAM_DRAW, GL_STREAM_READ, GL_STREAM_COPY,   GL_STATIC_DRAW, 
+      GL_STATIC_READ, GL_STATIC_COPY, GL_DYNAMIC_DRAW,  GL_DYNAMIC_READ, GL_DYNAMIC_COPY.
+  */
   VertexArray();
+
+  /*
+  Create and initialize buffer objects.
+
+  usage: specifies the expected usage pattern of the data store. 
+    The symbolic constant must be one of these:
+      GL_STREAM_DRAW, GL_STREAM_READ, GL_STREAM_COPY,   GL_STATIC_DRAW, 
+      GL_STATIC_READ, GL_STATIC_COPY, GL_DYNAMIC_DRAW,  GL_DYNAMIC_READ, GL_DYNAMIC_COPY.
+  */
+  VertexArray(const VertexBufferLayout& layout, const VertexBufferData& data, uint32_t usage);
 
   /* Disable copy constructor */
   VertexArray(VertexArray const&) = delete;
   VertexArray& operator=(VertexArray const&) = delete;
 
   /* Initialize vertex/index buffers with data */
-  void InitializeBuffers(const VertexBufferLayout& layout, const VertexBufferData& data);
+  void InitializeBuffers(const VertexBufferLayout& layout, const VertexBufferData& data, uint32_t usage);
 
   void Bind() const;
 
@@ -87,10 +103,10 @@ public:
   /* Free resources from GPU */
   void Destroy() const;
 
-  const uint32_t& VertexArrayID() const { return _vao; }
-  const uint32_t& VertexBufferID() const { return _vbo; }
-  const uint32_t& IndexBufferID() const { return _ebo; }
-  const VertexBufferLayout& GetLayout() const { return _layout; }
+  uint32_t VertexArrayID()  const { return _vao; }
+  uint32_t VertexBufferID() const { return _vbo; }
+  uint32_t IndexBufferID()  const { return _ebo; }
+  VertexBufferLayout GetLayout() const { return _layout; }
   
   /* Copy the vertex buffer data into writeBuffer */
   void CopyVertexBufferData(uint32_t writeBuffer);

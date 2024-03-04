@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Core/Core.hpp"
-#include "Engine/GameObjectType.hpp"
 #include <entt/entt.hpp> /* Entity component system */
 
 /* ----------------------------------------------------------------------------
@@ -22,7 +21,7 @@ public:
 	void ClearScene();
 
 	/* Create object in scene */
-	class GameObject CreateObject(const char* label, GameObjectType type);
+	class GameObject CreateObject(const char* label, uint32_t type);
 
 	/* Remove object from scene */
 	void DestroyObject(class GameObject* object);

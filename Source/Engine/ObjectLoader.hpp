@@ -17,7 +17,7 @@ public:
 	ObjectLoader(const Path& filePath);
 
 	/* Load data from file and initializes vertex array object */
-	void LoadMesh(class MeshComponent* mesh);
+	void LoadMesh(class StaticMeshComponent* mesh);
 	
 	Material material;
 

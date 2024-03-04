@@ -11,7 +11,11 @@
 
 #include "Engine/GameObject.hpp"
 #include "Engine/GameObjectType.hpp"
+#include "Engine/ECS/StaticMeshComponent.hpp"
+#include "Engine/ECS/TransformComponent.hpp"
 #include "Engine/ECS/Lighting/DirLightComponent.hpp"
+#include "Engine/ECS/Lighting/PointLightComponent.hpp"
+#include "Engine/ECS/Lighting/SpotLightComponent.hpp"
 
 #include "Engine/Subsystems/WindowManager.hpp"
 #include "Engine/Subsystems/ShaderManager.hpp"
@@ -42,14 +46,14 @@ void Engine::Initialize()
   WindowManager::Instance().Initialize();
   LoadConfig();
 
-  editor.Initialize();
-
   ShaderManager::Instance().Initialize();
   LoadShaders();
   
   TextureManager::Instance().Initialize();
   LoadTextures();
   LoadIcons();
+
+  editor.Initialize();
 }
 
 void Engine::Run()
@@ -75,10 +79,7 @@ void Engine::Run()
   
   /* Create scene */
   Scene scene;
-  auto dLight = scene.CreateObject("Directional Light", GameObjectType::DIRECTIONAL_LIGHT);
-  auto pLight = scene.CreateObject("Point Light", GameObjectType::POINT_LIGHT);
-  auto sMesh = scene.CreateObject("Static mesh", GameObjectType::STATIC_MESH);
-  dLight.AddComponent<DirLightComponent>();
+
 
 #if 0
   /* Shadow mapping */

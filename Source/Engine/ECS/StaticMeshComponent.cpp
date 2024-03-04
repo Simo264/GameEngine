@@ -1,22 +1,39 @@
-#include "MeshComponent.hpp"
+#include "StaticMeshComponent.hpp"
 
 #include "Engine/Graphics/Shader.hpp"
 #include "Engine/Graphics/Texture2D.hpp"
 #include "Engine/Graphics/Renderer.hpp"
+#include "Engine/ObjectLoader.hpp"
+#include "Engine/ECS/TransformComponent.hpp"
 
 #include "Core/Platform/OpenGL/OpenGL.hpp"
 
-MeshComponent::MeshComponent()
+StaticMeshComponent::StaticMeshComponent()
 {
 	vertexArray = std::make_shared<VertexArray>();
 }
 
-void MeshComponent::InitVAO(const VertexBufferLayout& layout, const VertexBufferData& data) const
+StaticMeshComponent::StaticMeshComponent(const VertexBufferLayout& layout, const VertexBufferData& data)
 {
-	vertexArray->InitializeBuffers(layout, data);
+	vertexArray = std::make_shared<VertexArray>(layout, data, GL_STATIC_DRAW);
 }
 
-void MeshComponent::Draw(const TransformComponent& tranform, Shader* shader) const
+StaticMeshComponent::StaticMeshComponent(const Path& objFilePath)
+{
+	vertexArray = std::make_shared<VertexArray>();
+
+	ObjectLoader loader(objFilePath);
+	loader.LoadMesh(this);
+
+	material = loader.material;
+}
+
+void StaticMeshComponent::InitMesh(const VertexBufferLayout& layout, const VertexBufferData& data) const
+{
+	vertexArray->InitializeBuffers(layout, data, GL_STATIC_DRAW);
+}
+
+void StaticMeshComponent::Draw(const TransformComponent& tranform, Shader* shader) const
 {
 	if (material.diffuse)
 	{

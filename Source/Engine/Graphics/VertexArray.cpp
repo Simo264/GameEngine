@@ -21,7 +21,23 @@ VertexArray::VertexArray()
   glGenBuffers(1, &_ebo);
 }
 
-void VertexArray::InitializeBuffers(const VertexBufferLayout& layout, const VertexBufferData& data)
+VertexArray::VertexArray(
+  const VertexBufferLayout& layout, const VertexBufferData& data, uint32_t usage)
+  : _vao{ 0 },
+    _vbo{ 0 },
+    _ebo{ 0 },
+    numVertices{ 0 },
+    numIndices{ 0 },
+    vboSize{ 0 }
+{
+  glGenVertexArrays(1, &_vao);
+  glGenBuffers(1, &_vbo);
+  glGenBuffers(1, &_ebo);
+  InitializeBuffers(layout, data, usage);
+}
+
+void VertexArray::InitializeBuffers(
+  const VertexBufferLayout& layout, const VertexBufferData& data, uint32_t usage)
 {
   _layout = layout;
   vboSize = data.vertexDataSize;
@@ -31,13 +47,13 @@ void VertexArray::InitializeBuffers(const VertexBufferLayout& layout, const Vert
 
   /* Initialize vertex buffer (mutable storage) */
   glBindBuffer(GL_ARRAY_BUFFER, _vbo);
-  glBufferData(GL_ARRAY_BUFFER, data.vertexDataSize, data.vertextDataPtr, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, data.vertexDataSize, data.vertextDataPtr, usage);
 
   /* Initialize index buffer (mutable storage) */
   if (data.indexDataSize > 0)
   {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ebo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, data.indexDataSize, data.indexDataPtr, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, data.indexDataSize, data.indexDataPtr, usage);
     numIndices = data.indexDataSize / sizeof(uint32_t);
   }
 

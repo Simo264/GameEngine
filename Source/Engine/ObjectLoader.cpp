@@ -4,7 +4,7 @@
 #include "Engine/Graphics/Texture2D.hpp"
 #include "Engine/Subsystems/TextureManager.hpp"
 
-#include "Engine/ECS/MeshComponent.hpp"
+#include "Engine/ECS/StaticMeshComponent.hpp"
 
 #include "Core/Platform/OpenGL/OpenGL.hpp"
 #include "Core/Log/Logger.hpp"
@@ -29,7 +29,7 @@ ObjectLoader::ObjectLoader(const Path& filePath)
   }
 }
 
-void ObjectLoader::LoadMesh(MeshComponent* mesh)
+void ObjectLoader::LoadMesh(StaticMeshComponent* mesh)
 {
   aiMesh* aimesh = _scene->mMeshes[0];
   const uint64_t vertexDataSize = aimesh->mNumVertices * 8; /* 8: 3(position), 3(normals), 2(uv/text coords) */
@@ -48,7 +48,7 @@ void ObjectLoader::LoadMesh(MeshComponent* mesh)
 
   /* Initialize empty buffers with calculated size */
   SharedPointer<VertexArray>& vao = mesh->vertexArray;
-  vao->InitializeBuffers(layout, data);
+  vao->InitializeBuffers(layout, data, GL_STATIC_DRAW);
 
   /* Now fill vertex buffer with data */
   LoadVertices(aimesh, vao->VertexBufferID());

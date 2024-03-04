@@ -3,10 +3,11 @@
 #include "Core/Core.hpp"
 #include "Core/Math/Math.hpp"
 
-class LightComponent
+/* Interface light component */
+class ILightComponent
 {
 public:
-	LightComponent(const char* uniform)
+	ILightComponent(const char* uniform)
 		: color{ 1.0f, 1.0f, 1.0f }, /* default white color */
 			ambient{ 0.125f },
 			diffuse{ 0.25f },

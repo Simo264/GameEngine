@@ -15,6 +15,11 @@
 #include <sstream>
 #include <vector>
 
+#define SHADER_UNIFORM_POINTLIGHT(i)	"UPointLight[" #i "]"
+
+constexpr int		MAX_NUM_POINTLIGHTS = 5;
+constexpr char	SHADER_UNIFORM_DIRLIGHT[] = "UDirLight";
+
 /* -----------------------------
 			STL library layer
    ----------------------------- */
