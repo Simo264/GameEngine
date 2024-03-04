@@ -164,8 +164,8 @@ void Engine::Run()
     glEnable(GL_DEPTH_TEST);
 
     sceneShader->Use();
-    sceneShader->SetMat4f("UProjection", cameraProjectionMatrix);
-    sceneShader->SetMat4f("UView", cameraViewMatrix);
+    sceneShader->SetMat4f(SHADER_UNIFORM_PROJECTION, cameraProjectionMatrix);
+    sceneShader->SetMat4f(SHADER_UNIFORM_VIEW, cameraViewMatrix);
     scene.DrawScene(sceneShader);
     
     framebuffer.BlitFrameBuffer();

@@ -180,7 +180,7 @@ void OutlinerPanel::AddSceneComponentPopup(Scene* scene)
       case 1: /* Pointlight */
       {
         uint32_t size = scene->Reg().view<PointLightComponent>().size();
-        if (size < MAX_NUM_POINTLIGHTS)
+        if (size < SHADER_MAX_NUM_POINTLIGHTS)
         {
           GameObject pLight = scene->CreateObject(
             "Point light",

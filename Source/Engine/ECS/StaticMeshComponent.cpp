@@ -33,7 +33,7 @@ void StaticMeshComponent::InitMesh(const VertexBufferLayout& layout, const Verte
 	vertexArray->InitializeBuffers(layout, data, GL_STATIC_DRAW);
 }
 
-void StaticMeshComponent::Draw(const TransformComponent& tranform, Shader* shader) const
+void StaticMeshComponent::Draw(const Mat4f& transform, Shader* shader) const
 {
 	if (material.diffuse)
 	{
@@ -45,6 +45,8 @@ void StaticMeshComponent::Draw(const TransformComponent& tranform, Shader* shade
 		glActiveTexture(GL_TEXTURE1);
 		material.specular->Bind();
 	}
+	
+	shader->SetMat4f(SHADER_UNIFORM_MODEL, transform);
 
 	/* If vertex array does not contain indices call DrawArrays */
 	if (vertexArray->numIndices == 0)

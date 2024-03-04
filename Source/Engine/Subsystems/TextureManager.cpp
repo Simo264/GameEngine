@@ -54,12 +54,3 @@ Texture2D* TextureManager::GetTextureByPath(const Path& filePath) const
   return *it;
 }
 
-Texture2D* TextureManager::Begin()
-{
-  return *_textures.begin();
-}
-
-Texture2D* TextureManager::End()
-{
-  return *_textures.end();
-}

@@ -1,8 +1,9 @@
 #pragma once
 
 #include "Core/Core.hpp"
-#include "Engine/Graphics/VertexArray.hpp"
+#include "Core/Math/Math.hpp"
 #include "Engine/Material.hpp"
+#include "Engine/Graphics/VertexArray.hpp"
 
 /* ---------------------------------------------------------------------------
 	A Static Mesh is a piece of geometry that consists of a set of polygons that 
@@ -34,7 +35,7 @@ public:
 	void InitMesh(const VertexBufferLayout& layout, const VertexBufferData& data) const;
 
 	/* Draw mesh */
-	void Draw(const class TransformComponent& tranform, class Shader* shader) const;
+	void Draw(const Mat4f& transform, class Shader* shader) const;
 
 	/* By default it does not contain textures */
 	Material material;

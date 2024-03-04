@@ -1,11 +1,16 @@
 #include "DetailsPanel.hpp"
 #include "Core/Log/Logger.hpp"
+
 #include "Engine/GameObject.hpp"
 
+#include "Engine/ECS/LabelComponent.hpp"
 #include "Engine/ECS/TransformComponent.hpp"
 #include "Engine/ECS/StaticMeshComponent.hpp"
 #include "Engine/ECS/Lighting/DirLightComponent.hpp"
 #include "Engine/ECS/Lighting/PointLightComponent.hpp"
+
+#include "Engine/Graphics/Texture2D.hpp"
+#include "Engine/Subsystems/TextureManager.hpp"
 
 #include <imgui/imgui.h>
 
@@ -14,223 +19,126 @@
  * -----------------------------------------------------
 */
 
-#if 0
-void DetailsPanel::RenderPanel(SharedPointer<DirectionalLight>& target, Scene* scene)
-{
-  ImGui::Begin(panelName.c_str(), &isOpen);
-  if (ImGui::CollapsingHeader("Light properties"))
-  {
-    ImGui::BeginTable("##table", 2);
-    float C1 = 0.30f * ImGui::GetContentRegionAvail().x;
-    float C2 = 0.70f * ImGui::GetContentRegionAvail().x;
-    ImGui::TableSetupColumn("##C1", ImGuiTableColumnFlags_WidthFixed, C1);
-    ImGui::TableSetupColumn("##C2", ImGuiTableColumnFlags_WidthFixed, C2);
-
-    ImGui::TableNextRow();
-    ImGui::TableNextColumn();
-    ImGui::Text("Light color");
-    ImGui::TableNextColumn();
-    ImGui::SetNextItemWidth(-1);
-    ImGui::ColorEdit3("##color", (float*)&target->color);
-
-    ImGui::TableNextRow();
-    ImGui::TableNextColumn();
-    ImGui::Text("Ambient");
-    ImGui::TableNextColumn();
-    ImGui::SetNextItemWidth(-1);
-    ImGui::SliderFloat("##ambient", &target->ambient, 0.0f, 1.0f);
-
-    ImGui::TableNextRow();
-    ImGui::TableNextColumn();
-    ImGui::Text("Diffuse");
-    ImGui::TableNextColumn();
-    ImGui::SetNextItemWidth(-1);
-    ImGui::SliderFloat("##diffuse", &target->diffuse, 0.0f, 1.0f);
-
-    ImGui::TableNextRow();
-    ImGui::TableNextColumn();
-    ImGui::Text("Specular");
-    ImGui::TableNextColumn();
-    ImGui::SetNextItemWidth(-1);
-    ImGui::SliderFloat("##specular", &target->specular, 0.0f, 1.0f);
-
-    ImGui::TableNextRow();
-    EditVec3("Direction", 1, { -FLT_MAX, +FLT_MAX }, target->direction, C2);
-
-    ImGui::EndTable();
-  }
-  if (ImGui::CollapsingHeader("Advanced"))
-  {
-    if (ImGui::Button("Delete"))
-      scene->RemoveSceneObject(target);
-  }
-  ImGui::End();
-}
-
-void DetailsPanel::RenderPanel(SharedPointer<PointLight>& target, Scene* scene)
-{
-  if (!isOpen)
-    return;
-
-  ImGui::Begin(panelName.c_str(), &isOpen);
-  if (ImGui::CollapsingHeader("Light properties"))
-  {
-    ImGui::BeginTable("##table", 2);
-    int C1 = 0.30f * ImGui::GetContentRegionAvail().x;
-    int C2 = 0.70f * ImGui::GetContentRegionAvail().x;
-    ImGui::TableSetupColumn("##C1", ImGuiTableColumnFlags_WidthFixed, C1);
-    ImGui::TableSetupColumn("##C2", ImGuiTableColumnFlags_WidthFixed, C2);
-
-    ImGui::TableNextRow();
-    ImGui::TableNextColumn();
-    ImGui::Text("Light color");
-    ImGui::TableNextColumn();
-    ImGui::SetNextItemWidth(-1);
-    ImGui::ColorEdit3("##color", (float*)&target->color);
-
-    ImGui::TableNextRow();
-    ImGui::TableNextColumn();
-    ImGui::Text("Ambient");
-    ImGui::TableNextColumn();
-    ImGui::SetNextItemWidth(-1);
-    ImGui::SliderFloat("##ambient", &target->ambient, 0.0f, 1.0f);
-
-    ImGui::TableNextRow();
-    ImGui::TableNextColumn();
-    ImGui::Text("Diffuse");
-    ImGui::TableNextColumn();
-    ImGui::SetNextItemWidth(-1);
-    ImGui::SliderFloat("##diffuse", &target->diffuse, 0.0f, 1.0f);
-
-    ImGui::TableNextRow();
-    ImGui::TableNextColumn();
-    ImGui::Text("Specular");
-    ImGui::TableNextColumn();
-    ImGui::SetNextItemWidth(-1);
-    ImGui::SliderFloat("##specular", &target->specular, 0.0f, 1.0f);
-
-    ImGui::TableNextRow();
-    EditVec3("Position", 1, { -FLT_MAX, +FLT_MAX }, target->position, C2);
-
-    ImGui::EndTable();
-  }
-  if (ImGui::CollapsingHeader("Advanced"))
-  {
-    if (ImGui::Button("Delete"))
-      scene->RemoveSceneObject(target);
-  }
-  
-  ImGui::End();
-}
-
-void DetailsPanel::RenderPanel(SharedPointer<StaticMesh>& target, Scene* scene)
-{
-  if (!isOpen)
-    return;
-
-  ImGui::Begin(panelName.c_str(), &isOpen);
-  if (ImGui::CollapsingHeader("Transform"))
-  {
-    ImGui::BeginTable("##table", 2);
-    int C1 = 0.30f * ImGui::GetContentRegionAvail().x;
-    int C2 = 0.70f * ImGui::GetContentRegionAvail().x;
-    ImGui::TableSetupColumn("##C1", ImGuiTableColumnFlags_WidthFixed, C1);
-    ImGui::TableSetupColumn("##C2", ImGuiTableColumnFlags_WidthFixed, C2);
-
-    ImGui::TableNextRow();
-    EditVec3("Position", 1, { -FLT_MAX, +FLT_MAX }, target->transform.position, C2);
-
-    ImGui::TableNextRow();
-    EditVec3("Scale", 1, { -FLT_MAX, +FLT_MAX }, target->transform.scale, C2);
-
-    ImGui::TableNextRow();
-    EditVec3("Rotate", 1, { -180.0f, 180.0f}, target->transform.degrees, C2);
-
-    ImGui::EndTable();
-  }
-  if (ImGui::CollapsingHeader("Material"))
-  {
-    const String diffusePathStr = (
-      target->material.diffuse ? target->material.diffuse->texturePath.string() : "");
-    const uint32_t diffuseID = (
-      target->material.diffuse ? target->material.diffuse->textureID : 0);
-
-    ImGui::BeginTable("##table", 3, ImGuiTableFlags_BordersInnerH);
-    ImGui::TableSetupColumn("##C1", ImGuiTableColumnFlags_WidthFixed, 0.5f * ImGui::GetContentRegionAvail().x);
-    ImGui::TableSetupColumn("##C2", ImGuiTableColumnFlags_WidthFixed, 0.3f * ImGui::GetContentRegionAvail().x);
-    ImGui::TableSetupColumn("##C3", ImGuiTableColumnFlags_WidthFixed, 0.2f * ImGui::GetContentRegionAvail().x);
-
-    ImGui::TableNextRow();
-    ImGui::TableNextColumn();
-    ImGui::Image((ImTextureID)diffuseID, { 64,64 });
-
-    ImGui::TableNextColumn();
-    ImGui::SetNextItemWidth(-1);
-    if (ImGui::BeginCombo("##Textures", diffusePathStr.c_str()))
-    {
-      auto& instanceTM = TextureManager::Instance();
-      std::for_each(instanceTM.Begin(), instanceTM.End(), [&](Texture2D& texture) {
-        String textPathStr = texture.texturePath.string();
-        bool isSelected = (std::strcmp(diffusePathStr.c_str(), textPathStr.c_str()) == 0);
-        if (ImGui::Selectable(textPathStr.c_str(), isSelected))
-          target->material.diffuse = instanceTM.GetTextureByPath(textPathStr.c_str());
-        if (isSelected)
-          ImGui::SetItemDefaultFocus();
-        });
-
-      ImGui::EndCombo();
-    }
-
-    ImGui::TableNextColumn();
-    ImGui::Button("reset");
-
-    ImGui::EndTable();
-  }
-  if (ImGui::CollapsingHeader("Advanced"))
-  {
-    if (ImGui::Button("Delete"))
-    {
-      scene->RemoveSceneObject(target);
-    }
-  }
-
-  ImGui::End();
-}
-#endif
-
 void DetailsPanel::RenderPanel(GameObject& object)
 {
   ImGui::Begin(panelName.c_str(), &visible);
   if (object.IsValid())
   {
+    const String& label = object.GetComponent<LabelComponent>()->label;
+    ImGui::Text("Object label: %s", label.c_str());
+    
+    /* Directional light component */
     if (auto dLightComp = object.GetComponent<DirLightComponent>())
     {
-      if (ImGui::CollapsingHeader("DirLightComponent properties"))
+      if (ImGui::CollapsingHeader("Light properties"))
       {
-
+        const float C1 = 0.30f * ImGui::GetContentRegionAvail().x;
+        const float C2 = 0.70f * ImGui::GetContentRegionAvail().x;
+        CreateTable<2>("##LightProps", { C1, C2 });
+        LightProperties(dLightComp);
+        EndTable();
+      }
+      if (ImGui::CollapsingHeader("Directional light properties"))
+      {
+        const float C1 = 0.30f * ImGui::GetContentRegionAvail().x;
+        const float C2 = 0.70f * ImGui::GetContentRegionAvail().x;
+        CreateTable<2>("##DirectionalLightProps", { C1, C2 });
+        ImGui::TableNextRow();
+        EditVec3("Direction", 0.1f, { -FLT_MAX, +FLT_MAX }, dLightComp->direction, C2);
+        EndTable();
       }
     }
+    
+    /* Point light component */
     if (auto pLightComp = object.GetComponent<PointLightComponent>())
     {
-      if (ImGui::CollapsingHeader("PointLightComponent properties"))
+      if (ImGui::CollapsingHeader("Light properties"))
       {
+        const float C1 = 0.30f * ImGui::GetContentRegionAvail().x;
+        const float C2 = 0.70f * ImGui::GetContentRegionAvail().x;
+        CreateTable<2>("##LighProps", { C1, C2 });
+        LightProperties(pLightComp);
+        EndTable();
+      }
 
+      if (ImGui::CollapsingHeader("Point light properties"))
+      {
+        const float C1 = 0.30f * ImGui::GetContentRegionAvail().x;
+        const float C2 = 0.70f * ImGui::GetContentRegionAvail().x;
+        CreateTable<2>("##PointLightProps", { C1, C2 });
+        ImGui::TableNextRow();
+        EditVec3("Position", 0.1f, { -FLT_MAX, +FLT_MAX }, pLightComp->position, C2);
+        EndTable();
       }
     }
+
+    /* Transformation component */
     if (auto transComp = object.GetComponent<TransformComponent>())
     {
-      if (ImGui::CollapsingHeader("Transform properties"))
+      if (ImGui::CollapsingHeader("Transformation"))
       {
-
+        const float C1 = 0.30f * ImGui::GetContentRegionAvail().x;
+        const float C2 = 0.70f * ImGui::GetContentRegionAvail().x;
+        CreateTable<2>("##Transformation", { C1, C2 });
+        
+        ImGui::TableNextRow();
+        EditVec3("Position", 1, { -FLT_MAX, +FLT_MAX }, transComp->position, C2);
+        ImGui::TableNextRow();
+        EditVec3("Scale", 1, { -FLT_MAX, +FLT_MAX }, transComp->scale, C2);
+        ImGui::TableNextRow();
+        EditVec3("Rotate", 1, { -180.0f, 180.0f }, transComp->degrees, C2);
+        
+        EndTable();
       }
     }
+    
+    /* Static mesh component */
     if (auto meshComp = object.GetComponent<StaticMeshComponent>())
     {
-      if (ImGui::CollapsingHeader("Mesh properties"))
+      if (ImGui::CollapsingHeader("Material"))
       {
+        const float C1 = 0.5f * ImGui::GetContentRegionAvail().x;
+        const float C2 = 0.3f * ImGui::GetContentRegionAvail().x;
+        const float C3 = 0.2f * ImGui::GetContentRegionAvail().x;
+        CreateTable<3>("##Material", { C1, C2, C3 });
 
+        const String diffusePathStr = 
+          (meshComp->material.diffuse ? meshComp->material.diffuse->texturePath.string() : "");
+        const uint32_t diffuseID = 
+          (meshComp->material.diffuse ? meshComp->material.diffuse->textureID : 0xFFFFFFFF);
+
+        ImGui::TableNextRow();
+        ImGui::TableNextColumn();
+        ImGui::Image((ImTextureID)diffuseID, { 64,64 });
+
+        ImGui::TableNextColumn();
+        ImGui::SetNextItemWidth(-1);
+        if (ImGui::BeginCombo("##Textures", diffusePathStr.c_str()))
+        {
+          auto& instanceTM = TextureManager::Instance();
+          std::for_each(instanceTM.Begin(), instanceTM.End(), [&](Texture2D* texture) {
+            String textPathStr = texture->texturePath.string();
+            bool isSelected = (std::strcmp(diffusePathStr.c_str(), textPathStr.c_str()) == 0);
+            if (ImGui::Selectable(textPathStr.c_str(), isSelected))
+              meshComp->material.diffuse = instanceTM.GetTextureByPath(textPathStr.c_str());
+            if (isSelected)
+              ImGui::SetItemDefaultFocus();
+            });
+
+          ImGui::EndCombo();
+        }
+
+        ImGui::TableNextColumn();
+        ImGui::Button("reset");
+
+        EndTable();
       }
     }
+
+    /* Delete object */
+    if (ImGui::CollapsingHeader("Advanced"))
+      if (ImGui::Button("Delete object"))
+        object.Destroy();
   }
   ImGui::End();
 }
@@ -239,6 +147,23 @@ void DetailsPanel::RenderPanel(GameObject& object)
  *          PRIVATE METHODS
  * -----------------------------------------------------
 */
+
+template<int cols>
+void DetailsPanel::CreateTable(const char* label, Array<float, cols> sizes)
+{
+  ImGui::BeginTable(label, cols);
+  for (int i = 0; i < cols; i++)
+  {
+    char label[8]{};
+    sprintf_s(label, "##C%d", i);
+    ImGui::TableSetupColumn(label, ImGuiTableColumnFlags_WidthFixed, sizes[i]);
+  }
+}
+
+void DetailsPanel::EndTable()
+{
+  ImGui::EndTable();
+}
 
 void DetailsPanel::EditVec3(const char* label, float speed, Vec2f minMax, Vec3f& values, float colSize)
 {
@@ -258,3 +183,35 @@ void DetailsPanel::EditVec3(const char* label, float speed, Vec2f minMax, Vec3f&
 
   ImGui::PopID();
 }
+
+void DetailsPanel::LightProperties(LightComponent* light)
+{
+  ImGui::TableNextRow();
+  ImGui::TableNextColumn();
+  ImGui::Text("Light color");
+  ImGui::TableNextColumn();
+  ImGui::SetNextItemWidth(-1);
+  ImGui::ColorEdit3("##color", reinterpret_cast<float*>(&light->color));
+
+  ImGui::TableNextRow();
+  ImGui::TableNextColumn();
+  ImGui::Text("Ambient");
+  ImGui::TableNextColumn();
+  ImGui::SetNextItemWidth(-1);
+  ImGui::SliderFloat("##ambient", &light->ambient, 0.0f, 1.0f);
+
+  ImGui::TableNextRow();
+  ImGui::TableNextColumn();
+  ImGui::Text("Diffuse");
+  ImGui::TableNextColumn();
+  ImGui::SetNextItemWidth(-1);
+  ImGui::SliderFloat("##diffuse", &light->diffuse, 0.0f, 1.0f);
+
+  ImGui::TableNextRow();
+  ImGui::TableNextColumn();
+  ImGui::Text("Specular");
+  ImGui::TableNextColumn();
+  ImGui::SetNextItemWidth(-1);
+  ImGui::SliderFloat("##specular", &light->specular, 0.0f, 1.0f);
+}
+

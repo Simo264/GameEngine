@@ -16,9 +16,11 @@
 #include <vector>
 
 #define SHADER_UNIFORM_POINTLIGHT(i)	"UPointLight[" #i "]"
-
-constexpr int		MAX_NUM_POINTLIGHTS = 5;
+constexpr char	SHADER_UNIFORM_PROJECTION[] = "UProjection";
+constexpr char	SHADER_UNIFORM_VIEW[] = "UView";
+constexpr char	SHADER_UNIFORM_MODEL[] = "UModel";
 constexpr char	SHADER_UNIFORM_DIRLIGHT[] = "UDirLight";
+constexpr int		SHADER_MAX_NUM_POINTLIGHTS = 5;
 
 /* -----------------------------
 			STL library layer

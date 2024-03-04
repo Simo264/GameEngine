@@ -1,8 +1,14 @@
 #include "Scene.hpp"
 #include "Core/Log/Logger.hpp"
 #include "Engine/GameObject.hpp"
+
 #include "Engine/ECS/LabelComponent.hpp"
 #include "Engine/ECS/TypeComponent.hpp"
+#include "Engine/ECS/TransformComponent.hpp"
+#include "Engine/ECS/StaticMeshComponent.hpp"
+#include "Engine/ECS/Lighting/DirLightComponent.hpp"
+#include "Engine/ECS/Lighting/PointLightComponent.hpp"
+#include "Engine/ECS/Lighting/SpotLightComponent.hpp"
 
 //#include "Engine/Graphics/Shader.hpp"
 //#include "Engine/Graphics/Texture2D.hpp"
@@ -18,7 +24,21 @@
 
 void Scene::DrawScene(Shader* shader)
 {
+	/* Render light */
+	for (auto [entity, dLightComp] : _registry.view<DirLightComponent>().each())
+		dLightComp.Render(shader);
+	for (auto [entity, pLightComp] : _registry.view<PointLightComponent>().each())
+		pLightComp.Render(shader);
+	for (auto [entity, sLightComp] : _registry.view<SpotLightComponent>().each())
+		sLightComp.Render(shader);
 
+	/* Render static meshes */
+	for (auto [entity, smeshComp] : _registry.view<StaticMeshComponent>().each())
+	{
+		GameObject obj{ entity, &_registry };
+		TransformComponent* transform = obj.GetComponent<TransformComponent>();
+		smeshComp.Draw(transform->GetTransformation(), shader);
+	}
 }
 
 void Scene::ClearScene()

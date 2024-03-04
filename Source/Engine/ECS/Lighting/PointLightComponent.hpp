@@ -9,11 +9,11 @@
   that illuminates in all directions, where the light rays fade out over distance.
   Think of light bulbs and torches as light casters that act as a point light.
   ------------------------------------------------------------------------------ */
-class PointLightComponent : public ILightComponent
+class PointLightComponent : public LightComponent
 {
 public:
 	PointLightComponent(const char* uniform)
-    : ILightComponent(uniform),
+    : LightComponent(uniform),
       position{ 0.0f, 0.0f, 0.0f },
       linear{ 0.14f },
       quadratic{ 0.07f }

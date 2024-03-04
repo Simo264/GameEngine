@@ -3,11 +3,10 @@
 #include "Core/Core.hpp"
 #include "Core/Math/Math.hpp"
 
-/* Interface light component */
-class ILightComponent
+class LightComponent
 {
 public:
-	ILightComponent(const char* uniform)
+	LightComponent(const char* uniform)
 		: color{ 1.0f, 1.0f, 1.0f }, /* default white color */
 			ambient{ 0.125f },
 			diffuse{ 0.25f },
@@ -17,7 +16,7 @@ public:
 		this->uniform.append(uniform);
 	}
 
-	virtual void Render(class Shader* shader) = 0;
+	virtual void Render(class Shader* shader) {}
 
 	Vec3f color;    /* light color */
 	float ambient;  /* ambient intensity */

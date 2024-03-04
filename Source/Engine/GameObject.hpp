@@ -11,7 +11,7 @@ class GameObject
 {
 public:
 	GameObject()
-		: _entity{ 0xFFFFFFFF }, /* Invalid entity */
+		: _entity{ entt::null }, /* entt::null = static_cast<uint32_t>(0xFFFFFFFF) */
 			_reg{ nullptr } 
 	{}
 
@@ -46,7 +46,18 @@ public:
 
 	entt::entity GetObjectID() const { return _entity; }
 
-	bool IsValid() const {  return (_reg && (uint32_t)_entity != 0xFFFFFFFF); }
+	bool IsValid() const 
+	{  
+		return (_reg && _entity != entt::null);
+	}
+
+	/* Destroys the entity and releases its identifier */
+	void Destroy() 
+	{ 
+		_reg->destroy(_entity); 
+		_entity = entt::null;
+		_reg = nullptr;
+	}
 
 private:
 	entt::entity		_entity;	/* Object id */
