@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Core/Core.hpp"
+#include "Core/Math/Math.hpp"
 #include <mini/ini.h>
 
 /* ---------------------------------
@@ -8,7 +9,7 @@
  ----------------------------------- */
 class INIFileParser{
 public:
-	INIFileParser(Path filepath);
+	INIFileParser(const Path& filepath);
 
 	void PrintContent();
 
@@ -82,26 +83,15 @@ public:
 	}
 
 	/* From string "50,50" -> to Vec2i(50,50) */
-	template<class T>
-	static T StringToVec2(const String& str, char sep = ',');
+	static Vec2i StringToVec2i(String& str, const char* delimiter = ",");
+	static Vec2f StringToVec2f(String& str, const char* delimiter = ",");
 	
 	/* From string "50,50,50" -> to Vec3i(50,50,50) */
-	template<class T>
-	static T StringToVec3(const String& str, char sep = ',');
-
-	/* From Vec2i(50,50) -> to string "50,50" */
-	template<class T>
-	static String Vec2ToString(const T& v, char sep = ',');
-
-	/* From Vec3i(50,50,50) -> to string "50,50,50" */
-	template<class T>
-	static String Vec3ToString(const T& v, char sep = ',');
+	static Vec3i StringToVec3i(String& str, const char* delimiter = ",");
+	static Vec3f StringToVec3f(String& str, const char* delimiter = ",");
 
 	/* Parse strings { "1" "0" "true" "false" } to boolean */
 	static bool StringToBool(const String& str);
-
-	static String BoolToString(const bool& b);
-
 
 private:
 	UniquePointer<mINI::INIFile> _file;

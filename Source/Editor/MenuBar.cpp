@@ -15,7 +15,7 @@ void MenuBar::RenderMenuBar()
     {
       ImGui::MenuItem("New scene", nullptr, _items[NEW_SCENE]);
       ImGui::MenuItem("Open scene...", nullptr, _items[OPEN_SCENE]);
-      ImGui::MenuItem("Save scene", nullptr, _items[SAVE_SCENE]);
+      //ImGui::MenuItem("Save scene", nullptr, _items[SAVE_SCENE]);
       ImGui::MenuItem("Save scene as...", nullptr, _items[SAVE_AS_SCENE]);
       ImGui::Separator();
       ImGui::MenuItem("Exit", nullptr, _items[EXIT]);

@@ -79,7 +79,22 @@ void Engine::Run()
   
   /* Create scene */
   Scene scene;
+  GameObject cube = scene.CreateObject("Cube", static_cast<uint32_t>(GameObjectType::STATIC_MESH));
+  cube.AddComponent<StaticMeshComponent>(ASSETS_PATH / (Path("Shapes/Cube/Cube.obj").lexically_normal()));
+  cube.AddComponent<TransformComponent>();
 
+  GameObject plane = scene.CreateObject("Plane", static_cast<uint32_t>(GameObjectType::STATIC_MESH));
+  plane.AddComponent<StaticMeshComponent>(ASSETS_PATH / (Path("Shapes/Plane/Plane.obj").lexically_normal()));
+  auto& trans = plane.AddComponent<TransformComponent>();
+  trans.scale *= 5.0f;
+  trans.position.y = -1.0f;
+
+  GameObject dLight = scene.CreateObject("Directional light", static_cast<uint32_t>(GameObjectType::DIRECTIONAL_LIGHT));
+  auto& light = dLight.AddComponent<DirLightComponent>(SHADER_UNIFORM_DIRLIGHT);
+  light.color = { 0.024f, 0.020f, 0.141f };
+
+  scene.SaveScene(ROOT_PATH / "Scene.ini");
+  exit(0);
 
 #if 0
   /* Shadow mapping */
@@ -275,12 +290,13 @@ void Engine::LoadConfig()
 
   String tmp;
   tmp.reserve(32);
+
   tmp = conf.GetValue("window", "resolution");
-  Vec2i resolution = INIFileParser::StringToVec2<Vec2i>(tmp, 'x');
+  Vec2i resolution = INIFileParser::StringToVec2i(tmp, "x");
   tmp = conf.GetValue("window", "aspectratio");
-  Vec2i aspectratio = INIFileParser::StringToVec2<Vec2i>(tmp, ':');
+  Vec2i aspectratio = INIFileParser::StringToVec2i(tmp, ":");
   tmp = conf.GetValue("window", "position");
-  Vec2i position = INIFileParser::StringToVec2<Vec2i>(tmp, ',');
+  Vec2i position = INIFileParser::StringToVec2i(tmp, ",");
   tmp = conf.GetValue("window", "vsync");
   bool vsync = INIFileParser::StringToBool(tmp);
 

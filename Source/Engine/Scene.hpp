@@ -6,7 +6,6 @@
 /* ----------------------------------------------------------------------------
 	Scene class contains all of objects that are placed in world.	
 	---------------------------------------------------------------------------- */
-
 class Scene
 {
 public:
@@ -24,7 +23,7 @@ public:
 	class GameObject CreateObject(const char* label, uint32_t type);
 
 	/* Remove object from scene */
-	void DestroyObject(class GameObject* object);
+	void DestroyObject(class GameObject& object);
 
 	/* Return the reference of registry */
 	entt::registry& Reg() { return _registry; }
@@ -32,17 +31,4 @@ public:
 private:
 	/* We can create a entt::registry to store our entities */
 	entt::registry _registry;
-
-#if 0
-	SharedPointer<DirectionalLight> ParseDirectionalLight(
-		IFStream& file, String& line, char name[64], char value[64]);
-	
-	SharedPointer<PointLight> ParsePointLight(
-		IFStream& file, String& line, char name[64], char value[64]);
-	
-	//SharedPointer<SpotLight> ParseDirectionalLight();
-	
-	SharedPointer<StaticMesh> ParseStaticMesh(
-		IFStream& file, String& line, char name[64], char value[64]);
-#endif
 };

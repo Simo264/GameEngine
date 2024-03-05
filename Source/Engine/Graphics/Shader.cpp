@@ -119,20 +119,21 @@ void Shader::SetFloatArray(const char* name, uint32_t count, float* value)
   * -----------------------------------------------------
 */
 
-
 void Shader::GetSourceFromFile(const Path& sourceFile, String& dest)
 {
-  OStringStream buffer;
-  IFStream file(sourceFile);
-  if (!file.is_open())
+  IFStream file(sourceFile, std::ios::in | std::ios::out | std::ios::binary | std::ios::ate);
+  
+  const size_t sz = file.tellg();
+  if (sz <= 0 || !file.is_open()) 
   {
     CONSOLE_ERROR("Shader::getSourceFromFile error on opening file {}", sourceFile.string());
     return;
   }
-
-  buffer << file.rdbuf();
-
-  dest = buffer.str();
+  
+  file.seekg(0, std::ios::beg);
+  dest.assign(sz, '\0');
+  
+  file.read(&dest[0], sz);
 
   file.close();
 }

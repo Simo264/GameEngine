@@ -20,7 +20,23 @@ public:
 			direction{ 0.0f, -1.0f, 0.0f }
 	{}
 	
-	void Render(class Shader* shader) override; 
+	/* Return following string representation:
+	"color=<color.x,color.y,color.z>"
+	"ambient=<ambient>"
+	"diffuse=<diffuse>"
+	"specular=<specular>"
+	"direction=<direction.x,direction.y,direction.z>"
+*/
+	void ToString(String& out) const override
+	{
+		LightComponent::ToString(out);
+
+		char buff[64]{};
+		sprintf_s(buff, "direction=%.3f,%.3f,%.3f\n", direction.x, direction.y, direction.z);
+		out.append(buff);
+	}
+
+	void Render(class Shader* shader) override;
 
 	Vec3f direction;
 };

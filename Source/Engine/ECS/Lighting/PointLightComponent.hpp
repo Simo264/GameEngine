@@ -19,6 +19,23 @@ public:
       quadratic{ 0.07f }
   {}
 
+  /* Return following string representation:
+    "color=<color.x,color.y,color.z>"
+    "ambient=<ambient>"
+    "diffuse=<diffuse>"
+    "specular=<specular>"
+    "position=<position.x,position.y,position.z>"
+  */
+  void ToString(String& out) const override
+  {
+    LightComponent::ToString(out);
+    out.append("\n");
+
+    char buff[64]{};
+    sprintf_s(buff, "position=%.3f,%.3f,%.3f\n", position.x, position.y, position.z);
+    out.append(buff);
+  }
+
   void Render(class Shader* shader) override;
 
   Vec3f position;

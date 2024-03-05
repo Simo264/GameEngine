@@ -18,6 +18,26 @@ public:
     cutOff{ 12.0f }
   {}
   
+	/* Return following string representation:
+	  "color=<color.x,color.y,color.z>"
+	  "ambient=<ambient>"
+	  "diffuse=<diffuse>"
+	  "direction=<direction.x,direction.y,direction.z>"
+    "cutoff=<cutoff>"
+  */
+  void ToString(String& out) const override
+	{
+    LightComponent::ToString(out);
+    out.append("\n");
+
+    char buff[64]{};
+    sprintf_s(buff, "direction=%.3f,%.3f,%.3f\n", direction.x, direction.y, direction.z);
+    out.append(buff);
+
+    sprintf_s(buff, "cutoff=%.3f\n", cutOff);
+    out.append(buff);
+	}
+
   void Render(class Shader* shader) override;
 
 	Vec3f direction;

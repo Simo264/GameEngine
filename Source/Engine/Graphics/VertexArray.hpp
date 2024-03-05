@@ -89,6 +89,9 @@ public:
   */
   VertexArray(const VertexBufferLayout& layout, const VertexBufferData& data, uint32_t usage);
 
+  /* The destructor do nothing. You must call Destroy to free memory */
+  ~VertexArray() = default;
+
   /* Disable copy constructor */
   VertexArray(VertexArray const&) = delete;
   VertexArray& operator=(VertexArray const&) = delete;

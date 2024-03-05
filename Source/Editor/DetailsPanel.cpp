@@ -50,7 +50,7 @@ void DetailsPanel::RenderPanel(GameObject& object)
     }
     
     /* Point light component */
-    if (auto pLightComp = object.GetComponent<PointLightComponent>())
+    else if (auto pLightComp = object.GetComponent<PointLightComponent>())
     {
       if (ImGui::CollapsingHeader("Light properties"))
       {
@@ -73,7 +73,7 @@ void DetailsPanel::RenderPanel(GameObject& object)
     }
 
     /* Transformation component */
-    if (auto transComp = object.GetComponent<TransformComponent>())
+    else if (auto transComp = object.GetComponent<TransformComponent>())
     {
       if (ImGui::CollapsingHeader("Transformation"))
       {

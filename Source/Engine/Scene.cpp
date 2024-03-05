@@ -10,21 +10,34 @@
 #include "Engine/ECS/Lighting/PointLightComponent.hpp"
 #include "Engine/ECS/Lighting/SpotLightComponent.hpp"
 
-//#include "Engine/Graphics/Shader.hpp"
-//#include "Engine/Graphics/Texture2D.hpp"
-//#include "Engine/Subsystems/TextureManager.hpp"
-//#include "Core/FileParser/INIFileParser.hpp"
-
-
+#include "Engine/SceneSerializer.hpp"
 
 /* -----------------------------------------------------
  *          PUBLIC METHODS
  * -----------------------------------------------------
 */
 
+GameObject Scene::CreateObject(const char* label, uint32_t type)
+{
+	GameObject object = GameObject(_registry.create(), &_registry);
+	object.AddComponent<LabelComponent>(label);
+	object.AddComponent<TypeComponent>(type);
+	return object;
+}
+
+void Scene::DestroyObject(GameObject& object)
+{
+	/* Destroy mesh buffers and free memory */
+	auto mesh = object.GetComponent<StaticMeshComponent>();
+	if (mesh)
+		mesh->DestroyMesh();
+
+	_registry.destroy(object.GetObjectID());
+}
+
 void Scene::DrawScene(Shader* shader)
 {
-	/* Render light */
+	/* Render lights */
 	for (auto [entity, dLightComp] : _registry.view<DirLightComponent>().each())
 		dLightComp.Render(shader);
 	for (auto [entity, pLightComp] : _registry.view<PointLightComponent>().each())
@@ -43,48 +56,26 @@ void Scene::DrawScene(Shader* shader)
 
 void Scene::ClearScene()
 {
+	/* Destroy buffers and free memory */
+	for (auto [entity, smesh] : _registry.view<StaticMeshComponent>().each())
+		smesh.DestroyMesh();
+
 	_registry.clear();
 }
 
 void Scene::LoadScene(const Path& filepath)
 {
-	/* TODO */
-	assert(false, && "TODO");
+	SceneSerializer serializer;
+	serializer.DeserializeScene(*this, filepath);
 }
 
 void Scene::SaveScene(const Path& filepath)
 {
-	/* TODO */
-	assert(false, && "TODO");
-}
-
-GameObject Scene::CreateObject(const char* label, uint32_t type)
-{
-	GameObject object = GameObject(_registry.create(), &_registry);
-	object.AddComponent<LabelComponent>(label);
-	object.AddComponent<TypeComponent>(type);
-	return object;
-}
-
-void Scene::DestroyObject(GameObject* object)
-{
-	_registry.destroy(object->GetObjectID());
+	SceneSerializer serializer;
+	serializer.SerializeScene(*this, filepath);
 }
 
 #if 0
-void Scene::ClearScene() 
-{ 
-	sceneDLight.reset();
-
-	for (auto& pLight : scenePLights)
-		pLight.reset();
-	scenePLights.clear();
-
-	for (auto& sMesh: sceneSMeshes)
-		sMesh.reset();
-	sceneSMeshes.clear();
-}
-
 void Scene::LoadScene(Path filepath)
 {
 	INIFileParser conf(filepath);
@@ -139,15 +130,11 @@ void Scene::LoadScene(Path filepath)
 		}
 	}
 }
+#endif
 
+#if 0
 void Scene::SaveScene(Path outfile)
 {
-	if (IsEmpty())
-	{
-		CONSOLE_WARN("Scene is empty!");
-		return;
-	}
-
 	INIFileParser conf(outfile);
 	
 	char section[32]{};
@@ -188,70 +175,8 @@ void Scene::SaveScene(Path outfile)
 
 	conf.Write();
 }
-
-void Scene::DrawScene(Shader* shader)
-{
-	/* Render directional light */
-	if (HasDirLight())
-		if (sceneDLight->visible)
-			sceneDLight->RenderLight(shader);
-
-	/* Render point lights */
-	for (auto& scenePLight : scenePLights)
-		if (scenePLight->visible)
-			scenePLight->RenderLight(shader);
-
-	/* Render static mesh objects (enable cull face to improve performance) */
-	for (auto& sceneSMesh : sceneSMeshes)
-		if (sceneSMesh->visible)
-			sceneSMesh->Draw(shader);
-}
-
-void Scene::AddSceneObject(const SharedPointer<DirectionalLight>& obj)
-{
-	sceneDLight = obj;
-}
-
-void Scene::AddSceneObject(const SharedPointer<PointLight>& obj)
-{
-	scenePLights.push_back(obj);
-}
-
-void Scene::AddSceneObject(const SharedPointer<StaticMesh>& obj)
-{
-	sceneSMeshes.push_back(obj);
-}
-
-void Scene::RemoveSceneObject(const SharedPointer<DirectionalLight>& obj)
-{
-	sceneDLight = nullptr;
-}
-
-void Scene::RemoveSceneObject(const SharedPointer<PointLight>& obj)
-{
-	auto beg = scenePLights.begin();
-	auto end = scenePLights.end();
-	auto it = std::find_if(beg, end, [&](SharedPointer<PointLight>& o) {
-		return o->Compare(*obj);
-		});
-
-	if (it != end)
-		scenePLights.erase(it);
-}
-
-void Scene::RemoveSceneObject(const SharedPointer<StaticMesh>& obj)
-{
-	auto beg = sceneSMeshes.begin();
-	auto end = sceneSMeshes.end();
-	auto it = std::find_if(beg, end, [&](SharedPointer<StaticMesh>& o) {
-		return o->Compare(*obj);
-		});
-
-	if (it != end)
-		sceneSMeshes.erase(it);
-}
-
 #endif
+
 
 /* -----------------------------------------------------
  *          PRIVATE METHODS

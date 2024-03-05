@@ -21,11 +21,32 @@ StaticMeshComponent::StaticMeshComponent(const VertexBufferLayout& layout, const
 StaticMeshComponent::StaticMeshComponent(const Path& objFilePath)
 {
 	vertexArray = std::make_shared<VertexArray>();
+	modelPath = objFilePath;
 
 	ObjectLoader loader(objFilePath);
 	loader.LoadMesh(this);
 
 	material = loader.material;
+}
+
+void StaticMeshComponent::ToString(String& out) const
+{
+	char buff[128]{};
+	if (!modelPath.empty())
+	{
+		sprintf_s(buff, "model-path=%s\n", modelPath.string().c_str());
+		out.append(buff);
+	}
+	if (material.diffuse)
+	{
+		sprintf_s(buff, "material-diffuse=%s\n", material.diffuse->texturePath.string().c_str());
+		out.append(buff);
+	}
+	if (material.specular)
+	{
+		sprintf_s(buff, "material-specular=%s\n", material.specular->texturePath.string().c_str());
+		out.append(buff);
+	}
 }
 
 void StaticMeshComponent::InitMesh(const VertexBufferLayout& layout, const VertexBufferData& data) const

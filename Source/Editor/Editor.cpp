@@ -62,7 +62,7 @@ void Editor::Initialize()
   items[FRAME_DEMO] = &_demoOpen;
   items[FRAME_SETTINGS] = &settingsPanel->visible;
   items[NEW_SCENE] = &_newScene;
-  items[SAVE_SCENE] = &_saveScene;
+  //items[SAVE_SCENE] = &_saveScene;
   items[SAVE_AS_SCENE] = &_saveAsScene;
   items[OPEN_SCENE] = &_openScene;
   items[EXIT] = &_exit;
@@ -126,22 +126,6 @@ void Editor::Render(Scene* scene, FrameBuffer* framebuffer)
     detailsPanel->RenderPanel(outlinerPanel->GetItemSelected());
 
 
-#if 0
-  if (outlinerPanel->IsItemSelected())
-  {
-    auto& dLight = outlinerPanel->GetItemSelected<DirectionalLight>();
-    auto& pLight = outlinerPanel->GetItemSelected<PointLight>();
-    auto& sMesh = outlinerPanel->GetItemSelected<StaticMesh>();
-
-    if (dLight)
-      detailsPanel->RenderPanel(dLight, scene);
-    else if (pLight)
-      detailsPanel->RenderPanel(pLight, scene);
-    else if (sMesh)
-      detailsPanel->RenderPanel(sMesh, scene);
-  }
-#endif
-
   if (viewportPanel->visible)
     viewportPanel->RenderPanel(framebuffer);
   
@@ -152,8 +136,8 @@ void Editor::Render(Scene* scene, FrameBuffer* framebuffer)
     OnNewScene(scene);
   else if (_saveAsScene)
     OnSaveAsScene(scene);
-  else if (_saveScene)
-    OnSaveScene(scene);
+  //else if (_saveScene)
+  //  OnSaveScene(scene);
   else if (_openScene)
     OnOpenScene(scene);
 
@@ -328,12 +312,6 @@ void Editor::OnOpenScene(Scene* scene)
     scene->ClearScene();
     scene->LoadScene(filePath);
   }
-}
-
-void Editor::OnSaveScene(Scene* scene)
-{
-  _saveScene = false;
-  CONSOLE_INFO("TODO OnSaveScene");
 }
 
 void Editor::OnSaveAsScene(Scene* scene)

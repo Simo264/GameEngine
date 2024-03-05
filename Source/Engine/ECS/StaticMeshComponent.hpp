@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Core/Core.hpp"
+#include "Engine/ECS/IComponent.hpp"
 #include "Core/Math/Math.hpp"
 #include "Engine/Material.hpp"
 #include "Engine/Graphics/VertexArray.hpp"
@@ -13,7 +14,7 @@
 	Since they are cached in video memory, Static Meshes can be translated, rotated, 
 	and scaled, but they cannot have their vertices animated in any way.
 	--------------------------------------------------------------------------- */
-class StaticMeshComponent
+class StaticMeshComponent : public IComponent
 {
 public:
 	/* Create empty vertex array object. You Must call InitMesh to initialize buffers */
@@ -24,8 +25,18 @@ public:
 	
 	/* Initialize Mesh reading data from .obj file */
 	StaticMeshComponent(const Path& objFilePath);
+
+	/* The destructor do nothing. You must call DestroyMesh to destroy vertex array and free memory */
+	~StaticMeshComponent() = default;
 	
-	/* Free resources from GPU */
+	/* Return following string representation: 
+		"model-path=<path>"														if exists
+		"material-diffuse=<material.diffuse.path>"		if exists
+		"material-specular=<material.specular.path>"	if exists
+	*/
+	void ToString(String& out) const override;
+
+	/* Destroy vertex array */
 	void DestroyMesh() const
 	{ 
 		vertexArray->Destroy(); 
@@ -39,6 +50,8 @@ public:
 
 	/* By default it does not contain textures */
 	Material material;
+
+	Path modelPath;
 
 	SharedPointer<VertexArray> vertexArray;
 };
