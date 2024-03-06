@@ -7,13 +7,7 @@
 #include "Engine/Subsystems/TextureManager.hpp"
 
 #include "Engine/GameObjectType.hpp"
-#include "Engine/ECS/LabelComponent.hpp"
-#include "Engine/ECS/TypeComponent.hpp"
-#include "Engine/ECS/StaticMeshComponent.hpp"
-#include "Engine/ECS/TransformComponent.hpp"
-#include "Engine/ECS/Lighting/DirLightComponent.hpp"
-#include "Engine/ECS/Lighting/PointLightComponent.hpp"
-#include "Engine/ECS/Lighting/SpotLightComponent.hpp"
+#include "Engine/ECS/Components.hpp"
 
 #include <imgui/imgui.h>
 #include <imgui/imgui_internal.h>
@@ -29,12 +23,12 @@ OutlinerPanel::OutlinerPanel(const char* panelName, bool visible)
     _selected{} /* null entity */
 {
   auto& instanceTM = TextureManager::Instance();
-  _icons[static_cast<int>(ICON_TYPE::DIR_LIGHT)]    = instanceTM.GetTextureByPath(ICONS_PATH / "icon-dirlight.png");
-  _icons[static_cast<int>(ICON_TYPE::POINT_LIGHT)]  = instanceTM.GetTextureByPath(ICONS_PATH / "icon-pointlight.png");
-  _icons[static_cast<int>(ICON_TYPE::SPOT_LIGHT)]   = instanceTM.GetTextureByPath(ICONS_PATH / "icon-spotlight.png");
-  _icons[static_cast<int>(ICON_TYPE::STATIC_MESH)]  = instanceTM.GetTextureByPath(ICONS_PATH / "icon-staticmesh.png");
-  _icons[static_cast<int>(ICON_TYPE::VISIBLE)]      = instanceTM.GetTextureByPath(ICONS_PATH / "icon-visible.png");
-  _icons[static_cast<int>(ICON_TYPE::HIDDEN)]       = instanceTM.GetTextureByPath(ICONS_PATH / "icon-hidden.png");
+  _icons[static_cast<int>(ICON_TYPE::DIR_LIGHT)]    = &instanceTM.GetTextureByPath(ICONS_PATH / "icon-dirlight.png");
+  _icons[static_cast<int>(ICON_TYPE::POINT_LIGHT)]  = &instanceTM.GetTextureByPath(ICONS_PATH / "icon-pointlight.png");
+  _icons[static_cast<int>(ICON_TYPE::SPOT_LIGHT)]   = &instanceTM.GetTextureByPath(ICONS_PATH / "icon-spotlight.png");
+  _icons[static_cast<int>(ICON_TYPE::STATIC_MESH)]  = &instanceTM.GetTextureByPath(ICONS_PATH / "icon-staticmesh.png");
+  _icons[static_cast<int>(ICON_TYPE::VISIBLE)]      = &instanceTM.GetTextureByPath(ICONS_PATH / "icon-visible.png");
+  _icons[static_cast<int>(ICON_TYPE::HIDDEN)]       = &instanceTM.GetTextureByPath(ICONS_PATH / "icon-hidden.png");
 }
 
 void OutlinerPanel::RenderPanel(Scene* scene)

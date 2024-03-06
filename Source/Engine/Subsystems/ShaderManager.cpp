@@ -23,14 +23,25 @@ void ShaderManager::CleanUp()
   }
 }
 
-Shader* ShaderManager::LoadShader(const char* label, const Path& vertFilePath, const Path& fragFilePath)
+Shader& ShaderManager::LoadShader(const char* label, const Path& vertFilePath, const Path& fragFilePath)
 {
+  if (!std::filesystem::exists(vertFilePath))
+  {
+    CONSOLE_ERROR("File '{}' does not exists", vertFilePath.string());
+    throw RuntimeError("File does not exists");
+  }
+  if (!std::filesystem::exists(fragFilePath))
+  {
+    CONSOLE_ERROR("File '{}' does not exists", fragFilePath.string());
+    throw RuntimeError("File does not exists");
+  }
+
   Shader* shader = new Shader(label,vertFilePath,fragFilePath);
   _shaders.push_back(shader);
-  return shader;
+  return *shader;
 }
 
-Shader* ShaderManager::GetShader(const char* label) const
+Shader& ShaderManager::GetShader(const char* label) const
 {
   auto beg = _shaders.begin();
   auto end = _shaders.end();
@@ -39,7 +50,11 @@ Shader* ShaderManager::GetShader(const char* label) const
     });
   
   if (it == end)
-    return nullptr;
-  return *it;
+  {
+    CONSOLE_ERROR("Shader '{}' does not exists ", label);
+    throw RuntimeError("Shader does not exists");
+  }
+  
+  return **it;
 }
 

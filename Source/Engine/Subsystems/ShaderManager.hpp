@@ -17,10 +17,10 @@ public:
 	void CleanUp() override;
 
 	/* Load in memory the shader program */
-	class Shader* LoadShader(const char* label, const Path& vertFilePath, const Path& fragFilePath);
+	class Shader& LoadShader(const char* label, const Path& vertFilePath, const Path& fragFilePath);
 	
 	/* Retrieve from memory the shader program */
-	class Shader* GetShader(const char* label) const;
+	class Shader& GetShader(const char* label) const;
 
 private:
 	Vector<class Shader*> _shaders;

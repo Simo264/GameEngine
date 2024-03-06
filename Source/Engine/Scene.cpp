@@ -2,13 +2,7 @@
 #include "Core/Log/Logger.hpp"
 #include "Engine/GameObject.hpp"
 
-#include "Engine/ECS/LabelComponent.hpp"
-#include "Engine/ECS/TypeComponent.hpp"
-#include "Engine/ECS/TransformComponent.hpp"
-#include "Engine/ECS/StaticMeshComponent.hpp"
-#include "Engine/ECS/Lighting/DirLightComponent.hpp"
-#include "Engine/ECS/Lighting/PointLightComponent.hpp"
-#include "Engine/ECS/Lighting/SpotLightComponent.hpp"
+#include "Engine/ECS/Components.hpp"
 
 #include "Engine/SceneSerializer.hpp"
 
@@ -35,7 +29,7 @@ void Scene::DestroyObject(GameObject& object)
 	_registry.destroy(object.GetObjectID());
 }
 
-void Scene::DrawScene(Shader* shader)
+void Scene::DrawScene(Shader& shader)
 {
 	/* Render lights */
 	for (auto [entity, dLightComp] : _registry.view<DirLightComponent>().each())
@@ -46,8 +40,8 @@ void Scene::DrawScene(Shader* shader)
 		sLightComp.Render(shader);
 
 	/* Render static meshes */
-	for (auto [entity, smeshComp, transComp] : _registry.view<StaticMeshComponent, TransformComponent>().each())
-		smeshComp.Draw(transComp.GetTransformation(), shader);
+	//for (auto [entity, smeshComp, transComp] : _registry.view<StaticMeshComponent, TransformComponent>().each())
+	//	smeshComp.Draw(transComp.GetTransformation(), shader);
 }
 
 void Scene::ClearScene()

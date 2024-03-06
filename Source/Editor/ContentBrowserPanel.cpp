@@ -28,7 +28,7 @@ void ContentBrowserPanel::RenderPanel()
   Texture2D* imageIcon = nullptr;
   if (_currentDir != ROOT_PATH)
   {
-    imageIcon = TextureManager::Instance().GetTextureByPath(ICONS_PATH / "icon-back.png");
+    imageIcon = &TextureManager::Instance().GetTextureByPath(ICONS_PATH / "icon-back.png");
     if (ImGui::ImageButton((ImTextureID)imageIcon->textureID, { 32,32 }))
       _currentDir = _currentDir.parent_path();
   }
@@ -77,35 +77,35 @@ Texture2D* ContentBrowserPanel::GetThumbIcon(const Path& entryPath, const char* 
   auto& instanceMT = TextureManager::Instance();
 
   if(isDirectory)
-    return instanceMT.GetTextureByPath(ICONS_PATH / "icon-folder.png");
+    return &instanceMT.GetTextureByPath(ICONS_PATH / "icon-folder.png");
 
   Path extension = entryPath.extension();
   /* Is image */
   if (extension == ".png" || extension == ".jpg")
-    return instanceMT.GetTextureByPath(ICONS_PATH / "icon-file-image.png");
+    return &instanceMT.GetTextureByPath(ICONS_PATH / "icon-file-image.png");
   /* Txt file */
   else if (extension == ".txt")
-    return instanceMT.GetTextureByPath(ICONS_PATH / "icon-text.png");
+    return &instanceMT.GetTextureByPath(ICONS_PATH / "icon-text.png");
   /* TTf file */
   else if (extension == ".ttf")
-    return instanceMT.GetTextureByPath(ICONS_PATH / "icon-font.png");
+    return &instanceMT.GetTextureByPath(ICONS_PATH / "icon-font.png");
   /* Cpp file*/
   else if (extension == ".cpp")
-    return instanceMT.GetTextureByPath(ICONS_PATH / "icon-cpp.png");
+    return &instanceMT.GetTextureByPath(ICONS_PATH / "icon-cpp.png");
   /* Hpp file*/
   else if (extension == ".hh" || extension == ".hpp" || extension == ".h")
-    return instanceMT.GetTextureByPath(ICONS_PATH / "icon-hpp.png");
+    return &instanceMT.GetTextureByPath(ICONS_PATH / "icon-hpp.png");
   /* Vertex shader file*/
   else if (extension == ".vert")
-    return instanceMT.GetTextureByPath(ICONS_PATH / "icon-vertex.png");
+    return &instanceMT.GetTextureByPath(ICONS_PATH / "icon-vertex.png");
   /* Fragment shader file*/
   else if (extension == ".frag")
-    return instanceMT.GetTextureByPath(ICONS_PATH / "icon-fragment.png");
+    return &instanceMT.GetTextureByPath(ICONS_PATH / "icon-fragment.png");
   /* Object file*/
   else if (extension == ".obj")
-    return instanceMT.GetTextureByPath(ICONS_PATH / "icon-file-obj.png");
+    return &instanceMT.GetTextureByPath(ICONS_PATH / "icon-file-obj.png");
   /* Other file */
   else
-    return instanceMT.GetTextureByPath(ICONS_PATH / "icon-file.png");
+    return &instanceMT.GetTextureByPath(ICONS_PATH / "icon-file.png");
     
 }

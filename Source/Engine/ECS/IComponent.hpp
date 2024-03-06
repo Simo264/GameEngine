@@ -2,9 +2,8 @@
 
 #include "Core/Core.hpp"
 
-class IComponent
+struct IComponent
 {
-public:
 	IComponent() = default;
 	~IComponent() = default;
 

@@ -24,20 +24,20 @@ void TextureManager::CleanUp()
   }
 }
 
-Texture2D* TextureManager::LoadTexture(const Path& filePath, bool gammaCorrection)
+Texture2D& TextureManager::LoadTexture(const Path& filePath, bool gammaCorrection)
 {
   if (!std::filesystem::exists(filePath))
   {
-    CONSOLE_WARN("File '{}' does not exists", filePath.string());
-    return nullptr;
+    CONSOLE_ERROR("Texture '{}' does not exists", filePath.string());
+    throw RuntimeError("File does not exists");
   }
 
   Texture2D* texture = new Texture2D(filePath, gammaCorrection);
   _textures.push_back(texture);
-  return texture;
+  return *texture;
 }
 
-Texture2D* TextureManager::GetTextureByPath(const Path& filePath) const
+Texture2D& TextureManager::GetTextureByPath(const Path& filePath) const
 {
   auto begin = _textures.begin();
   auto end = _textures.end();
@@ -48,9 +48,9 @@ Texture2D* TextureManager::GetTextureByPath(const Path& filePath) const
   if (it == end)
   {
     CONSOLE_WARN("Texture '{}' does not exixts", filePath.string());
-    return nullptr;
+    throw RuntimeError("Texture does not exists");
   }
   
-  return *it;
+  return **it;
 }
 

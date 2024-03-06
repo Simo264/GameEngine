@@ -4,7 +4,7 @@
 #include "Engine/Graphics/Texture2D.hpp"
 #include "Engine/Subsystems/TextureManager.hpp"
 
-#include "Engine/ECS/StaticMeshComponent.hpp"
+#include "Engine/ECS/Components.hpp"
 
 #include "Core/Platform/OpenGL/OpenGL.hpp"
 #include "Core/Log/Logger.hpp"
@@ -47,7 +47,7 @@ void ObjectLoader::LoadMesh(StaticMeshComponent* mesh)
   layout.PushAttributes({ 3,3,2 }); 
 
   /* Initialize empty buffers with calculated size */
-  SharedPointer<VertexArray>& vao = mesh->vertexArray;
+  VertexArray* vao = mesh->vertexArray;
   vao->InitializeBuffers(layout, data, GL_STATIC_DRAW);
 
   /* Now fill vertex buffer with data */
@@ -139,5 +139,5 @@ Texture2D* ObjectLoader::LoadTexture(const aiMaterial* aimaterial, const char* t
   if (aimaterial->GetTexture(aiType, 0, &fileName) != AI_SUCCESS)
     return nullptr;
 
-  return TextureManager::Instance().GetTextureByPath(ROOT_PATH / fileName.C_Str());
+  return &TextureManager::Instance().GetTextureByPath(ROOT_PATH / fileName.C_Str());
 }

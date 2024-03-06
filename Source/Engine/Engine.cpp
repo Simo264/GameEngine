@@ -11,11 +11,7 @@
 
 #include "Engine/GameObject.hpp"
 #include "Engine/GameObjectType.hpp"
-#include "Engine/ECS/StaticMeshComponent.hpp"
-#include "Engine/ECS/TransformComponent.hpp"
-#include "Engine/ECS/Lighting/DirLightComponent.hpp"
-#include "Engine/ECS/Lighting/PointLightComponent.hpp"
-#include "Engine/ECS/Lighting/SpotLightComponent.hpp"
+#include "Engine/ECS/Components.hpp"
 
 #include "Engine/Subsystems/WindowManager.hpp"
 #include "Engine/Subsystems/ShaderManager.hpp"
@@ -58,13 +54,13 @@ void Engine::Initialize()
 
 void Engine::Run()
 {
-  auto& instanceSM          = ShaderManager::Instance();
-  auto testingShader        = instanceSM.GetShader("TestingShader");
-  auto instancingShader     = instanceSM.GetShader("InstancingShader");
-  auto framebufferShader    = instanceSM.GetShader("FramebufferShader");
-  auto sceneShader          = instanceSM.GetShader("SceneShader");
-  auto shadowMapDepthShader = instanceSM.GetShader("ShadowMapDepthShader");
-  auto shadowMapShader      = instanceSM.GetShader("ShadowMapShader");
+  auto& instanceSM            = ShaderManager::Instance();
+  auto& testingShader         = instanceSM.GetShader("TestingShader");
+  auto& instancingShader      = instanceSM.GetShader("InstancingShader");
+  auto& framebufferShader     = instanceSM.GetShader("FramebufferShader");
+  auto& sceneShader           = instanceSM.GetShader("SceneShader");
+  auto& shadowMapDepthShader  = instanceSM.GetShader("ShadowMapDepthShader");
+  auto& shadowMapShader       = instanceSM.GetShader("ShadowMapShader");
 
   /* Initialize framebuffer object */
   auto& window = WindowManager::Instance();
@@ -179,9 +175,9 @@ void Engine::Run()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
 
-    sceneShader->Use();
-    sceneShader->SetMat4f(SHADER_UNIFORM_PROJECTION, cameraProjectionMatrix);
-    sceneShader->SetMat4f(SHADER_UNIFORM_VIEW, cameraViewMatrix);
+    sceneShader.Use();
+    sceneShader.SetMat4f(SHADER_UNIFORM_PROJECTION, cameraProjectionMatrix);
+    sceneShader.SetMat4f(SHADER_UNIFORM_VIEW, cameraViewMatrix);
     scene.DrawScene(sceneShader);
     
     framebuffer.BlitFrameBuffer();
@@ -312,48 +308,48 @@ void Engine::LoadConfig()
 void Engine::LoadShaders()
 {
   auto& instanceSM = ShaderManager::Instance();
-  auto testingShader = instanceSM.LoadShader(
+  auto& testingShader = instanceSM.LoadShader(
     "TestingShader",
     SHADERS_PATH / "Testing.vert",
     SHADERS_PATH / "Testing.frag");
-  auto instancingShader = instanceSM.LoadShader(
+  auto& instancingShader = instanceSM.LoadShader(
     "InstancingShader",
     SHADERS_PATH / "Instancing.vert",
     SHADERS_PATH / "Scene.frag");
-  auto sceneShader = instanceSM.LoadShader(
+  auto& sceneShader = instanceSM.LoadShader(
     "SceneShader",
     SHADERS_PATH / "Scene.vert",
     SHADERS_PATH / "Scene.frag");
-  auto framebufferShader = instanceSM.LoadShader(
+  auto& framebufferShader = instanceSM.LoadShader(
     "FramebufferShader",
     SHADERS_PATH / "Framebuffer.vert",
     SHADERS_PATH / "Framebuffer.frag");
-  auto shadowMapDepthShader = instanceSM.LoadShader(
+  auto& shadowMapDepthShader = instanceSM.LoadShader(
     "ShadowMapDepthShader",
     SHADERS_PATH / "ShadowMapDepth.vert",
     SHADERS_PATH / "ShadowMapDepth.frag");
-  auto shadowMapShader = instanceSM.LoadShader(
+  auto& shadowMapShader = instanceSM.LoadShader(
     "ShadowMapShader",
     SHADERS_PATH / "ShadowMap.vert",
     SHADERS_PATH / "ShadowMap.frag");
 
-  framebufferShader->Use();
-  framebufferShader->SetInt("UScreenTexture", 0);
-  framebufferShader->SetInt("UPostProcessingType", 0);
+  framebufferShader.Use();
+  framebufferShader.SetInt("UScreenTexture", 0);
+  framebufferShader.SetInt("UPostProcessingType", 0);
 
-  instancingShader->Use();
-  instancingShader->SetInt("UMaterial.diffuse", 0);
-  instancingShader->SetInt("UMaterial.specular", 1);
-  instancingShader->SetFloat("UMaterial.shininess", 32.0f);
-  instancingShader->SetFloat("UGamma", 2.2f);
+  instancingShader.Use();
+  instancingShader.SetInt("UMaterial.diffuse", 0);
+  instancingShader.SetInt("UMaterial.specular", 1);
+  instancingShader.SetFloat("UMaterial.shininess", 32.0f);
+  instancingShader.SetFloat("UGamma", 2.2f);
 
-  sceneShader->Use();
-  sceneShader->SetInt("UMaterial.diffuse", 0);
-  sceneShader->SetInt("UMaterial.specular", 1);
-  sceneShader->SetFloat("UMaterial.shininess", 32.0f);
-  sceneShader->SetFloat("UGamma", 2.2f);
-  sceneShader->SetFloat("UDirLightVisible", true);
-  sceneShader->SetIntArray("UPointLightVisible", 5, Array<int, 5>{1,1,1,1,1}.data());
+  sceneShader.Use();
+  sceneShader.SetInt("UMaterial.diffuse", 0);
+  sceneShader.SetInt("UMaterial.specular", 1);
+  sceneShader.SetFloat("UMaterial.shininess", 32.0f);
+  sceneShader.SetFloat("UGamma", 2.2f);
+  sceneShader.SetFloat("UDirLightVisible", true);
+  sceneShader.SetIntArray("UPointLightVisible", 5, Array<int, 5>{1,1,1,1,1}.data());
 }
 
 void Engine::LoadTextures()

@@ -3,11 +3,7 @@
 
 #include "Engine/GameObject.hpp"
 
-#include "Engine/ECS/LabelComponent.hpp"
-#include "Engine/ECS/TransformComponent.hpp"
-#include "Engine/ECS/StaticMeshComponent.hpp"
-#include "Engine/ECS/Lighting/DirLightComponent.hpp"
-#include "Engine/ECS/Lighting/PointLightComponent.hpp"
+#include "Engine/ECS/Components.hpp"
 
 #include "Engine/Graphics/Texture2D.hpp"
 #include "Engine/Subsystems/TextureManager.hpp"
@@ -120,7 +116,7 @@ void DetailsPanel::RenderPanel(GameObject& object)
             String textPathStr = texture->texturePath.string();
             bool isSelected = (std::strcmp(diffusePathStr.c_str(), textPathStr.c_str()) == 0);
             if (ImGui::Selectable(textPathStr.c_str(), isSelected))
-              meshComp->material.diffuse = instanceTM.GetTextureByPath(textPathStr.c_str());
+              meshComp->material.diffuse = &instanceTM.GetTextureByPath(textPathStr.c_str());
             if (isSelected)
               ImGui::SetItemDefaultFocus();
             });

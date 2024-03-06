@@ -5,13 +5,7 @@
 
 #include "Engine/GameObject.hpp"
 #include "Engine/GameObjectType.hpp"
-#include "Engine/ECS/LabelComponent.hpp"
-#include "Engine/ECS/TypeComponent.hpp"
-#include "Engine/ECS/TransformComponent.hpp"
-#include "Engine/ECS/StaticMeshComponent.hpp"
-#include "Engine/ECS/Lighting/DirLightComponent.hpp"
-#include "Engine/ECS/Lighting/PointLightComponent.hpp"
-#include "Engine/ECS/Lighting/SpotLightComponent.hpp"
+#include "Engine/ECS/Components.hpp"
 
 #include "Engine/Graphics/Texture2D.hpp"
 #include "Engine/Subsystems/TextureManager.hpp"
@@ -145,11 +139,11 @@ void SceneSerializer::DeserializeScene(Scene& scene, const Path& filepath)
 
 				buff = conf.GetValue(section.c_str(), "material-diffuse");
 				if (!buff.empty())
-					smeshComp.material.diffuse = TextureManager::Instance().GetTextureByPath(buff);
+					smeshComp.material.diffuse = &TextureManager::Instance().GetTextureByPath(buff);
 
 				buff = conf.GetValue(section.c_str(), "material-specular");
 				if (!buff.empty())
-					smeshComp.material.specular = TextureManager::Instance().GetTextureByPath(buff);
+					smeshComp.material.specular = &TextureManager::Instance().GetTextureByPath(buff);
 			}
 		}
 	}

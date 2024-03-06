@@ -17,10 +17,10 @@ public:
 	void CleanUp() override;
 
 	/* Load in memory the texture object by filename */
-	class Texture2D* LoadTexture(const Path& filePath, bool gammaCorrection = true);
+	class Texture2D& LoadTexture(const Path& filePath, bool gammaCorrection = true);
 		
 	/* Retrieve from memory texture object */
-	class Texture2D* GetTextureByPath(const Path& filePath) const;
+	class Texture2D& GetTextureByPath(const Path& filePath) const;
 
 	/* Return begin iterator */
 	auto Begin() { return _textures.begin(); }
