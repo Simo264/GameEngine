@@ -10,12 +10,19 @@ public:
 		: type{ type }
 	{}
 
-	/* Return following string representation: "type=<type>" */
+	static const char* GetComponentName(bool lower = false)
+	{
+		if(lower)
+			return "typecomponent";
+
+		return "TypeComponent";
+	}
+
+	/* Return "type=<type>" */
 	void ToString(String& out) const override
 	{
 		char buff[32]{};
 		sprintf_s(buff, "type=%d\n", type);
-
 		out.append(buff);
 	}
 

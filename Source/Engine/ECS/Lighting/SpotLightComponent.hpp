@@ -18,6 +18,14 @@ public:
     cutOff{ 12.0f }
   {}
   
+  static const char* GetComponentName(bool lower = false)
+  {
+    if (lower)
+      return "spotlightcomponent";
+
+    return "SpotLightComponent";
+  }
+
 	/* Return following string representation:
 	  "color=<color.x,color.y,color.z>"
 	  "ambient=<ambient>"

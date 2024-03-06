@@ -19,6 +19,14 @@ public:
       quadratic{ 0.07f }
   {}
 
+  static const char* GetComponentName(bool lower = false)
+  {
+    if(lower)
+      return "pointLlghtcomponent";
+
+    return "PointLightComponent";
+  }
+
   /* Return following string representation:
     "color=<color.x,color.y,color.z>"
     "ambient=<ambient>"

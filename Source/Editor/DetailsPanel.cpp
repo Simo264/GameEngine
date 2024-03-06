@@ -86,7 +86,7 @@ void DetailsPanel::RenderPanel(GameObject& object)
         ImGui::TableNextRow();
         EditVec3("Scale", 1, { -FLT_MAX, +FLT_MAX }, transComp->scale, C2);
         ImGui::TableNextRow();
-        EditVec3("Rotate", 1, { -180.0f, 180.0f }, transComp->degrees, C2);
+        EditVec3("Rotate", 1, { -180.0f, 180.0f }, transComp->rotation, C2);
         
         EndTable();
       }

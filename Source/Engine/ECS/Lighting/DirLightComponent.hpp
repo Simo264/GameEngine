@@ -19,6 +19,14 @@ public:
 		: LightComponent(uniform),
 			direction{ 0.0f, -1.0f, 0.0f }
 	{}
+
+	static const char* GetComponentName(bool lower = false)
+	{
+		if (lower)
+			return "dirlightcomponent";
+
+		return "DirLightComponent";
+	}
 	
 	/* Return following string representation:
 	"color=<color.x,color.y,color.z>"

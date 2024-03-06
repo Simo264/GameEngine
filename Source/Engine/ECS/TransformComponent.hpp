@@ -13,8 +13,16 @@ public:
 	TransformComponent() : 
 		position{ 0,0,0 }, 
 		scale{ 1,1,1 }, 
-		degrees{ 0,0,0 }
+		rotation{ 0,0,0 }
 	{}
+
+	static const char* GetComponentName(bool lower = false)
+	{
+		if(lower)
+			return "transformcomponent";
+
+		return "TransformComponent";
+	}
 
 	/* Return following string representation: 
 		"position=<position.x,position.y,position.z>"
@@ -31,7 +39,7 @@ public:
 		sprintf_s(buff, "scale=%.3f,%.3f,%.3f\n", scale.x, scale.y, scale.z);
 		out.append(buff);
 
-		sprintf_s(buff, "rotation=%.3f,%.3f,%.3f\n", degrees.x, degrees.y, degrees.z);
+		sprintf_s(buff, "rotation=%.3f,%.3f,%.3f\n", rotation.x, rotation.y, rotation.z);
 		out.append(buff);
 	}
 
@@ -40,17 +48,17 @@ public:
 	{
 		static const Mat4f I = Mat4f(1.0f);
 
-		Mat4f translation = glm::translate(I, position);
-		Mat4f rotation =
-			glm::rotate(I, glm::radians(degrees.x), Vec3f(1.0f, 0.0f, 0.0f)) *
-			glm::rotate(I, glm::radians(degrees.y), Vec3f(0.0f, 1.0f, 0.0f)) *
-			glm::rotate(I, glm::radians(degrees.z), Vec3f(0.0f, 0.0f, 1.0f));
-		Mat4f scaling = glm::scale(I, scale);
+		Mat4f translationMatrix = glm::translate(I, position);
+		Mat4f rotationMatrix =
+			glm::rotate(I, glm::radians(rotation.x), Vec3f(1.0f, 0.0f, 0.0f)) *
+			glm::rotate(I, glm::radians(rotation.y), Vec3f(0.0f, 1.0f, 0.0f)) *
+			glm::rotate(I, glm::radians(rotation.z), Vec3f(0.0f, 0.0f, 1.0f));
+		Mat4f scalingMatrix = glm::scale(I, scale);
 
-		return translation * rotation * scaling;
+		return translationMatrix * rotationMatrix * scalingMatrix;
 	}
 
 	Vec3f position;
 	Vec3f scale;
-	Vec3f degrees;	/* rotation in degree */
+	Vec3f rotation;	/* in degrees */
 };

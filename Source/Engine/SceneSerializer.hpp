@@ -14,5 +14,7 @@ public:
 	void DeserializeScene(class Scene& scene, const Path& filepath);
 
 private:
-	void SerializeComponent(class INIFileParser& conf, const char* section, String& strComponent);
+	void SerializeObject(class INIFileParser& conf, class GameObject& object);
+	void SerializeComponent(
+		class INIFileParser& conf, const char* section, const char* componentName, String& strComponent);
 };

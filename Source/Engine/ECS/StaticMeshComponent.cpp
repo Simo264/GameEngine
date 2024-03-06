@@ -29,6 +29,11 @@ StaticMeshComponent::StaticMeshComponent(const Path& objFilePath)
 	material = loader.material;
 }
 
+void StaticMeshComponent::InitMesh(const VertexBufferLayout& layout, const VertexBufferData& data) const
+{
+	vertexArray->InitializeBuffers(layout, data, GL_STATIC_DRAW);
+}
+
 void StaticMeshComponent::ToString(String& out) const
 {
 	char buff[128]{};
@@ -47,11 +52,6 @@ void StaticMeshComponent::ToString(String& out) const
 		sprintf_s(buff, "material-specular=%s\n", material.specular->texturePath.string().c_str());
 		out.append(buff);
 	}
-}
-
-void StaticMeshComponent::InitMesh(const VertexBufferLayout& layout, const VertexBufferData& data) const
-{
-	vertexArray->InitializeBuffers(layout, data, GL_STATIC_DRAW);
 }
 
 void StaticMeshComponent::Draw(const Mat4f& transform, Shader* shader) const

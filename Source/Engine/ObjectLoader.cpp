@@ -60,7 +60,7 @@ void ObjectLoader::LoadMesh(StaticMeshComponent* mesh)
   if (aimesh->mMaterialIndex >= 0)
   {
     const aiMaterial* aimaterial = _scene->mMaterials[aimesh->mMaterialIndex];
-    material.diffuse = LoadTexture(aimaterial, "diffuse");
+    material.diffuse  = LoadTexture(aimaterial, "diffuse");
     material.specular = LoadTexture(aimaterial, "specular");
   }
 }

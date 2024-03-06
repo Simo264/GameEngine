@@ -23,12 +23,20 @@ public:
 	/* Initialize Mesh component from given data */
 	StaticMeshComponent(const VertexBufferLayout& layout, const VertexBufferData& data);
 	
-	/* Initialize Mesh reading data from .obj file */
+	/* Initialize Mesh getting data from .obj file */
 	StaticMeshComponent(const Path& objFilePath);
 
 	/* The destructor do nothing. You must call DestroyMesh to destroy vertex array and free memory */
 	~StaticMeshComponent() = default;
 	
+	static const char* GetComponentName(bool lower = false)
+	{
+		if(lower)
+			return "staticmeshcomponent";
+
+		return "StaticMeshComponent";
+	}
+
 	/* Return following string representation: 
 		"model-path=<path>"														if exists
 		"material-diffuse=<material.diffuse.path>"		if exists
@@ -42,7 +50,7 @@ public:
 		vertexArray->Destroy(); 
 	}
 
-	/* Initialize buffers */
+	/* Initialize buffers with given data */
 	void InitMesh(const VertexBufferLayout& layout, const VertexBufferData& data) const;
 
 	/* Draw mesh */

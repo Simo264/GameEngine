@@ -10,12 +10,18 @@ public:
 		: label{ label } 
 	{}
 
-	/* Return following string representation: "label=<label>" */
+	static const char* GetComponentName(bool lower = false)
+	{
+		if(lower)
+			return "labelcomponent";
+
+		return "LabelComponent";
+	}
+
+	/* Return string "label=<label>" */
 	void ToString(String& out) const override
 	{
-		char buff[64]{};
-		sprintf_s(buff, "label=%s\n", label.c_str());
-		out.append(buff);
+		out.append(label.c_str());
 	}
 
 	String label;
