@@ -4,8 +4,22 @@
 #include "Core/Log/Logger.hpp"
 #include <entt/entt.hpp> /* Entity component system */
 
+enum class GameObjectType : int
+{
+	NONE = 0,
+	DIRECTIONAL_LIGHT,
+	POINT_LIGHT,
+	SPOT_LIGHT,
+
+	STATIC_MESH,
+
+	// SKELETAL_MESH,
+	// ...
+};
+
+
 /* ------------------------------------------------------------------
-	Base object class represents a generic object placed in world.
+	GameObject class represents the enitity in Entity Component System
 	------------------------------------------------------------------- */
 class GameObject
 {

@@ -29,7 +29,7 @@ void ContentBrowserPanel::RenderPanel()
   if (_currentDir != ROOT_PATH)
   {
     imageIcon = &TextureManager::Instance().GetTextureByPath(ICONS_PATH / "icon-back.png");
-    if (ImGui::ImageButton((ImTextureID)imageIcon->textureID, { 32,32 }))
+    if (ImGui::ImageButton(reinterpret_cast<ImTextureID>(imageIcon->textureID), { 32,32 }))
       _currentDir = _currentDir.parent_path();
   }
 
@@ -52,7 +52,7 @@ void ContentBrowserPanel::RenderPanel()
     imageIcon = GetThumbIcon(entryPath, entryStr.c_str(), entry.is_directory());
 
     /* Double click on thumb */
-    ImGui::ImageButton((ImTextureID)imageIcon->textureID, { _thumbSize, _thumbSize });
+    ImGui::ImageButton(reinterpret_cast<ImTextureID>(imageIcon->textureID), { _thumbSize, _thumbSize });
     if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
       if (entry.is_directory())
         _currentDir /= entryStr;

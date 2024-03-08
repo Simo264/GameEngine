@@ -1,4 +1,4 @@
-#include "Editor.hpp"
+    #include "Editor.hpp"
 #include "Engine/Scene.hpp"
 #include "Engine/Graphics/FrameBuffer.hpp"
 #include "Engine/Subsystems/WindowManager.hpp"
@@ -105,41 +105,65 @@ void Editor::End()
   }
 }
 
-void Editor::Render(Scene* scene, FrameBuffer* framebuffer)
+void Editor::Render(Scene& scene, FrameBuffer& framebuffer)
 {
   if (_demoOpen) 
     ImGui::ShowDemoWindow(&_demoOpen);
 
+  /* Settings panel */
   if (settingsPanel->visible)
     settingsPanel->RenderFrame();
 
+  /* Debug panel */
   if (debugPanel->visible)
     debugPanel->RenderFrame();
 
+  /* Content browser panel */
   if (contentBrowserPanel->visible)
     contentBrowserPanel->RenderPanel();
-  
-  if(outlinerPanel->visible)
+
+  /* Outliner panel */
+  if (outlinerPanel->visible)
     outlinerPanel->RenderPanel(scene);
+  else 
+    outlinerPanel->_selected = {}; /* If outliner panel is closed the selected object is being setting to null */
   
+  GameObject* objectSelected = &outlinerPanel->GetItemSelected();
+  if (!objectSelected->IsValid())
+    objectSelected = nullptr;
+
+  /* Details panel */
   if (detailsPanel->visible)
-    detailsPanel->RenderPanel(outlinerPanel->GetItemSelected());
-
-
-  if (viewportPanel->visible)
-    viewportPanel->RenderPanel(framebuffer);
+    detailsPanel->RenderPanel(objectSelected);
   
+  /* Viewport panel */
+  if (viewportPanel->visible)
+  {
+    viewportPanel->_grizmoMode = detailsPanel->_grizmoMode;
+    viewportPanel->RenderPanel(framebuffer, objectSelected);
+  }
+  
+  /* Inspector panel */
   if(inspectorPanel->visible)
     inspectorPanel->RenderPanel();
 
+  /* MenuBar events */
   if (_newScene)
+  {
+    outlinerPanel->_selected = {}; /* The selected object in outliner panel is being setting to null */
     OnNewScene(scene);
+  }
   else if (_saveAsScene)
+  {
     OnSaveAsScene(scene);
+  }
   //else if (_saveScene)
   //  OnSaveScene(scene);
   else if (_openScene)
+  {
+    outlinerPanel->_selected = {};  /* The selected object in outliner panel is being setting to null */
     OnOpenScene(scene);
+  }
 
   if (_exit)
   {
@@ -295,13 +319,13 @@ void Editor::Dockspace()
   ImGui::End();
 }
 
-void Editor::OnNewScene(Scene* scene)
+void Editor::OnNewScene(Scene& scene)
 {
   _newScene = false;
-  scene->ClearScene();
+  scene.ClearScene();
 }
 
-void Editor::OnOpenScene(Scene* scene)
+void Editor::OnOpenScene(Scene& scene)
 {
   _openScene = false;
   const char* filters[1] = { "*.ini" };
@@ -309,16 +333,16 @@ void Editor::OnOpenScene(Scene* scene)
   
   if (!filePath.empty())
   {
-    scene->ClearScene();
-    scene->LoadScene(filePath);
+    scene.ClearScene();
+    scene.LoadScene(filePath);
   }
 }
 
-void Editor::OnSaveAsScene(Scene* scene)
+void Editor::OnSaveAsScene(Scene& scene)
 {
   _saveAsScene = false;
   const char* filters[1] = { "*.ini" };
   Path filePath = FileDialog::SaveFileDialog(1, filters, "Save scene (.ini)");
   if (!filePath.empty())
-    scene->SaveScene(filePath);
+    scene.SaveScene(filePath);
 }

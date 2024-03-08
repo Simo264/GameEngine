@@ -3,8 +3,7 @@
 #include "Engine/Scene.hpp"
 #include "Engine/ObjectLoader.hpp"
 
-#include "Engine/GameObject.hpp"
-#include "Engine/GameObjectType.hpp"
+#include "Engine/ECS/GameObject.hpp"
 #include "Engine/ECS/Components.hpp"
 
 #include "Engine/Graphics/Texture2D.hpp"

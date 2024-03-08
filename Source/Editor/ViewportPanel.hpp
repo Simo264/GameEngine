@@ -8,15 +8,18 @@
 	---------------------------------------- */
 class ViewportPanel : public Panel
 {
+	friend class Editor;
+
 public:
-	ViewportPanel(const char* panelName, bool visible)
-		: Panel(panelName, visible),
-		isFocused{ false },
-		viewportSize{ 0, 0 } /* Set size on Render() function */
-	{}
+	ViewportPanel(const char* panelName, bool visible);
 	
 	bool isFocused;
 	Vec2i viewportSize;
 
-	void RenderPanel(class FrameBuffer* framebuffer);
+	void RenderPanel(class FrameBuffer& framebuffer, class GameObject* selected);
+
+private:
+	int _grizmoMode;
+
+	void GrizmoTransformation(struct TransformComponent& component);
 };

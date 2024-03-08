@@ -6,7 +6,7 @@
 #include "Engine/Graphics/Texture2D.hpp"
 #include "Engine/Subsystems/TextureManager.hpp"
 
-#include "Engine/GameObjectType.hpp"
+#include "Engine/ECS/GameObject.hpp"
 #include "Engine/ECS/Components.hpp"
 
 #include <imgui/imgui.h>
@@ -31,7 +31,7 @@ OutlinerPanel::OutlinerPanel(const char* panelName, bool visible)
   _icons[static_cast<int>(ICON_TYPE::HIDDEN)]       = &instanceTM.GetTextureByPath(ICONS_PATH / "icon-hidden.png");
 }
 
-void OutlinerPanel::RenderPanel(Scene* scene)
+void OutlinerPanel::RenderPanel(Scene& scene)
 {
   ImGui::Begin(panelName.c_str(), &visible);
 
@@ -47,18 +47,18 @@ void OutlinerPanel::RenderPanel(Scene* scene)
     ImGui::TableHeadersRow();
 
     /* Every object has LabelComponent and TypeComponent */
-    auto view = scene->Reg().view<LabelComponent, TypeComponent>();
+    auto view = scene.Reg().view<LabelComponent, TypeComponent>();
     for(auto [entity, labelComp, typeComp] : view.each())
     {
       const String& label = labelComp.label;
       const uint32_t itype = typeComp.type;
       const GameObjectType type = static_cast<GameObjectType>(itype);
-      GameObject object{ entity, &scene->Reg() };
+      GameObject object{ entity, &scene.Reg() };
 
       ImGui::TableNextRow();
       ImGui::TableSetColumnIndex(0);
       Texture2D* icon = GetObjectIcon(itype);
-      ImGui::Image((ImTextureID)icon->textureID, { _iconSize,_iconSize });
+      ImGui::Image(reinterpret_cast<ImTextureID>(icon->textureID), { _iconSize,_iconSize });
       SetIconTooltip(itype);
 
       ImGui::TableSetColumnIndex(1);
@@ -68,7 +68,7 @@ void OutlinerPanel::RenderPanel(Scene* scene)
       ImGui::PopID();
 
       ImGui::TableSetColumnIndex(2);
-      ImGui::ImageButton((ImTextureID)_icons[static_cast<int>(ICON_TYPE::VISIBLE)]->textureID, 
+      ImGui::ImageButton(reinterpret_cast<ImTextureID>(_icons[static_cast<int>(ICON_TYPE::VISIBLE)]->textureID),
         { _iconSize,_iconSize });
     }
     ImGui::EndTable();
@@ -144,7 +144,7 @@ void OutlinerPanel::AddSceneComponentButton(const char* labelPopup)
   ImGui::InvisibleButton("##margin-bottom", { 4,4 });
 }
 
-void OutlinerPanel::AddSceneComponentPopup(Scene* scene)
+void OutlinerPanel::AddSceneComponentPopup(Scene& scene)
 {
   static const char* lights[] = { "Directional light", "Point light", "Spot light", };
   static const char* meshes[] = { "Cube", "Plane", "Cylinder", };
@@ -158,9 +158,9 @@ void OutlinerPanel::AddSceneComponentPopup(Scene* scene)
       {
       case 0: /* Directional light */
       {
-        if (scene->Reg().view<DirLightComponent>().size() == 0)
+        if (scene.Reg().view<DirLightComponent>().size() == 0)
         {
-          GameObject dLight = scene->CreateObject(
+          GameObject dLight = scene.CreateObject(
             "Directional light",
             static_cast<uint32_t>(GameObjectType::DIRECTIONAL_LIGHT));
 
@@ -173,10 +173,10 @@ void OutlinerPanel::AddSceneComponentPopup(Scene* scene)
       }
       case 1: /* Pointlight */
       {
-        uint32_t size = scene->Reg().view<PointLightComponent>().size();
+        uint32_t size = scene.Reg().view<PointLightComponent>().size();
         if (size < SHADER_MAX_NUM_POINTLIGHTS)
         {
-          GameObject pLight = scene->CreateObject(
+          GameObject pLight = scene.CreateObject(
             "Point light",
             static_cast<uint32_t>(GameObjectType::POINT_LIGHT));
 
@@ -206,7 +206,7 @@ void OutlinerPanel::AddSceneComponentPopup(Scene* scene)
       case 0: /* Cube mesh */
       {
         Path model = ASSETS_PATH / (Path("Shapes/Cube/Cube.obj").lexically_normal());
-        GameObject cube = scene->CreateObject("Cube", static_cast<uint32_t>(GameObjectType::STATIC_MESH));
+        GameObject cube = scene.CreateObject("Cube", static_cast<uint32_t>(GameObjectType::STATIC_MESH));
         cube.AddComponent<StaticMeshComponent>(model);
         cube.AddComponent<TransformComponent>();
         break;
@@ -214,7 +214,7 @@ void OutlinerPanel::AddSceneComponentPopup(Scene* scene)
       case 1: /* Plane mesh */
       {
         Path model = ASSETS_PATH / (Path("Shapes/Plane/Plane.obj").lexically_normal());
-        GameObject cube = scene->CreateObject("Plane", static_cast<uint32_t>(GameObjectType::STATIC_MESH));
+        GameObject cube = scene.CreateObject("Plane", static_cast<uint32_t>(GameObjectType::STATIC_MESH));
         cube.AddComponent<StaticMeshComponent>(model);
         cube.AddComponent<TransformComponent>();
         break;
@@ -222,7 +222,7 @@ void OutlinerPanel::AddSceneComponentPopup(Scene* scene)
       case 2: /* Cylinder mesh */
       {
         Path model = ASSETS_PATH / (Path("Shapes/Cylinder/Cylinder.obj").lexically_normal());
-        GameObject cube = scene->CreateObject("Cylinder", static_cast<uint32_t>(GameObjectType::STATIC_MESH));
+        GameObject cube = scene.CreateObject("Cylinder", static_cast<uint32_t>(GameObjectType::STATIC_MESH));
         cube.AddComponent<StaticMeshComponent>(model);
         cube.AddComponent<TransformComponent>();
         break;

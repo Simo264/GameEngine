@@ -1,5 +1,11 @@
 #include "Engine.hpp"
 
+#include "Core/Math/Math.hpp"
+#include "Core/Math/Extensions.hpp"
+#include "Core/Log/Logger.hpp"
+#include "Core/FileParser/INIFileParser.hpp"
+#include "Core/Platform/OpenGL/OpenGL.hpp"
+
 #include "Engine/Camera.hpp"
 #include "Engine/Scene.hpp"
 
@@ -9,22 +15,14 @@
 #include "Engine/Graphics/Renderer.hpp"
 #include "Engine/Graphics/FrameBuffer.hpp"
 
-#include "Engine/GameObject.hpp"
-#include "Engine/GameObjectType.hpp"
+#include "Engine/ECS/GameObject.hpp"
 #include "Engine/ECS/Components.hpp"
 
 #include "Engine/Subsystems/WindowManager.hpp"
 #include "Engine/Subsystems/ShaderManager.hpp"
 #include "Engine/Subsystems/TextureManager.hpp"
 
-#include "Core/FileParser/INIFileParser.hpp"
-#include "Core/Log/Logger.hpp"
-
-#include "Core/Platform/OpenGL/OpenGL.hpp"
-
 #include <entt/entt.hpp> /* Entity component system */
-
-constexpr float GAMMA_CORRECTION = 2.2f;
 
 Mat4f cameraProjectionMatrix;
 Mat4f cameraViewMatrix;
@@ -75,23 +73,8 @@ void Engine::Run()
   
   /* Create scene */
   Scene scene;
-  //GameObject cube = scene.CreateObject("Cube", static_cast<uint32_t>(GameObjectType::STATIC_MESH));
-  //cube.AddComponent<StaticMeshComponent>(ASSETS_PATH / (Path("Shapes/Cube/Cube.obj").lexically_normal()));
-  //cube.AddComponent<TransformComponent>();
+  scene.LoadScene(ROOT_PATH / "scene.ini");
 
-  //GameObject plane = scene.CreateObject("Plane", static_cast<uint32_t>(GameObjectType::STATIC_MESH));
-  //plane.AddComponent<StaticMeshComponent>(ASSETS_PATH / (Path("Shapes/Plane/Plane.obj").lexically_normal()));
-  //auto& trans = plane.AddComponent<TransformComponent>();
-  //trans.scale *= 5.0f;
-  //trans.position.y = -1.0f;
-
-  //GameObject dLight = scene.CreateObject("Directional light", static_cast<uint32_t>(GameObjectType::DIRECTIONAL_LIGHT));
-  //auto& light = dLight.AddComponent<DirLightComponent>(SHADER_UNIFORM_DIRLIGHT);
-  //light.color = { 0.024f, 0.020f, 0.141f };
-
-  //scene.SaveScene(ROOT_PATH / "Scene.ini");
-  scene.LoadScene(ROOT_PATH / "Scene.ini");
-  //exit(0);
 
 #if 0
   /* Shadow mapping */
@@ -166,7 +149,7 @@ void Engine::Run()
     
     const Vec2i framebufferSize = framebuffer.GetSize();
     const float aspectRatio = ((float)framebufferSize.x / (float)framebufferSize.y);
-    cameraProjectionMatrix = glm::perspective(glm::radians(camera.fov), aspectRatio, 0.1f, 100.0f);
+    cameraProjectionMatrix = Math::Perspective(Math::Radians(camera.fov), aspectRatio, 0.1f, 100.0f);
     cameraViewMatrix = camera.GetViewMatrix();
     
     /* Render: bind frame buffer */
@@ -246,7 +229,7 @@ void Engine::Run()
 #endif
 
     /* Render editor */
-    editor.Render(&scene, &framebuffer);
+    editor.Render(scene, framebuffer);
     editor.End();
     window.SwapWindowBuffers();
     lastUpdateTime = now;

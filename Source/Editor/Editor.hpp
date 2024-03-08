@@ -35,16 +35,16 @@ public:
 
 	void Begin();
 	void End();
-	void Render(class Scene* scene, class FrameBuffer* framebuffer);
+	void Render(class Scene& scene, class FrameBuffer& framebuffer);
 
-	UniquePointer<ContentBrowserPanel> contentBrowserPanel;
-	UniquePointer<ViewportPanel> viewportPanel;
-	UniquePointer<OutlinerPanel> outlinerPanel;
-	UniquePointer<DetailsPanel> detailsPanel;
-	UniquePointer<InspectorPanel> inspectorPanel;
-	UniquePointer<SettingsPanel> settingsPanel;
-	UniquePointer<DebugPanel> debugPanel;
-	UniquePointer<MenuBar> menuBar;
+	UniquePointer<ContentBrowserPanel>	contentBrowserPanel;
+	UniquePointer<ViewportPanel>				viewportPanel;
+	UniquePointer<OutlinerPanel>				outlinerPanel;
+	UniquePointer<DetailsPanel>					detailsPanel;
+	UniquePointer<InspectorPanel>				inspectorPanel;
+	UniquePointer<SettingsPanel>				settingsPanel;
+	UniquePointer<DebugPanel>						debugPanel;
+	UniquePointer<MenuBar>							menuBar;
 
 private:
 	bool _demoOpen;
@@ -59,8 +59,8 @@ private:
 	void Styling();
 	void Dockspace();
 
-	void OnNewScene(class Scene* scene);
-	void OnOpenScene(class Scene* scene);
-	void OnSaveScene(class Scene* scene);
-	void OnSaveAsScene(class Scene* scene);
+	void OnNewScene(class Scene& scene);
+	void OnOpenScene(class Scene& scene);
+	//void OnSaveScene(class Scene& scene);
+	void OnSaveAsScene(class Scene& scene);
 };

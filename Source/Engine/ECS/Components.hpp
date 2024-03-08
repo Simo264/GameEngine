@@ -1,9 +1,26 @@
 #pragma once
 
 #include "Engine/ECS/IComponent.hpp"
+
 #include "Core/Math/Math.hpp"
 
 #include "Engine/Material.hpp"
+
+#include "Engine/Graphics/VertexArray.hpp"
+
+/*
+	Component list:
+		-TypeComponent	(is it really useful?)
+		-LabelComponent
+		-TransformComponent
+		-StaticMeshComponent
+		-LightComponent
+		-DirLightComponent
+		-PointLightComponent
+		-SpotLightComponent
+*/
+
+
 
 /* --------------------------------------------------------------------------- 
 	TypeComponent: 
@@ -110,8 +127,7 @@ struct StaticMeshComponent : public IComponent
 
 	Path modelPath;
 
-	//SharedPointer<VertexArray> vertexArray;
-	class VertexArray* vertexArray;
+	SharedPointer<VertexArray> vertexArray;
 };
 
 
@@ -132,14 +148,10 @@ struct LightComponent : public IComponent
 	*/
 	void ToString(String& out) const override;
 
-	/* Set shader uniform attributes */
-	virtual void Render(class Shader& shader) {}
-
 	Vec3f color;    /* light color */
 	float ambient;  /* ambient intensity */
 	float diffuse;  /* diffuse intensity */
 	float specular; /* specular intensity */
-
 	String uniform;	/* Used in shader */
 };
 
@@ -167,8 +179,6 @@ struct DirLightComponent : public LightComponent
 	*/
 	void ToString(String& out) const override;
 
-	void Render(class Shader& shader) override;
-
 	Vec3f direction;
 };
 
@@ -193,8 +203,6 @@ struct PointLightComponent : public LightComponent
 	*/
 	void ToString(String& out) const override;
 	
-	void Render(class Shader& shader) override;
-
 	Vec3f position;
 
 	/* Attenuation */
@@ -208,9 +216,8 @@ struct PointLightComponent : public LightComponent
 	a specific direction.
 	A good example of a spotlight would be a street lamp or a flashlight.
 	--------------------------------------------------------------------------- */
-class SpotLightComponent : PointLightComponent
+struct SpotLightComponent : PointLightComponent
 {
-public:
 	SpotLightComponent(const char* uniform);
 
 	static const char* GetComponentName(bool lower = false);
@@ -223,9 +230,7 @@ public:
 		"cutoff=<cutoff>"
 	*/
 	void ToString(String& out) const override;
-
-	void Render(class Shader& shader) override;
-
+	
 	Vec3f direction;
 
 	float cutOff; /* the cutoff angle that specifies the spotlight's radius. */

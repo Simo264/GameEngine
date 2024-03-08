@@ -22,6 +22,8 @@ constexpr char	SHADER_UNIFORM_MODEL[] = "UModel";
 constexpr char	SHADER_UNIFORM_DIRLIGHT[] = "UDirLight";
 constexpr int		SHADER_MAX_NUM_POINTLIGHTS = 5;
 
+constexpr float GAMMA_CORRECTION = 2.2f;
+
 /* -----------------------------
 			STL library layer
    ----------------------------- */

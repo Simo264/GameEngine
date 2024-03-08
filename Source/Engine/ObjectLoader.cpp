@@ -1,6 +1,5 @@
 #include "ObjectLoader.hpp"
 #include "Core/Math/Math.hpp"
-#include "Engine/Graphics/VertexArray.hpp"
 #include "Engine/Graphics/Texture2D.hpp"
 #include "Engine/Subsystems/TextureManager.hpp"
 
@@ -47,7 +46,7 @@ void ObjectLoader::LoadMesh(StaticMeshComponent* mesh)
   layout.PushAttributes({ 3,3,2 }); 
 
   /* Initialize empty buffers with calculated size */
-  VertexArray* vao = mesh->vertexArray;
+  auto& vao = mesh->vertexArray;
   vao->InitializeBuffers(layout, data, GL_STATIC_DRAW);
 
   /* Now fill vertex buffer with data */

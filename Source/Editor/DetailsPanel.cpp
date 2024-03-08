@@ -1,30 +1,35 @@
 #include "DetailsPanel.hpp"
 #include "Core/Log/Logger.hpp"
 
-#include "Engine/GameObject.hpp"
-
+#include "Engine/ECS/GameObject.hpp"
 #include "Engine/ECS/Components.hpp"
 
 #include "Engine/Graphics/Texture2D.hpp"
 #include "Engine/Subsystems/TextureManager.hpp"
 
 #include <imgui/imgui.h>
+#include <imgui/ImGuizmo.h>
 
 /* -----------------------------------------------------
  *          PUBLIC METHODS
  * -----------------------------------------------------
 */
 
-void DetailsPanel::RenderPanel(GameObject& object)
+DetailsPanel::DetailsPanel(const char* panelName, bool visible)
+  : Panel(panelName, visible),
+  _grizmoMode{ static_cast<int>(ImGuizmo::OPERATION::TRANSLATE) }
+{}
+
+void DetailsPanel::RenderPanel(GameObject* selected)
 {
   ImGui::Begin(panelName.c_str(), &visible);
-  if (object.IsValid())
+  if (selected != nullptr)
   {
-    const String& label = object.GetComponent<LabelComponent>()->label;
+    const String& label = selected->GetComponent<LabelComponent>()->label;
     ImGui::Text("Object label: %s", label.c_str());
     
     /* Directional light component */
-    if (auto dLightComp = object.GetComponent<DirLightComponent>())
+    if (auto dLightComp = selected->GetComponent<DirLightComponent>())
     {
       if (ImGui::CollapsingHeader("Light properties"))
       {
@@ -46,7 +51,7 @@ void DetailsPanel::RenderPanel(GameObject& object)
     }
     
     /* Point light component */
-    else if (auto pLightComp = object.GetComponent<PointLightComponent>())
+    else if (auto pLightComp = selected->GetComponent<PointLightComponent>())
     {
       if (ImGui::CollapsingHeader("Light properties"))
       {
@@ -68,28 +73,44 @@ void DetailsPanel::RenderPanel(GameObject& object)
       }
     }
 
+    /* Spot light component */
+    else if (auto sLightComp = selected->GetComponent<SpotLightComponent>())
+    {
+      /* TODO */
+    }
+
     /* Transformation component */
-    else if (auto transComp = object.GetComponent<TransformComponent>())
+    else if (auto transComp = selected->GetComponent<TransformComponent>())
     {
       if (ImGui::CollapsingHeader("Transformation"))
       {
+        if (ImGui::RadioButton("Translate", _grizmoMode == static_cast<int>(ImGuizmo::OPERATION::TRANSLATE)))
+          _grizmoMode = static_cast<int>(ImGuizmo::OPERATION::TRANSLATE);
+        ImGui::SameLine();
+        if (ImGui::RadioButton("Rotate", _grizmoMode == static_cast<int>(ImGuizmo::OPERATION::ROTATE)))
+          _grizmoMode = static_cast<int>(ImGuizmo::OPERATION::ROTATE);
+        ImGui::SameLine();
+        if (ImGui::RadioButton("Scale", _grizmoMode == static_cast<int>(ImGuizmo::OPERATION::SCALE)))
+          _grizmoMode = static_cast<int>(ImGuizmo::OPERATION::SCALE);
+        ImGui::Separator();
+
         const float C1 = 0.30f * ImGui::GetContentRegionAvail().x;
         const float C2 = 0.70f * ImGui::GetContentRegionAvail().x;
         CreateTable<2>("##Transformation", { C1, C2 });
         
         ImGui::TableNextRow();
-        EditVec3("Position", 1, { -FLT_MAX, +FLT_MAX }, transComp->position, C2);
+        EditVec3("Position", 0.1f, { -FLT_MAX, +FLT_MAX }, transComp->position, C2);
         ImGui::TableNextRow();
-        EditVec3("Scale", 1, { -FLT_MAX, +FLT_MAX }, transComp->scale, C2);
+        EditVec3("Scale", 0.1f, { -FLT_MAX, +FLT_MAX }, transComp->scale, C2);
         ImGui::TableNextRow();
-        EditVec3("Rotate", 1, { -180.0f, 180.0f }, transComp->rotation, C2);
+        EditVec3("Rotate", 0.1f, { -180.0f, 180.0f }, transComp->rotation, C2);
         
         EndTable();
       }
     }
     
     /* Static mesh component */
-    if (auto meshComp = object.GetComponent<StaticMeshComponent>())
+    if (auto meshComp = selected->GetComponent<StaticMeshComponent>())
     {
       if (ImGui::CollapsingHeader("Material"))
       {
@@ -105,7 +126,7 @@ void DetailsPanel::RenderPanel(GameObject& object)
 
         ImGui::TableNextRow();
         ImGui::TableNextColumn();
-        ImGui::Image((ImTextureID)diffuseID, { 64,64 });
+        ImGui::Image(reinterpret_cast<ImTextureID>(diffuseID), { 64,64 });
 
         ImGui::TableNextColumn();
         ImGui::SetNextItemWidth(-1);
@@ -134,7 +155,7 @@ void DetailsPanel::RenderPanel(GameObject& object)
     /* Delete object */
     if (ImGui::CollapsingHeader("Advanced"))
       if (ImGui::Button("Delete object"))
-        object.Destroy();
+        selected->Destroy();
   }
   ImGui::End();
 }

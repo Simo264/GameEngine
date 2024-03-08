@@ -1,11 +1,13 @@
 #include "Components.hpp"
 
+#include "Core/Math/Extensions.hpp"
+#include "Core/Platform/OpenGL/OpenGL.hpp"
+
 #include "Engine/ObjectLoader.hpp"
 
-#include "Engine/Graphics/VertexArray.hpp"
 #include "Engine/Graphics/Texture2D.hpp"
-#include "Engine/Graphics/Shader.hpp"
-#include "Core/Platform/OpenGL/OpenGL.hpp"
+
+
 
 /* ---------------------------------------------------------------------------
 			TypeComponent
@@ -78,13 +80,13 @@ Mat4f TransformComponent::GetTransformation() const
 {
 	static const Mat4f I = Mat4f(1.0f);
 
-	Mat4f translationMatrix = glm::translate(I, position);
-	Mat4f rotationMatrix =
-		glm::rotate(I, glm::radians(rotation.x), Vec3f(1.0f, 0.0f, 0.0f)) *
-		glm::rotate(I, glm::radians(rotation.y), Vec3f(0.0f, 1.0f, 0.0f)) *
-		glm::rotate(I, glm::radians(rotation.z), Vec3f(0.0f, 0.0f, 1.0f));
-	Mat4f scalingMatrix = glm::scale(I, scale);
-
+	//Mat4f rotationMatrix =
+	//	glm::rotate(I, glm::radians(rotation.x), Vec3f(1.0f, 0.0f, 0.0f)) *
+	//	glm::rotate(I, glm::radians(rotation.y), Vec3f(0.0f, 1.0f, 0.0f)) *
+	//	glm::rotate(I, glm::radians(rotation.z), Vec3f(0.0f, 0.0f, 1.0f));
+	Mat4f translationMatrix = Math::Translate(I, position);
+	Mat4f rotationMatrix		= Mat4f(Quat(rotation));
+	Mat4f scalingMatrix			= Math::Scale(I, scale);
 	return translationMatrix * rotationMatrix * scalingMatrix;
 }
 
@@ -95,20 +97,17 @@ Mat4f TransformComponent::GetTransformation() const
 
 StaticMeshComponent::StaticMeshComponent()
 {
-	//vertexArray = std::make_shared<VertexArray>();
-	vertexArray = new VertexArray;
+	vertexArray = std::make_shared<VertexArray>();
 }
 
 StaticMeshComponent::StaticMeshComponent(const VertexBufferLayout& layout, const VertexBufferData& data)
 {
-	//vertexArray = std::make_shared<VertexArray>(layout, data, GL_STATIC_DRAW);
-	vertexArray = new VertexArray(layout, data, GL_STATIC_DRAW);
+	vertexArray = std::make_shared<VertexArray>(layout, data, GL_STATIC_DRAW);
 }
 
 StaticMeshComponent::StaticMeshComponent(const Path& objFilePath)
 {
-	//vertexArray = std::make_shared<VertexArray>();
-	vertexArray = new VertexArray;
+	vertexArray = std::make_shared<VertexArray>();
 	modelPath = objFilePath;
 
 	ObjectLoader loader(objFilePath);
@@ -150,42 +149,7 @@ const char* StaticMeshComponent::GetComponentName(bool lower)
 void StaticMeshComponent::DestroyMesh() const
 {
 	vertexArray->Destroy();
-	delete vertexArray;
 }
-
-#if 0
-
-void StaticMeshComponent::Draw(const Mat4f& transform, Shader* shader) const
-{
-	if (material.diffuse)
-	{
-		glActiveTexture(GL_TEXTURE0);
-		material.diffuse->Bind();
-	}
-	if (material.specular)
-	{
-		glActiveTexture(GL_TEXTURE1);
-		material.specular->Bind();
-	}
-
-	shader->SetMat4f(SHADER_UNIFORM_MODEL, transform);
-
-	/* If vertex array does not contain indices call DrawArrays */
-	if (vertexArray->numIndices == 0)
-		Renderer::DrawArrays(vertexArray.get());
-
-	/* If vertex array does contain indices call DrawIndexed */
-	else
-		Renderer::DrawIndexed(vertexArray.get());
-
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, 0); /* unbind specular */
-
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, 0); /* unbind diffuse */
-}
-
-#endif
 
 
 /* ---------------------------------------------------------------------------
@@ -239,33 +203,6 @@ void DirLightComponent::ToString(String& out) const
 	out.append(buff);
 }
 
-void DirLightComponent::Render(Shader& shader)
-{
-	const uint64_t uniformNameSize = uniform.size();
-
-	/* uniformName = "DirLight.direction" */
-	uniform.append(".direction");
-	shader.SetVec3f(uniform.c_str(), direction);
-
-	/* uniformName = "DirLight.ambient" */
-	uniform.erase(uniformNameSize);
-	uniform.append(".ambient");
-	shader.SetVec3f(uniform.c_str(), color * ambient);
-
-	/* uniformName = "DirLight.diffuse" */
-	uniform.erase(uniformNameSize);
-	uniform.append(".diffuse");
-	shader.SetVec3f(uniform.c_str(), color * diffuse);
-
-	/* uniformName = "DirLight.specular" */
-	uniform.erase(uniformNameSize);
-	uniform.append(".specular");
-	shader.SetVec3f(uniform.c_str(), color * specular);
-
-	/* uniformName = "DirLight" */
-	uniform.erase(uniformNameSize);
-}
-
 /* ---------------------------------------------------------------------------
 			PointLightComponent
 	--------------------------------------------------------------------------- */
@@ -290,43 +227,6 @@ void PointLightComponent::ToString(String& out) const
 	char buff[64]{};
 	sprintf_s(buff, "position=%.3f,%.3f,%.3f\n", position.x, position.y, position.z);
 	out.append(buff);
-}
-
-void PointLightComponent::Render(Shader& shader)
-{
-	const uint64_t uniformNameSize = uniform.size();
-
-	/* shaderUName = "PointLight.position" */
-	uniform.append(".position");
-	shader.SetVec3f(uniform.c_str(), position);
-
-	/* shaderUName = "PointLight.ambient" */
-	uniform.erase(uniformNameSize);
-	uniform.append(".ambient");
-	shader.SetVec3f(uniform.c_str(), color * ambient);
-
-	/* shaderUName = "PointLight.diffuse" */
-	uniform.erase(uniformNameSize);
-	uniform.append(".diffuse");
-	shader.SetVec3f(uniform.c_str(), color * diffuse);
-
-	/* shaderUName = "PointLight.specular" */
-	uniform.erase(uniformNameSize);
-	uniform.append(".specular");
-	shader.SetVec3f(uniform.c_str(), color * specular);
-
-	/* shaderUName = "PointLight.linear" */
-	uniform.erase(uniformNameSize);
-	uniform.append(".linear");
-	shader.SetFloat(uniform.c_str(), linear);
-
-	/* shaderUName = "PointLight.quadratic" */
-	uniform.erase(uniformNameSize);
-	uniform.append(".quadratic");
-	shader.SetFloat(uniform.c_str(), quadratic);
-
-	/* shaderUName = "PointLight" */
-	uniform.erase(uniformNameSize);
 }
 
 
@@ -356,42 +256,4 @@ void SpotLightComponent::ToString(String& out) const
 
 	sprintf_s(buff, "cutoff=%.3f\n", cutOff);
 	out.append(buff);
-}
-
-void SpotLightComponent::Render(Shader& shader)
-{
-	const int uniformNameSize = uniform.size();
-
-	uniform.append(".position");
-	shader.SetVec3f(uniform.c_str(), position);
-
-	uniform.erase(uniformNameSize);
-	uniform.append(".direction");
-	shader.SetVec3f(uniform.c_str(), direction);
-
-	uniform.erase(uniformNameSize);
-	uniform.append(".ambient");
-	shader.SetVec3f(uniform.c_str(), color * ambient);
-
-	uniform.erase(uniformNameSize);
-	uniform.append(".diffuse");
-	shader.SetVec3f(uniform.c_str(), color * diffuse);
-
-	uniform.erase(uniformNameSize);
-	uniform.append(".specular");
-	shader.SetVec3f(uniform.c_str(), color * specular);
-
-	uniform.erase(uniformNameSize);
-	uniform.append(".linear");
-	shader.SetFloat(uniform.c_str(), linear);
-
-	uniform.erase(uniformNameSize);
-	uniform.append(".quadratic");
-	shader.SetFloat(uniform.c_str(), quadratic);
-
-	uniform.erase(uniformNameSize);
-	uniform.append(".cutOff");
-	shader.SetFloat(uniform.c_str(), glm::cos(glm::radians(cutOff)));
-
-	uniform.erase(uniformNameSize);
 }

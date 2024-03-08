@@ -1,7 +1,16 @@
 #include "ViewportPanel.hpp"
+
+#include "Core/Math/Extensions.hpp"
 #include "Core/Log/Logger.hpp"
-#include "Engine/Graphics/FrameBuffer.hpp"
 #include "Core/Platform/OpenGL/OpenGL.hpp"
+
+#include "Engine/ECS/GameObject.hpp"
+#include "Engine/ECS/Components.hpp"
+#include "Engine/ECS/Systems.hpp"
+
+#include "Engine/Graphics/FrameBuffer.hpp"
+
+#include "Engine/Subsystems/WindowManager.hpp"
 
 #include <imgui/imgui.h>
 #include <imgui/ImGuizmo.h>
@@ -9,7 +18,19 @@
 extern Mat4f cameraProjectionMatrix;
 extern Mat4f cameraViewMatrix;
 
-void ViewportPanel::RenderPanel(FrameBuffer* framebuffer)
+/* -----------------------------------------------------
+ *          PUBLIC METHODS
+ * -----------------------------------------------------
+*/
+
+ViewportPanel::ViewportPanel(const char* panelName, bool visible)
+  : Panel(panelName, visible),
+    isFocused{ false },
+    viewportSize{ 0, 0 }, /* Set size on Render() function */
+    _grizmoMode{ static_cast<int>(ImGuizmo::OPERATION::TRANSLATE) } 
+{}
+
+void ViewportPanel::RenderPanel(FrameBuffer& framebuffer, GameObject* selected)
 {
   /* Set viewport window padding to 0 */
   ImGuiStyle& style = ImGui::GetStyle();
@@ -26,33 +47,23 @@ void ViewportPanel::RenderPanel(FrameBuffer* framebuffer)
 
   /* Get the size of the child(i.e.the whole draw size of the windows). */
   ImVec2 viewport = ImGui::GetWindowSize();
-  Vec2i framebufferSize = framebuffer->GetSize();
+  Vec2i framebufferSize = framebuffer.GetSize();
   viewportSize = { viewport.x, viewport.y };
 
   if (framebufferSize.x != viewportSize.x || framebufferSize.y != viewportSize.y)
   {
-    framebuffer->RescaleFrameBuffer(viewportSize.x, viewportSize.y);
+    framebuffer.RescaleFrameBuffer(viewportSize.x, viewportSize.y);
     glViewport(0, 0, viewportSize.x, viewportSize.y);
   }
   else
   {
-    ImGui::Image((ImTextureID)framebuffer->GetImage(), viewport, ImVec2(0, 1), ImVec2(1, 0));
-    
-    //StaticMesh* mesh = static_cast<StaticMesh*>(objSelected);
-    //if (mesh)
-    //{
-    //  ImGuizmo::SetOrthographic(false);
-    //  ImGuizmo::SetDrawlist();
-
-    //  Window window(glfwGetCurrentContext());
-    //  Vec2f windowSize = window.GetWindowSize();
-    //  ImGuizmo::SetRect(mesh->transform.position.x, mesh->transform.position.y, windowSize.x, windowSize.y);
-
-    //  Mat4f transform = mesh->transform.GetTransformation();
-
-    //  ImGuizmo::Manipulate(&cameraViewMatrix[0][0], &cameraProjectionMatrix[0][0], 
-    //    ImGuizmo::OPERATION::TRANSLATE, ImGuizmo::LOCAL, &transform[0][0]);
-    //}
+    ImGui::Image(reinterpret_cast<ImTextureID>(framebuffer.GetImage()), viewport, ImVec2(0, 1), ImVec2(1, 0));
+    if (selected != nullptr)
+    {
+      auto component = selected->GetComponent<TransformComponent>();
+      if(component)
+        GrizmoTransformation(*component);
+    }
   }
   ImGui::EndChild();
   ImGui::End();
@@ -60,4 +71,37 @@ void ViewportPanel::RenderPanel(FrameBuffer* framebuffer)
   /* Restore padding */
   style.WindowPadding.x = paddingTmp.x;
   style.WindowPadding.y = paddingTmp.y;
+}
+
+/* -----------------------------------------------------
+ *          PRIVATE METHODS
+ * -----------------------------------------------------
+*/
+
+void ViewportPanel::GrizmoTransformation(TransformComponent& component)
+{
+  Mat4f model = component.GetTransformation();
+
+  ImGuizmo::SetOrthographic(false);
+  ImGuizmo::SetDrawlist();
+
+  float windowW = ImGui::GetWindowWidth();
+  float windowH = ImGui::GetWindowHeight();
+  ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, windowW, windowH);
+
+  ImGuizmo::Manipulate(&cameraViewMatrix[0][0], &cameraProjectionMatrix[0][0],
+    static_cast<ImGuizmo::OPERATION>(_grizmoMode), ImGuizmo::WORLD, &model[0][0]);
+
+  if (ImGuizmo::IsUsing())
+  {
+    static Vec3f translation;
+    static Vec3f scale;
+    static Quat  rotation;
+    Math::Decompose(model, translation, rotation, scale);
+
+    const Vec3f deltaRotation = Math::EulerAngles(rotation) - component.rotation;
+    UpdatePosition(component, translation);
+    UpdateScale(component, scale);
+    UpdateRotation(component, component.rotation + deltaRotation);
+  }
 }

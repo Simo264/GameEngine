@@ -1,7 +1,9 @@
 #include "Camera.hpp"
 
-#include "Engine/Subsystems/WindowManager.hpp"
+#include "Core/Math/Extensions.hpp"
 #include "Core/Log/Logger.hpp"
+
+#include "Engine/Subsystems/WindowManager.hpp"
 #include <GLFW/glfw3.h>
 
 /* -----------------------------------------------------
@@ -28,7 +30,7 @@ Camera::Camera(Vec3f position, float fov)
 
   UpdateCameraVectors();
 
-  _viewMatrix = glm::lookAt(position, position + _front, _up);
+  _viewMatrix = Math::LookAt(position, position + _front, _up);
 }
 
 void Camera::ProcessInput(const double deltaTime)
@@ -46,7 +48,7 @@ void Camera::ProcessInput(const double deltaTime)
   }
 
   UpdateCameraVectors();
-  _viewMatrix = glm::lookAt(position, position + _front, _up);
+  _viewMatrix = Math::LookAt(position, position + _front, _up);
 }
 
 
@@ -58,13 +60,13 @@ void Camera::ProcessInput(const double deltaTime)
 void Camera::UpdateCameraVectors()
 {
   Vec3f calc_front;
-  calc_front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-  calc_front.y = sin(glm::radians(pitch));
-  calc_front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+  calc_front.x = Math::Cos(Math::Radians(yaw)) * cos(Math::Radians(pitch));
+  calc_front.y = Math::Sin(Math::Radians(pitch));
+  calc_front.z = Math::Sin(Math::Radians(yaw)) * cos(Math::Radians(pitch));
   
-  _front = glm::normalize(calc_front);
-  _right = glm::normalize(glm::cross(_front, _worldUp));  
-  _up = glm::normalize(glm::cross(_right, _front));
+  _front  = Math::Normalize(calc_front);
+  _right  = Math::Normalize(Math::Cross(_front, _worldUp));
+  _up     = Math::Normalize(Math::Cross(_right, _front));
 }
 
 void Camera::FreeCameraWalk(const WindowManager* window, const double deltaTime)

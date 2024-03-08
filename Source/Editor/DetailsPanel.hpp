@@ -8,14 +8,16 @@
 	---------------------------------------- */
 class DetailsPanel : public Panel
 {
-public:
-	DetailsPanel(const char* panelName, bool visible) 
-		: Panel(panelName, visible)
-	{}
+	friend class Editor;
 
-	void RenderPanel(class GameObject& object);
+public:
+	DetailsPanel(const char* panelName, bool visible);
+
+	void RenderPanel(class GameObject* selected);
 
 private:
+	int _grizmoMode;
+
 	template<int cols>
 	void CreateTable(const char* label, Array<float, cols> sizes);
 	void EndTable();
