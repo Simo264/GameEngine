@@ -11,6 +11,11 @@
 
 namespace Math
 {
+	float Degrees(float radians)
+	{
+		return glm::degrees(radians);
+	}
+	
 	float Radians(float degrees)
 	{
 		return glm::radians(degrees);

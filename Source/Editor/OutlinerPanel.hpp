@@ -34,6 +34,8 @@ private:
 
 		STATIC_MESH,
 
+		CAMERA,
+
 		VISIBLE,
 		HIDDEN,
 
@@ -41,12 +43,6 @@ private:
 	};
 	
 	Array<Texture2D*, static_cast<int>(ICON_TYPE::COUNT)> _icons;
-
-#if 0
-	void ToggleVisibility(SharedPointer<DirectionalLight>& dLight);
-	void ToggleVisibility(SharedPointer<PointLight>& pLight);
-	void ToggleVisibility(SharedPointer<StaticMesh>& sMesh);
-#endif
 
 	void AddSceneComponentButton(const char* labelPopup);
 	void AddSceneComponentPopup(class Scene& scene);

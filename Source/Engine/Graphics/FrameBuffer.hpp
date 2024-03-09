@@ -58,10 +58,12 @@ public:
 	
 	void BlitFrameBuffer() const;
 	
-	uint32_t GetImage() const { return _renderRelatedIds[NORMAL_TEXTURE]; }
+	constexpr uint32_t GetImage() const { return _renderRelatedIds[NORMAL_TEXTURE]; }
 	
 	Vec2i GetSize() const { return _size; }
 	
+	constexpr float GetAspect() const { return static_cast<float>(_size.x) / static_cast<float>(_size.y); }
+
 	/* Render frame buffer texture */
 	void DrawFrame(class Shader* shader);
 

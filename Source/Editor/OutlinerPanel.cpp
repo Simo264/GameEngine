@@ -27,6 +27,8 @@ OutlinerPanel::OutlinerPanel(const char* panelName, bool visible)
   _icons[static_cast<int>(ICON_TYPE::POINT_LIGHT)]  = &instanceTM.GetTextureByPath(ICONS_PATH / "icon-pointlight.png");
   _icons[static_cast<int>(ICON_TYPE::SPOT_LIGHT)]   = &instanceTM.GetTextureByPath(ICONS_PATH / "icon-spotlight.png");
   _icons[static_cast<int>(ICON_TYPE::STATIC_MESH)]  = &instanceTM.GetTextureByPath(ICONS_PATH / "icon-staticmesh.png");
+  _icons[static_cast<int>(ICON_TYPE::CAMERA)]       = &instanceTM.GetTextureByPath(ICONS_PATH / "icon-camera.png");
+  
   _icons[static_cast<int>(ICON_TYPE::VISIBLE)]      = &instanceTM.GetTextureByPath(ICONS_PATH / "icon-visible.png");
   _icons[static_cast<int>(ICON_TYPE::HIDDEN)]       = &instanceTM.GetTextureByPath(ICONS_PATH / "icon-hidden.png");
 }
@@ -98,6 +100,9 @@ Texture2D* OutlinerPanel::GetObjectIcon(uint32_t objectType)
   
   case GameObjectType::STATIC_MESH:
     return _icons[static_cast<int>(ICON_TYPE::STATIC_MESH)];
+
+  case GameObjectType::CAMERA:
+    return _icons[static_cast<int>(ICON_TYPE::CAMERA)];
 
   default:
     CONSOLE_WARN("Object type %d does not have icon", objectType);

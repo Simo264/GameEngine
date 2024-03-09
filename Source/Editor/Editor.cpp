@@ -140,7 +140,7 @@ void Editor::Render(Scene& scene, FrameBuffer& framebuffer)
   if (viewportPanel->visible)
   {
     viewportPanel->_grizmoMode = detailsPanel->_grizmoMode;
-    viewportPanel->RenderPanel(framebuffer, objectSelected);
+    viewportPanel->RenderPanel(scene, framebuffer, objectSelected);
   }
   
   /* Inspector panel */

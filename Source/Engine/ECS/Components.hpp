@@ -1,11 +1,8 @@
 #pragma once
 
-#include "Engine/ECS/IComponent.hpp"
-
+#include "Core/Core.hpp"
 #include "Core/Math/Math.hpp"
-
 #include "Engine/Material.hpp"
-
 #include "Engine/Graphics/VertexArray.hpp"
 
 /*
@@ -18,8 +15,24 @@
 		-DirLightComponent
 		-PointLightComponent
 		-SpotLightComponent
+		-CameraComponent
 */
 
+/* ---------------------------------------------------------------------------
+	Component Interface
+	--------------------------------------------------------------------------- */
+struct IComponent
+{
+	IComponent() = default;
+	~IComponent() = default;
+
+	/* For ech attribute in component return the following string:
+		"<attr1>=<value1>"
+		"<attr2>=<value2>"
+		...
+	*/
+	virtual void ToString(String& out) const = 0;
+};
 
 
 /* --------------------------------------------------------------------------- 
@@ -78,7 +91,7 @@ struct TransformComponent : public IComponent
 
 	Vec3f position;
 	Vec3f scale;
-	Vec3f rotation;	/* in degrees */
+	Vec3f rotation;	/* In degrees */
 };
 
 
@@ -237,3 +250,50 @@ struct SpotLightComponent : PointLightComponent
 };
 
 
+/*	---------------------------------------------------------------------------
+	When we're talking about camera/view space we're talking about all the vertex 
+	coordinates as seen from the camera's perspective as the origin of the scene: 
+	the view matrix transforms all the world coordinates into view coordinates 
+	that are relative to the camera's position and direction. 
+	To define a camera we need its position in world space, the direction 
+	it's looking at, a vector pointing to the right and a vector pointing upwards 
+	from the camera. 
+	A careful reader may notice that we're actually going to create a coordinate 
+	system with 3 perpendicular unit axes with the camera's position as the origin.
+	--------------------------------------------------------------------------- */
+struct CameraComponent : public IComponent
+{
+	CameraComponent(const Vec3f& position, float fov, float aspect, float zNear, float zFar);
+
+	/* Return following string representation:
+		"position=<position.x,position.y,position.z>"
+		"fov=<fov>"
+		"yaw=<yaw>"
+		"pitch=<pitch>"
+		"movementSpeed=<movementSpeed>"
+		"mouseSensitivity=<mouseSensitivity>"
+	*/
+	void ToString(String& out) const override;
+
+	/* Camera Attributes */
+	Vec3f position;
+	Vec3f front;
+	Vec3f up;
+	Vec3f right;
+	float fov;
+	float aspect; 
+	float zNear; 
+	float zFar;
+
+	/* Euler Angles */
+	float yaw;
+	float pitch;
+
+	/* Matrices */
+	Mat4f viewMatrix;
+	Mat4f projectionMatrix;
+
+	/* Camera options */
+	float movementSpeed;
+	float mouseSensitivity;
+};

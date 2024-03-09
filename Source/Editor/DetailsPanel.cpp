@@ -31,7 +31,7 @@ void DetailsPanel::RenderPanel(GameObject* selected)
     /* Directional light component */
     if (auto dLightComp = selected->GetComponent<DirLightComponent>())
     {
-      if (ImGui::CollapsingHeader("Light properties"))
+      if (ImGui::CollapsingHeader("Light properties", ImGuiTreeNodeFlags_DefaultOpen))
       {
         const float C1 = 0.30f * ImGui::GetContentRegionAvail().x;
         const float C2 = 0.70f * ImGui::GetContentRegionAvail().x;
@@ -39,7 +39,7 @@ void DetailsPanel::RenderPanel(GameObject* selected)
         LightProperties(dLightComp);
         EndTable();
       }
-      if (ImGui::CollapsingHeader("Directional light properties"))
+      if (ImGui::CollapsingHeader("Directional light properties", ImGuiTreeNodeFlags_DefaultOpen))
       {
         const float C1 = 0.30f * ImGui::GetContentRegionAvail().x;
         const float C2 = 0.70f * ImGui::GetContentRegionAvail().x;
@@ -53,7 +53,7 @@ void DetailsPanel::RenderPanel(GameObject* selected)
     /* Point light component */
     else if (auto pLightComp = selected->GetComponent<PointLightComponent>())
     {
-      if (ImGui::CollapsingHeader("Light properties"))
+      if (ImGui::CollapsingHeader("Light properties", ImGuiTreeNodeFlags_DefaultOpen))
       {
         const float C1 = 0.30f * ImGui::GetContentRegionAvail().x;
         const float C2 = 0.70f * ImGui::GetContentRegionAvail().x;
@@ -61,8 +61,7 @@ void DetailsPanel::RenderPanel(GameObject* selected)
         LightProperties(pLightComp);
         EndTable();
       }
-
-      if (ImGui::CollapsingHeader("Point light properties"))
+      if (ImGui::CollapsingHeader("Point light properties", ImGuiTreeNodeFlags_DefaultOpen))
       {
         const float C1 = 0.30f * ImGui::GetContentRegionAvail().x;
         const float C2 = 0.70f * ImGui::GetContentRegionAvail().x;
@@ -82,7 +81,7 @@ void DetailsPanel::RenderPanel(GameObject* selected)
     /* Transformation component */
     else if (auto transComp = selected->GetComponent<TransformComponent>())
     {
-      if (ImGui::CollapsingHeader("Transformation"))
+      if (ImGui::CollapsingHeader("Transformation", ImGuiTreeNodeFlags_DefaultOpen))
       {
         if (ImGui::RadioButton("Translate", _grizmoMode == static_cast<int>(ImGuizmo::OPERATION::TRANSLATE)))
           _grizmoMode = static_cast<int>(ImGuizmo::OPERATION::TRANSLATE);
@@ -103,7 +102,7 @@ void DetailsPanel::RenderPanel(GameObject* selected)
         ImGui::TableNextRow();
         EditVec3("Scale", 0.1f, { -FLT_MAX, +FLT_MAX }, transComp->scale, C2);
         ImGui::TableNextRow();
-        EditVec3("Rotate", 0.1f, { -180.0f, 180.0f }, transComp->rotation, C2);
+        EditVec3("Rotate (deg)", 1.0f, { -180.0f, +180.0f }, transComp->rotation, C2);
         
         EndTable();
       }
@@ -112,7 +111,7 @@ void DetailsPanel::RenderPanel(GameObject* selected)
     /* Static mesh component */
     if (auto meshComp = selected->GetComponent<StaticMeshComponent>())
     {
-      if (ImGui::CollapsingHeader("Material"))
+      if (ImGui::CollapsingHeader("Material", ImGuiTreeNodeFlags_DefaultOpen))
       {
         const float C1 = 0.5f * ImGui::GetContentRegionAvail().x;
         const float C2 = 0.3f * ImGui::GetContentRegionAvail().x;
@@ -190,13 +189,13 @@ void DetailsPanel::EditVec3(const char* label, float speed, Vec2f minMax, Vec3f&
   ImGui::Text(label);
   ImGui::TableNextColumn();
   ImGui::SetNextItemWidth((colSize / 3.0f) - 5);
-  ImGui::DragFloat("##X", &values.x, speed, minMax[0], minMax[1], "X: %.2f");
+  ImGui::DragFloat("##X", &values.x, speed, minMax.x, minMax.y, "X: %.2f");
   ImGui::SameLine(0, 5);
   ImGui::SetNextItemWidth((colSize / 3.0f) - 5);
-  ImGui::DragFloat("##Y", &values.y, speed, minMax[0], minMax[1], "Y: %.2f");
+  ImGui::DragFloat("##Y", &values.y, speed, minMax.x, minMax.y, "Y: %.2f");
   ImGui::SameLine(0, 5);
   ImGui::SetNextItemWidth((colSize / 3.0f) - 5);
-  ImGui::DragFloat("##Z", &values.z, speed, minMax[0], minMax[1], "Z: %.2f");
+  ImGui::DragFloat("##Z", &values.z, speed, minMax.x, minMax.y, "Z: %.2f");
 
   ImGui::PopID();
 }

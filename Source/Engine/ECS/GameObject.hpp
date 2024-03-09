@@ -12,9 +12,9 @@ enum class GameObjectType : int
 	SPOT_LIGHT,
 
 	STATIC_MESH,
-
 	// SKELETAL_MESH,
-	// ...
+
+	CAMERA,
 };
 
 

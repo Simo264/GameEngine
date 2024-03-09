@@ -1,13 +1,17 @@
 #include "Components.hpp"
 
+#include "Core/Log/Logger.hpp"
 #include "Core/Math/Extensions.hpp"
 #include "Core/Platform/OpenGL/OpenGL.hpp"
 
 #include "Engine/ObjectLoader.hpp"
 
+#include "Engine/ECS/Systems.hpp"
+
 #include "Engine/Graphics/Texture2D.hpp"
 
-
+#include "Engine/Subsystems/WindowManager.hpp"
+#include <GLFW/glfw3.h>
 
 /* ---------------------------------------------------------------------------
 			TypeComponent
@@ -79,17 +83,11 @@ void TransformComponent::ToString(String& out) const
 Mat4f TransformComponent::GetTransformation() const
 {
 	static const Mat4f I = Mat4f(1.0f);
-
-	//Mat4f rotationMatrix =
-	//	glm::rotate(I, glm::radians(rotation.x), Vec3f(1.0f, 0.0f, 0.0f)) *
-	//	glm::rotate(I, glm::radians(rotation.y), Vec3f(0.0f, 1.0f, 0.0f)) *
-	//	glm::rotate(I, glm::radians(rotation.z), Vec3f(0.0f, 0.0f, 1.0f));
 	Mat4f translationMatrix = Math::Translate(I, position);
-	Mat4f rotationMatrix		= Mat4f(Quat(rotation));
+	Mat4f rotationMatrix		= Mat4f(Quat(Vec3f(Math::Radians(rotation.x), Math::Radians(rotation.y), glm::radians(rotation.z))));
 	Mat4f scalingMatrix			= Math::Scale(I, scale);
 	return translationMatrix * rotationMatrix * scalingMatrix;
 }
-
 
 /* ---------------------------------------------------------------------------
 			StaticMeshComponent
@@ -151,7 +149,6 @@ void StaticMeshComponent::DestroyMesh() const
 	vertexArray->Destroy();
 }
 
-
 /* ---------------------------------------------------------------------------
 			LightComponent
 	--------------------------------------------------------------------------- */
@@ -178,7 +175,6 @@ void LightComponent::ToString(String& out) const
 	sprintf_s(buff, "specular=%.3f\n", specular);
 	out.append(buff);
 }
-
 
 /* ---------------------------------------------------------------------------
 			DirLightComponent
@@ -229,7 +225,6 @@ void PointLightComponent::ToString(String& out) const
 	out.append(buff);
 }
 
-
 /* ---------------------------------------------------------------------------
 			SpotLightComponent
 	--------------------------------------------------------------------------- */
@@ -256,4 +251,35 @@ void SpotLightComponent::ToString(String& out) const
 
 	sprintf_s(buff, "cutoff=%.3f\n", cutOff);
 	out.append(buff);
+}
+
+/* ---------------------------------------------------------------------------
+			CameraComponent
+	--------------------------------------------------------------------------- */
+
+CameraComponent::CameraComponent(const Vec3f& position, float fov, float aspect, float zNear, float zFar)
+	: position{ position },
+		fov{ fov },
+		aspect{ aspect },
+		zNear{ zNear },
+		zFar{ zFar },
+		
+		yaw{ -90.0f },
+		pitch{ 0.0f },
+
+		movementSpeed{ 7.5f },        /* [1.0f:10.0f] */
+		mouseSensitivity{ 25.0f }     /* [1.0f:100.0f] */
+{
+	front = {};
+	up		= {};
+	right = {};
+	UpdateCameraVectors(*this);
+
+	viewMatrix			 = Math::LookAt(position, position + front, up);
+	projectionMatrix = Math::Perspective(fov, aspect, zNear, zFar);
+}
+
+void CameraComponent::ToString(String& out) const
+{
+	CONSOLE_WARN("TODO");
 }

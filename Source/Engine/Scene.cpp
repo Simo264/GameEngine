@@ -84,6 +84,16 @@ void Scene::SaveScene(const Path& filepath)
 	serializer.SerializeScene(*this, filepath);
 }
 
+void Scene::SetPrimaryCamera(GameObject cameraObject)
+{
+	_primaryCamera = cameraObject.GetObjectID();
+}
+
+GameObject Scene::GetPrimaryCamera()
+{
+	return GameObject{ _primaryCamera, &_registry };
+}
+
 /* -----------------------------------------------------
  *          PRIVATE METHODS
  * -----------------------------------------------------

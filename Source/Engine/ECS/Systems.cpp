@@ -1,27 +1,160 @@
 #include "Systems.hpp"
 
+#include "Core/Platform/OpenGL/OpenGL.hpp"
+#include "Core/Math/Extensions.hpp"
+
 #include "Engine/ECS/Components.hpp"
 
 #include "Engine/Graphics/Shader.hpp"
 #include "Engine/Graphics/Texture2D.hpp"
 #include "Engine/Graphics/Renderer.hpp"
 
-#include "Core/Platform/OpenGL/OpenGL.hpp"
+#include "Engine/Subsystems/WindowManager.hpp"
+#include <GLFW/glfw3.h>
+
 
 /* --------------------------------------------
 			TransformComponent Systems
 	-------------------------------------------- */
-void UpdatePosition(TransformComponent& component, const Vec3f& position)
+void UpdatePosition(TransformComponent& transform, const Vec3f& position)
 {
-	component.position = position;
+	transform.position = position;
 }
-void UpdateScale(TransformComponent& component, const Vec3f& scale)
+void UpdateScale(TransformComponent& transform, const Vec3f& scale)
 {
-	component.scale = scale;
+	transform.scale = scale;
 }
-void UpdateRotation(TransformComponent& component, const Vec3f& rotation)
+void UpdateRotation(TransformComponent& transform, const Vec3f& rotation)
 {
-	component.rotation = rotation;
+	transform.rotation = rotation;
+}
+
+/* --------------------------------------------
+			CameraComponent Systems
+	-------------------------------------------- */
+void UpdateCameraFov(struct CameraComponent& camera, float fov)
+{
+	camera.fov = fov;
+	camera.projectionMatrix = Math::Perspective(camera.fov, camera.aspect, camera.zNear, camera.zFar);
+}
+void UpdateCameraAspect(CameraComponent& camera, float aspect)
+{
+	camera.aspect = aspect;
+	camera.projectionMatrix = Math::Perspective(camera.fov, camera.aspect, camera.zNear, camera.zFar);
+}
+void UpdateCameraZNear(CameraComponent& camera, float zNear)
+{
+	camera.zNear = zNear;
+	camera.projectionMatrix = Math::Perspective(camera.fov, camera.aspect, camera.zNear, camera.zFar);
+}
+void UpdateCameraZFar(CameraComponent& camera, float zFar)
+{
+	camera.zFar = zFar;
+	camera.projectionMatrix = Math::Perspective(camera.fov, camera.aspect, camera.zNear, camera.zFar);
+}
+
+void UpdateCameraVectors(CameraComponent& camera)
+{
+	Vec3f calcFront{};
+	calcFront.x = Math::Cos(Math::Radians(camera.yaw)) * cos(Math::Radians(camera.pitch));
+	calcFront.y = Math::Sin(Math::Radians(camera.pitch));
+	calcFront.z = Math::Sin(Math::Radians(camera.yaw)) * cos(Math::Radians(camera.pitch));
+
+	camera.front = Math::Normalize(calcFront);
+	camera.right = Math::Normalize(Math::Cross(camera.front, Vec3f(0.0f, 1.0f, 0.0f)));
+	camera.up		= Math::Normalize(Math::Cross(camera.right, camera.front));
+}
+void MoveCamera(CameraComponent& camera, double deltaTime)
+{
+	auto& window = WindowManager::Instance();
+	const float velocity = camera.movementSpeed * deltaTime;
+
+	/* W-S */
+	if (window.GetKey(GLFW_KEY_W) == GLFW_PRESS)
+	{
+		camera.position += camera.front * velocity;
+	}
+	else if (window.GetKey(GLFW_KEY_S) == GLFW_PRESS)
+	{
+		camera.position -= camera.front * velocity;
+	}
+
+	/* A-D */
+	if (window.GetKey(GLFW_KEY_A) == GLFW_PRESS)
+	{
+		camera.position -= camera.right * velocity;
+	}
+	else if (window.GetKey(GLFW_KEY_D) == GLFW_PRESS)
+	{
+		camera.position += camera.right * velocity;
+	}
+
+	/* SPACE-LCTRL */
+	if (window.GetKey(GLFW_KEY_SPACE) == GLFW_PRESS)
+	{
+		camera.position += camera.up * velocity;
+	}
+	else if (window.GetKey(GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
+	{
+		camera.position -= camera.up * velocity;
+	}
+}
+void RotateCamera(CameraComponent& camera, double deltaTime)
+{
+	auto& window = WindowManager::Instance();
+
+	Vec2d mousePos = window.GetCursorPosition();
+	Vec2i windowSize = window.GetWindowSize();
+	static float lastX = ((float)windowSize.x / 2.0f);
+	static float lastY = ((float)windowSize.y / 2.0f);
+
+	static bool firstMouse = true;
+	if (firstMouse)
+	{
+		lastX = mousePos.x;
+		lastY = mousePos.y;
+		firstMouse = false;
+	}
+
+	const float velocity = camera.mouseSensitivity * deltaTime * 10;
+
+	const float xoffset = lastX - mousePos.x;
+	if (xoffset < 0) /* Right */
+		camera.yaw += velocity;
+	else if (xoffset > 0) /* Left */
+		camera.yaw -= velocity;
+
+	const float yoffset = lastY - mousePos.y;
+	if (yoffset > 0) /* Up */
+		camera.pitch += velocity;
+	else if (yoffset < 0) /* Down */
+		camera.pitch -= velocity;
+
+	lastX = mousePos.x;
+	lastY = mousePos.y;
+
+	/* make sure that when pitch is out of bounds, screen doesn't get flipped */
+	static bool constrainPitch = true;
+	if (constrainPitch)
+	{
+		if (camera.pitch > 89.0f)
+			camera.pitch = 89.0f;
+		if (camera.pitch < -89.0f)
+			camera.pitch = -89.0f;
+	}
+}
+
+void ProcessCameraInput(CameraComponent& camera, double deltaTime)
+{
+	auto& window = WindowManager::Instance();
+
+	MoveCamera(camera, deltaTime);
+	if (window.GetMouseKey(GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
+		RotateCamera(camera, deltaTime);
+
+	UpdateCameraVectors(camera);
+
+	camera.viewMatrix = Math::LookAt(camera.position, camera.position + camera.front, camera.up);
 }
 
 /* --------------------------------------------
@@ -56,102 +189,102 @@ void RenderMesh(StaticMeshComponent& mesh, const Mat4f& transform, Shader& shade
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, 0); /* unbind diffuse */
 }
-void RenderLight(DirLightComponent& dirLight, Shader& shader)
+void RenderLight(DirLightComponent& light, Shader& shader)
 {
-	const uint64_t uniformNameSize = dirLight.uniform.size();
+	const uint64_t uniformNameSize = light.uniform.size();
 
 	/* uniformName = "DirLight.direction" */
-	dirLight.uniform.append(".direction");
-	shader.SetVec3f(dirLight.uniform.c_str(), dirLight.direction);
+	light.uniform.append(".direction");
+	shader.SetVec3f(light.uniform.c_str(), light.direction);
 
 	/* uniformName = "DirLight.ambient" */
-	dirLight.uniform.erase(uniformNameSize);
-	dirLight.uniform.append(".ambient");
-	shader.SetVec3f(dirLight.uniform.c_str(), dirLight.color * dirLight.ambient);
+	light.uniform.erase(uniformNameSize);
+	light.uniform.append(".ambient");
+	shader.SetVec3f(light.uniform.c_str(), light.color * light.ambient);
 
 	/* uniformName = "DirLight.diffuse" */
-	dirLight.uniform.erase(uniformNameSize);
-	dirLight.uniform.append(".diffuse");
-	shader.SetVec3f(dirLight.uniform.c_str(), dirLight.color * dirLight.diffuse);
+	light.uniform.erase(uniformNameSize);
+	light.uniform.append(".diffuse");
+	shader.SetVec3f(light.uniform.c_str(), light.color * light.diffuse);
 
 	/* uniformName = "DirLight.specular" */
-	dirLight.uniform.erase(uniformNameSize);
-	dirLight.uniform.append(".specular");
-	shader.SetVec3f(dirLight.uniform.c_str(), dirLight.color * dirLight.specular);
+	light.uniform.erase(uniformNameSize);
+	light.uniform.append(".specular");
+	shader.SetVec3f(light.uniform.c_str(), light.color * light.specular);
 
 	/* uniformName = "DirLight" */
-	dirLight.uniform.erase(uniformNameSize);
+	light.uniform.erase(uniformNameSize);
 }
-void RenderLight(PointLightComponent& pointLight, Shader& shader)
+void RenderLight(PointLightComponent& light, Shader& shader)
 {
-	const uint64_t uniformNameSize = pointLight.uniform.size();
+	const uint64_t uniformNameSize = light.uniform.size();
 
 	/* shaderUName = "PointLight.position" */
-	pointLight.uniform.append(".position");
-	shader.SetVec3f(pointLight.uniform.c_str(), pointLight.position);
+	light.uniform.append(".position");
+	shader.SetVec3f(light.uniform.c_str(), light.position);
 
 	/* shaderUName = "PointLight.ambient" */
-	pointLight.uniform.erase(uniformNameSize);
-	pointLight.uniform.append(".ambient");
-	shader.SetVec3f(pointLight.uniform.c_str(), pointLight.color * pointLight.ambient);
+	light.uniform.erase(uniformNameSize);
+	light.uniform.append(".ambient");
+	shader.SetVec3f(light.uniform.c_str(), light.color * light.ambient);
 
 	/* shaderUName = "PointLight.diffuse" */
-	pointLight.uniform.erase(uniformNameSize);
-	pointLight.uniform.append(".diffuse");
-	shader.SetVec3f(pointLight.uniform.c_str(), pointLight.color * pointLight.diffuse);
+	light.uniform.erase(uniformNameSize);
+	light.uniform.append(".diffuse");
+	shader.SetVec3f(light.uniform.c_str(), light.color * light.diffuse);
 
 	/* shaderUName = "PointLight.specular" */
-	pointLight.uniform.erase(uniformNameSize);
-	pointLight.uniform.append(".specular");
-	shader.SetVec3f(pointLight.uniform.c_str(), pointLight.color * pointLight.specular);
+	light.uniform.erase(uniformNameSize);
+	light.uniform.append(".specular");
+	shader.SetVec3f(light.uniform.c_str(), light.color * light.specular);
 
 	/* shaderUName = "PointLight.linear" */
-	pointLight.uniform.erase(uniformNameSize);
-	pointLight.uniform.append(".linear");
-	shader.SetFloat(pointLight.uniform.c_str(), pointLight.linear);
+	light.uniform.erase(uniformNameSize);
+	light.uniform.append(".linear");
+	shader.SetFloat(light.uniform.c_str(), light.linear);
 
 	/* shaderUName = "PointLight.quadratic" */
-	pointLight.uniform.erase(uniformNameSize);
-	pointLight.uniform.append(".quadratic");
-	shader.SetFloat(pointLight.uniform.c_str(), pointLight.quadratic);
+	light.uniform.erase(uniformNameSize);
+	light.uniform.append(".quadratic");
+	shader.SetFloat(light.uniform.c_str(), light.quadratic);
 
 	/* shaderUName = "PointLight" */
-	pointLight.uniform.erase(uniformNameSize);
+	light.uniform.erase(uniformNameSize);
 }
-void RenderLight(SpotLightComponent& spotLight, Shader& shader)
+void RenderLight(SpotLightComponent& light, Shader& shader)
 {
-	const int uniformNameSize = spotLight.uniform.size();
+	const int uniformNameSize = light.uniform.size();
 
-	spotLight.uniform.append(".position");
-	shader.SetVec3f(spotLight.uniform.c_str(), spotLight.position);
+	light.uniform.append(".position");
+	shader.SetVec3f(light.uniform.c_str(), light.position);
 
-	spotLight.uniform.erase(uniformNameSize);
-	spotLight.uniform.append(".direction");
-	shader.SetVec3f(spotLight.uniform.c_str(), spotLight.direction);
+	light.uniform.erase(uniformNameSize);
+	light.uniform.append(".direction");
+	shader.SetVec3f(light.uniform.c_str(), light.direction);
 
-	spotLight.uniform.erase(uniformNameSize);
-	spotLight.uniform.append(".ambient");
-	shader.SetVec3f(spotLight.uniform.c_str(), spotLight.color * spotLight.ambient);
+	light.uniform.erase(uniformNameSize);
+	light.uniform.append(".ambient");
+	shader.SetVec3f(light.uniform.c_str(), light.color * light.ambient);
 
-	spotLight.uniform.erase(uniformNameSize);
-	spotLight.uniform.append(".diffuse");
-	shader.SetVec3f(spotLight.uniform.c_str(), spotLight.color * spotLight.diffuse);
+	light.uniform.erase(uniformNameSize);
+	light.uniform.append(".diffuse");
+	shader.SetVec3f(light.uniform.c_str(), light.color * light.diffuse);
 
-	spotLight.uniform.erase(uniformNameSize);
-	spotLight.uniform.append(".specular");
-	shader.SetVec3f(spotLight.uniform.c_str(), spotLight.color * spotLight.specular);
+	light.uniform.erase(uniformNameSize);
+	light.uniform.append(".specular");
+	shader.SetVec3f(light.uniform.c_str(), light.color * light.specular);
 
-	spotLight.uniform.erase(uniformNameSize);
-	spotLight.uniform.append(".linear");
-	shader.SetFloat(spotLight.uniform.c_str(), spotLight.linear);
+	light.uniform.erase(uniformNameSize);
+	light.uniform.append(".linear");
+	shader.SetFloat(light.uniform.c_str(), light.linear);
 
-	spotLight.uniform.erase(uniformNameSize);
-	spotLight.uniform.append(".quadratic");
-	shader.SetFloat(spotLight.uniform.c_str(), spotLight.quadratic);
+	light.uniform.erase(uniformNameSize);
+	light.uniform.append(".quadratic");
+	shader.SetFloat(light.uniform.c_str(), light.quadratic);
 
-	spotLight.uniform.erase(uniformNameSize);
-	spotLight.uniform.append(".cutOff");
-	shader.SetFloat(spotLight.uniform.c_str(), Math::Cos(Math::Radians(spotLight.cutOff)));
+	light.uniform.erase(uniformNameSize);
+	light.uniform.append(".cutOff");
+	shader.SetFloat(light.uniform.c_str(), Math::Cos(Math::Radians(light.cutOff)));
 
-	spotLight.uniform.erase(uniformNameSize);
+	light.uniform.erase(uniformNameSize);
 }

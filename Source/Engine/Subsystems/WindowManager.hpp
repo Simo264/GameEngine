@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Core/Core.hpp"
+#include "Core/Math/Math.hpp"
 #include "Engine/Subsystems/Manager.hpp"
 
 /* ----------------------------------------
@@ -43,13 +44,13 @@ public:
   void SetWindowAspectRatio(int numer, int denom) const;
 
   /* Get window size */
-  void GetWindowSize(int& w, int& h) const;
+  Vec2i GetWindowSize() const;
   
   /* Set window resolution */
   void SetWindowSize(int w, int h) const;
 
   /* Get the size, in pixels, of the framebuffer of the current context */
-  void GetFramebufferSize(int& w, int& h) const;
+  Vec2i GetFramebufferSize() const;
 
   /* Get Keyboard key */
   int GetKey(uint32_t key) const;
@@ -58,7 +59,7 @@ public:
   int GetMouseKey(uint32_t key) const; 
 
   /* Get mouse position */
-  void GetCursorPosition(double& x, double& y) const;
+  Vec2d GetCursorPosition() const;
 
   /* Set mouse mode: value = GLFW_CURSOR_NORMAL | GLFW_CURSOR_HIDDEN | GLFW_CURSOR_DISABLED */
   void SetCursorMode(int value) const;

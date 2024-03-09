@@ -1,9 +1,10 @@
 #include "ViewportPanel.hpp"
 
+#include "Core/Platform/OpenGL/OpenGL.hpp"
 #include "Core/Math/Extensions.hpp"
 #include "Core/Log/Logger.hpp"
-#include "Core/Platform/OpenGL/OpenGL.hpp"
 
+#include "Engine/Scene.hpp"
 #include "Engine/ECS/GameObject.hpp"
 #include "Engine/ECS/Components.hpp"
 #include "Engine/ECS/Systems.hpp"
@@ -14,9 +15,6 @@
 
 #include <imgui/imgui.h>
 #include <imgui/ImGuizmo.h>
-
-extern Mat4f cameraProjectionMatrix;
-extern Mat4f cameraViewMatrix;
 
 /* -----------------------------------------------------
  *          PUBLIC METHODS
@@ -30,7 +28,7 @@ ViewportPanel::ViewportPanel(const char* panelName, bool visible)
     _grizmoMode{ static_cast<int>(ImGuizmo::OPERATION::TRANSLATE) } 
 {}
 
-void ViewportPanel::RenderPanel(FrameBuffer& framebuffer, GameObject* selected)
+void ViewportPanel::RenderPanel(Scene& scene, FrameBuffer& framebuffer, GameObject* selected)
 {
   /* Set viewport window padding to 0 */
   ImGuiStyle& style = ImGui::GetStyle();
@@ -47,11 +45,14 @@ void ViewportPanel::RenderPanel(FrameBuffer& framebuffer, GameObject* selected)
 
   /* Get the size of the child(i.e.the whole draw size of the windows). */
   ImVec2 viewport = ImGui::GetWindowSize();
-  Vec2i framebufferSize = framebuffer.GetSize();
+
+  /* Update viewport size */
   viewportSize = { viewport.x, viewport.y };
+  const Vec2i framebufferSize = framebuffer.GetSize();
 
   if (framebufferSize.x != viewportSize.x || framebufferSize.y != viewportSize.y)
   {
+    /* Update framebuffer size */
     framebuffer.RescaleFrameBuffer(viewportSize.x, viewportSize.y);
     glViewport(0, 0, viewportSize.x, viewportSize.y);
   }
@@ -62,7 +63,7 @@ void ViewportPanel::RenderPanel(FrameBuffer& framebuffer, GameObject* selected)
     {
       auto component = selected->GetComponent<TransformComponent>();
       if(component)
-        GrizmoTransformation(*component);
+        GrizmoTransformation(scene , *component);
     }
   }
   ImGui::EndChild();
@@ -78,7 +79,7 @@ void ViewportPanel::RenderPanel(FrameBuffer& framebuffer, GameObject* selected)
  * -----------------------------------------------------
 */
 
-void ViewportPanel::GrizmoTransformation(TransformComponent& component)
+void ViewportPanel::GrizmoTransformation(class Scene& scene, TransformComponent& component)
 {
   Mat4f model = component.GetTransformation();
 
@@ -89,7 +90,10 @@ void ViewportPanel::GrizmoTransformation(TransformComponent& component)
   float windowH = ImGui::GetWindowHeight();
   ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, windowW, windowH);
 
-  ImGuizmo::Manipulate(&cameraViewMatrix[0][0], &cameraProjectionMatrix[0][0],
+  GameObject primaryCamera = scene.GetPrimaryCamera();
+  auto cameraComponent = primaryCamera.GetComponent<CameraComponent>();
+
+  ImGuizmo::Manipulate(&cameraComponent->viewMatrix[0][0], &cameraComponent->projectionMatrix[0][0],
     static_cast<ImGuizmo::OPERATION>(_grizmoMode), ImGuizmo::WORLD, &model[0][0]);
 
   if (ImGuizmo::IsUsing())
@@ -99,7 +103,12 @@ void ViewportPanel::GrizmoTransformation(TransformComponent& component)
     static Quat  rotation;
     Math::Decompose(model, translation, rotation, scale);
 
-    const Vec3f deltaRotation = Math::EulerAngles(rotation) - component.rotation;
+    Vec3f rotationDegrees = Math::EulerAngles(rotation);  /* Get vector rotation in radians */
+    rotationDegrees.x = Math::Degrees(rotationDegrees.x); /* Convert it in degrees */
+    rotationDegrees.y = Math::Degrees(rotationDegrees.y);
+    rotationDegrees.z = Math::Degrees(rotationDegrees.z);
+    const Vec3f deltaRotation = rotationDegrees - component.rotation;
+    
     UpdatePosition(component, translation);
     UpdateScale(component, scale);
     UpdateRotation(component, component.rotation + deltaRotation);

@@ -39,6 +39,7 @@ using Mat4d = glm::dmat4x4;
 
 namespace Math
 {
+	float Degrees(float radians);
 	float Radians(float degrees);
 	
 	float Cos(float degree);

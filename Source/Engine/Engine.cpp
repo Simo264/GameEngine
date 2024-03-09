@@ -1,12 +1,12 @@
 #include "Engine.hpp"
 
+#include "Core/Platform/OpenGL/OpenGL.hpp"
+
 #include "Core/Math/Math.hpp"
 #include "Core/Math/Extensions.hpp"
 #include "Core/Log/Logger.hpp"
 #include "Core/FileParser/INIFileParser.hpp"
-#include "Core/Platform/OpenGL/OpenGL.hpp"
 
-#include "Engine/Camera.hpp"
 #include "Engine/Scene.hpp"
 
 #include "Engine/ObjectLoader.hpp"
@@ -17,6 +17,7 @@
 
 #include "Engine/ECS/GameObject.hpp"
 #include "Engine/ECS/Components.hpp"
+#include "Engine/ECS/Systems.hpp"
 
 #include "Engine/Subsystems/WindowManager.hpp"
 #include "Engine/Subsystems/ShaderManager.hpp"
@@ -24,9 +25,8 @@
 
 #include <entt/entt.hpp> /* Entity component system */
 
-Mat4f cameraProjectionMatrix;
-Mat4f cameraViewMatrix;
-
+Mat4f cameraProjectionMatrix{};
+Mat4f cameraViewMatrix{};
 
 /* -----------------------------------------------------
  *          PUBLIC METHODS
@@ -62,19 +62,28 @@ void Engine::Run()
 
   /* Initialize framebuffer object */
   auto& window = WindowManager::Instance();
-  Vec2i framebufferSize;
-  window.GetFramebufferSize(framebufferSize.x, framebufferSize.y);
-
+  Vec2i framebufferSize = window.GetFramebufferSize();
   FrameBuffer framebuffer(framebufferSize.x, framebufferSize.y);
   glViewport(0, 0, framebufferSize.x, framebufferSize.y);
 
-  /* Camera object */
-  Camera camera(Vec3f(0.0f, 1.0f, 10.0f), 45.0f);
-  
   /* Create scene */
   Scene scene;
-  scene.LoadScene(ROOT_PATH / "scene.ini");
+  
+  GameObject primaryCameraObject = scene.CreateObject("Primary camera", static_cast<int>(GameObjectType::CAMERA));
+  auto& cameraComponent = primaryCameraObject.AddComponent<CameraComponent>(
+    Vec3f(0.0f, 0.0f, 0.0f), /* position */
+    45.0f, /* fov */
+    framebuffer.GetAspect(), /* aspect */
+    0.1f, /* zNear */
+    100.0f /* zFar */
+  );
+  GameObject cubeObject   = scene.CreateObject("Cube", static_cast<int>(GameObjectType::STATIC_MESH));
+  cubeObject.AddComponent<StaticMeshComponent>(ASSETS_PATH / Path("Shapes/Cube/Cube.obj").lexically_normal());
+  cubeObject.AddComponent<TransformComponent>();
+  GameObject lightObject  = scene.CreateObject("Diretional light", static_cast<int>(GameObjectType::DIRECTIONAL_LIGHT));
+  lightObject.AddComponent<DirLightComponent>(SHADER_UNIFORM_DIRLIGHT);
 
+  
 
 #if 0
   /* Shadow mapping */
@@ -125,6 +134,10 @@ void Engine::Run()
   shadowMapShader->SetInt("UShadowMap", 2);
 #endif
 
+  scene.SetPrimaryCamera(primaryCameraObject);
+  
+  assert(scene.GetPrimaryCamera().IsValid() && "Primary camera scene is null");
+
   /* Pre-loop */
   TimePoint lastUpdateTime = SystemClock::now();
   const Vec2f perspectiveDistance(0.1f, 100.0f); 
@@ -145,12 +158,11 @@ void Engine::Run()
     /* Input */
     window.PoolEvents();
     if (editor.viewportPanel->isFocused)
-      camera.ProcessInput(delta);
-    
-    const Vec2i framebufferSize = framebuffer.GetSize();
-    const float aspectRatio = ((float)framebufferSize.x / (float)framebufferSize.y);
-    cameraProjectionMatrix = Math::Perspective(Math::Radians(camera.fov), aspectRatio, 0.1f, 100.0f);
-    cameraViewMatrix = camera.GetViewMatrix();
+      ProcessCameraInput(cameraComponent, delta);
+    UpdateCameraAspect(cameraComponent, framebuffer.GetAspect());
+
+    cameraProjectionMatrix  = cameraComponent.projectionMatrix;
+    cameraViewMatrix        = cameraComponent.viewMatrix;
     
     /* Render: bind frame buffer */
     framebuffer.BindMSAAFramebuffer();
@@ -235,8 +247,8 @@ void Engine::Run()
     lastUpdateTime = now;
   }
   
-    /* Destroy framebuffer */
-    framebuffer.DestroyFrameBuffer();
+  /* Destroy framebuffer */
+  framebuffer.DestroyFrameBuffer();
 }
 
 void Engine::CleanUp()

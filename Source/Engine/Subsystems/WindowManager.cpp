@@ -4,6 +4,7 @@
 #include "Core/Platform/OpenGL/OpenGL.hpp"
 #include <GLFW/glfw3.h>
 
+
 void WindowManager::Initialize()
 {
   glfwInit();
@@ -93,9 +94,11 @@ void WindowManager::SwapWindowBuffers() const
   glfwSwapBuffers(_context); 
 }
 
-void WindowManager::GetWindowSize(int& w, int& h) const
+Vec2i WindowManager::GetWindowSize() const
 {
-  glfwGetWindowSize(_context, &w, &h);
+  Vec2i res{};
+  glfwGetWindowSize(_context, &res.x, &res.y);
+  return res;
 }
 
 void WindowManager::SetWindowSize(int w, int h) const
@@ -103,9 +106,11 @@ void WindowManager::SetWindowSize(int w, int h) const
   glfwSetWindowSize(_context, w, h);
 }
 
-void WindowManager::GetFramebufferSize(int& w, int& h) const
+Vec2i WindowManager::GetFramebufferSize() const
 {
-  glfwGetFramebufferSize(_context, &w, &h);
+  Vec2i res{};
+  glfwGetFramebufferSize(_context, &res.x, &res.y);
+  return res;
 }
 
 int WindowManager::GetKey(uint32_t key) const 
@@ -118,9 +123,11 @@ int WindowManager::GetMouseKey(uint32_t key) const
   return glfwGetMouseButton(_context, key); 
 }
 
-void WindowManager::GetCursorPosition(double& x, double& y) const
-{ 
-  glfwGetCursorPos(_context, &x, &y); 
+Vec2d WindowManager::GetCursorPosition() const
+{
+  Vec2d res{};
+  glfwGetCursorPos(_context, &res.x, &res.y);
+  return res;
 }
 
 void WindowManager::SetCursorMode(int value) const 
