@@ -25,17 +25,17 @@ FrameBuffer::FrameBuffer(int w, int h)
 	InitFrameBuffer();
 }
 
-void FrameBuffer::BindMSAAFramebuffer() const 
+void FrameBuffer::Bind() const 
 { 
 	glBindFramebuffer(GL_FRAMEBUFFER, _renderRelatedIds[MULTISAMPLING_FBO]); 
 }
 
-void FrameBuffer::UnbindFrameBuffer() const 
+void FrameBuffer::Unbind() const 
 { 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0); 
 };
 
-void FrameBuffer::BlitFrameBuffer() const
+void FrameBuffer::Blit() const
 {
 	glBindFramebuffer(GL_READ_FRAMEBUFFER, _renderRelatedIds[MULTISAMPLING_FBO]);
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, _renderRelatedIds[NORMAL_FBO]);
@@ -47,14 +47,14 @@ void FrameBuffer::DrawFrame(Shader* shader)
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, _renderRelatedIds[NORMAL_TEXTURE]);
 
-	shader->SetInt("UPostProcessingType", (int)_postprocType);
+	shader->SetInt(SHADER_UNIFORM_POST_PROCESSING, (int)_postprocType);
 	_frameBufferVAO->Bind();
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	_frameBufferVAO->Unbind();
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 	
-void FrameBuffer::RescaleFrameBuffer(int w, int h)
+void FrameBuffer::Rescale(int w, int h)
 {
 	_size = Vec2i(w, h);
 
@@ -76,7 +76,7 @@ void FrameBuffer::RescaleFrameBuffer(int w, int h)
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void FrameBuffer::DestroyFrameBuffer()
+void FrameBuffer::Destroy()
 {
 	glDeleteFramebuffers(1, &_renderRelatedIds[NORMAL_FBO]);
 	glDeleteTextures(1, &_renderRelatedIds[NORMAL_TEXTURE]);

@@ -105,7 +105,7 @@ void Editor::End()
   }
 }
 
-void Editor::Render(Scene& scene, FrameBuffer& framebuffer)
+void Editor::Render(Scene& scene, Camera& camera, FrameBuffer& framebuffer)
 {
   if (_demoOpen) 
     ImGui::ShowDemoWindow(&_demoOpen);
@@ -140,7 +140,7 @@ void Editor::Render(Scene& scene, FrameBuffer& framebuffer)
   if (viewportPanel->visible)
   {
     viewportPanel->_grizmoMode = detailsPanel->_grizmoMode;
-    viewportPanel->RenderPanel(scene, framebuffer, objectSelected);
+    viewportPanel->RenderPanel(scene, camera, framebuffer, objectSelected);
   }
   
   /* Inspector panel */

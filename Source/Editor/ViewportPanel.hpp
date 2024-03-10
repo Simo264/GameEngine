@@ -16,10 +16,17 @@ public:
 	bool isFocused;
 	Vec2i viewportSize;
 
-	void RenderPanel(class Scene& scene, class FrameBuffer& framebuffer, class GameObject* selected);
+	void RenderPanel(
+		class Scene& scene, 
+		class Camera& camera, 
+		class FrameBuffer& framebuffer, 
+		class GameObject* selected);
 
 private:
 	int _grizmoMode;
 
-	void GrizmoTransformation(class Scene& scene, struct TransformComponent& component);
+	void GrizmoTransformation(
+		class Scene& scene, 
+		class Camera& camera,
+		struct TransformComponent& component);
 };

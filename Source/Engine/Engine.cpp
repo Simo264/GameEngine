@@ -7,8 +7,8 @@
 #include "Core/Log/Logger.hpp"
 #include "Core/FileParser/INIFileParser.hpp"
 
+#include "Engine/Camera.hpp"
 #include "Engine/Scene.hpp"
-
 #include "Engine/ObjectLoader.hpp"
 
 #include "Engine/Graphics/Shader.hpp"
@@ -66,23 +66,18 @@ void Engine::Run()
   FrameBuffer framebuffer(framebufferSize.x, framebufferSize.y);
   glViewport(0, 0, framebufferSize.x, framebufferSize.y);
 
+  /* Create camera */
+  Camera camera({ 0.0f, 0.0f, 5.0f }, 45.0f, framebuffer.GetAspect());
+
   /* Create scene */
   Scene scene;
   
-  GameObject primaryCameraObject = scene.CreateObject("Primary camera", static_cast<int>(GameObjectType::CAMERA));
-  auto& cameraComponent = primaryCameraObject.AddComponent<CameraComponent>(
-    Vec3f(0.0f, 0.0f, 0.0f), /* position */
-    45.0f, /* fov */
-    framebuffer.GetAspect(), /* aspect */
-    0.1f, /* zNear */
-    100.0f /* zFar */
-  );
   GameObject cubeObject   = scene.CreateObject("Cube", static_cast<int>(GameObjectType::STATIC_MESH));
   cubeObject.AddComponent<StaticMeshComponent>(ASSETS_PATH / Path("Shapes/Cube/Cube.obj").lexically_normal());
   cubeObject.AddComponent<TransformComponent>();
+
   GameObject lightObject  = scene.CreateObject("Diretional light", static_cast<int>(GameObjectType::DIRECTIONAL_LIGHT));
   lightObject.AddComponent<DirLightComponent>(SHADER_UNIFORM_DIRLIGHT);
-
   
 
 #if 0
@@ -134,9 +129,6 @@ void Engine::Run()
   shadowMapShader->SetInt("UShadowMap", 2);
 #endif
 
-  scene.SetPrimaryCamera(primaryCameraObject);
-  
-  assert(scene.GetPrimaryCamera().IsValid() && "Primary camera scene is null");
 
   /* Pre-loop */
   TimePoint lastUpdateTime = SystemClock::now();
@@ -157,15 +149,15 @@ void Engine::Run()
 
     /* Input */
     window.PoolEvents();
+    
     if (editor.viewportPanel->isFocused)
-      ProcessCameraInput(cameraComponent, delta);
-    UpdateCameraAspect(cameraComponent, framebuffer.GetAspect());
-
-    cameraProjectionMatrix  = cameraComponent.projectionMatrix;
-    cameraViewMatrix        = cameraComponent.viewMatrix;
+      camera.ProcessInput(window, delta);
+    
+    cameraProjectionMatrix  = camera.cameraComponent->GetProjection();
+    cameraViewMatrix        = camera.cameraComponent->GetView();
     
     /* Render: bind frame buffer */
-    framebuffer.BindMSAAFramebuffer();
+    framebuffer.Bind();
     glClearColor(pow(0.3f, GAMMA_CORRECTION), pow(0.3f, GAMMA_CORRECTION), pow(0.3f, GAMMA_CORRECTION), 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
@@ -175,8 +167,8 @@ void Engine::Run()
     sceneShader.SetMat4f(SHADER_UNIFORM_VIEW, cameraViewMatrix);
     scene.DrawScene(sceneShader);
     
-    framebuffer.BlitFrameBuffer();
-    framebuffer.UnbindFrameBuffer();
+    framebuffer.Blit();
+    framebuffer.Unbind();
 
 #if 0
     /* Fill the depth map framebuffer (from light's perspective) */
@@ -241,14 +233,14 @@ void Engine::Run()
 #endif
 
     /* Render editor */
-    editor.Render(scene, framebuffer);
+    editor.Render(scene, camera, framebuffer);
     editor.End();
     window.SwapWindowBuffers();
     lastUpdateTime = now;
   }
   
   /* Destroy framebuffer */
-  framebuffer.DestroyFrameBuffer();
+  framebuffer.Destroy();
 }
 
 void Engine::CleanUp()
@@ -265,8 +257,6 @@ void Engine::CleanUp()
 
   WindowManager::Instance().CleanUp();
 }
-
-
 
 /* -----------------------------------------------------
  *          PRIVATE METHODS

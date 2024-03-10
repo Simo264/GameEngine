@@ -5,6 +5,8 @@
 #include "Core/Log/Logger.hpp"
 
 #include "Engine/Scene.hpp"
+#include "Engine/Camera.hpp"
+
 #include "Engine/ECS/GameObject.hpp"
 #include "Engine/ECS/Components.hpp"
 #include "Engine/ECS/Systems.hpp"
@@ -28,7 +30,7 @@ ViewportPanel::ViewportPanel(const char* panelName, bool visible)
     _grizmoMode{ static_cast<int>(ImGuizmo::OPERATION::TRANSLATE) } 
 {}
 
-void ViewportPanel::RenderPanel(Scene& scene, FrameBuffer& framebuffer, GameObject* selected)
+void ViewportPanel::RenderPanel(Scene& scene, Camera& camera, FrameBuffer& framebuffer, GameObject* selected)
 {
   /* Set viewport window padding to 0 */
   ImGuiStyle& style = ImGui::GetStyle();
@@ -53,7 +55,8 @@ void ViewportPanel::RenderPanel(Scene& scene, FrameBuffer& framebuffer, GameObje
   if (framebufferSize.x != viewportSize.x || framebufferSize.y != viewportSize.y)
   {
     /* Update framebuffer size */
-    framebuffer.RescaleFrameBuffer(viewportSize.x, viewportSize.y);
+    framebuffer.Rescale(viewportSize.x, viewportSize.y);
+    camera.cameraComponent->aspect = framebuffer.GetAspect();
     glViewport(0, 0, viewportSize.x, viewportSize.y);
   }
   else
@@ -63,7 +66,7 @@ void ViewportPanel::RenderPanel(Scene& scene, FrameBuffer& framebuffer, GameObje
     {
       auto component = selected->GetComponent<TransformComponent>();
       if(component)
-        GrizmoTransformation(scene , *component);
+        GrizmoTransformation(scene, camera, *component);
     }
   }
   ImGui::EndChild();
@@ -79,7 +82,7 @@ void ViewportPanel::RenderPanel(Scene& scene, FrameBuffer& framebuffer, GameObje
  * -----------------------------------------------------
 */
 
-void ViewportPanel::GrizmoTransformation(class Scene& scene, TransformComponent& component)
+void ViewportPanel::GrizmoTransformation(Scene& scene, Camera& camera, TransformComponent& component)
 {
   Mat4f model = component.GetTransformation();
 
@@ -90,11 +93,14 @@ void ViewportPanel::GrizmoTransformation(class Scene& scene, TransformComponent&
   float windowH = ImGui::GetWindowHeight();
   ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, windowW, windowH);
 
-  GameObject primaryCamera = scene.GetPrimaryCamera();
-  auto cameraComponent = primaryCamera.GetComponent<CameraComponent>();
-
-  ImGuizmo::Manipulate(&cameraComponent->viewMatrix[0][0], &cameraComponent->projectionMatrix[0][0],
-    static_cast<ImGuizmo::OPERATION>(_grizmoMode), ImGuizmo::WORLD, &model[0][0]);
+  auto view = camera.cameraComponent->GetView();
+  auto projection = camera.cameraComponent->GetProjection();
+  ImGuizmo::Manipulate(
+    &view[0][0],
+    &projection[0][0],
+    static_cast<ImGuizmo::OPERATION>(_grizmoMode), 
+    ImGuizmo::WORLD, 
+    &model[0][0]);
 
   if (ImGuizmo::IsUsing())
   {

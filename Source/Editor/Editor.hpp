@@ -35,7 +35,11 @@ public:
 
 	void Begin();
 	void End();
-	void Render(class Scene& scene, class FrameBuffer& framebuffer);
+
+	void Render(
+		class Scene& scene, 
+		class Camera& camera, 
+		class FrameBuffer& framebuffer);
 
 	UniquePointer<ContentBrowserPanel>	contentBrowserPanel;
 	UniquePointer<ViewportPanel>				viewportPanel;

@@ -52,11 +52,9 @@ public:
 	FrameBuffer(FrameBuffer const&) = delete;
 	FrameBuffer& operator=(FrameBuffer const&) = delete;
 
-	void BindMSAAFramebuffer() const;
-	
-	void UnbindFrameBuffer() const;
-	
-	void BlitFrameBuffer() const;
+	void Bind() const;
+	void Unbind() const;
+	void Blit() const;
 	
 	constexpr uint32_t GetImage() const { return _renderRelatedIds[NORMAL_TEXTURE]; }
 	
@@ -70,10 +68,10 @@ public:
 	void SetPostProcessing(PostProcessingType type) { _postprocType = type; }
 	
 	/* Resize the frame buffer viewport */
-	void RescaleFrameBuffer(int w, int h);
+	void Rescale(int w, int h);
 	
 	/* Free resources from GPU */
-	void DestroyFrameBuffer();
+	void Destroy();
 
 private:
 	Vec2i _size; 

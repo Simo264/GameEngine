@@ -10,8 +10,6 @@
 
 #include "Engine/Graphics/Texture2D.hpp"
 
-#include "Engine/Subsystems/WindowManager.hpp"
-#include <GLFW/glfw3.h>
 
 /* ---------------------------------------------------------------------------
 			TypeComponent
@@ -56,14 +54,23 @@ void LabelComponent::ToString(String& out) const
 	--------------------------------------------------------------------------- */
 
 TransformComponent::TransformComponent()
-	: position{ 0,0,0 },
-		scale{ 1,1,1 },
-		rotation{ 0,0,0 }
+	: position{ 0.0f, 0.0f, 0.0f },
+		scale{ 1.0f, 1.0f, 1.0f },
+		rotation{ 0.0f, 0.0f, 0.0f }
 {}
 
 const char* TransformComponent::GetComponentName(bool lower)
 {
 	return (lower ? "transformcomponent" : "TransformComponent");
+}
+
+Mat4f TransformComponent::GetTransformation() const
+{
+	static const Mat4f I		= Mat4f(1.0f);
+	Mat4f translationMatrix = Math::Translate(I, position);
+	Mat4f rotationMatrix		= Mat4f(Quat(Vec3f(Math::Radians(rotation.x), Math::Radians(rotation.y), glm::radians(rotation.z))));
+	Mat4f scalingMatrix			= Math::Scale(I, scale);
+	return translationMatrix * rotationMatrix * scalingMatrix;
 }
 
 void TransformComponent::ToString(String& out) const
@@ -78,15 +85,6 @@ void TransformComponent::ToString(String& out) const
 
 	sprintf_s(buff, "rotation=%.3f,%.3f,%.3f\n", rotation.x, rotation.y, rotation.z);
 	out.append(buff);
-}
-
-Mat4f TransformComponent::GetTransformation() const
-{
-	static const Mat4f I = Mat4f(1.0f);
-	Mat4f translationMatrix = Math::Translate(I, position);
-	Mat4f rotationMatrix		= Mat4f(Quat(Vec3f(Math::Radians(rotation.x), Math::Radians(rotation.y), glm::radians(rotation.z))));
-	Mat4f scalingMatrix			= Math::Scale(I, scale);
-	return translationMatrix * rotationMatrix * scalingMatrix;
 }
 
 /* ---------------------------------------------------------------------------
@@ -119,6 +117,16 @@ void StaticMeshComponent::InitMesh(const VertexBufferLayout& layout, const Verte
 	vertexArray->InitializeBuffers(layout, data, GL_STATIC_DRAW);
 }
 
+const char* StaticMeshComponent::GetComponentName(bool lower)
+{
+	return (lower ? "staticmeshcomponent" : "StaticMeshComponent");
+}
+
+void StaticMeshComponent::DestroyMesh() const
+{
+	vertexArray->Destroy();
+}
+
 void StaticMeshComponent::ToString(String& out) const
 {
 	char buff[128]{};
@@ -137,16 +145,6 @@ void StaticMeshComponent::ToString(String& out) const
 		sprintf_s(buff, "material-specular=%s\n", material.specular->texturePath.string().c_str());
 		out.append(buff);
 	}
-}
-
-const char* StaticMeshComponent::GetComponentName(bool lower)
-{
-	return (lower ? "staticmeshcomponent" : "StaticMeshComponent");
-}
-
-void StaticMeshComponent::DestroyMesh() const
-{
-	vertexArray->Destroy();
 }
 
 /* ---------------------------------------------------------------------------
@@ -257,26 +255,50 @@ void SpotLightComponent::ToString(String& out) const
 			CameraComponent
 	--------------------------------------------------------------------------- */
 
-CameraComponent::CameraComponent(const Vec3f& position, float fov, float aspect, float zNear, float zFar)
+CameraComponent::CameraComponent(const Vec3f& position, float fov, float aspect)
 	: position{ position },
 		fov{ fov },
-		aspect{ aspect },
-		zNear{ zNear },
-		zFar{ zFar },
-		
-		yaw{ -90.0f },
-		pitch{ 0.0f },
-
-		movementSpeed{ 7.5f },        /* [1.0f:10.0f] */
-		mouseSensitivity{ 25.0f }     /* [1.0f:100.0f] */
+		aspect{ aspect }
 {
-	front = {};
-	up		= {};
-	right = {};
-	UpdateCameraVectors(*this);
+	/* Default orientation */
+	yaw		= -90.0f;
+	pitch = 0.0f;
+	roll	= 0.0f;
 
-	viewMatrix			 = Math::LookAt(position, position + front, up);
-	projectionMatrix = Math::Perspective(fov, aspect, zNear, zFar);
+	/* Set default z values */
+	zNear	= 0.1f;
+	zFar	= 100.0f;
+
+	/* Update orientation vectors */
+	_front	= {};
+	_up			= {};
+	_right	= {};
+	UpdateVectors();
+}
+
+Mat4f CameraComponent::GetView() const 
+{ 
+	return Math::LookAt(position, position + _front, _up); 
+}
+Mat4f CameraComponent::GetProjection() const 
+{
+	return Math::Perspective(fov, aspect, zNear, zFar); 
+}
+
+void CameraComponent::UpdateVectors()
+{
+	const static Vec3f WorldUp = Vec3f(0.0f, 1.0f, 0.0f);
+
+	Vec3f calcFront{};
+	calcFront.x = Math::Cos(Math::Radians(yaw)) * cos(Math::Radians(pitch));
+	calcFront.y = Math::Sin(Math::Radians(pitch));
+	calcFront.z = Math::Sin(Math::Radians(yaw)) * cos(Math::Radians(pitch));
+
+	const Mat4f rollMat = Math::Rotate(Mat4f(1.0f), Math::Radians(roll), _front);
+	_front = Math::Normalize(calcFront);
+	_right = Math::Normalize(Math::Cross(_front, WorldUp));
+	_up = Math::Normalize(Math::Cross(_right, _front));
+	_up = Mat3f(rollMat) * _up;
 }
 
 void CameraComponent::ToString(String& out) const

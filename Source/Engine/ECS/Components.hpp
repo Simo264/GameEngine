@@ -263,37 +263,48 @@ struct SpotLightComponent : PointLightComponent
 	--------------------------------------------------------------------------- */
 struct CameraComponent : public IComponent
 {
-	CameraComponent(const Vec3f& position, float fov, float aspect, float zNear, float zFar);
+	CameraComponent(const Vec3f& position = { 0.0f, 0.0f, 0.0f }, /* default position*/
+		float fov = 45.0f,					/* default field of view */
+		float aspect = 16.0f/9.0f		/* default aspect ratio 16:9 */
+	);
 
 	/* Return following string representation:
 		"position=<position.x,position.y,position.z>"
-		"fov=<fov>"
 		"yaw=<yaw>"
 		"pitch=<pitch>"
-		"movementSpeed=<movementSpeed>"
-		"mouseSensitivity=<mouseSensitivity>"
+		"roll=<roll>"
+		"fov=<fov>"
+		"aspect=<aspect>"
+		"zNear=<zNear>"
+		"zFar=<zFar>"
 	*/
 	void ToString(String& out) const override;
 
-	/* Camera Attributes */
-	Vec3f position;
-	Vec3f front;
-	Vec3f up;
-	Vec3f right;
-	float fov;
-	float aspect; 
-	float zNear; 
-	float zFar;
+	Mat4f GetView() const;
+	Mat4f GetProjection() const;
+	
+	constexpr Vec3f& GetFrontVector() { return _front; }
+	constexpr Vec3f& GetUpVector() { return _up; }
+	constexpr Vec3f& GetRightVector() { return _right; }
 
-	/* Euler Angles */
+	/* Update Orientation vectors */
+	void UpdateVectors();
+
+	Vec3f position;
+
+	/* Euler angles (in degrees) */
 	float yaw;
 	float pitch;
+	float roll;
 
-	/* Matrices */
-	Mat4f viewMatrix;
-	Mat4f projectionMatrix;
+	float fov;
+	float aspect;
+	float zNear;
+	float zFar;
 
-	/* Camera options */
-	float movementSpeed;
-	float mouseSensitivity;
+private:
+	/* Orientation vectors */
+	Vec3f _front;
+	Vec3f _up;
+	Vec3f _right;
 };

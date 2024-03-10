@@ -13,18 +13,6 @@ void UpdateRotation(struct TransformComponent& transform, const Vec3f& rotation)
 			CameraComponent Systems
 	-------------------------------------------- */
 
-/* Update projection matrix */
-void UpdateCameraFov(struct CameraComponent& camera, float fov);
-void UpdateCameraAspect(struct CameraComponent& camera, float aspect);
-void UpdateCameraZNear(struct CameraComponent& camera, float zNear);
-void UpdateCameraZFar(struct CameraComponent& camera, float zFar);
-
-/* Calculates the front vector from the Camera's (updated) Euler Angles */
-void UpdateCameraVectors(struct CameraComponent& camera);
-void MoveCamera(struct CameraComponent& camera, double deltaTime);
-void RotateCamera(struct CameraComponent& camera, double deltaTime);
-
-void ProcessCameraInput(struct CameraComponent& camera, double deltaTime);
 
 /* --------------------------------------------
 			Render Systems
