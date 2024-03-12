@@ -27,9 +27,6 @@ void DetailsPanel::RenderPanel(Scene& scene, GameObject& selected)
   ImGui::Begin(panelName.c_str(), &visible);
   if (selected.IsValid())
   {
-    const String& label = selected.GetComponent<LabelComponent>()->label;
-    ImGui::Text("Object label: %s", label.c_str());
-    
     /* Directional light component */
     if (auto dLightComp = selected.GetComponent<DirLightComponent>())
     {

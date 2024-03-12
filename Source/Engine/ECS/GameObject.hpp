@@ -6,13 +6,13 @@
 
 enum class GameObjectType : int
 {
-	NONE = 0,
+	GAME_OBJECT = 0, /* Default */
+
 	DIRECTIONAL_LIGHT,
 	POINT_LIGHT,
 	SPOT_LIGHT,
 
 	STATIC_MESH,
-	// SKELETAL_MESH,
 
 	CAMERA,
 };
@@ -25,12 +25,12 @@ class GameObject
 {
 public:
 	GameObject()
-		: _entity{ entt::null }, /* entt::null = static_cast<uint32_t>(0xFFFFFFFF) */
+		: _entity{ entt::null },
 			_reg{ nullptr } 
 	{}
 
 	GameObject(entt::entity id, entt::registry* reg)
-		: _entity{ (uint32_t)id },
+		: _entity{ id },
 			_reg{ reg }
 	{}
 
@@ -58,11 +58,20 @@ public:
 		_reg->remove<T>(_entity);
 	}
 
-	entt::entity GetObjectID() const { return _entity; }
+	bool Compare(const GameObject& other) const
+	{
+		return static_cast<uint32_t>(_entity) == static_cast<uint32_t>(other.GetObjectID());
+	}
 
+	entt::entity GetObjectID() const 
+	{ 
+		return _entity; 
+	}
+
+	/* Check if object has a valid id */
 	bool IsValid() const 
 	{  
-		return (_reg && _entity != entt::null);
+		return (_reg && _entity != entt::null); 
 	}
 
 	/* Set entity to null */

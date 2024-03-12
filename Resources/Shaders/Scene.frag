@@ -62,8 +62,6 @@ uniform PointLight_t  UPointLight[NR_POINT_LIGHTS];
 uniform SpotLight_t   USpotLight;
 uniform vec3          UViewPos; 
 uniform float         UGamma;
-uniform bool          UDirLightVisible;
-uniform int           UPointLightVisible[NR_POINT_LIGHTS];
 
 /* ---------- Globals variable ---------- */
 /* -------------------------------------- */
@@ -98,13 +96,11 @@ void main()
     this fragment's final color. */
 
   /* Phase 1: Directional lighting */
-  if(UDirLightVisible)
-    result += CalcDirLight();
+  result += CalcDirLight();
 
   /* Phase 2: Point lights */
   for(int i = 0; i < NR_POINT_LIGHTS; i++)
-    if(UPointLightVisible[i] != 0)
-      result += BlinnPhong(UPointLight[i]); 
+    result += BlinnPhong(UPointLight[i]); 
   
 
   /* Phase 3: Spot light */

@@ -24,25 +24,7 @@ private:
 	const float _iconSize;
 	GameObject _selected;
 
-	class Texture2D* GetObjectIcon(uint32_t objectType);
-	void SetIconTooltip(uint32_t objectType);
-
-	enum class ICON_TYPE : int {
-		DIR_LIGHT = 0,
-		POINT_LIGHT,
-		SPOT_LIGHT,
-
-		STATIC_MESH,
-
-		CAMERA,
-
-		VISIBLE,
-		HIDDEN,
-
-		COUNT
-	};
-	
-	Array<Texture2D*, static_cast<int>(ICON_TYPE::COUNT)> _icons;
+	const char* GetTypeName(GameObjectType objectType);
 
 	void AddSceneComponentButton(const char* labelPopup);
 	void AddSceneComponentPopup(class Scene& scene);
