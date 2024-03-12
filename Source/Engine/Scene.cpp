@@ -2,7 +2,6 @@
 #include "Core/Log/Logger.hpp"
 #include "Engine/ECS/GameObject.hpp"
 #include "Engine/ECS/Components.hpp"
-#include "Engine/ECS/Systems.hpp"
 
 #include "Engine/SceneSerializer.hpp"
 
@@ -21,11 +20,6 @@ GameObject Scene::CreateObject(const char* label, uint32_t type)
 
 void Scene::DestroyObject(GameObject& object)
 {
-	/* Destroy mesh buffers and free memory */
-	auto mesh = object.GetComponent<StaticMeshComponent>();
-	if (mesh)
-		mesh->DestroyMesh();
-
 	_registry.destroy(object.GetObjectID());
 }
 
@@ -33,11 +27,11 @@ void Scene::DrawScene(Shader& shader)
 {
 	/* Render lights */
 	for (auto [entity, dLightComp] : _registry.view<DirLightComponent>().each())
-		RenderLight(dLightComp, shader);
+		dLightComp.RenderLight(shader);
 	for (auto [entity, pLightComp] : _registry.view<PointLightComponent>().each())
-		RenderLight(pLightComp, shader);
+		pLightComp.RenderLight(shader);
 	for (auto [entity, sLightComp] : _registry.view<SpotLightComponent>().each())
-		RenderLight(sLightComp, shader);
+		sLightComp.RenderLight(shader);
 
 	/* Render static meshes */
 	for (auto [entity, smeshComp] : _registry.view<StaticMeshComponent>().each())
@@ -50,7 +44,7 @@ void Scene::DrawScene(Shader& shader)
 		if (transComp)
 			transform = transComp->GetTransformation();
 		
-		RenderMesh(smeshComp, transform, shader);
+		smeshComp.RenderMesh(transform, shader);
 	}
 }
 
@@ -65,7 +59,7 @@ void Scene::ClearScene()
 		if(auto smesh = o.GetComponent<StaticMeshComponent>())
 			smesh->DestroyMesh();
 
-		o.Destroy();
+		o.Invalid();
 	}
 	
 	/* Clear scene */
@@ -84,15 +78,6 @@ void Scene::SaveScene(const Path& filepath)
 	serializer.SerializeScene(*this, filepath);
 }
 
-void Scene::SetPrimaryCamera(GameObject cameraObject)
-{
-	_primaryCamera = cameraObject.GetObjectID();
-}
-
-GameObject Scene::GetPrimaryCamera()
-{
-	return GameObject{ _primaryCamera, &_registry };
-}
 
 /* -----------------------------------------------------
  *          PRIVATE METHODS

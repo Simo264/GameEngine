@@ -17,16 +17,12 @@
 
 #include "Engine/ECS/GameObject.hpp"
 #include "Engine/ECS/Components.hpp"
-#include "Engine/ECS/Systems.hpp"
 
 #include "Engine/Subsystems/WindowManager.hpp"
 #include "Engine/Subsystems/ShaderManager.hpp"
 #include "Engine/Subsystems/TextureManager.hpp"
 
 #include <entt/entt.hpp> /* Entity component system */
-
-Mat4f cameraProjectionMatrix{};
-Mat4f cameraViewMatrix{};
 
 /* -----------------------------------------------------
  *          PUBLIC METHODS
@@ -153,8 +149,8 @@ void Engine::Run()
     if (editor.viewportPanel->isFocused)
       camera.ProcessInput(window, delta);
     
-    cameraProjectionMatrix  = camera.cameraComponent->GetProjection();
-    cameraViewMatrix        = camera.cameraComponent->GetView();
+    const auto& cameraViewMatrix        = camera.cameraComponent->GetView();
+    const auto& cameraProjectionMatrix  = camera.cameraComponent->GetProjection();
     
     /* Render: bind frame buffer */
     framebuffer.Bind();

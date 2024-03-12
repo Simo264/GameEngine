@@ -1,7 +1,6 @@
 #include "Camera.hpp"
 
 #include "Engine/ECS/Components.hpp"
-#include "Engine/ECS/Systems.hpp"
 
 #include "Engine/Subsystems/WindowManager.hpp"
 #include <GLFW/glfw3.h>
@@ -10,11 +9,6 @@
  *          PUBLIC METHODS
  * -----------------------------------------------------
 */
-
-Camera::Camera()
-{
-	cameraComponent = new CameraComponent;
-}
 
 Camera::Camera(const Vec3f& position, float fov, float aspect) 
 {
@@ -32,11 +26,12 @@ void Camera::ProcessInput(WindowManager& window, float delta)
 	const static float mouseSensitivity = 25.0f;
 
 	Move(window, movementSpeed, delta);
-	
 	if (window.GetMouseKey(GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
+	{
 		Rotate(window, mouseSensitivity, delta);
-	
-	cameraComponent->UpdateVectors();
+		cameraComponent->UpdateVectors();
+	}
+	cameraComponent->UpdateView();
 }
 
 /* -----------------------------------------------------

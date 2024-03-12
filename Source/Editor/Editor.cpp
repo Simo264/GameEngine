@@ -128,13 +128,11 @@ void Editor::Render(Scene& scene, Camera& camera, FrameBuffer& framebuffer)
   else 
     outlinerPanel->_selected = {}; /* If outliner panel is closed the selected object is being setting to null */
   
-  GameObject* objectSelected = &outlinerPanel->GetItemSelected();
-  if (!objectSelected->IsValid())
-    objectSelected = nullptr;
+  GameObject& objectSelected = outlinerPanel->GetItemSelected();
 
   /* Details panel */
   if (detailsPanel->visible)
-    detailsPanel->RenderPanel(objectSelected);
+    detailsPanel->RenderPanel(scene, objectSelected);
   
   /* Viewport panel */
   if (viewportPanel->visible)

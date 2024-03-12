@@ -6,9 +6,9 @@
 
 #include "Engine/ObjectLoader.hpp"
 
-#include "Engine/ECS/Systems.hpp"
-
+#include "Engine/Graphics/Shader.hpp"
 #include "Engine/Graphics/Texture2D.hpp"
+#include "Engine/Graphics/Renderer.hpp"
 
 
 /* ---------------------------------------------------------------------------
@@ -57,20 +57,28 @@ TransformComponent::TransformComponent()
 	: position{ 0.0f, 0.0f, 0.0f },
 		scale{ 1.0f, 1.0f, 1.0f },
 		rotation{ 0.0f, 0.0f, 0.0f }
-{}
+{
+	UpdateTransformation();
+}
 
 const char* TransformComponent::GetComponentName(bool lower)
 {
 	return (lower ? "transformcomponent" : "TransformComponent");
 }
 
-Mat4f TransformComponent::GetTransformation() const
+void TransformComponent::UpdateTransformation()
 {
-	static const Mat4f I		= Mat4f(1.0f);
+	static const Mat4f I = Mat4f(1.0f);
 	Mat4f translationMatrix = Math::Translate(I, position);
-	Mat4f rotationMatrix		= Mat4f(Quat(Vec3f(Math::Radians(rotation.x), Math::Radians(rotation.y), glm::radians(rotation.z))));
-	Mat4f scalingMatrix			= Math::Scale(I, scale);
-	return translationMatrix * rotationMatrix * scalingMatrix;
+	Mat4f rotationMatrix = Mat4f(Quat(Vec3f(Math::Radians(rotation.x), Math::Radians(rotation.y), glm::radians(rotation.z))));
+	Mat4f scalingMatrix = Math::Scale(I, scale);
+
+	_transformation = translationMatrix * rotationMatrix * scalingMatrix;
+}
+
+Mat4f& TransformComponent::GetTransformation()
+{
+	return _transformation;
 }
 
 void TransformComponent::ToString(String& out) const
@@ -125,6 +133,36 @@ const char* StaticMeshComponent::GetComponentName(bool lower)
 void StaticMeshComponent::DestroyMesh() const
 {
 	vertexArray->Destroy();
+}
+
+void StaticMeshComponent::RenderMesh(const Mat4f& transform, Shader& shader) const
+{
+	if (material.diffuse)
+	{
+		glActiveTexture(GL_TEXTURE0);
+		material.diffuse->Bind();
+	}
+	if (material.specular)
+	{
+		glActiveTexture(GL_TEXTURE1);
+		material.specular->Bind();
+	}
+
+	shader.SetMat4f(SHADER_UNIFORM_MODEL, transform);
+
+	/* If vertex array does not contain indices call DrawArrays */
+	if (vertexArray->numIndices == 0)
+		Renderer::DrawArrays(*vertexArray);
+
+	/* If vertex array does contain indices call DrawIndexed */
+	else
+		Renderer::DrawIndexed(*vertexArray);
+
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, 0); /* unbind specular */
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, 0); /* unbind diffuse */
 }
 
 void StaticMeshComponent::ToString(String& out) const
@@ -188,6 +226,33 @@ const char* DirLightComponent::GetComponentName(bool lower)
 	return (lower ? "dirlightcomponent" : "DirLightComponent");
 }
 
+void DirLightComponent::RenderLight(Shader& shader)
+{
+	const uint64_t uniformNameSize = uniform.size();
+
+	/* uniformName = "DirLight.direction" */
+	uniform.append(".direction");
+	shader.SetVec3f(uniform.c_str(), direction);
+
+	/* uniformName = "DirLight.ambient" */
+	uniform.erase(uniformNameSize);
+	uniform.append(".ambient");
+	shader.SetVec3f(uniform.c_str(), color * ambient);
+
+	/* uniformName = "DirLight.diffuse" */
+	uniform.erase(uniformNameSize);
+	uniform.append(".diffuse");
+	shader.SetVec3f(uniform.c_str(), color * diffuse);
+
+	/* uniformName = "DirLight.specular" */
+	uniform.erase(uniformNameSize);
+	uniform.append(".specular");
+	shader.SetVec3f(uniform.c_str(), color * specular);
+
+	/* uniformName = "DirLight" */
+	uniform.erase(uniformNameSize);
+}
+
 void DirLightComponent::ToString(String& out) const 
 {
 	LightComponent::ToString(out);
@@ -211,6 +276,43 @@ PointLightComponent::PointLightComponent(const char* uniform)
 const char* PointLightComponent::GetComponentName(bool lower)
 {
 	return (lower ? "pointlightcomponent" : "PointLightComponent");
+}
+
+void PointLightComponent::RenderLight(Shader& shader)
+{
+	const uint64_t uniformNameSize = uniform.size();
+
+	/* shaderUName = "PointLight.position" */
+	uniform.append(".position");
+	shader.SetVec3f(uniform.c_str(), position);
+
+	/* shaderUName = "PointLight.ambient" */
+	uniform.erase(uniformNameSize);
+	uniform.append(".ambient");
+	shader.SetVec3f(uniform.c_str(), color * ambient);
+
+	/* shaderUName = "PointLight.diffuse" */
+	uniform.erase(uniformNameSize);
+	uniform.append(".diffuse");
+	shader.SetVec3f(uniform.c_str(), color * diffuse);
+
+	/* shaderUName = "PointLight.specular" */
+	uniform.erase(uniformNameSize);
+	uniform.append(".specular");
+	shader.SetVec3f(uniform.c_str(), color * specular);
+
+	/* shaderUName = "PointLight.linear" */
+	uniform.erase(uniformNameSize);
+	uniform.append(".linear");
+	shader.SetFloat(uniform.c_str(), linear);
+
+	/* shaderUName = "PointLight.quadratic" */
+	uniform.erase(uniformNameSize);
+	uniform.append(".quadratic");
+	shader.SetFloat(uniform.c_str(), quadratic);
+
+	/* shaderUName = "PointLight" */
+	uniform.erase(uniformNameSize);
 }
 
 void PointLightComponent::ToString(String& out) const 
@@ -238,6 +340,44 @@ const char* SpotLightComponent::GetComponentName(bool lower)
 	return (lower ? "spotlightcomponent" : "SpotLightComponent");
 }
 
+void SpotLightComponent::RenderLight(Shader& shader)
+{
+	const int uniformNameSize = uniform.size();
+
+	uniform.append(".position");
+	shader.SetVec3f(uniform.c_str(), position);
+
+	uniform.erase(uniformNameSize);
+	uniform.append(".direction");
+	shader.SetVec3f(uniform.c_str(), direction);
+
+	uniform.erase(uniformNameSize);
+	uniform.append(".ambient");
+	shader.SetVec3f(uniform.c_str(), color * ambient);
+
+	uniform.erase(uniformNameSize);
+	uniform.append(".diffuse");
+	shader.SetVec3f(uniform.c_str(), color * diffuse);
+
+	uniform.erase(uniformNameSize);
+	uniform.append(".specular");
+	shader.SetVec3f(uniform.c_str(), color * specular);
+
+	uniform.erase(uniformNameSize);
+	uniform.append(".linear");
+	shader.SetFloat(uniform.c_str(), linear);
+
+	uniform.erase(uniformNameSize);
+	uniform.append(".quadratic");
+	shader.SetFloat(uniform.c_str(), quadratic);
+
+	uniform.erase(uniformNameSize);
+	uniform.append(".cutOff");
+	shader.SetFloat(uniform.c_str(), Math::Cos(Math::Radians(cutOff)));
+
+	uniform.erase(uniformNameSize);
+}
+
 void SpotLightComponent::ToString(String& out) const
 {
 	LightComponent::ToString(out);
@@ -258,32 +398,32 @@ void SpotLightComponent::ToString(String& out) const
 CameraComponent::CameraComponent(const Vec3f& position, float fov, float aspect)
 	: position{ position },
 		fov{ fov },
-		aspect{ aspect }
+		aspect{ aspect },
+		yaw { -90.0f }, /* Default orientation */
+		pitch{ 0.0f },
+		roll{ 0.0f },
+		zNear{ 0.1f }, /* Set default z values */
+		zFar{ 100.0f },
+		_front{},	/* Deafult vector values */
+		_up{},
+		_right{},
+		_viewMatrix{}, /* Deafult matrix values */
+		_projectionMatrix{}
 {
-	/* Default orientation */
-	yaw		= -90.0f;
-	pitch = 0.0f;
-	roll	= 0.0f;
-
-	/* Set default z values */
-	zNear	= 0.1f;
-	zFar	= 100.0f;
-
-	/* Update orientation vectors */
-	_front	= {};
-	_up			= {};
-	_right	= {};
+	/* Update vectors */
 	UpdateVectors();
+
+	/* Update matrices */
+	UpdateView();
+	UpdateProjection();
 }
 
-Mat4f CameraComponent::GetView() const 
-{ 
-	return Math::LookAt(position, position + _front, _up); 
-}
-Mat4f CameraComponent::GetProjection() const 
-{
-	return Math::Perspective(fov, aspect, zNear, zFar); 
-}
+Mat4f& CameraComponent::GetView() { return _viewMatrix; }
+Mat4f& CameraComponent::GetProjection() { return _projectionMatrix; }
+
+Vec3f& CameraComponent::GetFrontVector() { return _front; }
+Vec3f& CameraComponent::GetRightVector() { return _right; }
+Vec3f& CameraComponent::GetUpVector() { return _up; }
 
 void CameraComponent::UpdateVectors()
 {
@@ -294,11 +434,20 @@ void CameraComponent::UpdateVectors()
 	calcFront.y = Math::Sin(Math::Radians(pitch));
 	calcFront.z = Math::Sin(Math::Radians(yaw)) * cos(Math::Radians(pitch));
 
-	const Mat4f rollMat = Math::Rotate(Mat4f(1.0f), Math::Radians(roll), _front);
 	_front = Math::Normalize(calcFront);
 	_right = Math::Normalize(Math::Cross(_front, WorldUp));
+
+	const Mat4f rollMat = Math::Rotate(Mat4f(1.0f), Math::Radians(roll), _front);
 	_up = Math::Normalize(Math::Cross(_right, _front));
 	_up = Mat3f(rollMat) * _up;
+}
+void CameraComponent::UpdateView()
+{
+	_viewMatrix = Math::LookAt(position, position + _front, _up);
+}
+void CameraComponent::UpdateProjection()
+{
+	_projectionMatrix = Math::Perspective(fov, aspect, zNear, zFar);
 }
 
 void CameraComponent::ToString(String& out) const

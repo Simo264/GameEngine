@@ -86,12 +86,18 @@ struct TransformComponent : public IComponent
 	*/
 	void ToString(String& out) const override;
 
+	/* Update the transformation matrix. Call this function after changing position, scale or rotation. */
+	void UpdateTransformation();
+
 	/* Calculate the model matrix */
-	Mat4f GetTransformation() const;
+	Mat4f& GetTransformation();
 
 	Vec3f position;
 	Vec3f scale;
 	Vec3f rotation;	/* In degrees */
+
+private:
+	Mat4f _transformation;
 };
 
 
@@ -118,6 +124,8 @@ struct StaticMeshComponent : public IComponent
 	~StaticMeshComponent() = default;
 
 	static const char* GetComponentName(bool lower = false);
+
+	void RenderMesh(const Mat4f& transform, class Shader& shader) const;
 
 	/* Return following string representation:
 		"model-path=<path>"														if exists
@@ -153,6 +161,8 @@ struct LightComponent : public IComponent
 {
 	LightComponent(const char* uniform);
 
+	virtual void RenderLight(class Shader& shader) = 0;
+
 	/* Return following string representation:
 		"color=<color.x,color.y,color.z>"
 		"ambient=<ambient>"
@@ -183,6 +193,8 @@ struct DirLightComponent : public LightComponent
 
 	static const char* GetComponentName(bool lower = false);
 
+	void RenderLight(class Shader& shader) override;
+
 	/* Return following string representation:
 		"color=<color.x,color.y,color.z>"
 		"ambient=<ambient>"
@@ -207,6 +219,8 @@ struct PointLightComponent : public LightComponent
 
 	static const char* GetComponentName(bool lower = false);
 
+	void RenderLight(class Shader& shader) override;
+
 	/* Return following string representation:
 		"color=<color.x,color.y,color.z>"
 		"ambient=<ambient>"
@@ -215,13 +229,14 @@ struct PointLightComponent : public LightComponent
 		"position=<position.x,position.y,position.z>"
 	*/
 	void ToString(String& out) const override;
-	
+
 	Vec3f position;
 
 	/* Attenuation */
 	float linear;
 	float quadratic;
 };
+
 
 /* ---------------------------------------------------------------------------
 	A spotlight is a light source that is located somewhere in the environment 
@@ -235,6 +250,8 @@ struct SpotLightComponent : PointLightComponent
 
 	static const char* GetComponentName(bool lower = false);
 
+	void RenderLight(class Shader& shader) override;
+
 	/* Return following string representation:
 		"color=<color.x,color.y,color.z>"
 		"ambient=<ambient>"
@@ -243,7 +260,7 @@ struct SpotLightComponent : PointLightComponent
 		"cutoff=<cutoff>"
 	*/
 	void ToString(String& out) const override;
-	
+		
 	Vec3f direction;
 
 	float cutOff; /* the cutoff angle that specifies the spotlight's radius. */
@@ -263,7 +280,8 @@ struct SpotLightComponent : PointLightComponent
 	--------------------------------------------------------------------------- */
 struct CameraComponent : public IComponent
 {
-	CameraComponent(const Vec3f& position = { 0.0f, 0.0f, 0.0f }, /* default position*/
+	CameraComponent(
+		const Vec3f& position = { 0.0f, 0.0f, 0.0f }, /* default position*/
 		float fov = 45.0f,					/* default field of view */
 		float aspect = 16.0f/9.0f		/* default aspect ratio 16:9 */
 	);
@@ -280,15 +298,19 @@ struct CameraComponent : public IComponent
 	*/
 	void ToString(String& out) const override;
 
-	Mat4f GetView() const;
-	Mat4f GetProjection() const;
-	
-	constexpr Vec3f& GetFrontVector() { return _front; }
-	constexpr Vec3f& GetUpVector() { return _up; }
-	constexpr Vec3f& GetRightVector() { return _right; }
+	Mat4f& GetView();
+	Mat4f& GetProjection();
 
+	Vec3f& GetFrontVector();
+	Vec3f& GetRightVector();
+	Vec3f& GetUpVector();
+	
 	/* Update Orientation vectors */
 	void UpdateVectors();
+	/* Update the view matrix. Call this function every frame */
+	void UpdateView();
+	/* Update the projection matrix. Call this function after changing fov, aspect, znear and zfar */
+	void UpdateProjection();
 
 	Vec3f position;
 
@@ -303,6 +325,9 @@ struct CameraComponent : public IComponent
 	float zFar;
 
 private:
+	Mat4f _viewMatrix;
+	Mat4f _projectionMatrix;
+
 	/* Orientation vectors */
 	Vec3f _front;
 	Vec3f _up;

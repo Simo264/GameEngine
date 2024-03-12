@@ -13,7 +13,7 @@ class DetailsPanel : public Panel
 public:
 	DetailsPanel(const char* panelName, bool visible);
 
-	void RenderPanel(class GameObject* selected);
+	void RenderPanel(class Scene& scene, class GameObject& selected);
 
 private:
 	int _grizmoMode;

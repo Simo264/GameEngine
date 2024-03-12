@@ -9,9 +9,7 @@
 class Scene
 {
 public:
-	Scene()
-		: _primaryCamera{ entt::null } /* Invalid entity camera ID */
-	{}
+	Scene() = default;
 
 	void LoadScene(const Path& filepath);
 	void SaveScene(const Path& filepath);
@@ -24,19 +22,14 @@ public:
 	/* Create object in scene */
 	class GameObject CreateObject(const char* label, uint32_t type);
 
-	/* Remove object from scene */
+	/* Destroys an entity and releases its identifier */
 	void DestroyObject(class GameObject& object);
 
 	/* Return the reference of registry */
 	entt::registry& Reg() { return _registry; }
 
-	void SetPrimaryCamera(class GameObject cameraObject);
-
-	class GameObject GetPrimaryCamera();
-
 private:
 	/* We can create a entt::registry to store our entities */
 	entt::registry _registry;
 	
-	entt::entity _primaryCamera; /* Entity ID */
 };

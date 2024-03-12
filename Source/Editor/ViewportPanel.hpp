@@ -20,7 +20,7 @@ public:
 		class Scene& scene, 
 		class Camera& camera, 
 		class FrameBuffer& framebuffer, 
-		class GameObject* selected);
+		class GameObject& selected);
 
 private:
 	int _grizmoMode;

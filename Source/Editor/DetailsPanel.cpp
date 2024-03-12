@@ -1,6 +1,8 @@
 #include "DetailsPanel.hpp"
 #include "Core/Log/Logger.hpp"
 
+#include "Engine/Scene.hpp"
+
 #include "Engine/ECS/GameObject.hpp"
 #include "Engine/ECS/Components.hpp"
 
@@ -20,16 +22,16 @@ DetailsPanel::DetailsPanel(const char* panelName, bool visible)
   _grizmoMode{ static_cast<int>(ImGuizmo::OPERATION::TRANSLATE) }
 {}
 
-void DetailsPanel::RenderPanel(GameObject* selected)
+void DetailsPanel::RenderPanel(Scene& scene, GameObject& selected)
 {
   ImGui::Begin(panelName.c_str(), &visible);
-  if (selected != nullptr)
+  if (selected.IsValid())
   {
-    const String& label = selected->GetComponent<LabelComponent>()->label;
+    const String& label = selected.GetComponent<LabelComponent>()->label;
     ImGui::Text("Object label: %s", label.c_str());
     
     /* Directional light component */
-    if (auto dLightComp = selected->GetComponent<DirLightComponent>())
+    if (auto dLightComp = selected.GetComponent<DirLightComponent>())
     {
       if (ImGui::CollapsingHeader("Light properties", ImGuiTreeNodeFlags_DefaultOpen))
       {
@@ -51,7 +53,7 @@ void DetailsPanel::RenderPanel(GameObject* selected)
     }
     
     /* Point light component */
-    else if (auto pLightComp = selected->GetComponent<PointLightComponent>())
+    else if (auto pLightComp = selected.GetComponent<PointLightComponent>())
     {
       if (ImGui::CollapsingHeader("Light properties", ImGuiTreeNodeFlags_DefaultOpen))
       {
@@ -73,13 +75,13 @@ void DetailsPanel::RenderPanel(GameObject* selected)
     }
 
     /* Spot light component */
-    else if (auto sLightComp = selected->GetComponent<SpotLightComponent>())
+    else if (auto sLightComp = selected.GetComponent<SpotLightComponent>())
     {
       /* TODO */
     }
 
     /* Transformation component */
-    else if (auto transComp = selected->GetComponent<TransformComponent>())
+    else if (auto transComp = selected.GetComponent<TransformComponent>())
     {
       if (ImGui::CollapsingHeader("Transformation", ImGuiTreeNodeFlags_DefaultOpen))
       {
@@ -109,7 +111,7 @@ void DetailsPanel::RenderPanel(GameObject* selected)
     }
     
     /* Static mesh component */
-    if (auto meshComp = selected->GetComponent<StaticMeshComponent>())
+    if (auto meshComp = selected.GetComponent<StaticMeshComponent>())
     {
       if (ImGui::CollapsingHeader("Material", ImGuiTreeNodeFlags_DefaultOpen))
       {
@@ -153,8 +155,17 @@ void DetailsPanel::RenderPanel(GameObject* selected)
 
     /* Delete object */
     if (ImGui::CollapsingHeader("Advanced"))
+    {
       if (ImGui::Button("Delete object"))
-        selected->Destroy();
+      {
+        /* Release resources from GPU */
+        if (auto meshComp = selected.GetComponent<StaticMeshComponent>())
+          meshComp->DestroyMesh();
+
+        scene.DestroyObject(selected);
+        selected.Invalid();
+      }
+    }
   }
   ImGui::End();
 }

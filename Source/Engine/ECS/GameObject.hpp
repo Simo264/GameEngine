@@ -65,10 +65,9 @@ public:
 		return (_reg && _entity != entt::null);
 	}
 
-	/* Destroys the entity and releases its identifier */
-	void Destroy() 
+	/* Set entity to null */
+	void Invalid() 
 	{ 
-		_reg->destroy(_entity); 
 		_entity = entt::null;
 		_reg = nullptr;
 	}

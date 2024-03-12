@@ -5,9 +5,7 @@
 /* --------------------------------------------
 			TransformComponent Systems
 	-------------------------------------------- */
-void UpdatePosition(struct TransformComponent& transform, const Vec3f& position);
-void UpdateScale(struct TransformComponent& transform, const Vec3f& scale);
-void UpdateRotation(struct TransformComponent& transform, const Vec3f& rotation);
+	
 
 /* --------------------------------------------
 			CameraComponent Systems
