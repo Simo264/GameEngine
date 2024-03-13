@@ -54,7 +54,7 @@ void ViewportPanel::RenderPanel(Scene& scene, Camera& camera, FrameBuffer& frame
   if (framebufferSize.x != viewportSize.x || framebufferSize.y != viewportSize.y)
   {
     /* Update framebuffer size */
-    framebuffer.Rescale(viewportSize.x, viewportSize.y);
+    framebuffer.Rescale(viewportSize);
     camera.cameraComponent->aspect = framebuffer.GetAspect();
     camera.cameraComponent->UpdateProjection();
     glViewport(0, 0, viewportSize.x, viewportSize.y);

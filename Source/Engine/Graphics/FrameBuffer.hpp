@@ -2,9 +2,8 @@
 
 #include "Core/Core.hpp"
 #include "Core/Math/Math.hpp"
-#include "Engine/Graphics/VertexArray.hpp"
 
-enum class PostProcessingType {
+enum class PostProcessingType : int {
 	POST_PROC_NONE			= 0,
 	POST_PROC_INVERSION = 1,
 	POST_PROC_GRAYSCALE = 2,
@@ -12,68 +11,88 @@ enum class PostProcessingType {
 	POST_PROC_BLUR			= 4,
 };
 
-/* -------------------------------------------
-	Frame buffer class
+/* -----------------------------------------------------------------------------------------
+	So far we've used several types of screen buffers: 
+		1. color buffer for writing color values;
+		2. depth buffer to write and test depth information
+		3. stencil buffer that allows us to discard certain fragments based on some condition. 
 
-	How to use Framebuffer:
-			1. Create frame buffer object:
-				FrameBuffer framebuffer;
-				framebuffer.InitFrameBuffer(buffersize);
+	The combination of these buffers is stored in GPU memory and is called a framebuffer. 
 
-			2. Use frame buffer object:
-				framebuffer.BindMSAAFramebuffer();
-				glClearColor(pow(0.1f, GAMMA_CORRECTION), pow(0.1f, GAMMA_CORRECTION), pow(0.1f, GAMMA_CORRECTION), 1.0f);
-				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-				glEnable(GL_DEPTH_TEST);
+	Now each buffer attached to a Framebuffer can be a Renderbuffer or a texture.
+		1. Texture:
+			when attaching a texture to a framebuffer, all rendering commands will write to the texture.
+			The advantage of using textures is that the render output is stored inside
+			the texture image that we can then easily use in our shaders.
+		2. Renderbuffer:
+			renderbuffer objects were introduced to OpenGL after textures as a possible type of 
+			framebuffer attachment, Just like a texture image, a renderbuffer object is an actual buffer. 
+			Stores pixel values in native format, so it's optimized for offscreen rendering. 
+			In other words, drawing to a Renderbuffer can be much faster than drawing to a texture.
+			The drawback is that pixels uses a native so that reading from a Renderbuffer is much harder 
+			than reading from a texture.
 
-			3. Render scene to frame buffer object
-				scene.draw()
+			However, a renderbuffer object can not be directly read from. 
+			This gives it the added advantage that OpenGL can do a few memory optimizations that can give it 
+			a performance edge over textures for off-screen rendering to a framebuffer.
 
-			4. Unbind frame buffer object
-				framebuffer.BlitFrameBuffer();
-				framebuffer.UnbindFrameBuffer();
-
-			5.1 Draw frame buffer image as texture
-				ImGui::Image((ImTextureID)framebuffer.GetImage(),
-					wsize,
-					ImVec2(0, 1),
-					ImVec2(1, 0));
-
-			5.2 Or draw on screen
-				framebufferShader->Use();
-				framebuffer.DrawFrame(framebufferShader);
-	------------------------------------------- */
+			Nevertheless, once a Renderbuffer has been painted, one can copy its content directly to screen
+			very quickly using pixel transfer operations.
+			This means that a Renderbuffer can be used to efficiently implement the double buffer pattern.
+	----------------------------------------------------------------------------------------- */
 class FrameBuffer
 {
 public:
-	FrameBuffer(int w, int h);
+	FrameBuffer(const Vec2i& size);
+	~FrameBuffer();
 
-	/* Disable copy constructor */
-	FrameBuffer(FrameBuffer const&) = delete;
-	FrameBuffer& operator=(FrameBuffer const&) = delete;
-
+	/* By binding to the GL_FRAMEBUFFER target all the next read 
+		 and write framebuffer operations will affect the currently bound framebuffer. 
+		 It is also possible to bind a framebuffer to a read or write target specifically 
+		 by calling to BindRead() or BindWrite(). */
 	void Bind() const;
 	void Unbind() const;
-	void Blit() const;
 	
-	constexpr uint32_t GetImage() const { return _renderRelatedIds[NORMAL_TEXTURE]; }
+	/* The framebuffer bound to GL_READ_FRAMEBUFFER is then used for all read operations 
+		 like glReadPixels */
+	void BindRead() const;
+	void UnbindRead() const;
+
+	/* The framebuffer bound to GL_DRAW_FRAMEBUFFER is used as the destination for rendering, 
+		 clearing and other write operations */
+	void BindWrite() const;
+	void UnbindWrite() const;
 	
-	Vec2i GetSize() const { return _size; }
+	void AttachColorBuffer();
+	void AttachDepthBuffer();
+	void AttachStencilBuffer();
+
+	bool CheckStatus() const;
+
+	//void Blit() const;
 	
+	constexpr uint32_t GetImage() const { return _textureColorBuffer; }
+	constexpr Vec2i GetSize() const { return _size; }
 	constexpr float GetAspect() const { return static_cast<float>(_size.x) / static_cast<float>(_size.y); }
 
-	/* Render frame buffer texture */
-	void DrawFrame(class Shader* shader);
-
-	void SetPostProcessing(PostProcessingType type) { _postprocType = type; }
+	//void SetPostProcessing(PostProcessingType type) { _postprocType = type; }
 	
 	/* Resize the frame buffer viewport */
-	void Rescale(int w, int h);
-	
-	/* Free resources from GPU */
-	void Destroy();
+	void Rescale(Vec2i size);
 
 private:
+	Vec2i _size;
+
+	uint32_t _fbo; /* frame buffer id */
+
+	/* Attachments */
+	uint32_t _textureColorBuffer;	
+	uint32_t _textureDepthBuffer;
+	uint32_t _textureStencilBuffer;
+
+	
+
+#if 0
 	Vec2i _size; 
 
 	enum FBORenderTarget : int
@@ -87,9 +106,10 @@ private:
 	};
 	uint32_t _renderRelatedIds[5];
 	
-	UniquePointer<VertexArray> _frameBufferVAO;
+	class VertexArray* _frameBufferVAO;
 	PostProcessingType _postprocType;
 
 	void InitFrameBuffer();
 	void InitFrameBufferVAO();
+#endif
 };

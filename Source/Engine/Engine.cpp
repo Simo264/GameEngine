@@ -59,7 +59,9 @@ void Engine::Run()
   /* Initialize framebuffer object */
   auto& window = WindowManager::Instance();
   Vec2i framebufferSize = window.GetFramebufferSize();
-  FrameBuffer framebuffer(framebufferSize.x, framebufferSize.y);
+  FrameBuffer framebuffer(framebufferSize);
+  framebuffer.AttachColorBuffer();
+  framebuffer.AttachDepthBuffer();
   glViewport(0, 0, framebufferSize.x, framebufferSize.y);
 
   /* Create camera */
@@ -145,7 +147,6 @@ void Engine::Run()
 
     /* Input */
     window.PoolEvents();
-    
     if (editor.viewportPanel->isFocused)
       camera.ProcessInput(window, delta);
     
@@ -163,8 +164,10 @@ void Engine::Run()
     sceneShader.SetMat4f(SHADER_UNIFORM_VIEW, cameraViewMatrix);
     scene.DrawScene(sceneShader);
     
-    framebuffer.Blit();
+    //framebuffer.Blit();
     framebuffer.Unbind();
+    glClearColor(pow(0.3f, GAMMA_CORRECTION), pow(0.3f, GAMMA_CORRECTION), pow(0.3f, GAMMA_CORRECTION), 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
 
 #if 0
     /* Fill the depth map framebuffer (from light's perspective) */
@@ -236,7 +239,7 @@ void Engine::Run()
   }
   
   /* Destroy framebuffer */
-  framebuffer.Destroy();
+  //framebuffer.Destroy();
 }
 
 void Engine::CleanUp()

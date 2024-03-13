@@ -29,10 +29,10 @@ public:
   bool IsOpen() const;
 
   /* Return GLFWwindow * object */
-  Context GetContext() const;
+  constexpr Context GetContext() const { return _context; }
 
   /* Set current context with new one */
-  void SetContext(Context newcontext);
+  constexpr void SetContext(Context newcontext) { _context = newcontext; }
 
   /* Set window title */
   void SetWindowTitle(const char* title) const;

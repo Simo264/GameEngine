@@ -23,10 +23,10 @@ public:
 	class Texture2D& GetTextureByPath(const Path& filePath) const;
 
 	/* Return begin iterator */
-	auto Begin() { return _textures.begin(); }
+	constexpr auto Begin() { return _textures.begin(); }
 
 	/* Return end iterator */
-	auto End() { return _textures.end(); }
+	constexpr auto End() { return _textures.end(); }
 
 private:
 	Vector<class Texture2D*> _textures;

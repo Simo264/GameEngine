@@ -1,6 +1,4 @@
 #include "FrameBuffer.hpp"
-#include "Engine/Graphics/Shader.hpp"
-#include "Engine/Graphics/Renderer.hpp"
 
 #include "Core/Log/Logger.hpp"
 
@@ -11,6 +9,131 @@
  * -----------------------------------------------------
 */
 
+FrameBuffer::FrameBuffer(const Vec2i& size)
+	: _size{ size },
+		_fbo{ 0 },
+		_textureColorBuffer{ static_cast<uint32_t>(0xFFFFFFFF) },		/* Set id to infinity*/
+		_textureDepthBuffer{ static_cast<uint32_t>(0xFFFFFFFF) },		/* Set id to infinity*/
+		_textureStencilBuffer{ static_cast<uint32_t>(0xFFFFFFFF) }	/* Set id to infinity*/
+{
+	/* Creating a framebuffer object */
+	glGenFramebuffers(1, &_fbo);
+
+	/* 1. We have to attach at least one buffer (color, depth or stencil buffer).
+	   2. There should be at least one color attachment.
+	   3. All attachments should be complete as well (reserved memory).
+	   4. Each buffer should have the same number of samples. */
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+FrameBuffer::~FrameBuffer()
+{
+	glDeleteFramebuffers(1, &_fbo);
+	
+	if (_textureColorBuffer != static_cast<uint32_t>(0xFFFFFFFF))
+		glDeleteTextures(1, &_textureColorBuffer);
+	
+	if (_textureDepthBuffer != static_cast<uint32_t>(0xFFFFFFFF))
+		glDeleteTextures(1, &_textureDepthBuffer);
+	
+	if (_textureStencilBuffer != static_cast<uint32_t>(0xFFFFFFFF))
+		glDeleteTextures(1, &_textureStencilBuffer);
+}
+
+void FrameBuffer::Bind() const { glBindFramebuffer(GL_FRAMEBUFFER, _fbo); }
+void FrameBuffer::Unbind() const { glBindFramebuffer(GL_FRAMEBUFFER, 0); }
+void FrameBuffer::BindRead() const { glBindFramebuffer(GL_READ_FRAMEBUFFER, _fbo); }
+void FrameBuffer::UnbindRead() const { glBindFramebuffer(GL_READ_FRAMEBUFFER, 0); }
+void FrameBuffer::BindWrite()	const	{ glBindFramebuffer(GL_DRAW_FRAMEBUFFER, _fbo); }
+void FrameBuffer::UnbindWrite() const { glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); }
+
+
+void FrameBuffer::AttachColorBuffer()
+{
+	if (_textureColorBuffer != static_cast<uint32_t>(0xFFFFFFFF))
+	{
+		CONSOLE_WARN("Depth buffer is already attached!");
+		return;
+	}
+	glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
+
+	glGenTextures(1, &_textureColorBuffer);
+	glBindTexture(GL_TEXTURE_2D, _textureColorBuffer);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, _size.x, _size.y, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _textureColorBuffer, 0);
+}
+void FrameBuffer::AttachDepthBuffer()
+{
+	if (_textureDepthBuffer != static_cast<uint32_t>(0xFFFFFFFF))
+	{
+		CONSOLE_WARN("Depth buffer is already attached!");
+		return;
+	}
+	glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
+
+	glGenTextures(1, &_textureDepthBuffer);
+	glBindTexture(GL_TEXTURE_2D, _textureDepthBuffer);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, _size.x, _size.y, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, _textureDepthBuffer, 0);
+}
+void FrameBuffer::AttachStencilBuffer()
+{
+	if (_textureStencilBuffer != static_cast<uint32_t>(0xFFFFFFFF))
+	{
+		CONSOLE_WARN("Depth buffer is already attached!");
+		return;
+	}
+	glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
+	glGenTextures(1, &_textureStencilBuffer);
+	glBindTexture(GL_TEXTURE_2D, _textureStencilBuffer);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_STENCIL_INDEX8, _size.x, _size.y, 0, GL_STENCIL_INDEX, GL_UNSIGNED_BYTE, nullptr);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_TEXTURE_2D, _textureStencilBuffer, 0);
+}
+
+bool FrameBuffer::CheckStatus() const
+{
+	return glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
+}
+
+void FrameBuffer::Rescale(Vec2i size)
+{
+	_size = size;
+
+	/* Resize color buffer if exists */
+	if (_textureColorBuffer != static_cast<uint32_t>(0xFFFFFFFF))
+	{
+		glBindTexture(GL_TEXTURE_2D, _textureColorBuffer);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, _size.x, _size.y, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+	}
+	/* Resize depth buffer if exists */
+	if (_textureDepthBuffer != static_cast<uint32_t>(0xFFFFFFFF))
+	{
+		glBindTexture(GL_TEXTURE_2D, _textureDepthBuffer);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, _size.x, _size.y, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+	}
+	/* Resize stecil buffer if exists */
+	if (_textureStencilBuffer != static_cast<uint32_t>(0xFFFFFFFF))
+	{
+		glBindTexture(GL_TEXTURE_2D, _textureStencilBuffer);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_STENCIL_INDEX8, _size.x, _size.y, 0, GL_STENCIL_INDEX, GL_UNSIGNED_BYTE, nullptr);
+	}
+
+}
+
+#if 0
 FrameBuffer::FrameBuffer(int w, int h)
 {
 	_renderRelatedIds[NORMAL_FBO] = 0;
@@ -25,16 +148,6 @@ FrameBuffer::FrameBuffer(int w, int h)
 	InitFrameBuffer();
 }
 
-void FrameBuffer::Bind() const 
-{ 
-	glBindFramebuffer(GL_FRAMEBUFFER, _renderRelatedIds[MULTISAMPLING_FBO]); 
-}
-
-void FrameBuffer::Unbind() const 
-{ 
-	glBindFramebuffer(GL_FRAMEBUFFER, 0); 
-};
-
 void FrameBuffer::Blit() const
 {
 	glBindFramebuffer(GL_READ_FRAMEBUFFER, _renderRelatedIds[MULTISAMPLING_FBO]);
@@ -42,18 +155,6 @@ void FrameBuffer::Blit() const
 	glBlitFramebuffer(0, 0, _size.x, _size.y, 0, 0, _size.x, _size.y, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 }
 
-void FrameBuffer::DrawFrame(Shader* shader)
-{
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, _renderRelatedIds[NORMAL_TEXTURE]);
-
-	shader->SetInt(SHADER_UNIFORM_POST_PROCESSING, (int)_postprocType);
-	_frameBufferVAO->Bind();
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	_frameBufferVAO->Unbind();
-	glBindTexture(GL_TEXTURE_2D, 0);
-}
-	
 void FrameBuffer::Rescale(int w, int h)
 {
 	_size = Vec2i(w, h);
@@ -85,13 +186,14 @@ void FrameBuffer::Destroy()
 	glDeleteRenderbuffers(1, &_renderRelatedIds[MULTISAMPLING_RBO]);
 	_frameBufferVAO->Destroy();
 }
-
+#endif
 
 /* -----------------------------------------------------
  *          PRIVATE METHODS
  * -----------------------------------------------------
 */
 
+#if 0
 void FrameBuffer::InitFrameBuffer()
 {
 	InitFrameBufferVAO();
@@ -135,27 +237,5 @@ void FrameBuffer::InitFrameBuffer()
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void FrameBuffer::InitFrameBufferVAO()
-{
-	float vertices[] = {
-		-1.0f,  1.0f,  0.0f, 1.0f,
-		-1.0f, -1.0f,  0.0f, 0.0f,
-		 1.0f, -1.0f,  1.0f, 0.0f,
-		-1.0f,  1.0f,  0.0f, 1.0f,
-		 1.0f, -1.0f,  1.0f, 0.0f,
-		 1.0f,  1.0f,  1.0f, 1.0f
-	};
 
-	VertexBufferLayout layout; /* (2)position, (2)textCoords */
-	layout.PushAttributes({ 2,2 });
-	
-	VertexBufferData data{
-		sizeof(vertices),
-		vertices,
-		0,
-		nullptr 
-	};
-	
-	_frameBufferVAO = std::make_unique<VertexArray>();
-	_frameBufferVAO->InitializeBuffers(layout, data, GL_STATIC_DRAW);
-}
+#endif
