@@ -44,11 +44,10 @@ void ViewportPanel::RenderPanel(Scene& scene, Camera& camera, FrameBuffer& frame
   ImGui::BeginChild("GameRender");
   isFocused = isFocused || ImGui::IsWindowFocused();
 
-  /* Get the size of the child(i.e.the whole draw size of the windows). */
+  /* Get the whole draw size of the window */
   ImVec2 viewport = ImGui::GetWindowSize();
-
-  /* Update viewport size */
   viewportSize = { viewport.x, viewport.y };
+  
   const Vec2i framebufferSize = framebuffer.GetSize();
 
   if (framebufferSize.x != viewportSize.x || framebufferSize.y != viewportSize.y)

@@ -91,9 +91,9 @@ void main()
     diffuseColor = vec3(0.25f, 0.50f, 0.75f);
 
   /* Our lighting is set up in 3 phases: directional, point lights and an optional flashlight
-    For each phase, a calculate function is defined that calculates the corresponding color
-    per lamp. In the main() function we take all the calculated colors and sum them up for
-    this fragment's final color. */
+     For each phase, a calculate function is defined that calculates the corresponding color
+     per lamp. In the main() function we take all the calculated colors and sum them up for
+     this fragment's final color. */
 
   /* Phase 1: Directional lighting */
   result += CalcDirLight();

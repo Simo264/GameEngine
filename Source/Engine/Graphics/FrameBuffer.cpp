@@ -11,231 +11,139 @@
 
 FrameBuffer::FrameBuffer(const Vec2i& size)
 	: _size{ size },
-		_fbo{ 0 },
-		_textureColorBuffer{ static_cast<uint32_t>(0xFFFFFFFF) },		/* Set id to infinity*/
-		_textureDepthBuffer{ static_cast<uint32_t>(0xFFFFFFFF) },		/* Set id to infinity*/
-		_textureStencilBuffer{ static_cast<uint32_t>(0xFFFFFFFF) }	/* Set id to infinity*/
+		_samples{ 4 } /* default samples value */
 {
-	/* Creating a framebuffer object */
+	_fbo																= static_cast<uint32_t>(0xFFFFFFFF);
+	_intermediateFbo										= static_cast<uint32_t>(0xFFFFFFFF);
+	_colorAttachment										= static_cast<uint32_t>(0xFFFFFFFF);
+	_colorAttachmentMultisampled				= static_cast<uint32_t>(0xFFFFFFFF);
+	_depthStencilAttachmentMultisampled = static_cast<uint32_t>(0xFFFFFFFF);
+
+	/* Create framebuffer objects */
 	glGenFramebuffers(1, &_fbo);
+	glGenFramebuffers(1, &_intermediateFbo);
 
-	/* 1. We have to attach at least one buffer (color, depth or stencil buffer).
-	   2. There should be at least one color attachment.
-	   3. All attachments should be complete as well (reserved memory).
-	   4. Each buffer should have the same number of samples. */
-
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	/* Create texture objects */
+	glGenTextures(1, &_colorAttachment);
+	glGenTextures(1, &_colorAttachmentMultisampled);
+	
+	/* Create renderbuffer objects */
+	glGenRenderbuffers(1, &_depthStencilAttachmentMultisampled);
 }
 
 FrameBuffer::~FrameBuffer()
 {
+	/* Delete framebuffer objects */
 	glDeleteFramebuffers(1, &_fbo);
+	glDeleteFramebuffers(1, &_intermediateFbo);
 	
-	if (_textureColorBuffer != static_cast<uint32_t>(0xFFFFFFFF))
-		glDeleteTextures(1, &_textureColorBuffer);
+	/* Delete texture objects */
+	glDeleteTextures(1, &_colorAttachment);
+	glDeleteTextures(1, &_colorAttachmentMultisampled);
 	
-	if (_textureDepthBuffer != static_cast<uint32_t>(0xFFFFFFFF))
-		glDeleteTextures(1, &_textureDepthBuffer);
+	/* Delete renderbuffer objects */
+	glDeleteRenderbuffers(1, &_depthStencilAttachmentMultisampled);
+}
+
+void FrameBuffer::AttachMultisampledColorBuffers()
+{
+	/* Create a multisampled color attachment texture */
+	glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, _colorAttachmentMultisampled);
+	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, _samples, GL_RGB, _size.x, _size.y, GL_TRUE);
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, _colorAttachmentMultisampled, 0);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	
-	if (_textureStencilBuffer != static_cast<uint32_t>(0xFFFFFFFF))
-		glDeleteTextures(1, &_textureStencilBuffer);
+	/* Create a color attachment texture */
+	glBindFramebuffer(GL_FRAMEBUFFER, _intermediateFbo);
+	glBindTexture(GL_TEXTURE_2D, _colorAttachment);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, _size.x, _size.y, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _colorAttachment, 0);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
-
-void FrameBuffer::Bind() const { glBindFramebuffer(GL_FRAMEBUFFER, _fbo); }
-void FrameBuffer::Unbind() const { glBindFramebuffer(GL_FRAMEBUFFER, 0); }
-void FrameBuffer::BindRead() const { glBindFramebuffer(GL_READ_FRAMEBUFFER, _fbo); }
-void FrameBuffer::UnbindRead() const { glBindFramebuffer(GL_READ_FRAMEBUFFER, 0); }
-void FrameBuffer::BindWrite()	const	{ glBindFramebuffer(GL_DRAW_FRAMEBUFFER, _fbo); }
-void FrameBuffer::UnbindWrite() const { glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); }
-
-
-void FrameBuffer::AttachColorBuffer()
+void FrameBuffer::AttachMultisampledDepthStencilBuffer()
 {
-	if (_textureColorBuffer != static_cast<uint32_t>(0xFFFFFFFF))
-	{
-		CONSOLE_WARN("Depth buffer is already attached!");
-		return;
-	}
-	glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
+	glBindFramebuffer(GL_FRAMEBUFFER, _fbo); 
+	
+	/* Create a multisampled renderbuffer object for depth and stencil attachments */
+	glBindRenderbuffer(GL_RENDERBUFFER, _depthStencilAttachmentMultisampled);
+	glRenderbufferStorageMultisample(GL_RENDERBUFFER, _samples, GL_DEPTH24_STENCIL8, _size.x, _size.y);
+	glBindRenderbuffer(GL_RENDERBUFFER, 0);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, _depthStencilAttachmentMultisampled);
 
-	glGenTextures(1, &_textureColorBuffer);
-	glBindTexture(GL_TEXTURE_2D, _textureColorBuffer);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, _size.x, _size.y, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _textureColorBuffer, 0);
-}
-void FrameBuffer::AttachDepthBuffer()
-{
-	if (_textureDepthBuffer != static_cast<uint32_t>(0xFFFFFFFF))
-	{
-		CONSOLE_WARN("Depth buffer is already attached!");
-		return;
-	}
-	glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
-
-	glGenTextures(1, &_textureDepthBuffer);
-	glBindTexture(GL_TEXTURE_2D, _textureDepthBuffer);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, _size.x, _size.y, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, _textureDepthBuffer, 0);
-}
-void FrameBuffer::AttachStencilBuffer()
-{
-	if (_textureStencilBuffer != static_cast<uint32_t>(0xFFFFFFFF))
-	{
-		CONSOLE_WARN("Depth buffer is already attached!");
-		return;
-	}
-	glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
-	glGenTextures(1, &_textureStencilBuffer);
-	glBindTexture(GL_TEXTURE_2D, _textureStencilBuffer);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_STENCIL_INDEX8, _size.x, _size.y, 0, GL_STENCIL_INDEX, GL_UNSIGNED_BYTE, nullptr);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_TEXTURE_2D, _textureStencilBuffer, 0);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-bool FrameBuffer::CheckStatus() const
-{
-	return glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
-}
-
-void FrameBuffer::Rescale(Vec2i size)
+void FrameBuffer::Rescale(const Vec2i& size)
 {
 	_size = size;
 
-	/* Resize color buffer if exists */
-	if (_textureColorBuffer != static_cast<uint32_t>(0xFFFFFFFF))
-	{
-		glBindTexture(GL_TEXTURE_2D, _textureColorBuffer);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, _size.x, _size.y, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
-	}
-	/* Resize depth buffer if exists */
-	if (_textureDepthBuffer != static_cast<uint32_t>(0xFFFFFFFF))
-	{
-		glBindTexture(GL_TEXTURE_2D, _textureDepthBuffer);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, _size.x, _size.y, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
-	}
-	/* Resize stecil buffer if exists */
-	if (_textureStencilBuffer != static_cast<uint32_t>(0xFFFFFFFF))
-	{
-		glBindTexture(GL_TEXTURE_2D, _textureStencilBuffer);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_STENCIL_INDEX8, _size.x, _size.y, 0, GL_STENCIL_INDEX, GL_UNSIGNED_BYTE, nullptr);
-	}
+	/* Resize textures */
+	UpdateMultisampledTexture(_colorAttachmentMultisampled, _samples, _size.x, _size.y);
+	UpdateTexture(_colorAttachment, _size.x, _size.y);
 
-}
-
-#if 0
-FrameBuffer::FrameBuffer(int w, int h)
-{
-	_renderRelatedIds[NORMAL_FBO] = 0;
-	_renderRelatedIds[NORMAL_TEXTURE] = 0;
-	_renderRelatedIds[MULTISAMPLING_FBO] = 0;
-	_renderRelatedIds[MULTISAMPLING_TEXTURE] = 0;
-	_renderRelatedIds[MULTISAMPLING_RBO] = 0;
-	
-	_postprocType = PostProcessingType::POST_PROC_NONE;
-	_size = Vec2i(w, h);
-
-	InitFrameBuffer();
+	/* Resize renderbuffers */
+	UpdateMultisampledRenderbuffer(_depthStencilAttachmentMultisampled, _samples, _size.x, _size.y);
 }
 
 void FrameBuffer::Blit() const
 {
-	glBindFramebuffer(GL_READ_FRAMEBUFFER, _renderRelatedIds[MULTISAMPLING_FBO]);
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, _renderRelatedIds[NORMAL_FBO]);
+	/* Blit multisampled buffer to normal color buffer of intermediate FBO. Image is stored in _colorAttachment */
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, _fbo);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, _intermediateFbo);
 	glBlitFramebuffer(0, 0, _size.x, _size.y, 0, 0, _size.x, _size.y, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 }
 
-void FrameBuffer::Rescale(int w, int h)
+void FrameBuffer::SetSamples(int samples)
 {
-	_size = Vec2i(w, h);
+	if (samples != 1 && samples != 2 && samples != 4 && samples != 8)
+	{
+		CONSOLE_WARN("Invalid samples value");
+		return;
+	}
 
-	/* Rescale multisampling texture */
-	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, _renderRelatedIds[MULTISAMPLING_TEXTURE]);
-	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, 4, GL_RGB, w, h, GL_TRUE);
-	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
+	_samples = samples;
 
-	/* Rescale multisampling rbo */
-	glBindRenderbuffer(GL_RENDERBUFFER, _renderRelatedIds[MULTISAMPLING_RBO]);
-	glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_DEPTH24_STENCIL8, w, h);
-	glBindRenderbuffer(GL_RENDERBUFFER, 0);
+	/* Update multisampled texture objects */
+	UpdateMultisampledTexture(_colorAttachmentMultisampled, _samples, _size.x, _size.y);
 
-	/* Rescale normal texture */
-	glBindTexture(GL_TEXTURE_2D, _renderRelatedIds[NORMAL_TEXTURE]);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glBindTexture(GL_TEXTURE_2D, 0);
+	/* Update multisampled renderbuffer objects */
+	UpdateMultisampledRenderbuffer(_depthStencilAttachmentMultisampled, _samples, _size.x, _size.y);
 }
 
-void FrameBuffer::Destroy()
-{
-	glDeleteFramebuffers(1, &_renderRelatedIds[NORMAL_FBO]);
-	glDeleteTextures(1, &_renderRelatedIds[NORMAL_TEXTURE]);
-	glDeleteFramebuffers(1, &_renderRelatedIds[MULTISAMPLING_FBO]);
-	glDeleteTextures(1, &_renderRelatedIds[MULTISAMPLING_TEXTURE]);
-	glDeleteRenderbuffers(1, &_renderRelatedIds[MULTISAMPLING_RBO]);
-	_frameBufferVAO->Destroy();
-}
-#endif
+bool FrameBuffer::CheckStatus() const { return glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE; }
+void FrameBuffer::Bind() const { glBindFramebuffer(GL_FRAMEBUFFER, _fbo); }
+void FrameBuffer::Unbind() const { glBindFramebuffer(GL_FRAMEBUFFER, 0); }
+void FrameBuffer::BindRead() const { glBindFramebuffer(GL_READ_FRAMEBUFFER, _fbo); }
+void FrameBuffer::UnbindRead() const { glBindFramebuffer(GL_READ_FRAMEBUFFER, 0); }
+void FrameBuffer::BindWrite()	const { glBindFramebuffer(GL_DRAW_FRAMEBUFFER, _fbo); }
+void FrameBuffer::UnbindWrite() const { glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); }
 
 /* -----------------------------------------------------
  *          PRIVATE METHODS
  * -----------------------------------------------------
 */
 
-#if 0
-void FrameBuffer::InitFrameBuffer()
+void FrameBuffer::UpdateTexture(uint32_t texture, int width, int height)
 {
-	InitFrameBufferVAO();
-
-	glGenFramebuffers(1, &_renderRelatedIds[NORMAL_FBO]);
-	glGenTextures(1, &_renderRelatedIds[NORMAL_TEXTURE]);
-	glGenFramebuffers(1, &_renderRelatedIds[MULTISAMPLING_FBO]);
-	glGenTextures(1, &_renderRelatedIds[MULTISAMPLING_TEXTURE]);
-	glGenRenderbuffers(1, &_renderRelatedIds[MULTISAMPLING_RBO]);
-
-	glBindFramebuffer(GL_FRAMEBUFFER, _renderRelatedIds[MULTISAMPLING_FBO]);
-
-	/* Initialize multisampling texture */
-	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, _renderRelatedIds[MULTISAMPLING_TEXTURE]);
-	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, 4, GL_RGB16F, _size.x, _size.y, GL_TRUE);
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+	glBindTexture(GL_TEXTURE_2D, 0);
+}
+void FrameBuffer::UpdateMultisampledTexture(uint32_t texture, int samples, int width, int height)
+{
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, texture);
+	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, samples, GL_RGB, width, height, GL_TRUE);
 	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, _renderRelatedIds[MULTISAMPLING_TEXTURE], 0);
-
-	/* Initialize multisampling render buffer object  */
-	glBindRenderbuffer(GL_RENDERBUFFER, _renderRelatedIds[MULTISAMPLING_RBO]);
-	glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_DEPTH24_STENCIL8, _size.x, _size.y);
-	glBindRenderbuffer(GL_RENDERBUFFER, 0);
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, _renderRelatedIds[MULTISAMPLING_RBO]);
-
-	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-		CONSOLE_ERROR("ERROR::FRAMEBUFFER MSAA Framebuffer is not complete!");
-
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glBindFramebuffer(GL_FRAMEBUFFER, _renderRelatedIds[NORMAL_FBO]);
-
-	/* Initialize normal texture */
-	glBindTexture(GL_TEXTURE_2D, _renderRelatedIds[NORMAL_TEXTURE]);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, _size.x, _size.y, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _renderRelatedIds[NORMAL_TEXTURE], 0);
-
-	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-		CONSOLE_ERROR("ERROR::FRAMEBUFFER Normal framebuffer is not complete!");
-
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-
-#endif
+void FrameBuffer::UpdateMultisampledRenderbuffer(uint32_t renderbuffer, int samples, int width, int height)
+{
+	glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer);
+	glRenderbufferStorageMultisample(GL_RENDERBUFFER, samples, GL_DEPTH24_STENCIL8, _size.x, _size.y);
+	glBindRenderbuffer(GL_RENDERBUFFER, 0);
+}

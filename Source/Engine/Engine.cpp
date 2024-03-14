@@ -22,7 +22,7 @@
 #include "Engine/Subsystems/ShaderManager.hpp"
 #include "Engine/Subsystems/TextureManager.hpp"
 
-#include <entt/entt.hpp> /* Entity component system */
+#include <GLFW/glfw3.h>
 
 /* -----------------------------------------------------
  *          PUBLIC METHODS
@@ -48,6 +48,7 @@ void Engine::Initialize()
 
 void Engine::Run()
 {
+  auto& window                = WindowManager::Instance();
   auto& instanceSM            = ShaderManager::Instance();
   auto& testingShader         = instanceSM.GetShader("TestingShader");
   auto& instancingShader      = instanceSM.GetShader("InstancingShader");
@@ -56,12 +57,13 @@ void Engine::Run()
   auto& shadowMapDepthShader  = instanceSM.GetShader("ShadowMapDepthShader");
   auto& shadowMapShader       = instanceSM.GetShader("ShadowMapShader");
 
-  /* Initialize framebuffer object */
-  auto& window = WindowManager::Instance();
-  Vec2i framebufferSize = window.GetFramebufferSize();
+  /* Create framebuffer */
+  //Vec2i framebufferSize = window.GetFramebufferSize();
+  Vec2i framebufferSize = { 957, 498 };
   FrameBuffer framebuffer(framebufferSize);
-  framebuffer.AttachColorBuffer();
-  framebuffer.AttachDepthBuffer();
+  framebuffer.AttachMultisampledColorBuffers();
+  framebuffer.AttachMultisampledDepthStencilBuffer();
+  assert(framebuffer.CheckStatus() && "Framebuffer is not complete!");
   glViewport(0, 0, framebufferSize.x, framebufferSize.y);
 
   /* Create camera */
@@ -145,29 +147,50 @@ void Engine::Run()
     const double delta = diff.count();
     Renderer::drawCalls = 0;
 
+    
     /* Input */
     window.PoolEvents();
     if (editor.viewportPanel->isFocused)
+    {
       camera.ProcessInput(window, delta);
+
+      if (window.GetKey(GLFW_KEY_1) == GLFW_PRESS)
+      {
+        framebuffer.SetSamples(1);
+      }
+      else if (window.GetKey(GLFW_KEY_2) == GLFW_PRESS)
+      {
+        framebuffer.SetSamples(2);
+      }
+      else if (window.GetKey(GLFW_KEY_4) == GLFW_PRESS)
+      {
+        framebuffer.SetSamples(4);
+      }
+      else if (window.GetKey(GLFW_KEY_8) == GLFW_PRESS)
+      {
+        framebuffer.SetSamples(8);
+      }
+    }
+      
     
     const auto& cameraViewMatrix        = camera.cameraComponent->GetView();
     const auto& cameraProjectionMatrix  = camera.cameraComponent->GetProjection();
     
-    /* Render: bind frame buffer */
+    /* Render to frame buffer */
     framebuffer.Bind();
     glClearColor(pow(0.3f, GAMMA_CORRECTION), pow(0.3f, GAMMA_CORRECTION), pow(0.3f, GAMMA_CORRECTION), 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glEnable(GL_DEPTH_TEST);
 
     sceneShader.Use();
     sceneShader.SetMat4f(SHADER_UNIFORM_PROJECTION, cameraProjectionMatrix);
     sceneShader.SetMat4f(SHADER_UNIFORM_VIEW, cameraViewMatrix);
     scene.DrawScene(sceneShader);
-    
-    //framebuffer.Blit();
+
+    framebuffer.Blit();
     framebuffer.Unbind();
     glClearColor(pow(0.3f, GAMMA_CORRECTION), pow(0.3f, GAMMA_CORRECTION), pow(0.3f, GAMMA_CORRECTION), 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
+    
 
 #if 0
     /* Fill the depth map framebuffer (from light's perspective) */
@@ -237,17 +260,10 @@ void Engine::Run()
     window.SwapWindowBuffers();
     lastUpdateTime = now;
   }
-  
-  /* Destroy framebuffer */
-  //framebuffer.Destroy();
 }
 
 void Engine::CleanUp()
 {
-  /* Destroy scene ...*/
-
-  /* Destroy framebuffer ... */
-  
   ShaderManager::Instance().CleanUp();
   
   TextureManager::Instance().CleanUp();

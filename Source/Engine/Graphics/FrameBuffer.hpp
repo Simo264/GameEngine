@@ -63,53 +63,50 @@ public:
 	void BindWrite() const;
 	void UnbindWrite() const;
 	
-	void AttachColorBuffer();
-	void AttachDepthBuffer();
-	void AttachStencilBuffer();
+	/* Color buffers attachment */
+	void AttachMultisampledColorBuffers();
+
+	/* Depth-Stencil buffer attachment */
+	void AttachMultisampledDepthStencilBuffer();
 
 	bool CheckStatus() const;
 
-	//void Blit() const;
+	/* A multisampled image contains much more information than a normal image so 
+		 what we need to do is downscale or resolve the image. 
+		 Resolving a multisampled framebuffer is generally done through glBlitFramebuffer that
+		 copies a region from one framebuffer to the other while also resolving any multisampled buffers */
+	void Blit() const;
 	
-	constexpr uint32_t GetImage() const { return _textureColorBuffer; }
+	constexpr uint32_t GetImage() const { return _colorAttachment; }
 	constexpr Vec2i GetSize() const { return _size; }
 	constexpr float GetAspect() const { return static_cast<float>(_size.x) / static_cast<float>(_size.y); }
 
 	//void SetPostProcessing(PostProcessingType type) { _postprocType = type; }
 	
 	/* Resize the frame buffer viewport */
-	void Rescale(Vec2i size);
+	void Rescale(const Vec2i& size);
+
+	/* Update multisampled buffers with new sample value.
+		 Valid sample values are: { 1,2,4,8 } */
+	void SetSamples(int samples);
+
+	constexpr int GetSamples() const { return _samples; }
 
 private:
 	Vec2i _size;
 
-	uint32_t _fbo; /* frame buffer id */
+	int _samples;				/* number of samples for multisampling */
 
-	/* Attachments */
-	uint32_t _textureColorBuffer;	
-	uint32_t _textureDepthBuffer;
-	uint32_t _textureStencilBuffer;
-
+	uint32_t _fbo;							/* primary frame buffer object */
+	uint32_t _intermediateFbo;	/* second post-processing framebuffer */
 	
-
-#if 0
-	Vec2i _size; 
-
-	enum FBORenderTarget : int
-	{
-		NORMAL_FBO = 0,
-		NORMAL_TEXTURE,
-
-		MULTISAMPLING_FBO,
-		MULTISAMPLING_TEXTURE,
-		MULTISAMPLING_RBO,
-	};
-	uint32_t _renderRelatedIds[5];
+	uint32_t _colorAttachment;						/* Texture object */
+	uint32_t _colorAttachmentMultisampled;/* Texture object */
 	
-	class VertexArray* _frameBufferVAO;
-	PostProcessingType _postprocType;
+	uint32_t _depthStencilAttachmentMultisampled; /* Renderbuffer object */
+	
+	void UpdateTexture(uint32_t texture, int width, int height);
+	void UpdateMultisampledTexture(uint32_t texture, int samples, int width, int height);
 
-	void InitFrameBuffer();
-	void InitFrameBufferVAO();
-#endif
+	void UpdateMultisampledRenderbuffer(uint32_t renderbuffer, int samples, int width, int height);
 };
