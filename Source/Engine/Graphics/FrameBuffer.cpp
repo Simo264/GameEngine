@@ -96,6 +96,9 @@ void FrameBuffer::Blit() const
 	glBindFramebuffer(GL_READ_FRAMEBUFFER, _fbo);
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, _intermediateFbo);
 	glBlitFramebuffer(0, 0, _size.x, _size.y, 0, 0, _size.x, _size.y, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 }
 
 void FrameBuffer::SetSamples(int samples)
@@ -144,6 +147,6 @@ void FrameBuffer::UpdateMultisampledTexture(uint32_t texture, int samples, int w
 void FrameBuffer::UpdateMultisampledRenderbuffer(uint32_t renderbuffer, int samples, int width, int height)
 {
 	glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer);
-	glRenderbufferStorageMultisample(GL_RENDERBUFFER, samples, GL_DEPTH24_STENCIL8, _size.x, _size.y);
+	glRenderbufferStorageMultisample(GL_RENDERBUFFER, samples, GL_DEPTH24_STENCIL8, width, height);
 	glBindRenderbuffer(GL_RENDERBUFFER, 0);
 }

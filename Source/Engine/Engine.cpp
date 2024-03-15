@@ -58,8 +58,7 @@ void Engine::Run()
   auto& shadowMapShader       = instanceSM.GetShader("ShadowMapShader");
 
   /* Create framebuffer */
-  //Vec2i framebufferSize = window.GetFramebufferSize();
-  Vec2i framebufferSize = { 957, 498 };
+  Vec2i framebufferSize = window.GetFramebufferSize();
   FrameBuffer framebuffer(framebufferSize);
   framebuffer.AttachMultisampledColorBuffers();
   framebuffer.AttachMultisampledDepthStencilBuffer();
@@ -72,69 +71,10 @@ void Engine::Run()
   /* Create scene */
   Scene scene;
   
-  GameObject cubeObject   = scene.CreateObject("Cube", static_cast<int>(GameObjectType::STATIC_MESH));
-  cubeObject.AddComponent<StaticMeshComponent>(ASSETS_PATH / Path("Shapes/Cube/Cube.obj").lexically_normal());
-  cubeObject.AddComponent<TransformComponent>();
-
-  GameObject lightObject  = scene.CreateObject("Diretional light", static_cast<int>(GameObjectType::DIRECTIONAL_LIGHT));
-  lightObject.AddComponent<DirLightComponent>(SHADER_UNIFORM_DIRLIGHT);
-  
-
-#if 0
-  /* Shadow mapping */
-  uint32_t SHADOW_WIDTH = 1024;
-  uint32_t SHADOW_HEIGHT = 1024;
-  uint32_t depthMapFBO; /* Framebuffer object for rendering the depth map */
-  uint32_t depthMap;    /* Create a 2D texture that we'll use as the framebuffer's depth buffer */
-  {
-    glGenFramebuffers(1, &depthMapFBO);
-    glGenTextures(1, &depthMap);
-    glBindTexture(GL_TEXTURE_2D, depthMap);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-    float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
-    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO); /* Attach 2D texture as the framebuffer's depth buffer*/
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
-    glDrawBuffer(GL_NONE);
-    glReadBuffer(GL_NONE);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-  }
-  VertexArray screenQuad;
-  {
-    float vertices[] = {
-      // positions        // texture Coords
-      -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
-      -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
-       1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
-       1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
-    };
-    VertexArrayData data;
-    data.vertDataSize = sizeof(vertices);
-    data.vertData = vertices;
-    VertexArrayConfig config;
-    config.PushAttributes({ 3, 2 });
-
-    screenQuad.InitVertexArray(data, config);
-  }
-
-  testingShader->Use();
-  testingShader->SetInt("UShadowMap", 0);
-  shadowMapShader->Use();
-  shadowMapShader->SetInt("UDiffuseTexture", 0);
-  shadowMapShader->SetInt("USpecularTexture", 1);
-  shadowMapShader->SetInt("UShadowMap", 2);
-#endif
-
-
+ 
   /* Pre-loop */
   TimePoint lastUpdateTime = SystemClock::now();
   const Vec2f perspectiveDistance(0.1f, 100.0f); 
-  //Vec3f lightPos = Vec3f(-2.0f, 10.0f, -2.0f); /* Shadows */
-  //Mat4f lightSpaceMatrix; /* Shadows */
 
   /* Loop  */
   while (window.IsOpen())
@@ -142,44 +82,25 @@ void Engine::Run()
     editor.Begin();
 
     /* Per-frame time logic */
+    framebufferSize = framebuffer.GetSize();
     const auto now = SystemClock::now();
     const std::chrono::duration<double> diff = now - lastUpdateTime;
     const double delta = diff.count();
     Renderer::drawCalls = 0;
 
-    
+
     /* Input */
     window.PoolEvents();
     if (editor.viewportPanel->isFocused)
-    {
       camera.ProcessInput(window, delta);
-
-      if (window.GetKey(GLFW_KEY_1) == GLFW_PRESS)
-      {
-        framebuffer.SetSamples(1);
-      }
-      else if (window.GetKey(GLFW_KEY_2) == GLFW_PRESS)
-      {
-        framebuffer.SetSamples(2);
-      }
-      else if (window.GetKey(GLFW_KEY_4) == GLFW_PRESS)
-      {
-        framebuffer.SetSamples(4);
-      }
-      else if (window.GetKey(GLFW_KEY_8) == GLFW_PRESS)
-      {
-        framebuffer.SetSamples(8);
-      }
-    }
       
-    
     const auto& cameraViewMatrix        = camera.cameraComponent->GetView();
     const auto& cameraProjectionMatrix  = camera.cameraComponent->GetProjection();
-    
+
     /* Render to frame buffer */
     framebuffer.Bind();
     glClearColor(pow(0.3f, GAMMA_CORRECTION), pow(0.3f, GAMMA_CORRECTION), pow(0.3f, GAMMA_CORRECTION), 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
     sceneShader.Use();
     sceneShader.SetMat4f(SHADER_UNIFORM_PROJECTION, cameraProjectionMatrix);
@@ -187,75 +108,13 @@ void Engine::Run()
     scene.DrawScene(sceneShader);
 
     framebuffer.Blit();
+
+    editor.Render(scene, camera, framebuffer);
+
     framebuffer.Unbind();
     glClearColor(pow(0.3f, GAMMA_CORRECTION), pow(0.3f, GAMMA_CORRECTION), pow(0.3f, GAMMA_CORRECTION), 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     
-
-#if 0
-    /* Fill the depth map framebuffer (from light's perspective) */
-    {
-      glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
-      glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-      glClear(GL_DEPTH_BUFFER_BIT);
-      Mat4f lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
-      Mat4f lightView = glm::lookAt(lightPos, Vec3f(0.0f), Vec3f(0.0f, 1.0f, 0.0f));
-      lightSpaceMatrix = lightProjection * lightView;
-      shadowMapDepthShader->Use();
-      shadowMapDepthShader->SetMat4f("ULightSpaceMatrix", lightSpaceMatrix);
-      plane.Draw(shadowMapDepthShader);
-      glCullFace(GL_FRONT); /* To fix peter panning we cull all front faces during the shadow map generation */
-      cube1.Draw(shadowMapDepthShader);
-      cube2.Draw(shadowMapDepthShader);
-      glCullFace(GL_FRONT);
-      glBindFramebuffer(GL_FRAMEBUFFER, 0);
-      framebuffer.BindMSAAFramebuffer();
-    }
-
-
-    /* Reset viewport */
-    glViewport(0, 0, windowFbSize.x, windowFbSize.y);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    /* Render scene as normal using the generated shadow map */
-    {
-
-      shadowMapShader->Use();
-      shadowMapShader->SetMat4f("UView", view);
-      shadowMapShader->SetMat4f("UProjection", projection);
-      shadowMapShader->SetMat4f("ULightSpaceMatrix", lightSpaceMatrix);
-      shadowMapShader->SetVec3f("ULightPos", lightPos);
-      shadowMapShader->SetVec3f("UViewPos", camera.position);
-      glActiveTexture(GL_TEXTURE2);
-      glBindTexture(GL_TEXTURE_2D, depthMap);
-      plane.Draw(shadowMapShader);
-      cube1.Draw(shadowMapShader);
-      cube2.Draw(shadowMapShader);
-    }
-
-    /* Draw frame buffer image to editor Viewport */
-    framebuffer.BlitFrameBuffer();
-    framebuffer.UnbindFrameBuffer();
-
-    const double time = glfwGetTime();
-    lightPos.x = sin(time) * 10.f;
-    lightPos.z = cos(time) * 10.f;
-
-    /* Render Depth map to quad for visual debugging */
-    {
-      testingShader->Use();
-      testingShader->SetFloat("UNearPlane", near_plane);
-      testingShader->SetFloat("UFarPlane", far_plane);
-      glActiveTexture(GL_TEXTURE0);
-      glBindTexture(GL_TEXTURE_2D, depthMap);
-      Renderer::drawMode = GL_TRIANGLE_STRIP;
-      Renderer::DrawArrays(&screenQuad);
-      Renderer::drawMode = GL_TRIANGLES;
-    }
-#endif
-
-    /* Render editor */
-    editor.Render(scene, camera, framebuffer);
     editor.End();
     window.SwapWindowBuffers();
     lastUpdateTime = now;

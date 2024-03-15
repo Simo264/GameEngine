@@ -31,7 +31,7 @@ ViewportPanel::ViewportPanel(const char* panelName, bool visible)
 
 void ViewportPanel::RenderPanel(Scene& scene, Camera& camera, FrameBuffer& framebuffer, GameObject& selected)
 {
-  /* Set viewport window padding to 0 */
+  /* Set viewport padding */
   ImGuiStyle& style = ImGui::GetStyle();
   Vec2i paddingTmp = Vec2i(style.WindowPadding.x, style.WindowPadding.y);
   style.WindowPadding.x = 0;
@@ -40,16 +40,27 @@ void ViewportPanel::RenderPanel(Scene& scene, Camera& camera, FrameBuffer& frame
   ImGui::Begin(panelName.c_str(), &visible);
   isFocused = ImGui::IsWindowFocused();
 
+  /* Get the whole draw size of the window */
+  ImVec2 viewport = ImGui::GetWindowSize();
+  viewportSize = { viewport.x, viewport.y };
+  const Vec2i framebufferSize = framebuffer.GetSize();
+  
+  /* Mouse coordinates */
+  const auto viewportOffset = ImGui::GetCursorPos();  /* Including tab */
+  const auto windowPos  = ImGui::GetWindowPos();      /* Absolute position */
+  const auto mousePos   = ImGui::GetMousePos();       /* Absolute position */
+  const auto mousecoordX  = mousePos.x - windowPos.x;
+  const auto mousecoordY  = mousePos.y - windowPos.y - viewportOffset.y;
+  if ((mousecoordX >= 0 && mousecoordX <= viewportSize.x) && (mousecoordY >= 0 && mousecoordY <= viewportSize.y - viewportOffset.y))
+  {
+  }
+
   /* Using a Child allow to fill all the space of the window. It also alows customization */
   ImGui::BeginChild("GameRender");
   isFocused = isFocused || ImGui::IsWindowFocused();
 
-  /* Get the whole draw size of the window */
-  ImVec2 viewport = ImGui::GetWindowSize();
-  viewportSize = { viewport.x, viewport.y };
+  /* Update framebuffer size */
   
-  const Vec2i framebufferSize = framebuffer.GetSize();
-
   if (framebufferSize.x != viewportSize.x || framebufferSize.y != viewportSize.y)
   {
     /* Update framebuffer size */

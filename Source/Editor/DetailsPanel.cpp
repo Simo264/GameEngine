@@ -103,6 +103,8 @@ void DetailsPanel::RenderPanel(Scene& scene, GameObject& selected)
         ImGui::TableNextRow();
         EditVec3("Rotate (deg)", 1.0f, { -180.0f, +180.0f }, transComp->rotation, C2);
         
+        transComp->UpdateTransformation();
+
         EndTable();
       }
     }

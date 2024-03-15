@@ -36,12 +36,10 @@ void Scene::DrawScene(Shader& shader)
 	/* Render static meshes */
 	for (auto [entity, smeshComp] : _registry.view<StaticMeshComponent>().each())
 	{
-		GameObject o{ entity, &_registry };
+		GameObject object{ entity, &_registry };
 
-		auto transComp = o.GetComponent<TransformComponent>();
 		Mat4f transform = Mat4f(1.0f);
-
-		if (transComp)
+		if (TransformComponent* transComp = object.GetComponent<TransformComponent>())
 			transform = transComp->GetTransformation();
 		
 		smeshComp.RenderMesh(transform, shader);
