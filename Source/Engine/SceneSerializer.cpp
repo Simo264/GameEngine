@@ -120,6 +120,7 @@ void SceneSerializer::DeserializeScene(Scene& scene, const Path& filepath)
 				transComp.scale			= INIFileParser::StringToVec3f(buff);
 				buff = conf.GetValue(section.c_str(), "rotation");
 				transComp.rotation		= INIFileParser::StringToVec3f(buff);
+				transComp.UpdateTransformation();
 			}
 			else if (std::strcmp(componentName, StaticMeshComponent::GetComponentName(true)) == 0)
 			{

@@ -10,7 +10,6 @@
 #include "Engine/Graphics/Texture2D.hpp"
 #include "Engine/Graphics/Renderer.hpp"
 
-
 /* ---------------------------------------------------------------------------
 			TypeComponent
 	--------------------------------------------------------------------------- */
@@ -402,8 +401,8 @@ CameraComponent::CameraComponent(const Vec3f& position, float fov, float aspect)
 		yaw { -90.0f }, /* Default orientation */
 		pitch{ 0.0f },
 		roll{ 0.0f },
-		zNear{ 0.1f }, /* Set default z values */
-		zFar{ 100.0f },
+		zNear{ INITIAL_ZNEAR }, 
+		zFar{ INITIAL_ZFAR },
 		_front{},	/* Deafult vector values */
 		_up{},
 		_right{},

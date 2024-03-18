@@ -39,7 +39,7 @@ public:
 	void Render(
 		class Scene& scene, 
 		class Camera& camera, 
-		class FrameBuffer& framebuffer);
+		const uint32_t framebufferImage);
 
 	UniquePointer<ContentBrowserPanel>	contentBrowserPanel;
 	UniquePointer<ViewportPanel>				viewportPanel;

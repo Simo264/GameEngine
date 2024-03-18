@@ -31,6 +31,11 @@ namespace Math
 		return glm::sin(degree);
 	}
 
+	double Pow(double base, double exponent)
+	{
+		return glm::pow(base, exponent);
+	}
+
 	Vec3f Cross(const Vec3f& v1, const Vec3f& v2)
 	{
 		return glm::cross(v1, v2);

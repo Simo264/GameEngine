@@ -63,14 +63,6 @@ public:
 	void BindWrite() const;
 	void UnbindWrite() const;
 	
-	/* Color buffers attachment */
-	void AttachMultisampledColorBuffers();
-
-	/* Depth-Stencil buffer attachment */
-	void AttachMultisampledDepthStencilBuffer();
-
-	bool CheckStatus() const;
-
 	/* A multisampled image contains much more information than a normal image so 
 		 what we need to do is downscale or resolve the image. 
 		 Resolving a multisampled framebuffer is generally done through glBlitFramebuffer that
@@ -86,8 +78,7 @@ public:
 	/* Resize the frame buffer viewport */
 	void Rescale(const Vec2i& size);
 
-	/* Update multisampled buffers with new sample value.
-		 Valid sample values are: { 1,2,4,8 } */
+	/* Update multisampled buffers with new sample value */
 	void SetSamples(int samples);
 
 	constexpr int GetSamples() const { return _samples; }
@@ -105,8 +96,15 @@ private:
 	
 	uint32_t _depthStencilAttachmentMultisampled; /* Renderbuffer object */
 	
+	/* Attach color to framebuffer using texture */
+	void ColorAttachment();
+
+	/* Attach both multisampled depth and stencil using renderbuffer */
+	void DepthStencilAttachment();
+
+	bool CheckStatus() const;
+
 	void UpdateTexture(uint32_t texture, int width, int height);
 	void UpdateMultisampledTexture(uint32_t texture, int samples, int width, int height);
-
 	void UpdateMultisampledRenderbuffer(uint32_t renderbuffer, int samples, int width, int height);
 };

@@ -37,7 +37,7 @@ void Scene::DrawScene(Shader& shader)
 	for (auto [entity, smeshComp] : _registry.view<StaticMeshComponent>().each())
 	{
 		GameObject object{ entity, &_registry };
-
+		
 		Mat4f transform = Mat4f(1.0f);
 		if (TransformComponent* transComp = object.GetComponent<TransformComponent>())
 			transform = transComp->GetTransformation();

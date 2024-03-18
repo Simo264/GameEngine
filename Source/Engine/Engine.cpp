@@ -10,6 +10,7 @@
 #include "Engine/Camera.hpp"
 #include "Engine/Scene.hpp"
 #include "Engine/ObjectLoader.hpp"
+#include "Engine/ShadowMap.hpp"
 
 #include "Engine/Graphics/Shader.hpp"
 #include "Engine/Graphics/Renderer.hpp"
@@ -23,6 +24,10 @@
 #include "Engine/Subsystems/TextureManager.hpp"
 
 #include <GLFW/glfw3.h>
+
+float zNear = INITIAL_ZNEAR;
+float zFar  = INITIAL_ZFAR;
+Vec3f lightPosition{ -2.0f, 4.0f, -1.0f };
 
 /* -----------------------------------------------------
  *          PUBLIC METHODS
@@ -57,65 +62,139 @@ void Engine::Run()
   auto& shadowMapDepthShader  = instanceSM.GetShader("ShadowMapDepthShader");
   auto& shadowMapShader       = instanceSM.GetShader("ShadowMapShader");
 
-  /* Create framebuffer */
-  Vec2i framebufferSize = window.GetFramebufferSize();
+  /* -------------------------- Framebuffer -------------------------- */
+  //Vec2i framebufferSize = window.GetFramebufferSize();
+  Vec2i framebufferSize = { 957, 498 };
   FrameBuffer framebuffer(framebufferSize);
-  framebuffer.AttachMultisampledColorBuffers();
-  framebuffer.AttachMultisampledDepthStencilBuffer();
-  assert(framebuffer.CheckStatus() && "Framebuffer is not complete!");
-  glViewport(0, 0, framebufferSize.x, framebufferSize.y);
+  const uint32_t& framebufferImage = framebuffer.GetImage();
 
-  /* Create camera */
+
+  /* -------------------------- Camera -------------------------- */
   Camera camera({ 0.0f, 0.0f, 5.0f }, 45.0f, framebuffer.GetAspect());
 
-  /* Create scene */
-  Scene scene;
-  
- 
-  /* Pre-loop */
-  TimePoint lastUpdateTime = SystemClock::now();
-  const Vec2f perspectiveDistance(0.1f, 100.0f); 
 
-  /* Loop  */
+  /* -------------------------- Scene -------------------------- */
+  Scene scene;
+  scene.LoadScene(ROOT_PATH / "Scene.ini");
+ 
+
+  /* -------------------------- Shadow mapping -------------------------- */
+  constexpr int shadowWidth = 1024, shadowHeight = 1024;
+  ShadowMap shadowMapping{ shadowWidth,shadowHeight };
+  const uint32_t depthMapTexture = shadowMapping.GetDepthTexture();
+
+
+  /* -------------------------- Pre-loop -------------------------- */
+  TimePoint lastUpdateTime = SystemClock::now();
+  const double colorValue = Math::Pow(static_cast<double>(0.3), static_cast<double>(GAMMA_CORRECTION));
+
+  float quadVertices[] = {
+    // positions        // texture Coords
+    -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
+    -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+     1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
+     1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+  };
+  VertexBufferLayout layout;
+  layout.PushAttributes({ 3,2 });
+  VertexBufferData data;
+  data.vertexDataSize = sizeof(quadVertices);
+  data.vertextDataPtr = quadVertices;
+  VertexArray vao(layout, data, GL_STATIC_DRAW);
+
+
+  /* -------------------------- Loop -------------------------- */
   while (window.IsOpen())
   {
     editor.Begin();
 
-    /* Per-frame time logic */
+    /* -------------------------- Per-frame time logic -------------------------- */
     framebufferSize = framebuffer.GetSize();
     const auto now = SystemClock::now();
     const std::chrono::duration<double> diff = now - lastUpdateTime;
     const double delta = diff.count();
     Renderer::drawCalls = 0;
 
+    const Mat4f lightProjection   = Math::Ortho(-10.0f, 10.0f, -10.0f, 10.0f, zNear, zFar);
+    const Mat4f lightView         = Math::LookAt(lightPosition, Vec3f(0.0f), Vec3f(0.0f, 1.0f, 0.0f));
+    const Mat4f lightSpaceMatrix  = lightProjection * lightView;
 
-    /* Input */
+    /* -------------------------- Input -------------------------- */
     window.PoolEvents();
     if (editor.viewportPanel->isFocused)
       camera.ProcessInput(window, delta);
-      
     const auto& cameraViewMatrix        = camera.cameraComponent->GetView();
     const auto& cameraProjectionMatrix  = camera.cameraComponent->GetProjection();
-
-    /* Render to frame buffer */
-    framebuffer.Bind();
-    glClearColor(pow(0.3f, GAMMA_CORRECTION), pow(0.3f, GAMMA_CORRECTION), pow(0.3f, GAMMA_CORRECTION), 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-    sceneShader.Use();
-    sceneShader.SetMat4f(SHADER_UNIFORM_PROJECTION, cameraProjectionMatrix);
-    sceneShader.SetMat4f(SHADER_UNIFORM_VIEW, cameraViewMatrix);
-    scene.DrawScene(sceneShader);
-
-    framebuffer.Blit();
-
-    editor.Render(scene, camera, framebuffer);
-
-    framebuffer.Unbind();
-    glClearColor(pow(0.3f, GAMMA_CORRECTION), pow(0.3f, GAMMA_CORRECTION), pow(0.3f, GAMMA_CORRECTION), 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     
+    /* -------------------------- Rendering -------------------------- */
+    
+    /* Fill depth buffer into the ShadowMap texture */
+    glViewport(0, 0, shadowWidth, shadowHeight);
+    shadowMapping.Bind();
+    {
+      glClear(GL_DEPTH_BUFFER_BIT);
+      shadowMapDepthShader.Use();
+      shadowMapDepthShader.SetMat4f("ULightSpaceMatrix", lightSpaceMatrix);
+      scene.DrawScene(shadowMapDepthShader);
+    }
+    shadowMapping.Unbind();
+
+    /* Render image to framebuffer */
+    framebuffer.Bind();
+    glViewport(0, 0, framebufferSize.x, framebufferSize.y);
+    glClearColor(colorValue, colorValue, colorValue, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+    /* Render scene with shadows */
+    {
+      shadowMapShader.Use();
+      shadowMapShader.SetMat4f("UProjection", cameraProjectionMatrix);
+      shadowMapShader.SetMat4f("UView", cameraViewMatrix);
+      shadowMapShader.SetMat4f("ULightSpaceMatrix", lightSpaceMatrix);
+      shadowMapShader.SetVec3f("ULightPos", lightPosition);
+      shadowMapShader.SetVec3f("UViewPos", camera.cameraComponent->position);
+      glActiveTexture(GL_TEXTURE2);
+      glBindTexture(GL_TEXTURE_2D, depthMapTexture);
+      scene.DrawScene(shadowMapShader);
+    }
+
+    /* Render depth map for visual debugging */
+    {
+      //testingShader.Use();
+      //testingShader.SetFloat("near_plane", INITIAL_ZNEAR);
+      //testingShader.SetFloat("far_plane", INITIAL_ZFAR);
+      //testingShader.SetInt("depthMap", 0);
+      //glActiveTexture(GL_TEXTURE0);
+      //glBindTexture(GL_TEXTURE_2D, depthMapTexture);
+      //Renderer::drawMode = GL_TRIANGLE_STRIP;
+      //Renderer::DrawArrays(vao);
+    }
+
+    /* Render scene as normal */
+    {
+      //glViewport(0, 0, framebufferSize.x, framebufferSize.y);
+      //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+      //sceneShader.Use();
+      //sceneShader.SetMat4f(SHADER_UNIFORM_PROJECTION, cameraProjectionMatrix);
+      //sceneShader.SetMat4f(SHADER_UNIFORM_VIEW, cameraViewMatrix);
+      //scene.DrawScene(sceneShader);
+    }
+    
+    framebuffer.Blit();
+    framebuffer.Unbind();
+    
+    editor.Render(scene, camera, framebufferImage);
     editor.End();
+
+    /* -------------------------- Resizing framebuffer -------------------------- */
+    const Vec2i viewportSize = editor.viewportPanel->viewportSize;
+    if (framebufferSize != viewportSize)
+    {
+      framebuffer.Rescale(viewportSize);
+      camera.cameraComponent->aspect = framebuffer.GetAspect();
+      camera.cameraComponent->UpdateProjection();
+    }
+
     window.SwapWindowBuffers();
     lastUpdateTime = now;
   }
@@ -207,8 +286,11 @@ void Engine::LoadShaders()
   sceneShader.SetInt("UMaterial.specular", 1);
   sceneShader.SetFloat("UMaterial.shininess", 32.0f);
   sceneShader.SetFloat("UGamma", 2.2f);
-  sceneShader.SetFloat("UDirLightVisible", true);
-  sceneShader.SetIntArray("UPointLightVisible", 5, Array<int, 5>{1,1,1,1,1}.data());
+  
+  shadowMapShader.Use();
+  shadowMapShader.SetInt("UDiffuseTexture", 0);
+  shadowMapShader.SetInt("USpecularTexture", 1);
+  shadowMapShader.SetInt("UShadowMap", 2);
 }
 
 void Engine::LoadTextures()

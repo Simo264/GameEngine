@@ -2,17 +2,11 @@
 
 #include "Core/Platform/OpenGL/OpenGL.hpp"
 #include "Core/Math/Extensions.hpp"
-#include "Core/Log/Logger.hpp"
 
-#include "Engine/Scene.hpp"
 #include "Engine/Camera.hpp"
 
 #include "Engine/ECS/GameObject.hpp"
 #include "Engine/ECS/Components.hpp"
-
-#include "Engine/Graphics/FrameBuffer.hpp"
-
-#include "Engine/Subsystems/WindowManager.hpp"
 
 #include <imgui/imgui.h>
 #include <imgui/ImGuizmo.h>
@@ -29,56 +23,33 @@ ViewportPanel::ViewportPanel(const char* panelName, bool visible)
     _grizmoMode{ static_cast<int>(ImGuizmo::OPERATION::TRANSLATE) } 
 {}
 
-void ViewportPanel::RenderPanel(Scene& scene, Camera& camera, FrameBuffer& framebuffer, GameObject& selected)
+void ViewportPanel::RenderPanel(Camera& camera, const uint32_t framebufferImage, GameObject& selected)
 {
   /* Set viewport padding */
   ImGuiStyle& style = ImGui::GetStyle();
-  Vec2i paddingTmp = Vec2i(style.WindowPadding.x, style.WindowPadding.y);
+  const Vec2i paddingTmp = { style.WindowPadding.x, style.WindowPadding.y };
   style.WindowPadding.x = 0;
   style.WindowPadding.y = 0;
 
   ImGui::Begin(panelName.c_str(), &visible);
   isFocused = ImGui::IsWindowFocused();
 
-  /* Get the whole draw size of the window */
-  ImVec2 viewport = ImGui::GetWindowSize();
-  viewportSize = { viewport.x, viewport.y };
-  const Vec2i framebufferSize = framebuffer.GetSize();
-  
-  /* Mouse coordinates */
-  const auto viewportOffset = ImGui::GetCursorPos();  /* Including tab */
-  const auto windowPos  = ImGui::GetWindowPos();      /* Absolute position */
-  const auto mousePos   = ImGui::GetMousePos();       /* Absolute position */
-  const auto mousecoordX  = mousePos.x - windowPos.x;
-  const auto mousecoordY  = mousePos.y - windowPos.y - viewportOffset.y;
-  if ((mousecoordX >= 0 && mousecoordX <= viewportSize.x) && (mousecoordY >= 0 && mousecoordY <= viewportSize.y - viewportOffset.y))
-  {
-  }
-
-  /* Using a Child allow to fill all the space of the window. It also alows customization */
+  /* Using a child allow to fill all the space of the window. It also alows customization */
   ImGui::BeginChild("GameRender");
   isFocused = isFocused || ImGui::IsWindowFocused();
 
-  /* Update framebuffer size */
-  
-  if (framebufferSize.x != viewportSize.x || framebufferSize.y != viewportSize.y)
+  /* Get the whole draw size of the window */
+  const ImVec2 viewport = ImGui::GetWindowSize();
+  viewportSize = { viewport.x, viewport.y };
+
+  ImGui::Image(reinterpret_cast<ImTextureID>(framebufferImage), viewport, ImVec2(0, 1), ImVec2(1, 0));
+  if (selected.IsValid())
   {
-    /* Update framebuffer size */
-    framebuffer.Rescale(viewportSize);
-    camera.cameraComponent->aspect = framebuffer.GetAspect();
-    camera.cameraComponent->UpdateProjection();
-    glViewport(0, 0, viewportSize.x, viewportSize.y);
+    auto component = selected.GetComponent<TransformComponent>();
+    if(component)
+      GrizmoTransformation(camera, *component);
   }
-  else
-  {
-    ImGui::Image(reinterpret_cast<ImTextureID>(framebuffer.GetImage()), viewport, ImVec2(0, 1), ImVec2(1, 0));
-    if (selected.IsValid())
-    {
-      auto component = selected.GetComponent<TransformComponent>();
-      if(component)
-        GrizmoTransformation(scene, camera, *component);
-    }
-  }
+
   ImGui::EndChild();
   ImGui::End();
 
@@ -92,7 +63,7 @@ void ViewportPanel::RenderPanel(Scene& scene, Camera& camera, FrameBuffer& frame
  * -----------------------------------------------------
 */
 
-void ViewportPanel::GrizmoTransformation(Scene& scene, Camera& camera, TransformComponent& component)
+void ViewportPanel::GrizmoTransformation(Camera& camera, TransformComponent& component)
 {
   Mat4f& model = component.GetTransformation();
 

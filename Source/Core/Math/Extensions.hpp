@@ -9,6 +9,7 @@ using Quat = glm::quat;
 namespace Math
 {
 	Mat4f Perspective(float fovy, float aspect, float zNear, float zFar);
+	Mat4f Ortho(float left, float right, float bottom, float top, float zNear, float zFar);
 	
 	Mat4f Translate(const Mat4f& model, const Vec3f& position);
 	Mat4f Scale(const Mat4f& model, const Vec3f& scaling);

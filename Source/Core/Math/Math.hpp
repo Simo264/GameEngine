@@ -45,6 +45,8 @@ namespace Math
 	float Cos(float degree);
 	float Sin(float degree);
 
+	double Pow(double base, double exponent);
+
 	Vec3f Cross(const Vec3f& v1, const Vec3f& v2);
 	Vec3f Normalize(const Vec3f& v);
 

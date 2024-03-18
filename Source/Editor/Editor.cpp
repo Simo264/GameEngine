@@ -1,6 +1,5 @@
-    #include "Editor.hpp"
+#include "Editor.hpp"
 #include "Engine/Scene.hpp"
-#include "Engine/Graphics/FrameBuffer.hpp"
 #include "Engine/Subsystems/WindowManager.hpp"
 
 #include "Core/FileParser/INIFileParser.hpp"
@@ -105,7 +104,7 @@ void Editor::End()
   }
 }
 
-void Editor::Render(Scene& scene, Camera& camera, FrameBuffer& framebuffer)
+void Editor::Render(Scene& scene, Camera& camera, const uint32_t framebufferImage)
 {
   if (_demoOpen) 
     ImGui::ShowDemoWindow(&_demoOpen);
@@ -138,7 +137,7 @@ void Editor::Render(Scene& scene, Camera& camera, FrameBuffer& framebuffer)
   if (viewportPanel->visible)
   {
     viewportPanel->_grizmoMode = detailsPanel->_grizmoMode;
-    viewportPanel->RenderPanel(scene, camera, framebuffer, objectSelected);
+    viewportPanel->RenderPanel(camera, framebufferImage, objectSelected);
   }
   
   /* Inspector panel */

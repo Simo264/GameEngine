@@ -24,7 +24,10 @@ constexpr char	SHADER_UNIFORM_DIRLIGHT[]					= "UDirLight";
 constexpr char	SHADER_UNIFORM_POST_PROCESSING[]	= "UPostProcessingType";
 constexpr int		SHADER_MAX_NUM_POINTLIGHTS = 5;
 
-constexpr float GAMMA_CORRECTION = 2.2f;
+constexpr float GAMMA_CORRECTION  = 2.2f;
+constexpr float	INITIAL_ZNEAR			= 0.1f;
+constexpr float	INITIAL_ZFAR			= 100.0f;
+
 
 /* -----------------------------
 			STL library layer

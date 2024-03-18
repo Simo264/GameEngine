@@ -73,7 +73,7 @@ public:
   /* Create buffer objects.
     
     usage: specifies the expected usage pattern of the data store. 
-    The symbolic constant must be one of these:
+      The symbolic constant must be one of these:
       GL_STREAM_DRAW, GL_STREAM_READ, GL_STREAM_COPY,   GL_STATIC_DRAW, 
       GL_STATIC_READ, GL_STATIC_COPY, GL_DYNAMIC_DRAW,  GL_DYNAMIC_READ, GL_DYNAMIC_COPY.
   */
@@ -83,7 +83,7 @@ public:
   Create and initialize buffer objects.
 
   usage: specifies the expected usage pattern of the data store. 
-    The symbolic constant must be one of these:
+      The symbolic constant must be one of these:
       GL_STREAM_DRAW, GL_STREAM_READ, GL_STREAM_COPY,   GL_STATIC_DRAW, 
       GL_STATIC_READ, GL_STATIC_COPY, GL_DYNAMIC_DRAW,  GL_DYNAMIC_READ, GL_DYNAMIC_COPY.
   */

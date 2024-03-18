@@ -13,6 +13,11 @@ namespace Math
 		return glm::perspective(fovy, aspect, zNear, zFar);
 	}
 
+	Mat4f Ortho(float left, float right, float bottom, float top, float zNear, float zFar)
+	{
+		return glm::ortho(left, right, bottom, top, zNear, zFar);
+	}
+
 	void Decompose(const Mat4f& model, Vec3f& translation, Quat& rotation, Vec3f& scale)
 	{
 		translation = model[3];

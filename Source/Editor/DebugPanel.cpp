@@ -1,7 +1,14 @@
 #include "DebugPanel.hpp"
+
+#include "Core/Math/Math.hpp"
+
 #include "Engine/Graphics/Renderer.hpp"
 
 #include <imgui/imgui.h>
+
+extern float zNear;
+extern float zFar;
+extern Vec3f lightPosition;
 
 DebugPanel::DebugPanel(const char* panelName, bool visible)
 	: Panel(panelName, visible)
@@ -15,9 +22,12 @@ DebugPanel::DebugPanel(const char* panelName, bool visible)
 void DebugPanel::RenderFrame()
 {
 	ImGuiIO& io = ImGui::GetIO();
-
+	ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoDocking;
 	ImGui::SetNextWindowBgAlpha(0.15f); /* Transparent background */
-	ImGui::Begin(panelName.c_str(), &visible, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoDocking);
+
+	//ImGuiWindowFlags flags = ImGuiWindowFlags_NoDocking;
+
+	ImGui::Begin(panelName.c_str(), &visible, flags);
 
 	_t2 = SystemClock::now();
 	const std::chrono::duration<double> diff = _t2 - _t1;
@@ -29,5 +39,10 @@ void DebugPanel::RenderFrame()
 
 	ImGui::Text("%.3f ms/frame (%d FPS)", 1000.0f / _framerate, (int)_framerate);
 	ImGui::Text("Draw calls: %d", Renderer::drawCalls);
+
+	ImGui::DragFloat("ZNear", &zNear, 0.01f, 0.1f, 100.0f);
+	ImGui::DragFloat("ZFar", &zFar, 0.01f, 0.1f, 100.0f);
+	ImGui::DragFloat3("Light position", (float*)&lightPosition, 0.01f,-100.0f, 100.0);
+
 	ImGui::End();
 }
