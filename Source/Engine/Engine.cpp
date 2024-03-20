@@ -136,6 +136,8 @@ void Engine::Run()
       shadowMapDepthShader.Use();
       shadowMapDepthShader.SetMat4f("ULightSpaceMatrix", lightSpaceMatrix);
       scene.DrawScene(shadowMapDepthShader);
+      
+      /* TODO: resolve the problem of peter panning */
     }
     shadowMapping.Unbind();
 

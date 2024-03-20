@@ -1,7 +1,10 @@
 #include "Scene.hpp"
 #include "Core/Log/Logger.hpp"
+
 #include "Engine/ECS/GameObject.hpp"
 #include "Engine/ECS/Components.hpp"
+
+#include "Engine/Graphics/Shader.hpp"
 
 #include "Engine/SceneSerializer.hpp"
 
@@ -42,7 +45,8 @@ void Scene::DrawScene(Shader& shader)
 		if (TransformComponent* transComp = object.GetComponent<TransformComponent>())
 			transform = transComp->GetTransformation();
 		
-		smeshComp.RenderMesh(transform, shader);
+		shader.SetMat4f(SHADER_UNIFORM_MODEL, transform);
+		smeshComp.DrawMesh(transform);
 	}
 }
 

@@ -134,7 +134,7 @@ void StaticMeshComponent::DestroyMesh() const
 	vertexArray->Destroy();
 }
 
-void StaticMeshComponent::RenderMesh(const Mat4f& transform, Shader& shader) const
+void StaticMeshComponent::DrawMesh(const Mat4f& transform) const
 {
 	if (material.diffuse)
 	{
@@ -146,8 +146,6 @@ void StaticMeshComponent::RenderMesh(const Mat4f& transform, Shader& shader) con
 		glActiveTexture(GL_TEXTURE1);
 		material.specular->Bind();
 	}
-
-	shader.SetMat4f(SHADER_UNIFORM_MODEL, transform);
 
 	/* If vertex array does not contain indices call DrawArrays */
 	if (vertexArray->numIndices == 0)

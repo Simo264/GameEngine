@@ -125,7 +125,7 @@ struct StaticMeshComponent : public IComponent
 
 	static const char* GetComponentName(bool lower = false);
 
-	void RenderMesh(const Mat4f& transform, class Shader& shader) const;
+	void DrawMesh(const Mat4f& transform) const;
 
 	/* Return following string representation:
 		"model-path=<path>"														if exists

@@ -73,11 +73,17 @@ float ShadowCalculation()
   /* Get depth of current fragment from light's perspective */
   float currentDepth = projCoords.z;
   
-  /* Check whether current frag pos is in shadow */
-  float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);  
+  /* Resolve the problem of over sampling */
+  if(projCoords.z > 1.0) 
+    return 0.0;
   
-  /* Percentage-closer filtering (PCF) */
   float shadow = 0.0f;
+  
+  /* Resolve the problem of shadow acne with bias */
+  float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);  
+  //return (currentDepth - bias > closestDepth) ? 1.0 : 0.0;
+
+  /* Percentage-closer filtering (PCF) */
   vec2 texelSize = 1.0 / textureSize(UShadowMap, 0);
   for(int x = -1; x <= 1; ++x)
   {
@@ -88,10 +94,6 @@ float ShadowCalculation()
     }    
   }
   shadow /= 9.0;
-
-  //shadow = (currentDepth - bias > closestDepth) ? 1.0 : 0.0;
-  if(projCoords.z > 1.0)
-    shadow = 0.0;
-
+  
   return shadow;
 }
