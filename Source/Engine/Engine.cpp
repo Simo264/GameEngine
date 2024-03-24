@@ -13,6 +13,7 @@
 #include "Engine/ShadowMap.hpp"
 
 #include "Engine/Graphics/Shader.hpp"
+#include "Engine/Graphics/ShaderUniforms.hpp"
 #include "Engine/Graphics/Renderer.hpp"
 #include "Engine/Graphics/FrameBuffer.hpp"
 
@@ -25,8 +26,6 @@
 
 #include <GLFW/glfw3.h>
 
-float zNear = INITIAL_ZNEAR;
-float zFar  = INITIAL_ZFAR;
 Vec3f lightPosition{ -2.0f, 4.0f, -1.0f };
 
 /* -----------------------------------------------------
@@ -100,8 +99,9 @@ void Engine::Run()
   VertexBufferData data;
   data.vertexDataSize = sizeof(quadVertices);
   data.vertextDataPtr = quadVertices;
-  VertexArray vao(layout, data, GL_STATIC_DRAW);
+  VertexArray quadVao(layout, data, GL_STATIC_DRAW);
 
+  Mat4f lightSpaceMatrix{};
 
   /* -------------------------- Loop -------------------------- */
   while (window.IsOpen())
@@ -114,10 +114,6 @@ void Engine::Run()
     const std::chrono::duration<double> diff = now - lastUpdateTime;
     const double delta = diff.count();
     Renderer::drawCalls = 0;
-
-    const Mat4f lightProjection   = Math::Ortho(-10.0f, 10.0f, -10.0f, 10.0f, zNear, zFar);
-    const Mat4f lightView         = Math::LookAt(lightPosition, Vec3f(0.0f), Vec3f(0.0f, 1.0f, 0.0f));
-    const Mat4f lightSpaceMatrix  = lightProjection * lightView;
 
     /* -------------------------- Input -------------------------- */
     window.PoolEvents();
@@ -132,9 +128,13 @@ void Engine::Run()
     glViewport(0, 0, shadowWidth, shadowHeight);
     shadowMapping.Bind();
     {
+      const Mat4f lightProjection   = Math::Ortho(-10.0f, 10.0f, -10.0f, 10.0f, INITIAL_ZNEAR, INITIAL_ZFAR);
+      const Mat4f lightView         = Math::LookAt(lightPosition, Vec3f(0.0f), Vec3f(0.0f, 1.0f, 0.0f));
+      lightSpaceMatrix              = lightProjection * lightView;
+
       glClear(GL_DEPTH_BUFFER_BIT);
       shadowMapDepthShader.Use();
-      shadowMapDepthShader.SetMat4f("ULightSpaceMatrix", lightSpaceMatrix);
+      shadowMapDepthShader.SetMat4f(SHADER_UNIFORM_LIGHTSPACE, lightSpaceMatrix);
       scene.DrawScene(shadowMapDepthShader);
       
       /* TODO: resolve the problem of peter panning */
@@ -150,11 +150,11 @@ void Engine::Run()
     /* Render scene with shadows */
     {
       shadowMapShader.Use();
-      shadowMapShader.SetMat4f("UProjection", cameraProjectionMatrix);
-      shadowMapShader.SetMat4f("UView", cameraViewMatrix);
-      shadowMapShader.SetMat4f("ULightSpaceMatrix", lightSpaceMatrix);
-      shadowMapShader.SetVec3f("ULightPos", lightPosition);
-      shadowMapShader.SetVec3f("UViewPos", camera.cameraComponent->position);
+      shadowMapShader.SetMat4f(SHADER_UNIFORM_PROJECTION, cameraProjectionMatrix);
+      shadowMapShader.SetMat4f(SHADER_UNIFORM_VIEW,       cameraViewMatrix);
+      shadowMapShader.SetMat4f(SHADER_UNIFORM_LIGHTSPACE, lightSpaceMatrix);
+      shadowMapShader.SetVec3f(SHADER_UNIFORM_LIGHT_POS,  lightPosition);
+      shadowMapShader.SetVec3f(SHADER_UNIFORM_VIEW_POS,   camera.cameraComponent->position);
       glActiveTexture(GL_TEXTURE2);
       glBindTexture(GL_TEXTURE_2D, depthMapTexture);
       scene.DrawScene(shadowMapShader);
@@ -169,7 +169,8 @@ void Engine::Run()
       //glActiveTexture(GL_TEXTURE0);
       //glBindTexture(GL_TEXTURE_2D, depthMapTexture);
       //Renderer::drawMode = GL_TRIANGLE_STRIP;
-      //Renderer::DrawArrays(vao);
+      //Renderer::DrawArrays(quadVao);
+      //Renderer::drawMode = GL_TRIANGLES;
     }
 
     /* Render scene as normal */
@@ -184,7 +185,7 @@ void Engine::Run()
     
     framebuffer.Blit();
     framebuffer.Unbind();
-    
+
     editor.Render(scene, camera, framebufferImage);
     editor.End();
 
@@ -273,26 +274,26 @@ void Engine::LoadShaders()
     SHADERS_PATH / "ShadowMap.vert",
     SHADERS_PATH / "ShadowMap.frag");
 
-  framebufferShader.Use();
-  framebufferShader.SetInt("UScreenTexture", 0);
-  framebufferShader.SetInt("UPostProcessingType", 0);
+  //framebufferShader.Use();
+  //framebufferShader.SetInt("UScreenTexture", 0);
+  //framebufferShader.SetInt("UPostProcessingType", 0);
 
-  instancingShader.Use();
-  instancingShader.SetInt("UMaterial.diffuse", 0);
-  instancingShader.SetInt("UMaterial.specular", 1);
-  instancingShader.SetFloat("UMaterial.shininess", 32.0f);
-  instancingShader.SetFloat("UGamma", 2.2f);
+  //instancingShader.Use();
+  //instancingShader.SetInt("UMaterial.diffuse", 0);
+  //instancingShader.SetInt("UMaterial.specular", 1);
+  //instancingShader.SetFloat("UMaterial.shininess", 32.0f);
+  //instancingShader.SetFloat(SHADER_UNIFORM_GAMMA, GAMMA_CORRECTION);
 
-  sceneShader.Use();
-  sceneShader.SetInt("UMaterial.diffuse", 0);
-  sceneShader.SetInt("UMaterial.specular", 1);
-  sceneShader.SetFloat("UMaterial.shininess", 32.0f);
-  sceneShader.SetFloat("UGamma", 2.2f);
+  //sceneShader.Use();
+  //sceneShader.SetInt("UMaterial.diffuse", 0);
+  //sceneShader.SetInt("UMaterial.specular", 1);
+  //sceneShader.SetFloat("UMaterial.shininess", 32.0f);
+  //sceneShader.SetFloat(SHADER_UNIFORM_GAMMA, GAMMA_CORRECTION);
   
   shadowMapShader.Use();
-  shadowMapShader.SetInt("UDiffuseTexture", 0);
-  shadowMapShader.SetInt("USpecularTexture", 1);
-  shadowMapShader.SetInt("UShadowMap", 2);
+  shadowMapShader.SetInt(SHADER_UNIFORM_MATERIAL_DIFFUSE, 0);
+  shadowMapShader.SetInt(SHADER_UNIFORM_MATERIAL_SPECULAR, 1);
+  shadowMapShader.SetInt(SHADER_UNIFORM_SHADOW_MAP, 2);
 }
 
 void Engine::LoadTextures()

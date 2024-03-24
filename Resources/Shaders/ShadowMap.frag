@@ -11,55 +11,69 @@ in vec4 FragPosLightSpace;
 /* ------------------------------------ */
 out vec4 FragColor;
 
+
+/* ---------- Structs ---------- */
+/* ----------------------------- */
+struct Material_t {
+  sampler2D diffuse;    /* GL_TEXTURE0 */
+  sampler2D specular;   /* GL_TEXTURE1 */
+  float     shininess;
+};
+struct DirLight_t {
+  vec3 direction;
+  vec3 ambient;
+  vec3 diffuse;
+  vec3 specular;
+};
+
 /* ---------- Uniforms ---------- */
 /* ------------------------------ */
-uniform sampler2D UDiffuseTexture;  /* GL_TEXTURE0 */
-uniform sampler2D USpecularTexture; /* GL_TEXTURE1 */
-uniform sampler2D UShadowMap;       /* GL_TEXTURE2 */
+uniform sampler2D UShadowMap; /* GL_TEXTURE2 */
 uniform vec3 ULightPos;
 uniform vec3 UViewPos;
 
+uniform Material_t UMaterial;
+uniform DirLight_t UDirLight;
+
+uniform float UGamma;
+
 /* ---------- Globals variable ---------- */
 /* -------------------------------------- */
-vec3 diffuseColor;
-vec3 normal;
-vec3 lightDir;
+vec3 g_diffuseColor;
+vec3 g_specularColor;
+vec3 g_normal;
+vec3 g_viewDir;
 
 /* ---------- Functions ---------- */
 /* ------------------------------- */
-float ShadowCalculation();
-
+vec3 CalcDirLight(vec3 lightPos, DirLight_t dirLight, Material_t material);
+float CalcDirLightShadow(vec3 lightDir);
+vec3 GammaCorrection(vec3 value, float gamma);
 
 void main()
 {     
   /* Init globals */
-  diffuseColor  = texture(UDiffuseTexture, TexCoords).rgb;
-  normal        = normalize(Normal);
-  lightDir      = normalize(ULightPos - FragPos);
+  g_normal        = normalize(Normal);
+  g_diffuseColor  = texture(UMaterial.diffuse, TexCoords).rgb;
+  g_specularColor = texture(UMaterial.specular, TexCoords).rgb;
+  g_viewDir       = normalize(UViewPos - FragPos);
+  vec3 result     = vec3(0.0f);
 
-  /* Ambient */
-  vec3 lightColor = vec3(0.25f);
-  vec3 ambient    = 0.3 * lightColor;
-  
-  /* Diffuse */
-  float diff    = max(dot(lightDir, normal), 0.0);
-  vec3 diffuse  = diff * lightColor;
-    
-  /* Specular */
-  vec3 viewDir    = normalize(UViewPos - FragPos);
-  vec3 reflectDir = reflect(-lightDir, normal);
-  vec3 halfwayDir = normalize(lightDir + viewDir);  
-  float spec      = pow(max(dot(normal, halfwayDir), 0.0), 32.0);
-  vec3 specular   = spec * lightColor;    
-    
-  /* Calculate shadow */
-  float shadow  = ShadowCalculation();                      
-  vec3 lighting = (ambient + (1.0 - shadow) * (diffuse + specular)) * diffuseColor;    
+  /* If no texture: set diffuse to default color */
+  //if(length(g_diffuseColor) == 0)
+  //  g_diffuseColor = vec3(0.25f, 0.50f, 0.75f);
 
-  FragColor = vec4(lighting, 1.0);
+  /* Phase 1: Directional lighting */
+  result += CalcDirLight(ULightPos, UDirLight, UMaterial);
+
+  /* Apply gamma correction */
+  if(UGamma != 0.0f)
+    result = GammaCorrection(result, UGamma);
+
+  FragColor = vec4(result, 1.0);
 }
 
-float ShadowCalculation()
+float CalcDirLightShadow(vec3 lightDir)
 {
   /* Perform perspective divide */
   vec3 projCoords = FragPosLightSpace.xyz / FragPosLightSpace.w;
@@ -80,7 +94,7 @@ float ShadowCalculation()
   float shadow = 0.0f;
   
   /* Resolve the problem of shadow acne with bias */
-  float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);  
+  float bias = max(0.05 * (1.0 - dot(g_normal, lightDir)), 0.005);  
   //return (currentDepth - bias > closestDepth) ? 1.0 : 0.0;
 
   /* Percentage-closer filtering (PCF) */
@@ -94,6 +108,35 @@ float ShadowCalculation()
     }    
   }
   shadow /= 9.0;
-  
   return shadow;
+}
+
+vec3 CalcDirLight(vec3 lightPos, DirLight_t dirLight, Material_t material)
+{
+  //vec3 lightDir = normalize(-dirLight.direction);
+  vec3 lightDir = normalize(lightPos - FragPos);
+  
+  /* ambient shading */
+  vec3 ambient  = dirLight.ambient * g_diffuseColor;
+
+  /* diffuse shading */
+  float diffuseFactor = max(dot(g_normal, lightDir), 0.0);
+  if(diffuseFactor == 0.0f)
+    return ambient;
+
+  vec3 diffuse = dirLight.diffuse * diffuseFactor * g_diffuseColor;
+  
+  /* specular shading */
+  vec3 reflectDir       = reflect(-lightDir, g_normal);
+  float specularFactor  = pow(max(dot(g_viewDir, reflectDir), 0.0), material.shininess);
+  vec3 specular         = dirLight.specular * specularFactor * g_specularColor;
+
+  /* Calculate shadow */
+  float shadow  = CalcDirLightShadow(lightDir);                      
+  return (ambient + (1.0 - shadow) * (diffuse + specular)) * g_diffuseColor;   
+}
+
+vec3 GammaCorrection(vec3 value, float gamma)
+{
+  return pow(value, vec3(1.0f / UGamma));
 }

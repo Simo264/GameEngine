@@ -6,6 +6,8 @@
 #include "Engine/ECS/GameObject.hpp"
 #include "Engine/ECS/Components.hpp"
 
+
+#include "Engine/Graphics/ShaderUniforms.hpp"
 #include "Engine/Graphics/Texture2D.hpp"
 #include "Engine/Subsystems/TextureManager.hpp"
 
@@ -83,14 +85,15 @@ void SceneSerializer::DeserializeScene(Scene& scene, const Path& filepath)
 					float specular
 					Vec3f position 
 				*/
-				auto& plightComp = obj.AddComponent<PointLightComponent>(SHADER_UNIFORM_POINTLIGHT(nPointLights++));
-				buff = conf.GetValue(section.c_str(), "color");
-				plightComp.color = INIFileParser::StringToVec3f(buff);
-				plightComp.ambient = std::stof(conf.GetValue(section.c_str(), "ambient"));
-				plightComp.diffuse = std::stof(conf.GetValue(section.c_str(), "ambient"));
-				plightComp.specular = std::stof(conf.GetValue(section.c_str(), "ambient"));
-				buff = conf.GetValue(section.c_str(), "position");
-				plightComp.position = INIFileParser::StringToVec3f(buff);
+
+				//auto& plightComp = obj.AddComponent<PointLightComponent>(SHADER_UNIFORM_POINTLIGHT(nPointLights++));
+				//buff = conf.GetValue(section.c_str(), "color");
+				//plightComp.color = INIFileParser::StringToVec3f(buff);
+				//plightComp.ambient = std::stof(conf.GetValue(section.c_str(), "ambient"));
+				//plightComp.diffuse = std::stof(conf.GetValue(section.c_str(), "ambient"));
+				//plightComp.specular = std::stof(conf.GetValue(section.c_str(), "ambient"));
+				//buff = conf.GetValue(section.c_str(), "position");
+				//plightComp.position = INIFileParser::StringToVec3f(buff);
 			}
 			else if (std::strcmp(componentName, SpotLightComponent::GetComponentName(true)) == 0)
 			{

@@ -5,7 +5,7 @@
 #include "Engine/ECS/Components.hpp"
 
 #include "Engine/Graphics/Shader.hpp"
-
+#include "Engine/Graphics/ShaderUniforms.hpp"
 #include "Engine/SceneSerializer.hpp"
 
 /* -----------------------------------------------------
@@ -31,10 +31,11 @@ void Scene::DrawScene(Shader& shader)
 	/* Render lights */
 	for (auto [entity, dLightComp] : _registry.view<DirLightComponent>().each())
 		dLightComp.RenderLight(shader);
-	for (auto [entity, pLightComp] : _registry.view<PointLightComponent>().each())
-		pLightComp.RenderLight(shader);
-	for (auto [entity, sLightComp] : _registry.view<SpotLightComponent>().each())
-		sLightComp.RenderLight(shader);
+
+	//for (auto [entity, pLightComp] : _registry.view<PointLightComponent>().each())
+	//	pLightComp.RenderLight(shader);
+	//for (auto [entity, sLightComp] : _registry.view<SpotLightComponent>().each())
+	//	sLightComp.RenderLight(shader);
 
 	/* Render static meshes */
 	for (auto [entity, smeshComp] : _registry.view<StaticMeshComponent>().each())

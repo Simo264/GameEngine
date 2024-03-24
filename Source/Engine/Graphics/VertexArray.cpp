@@ -8,6 +8,50 @@
  * -----------------------------------------------------
 */
 
+VertexSpecification::VertexSpecification()
+{
+
+}
+
+VertexArray::VertexArray()
+{
+  Generate();
+  
+  _vbo.Generate();
+  _ebo.Generate();
+
+
+}
+
+VertexArray::~VertexArray()
+{
+  Delete();
+
+  _vbo.Delete();
+  _ebo.Delete();
+}
+
+void VertexArray::Generate()
+{
+  glGenVertexArrays(1, &_vao);
+}
+
+void VertexArray::Delete() const
+{
+  glDeleteVertexArrays(1, &_vao);
+}
+
+void VertexArray::Bind() const
+{
+  glBindVertexArray(_vao);
+}
+
+void VertexArray::Unbind() const
+{
+  glBindVertexArray(0);
+}
+
+#if 0
 VertexArray::VertexArray()
   : _vao{ 0 },
     _vbo{ 0 },
@@ -119,6 +163,8 @@ void VertexArray::Destroy() const
   glDeleteBuffers(1, &_vbo);
   glDeleteBuffers(1, &_ebo);
 }
+
+#endif
 
 /* -----------------------------------------------------
  *          PRIVATE METHODS

@@ -3,6 +3,7 @@
 #include "Core/Log/Logger.hpp"
 
 #include "Engine/Scene.hpp"
+#include "Engine/Graphics/ShaderUniforms.hpp"
 #include "Engine/Graphics/Texture2D.hpp"
 #include "Engine/Subsystems/TextureManager.hpp"
 
@@ -132,20 +133,22 @@ void OutlinerPanel::AddSceneComponentPopup(Scene& scene)
       }
       case 1: /* Pointlight */
       {
-        uint32_t size = scene.Reg().view<PointLightComponent>().size();
-        if (size < SHADER_MAX_NUM_POINTLIGHTS)
-        {
-          GameObject pLight = scene.CreateObject(
-            "Point light",
-            static_cast<uint32_t>(GameObjectType::POINT_LIGHT));
+        //uint32_t size = scene.Reg().view<PointLightComponent>().size();
+        //if (size < SHADER_MAX_NUM_POINTLIGHTS)
+        //{
+        //  GameObject pLight = scene.CreateObject(
+        //    "Point light",
+        //    static_cast<uint32_t>(GameObjectType::POINT_LIGHT));
 
-          pLight.AddComponent<PointLightComponent>(SHADER_UNIFORM_POINTLIGHT(size));
-        }
-        else
-          CONSOLE_WARN("Can't create more point light objects");
+        //  pLight.AddComponent<PointLightComponent>(SHADER_UNIFORM_POINTLIGHT(size));
+        //}
+        //else
+        //  CONSOLE_WARN("Can't create more point light objects");
+        
+        CONSOLE_WARN("TODO");
         break;
       }
-      case 2: /* TODO: Spotlight */
+      case 2: /* Spotlight */
       {
         CONSOLE_WARN("TODO");
         break;

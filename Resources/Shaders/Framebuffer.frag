@@ -6,11 +6,11 @@ out vec4 FragColor;
 uniform sampler2D UScreenTexture;
 
 /*
-	POST_PROC_NONE			-> postProcessingType=0
-	POST_PROC_INVERSION -> postProcessingType=1
-	POST_PROC_GRAYSCALE -> postProcessingType=2
-	POST_PROC_KERNEL		-> postProcessingType=3
-	POST_PROC_BLUR			-> postProcessingType=4
+	UPostProcessingType=0 -> POST_PROC_NONE			
+	UPostProcessingType=1 -> POST_PROC_INVERSION 
+	UPostProcessingType=2 -> POST_PROC_GRAYSCALE 
+	UPostProcessingType=3 -> POST_PROC_KERNEL		
+	UPostProcessingType=4 -> POST_PROC_BLUR			
 */
 uniform int UPostProcessingType;
 

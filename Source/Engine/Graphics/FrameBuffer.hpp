@@ -69,8 +69,11 @@ public:
 		 copies a region from one framebuffer to the other while also resolving any multisampled buffers */
 	void Blit() const;
 	
+	/* Return the texture color attachment */
 	constexpr uint32_t GetImage() const { return _colorAttachment; }
+
 	constexpr Vec2i GetSize() const { return _size; }
+	
 	constexpr float GetAspect() const { return static_cast<float>(_size.x) / static_cast<float>(_size.y); }
 
 	//void SetPostProcessing(PostProcessingType type) { _postprocType = type; }

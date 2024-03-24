@@ -6,8 +6,6 @@
 
 #include <imgui/imgui.h>
 
-extern float zNear;
-extern float zFar;
 extern Vec3f lightPosition;
 
 DebugPanel::DebugPanel(const char* panelName, bool visible)
@@ -40,8 +38,6 @@ void DebugPanel::RenderFrame()
 	ImGui::Text("%.3f ms/frame (%d FPS)", 1000.0f / _framerate, (int)_framerate);
 	ImGui::Text("Draw calls: %d", Renderer::drawCalls);
 
-	ImGui::DragFloat("ZNear", &zNear, 0.01f, 0.1f, 100.0f);
-	ImGui::DragFloat("ZFar", &zFar, 0.01f, 0.1f, 100.0f);
 	ImGui::DragFloat3("Light position", (float*)&lightPosition, 0.01f,-100.0f, 100.0);
 
 	ImGui::End();
