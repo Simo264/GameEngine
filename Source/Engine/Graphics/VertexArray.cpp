@@ -8,27 +8,9 @@
  * -----------------------------------------------------
 */
 
-VertexSpecification::VertexSpecification()
-{
-
-}
-
 VertexArray::VertexArray()
 {
   Generate();
-  
-  _vbo.Generate();
-  _ebo.Generate();
-
-
-}
-
-VertexArray::~VertexArray()
-{
-  Delete();
-
-  _vbo.Delete();
-  _ebo.Delete();
 }
 
 void VertexArray::Generate()
@@ -41,6 +23,14 @@ void VertexArray::Delete() const
   glDeleteVertexArrays(1, &_vao);
 }
 
+void VertexArray::Destroy() const
+{
+  glDeleteVertexArrays(1, &_vao);
+
+  _vbo.Delete();
+  _ebo.Delete();
+}
+
 void VertexArray::Bind() const
 {
   glBindVertexArray(_vao);
@@ -51,20 +41,52 @@ void VertexArray::Unbind() const
   glBindVertexArray(0);
 }
 
-#if 0
-VertexArray::VertexArray()
-  : _vao{ 0 },
-    _vbo{ 0 },
-    _ebo{ 0 },
-    numVertices{ 0 },
-    numIndices{ 0 },
-    vboSize{ 0 }
+void VertexArray::EnableAttribute(int index) const
 {
-  glGenVertexArrays(1, &_vao);
-  glGenBuffers(1, &_vbo);
-  glGenBuffers(1, &_ebo);
+  //glEnableVertexArrayAttrib(_vao, index);
+
+  Bind();
+    glEnableVertexAttribArray(index);
+  Unbind();
 }
 
+void VertexArray::DisableAttribute(int index) const
+{
+  //glDisableVertexArrayAttrib(_vao, index);
+
+  Bind();
+    glDisableVertexAttribArray(index);
+  Unbind();
+}
+
+void VertexArray::BindVertexBuffer(const VertexBuffer& vertexBuffer, int bindingindex, int offset, int stride) const
+{
+  //glVertexArrayVertexBuffer(_vao, bindingindex, vertexBuffer.GetBufferID(), offset, stride);
+
+  Bind();
+    glBindVertexBuffer(bindingindex, vertexBuffer.GetBufferID(), offset, stride);
+  Unbind();
+}
+
+void VertexArray::SetAttribSpecification(int attribindex, int size, int type, bool normalize, int relativeoffset) const
+{
+  //glVertexArrayAttribFormat(_vao, attribindex, size, GL_FLOAT, GL_FALSE, relativeoffset);
+
+  Bind();
+    glVertexAttribFormat(attribindex, size, type, normalize, relativeoffset);
+  Unbind();
+}
+
+void VertexArray::SetAttribBinding(int attribindex, int bindingindex) const
+{
+  //glVertexArrayAttribBinding(_vao, attribindex, bindingindex);
+
+  Bind();
+    glVertexAttribBinding(attribindex, bindingindex);
+  Unbind();
+}
+
+#if 0
 VertexArray::VertexArray(
   const VertexBufferLayout& layout, const VertexBufferData& data, uint32_t usage)
   : _vao{ 0 },
@@ -80,8 +102,7 @@ VertexArray::VertexArray(
   InitializeBuffers(layout, data, usage);
 }
 
-void VertexArray::InitializeBuffers(
-  const VertexBufferLayout& layout, const VertexBufferData& data, uint32_t usage)
+void VertexArray::InitializeBuffers(const VertexBufferLayout& layout, const VertexBufferData& data, uint32_t usage)
 {
   _layout = layout;
   vboSize = data.vertexDataSize;
@@ -114,54 +135,6 @@ void VertexArray::InitializeBuffers(
   glBindVertexArray(0);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
-}
-
-void VertexArray::Bind() const
-{ 
-  glBindVertexArray(_vao); 
-};
-
-void VertexArray::Unbind() const
-{ 
-  glBindVertexArray(0); 
-};
-
-void VertexArray::CopyVertexBufferData(uint32_t writeBuffer)
-{
-  if (vboSize == 0)
-  {
-    CONSOLE_WARN("Vertex buffer is empty");
-    return;
-  }
-
-  glBindBuffer(GL_COPY_READ_BUFFER, _vbo);
-  glBindBuffer(GL_COPY_WRITE_BUFFER, writeBuffer);
-  glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, vboSize);
-  glBindBuffer(GL_COPY_READ_BUFFER, 0);
-  glBindBuffer(GL_COPY_WRITE_BUFFER, 0);
-}
-
-void VertexArray::CopyIndexBufferData(uint32_t writeBuffer)
-{
-  uint32_t indexBufferSize = numIndices * sizeof(uint32_t);
-  if (indexBufferSize == 0)
-  {
-    CONSOLE_WARN("Index buffer is empty");
-    return;
-  }
-
-  glBindBuffer(GL_COPY_READ_BUFFER, _ebo);
-  glBindBuffer(GL_COPY_WRITE_BUFFER, writeBuffer);
-  glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, indexBufferSize);
-  glBindBuffer(GL_COPY_READ_BUFFER, 0);
-  glBindBuffer(GL_COPY_WRITE_BUFFER, 0);
-}
-
-void VertexArray::Destroy() const
-{
-  glDeleteVertexArrays(1, &_vao);
-  glDeleteBuffers(1, &_vbo);
-  glDeleteBuffers(1, &_ebo);
 }
 
 #endif

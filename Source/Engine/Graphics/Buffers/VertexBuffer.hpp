@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "Core/Core.hpp"
+#include "Buffer.hpp"
 
 /** 
  *  A Vertex Buffer Object it is used as a source for vertex array data.
@@ -40,12 +41,10 @@
  *    1. it needs a byte offset from the start of the buffer object to the first element in the array
  *    2. it also needs a stride, which represents how many bytes it is from the start of one element to the start of another.
  */
-class VertexBuffer
+class VertexBuffer : public Buffer
 {
 public:
   using VertexBufferDataType = float;
-
-  VertexBuffer() = default;
 
   /**
    * Create a new data store for a buffer object
@@ -55,62 +54,11 @@ public:
    */
   VertexBuffer(const void* data, uint64_t size, int usage);
 
-  /**
-   * Copies only the buffer id
-   */
-  VertexBuffer(const VertexBuffer& other) { this->_buffer = other.GetBufferID(); }
+  void BufferData(const void* data, uint64_t size, int usage) override;
 
-  /**
-   * Do not delete buffer object on destructor. Instead call DeleteBuffer()
-   */
-  ~VertexBuffer() = default;
+  void BufferSubData(int offset, uint32_t size, const void* data) override;
 
-  /**
-   * Generate buffer object 
-   */
-  void Generate();
+  void Bind() const override;
 
-  /**
-   * Bind the buffer object
-   */
-  void Bind() const;
-
-  /**
-   * Unbind the buffer object
-   */
-  void Unbind() const;
-  
-  /**
-   * Create a new data store for a buffer object. 
-   * While creating the new storage, any pre-existing data store is deleted.
-   * The new data store is created with the specified size in bytes and usage
-   * 
-   * @param usage:  the symbolic constant must be GL_STREAM_DRAW, GL_STREAM_READ, GL_STREAM_COPY, GL_STATIC_DRAW, 
-   *                GL_STATIC_READ, GL_STATIC_COPY, GL_DYNAMIC_DRAW, GL_DYNAMIC_READ, or GL_DYNAMIC_COPY
-   */
-  void BufferData(const void* data, uint64_t size, int usage);
-
-  /**
-   * Updates a subset of a buffer object's data store
-   * 
-   * @param offset: specifies the offset (in bytes) into the buffer object's data store where data replacement will begin
-   * @param size:   specifies the size in bytes of the data store region being replaced
-   */
-  void BufferSubData(int offset, uint32_t size, const void* data);
-
-  /**
-   * Delete buffer objects
-   */
-  void Delete() const;
-
-  uint32_t GetBufferID() const { return _buffer; }
-
-  /**
-   * @return the buffer size in bytes
-   */
-  uint32_t GetBufferSize() const { return _size; }
-
-private:
-  uint32_t _buffer;
-  uint32_t _size; 
+  void Unbind() const override;
 };

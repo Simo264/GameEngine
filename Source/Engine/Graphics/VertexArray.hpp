@@ -1,9 +1,8 @@
 ﻿#pragma once
 
 #include "Core/Core.hpp"
-#include "Engine/Graphics/VertexBuffer.hpp"
-#include "Engine/Graphics/ElementBuffer.hpp"
-
+#include "Engine/Graphics/Buffers/VertexBuffer.hpp"
+#include "Engine/Graphics/Buffers/ElementBuffer.hpp"
 
 constexpr int MAX_VERTEX_ATTRIBUTES = 128;
 
@@ -61,15 +60,46 @@ public:
    *  }
    *
    *  We describe that stream of data using two arrays:
-   *    1. first array of attributes [3, 3, 2] 
-   *    2. second array of locations [0, 1, 2]
+   *    1. attributes array [3, 3, 2] 
+   *    2. locations array  [0, 1, 2]
    * 
    *    layout (location=0) in vec3 attribute0 (x,y,z)
    *    layout (location=1) in vec3 attribute1 (x,y,z)
    *    layout (location=2) in vec2 attribute2 (x,y)
    */
-  VertexSpecification();
+  VertexSpecification(int numAttributes) 
+  {
+    _vertexAttributes = numAttributes;
+    
+    /* By default attribute array is set to 0 -> [0, 0, 0] */
+    _attributes.fill(0);
+
+    /* By default location array is incremental -> [0, 1, 2] */
+    for (int i = 0; i < numAttributes; i++)
+      _locations[i] = i;
+  }
+
+  /**
+   * Update the attribute array with the given values
+   */
+  void UpdateAttributes(std::initializer_list<uint8_t> values)
+  {
+    for (int i = 0; i < values.size(); i++)
+      _attributes[i] = *(values.begin() + i);
+  }
+
+  /**
+   * Update the location array with the given values
+   */
+  void UpdateLocations(std::initializer_list<uint8_t> values)
+  {
+    for (int i = 0; i < values.size(); i++)
+      _locations[i] = *(values.begin() + i);
+  }
  
+  uint32_t GetNumAttributes() const { return _vertexAttributes; }
+  const Array<uint8_t, MAX_VERTEX_ATTRIBUTES>& GetAttributes() { return _attributes; }
+  const Array<uint8_t, MAX_VERTEX_ATTRIBUTES>& GetLocations() { return _locations; }
 
 private:
   Array<uint8_t, MAX_VERTEX_ATTRIBUTES> _attributes;
@@ -109,9 +139,14 @@ public:
   void Generate();
 
   /**
-   * Delete vertex array objects
+   * Only delete the vertex array object
    */
   void Delete() const;
+
+  /**
+   * Delete either the vertex array object and all buffer objects bounded with it
+   */
+  void Destroy() const;
 
   /**
    * Bind the vertex array object
@@ -123,6 +158,42 @@ public:
    */
   void Unbind() const;
 
+  /**
+   * Bind a buffer to a vertex buffer bind point
+   * 
+   * @param bindingindex: the index of the vertex buffer binding point to which to bind the buffer
+   * @param offset:       the offset of the first element of the buffer
+   * @param stride:       the distance between elements within the buffer
+   */
+  void BindVertexBuffer(const VertexBuffer& vertexBuffer, int bindingindex, int offset, int stride) const;
+
+  /**
+   * Enable a generic vertex attribute array
+   * 
+   * @param index: specifies the index of the generic vertex attribute to be enabled or disabled.
+   */
+  void EnableAttribute(int index) const;
+
+  /**
+   * Disable a generic vertex attribute array
+   *
+   * @param index: specifies the index of the generic vertex attribute to be enabled or disabled.
+   */
+  void DisableAttribute(int index) const;
+
+  /**
+   * Specify the organization of vertex arrays
+   *
+   * @param attribindex:    the generic vertex attribute array being described
+   * @param size:           the number of values per vertex that are stored in the array
+   * @param relativeoffset: the distance between elements within the buffer
+   */
+  void SetAttribSpecification(int attribindex, int size, int type, bool normalize, int relativeoffset) const;
+
+  /**
+   * associate a vertex attribute and a vertex buffer binding for a vertex array object
+   */
+  void SetAttribBinding(int attribindex, int bindingindex) const;
 
 private:
   uint32_t _vao;
@@ -135,64 +206,6 @@ private:
 
 
 #if 0
-/* ------------------------------------ 
-  Vertex buffer layout 
-
-  e.g: from vertex data stream
-    {0,0,1, 0,0,0, 1,0} -> vec3, vec3, vec2
-    {0,0,1, 0,0,0, 0,1} -> vec3, vec3, vec2
-  
-  we describe that stream of data as: attributes = [3, 3, 2]
-    layout=0: in vec3 components (x,y,z)
-    layout=1: in vec3 components (x,y,z)
-    layout=2: in vec2 components (x,y)
-  ------------------------------------ */
-class VertexBufferLayout
-{
-public:
-  VertexBufferLayout()
-  {
-    numAttrs = 0;
-    attributes.fill(0);
-  }
-  
-  void PushAttribute(uint8_t attribute)
-  {
-    attributes[numAttrs++] = attribute;
-  }
-  
-  void PushAttributes(std::initializer_list<uint8_t> values) 
-  {
-    for (int i = numAttrs; i < values.size(); i++, numAttrs++)
-      attributes[i] = *(values.begin() + i);
-  }
-  Array<uint8_t, 16> attributes;
-  uint32_t numAttrs;
-};
-
-/* --------------------------------------------------------------
-  Pack the vertex buffer data
-  -------------------------------------------------------------- */
-struct VertexBufferData
-{
-  uint64_t	vertexDataSize; /* size in bytes */
-  float*    vertextDataPtr;
-  uint64_t	indexDataSize;  /* size in bytes */
-  uint32_t* indexDataPtr;   
-
-  VertexBufferData() : 
-    vertexDataSize{ 0 }, 
-    vertextDataPtr{ nullptr }, 
-    indexDataSize{ 0 }, 
-    indexDataPtr{ nullptr } 
-  {}
-  VertexBufferData(uint64_t vSize, float* vData, uint64_t iSize, uint32_t* iData) : 
-    vertexDataSize{ vSize }, 
-    vertextDataPtr{ vData }, 
-    indexDataSize{ iSize }, 
-    indexDataPtr{ iData } 
-  {}
-};
 
 /* ------------------------------------
       Vertex array class
@@ -241,11 +254,6 @@ public:
   uint32_t IndexBufferID()  const { return _ebo; }
   VertexBufferLayout GetLayout() const { return _layout; }
   
-  /* Copy the vertex buffer data into writeBuffer */
-  void CopyVertexBufferData(uint32_t writeBuffer);
-
-  /* Copy the index buffer data into writeBuffer */
-  void CopyIndexBufferData(uint32_t writeBuffer);
 
   uint32_t numVertices; /* Used in renderer */
   uint32_t numIndices;  /* Used in renderer */
