@@ -2,21 +2,27 @@
 
 #include "Core/Platform/OpenGL/OpenGL.hpp"
 
-void Buffer::Generate()
+void Buffer::Create()
 {
-	glGenBuffers(1, &_buffer);
+	glCreateBuffers(1, &bufferID);
 }
 
 void Buffer::Delete() const
 {
-	glDeleteBuffers(1, &_buffer);
+	glDeleteBuffers(1, &bufferID);
 }
 
-void Buffer::Copy(const Buffer& other, uint64_t size, int readOffset, int writeOffset)
+void Buffer::CopyStorage(const Buffer& writeBuffer, int readOffset, int writeOffset, uint64_t size)
 {
-	glBindBuffer(GL_COPY_READ_BUFFER, _buffer);
-	glBindBuffer(GL_COPY_WRITE_BUFFER, other.GetBufferID());
-	glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, readOffset, writeOffset, size);
-	glBindBuffer(GL_COPY_READ_BUFFER, 0);
-	glBindBuffer(GL_COPY_WRITE_BUFFER, 0);
+	glCopyNamedBufferSubData(bufferID, writeBuffer.bufferID, readOffset, writeOffset, size);
+}
+
+void Buffer::CreateStorage(uint64_t size, const void* data, int usage)
+{
+	glNamedBufferData(bufferID, size, data, usage);
+}
+
+void Buffer::UpdateStorage(int offset, uint32_t size, const void* data)
+{
+	glNamedBufferSubData(bufferID, offset, size, data);
 }

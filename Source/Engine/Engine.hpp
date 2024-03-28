@@ -16,6 +16,8 @@ public:
 	Editor editor;
 
 private:
+	void SetGLStates();
+
 	void LoadConfig();
 	
 	/* Load shader programs from Shaders/ directory */

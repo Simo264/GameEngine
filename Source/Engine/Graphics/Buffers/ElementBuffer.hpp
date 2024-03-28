@@ -19,19 +19,16 @@ class ElementBuffer : public Buffer
 public:
   using ElementBufferDataType = uint32_t;
 
-  /**
-   * Create a new data store for a buffer object
-   *
-   * @param usage:  the symbolic constant must be GL_STREAM_DRAW, GL_STREAM_READ, GL_STREAM_COPY, GL_STATIC_DRAW,
-   *                GL_STATIC_READ, GL_STATIC_COPY, GL_DYNAMIC_DRAW, GL_DYNAMIC_READ, or GL_DYNAMIC_COPY.
-   */
-  ElementBuffer(const void* data, uint64_t size, int usage);
+  ElementBuffer() 
+    : Buffer(),
+      numIndices{ 0 } 
+  {}
 
-  void BufferData(const void* data, uint64_t size, int usage) override;
-
-  void BufferSubData(int offset, uint32_t size, const void* data) override;
+  ElementBuffer(uint64_t size, const void* data, int usage);
 
   void Bind() const override;
 
   void Unbind() const override;
+
+  uint32_t numIndices;
 };

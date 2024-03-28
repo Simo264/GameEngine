@@ -34,6 +34,7 @@ void ObjectLoader::LoadMesh(StaticMeshComponent* mesh)
   const uint64_t vertexDataSize = aimesh->mNumVertices * 8; /* 8: 3(position), 3(normals), 2(uv/text coords) */
   const uint64_t indDatasize = aimesh->mNumFaces * 3;       /* 3: number of vertices per triangle */
 
+#if 0
   /* Store the sizes for the vertex array buffers */
   VertexBufferData data;
   data.vertexDataSize = vertexDataSize * sizeof(float);
@@ -54,6 +55,7 @@ void ObjectLoader::LoadMesh(StaticMeshComponent* mesh)
 
   /* Now fill index buffer with data */
   LoadIndices(aimesh, vao->IndexBufferID());
+#endif
 
   /* Load materials */
   if (aimesh->mMaterialIndex >= 0)

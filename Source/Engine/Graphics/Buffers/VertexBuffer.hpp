@@ -46,19 +46,16 @@ class VertexBuffer : public Buffer
 public:
   using VertexBufferDataType = float;
 
-  /**
-   * Create a new data store for a buffer object
-   * 
-   * @param usage:  the symbolic constant must be GL_STREAM_DRAW, GL_STREAM_READ, GL_STREAM_COPY, GL_STATIC_DRAW, 
-   *                GL_STATIC_READ, GL_STATIC_COPY, GL_DYNAMIC_DRAW, GL_DYNAMIC_READ, or GL_DYNAMIC_COPY.
-   */
-  VertexBuffer(const void* data, uint64_t size, int usage);
+  VertexBuffer() : 
+    Buffer(), 
+    numVertices{ 0 } 
+  {}
 
-  void BufferData(const void* data, uint64_t size, int usage) override;
-
-  void BufferSubData(int offset, uint32_t size, const void* data) override;
+  VertexBuffer(uint64_t size, const void* data,  int usage);
 
   void Bind() const override;
 
   void Unbind() const override;
+
+  uint32_t numVertices;
 };

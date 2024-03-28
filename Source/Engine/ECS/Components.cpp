@@ -103,10 +103,10 @@ StaticMeshComponent::StaticMeshComponent()
 	vertexArray = std::make_shared<VertexArray>();
 }
 
-StaticMeshComponent::StaticMeshComponent(const VertexBufferLayout& layout, const VertexBufferData& data)
-{
-	vertexArray = std::make_shared<VertexArray>(layout, data, GL_STATIC_DRAW);
-}
+//StaticMeshComponent::StaticMeshComponent(const VertexBufferLayout& layout, const VertexBufferData& data)
+//{
+//	vertexArray = std::make_shared<VertexArray>(layout, data, GL_STATIC_DRAW);
+//}
 
 StaticMeshComponent::StaticMeshComponent(const Path& objFilePath)
 {
@@ -119,10 +119,10 @@ StaticMeshComponent::StaticMeshComponent(const Path& objFilePath)
 	material = loader.material;
 }
 
-void StaticMeshComponent::InitMesh(const VertexBufferLayout& layout, const VertexBufferData& data) const
-{
-	vertexArray->InitializeBuffers(layout, data, GL_STATIC_DRAW);
-}
+//void StaticMeshComponent::InitMesh(const VertexBufferLayout& layout, const VertexBufferData& data) const
+//{
+//	vertexArray->InitializeBuffers(layout, data, GL_STATIC_DRAW);
+//}
 
 const char* StaticMeshComponent::GetComponentName(bool lower)
 {
@@ -131,7 +131,7 @@ const char* StaticMeshComponent::GetComponentName(bool lower)
 
 void StaticMeshComponent::DestroyMesh() const
 {
-	vertexArray->Destroy();
+	//vertexArray->Destroy();
 }
 
 void StaticMeshComponent::DrawMesh(const Mat4f& transform) const
@@ -148,7 +148,7 @@ void StaticMeshComponent::DrawMesh(const Mat4f& transform) const
 	}
 
 	/* If vertex array does not contain indices call DrawArrays */
-	if (vertexArray->numIndices == 0)
+	if (vertexArray->elementBuffer.numIndices == 0)
 		Renderer::DrawArrays(*vertexArray);
 
 	/* If vertex array does contain indices call DrawIndexed */

@@ -31,40 +31,7 @@ void WindowManager::Initialize()
   int version = gladLoadGL(glfwGetProcAddress);
   assert((version != 0) && "Failed to initialize OpenGL context");
 
-  /* Depth test ON */
-  glEnable(GL_DEPTH_TEST);
-  glDepthMask(GL_TRUE);   /* enable or disable writing into the depth buffer */
-  glDepthFunc(GL_LESS);   /* specify the value used for depth buffer comparisons */
 
-  /* Stencil test ON */
-  glEnable(GL_STENCIL_TEST);
-  glStencilFunc(GL_EQUAL, 0, 0xFF); /* glStencilFunc only describes whether OpenGL should pass or discard 
-                                       fragments based on the stencil buffer's content, not how we can actually 
-                                       update the buffer */
-  
-  glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP); /* whatever the outcome of any of the tests, 
-                                             the stencil buffer keeps its values. The default behavior does 
-                                             not update the stencil buffer, so if you want to write to the 
-                                             stencil buffer you need to specify at least one different action 
-                                             for any of the options */
-
-  //glStencilMask(0xFF);  /* enable write to stencil buffer */
-  //glStencilMask(0x00);  /* disable write to stencil buffer */
-
-  /* Blending OFF */
-  glDisable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-  /* Culling OFF */
-  glDisable(GL_CULL_FACE);
-  glCullFace(GL_FRONT); /* specify whether front- or back-facing facets can be culled */
-  glFrontFace(GL_CW);
-
-  /* Gamma correction OFF */
-  glDisable(GL_FRAMEBUFFER_SRGB);
-
-  /* Antialising ON */
-  glEnable(GL_MULTISAMPLE);
 }
 
 void WindowManager::CleanUp()

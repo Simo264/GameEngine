@@ -115,7 +115,7 @@ struct StaticMeshComponent : public IComponent
 	StaticMeshComponent();
 
 	/* Initialize Mesh component from given data */
-	StaticMeshComponent(const class VertexBufferLayout& layout, const class VertexBufferData& data);
+	//StaticMeshComponent(const class VertexBufferLayout& layout, const class VertexBufferData& data);
 
 	/* Initialize Mesh getting data from .obj file */
 	StaticMeshComponent(const Path& objFilePath);
@@ -135,7 +135,7 @@ struct StaticMeshComponent : public IComponent
 	void ToString(String& out) const override;
 
 	/* Initialize buffers with given data */
-	void InitMesh(const VertexBufferLayout& layout, const VertexBufferData& data) const;
+	//void InitMesh(const VertexBufferLayout& layout, const VertexBufferData& data) const;
 
 	/* Destroy vertex array */
 	void DestroyMesh() const;

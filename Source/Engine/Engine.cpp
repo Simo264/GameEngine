@@ -40,6 +40,8 @@ void Engine::Initialize()
   WindowManager::Instance().Initialize();
   LoadConfig();
 
+  SetGLStates();
+
   ShaderManager::Instance().Initialize();
   LoadShaders();
   
@@ -61,9 +63,72 @@ void Engine::Run()
   auto& shadowMapDepthShader  = instanceSM.GetShader("ShadowMapDepthShader");
   auto& shadowMapShader       = instanceSM.GetShader("ShadowMapShader");
 
+  float positions[] = {
+     0.5f, -0.5f, 0.0f,  
+    -0.5f, -0.5f, 0.0f,  
+     0.0f,  0.5f, 0.0f,  
+  };
+  uint8_t colors[] = {
+    255, 0, 0,
+    0, 255, 0,
+    0, 0, 255,
+  };
+
+  /* create vertex buffer with positions */
+  VertexBuffer vbo_pos(sizeof(positions), positions, GL_STATIC_DRAW);
+
+  /* create vertex buffer with colors */
+  VertexBuffer vbo_col(sizeof(colors), colors, GL_STATIC_DRAW);
+
+  /* create vertex array, bind vertex buffer, set attribute format, enable attribute */
+  VertexArray vao;
+  vao.Create();
+
+  const int bindingPosition = 0;  /* binding point 0 -> position */
+  const int bindingColor    = 1;  /* binding point 1 -> color */
+
+  const int attrPosIndex    = 10; /* layout=10 -> position */
+  const int attrColIndex    = 11; /* laytou=11 -> color */
+
+  /* position -> 3 floats */
+  /* color    -> 3 unsigned bytes */
+  vao.SetAttribFormat(attrPosIndex, 3, GL_FLOAT, true, 0);
+  vao.SetAttribFormat(attrColIndex, 3, GL_UNSIGNED_BYTE, true, 0);
+
+  /* vbo_pos -> binding point 0 */
+  /* vbo_col -> binding point 1 */
+  vao.BindVertexBuffer(bindingPosition, vbo_pos, 0, 3 * sizeof(float));
+  vao.BindVertexBuffer(bindingColor,    vbo_col, 0, 3 * sizeof(uint8_t));
+  
+  /* set binding position: 10 -> 0*/
+  /* set binding color:    11 -> 1*/
+  vao.SetAttribBinding(attrPosIndex, bindingPosition);
+  vao.SetAttribBinding(attrColIndex, bindingColor);
+
+  vao.EnableAttribute(attrPosIndex);
+  vao.EnableAttribute(attrColIndex);
+
+
+  while (window.IsOpen())
+  {
+    window.PoolEvents();
+
+    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    testingShader.Use();
+    vao.Bind();
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+
+    window.SwapWindowBuffers();
+  }
+
+#if 0
+
+
   /* -------------------------- Framebuffer -------------------------- */
-  //Vec2i framebufferSize = window.GetFramebufferSize();
-  Vec2i framebufferSize = { 957, 498 };
+  Vec2i framebufferSize = window.GetFramebufferSize();
+  //Vec2i framebufferSize = { 957, 498 };
   FrameBuffer framebuffer(framebufferSize);
   const uint32_t& framebufferImage = framebuffer.GetImage();
 
@@ -94,12 +159,13 @@ void Engine::Run()
      1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
      1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
   };
-  VertexBufferLayout layout;
-  layout.PushAttributes({ 3,2 });
-  VertexBufferData data;
-  data.vertexDataSize = sizeof(quadVertices);
-  data.vertextDataPtr = quadVertices;
-  VertexArray quadVao(layout, data, GL_STATIC_DRAW);
+
+  //VertexBufferLayout layout;
+  //layout.PushAttributes({ 3,2 });
+  //VertexBufferData data;
+  //data.vertexDataSize = sizeof(quadVertices);
+  //data.vertextDataPtr = quadVertices;
+  //VertexArray quadVao(layout, data, GL_STATIC_DRAW);
 
   Mat4f lightSpaceMatrix{};
 
@@ -201,6 +267,7 @@ void Engine::Run()
     window.SwapWindowBuffers();
     lastUpdateTime = now;
   }
+#endif
 }
 
 void Engine::CleanUp()
@@ -218,6 +285,44 @@ void Engine::CleanUp()
  *          PRIVATE METHODS
  * -----------------------------------------------------
 */
+
+void Engine::SetGLStates()
+{
+  /* Depth test OFF */
+  glDisable(GL_DEPTH_TEST);
+  glDepthMask(GL_TRUE);   /* enable or disable writing into the depth buffer */
+  glDepthFunc(GL_LESS);   /* specify the value used for depth buffer comparisons */
+
+  /* Stencil test OFF */
+  glDisable(GL_STENCIL_TEST);
+  glStencilFunc(GL_EQUAL, 0, 0xFF); /* glStencilFunc only describes whether OpenGL should pass or discard
+                                       fragments based on the stencil buffer's content, not how we can actually
+                                       update the buffer */
+
+  glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP); /* whatever the outcome of any of the tests,
+                                             the stencil buffer keeps its values. The default behavior does
+                                             not update the stencil buffer, so if you want to write to the
+                                             stencil buffer you need to specify at least one different action
+                                             for any of the options */
+
+                                             //glStencilMask(0xFF);  /* enable write to stencil buffer */
+                                             //glStencilMask(0x00);  /* disable write to stencil buffer */
+
+                                             /* Blending OFF */
+  glDisable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+  /* Culling OFF */
+  glDisable(GL_CULL_FACE);
+  glCullFace(GL_FRONT); /* specify whether front- or back-facing facets can be culled */
+  glFrontFace(GL_CW);
+
+  /* Gamma correction OFF */
+  glDisable(GL_FRAMEBUFFER_SRGB);
+
+  /* Antialising ON */
+  glEnable(GL_MULTISAMPLE);
+}
 
 void Engine::LoadConfig()
 {

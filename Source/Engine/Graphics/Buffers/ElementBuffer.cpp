@@ -2,35 +2,21 @@
 
 #include "Core/Platform/OpenGL/OpenGL.hpp"
 
-ElementBuffer::ElementBuffer(const void* data, uint64_t size, int usage)
+ElementBuffer::ElementBuffer(uint64_t size, const void* data, int usage)
+	: Buffer()
 {
-	Generate();
-
-	Bind();
-		BufferData(data, size, usage);
-	Unbind();
-}
-
-void ElementBuffer::BufferData(const void* data, uint64_t size, int usage)
-{
-	_size = size;
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, size, data, usage);
-	//glNamedBufferData(_buffer, size, data, usage);
-}
-
-void ElementBuffer::BufferSubData(int offset, uint32_t size, const void* data)
-{
-	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, offset, size, data);
-	//glNamedBufferSubData(_buffer, offset, size, data);
+	Create();
+	CreateStorage(size, data, usage);
+	numIndices = size / sizeof(ElementBufferDataType);
 }
 
 void ElementBuffer::Bind() const
 {
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _buffer);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufferID);
 }
 
 void ElementBuffer::Unbind() const
 {
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _buffer);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufferID);
 }
 
