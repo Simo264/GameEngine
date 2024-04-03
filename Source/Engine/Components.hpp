@@ -7,7 +7,7 @@
 
 /*
 	Component list:
-		-TypeComponent	(is it really useful?)
+		-TypeComponent
 		-LabelComponent
 		-TransformComponent
 		-StaticMeshComponent
@@ -111,21 +111,21 @@ private:
 	--------------------------------------------------------------------------- */
 struct StaticMeshComponent : public IComponent
 {
-	/* Create empty vertex array object. You Must call InitMesh to initialize buffers */
-	StaticMeshComponent();
+	/* Create mesh with given data */
+	StaticMeshComponent(
+		uint64_t				vertsize, 
+		const void*			vertdata, 
+		uint64_t				indsize = 0, 
+		const uint32_t* inddata = nullptr);
 
-	/* Initialize Mesh component from given data */
-	//StaticMeshComponent(const class VertexBufferLayout& layout, const class VertexBufferData& data);
+	/* Create mesh reading vertices data from file */
+	StaticMeshComponent(const Path& filePath);
 
-	/* Initialize Mesh getting data from .obj file */
-	StaticMeshComponent(const Path& objFilePath);
-
-	/* The destructor do nothing. You must call DestroyMesh to destroy vertex array and free memory */
 	~StaticMeshComponent() = default;
 
 	static const char* GetComponentName(bool lower = false);
 
-	void DrawMesh(const Mat4f& transform) const;
+	void DrawMesh();
 
 	/* Return following string representation:
 		"model-path=<path>"														if exists
@@ -134,21 +134,12 @@ struct StaticMeshComponent : public IComponent
 	*/
 	void ToString(String& out) const override;
 
-	/* Initialize buffers with given data */
-	//void InitMesh(const VertexBufferLayout& layout, const VertexBufferData& data) const;
-
 	/* Destroy vertex array */
 	void DestroyMesh() const;
 
-	/* Draw mesh */
-	//void Draw(const Mat4f& transform, class Shader* shader) const;
-
-	/* By default it does not contain textures */
-	Material material;
-
-	Path modelPath;
-
-	SharedPointer<VertexArray> vertexArray;
+	VertexArray vao;
+	Material		material;
+	Path				modelPath;
 };
 
 

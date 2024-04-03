@@ -16,8 +16,8 @@ class ObjectLoader
 public:
 	ObjectLoader(const Path& filePath);
 
-	/* Load data from file and initializes vertex array object */
-	void LoadMesh(struct StaticMeshComponent* mesh);
+	/* Read data from file and put them into buffers */
+	void LoadMesh(class VertexBuffer& vbo, class ElementBuffer& ebo);
 	
 	Material material;
 
@@ -25,7 +25,7 @@ private:
 	Assimp::Importer _importer;
 	const aiScene* _scene;
 
-	void LoadVertices(const aiMesh* aimesh, uint32_t writeBuffer);
-	void LoadIndices(const aiMesh* aimesh, uint32_t writeBuffer);
+	void LoadVertices(const aiMesh* aimesh, class VertexBuffer& vbo);
+	void LoadIndices(const	aiMesh* aimesh,	class ElementBuffer& ebo);
 	class Texture2D* LoadTexture(const aiMaterial* aimaterial, const char* textureType);
 };

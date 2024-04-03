@@ -19,6 +19,7 @@ constexpr float GAMMA_CORRECTION	= 2.2f;
 constexpr float	INITIAL_ZNEAR			= 0.1f;
 constexpr float	INITIAL_ZFAR			= 100.0f;
 
+constexpr char CONFIG_FILENAME[]	= "AppConfig.ini";
 
 /* -----------------------------
 			STL library layer
@@ -51,10 +52,9 @@ using OFStream			= std::ofstream;
 using RuntimeError	= std::runtime_error;
 using Path					= std::filesystem::path;
 
-const Path ROOT_PATH				= std::filesystem::current_path().parent_path();
-const Path SHADERS_PATH			= ROOT_PATH / (Path("Resources/Shaders/").lexically_normal());
-const Path TEXTURES_PATH		= ROOT_PATH / (Path("Resources/Textures/").lexically_normal());
-const Path ICONS_PATH				= ROOT_PATH / (Path("Resources/Icons/").lexically_normal());
-const Path FONTS_PATH				= ROOT_PATH / (Path("Resources/Fonts/").lexically_normal());
-const Path ASSETS_PATH			= ROOT_PATH / (Path("Resources/Assets/").lexically_normal());
-const Path CONFIG_FILENAME	= "AppConfig.ini";
+const Path ROOT_PATH			= std::filesystem::current_path().parent_path();
+const Path SHADERS_PATH		= ROOT_PATH / (Path("Resources/Shaders/").lexically_normal());
+const Path TEXTURES_PATH	= ROOT_PATH / (Path("Resources/Textures/").lexically_normal());
+const Path ICONS_PATH			= ROOT_PATH / (Path("Resources/Icons/").lexically_normal());
+const Path FONTS_PATH			= ROOT_PATH / (Path("Resources/Fonts/").lexically_normal());
+const Path ASSETS_PATH		= ROOT_PATH / (Path("Resources/Assets/").lexically_normal());

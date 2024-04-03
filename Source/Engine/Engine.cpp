@@ -12,13 +12,14 @@
 #include "Engine/ObjectLoader.hpp"
 #include "Engine/ShadowMap.hpp"
 
+#include "Engine/Graphics/Texture2D.hpp"
 #include "Engine/Graphics/Shader.hpp"
 #include "Engine/Graphics/ShaderUniforms.hpp"
 #include "Engine/Graphics/Renderer.hpp"
 #include "Engine/Graphics/FrameBuffer.hpp"
 
-#include "Engine/ECS/GameObject.hpp"
-#include "Engine/ECS/Components.hpp"
+#include "Engine/GameObject.hpp"
+#include "Engine/Components.hpp"
 
 #include "Engine/Subsystems/WindowManager.hpp"
 #include "Engine/Subsystems/ShaderManager.hpp"
@@ -56,6 +57,7 @@ void Engine::Run()
 {
   auto& window                = WindowManager::Instance();
   auto& instanceSM            = ShaderManager::Instance();
+  auto& instanceTM            = TextureManager::Instance();
   auto& testingShader         = instanceSM.GetShader("TestingShader");
   auto& instancingShader      = instanceSM.GetShader("InstancingShader");
   auto& framebufferShader     = instanceSM.GetShader("FramebufferShader");
@@ -63,72 +65,108 @@ void Engine::Run()
   auto& shadowMapDepthShader  = instanceSM.GetShader("ShadowMapDepthShader");
   auto& shadowMapShader       = instanceSM.GetShader("ShadowMapShader");
 
-  float positions[] = {
-     0.5f, -0.5f, 0.0f,  
-    -0.5f, -0.5f, 0.0f,  
-     0.0f,  0.5f, 0.0f,  
-  };
-  uint8_t colors[] = {
-    255, 0, 0,
-    0, 255, 0,
-    0, 0, 255,
-  };
+#if 0
+  auto& diffuseMap  = instanceTM.GetTextureByPath(TEXTURES_PATH / "container_diffuse.png");
+  auto& specularMap = instanceTM.GetTextureByPath(TEXTURES_PATH / "container_specular.png");
 
-  /* create vertex buffer with positions */
-  VertexBuffer vbo_pos(sizeof(positions), positions, GL_STATIC_DRAW);
-
-  /* create vertex buffer with colors */
-  VertexBuffer vbo_col(sizeof(colors), colors, GL_STATIC_DRAW);
-
-  /* create vertex array, bind vertex buffer, set attribute format, enable attribute */
-  VertexArray vao;
-  vao.Create();
-
-  const int bindingPosition = 0;  /* binding point 0 -> position */
-  const int bindingColor    = 1;  /* binding point 1 -> color */
-
-  const int attrPosIndex    = 10; /* layout=10 -> position */
-  const int attrColIndex    = 11; /* laytou=11 -> color */
-
-  /* position -> 3 floats */
-  /* color    -> 3 unsigned bytes */
-  vao.SetAttribFormat(attrPosIndex, 3, GL_FLOAT, true, 0);
-  vao.SetAttribFormat(attrColIndex, 3, GL_UNSIGNED_BYTE, true, 0);
-
-  /* vbo_pos -> binding point 0 */
-  /* vbo_col -> binding point 1 */
-  vao.BindVertexBuffer(bindingPosition, vbo_pos, 0, 3 * sizeof(float));
-  vao.BindVertexBuffer(bindingColor,    vbo_col, 0, 3 * sizeof(uint8_t));
+  Camera camera({ 0.0f, 0.0f, 5.0f }, 45.0f, (16.0f/9.0f));
   
-  /* set binding position: 10 -> 0*/
-  /* set binding color:    11 -> 1*/
-  vao.SetAttribBinding(attrPosIndex, bindingPosition);
-  vao.SetAttribBinding(attrColIndex, bindingColor);
+  float vertices[] = {
+    // positions          // normals           // texture coords
+    -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f,  0.0f,
+     0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f,  0.0f,
+     0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f,  1.0f,
+     0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f,  1.0f,
+    -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f,  1.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f,  0.0f,
 
-  vao.EnableAttribute(attrPosIndex);
-  vao.EnableAttribute(attrColIndex);
+    -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f,  0.0f,
+     0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f,  0.0f,
+     0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f,  1.0f,
+     0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f,  1.0f,
+    -0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f,  1.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f,  0.0f,
 
+    -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
+    -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  1.0f,  1.0f,
+    -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
+    -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
+    -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  0.0f,  0.0f,
+    -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
 
+     0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
+     0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f,  1.0f,
+     0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
+     0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
+     0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  0.0f,  0.0f,
+     0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
+
+    -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f,  1.0f,
+     0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f,  1.0f,
+     0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f,  0.0f,
+     0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f,  0.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  0.0f,  0.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f,  1.0f,
+
+    -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  1.0f,
+     0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f,  1.0f,
+     0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f,  0.0f,
+     0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f,  0.0f,
+    -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  0.0f,
+    -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  1.0f
+  };
+
+  Scene scene;
+  GameObject cube = scene.CreateObject("Cube", 0);
+  cube.AddComponent<TransformComponent>();
+  auto& sm = cube.AddComponent<StaticMeshComponent>(sizeof(vertices), vertices, (uint32_t)0, nullptr);
+  sm.material.diffuse = &diffuseMap;
+  sm.material.specular = &specularMap;
+
+  TimePoint lastUpdateTime = SystemClock::now();
   while (window.IsOpen())
   {
-    window.PoolEvents();
+    const auto now = SystemClock::now();
+    const std::chrono::duration<double> diff = now - lastUpdateTime;
+    const double delta = diff.count();
 
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
+    window.PoolEvents();
+    camera.ProcessInput(window, delta);
+    const auto& cameraViewMatrix = camera.cameraComponent->GetView();
+    const auto& cameraProjectionMatrix = camera.cameraComponent->GetProjection();
+
+    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glEnable(GL_DEPTH_TEST);
 
     testingShader.Use();
-    vao.Bind();
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+    testingShader.SetInt("UMaterial.diffuse", 0);
+    testingShader.SetInt("UMaterial.specular", 1);
+    testingShader.SetVec3f("UViewPos", camera.cameraComponent->position);
+    testingShader.SetVec3f("ULight.position", { 1.2f, 1.0f, 2.0f });
+    testingShader.SetVec3f("ULight.ambient", { 0.2f, 0.2f, 0.2f });
+    testingShader.SetVec3f("ULight.diffuse", { 0.5f, 0.5f, 0.5f });
+    testingShader.SetVec3f("ULight.specular", { 1.0f, 1.0f, 1.0f });
+    testingShader.SetFloat("UMaterial.shininess", 64.0f);
+    testingShader.SetMat4f("UProjection", cameraProjectionMatrix);
+    testingShader.SetMat4f("UView", cameraViewMatrix);
+    testingShader.SetMat4f("UModel", Mat4f(1.0f));
+
+    cube.GetComponent<StaticMeshComponent>()->DrawMesh();
+
+
+
+    glDisable(GL_DEPTH_TEST);
 
     window.SwapWindowBuffers();
+    lastUpdateTime = now;
   }
+#endif
 
-#if 0
 
-
+#if 1
   /* -------------------------- Framebuffer -------------------------- */
   Vec2i framebufferSize = window.GetFramebufferSize();
-  //Vec2i framebufferSize = { 957, 498 };
   FrameBuffer framebuffer(framebufferSize);
   const uint32_t& framebufferImage = framebuffer.GetImage();
 
@@ -151,21 +189,6 @@ void Engine::Run()
   /* -------------------------- Pre-loop -------------------------- */
   TimePoint lastUpdateTime = SystemClock::now();
   const double colorValue = Math::Pow(static_cast<double>(0.3), static_cast<double>(GAMMA_CORRECTION));
-
-  float quadVertices[] = {
-    // positions        // texture Coords
-    -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
-    -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
-     1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
-     1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
-  };
-
-  //VertexBufferLayout layout;
-  //layout.PushAttributes({ 3,2 });
-  //VertexBufferData data;
-  //data.vertexDataSize = sizeof(quadVertices);
-  //data.vertextDataPtr = quadVertices;
-  //VertexArray quadVao(layout, data, GL_STATIC_DRAW);
 
   Mat4f lightSpaceMatrix{};
 
@@ -239,16 +262,6 @@ void Engine::Run()
       //Renderer::drawMode = GL_TRIANGLES;
     }
 
-    /* Render scene as normal */
-    {
-      //glViewport(0, 0, framebufferSize.x, framebufferSize.y);
-      //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-      //sceneShader.Use();
-      //sceneShader.SetMat4f(SHADER_UNIFORM_PROJECTION, cameraProjectionMatrix);
-      //sceneShader.SetMat4f(SHADER_UNIFORM_VIEW, cameraViewMatrix);
-      //scene.DrawScene(sceneShader);
-    }
-    
     framebuffer.Blit();
     framebuffer.Unbind();
 
@@ -288,33 +301,35 @@ void Engine::CleanUp()
 
 void Engine::SetGLStates()
 {
-  /* Depth test OFF */
-  glDisable(GL_DEPTH_TEST);
-  glDepthMask(GL_TRUE);   /* enable or disable writing into the depth buffer */
+  /* Depth test ON */
+  glEnable(GL_DEPTH_TEST);
+  glDepthMask(GL_TRUE);   /* enable/disable writing into the depth buffer */
   glDepthFunc(GL_LESS);   /* specify the value used for depth buffer comparisons */
 
   /* Stencil test OFF */
   glDisable(GL_STENCIL_TEST);
-  glStencilFunc(GL_EQUAL, 0, 0xFF); /* glStencilFunc only describes whether OpenGL should pass or discard
-                                       fragments based on the stencil buffer's content, not how we can actually
-                                       update the buffer */
+  /* 
+    only describes whether OpenGL should pass or discard fragments based on the stencil buffer's content, 
+    not how we can actually update the buffer 
+  */
+  glStencilFunc(GL_EQUAL, 0, 0xFF); 
+  /*
+    whatever the outcome of any of the tests,the stencil buffer keeps its values. 
+    The default behavior does not update the stencil buffer, so if you want to write to the
+    stencil buffer you need to specify at least one different action for any of the options
+  */
+  glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP); 
+  //glStencilMask(0xFF);  /* enable write to stencil buffer */
+  //glStencilMask(0x00);  /* disable write to stencil buffer */
 
-  glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP); /* whatever the outcome of any of the tests,
-                                             the stencil buffer keeps its values. The default behavior does
-                                             not update the stencil buffer, so if you want to write to the
-                                             stencil buffer you need to specify at least one different action
-                                             for any of the options */
-
-                                             //glStencilMask(0xFF);  /* enable write to stencil buffer */
-                                             //glStencilMask(0x00);  /* disable write to stencil buffer */
-
-                                             /* Blending OFF */
+             
+  /* Blending OFF */
   glDisable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
   /* Culling OFF */
   glDisable(GL_CULL_FACE);
-  glCullFace(GL_FRONT); /* specify whether front- or back-facing facets can be culled */
+  glCullFace(GL_FRONT);
   glFrontFace(GL_CW);
 
   /* Gamma correction OFF */

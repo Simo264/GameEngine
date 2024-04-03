@@ -44,18 +44,17 @@
 class VertexBuffer : public Buffer
 {
 public:
-  using VertexBufferDataType = float;
-
-  VertexBuffer() : 
-    Buffer(), 
-    numVertices{ 0 } 
-  {}
+  VertexBuffer() = default;
 
   VertexBuffer(uint64_t size, const void* data,  int usage);
+
+  VertexBuffer(const VertexBuffer& other) 
+  {
+    id    = other.id;
+    size  = other.size;
+  }
 
   void Bind() const override;
 
   void Unbind() const override;
-
-  uint32_t numVertices;
 };

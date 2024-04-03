@@ -8,44 +8,56 @@ uint32_t Renderer::drawMode = GL_TRIANGLES;
 
 void Renderer::DrawArrays(VertexArray& vertexArray)
 {
+	if (vertexArray.numVertices == 0)
+	{
+		CONSOLE_WARN("Invalid vertices number!");
+		return;
+	}
+
 	vertexArray.Bind();
-	glDrawArrays(drawMode, 0, vertexArray.vertexBuffer.numVertices);
+	glDrawArrays(drawMode, 0, vertexArray.numVertices);
 	drawCalls++;
 	vertexArray.Unbind();
 }
 
 void Renderer::DrawArraysInstanced(VertexArray& vertexArray, int nInstances)
 {
+	if (vertexArray.numVertices == 0)
+	{
+		CONSOLE_WARN("Invalid vertices number!");
+		return;
+	}
+
 	vertexArray.Bind();
-	glDrawArraysInstanced(drawMode, 0, vertexArray.vertexBuffer.numVertices, nInstances);
+	glDrawArraysInstanced(drawMode, 0, vertexArray.numVertices, nInstances);
 	drawCalls++;
 	vertexArray.Unbind();
 }
 
-void Renderer::DrawIndexed(VertexArray& vertexArray)
+void Renderer::DrawElements(VertexArray& vertexArray)
 {
-	if (vertexArray.elementBuffer.numIndices == 0)
+	if (vertexArray.numIndices == 0)
 	{
-		CONSOLE_WARN("Renderer::DrawIndexed called but no indices provided");
+		CONSOLE_WARN("Invalid indices number!");
 		return;
 	}
 		
 	vertexArray.Bind();
-	glDrawElements(drawMode, vertexArray.elementBuffer.numIndices, GL_UNSIGNED_INT, 0);
+	glDrawElements(drawMode, vertexArray.numIndices, GL_UNSIGNED_INT, 0);
 	drawCalls++;
 	vertexArray.Unbind();
 }
 
-void Renderer::DrawIndexedInstanced(VertexArray& vertexArray, int nInstances)
+void Renderer::DrawElementsInstanced(VertexArray& vertexArray, int nInstances)
 {
-	if (vertexArray.elementBuffer.numIndices == 0)
+	if (vertexArray.numIndices == 0)
 	{
-		CONSOLE_WARN("Renderer::DrawIndexedInstanced called but no indices provided");
+		CONSOLE_WARN("Invalid indices number!");
 		return;
 	}
 
 	vertexArray.Bind();
-	glDrawElementsInstanced(drawMode, vertexArray.elementBuffer.numIndices, GL_UNSIGNED_INT, 0, nInstances);
+	glDrawElementsInstanced(drawMode, vertexArray.numIndices, GL_UNSIGNED_INT, 0, nInstances);
 	drawCalls++;
 	vertexArray.Unbind();
 }

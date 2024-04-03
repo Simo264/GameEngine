@@ -3,8 +3,7 @@
 #include "Core/Platform/OpenGL/OpenGL.hpp"
 
 VertexBuffer::VertexBuffer(uint64_t size, const void* data, int usage)
-	: Buffer(), 
-		numVertices{ 0 }
+	: Buffer()
 {
 	Create();
 	CreateStorage(size, data, usage);
@@ -12,7 +11,7 @@ VertexBuffer::VertexBuffer(uint64_t size, const void* data, int usage)
 
 void VertexBuffer::Bind() const
 {
-	glBindBuffer(GL_ARRAY_BUFFER, bufferID);
+	glBindBuffer(GL_ARRAY_BUFFER, id);
 }
 
 void VertexBuffer::Unbind() const

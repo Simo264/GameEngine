@@ -1,8 +1,8 @@
 #include "Scene.hpp"
 #include "Core/Log/Logger.hpp"
 
-#include "Engine/ECS/GameObject.hpp"
-#include "Engine/ECS/Components.hpp"
+#include "Engine/GameObject.hpp"
+#include "Engine/Components.hpp"
 
 #include "Engine/Graphics/Shader.hpp"
 #include "Engine/Graphics/ShaderUniforms.hpp"
@@ -47,7 +47,7 @@ void Scene::DrawScene(Shader& shader)
 			transform = transComp->GetTransformation();
 		
 		shader.SetMat4f(SHADER_UNIFORM_MODEL, transform);
-		smeshComp.DrawMesh(transform);
+		smeshComp.DrawMesh();
 	}
 }
 

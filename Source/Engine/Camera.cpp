@@ -1,6 +1,6 @@
 #include "Camera.hpp"
 
-#include "Engine/ECS/Components.hpp"
+#include "Engine/Components.hpp"
 
 #include "Engine/Subsystems/WindowManager.hpp"
 #include <GLFW/glfw3.h>
@@ -23,7 +23,7 @@ Camera::~Camera()
 void Camera::ProcessInput(WindowManager& window, float delta)
 {
 	const static float movementSpeed = 7.5f;
-	const static float mouseSensitivity = 25.0f;
+	const static float mouseSensitivity = 25.0f; 
 
 	Move(window, movementSpeed, delta);
 	if (window.GetMouseKey(GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)

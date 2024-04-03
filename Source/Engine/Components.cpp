@@ -98,43 +98,129 @@ void TransformComponent::ToString(String& out) const
 			StaticMeshComponent
 	--------------------------------------------------------------------------- */
 
-StaticMeshComponent::StaticMeshComponent()
+StaticMeshComponent::StaticMeshComponent(
+	uint64_t				vertsize,
+	const void*			vertdata,
+	uint64_t				indsize,
+	const uint32_t* inddata)
 {
-	vertexArray = std::make_shared<VertexArray>();
+	vao.Create();
+
+	/* position(xyz) normal(xyz) tc(xy) */
+
+	VertexSpecifications specs{};
+	specs.bindingindex = 0;
+	specs.attrindex = 0;
+	specs.components = 3;
+	specs.type = GL_FLOAT;
+	specs.normalized = true;
+	specs.relativeoffset = 0;
+	vao.SetVertexSpecifications(specs);
+
+	specs.bindingindex = 0;
+	specs.attrindex = 1;
+	specs.components = 3;
+	specs.type = GL_FLOAT;
+	specs.normalized = true;
+	specs.relativeoffset = 3 * sizeof(float);
+	vao.SetVertexSpecifications(specs);
+
+	specs.bindingindex = 0;
+	specs.attrindex = 2;
+	specs.components = 2;
+	specs.type = GL_FLOAT;
+	specs.normalized = true;
+	specs.relativeoffset = 6 * sizeof(float);
+	vao.SetVertexSpecifications(specs);
+
+	vao.numVertices = vertsize / (8 * sizeof(float));
+	vao.numIndices	= indsize / sizeof(uint32_t);
+	
+	if (vertsize > 0)
+	{
+		VertexBuffer vbo(vertsize, vertdata, GL_STATIC_DRAW);
+		vao.AttachVertexBuffer(0, vbo, 0, 8 * sizeof(float));
+
+		if (indsize > 0)
+		{
+			ElementBuffer ebo(indsize, inddata, GL_STATIC_DRAW);
+			vao.AttachElementBuffer(ebo);
+		}
+	}
+	else
+	{
+		CONSOLE_WARN("Vertex buffer empty!");
+	}
+
 }
 
-//StaticMeshComponent::StaticMeshComponent(const VertexBufferLayout& layout, const VertexBufferData& data)
-//{
-//	vertexArray = std::make_shared<VertexArray>(layout, data, GL_STATIC_DRAW);
-//}
-
-StaticMeshComponent::StaticMeshComponent(const Path& objFilePath)
+StaticMeshComponent::StaticMeshComponent(const Path& filePath)
 {
-	vertexArray = std::make_shared<VertexArray>();
-	modelPath = objFilePath;
+	modelPath = filePath;
 
-	ObjectLoader loader(objFilePath);
-	loader.LoadMesh(this);
+	vao.Create();
+
+	/* position(xyz) normal(xyz) tc(xy) */
+
+	VertexSpecifications specs{};
+	specs.bindingindex = 0;
+	specs.attrindex = 0;
+	specs.components = 3;
+	specs.type = GL_FLOAT;
+	specs.normalized = false;
+	specs.relativeoffset = 0;
+	vao.SetVertexSpecifications(specs);
+		
+	specs.bindingindex = 0;
+	specs.attrindex = 1;
+	specs.components = 3;
+	specs.type = GL_FLOAT;
+	specs.normalized = false;
+	specs.relativeoffset = 3 * sizeof(float);
+	vao.SetVertexSpecifications(specs);
+		
+	specs.bindingindex = 0;
+	specs.attrindex = 2;
+	specs.components = 2;
+	specs.type = GL_FLOAT;
+	specs.normalized = false;
+	specs.relativeoffset = 6 * sizeof(float);
+	vao.SetVertexSpecifications(specs);
+
+	ObjectLoader loader(filePath);
+
+	VertexBuffer vbo;
+	ElementBuffer ebo;
+	loader.LoadMesh(vbo, ebo);
 
 	material = loader.material;
+	vao.numVertices = vbo.size / (8 * sizeof(float));
+	vao.numIndices	= ebo.size / sizeof(uint32_t);
+
+	if (vbo.IsValid())
+	{
+		vao.AttachVertexBuffer(0, vbo, 0, 8 * sizeof(float));
+		
+		if (ebo.IsValid())
+			vao.AttachElementBuffer(ebo);
+	}
+	else
+	{
+		CONSOLE_WARN("Vertex buffer empty!");
+	}
 }
 
-//void StaticMeshComponent::InitMesh(const VertexBufferLayout& layout, const VertexBufferData& data) const
-//{
-//	vertexArray->InitializeBuffers(layout, data, GL_STATIC_DRAW);
-//}
+void StaticMeshComponent::DestroyMesh() const
+{
+	vao.Delete();
+}
 
 const char* StaticMeshComponent::GetComponentName(bool lower)
 {
 	return (lower ? "staticmeshcomponent" : "StaticMeshComponent");
 }
 
-void StaticMeshComponent::DestroyMesh() const
-{
-	//vertexArray->Destroy();
-}
-
-void StaticMeshComponent::DrawMesh(const Mat4f& transform) const
+void StaticMeshComponent::DrawMesh()
 {
 	if (material.diffuse)
 	{
@@ -148,12 +234,12 @@ void StaticMeshComponent::DrawMesh(const Mat4f& transform) const
 	}
 
 	/* If vertex array does not contain indices call DrawArrays */
-	if (vertexArray->elementBuffer.numIndices == 0)
-		Renderer::DrawArrays(*vertexArray);
+	if (vao.numIndices == 0)
+		Renderer::DrawArrays(vao);
 
 	/* If vertex array does contain indices call DrawIndexed */
 	else
-		Renderer::DrawIndexed(*vertexArray);
+		Renderer::DrawElements(vao);
 
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, 0); /* unbind specular */

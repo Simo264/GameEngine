@@ -4,25 +4,36 @@
 
 void Buffer::Create()
 {
-	glCreateBuffers(1, &bufferID);
+	glCreateBuffers(1, &id);
 }
 
 void Buffer::Delete() const
 {
-	glDeleteBuffers(1, &bufferID);
+	glDeleteBuffers(1, &id);
 }
 
 void Buffer::CopyStorage(const Buffer& writeBuffer, int readOffset, int writeOffset, uint64_t size)
 {
-	glCopyNamedBufferSubData(bufferID, writeBuffer.bufferID, readOffset, writeOffset, size);
+	glCopyNamedBufferSubData(id, writeBuffer.id, readOffset, writeOffset, size);
 }
 
 void Buffer::CreateStorage(uint64_t size, const void* data, int usage)
 {
-	glNamedBufferData(bufferID, size, data, usage);
+	this->size = size;
+	glNamedBufferData(id, size, data, usage);
 }
 
 void Buffer::UpdateStorage(int offset, uint32_t size, const void* data)
 {
-	glNamedBufferSubData(bufferID, offset, size, data);
+	glNamedBufferSubData(id, offset, size, data);
+}
+
+void* Buffer::MapStorage(int access)
+{
+	return glMapNamedBuffer(id, access);
+}
+
+bool Buffer::UnmapStorage()
+{
+	return glUnmapNamedBuffer(id);
 }

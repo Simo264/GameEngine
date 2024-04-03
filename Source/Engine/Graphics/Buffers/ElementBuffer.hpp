@@ -17,18 +17,19 @@
 class ElementBuffer : public Buffer
 {
 public:
-  using ElementBufferDataType = uint32_t;
-
   ElementBuffer() 
-    : Buffer(),
-      numIndices{ 0 } 
+    : Buffer()
   {}
 
-  ElementBuffer(uint64_t size, const void* data, int usage);
+  ElementBuffer(uint64_t size, const uint32_t* data, int usage);
+
+  ElementBuffer(const ElementBuffer& other)
+  {
+    id    = other.id;
+    size  = other.size;
+  }
 
   void Bind() const override;
 
   void Unbind() const override;
-
-  uint32_t numIndices;
 };

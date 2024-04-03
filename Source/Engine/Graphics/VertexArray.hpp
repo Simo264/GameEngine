@@ -7,53 +7,46 @@
 constexpr int MAX_VERTEX_ATTRIBUTES = 128;
 
 /**  
- *  -------------------------- Vertex Specification --------------------------
  *  Vertex Specification is the process of setting up the necessary objects for 
  *  rendering with a particular shader program, as well as the process of using 
  *  those objects to render. 
  *  
  *  Submitting vertex data for rendering requires creating a stream of vertices, 
- *  and then telling OpenGL how to interpret that stream.
- *
- *  -------------------------- Vertex Stream --------------------------
- *  In order to render at all, you must be using a shader program or program pipeline 
- *  which includes a Vertex Shader. 
- *  
- *  The Vertex Shader defines the list of expected Vertex Attributes for that shader, 
- *  where each attribute is mapped to each user-defined input variable. 
- *  This set of attributes defines what values the vertex stream must provide to properly 
- *  render with this shader.
- *
- *  There are two ways of rendering with arrays of vertices: 
- *    1. you can generate a stream in the array's order (without index buffer)
- *    2. or you can use a list of indices to define the order (with index buffer)
- *
- * 
- *  Let's say you have the following array of arrays containing 3d position data belonging to 3 vertices:
- *  { {1, 1, 1}, {0, 0, 0}, {0, 0, 1} }
- * 
- *  A vertex stream can of course have multiple attributes. 
- *  You can take the above position array and augment it with, for example, a texture coordinate array:
- *  { {0, 0}, {0.5, 0}, {0, 1} }
- * 
- *  The vertex stream you get will be as follows:
- *  { 
- *    [{0, 0, 1}, {0.0, 1}], 
- *    [{0, 0, 0}, {0.5, 0}], 
- *    [{1, 1, 1}, {0.0, 0}], 
- *    [{0, 0, 1}, {0.0, 1}], 
- *    [{0, 0, 0}, {0.5, 0}], 
- *    [{0, 0, 1}, {0.0, 1}] 
- *  }
- *  
- *  The above stream is not enough to actually draw anything; you must also tell OpenGL how to interpret this stream.
+ *  and then telling OpenGL how to interpret that stream
  */
-struct VertexSpecification
+struct VertexSpecifications
 {
+  /**
+   * The index of the vertex buffer binding point to which to bind the buffer
+   */
+  int bindingindex;
   
-  
-};
+  /**
+   * The index of the generic vertex attribute to be enabled or disabled.
+   */
+  int attrindex;
 
+  /**
+   * The number of components per vertex are allocated to the specified attribute and must be 1, 2, 3, 4, or GL_BGRA
+   */
+  int components;
+
+  /**
+   * Indicates the type of the data.
+   */
+  int type;
+
+  /**
+   * If true then integer data is normalized to the range [-1, 1] or [0, 1] if it is signed or unsigned, respectively.
+   * Otherwise if normalized is false then integer data is directly converted to floating point
+   */
+  bool normalized;
+
+  /**
+   * Is the offset of the first element relative to the start of the vertex buffer binding this attribute fetches from
+   */
+  int relativeoffset;
+};
 
 
 /**
@@ -65,15 +58,42 @@ struct VertexSpecification
  *  Each attribute can be enabled or disabled for array access:
  *  when an attribute's array access is disabled, any reads of that attribute by the vertex shader will produce 
  *  a constant value instead of a value pulled from an array.
- *  
- *  A newly-created VAO has array access disabled for all attributes. 
- *  Array access is enabled by binding the VAO in question and calling glEnableVertexAttribArray(index​);
  */
-
 class VertexArray
 {
 public:
-  VertexArray() : vao{ static_cast<uint32_t>(-1) } {}
+  VertexArray() 
+    : numIndices{ 0 },
+      numVertices{ 0 },
+      eboAttached{},
+      vbosAttached{},
+      id{ static_cast<uint32_t>(-1) } 
+  {}
+  ~VertexArray() = default;
+
+  /**
+   * Copy constructor
+   */
+  VertexArray(const VertexArray& other)
+    : numIndices{ other.numIndices },
+      numVertices{ other.numVertices },
+      eboAttached{ other.eboAttached },
+      vbosAttached{ other.vbosAttached },
+      id{ other.id }
+  {}
+
+  /**
+   * Assignment operator
+   */
+  VertexArray& operator=(const VertexArray& other)
+  {
+    numIndices = other.numIndices;
+    numVertices = other.numVertices ;
+    eboAttached = other.eboAttached ;
+    vbosAttached = other.vbosAttached ;
+    id = other.id;
+    return *this;
+  }
   
   /**
    * Generate vertex array object
@@ -81,7 +101,7 @@ public:
   void Create();
 
   /**
-   * Delete vertex array object
+   * Delete vertex array object and all buffers attached
    */
   void Delete() const;
 
@@ -104,7 +124,14 @@ public:
    * 
    * @param stride:       the distance between elements within the buffer
    */
-  void BindVertexBuffer(int bindingindex, const VertexBuffer& vertexBuffer,  int offset, int stride) const;
+  void AttachVertexBuffer(int bindingindex, const VertexBuffer& buffer,  int offset, int stride);
+
+  /**
+   * Configures element array buffer binding of a vertex array object
+   * 
+   * @param buffer: specifies the name of the buffer object to use for the element array buffer binding
+   */
+  void AttachElementBuffer(const ElementBuffer& buffer);
 
   /**
    * Enable a generic vertex attribute array
@@ -147,16 +174,20 @@ public:
    */
   void SetAttribFormat(int attribindex, int size, int type, bool normalize, int relativeoffset) const;
 
-
   /**
    * Establishes an association between the generic vertex attribute of a vertex array object 
    * whose index is given by attribindex, and a vertex buffer binding whose index is given by bindingindex
    */
   void SetAttribBinding(int attribindex, int bindingindex) const;
 
-  VertexBuffer  vertexBuffer;
-  ElementBuffer elementBuffer;
+  void SetVertexSpecifications(const VertexSpecifications& specs) const;
 
-  uint32_t vao;
+  uint32_t id;
+
+  ElementBuffer         eboAttached;
+  Vector<VertexBuffer>  vbosAttached;
+
+  int numVertices;
+  int numIndices;
 };
 

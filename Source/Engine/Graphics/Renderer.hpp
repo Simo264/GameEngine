@@ -17,8 +17,8 @@ public:
 	static void DrawArraysInstanced(class VertexArray& vertexArray, int nInstances);
 
 	/* Render calls with indices */
-	static void DrawIndexed(class VertexArray& vertexArray);
-	static void DrawIndexedInstanced(class VertexArray& vertexArray, int nInstances);
+	static void DrawElements(class VertexArray& vertexArray);
+	static void DrawElementsInstanced(class VertexArray& vertexArray, int nInstances);
 	
 	inline static uint32_t drawCalls = 0;
 	static uint32_t drawMode;

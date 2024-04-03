@@ -2,7 +2,7 @@
 
 #include "Core/Core.hpp"
 #include "Editor/Panel.hpp"
-#include "Engine/ECS/GameObject.hpp"
+#include "Engine/GameObject.hpp"
 
 /* ----------------------------------------
 			OutlinerPanel class

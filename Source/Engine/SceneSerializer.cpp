@@ -3,8 +3,8 @@
 #include "Engine/Scene.hpp"
 #include "Engine/ObjectLoader.hpp"
 
-#include "Engine/ECS/GameObject.hpp"
-#include "Engine/ECS/Components.hpp"
+#include "Engine/GameObject.hpp"
+#include "Engine/Components.hpp"
 
 
 #include "Engine/Graphics/ShaderUniforms.hpp"
@@ -128,17 +128,16 @@ void SceneSerializer::DeserializeScene(Scene& scene, const Path& filepath)
 			else if (std::strcmp(componentName, StaticMeshComponent::GetComponentName(true)) == 0)
 			{
 				/* Parse StaticMeshComponent:
-					model-path					(if exists)
-					material-diffuse		(if exists)
-					material-specular		(if exists)
+					model-path			
+					material-diffuse
+					material-specular
 				*/
-				auto& smeshComp = obj.AddComponent<StaticMeshComponent>();
+				
 				buff = conf.GetValue(section.c_str(), "model-path");
-				if (!buff.empty())
-				{
-					ObjectLoader loader(buff);
-					loader.LoadMesh(&smeshComp);
-				}
+				if (buff.empty())
+					continue;
+
+				auto& smeshComp = obj.AddComponent<StaticMeshComponent>(buff);
 
 				buff = conf.GetValue(section.c_str(), "material-diffuse");
 				if (!buff.empty())
