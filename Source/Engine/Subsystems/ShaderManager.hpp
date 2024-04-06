@@ -3,23 +3,30 @@
 #include "Core/Core.hpp"
 #include "Engine/Subsystems/Manager.hpp"
 
-/* ------------------------------------------------
-	ShaderManager subsystem:
-	load and retrieve from memory shader programs 
- -------------------------------------------------- */
+/**
+ * Load and retrieve shader program objects from memory 
+ */
 class ShaderManager : public Manager<ShaderManager>
 {
 public:
-	/* Initialize shaders vector */
+	/**
+	 * Initialize shader buffer
+	 */
 	void Initialize() override;
 	
-	/* Destroy all shader objects and destroy vector */
+	/**
+	 * Destroy all shader objects and free buffer
+	 */
 	void CleanUp() override;
 
-	/* Load in memory the shader program */
+	/**
+	 * Load the shader program in memory 
+	 */
 	class Shader& LoadShader(const char* label, const Path& vertFilePath, const Path& fragFilePath);
 	
-	/* Retrieve from memory the shader program */
+	/**
+	 * Retrieve the shader program from memory 
+	 */
 	class Shader& GetShader(const char* label) const;
 
 private:

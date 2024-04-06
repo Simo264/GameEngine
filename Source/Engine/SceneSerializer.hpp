@@ -2,9 +2,6 @@
 
 #include "Core/Core.hpp"
 
-/* --------------------------------------------------------
-	This class takes care of serializing a scene in a file 
-	-------------------------------------------------------- */
 class SceneSerializer
 {
 public:

@@ -4,6 +4,8 @@
 #include "Buffer.hpp"
 
 /** 
+ *  https://www.khronos.org/opengl/wiki/Vertex_Specification#Vertex_Buffer_Object
+ * 
  *  A Vertex Buffer Object it is used as a source for vertex array data.
  *  There are two ways to use buffer objects as the source for vertex data:
  *    1. Vertex format

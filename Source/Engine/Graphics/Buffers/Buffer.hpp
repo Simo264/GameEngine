@@ -2,6 +2,13 @@
 
 #include "Core/Core.hpp"
 
+/**
+ * https://www.khronos.org/opengl/wiki/Buffer_Object
+ * 
+ * Buffer Objects are OpenGL Objects that store an array of unformatted memory allocated by the OpenGL context (AKA the GPU). 
+ * These can be used to store vertex data, pixel data retrieved from images or the framebuffer, and a variety of other things.
+ * 
+ */
 class Buffer
 {
 public:
@@ -12,24 +19,6 @@ public:
 	~Buffer() = default;
 
 	/**
-	 * Copy constructor
-	 */
-	Buffer(const Buffer& other) 
-		: id{ other.id }, 
-			size{ other.size }
-	{}
-
-	/**
-	 * Assignment operator 
-	 */
-	Buffer& operator=(const Buffer& other) 
-	{ 
-		id		= other.id;
-		size	= other.size;
-		return *this; 
-	}
-	
-	/**
 	 * Create buffer object
 	 */
 	void Create();
@@ -39,11 +28,6 @@ public:
 	 */
 	void Delete() const;
 	
-	constexpr bool Compare(const Buffer& other) const { return id == other.id; }
-
-	constexpr bool IsValid() const { return id != static_cast<uint32_t>(-1); }
-
-
 	/**
 	 * Create a new data store for the buffer object.
 	 * While creating the new storage, any pre-existing data store is deleted.
@@ -91,8 +75,6 @@ public:
 	 */
 	bool UnmapStorage();
 
-	
-
 	/**
 	 * Bind the buffer object
 	 */
@@ -102,6 +84,10 @@ public:
 	 * Unbind the buffer object
 	 */
 	virtual void Unbind() const = 0;
+
+	constexpr bool Compare(const Buffer& other) const { return id == other.id; }
+
+	constexpr bool IsValid() const { return id != static_cast<uint32_t>(-1); }
 
 	uint32_t id;		/* the buffer id*/
 	uint64_t size;	/* the buffer size in bytes */

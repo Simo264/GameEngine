@@ -7,6 +7,8 @@
 constexpr int MAX_VERTEX_ATTRIBUTES = 128;
 
 /**  
+ *  https://www.khronos.org/opengl/wiki/Vertex_Specification 
+ * 
  *  Vertex Specification is the process of setting up the necessary objects for 
  *  rendering with a particular shader program, as well as the process of using 
  *  those objects to render. 
@@ -50,6 +52,8 @@ struct VertexSpecifications
 
 
 /**
+ *  https://www.khronos.org/opengl/wiki/Vertex_Specification#Vertex_Array_Object
+ * 
  *  A Vertex Array Object is an OpenGL Object that stores all of the state needed to supply vertex data.
  *  It stores the format of the vertex data. 
  *

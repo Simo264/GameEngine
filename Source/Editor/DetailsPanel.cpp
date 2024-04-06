@@ -162,7 +162,7 @@ void DetailsPanel::RenderPanel(Scene& scene, GameObject& selected)
           meshComp->DestroyMesh();
 
         scene.DestroyObject(selected);
-        selected.Invalid();
+        selected.Invalidate();
       }
     }
   }

@@ -20,12 +20,18 @@ private:
 
 	void LoadConfig();
 	
-	/* Load shader programs from Shaders/ directory */
+	/**
+	 * Load shader programs from "Shaders/" directory
+	 */
 	void LoadShaders();
 	
-	/* Load textures from Textures/ directory */
+	/**
+	 * Load shader programs from "Textures/" directory
+	 */
 	void LoadTextures();
 
-	/* Load textures from Icons/ directory */
+	/**
+	 * Load shader programs from "Icons/" directory
+	 */
 	void LoadIcons();
 };

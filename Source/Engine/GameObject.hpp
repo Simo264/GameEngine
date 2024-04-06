@@ -6,7 +6,7 @@
 
 enum class GameObjectType : int
 {
-	GAME_OBJECT = 0, /* Default */
+	GAME_OBJECT = 0, 
 
 	DIRECTIONAL_LIGHT,
 	POINT_LIGHT,
@@ -18,9 +18,9 @@ enum class GameObjectType : int
 };
 
 
-/* ------------------------------------------------------------------
-	GameObject class represents the enitity in Entity Component System
-	------------------------------------------------------------------- */
+/**
+ * Represents the entity in Entity Component System
+ */
 class GameObject
 {
 public:
@@ -68,14 +68,12 @@ public:
 		return _entity; 
 	}
 
-	/* Check if object has a valid id */
 	bool IsValid() const 
 	{  
 		return (_reg && _entity != entt::null); 
 	}
 
-	/* Set entity to null */
-	void Invalid() 
+	void Invalidate() 
 	{ 
 		_entity = entt::null;
 		_reg = nullptr;

@@ -7,16 +7,20 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
-/* ----------------------------------------------------
-	Class ObjectLoader: 
-	load vertices, indices, materials data from .obj file
- ----------------------------------------------------- */
+/**
+ * Load mesh data from file
+ */
 class ObjectLoader
 {
 public:
 	ObjectLoader(const Path& filePath);
 
-	/* Read data from file and put them into buffers */
+	/**
+	 * Read data from file and put them into buffers
+	 * 
+	 * @param vbo: create and initialize the vertex buffer object with vertices
+	 * @param ebo: create and initialize the vertex buffer object with indices
+	 */
 	void LoadMesh(class VertexBuffer& vbo, class ElementBuffer& ebo);
 	
 	Material material;

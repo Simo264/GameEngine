@@ -3,9 +3,9 @@
 #include "Core/Core.hpp"
 #include <entt/entt.hpp> /* Entity component system */
 
-/* ----------------------------------------------------------------------------
-	Scene class contains all of objects that are placed in world.	
-	---------------------------------------------------------------------------- */
+/**
+ * Contains all objects that are placed in world.
+ */
 class Scene
 {
 public:
@@ -16,20 +16,27 @@ public:
 
 	void DrawScene(class Shader& shader);
 	
-	/* Remove all objects from scene */
+	/**
+	 * Remove all objects from scene
+	 */
 	void ClearScene();
 
-	/* Create object in scene */
+	/**
+	 * Create object in scene
+	 */
 	class GameObject CreateObject(const char* label, uint32_t type);
 
-	/* Destroys an entity and releases its identifier */
+	/**
+	 * Destroy an entity and releases its identifier
+	 */
 	void DestroyObject(class GameObject& object);
 
-	/* Return the reference of registry */
+	/**
+	 * Return the reference of registry
+	 */
 	entt::registry& Reg() { return _registry; }
 
 private:
 	/* We can create a entt::registry to store our entities */
 	entt::registry _registry;
-	
 };

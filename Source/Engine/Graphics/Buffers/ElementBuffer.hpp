@@ -4,7 +4,9 @@
 #include "Buffer.hpp"
 
 /**
- *	Indexed rendering, requires an array of indices; all vertex attributes will use the same index from this index array.
+ *	https://www.khronos.org/opengl/wiki/Vertex_Specification#Index_Buffers
+ * 
+ *  Indexed rendering, requires an array of indices; all vertex attributes will use the same index from this index array.
  *	The index array is provided by a Buffer Object bound to the GL_ELEMENT_ARRAY_BUFFER binding point. 
  * 
  *	When a buffer is bound to GL_ELEMENT_ARRAY_BUFFER, all drawing commands of the form gl*Draw*Elements* 

@@ -58,11 +58,11 @@ void Scene::ClearScene()
 	{
 		GameObject o{ entity, &_registry };
 		
-		/* Destroy static mesh data (if exists) from GPU */
+		/* Free GPU memory */
 		if(auto smesh = o.GetComponent<StaticMeshComponent>())
 			smesh->DestroyMesh();
 
-		o.Invalid();
+		o.Invalidate();
 	}
 	
 	/* Clear scene */

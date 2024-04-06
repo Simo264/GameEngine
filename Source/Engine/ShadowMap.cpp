@@ -14,15 +14,15 @@ ShadowMap::ShadowMap(int width, int height)
 	/* Create a framebuffer object for rendering the depth map */
 	glGenFramebuffers(1, &_fbo);
 
-	/* Create a 2D texture that we'll use as the framebuffer's depth buffer. 
-		 We also give the texture a width and height: this is the resolution of the depth map */
+	/* 
+		Create a 2D texture that we'll use as the framebuffer's depth buffer. 
+		We also give the texture a width and height: this is the resolution of the depth map 
+	*/
 	glGenTextures(1, &_depthMap);
 	glBindTexture(GL_TEXTURE_2D, _depthMap);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
 	/* Resolve the problem of over sampling */
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
@@ -41,10 +41,8 @@ ShadowMap::ShadowMap(int width, int height)
 }
 ShadowMap::~ShadowMap()
 {
-	/* Delete framebuffer object */
 	glDeleteFramebuffers(1, &_fbo);
 
-	/* Delete texture object */
 	glDeleteTextures(1, &_depthMap);
 }
 
