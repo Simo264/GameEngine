@@ -14,6 +14,7 @@
 Texture2D::Texture2D()
   : id{ static_cast<uint32_t>(-1) },
     path{},
+    mipmapLevels{ 0 },
     width{ 0 },
     height{ 0 },
     format{ 0 },
@@ -22,7 +23,8 @@ Texture2D::Texture2D()
 {}
 
 Texture2D::Texture2D(const Path& path, bool gammaCorrection)
-  : path{ path },
+  : path{},
+    mipmapLevels{ 0 },
     width{ 0 },
     height{ 0 },
     format{ 0 },              
@@ -72,15 +74,16 @@ void Texture2D::GenerateMipmap() const
   glGenerateTextureMipmap(id);
 }
 
-void Texture2D::CreateStorage(int levels, int width, int height)
+void Texture2D::CreateStorage(int width, int height)
 {
-  this->width           = width;
-  this->height          = height;
+  this->width   = width;
+  this->height  = height;
+  mipmapLevels  = 1 + std::floor(std::log2(std::max(width, height)));
 
   if (internalformat == 0)
     CONSOLE_WARN("Invalid texture internalformat");
 
-  glTextureStorage2D(id, levels, internalformat, width, height);
+  glTextureStorage2D(id, mipmapLevels, internalformat, width, height);
 }
 
 void Texture2D::UpdateStorage(int level, int xoffset, int yoffset, const void* pixels) const
@@ -109,6 +112,8 @@ void Texture2D::CopyStorage(int level, const Texture2D& dest) const
 
 void Texture2D::LoadImageData(const Path& path, bool gammaCorrection)
 {
+  this->path = path;
+
   const String stringPath = path.string();
   
   int width, height, nrChannels;
@@ -147,8 +152,7 @@ void Texture2D::LoadImageData(const Path& path, bool gammaCorrection)
     SetParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     SetParameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     
-    const int levels = std::floor(std::log2(std::max(width, height))) + 1;
-    CreateStorage(levels, width, height);
+    CreateStorage(width, height);
     UpdateStorage(0, 0, 0, data);
 
     GenerateMipmap();

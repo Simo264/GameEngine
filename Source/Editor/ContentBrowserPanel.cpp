@@ -50,12 +50,14 @@ void ContentBrowserPanel::RenderPanel()
       continue;
 
     imageIcon = GetThumbIcon(entryPath, entryStr.c_str(), entry.is_directory());
-
-    /* Double click on thumb */
-    ImGui::ImageButton(reinterpret_cast<ImTextureID>(imageIcon->id), { _thumbSize, _thumbSize });
-    if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
-      if (entry.is_directory())
-        _currentDir /= entryStr;
+    if (imageIcon)
+    {
+      /* Double click on thumb */
+      ImGui::ImageButton(reinterpret_cast<ImTextureID>(imageIcon->id), { _thumbSize, _thumbSize });
+      if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+        if (entry.is_directory())
+          _currentDir /= entryStr;
+    }
 
     ImGui::TextWrapped(entryStr.c_str());
     ImGui::NextColumn();

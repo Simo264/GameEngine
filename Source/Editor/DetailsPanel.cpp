@@ -133,8 +133,8 @@ void DetailsPanel::RenderPanel(Scene& scene, GameObject& selected)
         if (ImGui::BeginCombo("##Textures", diffusePathStr.c_str()))
         {
           auto& instanceTM = TextureManager::Instance();
-          std::for_each(instanceTM.Begin(), instanceTM.End(), [&](Texture2D* texture) {
-            String textPathStr = texture->path.string();
+          std::for_each(instanceTM.Begin(), instanceTM.End(), [&](Texture2D& texture) {
+            String textPathStr = texture.path.string();
             bool isSelected = (std::strcmp(diffusePathStr.c_str(), textPathStr.c_str()) == 0);
             if (ImGui::Selectable(textPathStr.c_str(), isSelected))
               meshComp->material.diffuse = instanceTM.GetTextureByPath(textPathStr.c_str());

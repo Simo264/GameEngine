@@ -24,14 +24,4 @@ private:
 	 * Load shader programs from "Shaders/" directory
 	 */
 	void LoadShaders();
-	
-	/**
-	 * Load shader programs from "Textures/" directory
-	 */
-	void LoadTextures();
-
-	/**
-	 * Load shader programs from "Icons/" directory
-	 */
-	void LoadIcons();
 };

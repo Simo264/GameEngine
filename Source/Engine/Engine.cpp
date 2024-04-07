@@ -46,8 +46,8 @@ void Engine::Initialize()
   LoadShaders();
   
   TextureManager::Instance().Initialize();
-  LoadTextures();
-  LoadIcons();
+  TextureManager::Instance().LoadTextures();
+  TextureManager::Instance().LoadIcons();
 
   editor.Initialize();
 }
@@ -137,23 +137,6 @@ void Engine::Run()
   vao.numIndices = 0;
 
   Texture2D texture((TEXTURES_PATH / "container_diffuse.png"), true);
-  texture.ClearStorage(0, &Vec4ui8(255, 255, 255, 255)[0]);
-
-  Texture2D texture_2;
-  texture_2.type = texture.type;
-  texture_2.format = texture.format;
-  texture_2.internalformat = texture.internalformat;
-
-  texture_2.Create();
-  
-  texture_2.SetParameteri(GL_TEXTURE_WRAP_S, GL_REPEAT);
-  texture_2.SetParameteri(GL_TEXTURE_WRAP_T, GL_REPEAT);
-  texture_2.SetParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-  texture_2.SetParameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-  texture_2.CreateStorage(1, texture.width, texture.height);
-  texture.CopyStorage(0, texture_2);
-  texture_2.ClearStorage(0, &Vec4ui8(255, 0, 0, 255)[0]);
 
   TimePoint lastUpdateTime = SystemClock::now();
   while (window.IsOpen())
@@ -176,8 +159,7 @@ void Engine::Run()
     testingShader.SetMat4f(SHADER_UNIFORM_MODEL, Mat4f(1.0f));
     testingShader.SetInt("UTexture", 0);
 
-    //texture.BindTextureUnit(0);
-    texture_2.BindTextureUnit(0);
+    texture.BindTextureUnit(0);
     Renderer::DrawArrays(vao);
 
     window.SwapWindowBuffers();
@@ -438,16 +420,3 @@ void Engine::LoadShaders()
   shadowMapShader.SetInt(SHADER_UNIFORM_SHADOW_MAP, 2);
 }
 
-void Engine::LoadTextures()
-{
-  for (auto& entry : std::filesystem::recursive_directory_iterator(TEXTURES_PATH))
-    if (!std::filesystem::is_directory(entry))
-      TextureManager::Instance().LoadTexture(entry);
-}
-
-void Engine::LoadIcons()
-{
-  for (auto& entry : std::filesystem::recursive_directory_iterator(ICONS_PATH))
-    if (!std::filesystem::is_directory(entry))
-      TextureManager::Instance().LoadTexture(entry);
-}

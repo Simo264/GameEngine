@@ -74,14 +74,12 @@ public:
   void GenerateMipmap() const;
 
   /**
-   * Allocate images with the given size (width​, height), with the number of mipmaps given by levels​. 
    * The storage is created here, but the contents of that storage is undefined
    * 
-   * @param levels:         specify the number of texture levels. Level 0 is the base image level
    * @param width:          specifies the width of the texture, in texels
    * @param height:         specifies the height of the texture, in texels
    */
-  void CreateStorage(int levels, int width, int height);
+  void CreateStorage(int width, int height);
 
   /**
    * Specify a two-dimensional texture subimage
@@ -123,6 +121,8 @@ public:
   
   int format;         /* the format of the pixel data */
   int internalformat; /* the number of color components in the texture */
+  
+  int mipmapLevels;   /* the mipmap levels */
 
   int width;          /* the texture size */
   int height;

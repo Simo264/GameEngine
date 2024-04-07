@@ -2,6 +2,7 @@
 
 #include "Core/Core.hpp"
 #include "Engine/Subsystems/Manager.hpp"
+#include "Engine/Graphics/Texture2D.hpp"
 
 /**
  * Load and retrieve texture objects from memory 
@@ -20,25 +21,38 @@ public:
 	void CleanUp() override;
 
 	/**
+	 * Load all textures in "Textures/" directory
+	 */
+	void LoadTextures();
+
+	/**
+	 * Load all icons in "Icons/" directory
+	 */
+	void LoadIcons();
+
+	/**
 	 * Load texture object in pool 
 	 */
-	class Texture2D& LoadTexture(const Path& filePath, bool gammaCorrection = true);
+	Texture2D* LoadTexture(const Path& filePath, bool gammaCorrection = true);
 		
 	/**
 	 * Retrieve texture object from pool
 	 */
-	class Texture2D* GetTextureByPath(const Path& filePath) const;
+	Texture2D* GetTextureByPath(const Path& filePath);
 
 	/**
-	 * Return begin iterator
+	 * Return the address of first element
 	 */
-	constexpr auto Begin() { return _textures.begin(); }
+	Texture2D* Begin() { return &_pool[0]; }
 
 	/**
-	 * Return end iterator
+	 * Return the address of last element
 	 */
-	constexpr auto End() { return _textures.end(); }
+	Texture2D* End() { return &_pool[_nTextures]; }
 
 private:
-	Vector<class Texture2D*> _textures;
+	UniquePointer<Texture2D[]> _pool;
+	
+	uint32_t _size;
+	uint32_t _nTextures;
 };

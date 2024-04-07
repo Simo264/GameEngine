@@ -4,9 +4,9 @@
 #include "Core/Math/Math.hpp"
 #include <mini/ini.h>
 
-/* ---------------------------------
-	Read and load data from .ini file
- ----------------------------------- */
+/**
+ * Read and load data from .ini file
+ */
 class INIFileParser{
 public:
 	INIFileParser(const Path& filepath);
