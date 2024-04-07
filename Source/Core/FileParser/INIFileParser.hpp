@@ -83,11 +83,11 @@ public:
 	}
 
 	/* From string "50,50" -> to Vec2i(50,50) */
-	static Vec2i StringToVec2i(String& str, const char* delimiter = ",");
+	static Vec2i32 StringToVec2i(String& str, const char* delimiter = ",");
 	static Vec2f StringToVec2f(String& str, const char* delimiter = ",");
 	
 	/* From string "50,50,50" -> to Vec3i(50,50,50) */
-	static Vec3i StringToVec3i(String& str, const char* delimiter = ",");
+	static Vec3i32 StringToVec3i(String& str, const char* delimiter = ",");
 	static Vec3f StringToVec3f(String& str, const char* delimiter = ",");
 
 	/* Parse strings { "1" "0" "true" "false" } to boolean */

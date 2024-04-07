@@ -13,9 +13,9 @@ INIFileParser::INIFileParser(const Path& filepath)
 	_file = std::make_unique<mINI::INIFile>(filepath.string());
 }
 
-Vec2i INIFileParser::StringToVec2i(String& str, const char* delimiter)
+Vec2i32 INIFileParser::StringToVec2i(String& str, const char* delimiter)
 {
-	Vec2i vec;
+	Vec2i32 vec;
 	char* token = nullptr;
 	char* next_token = nullptr;
 	token = strtok_s(str.data(), delimiter, &next_token);
@@ -37,9 +37,9 @@ Vec2f INIFileParser::StringToVec2f(String& str, const char* delimiter)
 	return vec;
 }
 
-Vec3i INIFileParser::StringToVec3i(String& str, const char* delimiter)
+Vec3i32 INIFileParser::StringToVec3i(String& str, const char* delimiter)
 {
-	Vec3i vec;
+	Vec3i32 vec;
 	char* token = nullptr;
 	char* next_token = nullptr;
 	token = strtok_s(str.data(), delimiter, &next_token);

@@ -9,7 +9,7 @@
  * -----------------------------------------------------
 */
 
-FrameBuffer::FrameBuffer(const Vec2i& size)
+FrameBuffer::FrameBuffer(const Vec2i32& size)
 	: _size{ size },
 		_samples{ 1 } /* default samples value */
 {
@@ -44,7 +44,7 @@ FrameBuffer::~FrameBuffer()
 	glDeleteRenderbuffers(1, &_depthStencilAttachmentMultisampled);
 }
 
-void FrameBuffer::Rescale(const Vec2i& size)
+void FrameBuffer::Rescale(const Vec2i32& size)
 {
 	_size = size;
 

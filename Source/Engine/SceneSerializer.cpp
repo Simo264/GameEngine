@@ -141,11 +141,11 @@ void SceneSerializer::DeserializeScene(Scene& scene, const Path& filepath)
 
 				buff = conf.GetValue(section.c_str(), "material-diffuse");
 				if (!buff.empty())
-					smeshComp.material.diffuse = &TextureManager::Instance().GetTextureByPath(buff);
+					smeshComp.material.diffuse = TextureManager::Instance().GetTextureByPath(buff);
 
 				buff = conf.GetValue(section.c_str(), "material-specular");
 				if (!buff.empty())
-					smeshComp.material.specular = &TextureManager::Instance().GetTextureByPath(buff);
+					smeshComp.material.specular = TextureManager::Instance().GetTextureByPath(buff);
 			}
 		}
 	}

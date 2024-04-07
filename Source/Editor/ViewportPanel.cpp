@@ -27,7 +27,7 @@ void ViewportPanel::RenderPanel(Camera& camera, const uint32_t framebufferImage,
 {
   /* Set viewport padding */
   ImGuiStyle& style = ImGui::GetStyle();
-  const Vec2i paddingTmp = { style.WindowPadding.x, style.WindowPadding.y };
+  const Vec2i32 paddingTmp = { style.WindowPadding.x, style.WindowPadding.y };
   style.WindowPadding.x = 0;
   style.WindowPadding.y = 0;
 

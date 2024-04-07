@@ -77,7 +77,7 @@ void Camera::Move(WindowManager& window, const float movementSpeed, float delta)
 void Camera::Rotate(WindowManager& window, const float mouseSensitivity, float delta)
 {
 	Vec2d mousePos = window.GetCursorPosition();
-	Vec2i windowSize = window.GetWindowSize();
+	Vec2i32 windowSize = window.GetWindowSize();
 	static float lastX = ((float)windowSize.x / 2.0f);
 	static float lastY = ((float)windowSize.y / 2.0f);
 	static bool firstMouse = true;

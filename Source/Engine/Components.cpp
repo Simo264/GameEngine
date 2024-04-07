@@ -223,15 +223,10 @@ const char* StaticMeshComponent::GetComponentName(bool lower)
 void StaticMeshComponent::DrawMesh()
 {
 	if (material.diffuse)
-	{
-		glActiveTexture(GL_TEXTURE0);
-		material.diffuse->Bind();
-	}
+		material.diffuse->BindTextureUnit(0);
+	
 	if (material.specular)
-	{
-		glActiveTexture(GL_TEXTURE1);
-		material.specular->Bind();
-	}
+		material.specular->BindTextureUnit(1);
 
 	/* If vertex array does not contain indices call DrawArrays */
 	if (vao.numIndices == 0)
@@ -241,11 +236,8 @@ void StaticMeshComponent::DrawMesh()
 	else
 		Renderer::DrawElements(vao);
 
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, 0); /* unbind specular */
-
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, 0); /* unbind diffuse */
+	glBindTextureUnit(0, 0);	/* unbind diffuse */
+	glBindTextureUnit(1, 0);	/* unbind specular */
 }
 
 void StaticMeshComponent::ToString(String& out) const
@@ -258,12 +250,12 @@ void StaticMeshComponent::ToString(String& out) const
 	}
 	if (material.diffuse)
 	{
-		sprintf_s(buff, "material-diffuse=%s\n", material.diffuse->texturePath.string().c_str());
+		sprintf_s(buff, "material-diffuse=%s\n", material.diffuse->path.string().c_str());
 		out.append(buff);
 	}
 	if (material.specular)
 	{
-		sprintf_s(buff, "material-specular=%s\n", material.specular->texturePath.string().c_str());
+		sprintf_s(buff, "material-specular=%s\n", material.specular->path.string().c_str());
 		out.append(buff);
 	}
 }

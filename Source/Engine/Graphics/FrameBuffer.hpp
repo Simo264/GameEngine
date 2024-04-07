@@ -43,7 +43,7 @@ enum class PostProcessingType : int {
 class FrameBuffer
 {
 public:
-	FrameBuffer(const Vec2i& size);
+	FrameBuffer(const Vec2i32& size);
 	~FrameBuffer();
 
 	/* By binding to the GL_FRAMEBUFFER target all the next read 
@@ -72,14 +72,14 @@ public:
 	/* Return the texture color attachment */
 	constexpr uint32_t GetImage() const { return _colorAttachment; }
 
-	constexpr Vec2i GetSize() const { return _size; }
+	constexpr Vec2i32 GetSize() const { return _size; }
 	
 	constexpr float GetAspect() const { return static_cast<float>(_size.x) / static_cast<float>(_size.y); }
 
 	//void SetPostProcessing(PostProcessingType type) { _postprocType = type; }
 	
 	/* Resize the frame buffer viewport */
-	void Rescale(const Vec2i& size);
+	void Rescale(const Vec2i32& size);
 
 	/* Update multisampled buffers with new sample value */
 	void SetSamples(int samples);
@@ -87,7 +87,7 @@ public:
 	constexpr int GetSamples() const { return _samples; }
 
 private:
-	Vec2i _size;
+	Vec2i32 _size;
 
 	int _samples;				/* number of samples for multisampling */
 

@@ -11,20 +11,25 @@
  * -----------------------------------------------------
 */
 
+Texture2D::Texture2D()
+  : id{ static_cast<uint32_t>(-1) },
+    path{},
+    width{ 0 },
+    height{ 0 },
+    format{ 0 },
+    internalformat{ 0 },
+    type{ GL_UNSIGNED_BYTE }  /* default type value */
+{}
+
 Texture2D::Texture2D(const Path& path, bool gammaCorrection)
   : path{ path },
     width{ 0 },
     height{ 0 },
-    format{ GL_RGB },         /* default format value */
-    internalformat{ GL_RGB }, /* default internalformat value */
+    format{ 0 },              
+    internalformat{ 0 },
     type{ GL_UNSIGNED_BYTE }  /* default type value */
 {
   Create();
-
-  SetParameteri(GL_TEXTURE_WRAP_S, GL_REPEAT);
-  SetParameteri(GL_TEXTURE_WRAP_T, GL_REPEAT);
-  SetParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-  SetParameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
   LoadImageData(path, gammaCorrection);
 }
@@ -34,9 +39,12 @@ void Texture2D::Create()
   glCreateTextures(GL_TEXTURE_2D, 1, &id);
 }
 
-void Texture2D::Delete() const 
+void Texture2D::Delete() 
 { 
   glDeleteTextures(1, &id); 
+
+  /* Invalidate texture object */
+  id = static_cast<uint32_t>(-1); 
 }
 
 void Texture2D::Bind() const 
@@ -49,7 +57,12 @@ void Texture2D::Unbind() const
   glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void Texture2D::SetParameteri(int name, int value)
+void Texture2D::BindTextureUnit(int unit) const
+{
+  glBindTextureUnit(unit, id);
+}
+
+void Texture2D::SetParameteri(int name, int value) const
 {
   glTextureParameteri(id, name, value);
 }
@@ -59,68 +72,83 @@ void Texture2D::GenerateMipmap() const
   glGenerateTextureMipmap(id);
 }
 
-void Texture2D::CreateStorage(int levels, int internalformat, int width, int height)
+void Texture2D::CreateStorage(int levels, int width, int height)
 {
+  this->width           = width;
+  this->height          = height;
+
+  if (internalformat == 0)
+    CONSOLE_WARN("Invalid texture internalformat");
+
   glTextureStorage2D(id, levels, internalformat, width, height);
-  this->width = width;
-  this->height = height;
-  this->internalformat = internalformat;
 }
 
 void Texture2D::UpdateStorage(int level, int xoffset, int yoffset, const void* pixels) const
 {
+  if (format == 0)
+    CONSOLE_WARN("Invalid texture format");
+
   glTextureSubImage2D(id, level, xoffset, yoffset, width, height, format, type, pixels);
 }
 
-void Texture2D::Copy()
+void Texture2D::ClearStorage(int level, const void* data) const
 {
-  // https://registry.khronos.org/OpenGL/extensions/ARB/ARB_direct_state_access.txt
+  glClearTexImage(id, level, format, type, data);
 }
 
-/* -----------------------------------------------------
- *          PRIVATE METHODS
- * -----------------------------------------------------
-*/
+void Texture2D::CopyStorage(int level, const Texture2D& dest) const
+{
+  if (!dest.IsValid())
+    CONSOLE_WARN("Invalid destination texture object!");
+  
+  if (dest.width == 0 || dest.height == 0)
+    CONSOLE_WARN("The destination texture storage is not allocated!");
+
+  glCopyImageSubData(id, GL_TEXTURE_2D, level, 0, 0, 0, dest.id, GL_TEXTURE_2D, 0, 0, 0, 0, width, height, 1);
+}
 
 void Texture2D::LoadImageData(const Path& path, bool gammaCorrection)
 {
   const String stringPath = path.string();
   
-  //stbi_set_flip_vertically_on_load(true);
-
   int width, height, nrChannels;
   auto data = stbi_load(stringPath.c_str(), &width, &height, &nrChannels, 0);
   if (data)
   {
-    int internalformat  = GL_RGB;
-
     /*
+      From https://registry.khronos.org/OpenGL-Refpages/gl4/html/glTexStorage2D.xhtml
+     
       GL_RGB:         no gamma correction, no alpha component
       GL_RGBA:        no gamma correction, with alpha component
       GL_SRGB:        with gamma correction, no alpha component
-      GL_SRGB_ALPHA:  with gamma correction, with alpha component    
+      GL_SRGB_ALPHA:  with gamma correction, with alpha component
     */
     switch (nrChannels) {
-    case 1: 
-      internalformat  = GL_RED;
+    case 1:
+      internalformat  = GL_R8;
       format          = GL_RED;
       break;
-    case 2: 
-      internalformat  = GL_RG;
+    case 2:
+      internalformat  = GL_RG8;
       format          = GL_RG;
       break;
-    case 3: 
-      internalformat  = (gammaCorrection ? GL_SRGB : GL_RGB);
-      format          = GL_RGB; 
+    case 3:
+      internalformat  = (gammaCorrection ? GL_SRGB8 : GL_RGB8);
+      format          = GL_RGB;
       break;
-    case 4: 
-      internalformat  = (gammaCorrection ? GL_SRGB_ALPHA : GL_RGBA);
-      format          = GL_RGBA; 
+    case 4:
+      internalformat  = (gammaCorrection ? GL_SRGB8_ALPHA8 : GL_RGBA8);
+      format          = GL_RGBA;
       break;
     }
 
-    //glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, data);
-    CreateStorage(0, internalformat, width, height);
+    SetParameteri(GL_TEXTURE_WRAP_S, GL_REPEAT);
+    SetParameteri(GL_TEXTURE_WRAP_T, GL_REPEAT);
+    SetParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    SetParameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    
+    const int levels = std::floor(std::log2(std::max(width, height))) + 1;
+    CreateStorage(levels, width, height);
     UpdateStorage(0, 0, 0, data);
 
     GenerateMipmap();
@@ -132,3 +160,8 @@ void Texture2D::LoadImageData(const Path& path, bool gammaCorrection)
 
   stbi_image_free(reinterpret_cast<void*>(data));
 }
+
+/* -----------------------------------------------------
+ *          PRIVATE METHODS
+ * -----------------------------------------------------
+*/

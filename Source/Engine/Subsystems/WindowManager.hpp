@@ -37,21 +37,17 @@ public:
    */
   bool IsOpen() const;
 
-  constexpr Context GetContext() const { return _context; }
-
-  constexpr void SetContext(Context newcontext) { _context = newcontext; }
-
   void SetWindowTitle(const char* title) const;
 
   void SwapWindowBuffers() const;
 
   void SetWindowAspectRatio(int numer, int denom) const;
 
-  Vec2i GetWindowSize() const;
+  Vec2i32 GetWindowSize() const;
   
   void SetWindowSize(int w, int h) const;
 
-  Vec2i GetFramebufferSize() const;
+  Vec2i32 GetFramebufferSize() const;
 
   int GetKey(uint32_t key) const;
 
@@ -67,6 +63,10 @@ public:
   void SetWindowPosition(int x, int y) const;
 
   void SetWindowVsync(bool b) const;
+
+  constexpr Context GetContext() const { return _context; }
+
+  constexpr void SetContext(Context newcontext) { _context = newcontext; }
 
 private:
   Context _context;

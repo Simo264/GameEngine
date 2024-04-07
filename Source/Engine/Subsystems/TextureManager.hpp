@@ -10,24 +10,24 @@ class TextureManager : public Manager<TextureManager>
 {
 public:
 	/**
-	 * Initialize texture buffer
+	 * Initialize texture pool
 	 */
 	void Initialize() override;
 	
 	/**
-	 * Destroy all texture objects and free buffer
+	 * Destroy all texture objects and free pool
 	 */
 	void CleanUp() override;
 
 	/**
-	 * Load in memory the texture object by filename
+	 * Load texture object in pool 
 	 */
 	class Texture2D& LoadTexture(const Path& filePath, bool gammaCorrection = true);
 		
 	/**
-	 * Retrieve from memory texture object
+	 * Retrieve texture object from pool
 	 */
-	class Texture2D& GetTextureByPath(const Path& filePath) const;
+	class Texture2D* GetTextureByPath(const Path& filePath) const;
 
 	/**
 	 * Return begin iterator

@@ -30,7 +30,11 @@
 class Texture2D
 {
 public:
+  Texture2D();
+
   Texture2D(const Path& path, bool gammaCorrection);
+
+  void LoadImageData(const Path& path, bool gammaCorrection);
 
   /**
    * Create texture object
@@ -40,7 +44,7 @@ public:
   /**
    * Delete texture object
    */
-  void Delete() const;
+  void Delete();
 
   /**
    * Bind texture object
@@ -53,9 +57,16 @@ public:
   void Unbind() const;
 
   /**
+   * Bind the texture object to the specified texture unit
+   *
+   * @param unit: specifies the texture unit, to which the texture object should be bound to
+   */
+  void BindTextureUnit(int unit) const;
+
+  /**
    * Set texture parameters
    */
-  void SetParameteri(int name, int value);
+  void SetParameteri(int name, int value) const;
 
   /**
    * Generate mipmaps for the texture object
@@ -67,11 +78,10 @@ public:
    * The storage is created here, but the contents of that storage is undefined
    * 
    * @param levels:         specify the number of texture levels. Level 0 is the base image level
-   * @param internalformat: specifies the sized internal format to be used to store texture image data
    * @param width:          specifies the width of the texture, in texels
    * @param height:         specifies the height of the texture, in texels
    */
-  void CreateStorage(int levels, int internalformat, int width, int height);
+  void CreateStorage(int levels, int width, int height);
 
   /**
    * Specify a two-dimensional texture subimage
@@ -87,7 +97,21 @@ public:
    */
   void UpdateStorage(int level, int xoffset, int yoffset, const void* pixels) const;
 
-  void Copy();
+  /**
+   * Fills all the texture image with a constant value
+   * 
+   * @param level:  the level of texture containing the region to be cleared. Level 0 is the base image level
+   * @param data:   the address in memory of the data to be used to clear the specified region
+   */
+  void ClearStorage(int level, const void* data) const;
+  
+  /**
+   * Perform a raw data copy between two images. 
+   * This requires the destination texture to already be allocated with an image of appropriate size and format
+   * 
+   * @param level: the mipmap level to read from the source. Level 0 is the base image level
+   */
+  void CopyStorage(int level, const Texture2D& dest) const;
 
   constexpr bool Compare(const Texture2D& other) const { return id == other.id; }
 
@@ -104,7 +128,4 @@ public:
   int height;
 
   Path path;          /* the texture path (if loaded from file) */
-
-private:
-  void LoadImageData(const Path& path, bool gammaCorrection);
 };

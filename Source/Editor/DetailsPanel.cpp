@@ -120,9 +120,9 @@ void DetailsPanel::RenderPanel(Scene& scene, GameObject& selected)
         CreateTable<3>("##Material", { C1, C2, C3 });
 
         const String diffusePathStr = 
-          (meshComp->material.diffuse ? meshComp->material.diffuse->texturePath.string() : "");
+          (meshComp->material.diffuse ? meshComp->material.diffuse->path.string() : "");
         const uint32_t diffuseID = 
-          (meshComp->material.diffuse ? meshComp->material.diffuse->textureID : 0xFFFFFFFF);
+          (meshComp->material.diffuse ? meshComp->material.diffuse->id : 0xFFFFFFFF);
 
         ImGui::TableNextRow();
         ImGui::TableNextColumn();
@@ -134,10 +134,10 @@ void DetailsPanel::RenderPanel(Scene& scene, GameObject& selected)
         {
           auto& instanceTM = TextureManager::Instance();
           std::for_each(instanceTM.Begin(), instanceTM.End(), [&](Texture2D* texture) {
-            String textPathStr = texture->texturePath.string();
+            String textPathStr = texture->path.string();
             bool isSelected = (std::strcmp(diffusePathStr.c_str(), textPathStr.c_str()) == 0);
             if (ImGui::Selectable(textPathStr.c_str(), isSelected))
-              meshComp->material.diffuse = &instanceTM.GetTextureByPath(textPathStr.c_str());
+              meshComp->material.diffuse = instanceTM.GetTextureByPath(textPathStr.c_str());
             if (isSelected)
               ImGui::SetItemDefaultFocus();
             });

@@ -8,9 +8,9 @@
 struct WindowArgs 
 {
   String title;
-  Vec2i position;
-  Vec2i resolution;
-  Vec2i aspectratio;
+  Vec2i32 position;
+  Vec2i32 resolution;
+  Vec2i32 aspectratio;
   bool vsync;
 
   WindowArgs()

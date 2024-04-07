@@ -70,9 +70,9 @@ void WindowManager::SwapWindowBuffers() const
   glfwSwapBuffers(_context); 
 }
 
-Vec2i WindowManager::GetWindowSize() const
+Vec2i32 WindowManager::GetWindowSize() const
 {
-  Vec2i res{};
+  Vec2i32 res{};
   glfwGetWindowSize(_context, &res.x, &res.y);
   return res;
 }
@@ -82,9 +82,9 @@ void WindowManager::SetWindowSize(int w, int h) const
   glfwSetWindowSize(_context, w, h);
 }
 
-Vec2i WindowManager::GetFramebufferSize() const
+Vec2i32 WindowManager::GetFramebufferSize() const
 {
-  Vec2i res{};
+  Vec2i32 res{};
   glfwGetFramebufferSize(_context, &res.x, &res.y);
   return res;
 }

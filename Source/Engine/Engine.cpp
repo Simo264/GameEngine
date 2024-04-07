@@ -1,7 +1,6 @@
 #include "Engine.hpp"
 
 #include "Core/Platform/OpenGL/OpenGL.hpp"
-
 #include "Core/Math/Math.hpp"
 #include "Core/Math/Extensions.hpp"
 #include "Core/Log/Logger.hpp"
@@ -66,62 +65,95 @@ void Engine::Run()
   auto& shadowMapShader       = instanceSM.GetShader("ShadowMapShader");
 
 #if 0
-  auto& diffuseMap  = instanceTM.GetTextureByPath(TEXTURES_PATH / "container_diffuse.png");
-  auto& specularMap = instanceTM.GetTextureByPath(TEXTURES_PATH / "container_specular.png");
-
   Camera camera({ 0.0f, 0.0f, 5.0f }, 45.0f, (16.0f/9.0f));
-  
+
   float vertices[] = {
-    // positions          // normals           // texture coords
-    -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f,  0.0f,
-     0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f,  0.0f,
-     0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f,  1.0f,
-     0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f,  1.0f,
-    -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f,  1.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+         0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
 
-    -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f,  0.0f,
-     0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f,  0.0f,
-     0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f,  1.0f,
-     0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f,  1.0f,
-    -0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f,  1.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+         0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+         0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
 
-    -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
-    -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  1.0f,  1.0f,
-    -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
-    -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
-    -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  0.0f,  0.0f,
-    -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
+        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
 
-     0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
-     0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f,  1.0f,
-     0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
-     0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
-     0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  0.0f,  0.0f,
-     0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
+         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+         0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+         0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+         0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
 
-    -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f,  1.0f,
-     0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f,  1.0f,
-     0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f,  0.0f,
-     0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f,  0.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  0.0f,  0.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f,  1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+         0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
 
-    -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  1.0f,
-     0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f,  1.0f,
-     0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f,  0.0f,
-     0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f,  0.0f,
-    -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  0.0f,
-    -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  1.0f
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
   };
+  VertexBuffer vbo(sizeof(vertices), vertices, GL_STATIC_DRAW);
+  
+  VertexArray vao;
+  vao.Create();
+  {
+    VertexSpecifications specs{};
+    specs.attrindex = 0;
+    specs.bindingindex = 0;
+    specs.components = 3;
+    specs.normalized = true;
+    specs.relativeoffset = 0;
+    specs.type = GL_FLOAT;
+    vao.SetVertexSpecifications(specs);
 
-  Scene scene;
-  GameObject cube = scene.CreateObject("Cube", 0);
-  cube.AddComponent<TransformComponent>();
-  auto& sm = cube.AddComponent<StaticMeshComponent>(sizeof(vertices), vertices, (uint32_t)0, nullptr);
-  sm.material.diffuse = &diffuseMap;
-  sm.material.specular = &specularMap;
+    specs.attrindex = 1;
+    specs.bindingindex = 0;
+    specs.components = 2;
+    specs.normalized = true;
+    specs.relativeoffset = 3 * sizeof(float);
+    specs.type = GL_FLOAT;
+    vao.SetVertexSpecifications(specs);
+  }
+  vao.AttachVertexBuffer(0, vbo, 0, 5 * sizeof(float));
+  vao.numVertices = sizeof(vertices) / (5 * sizeof(float));
+  vao.numIndices = 0;
+
+  Texture2D texture((TEXTURES_PATH / "container_diffuse.png"), true);
+  texture.ClearStorage(0, &Vec4ui8(255, 255, 255, 255)[0]);
+
+  Texture2D texture_2;
+  texture_2.type = texture.type;
+  texture_2.format = texture.format;
+  texture_2.internalformat = texture.internalformat;
+
+  texture_2.Create();
+  
+  texture_2.SetParameteri(GL_TEXTURE_WRAP_S, GL_REPEAT);
+  texture_2.SetParameteri(GL_TEXTURE_WRAP_T, GL_REPEAT);
+  texture_2.SetParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+  texture_2.SetParameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+  texture_2.CreateStorage(1, texture.width, texture.height);
+  texture.CopyStorage(0, texture_2);
+  texture_2.ClearStorage(0, &Vec4ui8(255, 0, 0, 255)[0]);
 
   TimePoint lastUpdateTime = SystemClock::now();
   while (window.IsOpen())
@@ -132,31 +164,21 @@ void Engine::Run()
 
     window.PoolEvents();
     camera.ProcessInput(window, delta);
-    const auto& cameraViewMatrix = camera.cameraComponent->GetView();
-    const auto& cameraProjectionMatrix = camera.cameraComponent->GetProjection();
+    const auto& cameraViewMatrix        = camera.cameraComponent->GetView();
+    const auto& cameraProjectionMatrix  = camera.cameraComponent->GetProjection();
 
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glEnable(GL_DEPTH_TEST);
-
+    
     testingShader.Use();
-    testingShader.SetInt("UMaterial.diffuse", 0);
-    testingShader.SetInt("UMaterial.specular", 1);
-    testingShader.SetVec3f("UViewPos", camera.cameraComponent->position);
-    testingShader.SetVec3f("ULight.position", { 1.2f, 1.0f, 2.0f });
-    testingShader.SetVec3f("ULight.ambient", { 0.2f, 0.2f, 0.2f });
-    testingShader.SetVec3f("ULight.diffuse", { 0.5f, 0.5f, 0.5f });
-    testingShader.SetVec3f("ULight.specular", { 1.0f, 1.0f, 1.0f });
-    testingShader.SetFloat("UMaterial.shininess", 64.0f);
-    testingShader.SetMat4f("UProjection", cameraProjectionMatrix);
-    testingShader.SetMat4f("UView", cameraViewMatrix);
-    testingShader.SetMat4f("UModel", Mat4f(1.0f));
+    testingShader.SetMat4f(SHADER_UNIFORM_PROJECTION, cameraProjectionMatrix);
+    testingShader.SetMat4f(SHADER_UNIFORM_VIEW, cameraViewMatrix);
+    testingShader.SetMat4f(SHADER_UNIFORM_MODEL, Mat4f(1.0f));
+    testingShader.SetInt("UTexture", 0);
 
-    cube.GetComponent<StaticMeshComponent>()->DrawMesh();
-
-
-
-    glDisable(GL_DEPTH_TEST);
+    //texture.BindTextureUnit(0);
+    texture_2.BindTextureUnit(0);
+    Renderer::DrawArrays(vao);
 
     window.SwapWindowBuffers();
     lastUpdateTime = now;
@@ -166,7 +188,7 @@ void Engine::Run()
 
 #if 1
   /* -------------------------- Framebuffer -------------------------- */
-  Vec2i framebufferSize = window.GetFramebufferSize();
+  Vec2i32 framebufferSize = window.GetFramebufferSize();
   FrameBuffer framebuffer(framebufferSize);
   const uint32_t& framebufferImage = framebuffer.GetImage();
 
@@ -244,8 +266,8 @@ void Engine::Run()
       shadowMapShader.SetMat4f(SHADER_UNIFORM_LIGHTSPACE, lightSpaceMatrix);
       shadowMapShader.SetVec3f(SHADER_UNIFORM_LIGHT_POS,  lightPosition);
       shadowMapShader.SetVec3f(SHADER_UNIFORM_VIEW_POS,   camera.cameraComponent->position);
-      glActiveTexture(GL_TEXTURE2);
-      glBindTexture(GL_TEXTURE_2D, depthMapTexture);
+      
+      glBindTextureUnit(0, depthMapTexture);
       scene.DrawScene(shadowMapShader);
     }
 
@@ -269,7 +291,7 @@ void Engine::Run()
     editor.End();
 
     /* -------------------------- Resizing framebuffer -------------------------- */
-    const Vec2i viewportSize = editor.viewportPanel->viewportSize;
+    const Vec2i32 viewportSize = editor.viewportPanel->viewportSize;
     if (framebufferSize != viewportSize)
     {
       framebuffer.Rescale(viewportSize);
@@ -350,11 +372,11 @@ void Engine::LoadConfig()
   tmp.reserve(32);
 
   tmp = conf.GetValue("window", "resolution");
-  Vec2i resolution = INIFileParser::StringToVec2i(tmp, "x");
+  Vec2i32 resolution = INIFileParser::StringToVec2i(tmp, "x");
   tmp = conf.GetValue("window", "aspectratio");
-  Vec2i aspectratio = INIFileParser::StringToVec2i(tmp, ":");
+  Vec2i32 aspectratio = INIFileParser::StringToVec2i(tmp, ":");
   tmp = conf.GetValue("window", "position");
-  Vec2i position = INIFileParser::StringToVec2i(tmp, ",");
+  Vec2i32 position = INIFileParser::StringToVec2i(tmp, ",");
   tmp = conf.GetValue("window", "vsync");
   bool vsync = INIFileParser::StringToBool(tmp);
 

@@ -10,7 +10,7 @@
 
 void TextureManager::Initialize()
 {
-  /* Preallocate memory for 32 textures */
+  /* Preallocate memory for 32 texture objects */
   _textures.reserve(32);
 }
 
@@ -19,7 +19,7 @@ void TextureManager::CleanUp()
 	/* Destoy each texture objects */
   for (Texture2D* texture : _textures)
   {
-    texture->Destroy();
+    texture->Delete();
     delete texture;
   }
 }
@@ -37,20 +37,20 @@ Texture2D& TextureManager::LoadTexture(const Path& filePath, bool gammaCorrectio
   return *texture;
 }
 
-Texture2D& TextureManager::GetTextureByPath(const Path& filePath) const
+Texture2D* TextureManager::GetTextureByPath(const Path& filePath) const
 {
   auto begin = _textures.begin();
   auto end = _textures.end();
   auto it = std::find_if(begin, end, [&filePath](Texture2D* texture) {
-    return texture->texturePath.compare(filePath) == 0;
+    return texture->path.compare(filePath) == 0;
     });
   
   if (it == end)
   {
     CONSOLE_WARN("Texture '{}' does not exixts", filePath.string());
-    throw RuntimeError("Texture does not exists");
+    return nullptr;
   }
   
-  return **it;
+  return *it;
 }
 

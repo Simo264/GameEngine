@@ -14,7 +14,7 @@ public:
 	ViewportPanel(const char* panelName, bool visible);
 	
 	bool isFocused;
-	Vec2i viewportSize;
+	Vec2i32 viewportSize;
 
 	/**
 	 * .
