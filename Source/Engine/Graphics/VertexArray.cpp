@@ -8,21 +8,33 @@
  * -----------------------------------------------------
 */
 
+VertexArray::VertexArray()
+  : id{ static_cast<uint32_t>(-1) },
+    numIndices{ 0 },
+    numVertices{ 0 },
+    eboAttachment{},
+    vboAttachments{}
+{}
+
 void VertexArray::Create()
 {
   glCreateVertexArrays(1, &id);
 }
 
-void VertexArray::Delete() const
+void VertexArray::Delete()
 {
   glDeleteVertexArrays(1, &id);
   
-  for (const VertexBuffer& vb : vbosAttached)
-    if(vb.IsValid())
-      vb.Delete();  
+  if (eboAttachment.IsValid())
+    eboAttachment.Delete();
 
-  if (eboAttached.IsValid())
-    eboAttached.Delete();
+  for (VertexBuffer& vbo : vboAttachments)
+    if (vbo.IsValid())
+      vbo.Delete();
+
+  id = static_cast<uint32_t>(-1);
+
+  vboAttachments.clear();
 }
 
 void VertexArray::Bind() const
@@ -45,31 +57,15 @@ void VertexArray::DisableAttribute(int attribindex) const
   glDisableVertexArrayAttrib(id, attribindex);
 }
 
-void VertexArray::AttachVertexBuffer(int bindingindex, const VertexBuffer& buffer, int offset, int stride)
+void VertexArray::AttachVertexBuffer(int bindingindex, VertexBuffer& buffer, int offset, int stride)
 {
-  const auto end = vbosAttached.end();
-  auto it = std::find_if(vbosAttached.begin(), end, [&](const VertexBuffer& attached) {
-    return attached.Compare(buffer);
-    });
-  if (it != end)
-  {
-    CONSOLE_WARN("Vertex buffer is already attached to this vertex array object!");
-    return;
-  }
-
-  vbosAttached.push_back(buffer);
+  vboAttachments.push_back(buffer);
   glVertexArrayVertexBuffer(id, bindingindex, buffer.id, offset, stride);
 }
 
-void VertexArray::AttachElementBuffer(const ElementBuffer& buffer)
+void VertexArray::AttachElementBuffer(ElementBuffer& buffer)
 {
-  if (eboAttached.IsValid())
-  {
-    CONSOLE_WARN("Element buffer is already attached to this vertex array object!");
-    return;
-  }
-
-  eboAttached = buffer;
+  eboAttachment = buffer;
   glVertexArrayElementBuffer(id, buffer.id);
 }
 

@@ -3,7 +3,7 @@
 #include "Core/Log/Logger.hpp"
 
 #include "Engine/Scene.hpp"
-#include "Engine/Graphics/ShaderUniforms.hpp"
+#include "Engine/ShaderUniforms.hpp"
 #include "Engine/Graphics/Texture2D.hpp"
 #include "Engine/Subsystems/TextureManager.hpp"
 

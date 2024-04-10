@@ -12,10 +12,7 @@
 class Buffer
 {
 public:
-	Buffer() 
-		: id{ static_cast<uint32_t>(-1) }, 
-			size{ 0 } 
-	{}
+	Buffer();
 	~Buffer() = default;
 
 	/**
@@ -26,7 +23,7 @@ public:
 	/**
 	 * Delete buffer object
 	 */
-	void Delete() const;
+	void Delete();
 	
 	/**
 	 * Create a new data store for the buffer object.
@@ -89,6 +86,10 @@ public:
 
 	constexpr bool IsValid() const { return id != static_cast<uint32_t>(-1); }
 
+	constexpr uint64_t GetSize() const { return _size; }
+
 	uint32_t id;		/* the buffer id*/
-	uint64_t size;	/* the buffer size in bytes */
+
+protected:
+	uint64_t _size;	/* the buffer size in bytes */
 };

@@ -3,9 +3,9 @@
 
 #include "Engine/GameObject.hpp"
 #include "Engine/Components.hpp"
+#include "Engine/ShaderUniforms.hpp"
 
 #include "Engine/Graphics/Shader.hpp"
-#include "Engine/Graphics/ShaderUniforms.hpp"
 #include "Engine/SceneSerializer.hpp"
 
 /* -----------------------------------------------------

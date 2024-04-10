@@ -2,6 +2,10 @@
 
 #include "Core/Platform/OpenGL/OpenGL.hpp"
 
+ElementBuffer::ElementBuffer()
+	: Buffer()
+{}
+
 ElementBuffer::ElementBuffer(uint64_t size, const uint32_t* data, int usage)
 	: Buffer()
 {

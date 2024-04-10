@@ -10,10 +10,14 @@
 #include "Engine/Scene.hpp"
 #include "Engine/ObjectLoader.hpp"
 #include "Engine/ShadowMap.hpp"
+#include "Engine/ShaderUniforms.hpp"
+
+#include "Engine/Graphics/VertexBuffer.hpp"
+#include "Engine/Graphics/ElementBuffer.hpp"
+#include "Engine/Graphics/RenderBuffer.hpp"
 
 #include "Engine/Graphics/Texture2D.hpp"
 #include "Engine/Graphics/Shader.hpp"
-#include "Engine/Graphics/ShaderUniforms.hpp"
 #include "Engine/Graphics/Renderer.hpp"
 #include "Engine/Graphics/FrameBuffer.hpp"
 
@@ -25,6 +29,158 @@
 #include "Engine/Subsystems/TextureManager.hpp"
 
 #include <GLFW/glfw3.h>
+
+static void CreateCube(VertexArray& vao)
+{
+  float vertices[] = {
+      -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+       0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+       0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+       0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+      -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+      -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+
+      -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+       0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+       0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+       0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+      -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+      -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+
+      -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+      -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+      -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+      -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+      -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+      -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+       0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+       0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+       0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+       0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+       0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+       0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+      -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+       0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+       0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+       0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+      -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+      -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+
+      -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+       0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+       0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+       0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+      -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+      -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
+  };
+  VertexBuffer vbo(sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+  vao.Create();
+  {
+    VertexSpecifications specs{};
+    specs.attrindex = 0;
+    specs.bindingindex = 0;
+    specs.components = 3;
+    specs.normalized = true;
+    specs.relativeoffset = 0;
+    specs.type = GL_FLOAT;
+    vao.SetVertexSpecifications(specs);
+
+    specs.attrindex = 1;
+    specs.bindingindex = 0;
+    specs.components = 2;
+    specs.normalized = true;
+    specs.relativeoffset = 3 * sizeof(float);
+    specs.type = GL_FLOAT;
+    vao.SetVertexSpecifications(specs);
+  }
+  vao.AttachVertexBuffer(0, vbo, 0, 5 * sizeof(float));
+  vao.numVertices = sizeof(vertices) / (5 * sizeof(float));
+  vao.numIndices = 0;
+}
+
+static void CreateQuad(VertexArray& vao)
+{
+  float vertices[] = {
+    // positions   // texCoords
+    -1.0f,  1.0f,  0.0f, 1.0f,
+    -1.0f, -1.0f,  0.0f, 0.0f,
+     1.0f, -1.0f,  1.0f, 0.0f,
+    -1.0f,  1.0f,  0.0f, 1.0f,
+     1.0f, -1.0f,  1.0f, 0.0f,
+     1.0f,  1.0f,  1.0f, 1.0f
+  };
+  VertexBuffer vbo(sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+  vao.Create();
+
+  VertexSpecifications specs{};
+  specs.attrindex = 0;
+  specs.bindingindex = 0;
+  specs.components = 2;
+  specs.normalized = true;
+  specs.relativeoffset = 0;
+  specs.type = GL_FLOAT;
+  vao.SetVertexSpecifications(specs);
+
+  specs.attrindex = 1;
+  specs.bindingindex = 0;
+  specs.components = 2;
+  specs.normalized = true;
+  specs.relativeoffset = 2 * sizeof(float);
+  specs.type = GL_FLOAT;
+  vao.SetVertexSpecifications(specs);
+
+  vao.AttachVertexBuffer(0, vbo, 0, 4 * sizeof(float));
+
+  vao.numVertices = 6;
+  vao.numIndices = 0;
+}
+
+static void CreateFramebuffer(FrameBuffer& framebuffer)
+{
+  framebuffer.Create();
+
+  Texture2D color_att;
+  color_att.format = GL_RGB;
+  color_att.internalformat = GL_RGB8;
+  color_att.Create();
+  color_att.CreateStorage(1600, 900);
+  color_att.SetParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  color_att.SetParameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+  RenderBuffer depth_stenc_att;
+  depth_stenc_att.Create();
+  depth_stenc_att.CreateStorage(GL_DEPTH24_STENCIL8, 1600, 900);
+
+  framebuffer.AttachTexture(GL_COLOR_ATTACHMENT0, color_att, 0);
+  framebuffer.AttachRenderBuffer(GL_DEPTH_STENCIL_ATTACHMENT, depth_stenc_att);
+
+  if(!framebuffer.CheckStatus())
+    CONSOLE_WARN("ERROR::FRAMEBUFFER:: Framebuffer is not complete!");
+
+  //glCreateFramebuffers(1, &framebuffer_id);
+
+  //// create a color attachment texture
+  //glCreateTextures(GL_TEXTURE_2D, 1, &color_text_att);
+  //glTextureStorage2D(color_text_att, 1, GL_RGB8, 1600, 900);
+  //glTextureParameteri(color_text_att, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  //glTextureParameteri(color_text_att, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+  //// create a renderbuffer object for depth and stencil attachment (we won't be sampling these)
+  //glCreateRenderbuffers(1, &stenc_depth_rbo_att);
+  //glNamedRenderbufferStorage(stenc_depth_rbo_att, GL_DEPTH24_STENCIL8, 1600, 900);
+
+  //// attach color texture to framebuffer
+  //glNamedFramebufferTexture(framebuffer_id, GL_COLOR_ATTACHMENT0, color_text_att, 0);
+  //// attach renderbuffer to framebuffer object
+  //glNamedFramebufferRenderbuffer(framebuffer_id, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, stenc_depth_rbo_att);
+
+  //if (glCheckNamedFramebufferStatus(framebuffer_id, GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+  //  CONSOLE_WARN("ERROR::FRAMEBUFFER:: Framebuffer is not complete!");
+}
 
 Vec3f lightPosition{ -2.0f, 4.0f, -1.0f };
 
@@ -64,79 +220,26 @@ void Engine::Run()
   auto& shadowMapDepthShader  = instanceSM.GetShader("ShadowMapDepthShader");
   auto& shadowMapShader       = instanceSM.GetShader("ShadowMapShader");
 
-#if 0
+#if 1
   Camera camera({ 0.0f, 0.0f, 5.0f }, 45.0f, (16.0f/9.0f));
-
-  float vertices[] = {
-        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-         0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-
-        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-        -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-
-         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-         0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-         0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-         0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-         0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
-         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
-  };
-  VertexBuffer vbo(sizeof(vertices), vertices, GL_STATIC_DRAW);
   
-  VertexArray vao;
-  vao.Create();
-  {
-    VertexSpecifications specs{};
-    specs.attrindex = 0;
-    specs.bindingindex = 0;
-    specs.components = 3;
-    specs.normalized = true;
-    specs.relativeoffset = 0;
-    specs.type = GL_FLOAT;
-    vao.SetVertexSpecifications(specs);
+  Texture2D* texture = instanceTM.GetTextureByPath((TEXTURES_PATH / "container_diffuse.png"));
 
-    specs.attrindex = 1;
-    specs.bindingindex = 0;
-    specs.components = 2;
-    specs.normalized = true;
-    specs.relativeoffset = 3 * sizeof(float);
-    specs.type = GL_FLOAT;
-    vao.SetVertexSpecifications(specs);
-  }
-  vao.AttachVertexBuffer(0, vbo, 0, 5 * sizeof(float));
-  vao.numVertices = sizeof(vertices) / (5 * sizeof(float));
-  vao.numIndices = 0;
+  VertexArray cube_vao;
+  CreateCube(cube_vao);
 
-  Texture2D texture((TEXTURES_PATH / "container_diffuse.png"), true);
+  VertexArray quad_vao;
+  CreateQuad(quad_vao);
+
+  FrameBuffer framebuffer;
+  CreateFramebuffer(framebuffer);
+
+  //uint32_t framebuffer_id;
+  //uint32_t color_text_att;
+  //uint32_t sten_depth_rbo_att;
+  //SetupFramebuffer(framebuffer_id, color_text_att, sten_depth_rbo_att);
+
+
 
   TimePoint lastUpdateTime = SystemClock::now();
   while (window.IsOpen())
@@ -149,6 +252,11 @@ void Engine::Run()
     camera.ProcessInput(window, delta);
     const auto& cameraViewMatrix        = camera.cameraComponent->GetView();
     const auto& cameraProjectionMatrix  = camera.cameraComponent->GetProjection();
+    
+    glViewport(0, 0, 1600, 900);
+
+    framebuffer.Bind(GL_FRAMEBUFFER);
+    glEnable(GL_DEPTH_TEST);
 
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -159,8 +267,19 @@ void Engine::Run()
     testingShader.SetMat4f(SHADER_UNIFORM_MODEL, Mat4f(1.0f));
     testingShader.SetInt("UTexture", 0);
 
-    texture.BindTextureUnit(0);
-    Renderer::DrawArrays(vao);
+    texture->BindTextureUnit(0);
+    Renderer::DrawArrays(cube_vao);
+
+    framebuffer.Unbind(GL_FRAMEBUFFER);
+    glDisable(GL_DEPTH_TEST);
+
+    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    framebufferShader.Use();
+    
+    framebuffer.GetTextureAttachment(0).BindTextureUnit(0);
+    Renderer::DrawArrays(quad_vao);
 
     window.SwapWindowBuffers();
     lastUpdateTime = now;
@@ -168,7 +287,7 @@ void Engine::Run()
 #endif
 
 
-#if 1
+#if 0
   /* -------------------------- Framebuffer -------------------------- */
   Vec2i32 framebufferSize = window.GetFramebufferSize();
   FrameBuffer framebuffer(framebufferSize);
@@ -398,9 +517,9 @@ void Engine::LoadShaders()
     SHADERS_PATH / "ShadowMap.vert",
     SHADERS_PATH / "ShadowMap.frag");
 
-  //framebufferShader.Use();
-  //framebufferShader.SetInt("UScreenTexture", 0);
-  //framebufferShader.SetInt("UPostProcessingType", 0);
+  framebufferShader.Use();
+  framebufferShader.SetInt("UScreenTexture", 0);
+  framebufferShader.SetInt("UPostProcessingType", 0);
 
   //instancingShader.Use();
   //instancingShader.SetInt("UMaterial.diffuse", 0);

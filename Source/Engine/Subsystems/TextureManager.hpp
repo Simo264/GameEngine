@@ -5,13 +5,13 @@
 #include "Engine/Graphics/Texture2D.hpp"
 
 /**
- * Load and retrieve texture objects from memory 
+ * Load and retrieve texture objects from the pool
  */
 class TextureManager : public Manager<TextureManager>
 {
 public:
 	/**
-	 * Initialize texture pool
+	 * Initialize the texture pool
 	 */
 	void Initialize() override;
 	

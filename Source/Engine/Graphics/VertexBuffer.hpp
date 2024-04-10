@@ -46,15 +46,9 @@
 class VertexBuffer : public Buffer
 {
 public:
-  VertexBuffer() = default;
+  VertexBuffer();
 
   VertexBuffer(uint64_t size, const void* data,  int usage);
-
-  VertexBuffer(const VertexBuffer& other) 
-  {
-    id    = other.id;
-    size  = other.size;
-  }
 
   void Bind() const override;
 

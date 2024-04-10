@@ -19,17 +19,9 @@
 class ElementBuffer : public Buffer
 {
 public:
-  ElementBuffer() 
-    : Buffer()
-  {}
+  ElementBuffer();
 
   ElementBuffer(uint64_t size, const uint32_t* data, int usage);
-
-  ElementBuffer(const ElementBuffer& other)
-  {
-    id    = other.id;
-    size  = other.size;
-  }
 
   void Bind() const override;
 

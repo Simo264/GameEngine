@@ -194,8 +194,8 @@ StaticMeshComponent::StaticMeshComponent(const Path& filePath)
 	loader.LoadMesh(vbo, ebo);
 
 	material = loader.material;
-	vao.numVertices = vbo.size / (8 * sizeof(float));
-	vao.numIndices	= ebo.size / sizeof(uint32_t);
+	vao.numVertices = vbo.GetSize() / (8 * sizeof(float));
+	vao.numIndices	= ebo.GetSize() / sizeof(uint32_t);
 
 	if (vbo.IsValid())
 	{
@@ -210,7 +210,7 @@ StaticMeshComponent::StaticMeshComponent(const Path& filePath)
 	}
 }
 
-void StaticMeshComponent::DestroyMesh() const
+void StaticMeshComponent::DestroyMesh()
 {
 	vao.Delete();
 }

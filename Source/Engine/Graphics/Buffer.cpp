@@ -2,14 +2,21 @@
 
 #include "Core/Platform/OpenGL/OpenGL.hpp"
 
+Buffer::Buffer()
+	: id{ static_cast<uint32_t>(-1) },
+		_size{ 0 }
+{}
+
 void Buffer::Create()
 {
 	glCreateBuffers(1, &id);
 }
 
-void Buffer::Delete() const
+void Buffer::Delete()
 {
 	glDeleteBuffers(1, &id);
+	
+	id = static_cast<uint32_t>(-1);
 }
 
 void Buffer::CopyStorage(const Buffer& writeBuffer, int readOffset, int writeOffset, uint64_t size)
@@ -19,7 +26,7 @@ void Buffer::CopyStorage(const Buffer& writeBuffer, int readOffset, int writeOff
 
 void Buffer::CreateStorage(uint64_t size, const void* data, int usage)
 {
-	this->size = size;
+	_size = size;
 	glNamedBufferData(id, size, data, usage);
 }
 

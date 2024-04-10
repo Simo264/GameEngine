@@ -45,7 +45,6 @@ void Texture2D::Delete()
 { 
   glDeleteTextures(1, &id); 
 
-  /* Invalidate texture object */
   id = static_cast<uint32_t>(-1); 
 }
 

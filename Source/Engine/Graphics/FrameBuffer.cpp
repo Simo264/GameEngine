@@ -1,14 +1,71 @@
 #include "FrameBuffer.hpp"
 
-#include "Core/Log/Logger.hpp"
-
 #include "Core/Platform/OpenGL/OpenGL.hpp"
+#include "Core/Log/Logger.hpp"
 
 /* -----------------------------------------------------
  *          PUBLIC METHODS
  * -----------------------------------------------------
 */
 
+FrameBuffer::FrameBuffer()
+	: id{ static_cast<uint32_t>(-1) },
+		_textAttachments{},
+		_rboAttachments{}
+{}
+
+void FrameBuffer::Create()
+{
+	glCreateFramebuffers(1, &id);
+}
+
+void FrameBuffer::Delete()
+{
+	glDeleteFramebuffers(1, &id);
+
+	for (Texture2D& texture : _textAttachments)
+		texture.Delete();
+
+	for (RenderBuffer& rbo : _rboAttachments)
+		rbo.Delete();
+
+	id = static_cast<uint32_t>(-1);
+	_textAttachments.clear();
+	_rboAttachments.clear();
+}
+
+void FrameBuffer::Bind(int target) const
+{
+	glBindFramebuffer(target, id);
+}
+
+void FrameBuffer::Unbind(int target) const
+{
+	glBindFramebuffer(target, 0);
+}
+
+bool FrameBuffer::CheckStatus() const
+{
+	return glCheckNamedFramebufferStatus(id, GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE;
+}
+
+void FrameBuffer::AttachTexture(int attachment, Texture2D& texture, int level)
+{
+	glNamedFramebufferTexture(id, attachment, texture.id, level);
+
+	_textAttachments.push_back(texture);
+}
+
+void FrameBuffer::AttachRenderBuffer(int attachment, RenderBuffer& renderbuffer)
+{
+	glNamedFramebufferRenderbuffer(id, attachment, GL_RENDERBUFFER, renderbuffer.id);
+	
+	_rboAttachments.push_back(renderbuffer);
+}
+
+
+
+#if 0
 FrameBuffer::FrameBuffer(const Vec2i32& size)
 	: _size{ size },
 		_samples{ 1 } /* default samples value */
@@ -86,12 +143,14 @@ void FrameBuffer::BindRead() const { glBindFramebuffer(GL_READ_FRAMEBUFFER, _fbo
 void FrameBuffer::UnbindRead() const { glBindFramebuffer(GL_READ_FRAMEBUFFER, 0); }
 void FrameBuffer::BindWrite()	const { glBindFramebuffer(GL_DRAW_FRAMEBUFFER, _fbo); }
 void FrameBuffer::UnbindWrite() const { glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); }
+#endif
 
 /* -----------------------------------------------------
  *          PRIVATE METHODS
  * -----------------------------------------------------
 */
 
+#if 0
 void FrameBuffer::ColorAttachment()
 {
 	/* Normal color attachment */
@@ -142,3 +201,4 @@ void FrameBuffer::UpdateMultisampledRenderbuffer(uint32_t renderbuffer, int samp
 }
 
 bool FrameBuffer::CheckStatus() const { return glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE; }
+#endif

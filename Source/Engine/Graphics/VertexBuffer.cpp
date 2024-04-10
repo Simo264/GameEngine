@@ -2,6 +2,10 @@
 
 #include "Core/Platform/OpenGL/OpenGL.hpp"
 
+VertexBuffer::VertexBuffer()
+	: Buffer()
+{}
+
 VertexBuffer::VertexBuffer(uint64_t size, const void* data, int usage)
 	: Buffer()
 {

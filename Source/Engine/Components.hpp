@@ -136,7 +136,7 @@ struct StaticMeshComponent : public IComponent
 	/**
 	 * Free GPU memory
 	 */
-	void DestroyMesh() const;
+	void DestroyMesh();
 
 	VertexArray vao;
 	Material		material;

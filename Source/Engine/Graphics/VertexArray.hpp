@@ -1,8 +1,8 @@
 ﻿#pragma once
 
 #include "Core/Core.hpp"
-#include "Engine/Graphics/Buffers/VertexBuffer.hpp"
-#include "Engine/Graphics/Buffers/ElementBuffer.hpp"
+#include "Engine/Graphics/VertexBuffer.hpp"
+#include "Engine/Graphics/ElementBuffer.hpp"
 
 constexpr int MAX_VERTEX_ATTRIBUTES = 128;
 
@@ -66,48 +66,18 @@ struct VertexSpecifications
 class VertexArray
 {
 public:
-  VertexArray() 
-    : numIndices{ 0 },
-      numVertices{ 0 },
-      eboAttached{},
-      vbosAttached{},
-      id{ static_cast<uint32_t>(-1) } 
-  {}
+  VertexArray();
   ~VertexArray() = default;
 
-  /**
-   * Copy constructor
-   */
-  VertexArray(const VertexArray& other)
-    : numIndices{ other.numIndices },
-      numVertices{ other.numVertices },
-      eboAttached{ other.eboAttached },
-      vbosAttached{ other.vbosAttached },
-      id{ other.id }
-  {}
-
-  /**
-   * Assignment operator
-   */
-  VertexArray& operator=(const VertexArray& other)
-  {
-    numIndices = other.numIndices;
-    numVertices = other.numVertices ;
-    eboAttached = other.eboAttached ;
-    vbosAttached = other.vbosAttached ;
-    id = other.id;
-    return *this;
-  }
-  
   /**
    * Generate vertex array object
    */
   void Create();
 
   /**
-   * Delete vertex array object and all buffers attached
+   * Delete vertex array object and all attachments
    */
-  void Delete() const;
+  void Delete();
 
   /**
    * Bind vertex array object
@@ -123,19 +93,15 @@ public:
    * Bind the vertex buffer <vertexBuffer> to the binding point whose index is given by <bindingindex>
    * 
    * @param bindingindex: the index of the vertex buffer binding point to which to bind the buffer
-   * 
    * @param offset:       the offset of the first element of the buffer
-   * 
    * @param stride:       the distance between elements within the buffer
    */
-  void AttachVertexBuffer(int bindingindex, const VertexBuffer& buffer,  int offset, int stride);
+  void AttachVertexBuffer(int bindingindex, VertexBuffer& buffer, int offset, int stride);
 
   /**
    * Configures element array buffer binding of a vertex array object
-   * 
-   * @param buffer: specifies the name of the buffer object to use for the element array buffer binding
    */
-  void AttachElementBuffer(const ElementBuffer& buffer);
+  void AttachElementBuffer(ElementBuffer& buffer);
 
   /**
    * Enable a generic vertex attribute array
@@ -188,10 +154,11 @@ public:
 
   uint32_t id;
 
-  ElementBuffer         eboAttached;
-  Vector<VertexBuffer>  vbosAttached;
-
   int numVertices;
   int numIndices;
+
+  ElementBuffer         eboAttachment;
+  Vector<VertexBuffer>  vboAttachments;
+
 };
 
