@@ -44,26 +44,41 @@ void FrameBuffer::Unbind(int target) const
 	glBindFramebuffer(target, 0);
 }
 
-bool FrameBuffer::CheckStatus() const
+int FrameBuffer::CheckStatus() const
 {
-	return glCheckNamedFramebufferStatus(id, GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE;
+	return glCheckNamedFramebufferStatus(id, GL_FRAMEBUFFER);
 }
 
-void FrameBuffer::AttachTexture(int attachment, Texture2D& texture, int level)
+void FrameBuffer::AttachTexture(int attachment, const Texture2D& texture, int level)
 {
 	glNamedFramebufferTexture(id, attachment, texture.id, level);
 
 	_textAttachments.push_back(texture);
 }
 
-void FrameBuffer::AttachRenderBuffer(int attachment, RenderBuffer& renderbuffer)
+void FrameBuffer::AttachRenderBuffer(int attachment, const RenderBuffer& renderbuffer)
 {
 	glNamedFramebufferRenderbuffer(id, attachment, GL_RENDERBUFFER, renderbuffer.id);
 	
 	_rboAttachments.push_back(renderbuffer);
 }
 
-
+void FrameBuffer::Blit(
+	const FrameBuffer& dest,
+	int srcLowerX,
+	int srcLowerY,
+	int srcUpperX,
+	int srcUpperY,
+	int destLowerX,
+	int destLowerY,
+	int destUpperX,
+	int destUpperY,
+	int mask,
+	int filter) const
+{
+	glBlitNamedFramebuffer(
+		id, dest.id, srcLowerX, srcLowerY, srcUpperX, srcUpperY, destLowerX, destLowerY, destUpperX, destUpperY, mask, filter);
+}
 
 #if 0
 FrameBuffer::FrameBuffer(const Vec2i32& size)

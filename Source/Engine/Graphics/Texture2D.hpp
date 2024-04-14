@@ -38,8 +38,15 @@ public:
 
   /**
    * Create texture object
+   * 
+   * @param target: specifies an array in which names of the new texture objects are stored. Must be one of:
+   *                GL_TEXTURE_1D, GL_TEXTURE_2D, GL_TEXTURE_3D, GL_TEXTURE_1D_ARRAY, GL_TEXTURE_2D_ARRAY, 
+   *                GL_TEXTURE_RECTANGLE, GL_TEXTURE_CUBE_MAP, GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_BUFFER, 
+   *                GL_TEXTURE_2D_MULTISAMPLE or GL_TEXTURE_2D_MULTISAMPLE_ARRAY
+   * 
+   * https://registry.khronos.org/OpenGL-Refpages/gl4/html/glCreateTextures.xhtml
    */
-  void Create();
+  void Create(int target);
 
   /**
    * Delete texture object
@@ -71,37 +78,59 @@ public:
   /**
    * Generate mipmaps for the texture object
    */
-  void GenerateMipmap() const;
+  void GenerateMipmap();
 
   /**
    * The storage is created here, but the contents of that storage is undefined
    * 
-   * @param width:          specifies the width of the texture, in texels
-   * @param height:         specifies the height of the texture, in texels
+   * @param width:  specifies the width of the texture, in texels
+   * 
+   * @param height: specifies the height of the texture, in texels
    */
   void CreateStorage(int width, int height);
+
+  /**
+   * Specify storage for multisample texture
+   * 
+   * @param samples:              specify the number of samples in the texture
+   * 
+   * @param width:                specifies the width of the texture, in texels
+   * 
+   * @param height:               specifies the height of the texture, in texels
+   * 
+   * @param fixedsamplelocations: specifies whether the image will use identical sample locations and the same number 
+   *                              of samples for all texels in the image
+   */
+  void CreateStorageMultisampled(int samples, int width, int height, bool fixedsamplelocations = true);
 
   /**
    * Specify a two-dimensional texture subimage
    * 
    * @param level:    specifies the level-of-detail number. Level 0 is the base image level
+   * 
    * @param xoffset:  specifies a texel offset in the x direction within the texture array.
+   * 
    * @param yoffset:  specifies a texel offset in the y direction within the texture array
-   * @param format:   specifies the format of the pixel data. 
-   *                  The following symbolic values are accepted: GL_RED, GL_RG, GL_RGB, GL_BGR, ... 
+   * 
    * @param type:     specifies the data type of the pixel data.
    *                  The following symbolic values are accepted: GL_UNSIGNED_BYTE, GL_BYTE, GL_UNSIGNED_SHORT, ...
+   *                  https://registry.khronos.org/OpenGL-Refpages/gl4/html/glTexSubImage2D.xhtml
+   * 
    * @param pixels:   specifies a pointer to the image data in memory
    */
-  void UpdateStorage(int level, int xoffset, int yoffset, const void* pixels) const;
+  void UpdateStorage(int level, int xoffset, int yoffset, int type, const void* pixels) const;
 
   /**
    * Fills all the texture image with a constant value
    * 
    * @param level:  the level of texture containing the region to be cleared. Level 0 is the base image level
+   * 
+   * @param type:   the type of the data whose address in memory is given by data.
+   *                https://registry.khronos.org/OpenGL-Refpages/gl4/html/glClearTexImage.xhtml
+   * 
    * @param data:   the address in memory of the data to be used to clear the specified region
    */
-  void ClearStorage(int level, const void* data) const;
+  void ClearStorage(int level, int type, const void* data) const;
   
   /**
    * Perform a raw data copy between two images. 
@@ -115,17 +144,26 @@ public:
 
   constexpr bool IsValid() const { return id != static_cast<uint32_t>(-1); }
 
-  uint32_t id;        /* the texture object id */
+  uint32_t id; /* the texture object id */
   
-  int type;           /* the the data type of the pixel data */
-  
-  int format;         /* the format of the pixel data */
-  int internalformat; /* the number of color components in the texture */
-  
-  int mipmapLevels;   /* the mipmap levels */
+  /**
+   * Specifies the format of the pixel data.
+   * The following symbolic values are accepted:
+   * GL_RED, GL_RG, GL_RGB, GL_BGR, GL_RGBA, GL_BGRA, GL_DEPTH_COMPONENT, and GL_STENCIL_INDEX.
+   */
+  int format;
 
-  int width;          /* the texture size */
-  int height;
+  /**
+   * Specifies the sized internal format to be used to store texture image data.
+   * Must be one of the sized internal formats given in Table 1 below:
+   * https://registry.khronos.org/OpenGL-Refpages/gl4/html/glTexStorage2D.xhtml
+   */
+  int internalformat;
 
-  Path path;          /* the texture path (if loaded from file) */
+  int mipmapLevels;   
+
+  int width;          
+  int height;         
+
+  Path path; /* the texture path (if loaded from file) */
 };

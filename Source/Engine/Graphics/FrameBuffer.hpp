@@ -79,9 +79,13 @@ public:
 	void Unbind(int target) const;
 
 	/**
-	 * Check the completeness status of the framebuffer
+	 * Check the completeness status of the framebuffer.
+	 * The return value is GL_FRAMEBUFFER_COMPLETE if the FBO can be used. If it is something else, then there is a problem.
+	 * 
+	 * 
+	 * 
 	 */
-	bool CheckStatus() const;
+	int CheckStatus() const;
 
 	/**
 	 * Attach a level of a texture object as a logical buffer of the framebuffer object
@@ -101,7 +105,7 @@ public:
 	 * 
 	 * @param level:			specifies the mipmap level of the texture object to attach
 	 */ 
-	void AttachTexture(int attachment, Texture2D& texture, int level);
+	void AttachTexture(int attachment, const Texture2D& texture, int level);
 
 	/**
 	 * Attach a renderbuffer as a logical buffer of the framebuffer object
@@ -114,11 +118,47 @@ public:
 	 * 
 	 * @param renderbuffer: specifies the name of an existing renderbuffer object of type renderbuffertarget to attach
 	 */
-	void AttachRenderBuffer(int attachment, RenderBuffer& renderbuffer);
+	void AttachRenderBuffer(int attachment, const RenderBuffer& renderbuffer);
+
+	/**
+	 * Copy a block of pixels from one framebuffer object to another.
+	 * 
+	 * @param dest: specifies the name of the destination framebuffer object
+	 * 
+	 * @param srcLowerX, 
+	 *				srcLowerY, 
+	 *				destLowerX, 
+	 *				destLowerY: specify the bounds of the source rectangle within the read buffer of the read framebuffer.
+	 * 
+	 * @param srcUpperX,
+	 * 				srcUpperY,
+	 *				destUpperX,
+	 * 				destUpperY: specify the bounds of the destination rectangle within the write buffer of the write framebuffer.
+	 * 
+	 * @param mask:				the bitwise OR of the flags indicating which buffers are to be copied. 
+	 *										The allowed flags are GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT and GL_STENCIL_BUFFER_BIT.
+	 * 
+	 * @param filter:			specifies the interpolation to be applied if the image is stretched. 
+	 *										Must be GL_NEAREST or GL_LINEAR.
+	 * 
+	 */
+	void Blit(
+		const FrameBuffer& dest, 
+		int srcLowerX,
+		int srcLowerY,
+		int srcUpperX,
+		int srcUpperY,
+		int destLowerX,
+		int destLowerY,
+		int destUpperX,
+		int destUpperY,
+		int mask,
+		int filter
+	) const;
 
 	constexpr bool IsValid()	const { return id != static_cast<uint32_t>(-1); }
-	//constexpr int GetWidth()	const { return _size.x; }
-	//constexpr int GetHeigth() const { return _size.y; }
+	constexpr int GetWidth()	const { return _width; }
+	constexpr int GetHeigth() const { return _height; }
 
 	constexpr Texture2D& GetTextureAttachment(int i) { return _textAttachments.at(i); }
 	constexpr RenderBuffer& GetRenderBufferAttachment(int i) { return _rboAttachments.at(i); }
@@ -126,37 +166,11 @@ public:
 	constexpr int GetNumTextureAttachments() const { return _textAttachments.size(); }
 	constexpr int GetNumRenderBufferAttachments() const { return _rboAttachments.size(); }
 
+	constexpr float GetAspect() const { return static_cast<float>(_width) / static_cast<float>(_height); }
+
+
+
 #if 0
-	FrameBuffer(const Vec2i32& size);
-	
-	~FrameBuffer();
-
-
-	//void Create();
-
-	/* 
-		By binding to the GL_FRAMEBUFFER target all the next read 
-		and write framebuffer operations will affect the currently bound framebuffer. 
-		It is also possible to bind a framebuffer to a read or write target specifically 
-		by calling to BindRead() or BindWrite(). 
-	*/
-	void Bind() const;
-	void Unbind() const;
-	
-	/* 
-		The framebuffer bound to GL_READ_FRAMEBUFFER is then used for all read operations 
-		like glReadPixels 
-	*/
-	void BindRead() const;
-	void UnbindRead() const;
-
-	/* 
-		The framebuffer bound to GL_DRAW_FRAMEBUFFER is used as the destination for rendering, 
-		clearing and other write operations 
-	*/
-	void BindWrite() const;
-	void UnbindWrite() const;
-	
 	/* 
 		A multisampled image contains much more information than a normal image so 
 		what we need to do is downscale or resolve the image. 
@@ -164,8 +178,6 @@ public:
 		copies a region from one framebuffer to the other while also resolving any multisampled buffers 
 	*/
 	void Blit() const;
-	
-	
 
 	//void SetPostProcessing(PostProcessingType type) { _postprocType = type; }
 	
@@ -178,10 +190,6 @@ public:
 	/* Return the texture color attachment */
 	constexpr uint32_t GetImage() const { return _colorAttachment; }
 
-	constexpr Vec2i32 GetSize() const { return _size; }
-
-	constexpr float GetAspect() const { return static_cast<float>(_size.x) / static_cast<float>(_size.y); }
-
 	constexpr int GetSamples() const { return _samples; }
 #endif
 
@@ -191,31 +199,6 @@ private:
 	Vector<Texture2D>			_textAttachments;	/* vector of all attached texture ids */
 	Vector<RenderBuffer>	_rboAttachments;	/* vector of all attached renderbuffer ids */
 
-	//Vec2i32 _size; /* the framebuffer size (width and height) */
-
-#if 0
-	Vec2i32 _size;
-
-	int _samples;				/* number of samples for multisampling */
-
-	uint32_t _fbo;							/* primary frame buffer object */
-	uint32_t _intermediateFbo;	/* second post-processing framebuffer */
-	
-	uint32_t _colorAttachment;						/* Texture object */
-	uint32_t _colorAttachmentMultisampled;/* Texture object */
-	
-	uint32_t _depthStencilAttachmentMultisampled; /* Renderbuffer object */
-	
-	/* Attach color to framebuffer using texture */
-	void ColorAttachment();
-
-	/* Attach both multisampled depth and stencil using renderbuffer */
-	void DepthStencilAttachment();
-
-	bool CheckStatus() const;
-
-	void UpdateTexture(uint32_t texture, int width, int height);
-	void UpdateMultisampledTexture(uint32_t texture, int samples, int width, int height);
-	void UpdateMultisampledRenderbuffer(uint32_t renderbuffer, int samples, int width, int height);
-#endif
+	int _width;
+	int _height;
 };

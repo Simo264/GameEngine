@@ -33,6 +33,7 @@
 static void CreateCube(VertexArray& vao)
 {
   float vertices[] = {
+      // position           // text coord
       -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
        0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
        0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
@@ -146,40 +147,64 @@ static void CreateFramebuffer(FrameBuffer& framebuffer)
   Texture2D color_att;
   color_att.format = GL_RGB;
   color_att.internalformat = GL_RGB8;
-  color_att.Create();
+  color_att.Create(GL_TEXTURE_2D);
   color_att.CreateStorage(1600, 900);
   color_att.SetParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   color_att.SetParameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
   RenderBuffer depth_stenc_att;
+  depth_stenc_att.internalformat = GL_DEPTH24_STENCIL8;
   depth_stenc_att.Create();
-  depth_stenc_att.CreateStorage(GL_DEPTH24_STENCIL8, 1600, 900);
+  depth_stenc_att.CreateStorage(1600, 900);
 
   framebuffer.AttachTexture(GL_COLOR_ATTACHMENT0, color_att, 0);
   framebuffer.AttachRenderBuffer(GL_DEPTH_STENCIL_ATTACHMENT, depth_stenc_att);
 
-  if(!framebuffer.CheckStatus())
-    CONSOLE_WARN("ERROR::FRAMEBUFFER:: Framebuffer is not complete!");
+  if(framebuffer.CheckStatus() != GL_FRAMEBUFFER_COMPLETE)
+    CONSOLE_WARN("Framebuffer is not complete!");
+}
 
-  //glCreateFramebuffers(1, &framebuffer_id);
+static void CreateFramebufferMultisampled(FrameBuffer& multisampled_framebuffer, FrameBuffer& intermediate_framebuffer)
+{
+  multisampled_framebuffer.Create();
 
-  //// create a color attachment texture
-  //glCreateTextures(GL_TEXTURE_2D, 1, &color_text_att);
-  //glTextureStorage2D(color_text_att, 1, GL_RGB8, 1600, 900);
-  //glTextureParameteri(color_text_att, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  //glTextureParameteri(color_text_att, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  // create a multisampled color attachment texture
+  Texture2D text_col_mult_att;
+  text_col_mult_att.format = GL_RGB;
+  text_col_mult_att.internalformat = GL_RGB8;
+  text_col_mult_att.Create(GL_TEXTURE_2D_MULTISAMPLE);
+  text_col_mult_att.CreateStorageMultisampled(4, 1600, 900);
 
-  //// create a renderbuffer object for depth and stencil attachment (we won't be sampling these)
-  //glCreateRenderbuffers(1, &stenc_depth_rbo_att);
-  //glNamedRenderbufferStorage(stenc_depth_rbo_att, GL_DEPTH24_STENCIL8, 1600, 900);
+  // create a renderbuffer object for depth and stencil attachments
+  RenderBuffer depth_stenc_mult_att;
+  depth_stenc_mult_att.internalformat = GL_DEPTH24_STENCIL8;
+  depth_stenc_mult_att.Create();
+  depth_stenc_mult_att.CreateStorageMulstisampled(4, 1600, 900);
 
-  //// attach color texture to framebuffer
-  //glNamedFramebufferTexture(framebuffer_id, GL_COLOR_ATTACHMENT0, color_text_att, 0);
-  //// attach renderbuffer to framebuffer object
-  //glNamedFramebufferRenderbuffer(framebuffer_id, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, stenc_depth_rbo_att);
+  multisampled_framebuffer.AttachTexture(GL_COLOR_ATTACHMENT0, text_col_mult_att, 0);
+  multisampled_framebuffer.AttachRenderBuffer(GL_DEPTH_STENCIL_ATTACHMENT, depth_stenc_mult_att);
 
-  //if (glCheckNamedFramebufferStatus(framebuffer_id, GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-  //  CONSOLE_WARN("ERROR::FRAMEBUFFER:: Framebuffer is not complete!");
+  if (multisampled_framebuffer.CheckStatus() != GL_FRAMEBUFFER_COMPLETE)
+    CONSOLE_WARN("Multisampled framebuffer is not complete!");
+
+
+  // configure second post-processing framebuffer
+  intermediate_framebuffer.Create();
+
+  // create a color attachment texture
+  Texture2D text_col_att;
+  text_col_att.format = GL_RGB;
+  text_col_att.internalformat = GL_RGB8;
+
+  text_col_att.Create(GL_TEXTURE_2D);
+  text_col_att.CreateStorage(1600, 900);
+  text_col_att.SetParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  text_col_att.SetParameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+  intermediate_framebuffer.AttachTexture(GL_COLOR_ATTACHMENT0, text_col_att, 0);
+
+  if (intermediate_framebuffer.CheckStatus() != GL_FRAMEBUFFER_COMPLETE)
+    CONSOLE_WARN("Intermediate framebuffer is not complete!");
 }
 
 Vec3f lightPosition{ -2.0f, 4.0f, -1.0f };
@@ -223,23 +248,17 @@ void Engine::Run()
 #if 1
   Camera camera({ 0.0f, 0.0f, 5.0f }, 45.0f, (16.0f/9.0f));
   
-  Texture2D* texture = instanceTM.GetTextureByPath((TEXTURES_PATH / "container_diffuse.png"));
+  Texture2D* texture = instanceTM.GetTextureByPath((TEXTURES_PATH / "container_diffuse.png").lexically_normal());
+  
+  VertexArray cube;
+  CreateCube(cube);
 
-  VertexArray cube_vao;
-  CreateCube(cube_vao);
+  VertexArray framebuffer_quad;
+  CreateQuad(framebuffer_quad);
 
-  VertexArray quad_vao;
-  CreateQuad(quad_vao);
-
-  FrameBuffer framebuffer;
-  CreateFramebuffer(framebuffer);
-
-  //uint32_t framebuffer_id;
-  //uint32_t color_text_att;
-  //uint32_t sten_depth_rbo_att;
-  //SetupFramebuffer(framebuffer_id, color_text_att, sten_depth_rbo_att);
-
-
+  FrameBuffer multisampled_framebuffer;
+  FrameBuffer intermediate_framebuffer;
+  CreateFramebufferMultisampled(multisampled_framebuffer, intermediate_framebuffer);
 
   TimePoint lastUpdateTime = SystemClock::now();
   while (window.IsOpen())
@@ -253,37 +272,37 @@ void Engine::Run()
     const auto& cameraViewMatrix        = camera.cameraComponent->GetView();
     const auto& cameraProjectionMatrix  = camera.cameraComponent->GetProjection();
     
-    glViewport(0, 0, 1600, 900);
-
-    framebuffer.Bind(GL_FRAMEBUFFER);
-    glEnable(GL_DEPTH_TEST);
-
+    // bind to framebuffer and draw scene as we normally would to color texture 
+    multisampled_framebuffer.Bind(GL_FRAMEBUFFER);
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    
+    glEnable(GL_DEPTH_TEST);
+
     testingShader.Use();
     testingShader.SetMat4f(SHADER_UNIFORM_PROJECTION, cameraProjectionMatrix);
     testingShader.SetMat4f(SHADER_UNIFORM_VIEW, cameraViewMatrix);
     testingShader.SetMat4f(SHADER_UNIFORM_MODEL, Mat4f(1.0f));
     testingShader.SetInt("UTexture", 0);
-
     texture->BindTextureUnit(0);
-    Renderer::DrawArrays(cube_vao);
+    Renderer::DrawArrays(cube);
 
-    framebuffer.Unbind(GL_FRAMEBUFFER);
-    glDisable(GL_DEPTH_TEST);
+    // now blit multisampled buffer(s) to normal colorbuffer of intermediate FBO. Image is stored in screenTexture
+    multisampled_framebuffer.Blit(intermediate_framebuffer, 0, 0, 1600, 900, 0, 0, 1600, 900, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
+    // now bind back to default framebuffer and draw a quad plane with the attached framebuffer color texture
+    multisampled_framebuffer.Unbind(GL_FRAMEBUFFER);
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
+    glDisable(GL_DEPTH_TEST);
 
     framebufferShader.Use();
-    
-    framebuffer.GetTextureAttachment(0).BindTextureUnit(0);
-    Renderer::DrawArrays(quad_vao);
+    intermediate_framebuffer.GetTextureAttachment(0).BindTextureUnit(0);
+    Renderer::DrawArrays(framebuffer_quad);
 
     window.SwapWindowBuffers();
     lastUpdateTime = now;
   }
+
 #endif
 
 

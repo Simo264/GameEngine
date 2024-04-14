@@ -1,7 +1,7 @@
 #include "TextureManager.hpp"
 
-
 #include "Core/Log/Logger.hpp"
+#include "Core/Platform/OpenGL/OpenGL.hpp"
 
 /* -----------------------------------------------------
  *          PUBLIC METHODS
@@ -63,7 +63,7 @@ Texture2D* TextureManager::LoadTexture(const Path& filePath, bool gammaCorrectio
   }
 
   auto& texture = _pool[_nTextures++];
-  texture.Create();
+  texture.Create(GL_TEXTURE_2D);
   texture.LoadImageData(normalPath, true);
   return &texture;
 }

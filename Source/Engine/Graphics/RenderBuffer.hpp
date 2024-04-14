@@ -30,13 +30,32 @@ public:
 	void Delete();
 
 	/**
-	 * Establish data storage, format and dimensions of a renderbuffer object's image
+	 * Establish data storage, format and dimensions of the renderbuffer object's image
 	 * 
-	 * @param internalformat: specifies the internal format to use for the renderbuffer object's image
-	 * @param width:					specifies the width of the renderbuffer, in pixels.
-	 * @param height:					specifies the height of the renderbuffer, in pixels.
+	 * @param width:	specifies the width of the renderbuffer, in pixels.
+	 * 
+	 * @param height: specifies the height of the renderbuffer, in pixels.
 	 */
-	void CreateStorage(int internalformat, int width, int height) const;
+	void CreateStorage(int width, int height) const;
+
+	/**
+	 * Establish data storage, format, dimensions and sample count of the renderbuffer object's image
+	 * 
+	 * @param samples:	specifies the number of samples to be used for the renderbuffer object's storage.
+	 * 
+	 * @param width:		specifies the width of the renderbuffer, in pixels.
+	 * 
+	 * @param height:		specifies the height of the renderbuffer, in pixels.
+	 */
+	void CreateStorageMulstisampled(int samples, int width, int height) const;
 
 	uint32_t id;
+
+	/**
+	 * Specifies the internal format to be used for the renderbuffer object's storage and must be a 
+	 * color-renderable, depth-renderable, or stencil-renderable format.
+	 * 
+	 * https://www.khronos.org/opengl/wiki/Image_Format
+	 */
+	int internalformat;
 };

@@ -206,7 +206,7 @@ StaticMeshComponent::StaticMeshComponent(const Path& filePath)
 	}
 	else
 	{
-		CONSOLE_WARN("Vertex buffer empty!");
+		CONSOLE_WARN("Invalid mesh's vertex buffer!");
 	}
 }
 
