@@ -6,11 +6,6 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
-/* -----------------------------------------------------
- *          PUBLIC METHODS
- * -----------------------------------------------------
-*/
-
 Texture2D::Texture2D()
   : id{ static_cast<uint32_t>(-1) },
     path{},
@@ -21,7 +16,7 @@ Texture2D::Texture2D()
     internalformat{ 0 }
 {}
 
-Texture2D::Texture2D(const Path& path, bool gammaCorrection)
+Texture2D::Texture2D(const fspath& path, bool gammaCorrection)
   : path{},
     mipmapLevels{ 0 },
     width{ 0 },
@@ -127,11 +122,11 @@ void Texture2D::CopyStorage(int level, const Texture2D& dest) const
   glCopyImageSubData(id, GL_TEXTURE_2D, level, 0, 0, 0, dest.id, GL_TEXTURE_2D, 0, 0, 0, 0, width, height, 1);
 }
 
-void Texture2D::LoadImageData(const Path& path, bool gammaCorrection)
+void Texture2D::LoadImageData(const fspath& path, bool gammaCorrection)
 {
   this->path = path;
 
-  const String stringPath = path.string();
+  const string stringPath = path.string();
   
   int width, height, nrChannels;
   auto data = stbi_load(stringPath.c_str(), &width, &height, &nrChannels, 0);
@@ -182,7 +177,3 @@ void Texture2D::LoadImageData(const Path& path, bool gammaCorrection)
   stbi_image_free(reinterpret_cast<void*>(data));
 }
 
-/* -----------------------------------------------------
- *          PRIVATE METHODS
- * -----------------------------------------------------
-*/

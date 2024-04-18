@@ -42,8 +42,8 @@ void ContentBrowserPanel::RenderPanel()
   ImGui::Columns(columnCount, 0, false);
   for (auto& entry : std::filesystem::directory_iterator(_currentDir))
   {
-    Path entryPath = entry.path();
-    String entryStr = entryPath.filename().string();
+    fspath entryPath = entry.path();
+    string entryStr = entryPath.filename().string();
 
     /* Ignore hidden file/directory */
     if (entryStr[0] == '.')
@@ -74,14 +74,14 @@ void ContentBrowserPanel::RenderPanel()
  * -----------------------------------------------------
 */
 
-Texture2D* ContentBrowserPanel::GetThumbIcon(const Path& entryPath, const char* entryStr, bool isDirectory) const
+Texture2D* ContentBrowserPanel::GetThumbIcon(const fspath& entryPath, const char* entryStr, bool isDirectory) const
 {
   auto& instanceMT = TextureManager::Instance();
 
   if(isDirectory)
     return instanceMT.GetTextureByPath(ICONS_PATH / "icon-folder.png");
 
-  Path extension = entryPath.extension();
+  fspath extension = entryPath.extension();
   /* Is image */
   if (extension == ".png" || extension == ".jpg")
     return instanceMT.GetTextureByPath(ICONS_PATH / "icon-file-image.png");

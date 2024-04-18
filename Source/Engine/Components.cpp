@@ -23,7 +23,7 @@ const char* TypeComponent::GetComponentName(bool lower)
 	return (lower ? "typecomponent" : "TypeComponent");
 }
 
-void TypeComponent::ToString(String& out) const
+void TypeComponent::ToString(string& out) const
 {
 	char buff[32]{};
 	sprintf_s(buff, "type=%d\n", type);
@@ -43,7 +43,7 @@ const char* LabelComponent::GetComponentName(bool lower)
 	return (lower ? "labelcomponent" : "LabelComponent");
 }
 
-void LabelComponent::ToString(String& out) const 
+void LabelComponent::ToString(string& out) const 
 {
 	out.append(label.c_str());
 }
@@ -80,7 +80,7 @@ Mat4f& TransformComponent::GetTransformation()
 	return _transformation;
 }
 
-void TransformComponent::ToString(String& out) const
+void TransformComponent::ToString(string& out) const
 {
 	char buff[64]{};
 
@@ -154,7 +154,7 @@ StaticMeshComponent::StaticMeshComponent(
 
 }
 
-StaticMeshComponent::StaticMeshComponent(const Path& filePath)
+StaticMeshComponent::StaticMeshComponent(const fspath& filePath)
 {
 	modelPath = filePath;
 
@@ -240,7 +240,7 @@ void StaticMeshComponent::DrawMesh()
 	glBindTextureUnit(1, 0);	/* unbind specular */
 }
 
-void StaticMeshComponent::ToString(String& out) const
+void StaticMeshComponent::ToString(string& out) const
 {
 	char buff[128]{};
 	if (!modelPath.empty())
@@ -274,7 +274,7 @@ LightComponent::LightComponent(const char* uniform)
 	this->uniform = uniform;
 }
 
-void LightComponent::ToString(String& out) const 
+void LightComponent::ToString(string& out) const 
 {
 	char buff[64]{};
 	sprintf_s(buff, "color=%.3f,%.3f,%.3f\n", color.x, color.y, color.z);
@@ -305,6 +305,7 @@ void DirLightComponent::RenderLight(Shader& shader)
 {
 	const uint64_t uniformNameSize = uniform.size();
 
+#if 0 
 	/* uniformName = "DirLight.direction" */
 	uniform.append(".direction");
 	shader.SetVec3f(uniform.c_str(), direction);
@@ -323,12 +324,13 @@ void DirLightComponent::RenderLight(Shader& shader)
 	uniform.erase(uniformNameSize);
 	uniform.append(".specular");
 	shader.SetVec3f(uniform.c_str(), color * specular);
+#endif
 
 	/* uniformName = "DirLight" */
 	uniform.erase(uniformNameSize);
 }
 
-void DirLightComponent::ToString(String& out) const 
+void DirLightComponent::ToString(string& out) const 
 {
 	LightComponent::ToString(out);
 
@@ -356,7 +358,7 @@ const char* PointLightComponent::GetComponentName(bool lower)
 void PointLightComponent::RenderLight(Shader& shader)
 {
 	const uint64_t uniformNameSize = uniform.size();
-
+#if 0
 	/* shaderUName = "PointLight.position" */
 	uniform.append(".position");
 	shader.SetVec3f(uniform.c_str(), position);
@@ -385,12 +387,12 @@ void PointLightComponent::RenderLight(Shader& shader)
 	uniform.erase(uniformNameSize);
 	uniform.append(".quadratic");
 	shader.SetFloat(uniform.c_str(), quadratic);
-
+#endif
 	/* shaderUName = "PointLight" */
 	uniform.erase(uniformNameSize);
 }
 
-void PointLightComponent::ToString(String& out) const 
+void PointLightComponent::ToString(string& out) const 
 {
 	LightComponent::ToString(out);
 	out.append("\n");
@@ -419,6 +421,7 @@ void SpotLightComponent::RenderLight(Shader& shader)
 {
 	const int uniformNameSize = uniform.size();
 
+#if 0
 	uniform.append(".position");
 	shader.SetVec3f(uniform.c_str(), position);
 
@@ -449,11 +452,11 @@ void SpotLightComponent::RenderLight(Shader& shader)
 	uniform.erase(uniformNameSize);
 	uniform.append(".cutOff");
 	shader.SetFloat(uniform.c_str(), Math::Cos(Math::Radians(cutOff)));
-
+#endif
 	uniform.erase(uniformNameSize);
 }
 
-void SpotLightComponent::ToString(String& out) const
+void SpotLightComponent::ToString(string& out) const
 {
 	LightComponent::ToString(out);
 	out.append("\n");
@@ -525,7 +528,7 @@ void CameraComponent::UpdateProjection()
 	_projectionMatrix = Math::Perspective(fov, aspect, zNear, zFar);
 }
 
-void CameraComponent::ToString(String& out) const
+void CameraComponent::ToString(string& out) const
 {
 	CONSOLE_WARN("TODO");
 }

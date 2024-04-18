@@ -2,33 +2,48 @@
 
 #include "Core/Core.hpp"
 #include "Engine/Subsystems/Manager.hpp"
+#include "Engine/Graphics/Shader.hpp"
+
 
 /**
- * Load and retrieve shader program objects from memory 
+ * Load and retrieve shader objects and program objects from the array
  */
 class ShaderManager : public Manager<ShaderManager>
 {
 public:
 	/**
-	 * Initialize shader buffer
+	 * Initialize shaders array and load shaders from files
 	 */
 	void Initialize() override;
 	
 	/**
-	 * Destroy all shader objects and free buffer
+	 * Destroy all shader objects and program objects
 	 */
 	void CleanUp() override;
 
 	/**
-	 * Load the shader program in memory 
+	 * Load the shader object in shaders array
 	 */
-	class Shader& LoadShader(const char* label, const Path& vertFilePath, const Path& fragFilePath);
+	Shader& LoadShader(const fspath& filepath, int shaderType);
 	
 	/**
-	 * Retrieve the shader program from memory 
+	 * Retrieve the shader object from shaders array 
 	 */
-	class Shader& GetShader(const char* label) const;
+	Shader* GetShader(const char* filename);
+
+	/**
+	 * Load the shader object in shaders array
+	 */
+	Program& LoadProgram(const char* programName, Shader& vertexShader, Shader& fragmentShader);
+
+	/**
+	 * Retrieve the shader object from shaders array
+	 */
+	Program* GetProgram(const char* name);
+	
+	vector<Shader> shaders;
+	vector<Program> programs;
 
 private:
-	Vector<class Shader*> _shaders;
+	void LoadFileContent(const fspath& filepath, string& dest);
 };

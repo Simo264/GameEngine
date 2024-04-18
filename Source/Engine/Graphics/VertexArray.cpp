@@ -3,11 +3,6 @@
 
 #include "Core/Platform/OpenGL/OpenGL.hpp"
 
-/* -----------------------------------------------------
- *          PUBLIC METHODS
- * -----------------------------------------------------
-*/
-
 VertexArray::VertexArray()
   : id{ static_cast<uint32_t>(-1) },
     numIndices{ 0 },
@@ -87,8 +82,3 @@ void VertexArray::SetVertexSpecifications(const VertexSpecifications& specs) con
   
   EnableAttribute(specs.attrindex);
 }
-
-/* -----------------------------------------------------
- *          PRIVATE METHODS
- * -----------------------------------------------------
-*/

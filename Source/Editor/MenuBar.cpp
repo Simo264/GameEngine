@@ -2,7 +2,7 @@
 
 #include <imgui/imgui.h>
 
-MenuBar::MenuBar(const Array<bool*, MENU_ITEMS_COUNT>& menuItems)
+MenuBar::MenuBar(const array<bool*, MENU_ITEMS_COUNT>& menuItems)
 {
   _items = menuItems;
 }

@@ -41,14 +41,14 @@ public:
 		class Camera& camera, 
 		const uint32_t framebufferImage);
 
-	UniquePointer<ContentBrowserPanel>	contentBrowserPanel;
-	UniquePointer<ViewportPanel>				viewportPanel;
-	UniquePointer<OutlinerPanel>				outlinerPanel;
-	UniquePointer<DetailsPanel>					detailsPanel;
-	UniquePointer<InspectorPanel>				inspectorPanel;
-	UniquePointer<SettingsPanel>				settingsPanel;
-	UniquePointer<DebugPanel>						debugPanel;
-	UniquePointer<MenuBar>							menuBar;
+	unique_pointer<ContentBrowserPanel>	contentBrowserPanel;
+	unique_pointer<ViewportPanel>				viewportPanel;
+	unique_pointer<OutlinerPanel>				outlinerPanel;
+	unique_pointer<DetailsPanel>					detailsPanel;
+	unique_pointer<InspectorPanel>				inspectorPanel;
+	unique_pointer<SettingsPanel>				settingsPanel;
+	unique_pointer<DebugPanel>						debugPanel;
+	unique_pointer<MenuBar>							menuBar;
 
 private:
 	bool _demoOpen;

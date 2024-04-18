@@ -25,10 +25,10 @@ enum MENU_ITEMS : int {
 class MenuBar
 {
 public:
-	MenuBar(const Array<bool*, MENU_ITEMS_COUNT>& menuItems);
+	MenuBar(const array<bool*, MENU_ITEMS_COUNT>& menuItems);
 
 	void RenderMenuBar();
 
 private:
-	Array<bool*, MENU_ITEMS_COUNT> _items;
+	array<bool*, MENU_ITEMS_COUNT> _items;
 };

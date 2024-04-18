@@ -12,8 +12,8 @@ DebugPanel::DebugPanel(const char* panelName, bool visible)
 	: Panel(panelName, visible)
 {
 	ImGuiIO& io = ImGui::GetIO();
-	_t1 = SystemClock::now();
-	_t2 = SystemClock::now();
+	_t1 = system_clock::now();
+	_t2 = system_clock::now();
 	_framerate = io.Framerate;
 }
 
@@ -27,7 +27,7 @@ void DebugPanel::RenderFrame()
 
 	ImGui::Begin(panelName.c_str(), &visible, flags);
 
-	_t2 = SystemClock::now();
+	_t2 = system_clock::now();
 	const std::chrono::duration<double> diff = _t2 - _t1;
 	if (diff.count() >= 0.125f) /* display every 0.125s */
 	{

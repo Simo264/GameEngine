@@ -41,7 +41,7 @@ void OutlinerPanel::RenderPanel(Scene& scene)
     {
       ImGui::SetNextItemOpen(true, ImGuiCond_Once);
 
-      const String& label = labelComp.label;
+      const string& label = labelComp.label;
       GameObject object{ entity, &scene.Reg() };
 
       ImGuiTreeNodeFlags nodeFlag = ImGuiTreeNodeFlags_OpenOnArrow;
@@ -167,7 +167,7 @@ void OutlinerPanel::AddSceneComponentPopup(Scene& scene)
       {
       case 0: /* Cube mesh */
       {
-        Path model = ASSETS_PATH / (Path("Shapes/Cube/Cube.obj").lexically_normal());
+        fspath model = ASSETS_PATH / (fspath("Shapes/Cube/Cube.obj").lexically_normal());
         GameObject cube = scene.CreateObject("Cube", static_cast<uint32_t>(GameObjectType::STATIC_MESH));
         cube.AddComponent<StaticMeshComponent>(model);
         cube.AddComponent<TransformComponent>();
@@ -175,7 +175,7 @@ void OutlinerPanel::AddSceneComponentPopup(Scene& scene)
       }
       case 1: /* Plane mesh */
       {
-        Path model = ASSETS_PATH / (Path("Shapes/Plane/Plane.obj").lexically_normal());
+        fspath model = ASSETS_PATH / (fspath("Shapes/Plane/Plane.obj").lexically_normal());
         GameObject cube = scene.CreateObject("Plane", static_cast<uint32_t>(GameObjectType::STATIC_MESH));
         cube.AddComponent<StaticMeshComponent>(model);
         cube.AddComponent<TransformComponent>();
@@ -183,7 +183,7 @@ void OutlinerPanel::AddSceneComponentPopup(Scene& scene)
       }
       case 2: /* Cylinder mesh */
       {
-        Path model = ASSETS_PATH / (Path("Shapes/Cylinder/Cylinder.obj").lexically_normal());
+        fspath model = ASSETS_PATH / (fspath("Shapes/Cylinder/Cylinder.obj").lexically_normal());
         GameObject cube = scene.CreateObject("Cylinder", static_cast<uint32_t>(GameObjectType::STATIC_MESH));
         cube.AddComponent<StaticMeshComponent>(model);
         cube.AddComponent<TransformComponent>();

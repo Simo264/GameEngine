@@ -7,7 +7,7 @@
 
 struct WindowArgs 
 {
-  String title;
+  string title;
   Vec2i32 position;
   Vec2i32 resolution;
   Vec2i32 aspectratio;
@@ -33,7 +33,7 @@ SettingsPanel::SettingsPanel(const char* panelName, bool visible)
   _windowArgs = new WindowArgs;
   _windowArgs->title = _conf->GetValue("window", "title");
   
-  String value;
+  string value;
   value.reserve(32);
 
   value = _conf->GetValue("window", "position");
@@ -47,8 +47,8 @@ SettingsPanel::SettingsPanel(const char* panelName, bool visible)
   
   _windowArgs->vsync = INIFileParser::StringToBool(_conf->GetValue("window", "vsync"));
 
-  String resolutionStr = _conf->GetValue("window", "resolution");
-  String aspectRatioStr = _conf->GetValue("window", "aspectratio");
+  string resolutionStr = _conf->GetValue("window", "resolution");
+  string aspectRatioStr = _conf->GetValue("window", "aspectratio");
   for (_aspectIndex = 0; _aspectIndex < IM_ARRAYSIZE(_aspectRatioValues); _aspectIndex++)
     if (std::strcmp(_aspectRatioValues[_aspectIndex], aspectRatioStr.c_str()) == 0)
       break;
@@ -64,7 +64,7 @@ SettingsPanel::~SettingsPanel()
 
 void SettingsPanel::RenderFrame()
 {
-  static String buffer(32, '\0');
+  static string buffer(32, '\0');
 
   static bool buttonDisabled = true;
   ImGui::Begin(panelName.c_str(), &visible, ImGuiWindowFlags_NoDocking);

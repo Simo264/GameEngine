@@ -31,7 +31,7 @@ private:
 	int _aspectIndex;
 	int _resolutionIndex;
 
-	UniquePointer<INIFileParser> _conf;
+	unique_pointer<INIFileParser> _conf;
 	struct WindowArgs* _windowArgs;
 
 	void OnSaveSettings();

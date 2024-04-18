@@ -7,13 +7,13 @@
  * -----------------------------------------------------
 */
 
-INIFileParser::INIFileParser(const Path& filepath)
+INIFileParser::INIFileParser(const fspath& filepath)
 {
 	/* Create a file instance */
 	_file = std::make_unique<mINI::INIFile>(filepath.string());
 }
 
-Vec2i32 INIFileParser::StringToVec2i(String& str, const char* delimiter)
+Vec2i32 INIFileParser::StringToVec2i(string& str, const char* delimiter)
 {
 	Vec2i32 vec;
 	char* token = nullptr;
@@ -25,7 +25,7 @@ Vec2i32 INIFileParser::StringToVec2i(String& str, const char* delimiter)
 	return vec;
 }
 
-Vec2f INIFileParser::StringToVec2f(String& str, const char* delimiter)
+Vec2f INIFileParser::StringToVec2f(string& str, const char* delimiter)
 {
 	Vec2f vec;
 	char* token = nullptr;
@@ -37,7 +37,7 @@ Vec2f INIFileParser::StringToVec2f(String& str, const char* delimiter)
 	return vec;
 }
 
-Vec3i32 INIFileParser::StringToVec3i(String& str, const char* delimiter)
+Vec3i32 INIFileParser::StringToVec3i(string& str, const char* delimiter)
 {
 	Vec3i32 vec;
 	char* token = nullptr;
@@ -51,7 +51,7 @@ Vec3i32 INIFileParser::StringToVec3i(String& str, const char* delimiter)
 	return vec;
 }
 
-Vec3f INIFileParser::StringToVec3f(String& str, const char* delimiter)
+Vec3f INIFileParser::StringToVec3f(string& str, const char* delimiter)
 {
 	Vec3f vec;
 	char* token = nullptr;
@@ -65,7 +65,7 @@ Vec3f INIFileParser::StringToVec3f(String& str, const char* delimiter)
 	return vec;
 }
 
-bool INIFileParser::StringToBool(const String& str)
+bool INIFileParser::StringToBool(const string& str)
 {
 	return (str.compare("1") == 0 || str.compare("true") == 0);
 }	

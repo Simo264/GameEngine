@@ -14,12 +14,12 @@ public:
 	Logger()	= delete;
 	~Logger() = delete;
 
-	static const SharedPointer<spdlog::logger>& GetLogger() { return _logger; }
+	static const shared_pointer<spdlog::logger>& GetLogger() { return _logger; }
 
 	static void Initialize();
 
 private:
-	static SharedPointer<spdlog::logger> _logger;
+	static shared_pointer<spdlog::logger> _logger;
 };
 
 #define CONSOLE_TRACE(...)		SPDLOG_LOGGER_TRACE(Logger::GetLogger(),		__VA_ARGS__) 

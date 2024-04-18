@@ -25,7 +25,7 @@ public:
 	void Create();
 
 	/**
-	 * Delete renderbuffer objects
+	 * Delete renderbuffer objects and invalidates the name associated with the render buffer object 
 	 */
 	void Delete();
 

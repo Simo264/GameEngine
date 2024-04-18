@@ -2,9 +2,14 @@
 
 int main()
 {
-  Engine engine;
-  engine.Initialize();
-  engine.Run();
-  engine.CleanUp();
+  Engine* engine = new Engine;
+  
+  engine->Initialize();
+  
+  engine->Run();
+  
+  engine->CleanUp();
+
+  delete engine;
   return 0;
 }

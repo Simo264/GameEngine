@@ -13,7 +13,7 @@
 class ObjectLoader
 {
 public:
-	ObjectLoader(const Path& filePath);
+	ObjectLoader(const fspath& filePath);
 
 	/**
 	 * Read data from file and put them into buffers

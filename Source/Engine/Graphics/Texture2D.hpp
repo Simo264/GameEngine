@@ -32,9 +32,9 @@ class Texture2D
 public:
   Texture2D();
 
-  Texture2D(const Path& path, bool gammaCorrection);
+  Texture2D(const fspath& path, bool gammaCorrection);
 
-  void LoadImageData(const Path& path, bool gammaCorrection);
+  void LoadImageData(const fspath& path, bool gammaCorrection);
 
   /**
    * Create texture object
@@ -49,7 +49,7 @@ public:
   void Create(int target);
 
   /**
-   * Delete texture object
+   * Delete texture object and invalidates the name associated with the texture object 
    */
   void Delete();
 
@@ -165,5 +165,5 @@ public:
   int width;          
   int height;         
 
-  Path path; /* the texture path (if loaded from file) */
+  fspath path; /* the texture path (if loaded from file) */
 };

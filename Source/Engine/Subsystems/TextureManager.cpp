@@ -10,71 +10,43 @@
 
 void TextureManager::Initialize()
 {
-  _size = 0;
-  _nTextures = 0;
-
-  /* Calculate how many textures and icons must be loaded */
+  /* Load textures */
   for (auto& entry : std::filesystem::recursive_directory_iterator(TEXTURES_PATH))
     if (!std::filesystem::is_directory(entry))
-      _size++;
-
+      LoadTexture(entry);
+  
+  /* Load icons */
   for (auto& entry : std::filesystem::recursive_directory_iterator(ICONS_PATH))
     if (!std::filesystem::is_directory(entry))
-      _size++;
-
-  assert(!(_size == 0) && "Cannot create the texture pool with size 0");
-
-  _pool = UniquePointer<Texture2D[]>(new Texture2D[_size]);
+      LoadTexture(entry);
 }
 
 void TextureManager::CleanUp()
 {
-  const auto beg = Begin();
-  const auto end = End();
-
-  std::for_each(beg, end, [](Texture2D& texture) {
-    texture.Delete();
-    });
-  
-  _pool.reset();
+  for (auto& text : textures)
+    text.Delete();
 }
 
-void TextureManager::LoadTextures()
+Texture2D* TextureManager::LoadTexture(const fspath& filePath, bool gammaCorrection)
 {
-  for (auto& entry : std::filesystem::recursive_directory_iterator(TEXTURES_PATH))
-    if (!std::filesystem::is_directory(entry))
-      LoadTexture(entry);
-}
-
-void TextureManager::LoadIcons()
-{
-  for (auto& entry : std::filesystem::recursive_directory_iterator(ICONS_PATH))
-    if (!std::filesystem::is_directory(entry))
-      LoadTexture(entry);
-}
-
-Texture2D* TextureManager::LoadTexture(const Path& filePath, bool gammaCorrection)
-{
-  const Path normalPath = filePath.lexically_normal();
+  const fspath normalPath = filePath.lexically_normal();
   if (!std::filesystem::exists(normalPath))
   {
-    CONSOLE_WARN("Texture '{}' does not exists", filePath.string());
+    CONSOLE_WARN("Texture '{}' does not exists", normalPath.string());
     return nullptr;
   }
 
-  auto& texture = _pool[_nTextures++];
-  texture.Create(GL_TEXTURE_2D);
-  texture.LoadImageData(normalPath, true);
+  auto& texture = textures.emplace_back(normalPath, gammaCorrection);
   return &texture;
 }
 
-Texture2D* TextureManager::GetTextureByPath(const Path& filePath)
+Texture2D* TextureManager::GetTextureByPath(const fspath& filePath)
 {
-  const Path normalPath = filePath.lexically_normal();
-  for (auto it = Begin(); it != End(); ++it)
-    if (it->path.compare(normalPath) == 0)
-      return it;
-  
+  const fspath normalPath = filePath.lexically_normal();
+  for (auto& text : textures)
+    if (text.path.compare(filePath) == 0)
+      return &text;
+
   CONSOLE_WARN("Texture '{}' not found", normalPath.string());
   return nullptr;
 }

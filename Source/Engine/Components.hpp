@@ -33,7 +33,7 @@ struct IComponent
 	 * "<attr2>=<value2>"
 	 * ...
 	 */
-	virtual void ToString(String& out) const = 0;
+	virtual void ToString(string& out) const = 0;
 };
 
 struct TypeComponent : public IComponent
@@ -45,7 +45,7 @@ struct TypeComponent : public IComponent
 	/**
 	 * Return "type=<type>"
 	 */
-	void ToString(String& out) const override;
+	void ToString(string& out) const override;
 
 	uint32_t type;
 };
@@ -59,9 +59,9 @@ struct LabelComponent : public IComponent
 	/**
 	 * Return string "label=<label>"
 	 */
-	void ToString(String& out) const override;
+	void ToString(string& out) const override;
 
-	String label;
+	string label;
 };
 
 
@@ -80,7 +80,7 @@ struct TransformComponent : public IComponent
 	 * "scale=<scale.x,scale.y,scale.z>"
 	 * "rotation=<rotation.x,rotation.y,rotation.z>"
 	 */
-	void ToString(String& out) const override;
+	void ToString(string& out) const override;
 
 	/**
 	 * Update the transformation matrix. Call this function after changing position, scale or rotation.
@@ -117,7 +117,7 @@ struct StaticMeshComponent : public IComponent
 		uint64_t				indsize = 0, 
 		const uint32_t* inddata = nullptr);
 
-	StaticMeshComponent(const Path& filePath);
+	StaticMeshComponent(const fspath& filePath);
 
 	~StaticMeshComponent() = default;
 
@@ -131,7 +131,7 @@ struct StaticMeshComponent : public IComponent
 	 * "material-diffuse=<material.diffuse.path>"		if exists
 	 * "material-specular=<material.specular.path>"	if exists
 	 */
-	void ToString(String& out) const override;
+	void ToString(string& out) const override;
 
 	/**
 	 * Free GPU memory
@@ -140,7 +140,7 @@ struct StaticMeshComponent : public IComponent
 
 	VertexArray vao;
 	Material		material;
-	Path				modelPath;
+	fspath				modelPath;
 };
 
 
@@ -161,13 +161,13 @@ struct LightComponent : public IComponent
 	 * "diffuse=<diffuse>"
 	 * "specular=<specular>"
 	 */
-	void ToString(String& out) const override;
+	void ToString(string& out) const override;
 
 	Vec3f color;    /* light color */
 	float ambient;  /* ambient intensity */
 	float diffuse;  /* diffuse intensity */
 	float specular; /* specular intensity */
-	String uniform;	/* Used in shader */
+	string uniform;	/* Used in shader */
 };
 
 /**
@@ -194,7 +194,7 @@ struct DirLightComponent : public LightComponent
 	 * "specular=<specular>"
 	 * "direction=<direction.x,direction.y,direction.z>"
 	 */
-	void ToString(String& out) const override;
+	void ToString(string& out) const override;
 
 	Vec3f direction;
 };
@@ -221,7 +221,7 @@ struct PointLightComponent : public LightComponent
 	 * "specular=<specular>"
 	 * "position=<position.x,position.y,position.z>"
 	 */
-	void ToString(String& out) const override;
+	void ToString(string& out) const override;
 
 	Vec3f position;
 
@@ -253,7 +253,7 @@ struct SpotLightComponent : PointLightComponent
 	 * "direction=<direction.x,direction.y,direction.z>"
 	 * "cutoff=<cutoff>"
 	 */
-	void ToString(String& out) const override;
+	void ToString(string& out) const override;
 		
 	Vec3f direction;
 
@@ -291,7 +291,7 @@ struct CameraComponent : public IComponent
 	 * "zNear=<zNear>"
 	 * "zFar=<zFar>"
 	 */
-	void ToString(String& out) const override;
+	void ToString(string& out) const override;
 
 	Mat4f& GetView();
 	Mat4f& GetProjection();

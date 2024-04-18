@@ -13,7 +13,7 @@ public:
 	void RenderFrame();
 
 private:
-	TimePoint _t1;
-	TimePoint _t2;
+	time_point _t1;
+	time_point _t2;
 	double _framerate;
 };

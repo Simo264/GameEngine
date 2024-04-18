@@ -51,7 +51,7 @@ void Editor::Initialize()
   _openScene = false;
   _exit = false;
 
-  Array<bool*, MENU_ITEMS_COUNT> items{};
+  array<bool*, MENU_ITEMS_COUNT> items{};
   items[PANEL_BROWSER] = &contentBrowserPanel->visible;
   items[PANEL_INSPECTOR] = &inspectorPanel->visible;
   items[PANEL_OUTLINER] = &outlinerPanel->visible;
@@ -177,7 +177,7 @@ void Editor::Render(Scene& scene, Camera& camera, const uint32_t framebufferImag
 
 void Editor::Styling()
 {
-  Path fontPath = FONTS_PATH / "Karla-Regular.ttf";
+  fspath fontPath = FONTS_PATH / "Karla-Regular.ttf";
   ImGuiIO& io = ImGui::GetIO();
   io.Fonts->AddFontFromFileTTF(fontPath.string().c_str(), 16); 
 
@@ -326,7 +326,7 @@ void Editor::OnOpenScene(Scene& scene)
 {
   _openScene = false;
   const char* filters[1] = { "*.ini" };
-  Path filePath = FileDialog::OpenFileDialog(1, filters, "Open scene (.ini)", false);
+  fspath filePath = FileDialog::OpenFileDialog(1, filters, "Open scene (.ini)", false);
   
   if (!filePath.empty())
   {
@@ -339,7 +339,7 @@ void Editor::OnSaveAsScene(Scene& scene)
 {
   _saveAsScene = false;
   const char* filters[1] = { "*.ini" };
-  Path filePath = FileDialog::SaveFileDialog(1, filters, "Save scene (.ini)");
+  fspath filePath = FileDialog::SaveFileDialog(1, filters, "Save scene (.ini)");
   if (!filePath.empty())
     scene.SaveScene(filePath);
 }

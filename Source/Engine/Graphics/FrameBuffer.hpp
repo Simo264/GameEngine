@@ -57,7 +57,7 @@ public:
 	void Create();
 
 	/**
-	 * Delete framebuffer object and all attachments
+	 * Delete framebuffer object and all attachments and invalidates the name associated with the frame buffer object 
 	 */
 	void Delete();
 
@@ -196,8 +196,8 @@ public:
 	uint32_t id;
 
 private:
-	Vector<Texture2D>			_textAttachments;	/* vector of all attached texture ids */
-	Vector<RenderBuffer>	_rboAttachments;	/* vector of all attached renderbuffer ids */
+	vector<Texture2D>			_textAttachments;	/* vector of all attached texture ids */
+	vector<RenderBuffer>	_rboAttachments;	/* vector of all attached renderbuffer ids */
 
 	int _width;
 	int _height;

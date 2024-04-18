@@ -21,7 +21,7 @@ public:
 	void Create();
 
 	/**
-	 * Delete buffer object
+	 * Delete buffer object and invalidates the name associated with the buffer object 
 	 */
 	void Delete();
 	

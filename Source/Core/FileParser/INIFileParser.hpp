@@ -9,7 +9,7 @@
  */
 class INIFileParser{
 public:
-	INIFileParser(const Path& filepath);
+	INIFileParser(const fspath& filepath);
 
 	void PrintContent();
 
@@ -23,7 +23,7 @@ public:
 	}
 
 	/* Returns a copy of the data and doesn't create new items in the structure */
-	String GetValue(const char* section, const char* key)
+	string GetValue(const char* section, const char* key)
 	{
 		return _iniData.get(section).get(key);
 	}
@@ -35,7 +35,7 @@ public:
 	}
 
 	/* Set multiple values at once */
-	void Set(const char* section, const Vector<std::pair<String, String>>& args)
+	void Set(const char* section, const vector<std::pair<string, string>>& args)
 	{
 		_iniData[section].set(args);
 	}
@@ -83,18 +83,18 @@ public:
 	}
 
 	/* From string "50,50" -> to Vec2i(50,50) */
-	static Vec2i32 StringToVec2i(String& str, const char* delimiter = ",");
-	static Vec2f StringToVec2f(String& str, const char* delimiter = ",");
+	static Vec2i32 StringToVec2i(string& str, const char* delimiter = ",");
+	static Vec2f StringToVec2f(string& str, const char* delimiter = ",");
 	
 	/* From string "50,50,50" -> to Vec3i(50,50,50) */
-	static Vec3i32 StringToVec3i(String& str, const char* delimiter = ",");
-	static Vec3f StringToVec3f(String& str, const char* delimiter = ",");
+	static Vec3i32 StringToVec3i(string& str, const char* delimiter = ",");
+	static Vec3f StringToVec3f(string& str, const char* delimiter = ",");
 
 	/* Parse strings { "1" "0" "true" "false" } to boolean */
-	static bool StringToBool(const String& str);
+	static bool StringToBool(const string& str);
 
 private:
-	UniquePointer<mINI::INIFile> _file;
+	unique_pointer<mINI::INIFile> _file;
 	mINI::INIStructure _iniData;
 };
 

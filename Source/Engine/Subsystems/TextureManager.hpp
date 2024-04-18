@@ -5,54 +5,36 @@
 #include "Engine/Graphics/Texture2D.hpp"
 
 /**
- * Load and retrieve texture objects from the pool
+ * Load and retrieve texture objects from the array
  */
 class TextureManager : public Manager<TextureManager>
 {
 public:
 	/**
-	 * Initialize the texture pool
+	 * Initialize the texture array and load images from "Textures/" and "Icons/" directories
 	 */
 	void Initialize() override;
 	
 	/**
-	 * Destroy all texture objects and free pool
+	 * Destroy all texture objects 
 	 */
 	void CleanUp() override;
 
 	/**
-	 * Load all textures in "Textures/" directory
+	 * Load texture object in array
 	 */
-	void LoadTextures();
-
-	/**
-	 * Load all icons in "Icons/" directory
-	 */
-	void LoadIcons();
-
-	/**
-	 * Load texture object in pool 
-	 */
-	Texture2D* LoadTexture(const Path& filePath, bool gammaCorrection = true);
+	Texture2D* LoadTexture(const fspath& filePath, bool gammaCorrection = true);
 		
 	/**
 	 * Retrieve texture object from pool
 	 */
-	Texture2D* GetTextureByPath(const Path& filePath);
+	Texture2D* GetTextureByPath(const fspath& filePath);
 
-	/**
-	 * Return the address of first element
-	 */
-	Texture2D* Begin() { return &_pool[0]; }
+	constexpr auto Begin() const { return textures.begin(); }
 
-	/**
-	 * Return the address of last element
-	 */
-	Texture2D* End() { return &_pool[_nTextures]; }
+	constexpr auto End() const { return textures.end(); }
 
-private:
-	UniquePointer<Texture2D[]> _pool;
-	
-	uint32_t _size;
-	uint32_t _nTextures;
+	constexpr auto Size() const { return textures.size(); }
+
+	vector<Texture2D> textures;
 };

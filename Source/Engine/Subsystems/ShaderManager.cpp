@@ -1,6 +1,8 @@
 #include "ShaderManager.hpp"
-#include "Engine/Graphics/Shader.hpp"
+
 #include "Core/Log/Logger.hpp"
+#include "Core/Platform/OpenGL/OpenGL.hpp"
+
 
 /* -----------------------------------------------------
  *          PUBLIC METHODS
@@ -9,52 +11,123 @@
 
 void ShaderManager::Initialize()
 {
-  /* Preallocate memory for 16 shaders */
-  _shaders.reserve(16); 
+  /* Load all shader files in "Shaders/" directory */
+  for (auto& entry : std::filesystem::directory_iterator(SHADERS_PATH))
+  {
+    if (!std::filesystem::is_directory(entry))
+    {
+      auto filename = entry.path().filename().string();
+      auto pos = filename.find_last_of('.') + 1;
+      auto ext = filename.substr(pos);
+      if (ext.compare("vert") == 0)
+      {
+        LoadShader(entry, GL_VERTEX_SHADER);
+      }
+      else if (ext.compare("frag") == 0)
+      {
+        LoadShader(entry, GL_FRAGMENT_SHADER);
+      }
+      else
+      {
+        CONSOLE_WARN("Error on loading file '{}': unknown '.{}' file extension", filename.c_str(), ext.c_str());
+      }
+    }
+  }
 }
 
 void ShaderManager::CleanUp()
 {
-  /* Destoy all shaders */
-  for (Shader* shader : _shaders)
-  {
-    shader->DestroyShader();
-    delete shader;
-  }
+  /* Destoy all shaders objects */
+  for (auto& shader : shaders)
+    shader.Delete();
+
+  /* Destoy all program objects */
+  for (auto& program : programs)
+    program.Delete();
+
+  shaders.clear();
+  programs.clear();
 }
 
-Shader& ShaderManager::LoadShader(const char* label, const Path& vertFilePath, const Path& fragFilePath)
+Shader& ShaderManager::LoadShader(const fspath& filepath, int shaderType)
 {
-  if (!std::filesystem::exists(vertFilePath))
+  string filepathstr = filepath.lexically_normal().string();
+
+  Shader& shader = shaders.emplace_back();
+  shader.Create(shaderType);
+
+  shader.filename = filepath.filename().string();
+
+  string filecontent;
+  LoadFileContent(filepathstr.c_str(), filecontent);
+
+  shader.LoadSource(filecontent.c_str(), filecontent.size());
+  bool compiled = shader.Compile();
+  if (!compiled)
   {
-    CONSOLE_ERROR("File '{}' does not exists", vertFilePath.string());
-    throw RuntimeError("File does not exists");
-  }
-  if (!std::filesystem::exists(fragFilePath))
-  {
-    CONSOLE_ERROR("File '{}' does not exists", fragFilePath.string());
-    throw RuntimeError("File does not exists");
+    CONSOLE_WARN("Error on compiling shader '{}': {}", filepathstr.c_str(), shader.GetShaderInfo());
   }
 
-  Shader* shader = new Shader(label,vertFilePath,fragFilePath);
-  _shaders.push_back(shader);
-  return *shader;
+  return shader;
 }
 
-Shader& ShaderManager::GetShader(const char* label) const
+Shader* ShaderManager::GetShader(const char* filename)
 {
-  auto beg = _shaders.begin();
-  auto end = _shaders.end();
-  auto it = std::find_if(beg, end, [&label](Shader* shader) {
-      return shader->GetLabel().compare(label) == 0;
-    });
-  
-  if (it == end)
+  for (auto& shader : shaders)
   {
-    CONSOLE_ERROR("Shader '{}' does not exists ", label);
-    throw RuntimeError("Shader does not exists");
+    if (shader.filename.compare(filename) == 0)
+      return &shader;
   }
-  
-  return **it;
+
+  return nullptr;
 }
 
+Program& ShaderManager::LoadProgram(const char* programName, Shader& vertexShader, Shader& fragmentShader)
+{
+  Program& program = programs.emplace_back();
+  program.Create();
+  program.name = programName;
+  program.AttachShader(vertexShader);
+  program.AttachShader(fragmentShader);
+  bool link = program.Link();
+  if (!link)
+  {
+    CONSOLE_WARN("Error on linking program {}: {}", programName, program.GetProgramInfo());
+  }
+
+  return program;
+}
+
+Program* ShaderManager::GetProgram(const char* name)
+{
+  for (auto& program : programs)
+  {
+    if (program.name.compare(name) == 0)
+      return &program;
+  }
+
+  return nullptr;
+}
+
+
+/* -----------------------------------------------------
+ *          PRIVATE METHODS
+ * -----------------------------------------------------
+*/
+
+
+void ShaderManager::LoadFileContent(const fspath& filepath, string& dest)
+{
+  ifStream file(filepath);
+  if (file)
+  {
+    dest.assign(
+      std::istreambuf_iterator<char>(file),
+      std::istreambuf_iterator<char>()
+    );
+  }
+  else
+  {
+    CONSOLE_WARN("Error on opening '{}' file", filepath.string().c_str());
+  }
+}

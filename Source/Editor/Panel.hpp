@@ -10,7 +10,7 @@ public:
 			visible{ visible }
 	{}
 
-	String panelName;
+	string panelName;
 	bool visible;
 };
 

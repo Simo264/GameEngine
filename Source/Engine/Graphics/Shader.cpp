@@ -3,58 +3,9 @@
 
 #include "Core/Platform/OpenGL/OpenGL.hpp"
 
-/* -----------------------------------------------------
-  *          PUBLIC METHODS
-  * -----------------------------------------------------
-*/
 
-Shader::Shader(const char* label, const Path& vertFile, const Path& fragFile)
-  : _shaderID{ 0 }
-{
-  _label = label;
+#if 0
 
-  String vShaderSrc;
-  String fShaderSrc;
-  GetSourceFromFile(vertFile, vShaderSrc);
-  GetSourceFromFile(fragFile, fShaderSrc);
-
-  char infoLog[512];
-
-  /* vertex shader */
-  uint32_t vertexShader = glCreateShader(GL_VERTEX_SHADER);
-  if (!Compile(vertexShader, vShaderSrc.c_str()))
-  {
-    glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-    CONSOLE_WARN("ERROR::SHADER::VERTEX::COMPILATION_FAILED {}", infoLog);
-    return;
-  }
-
-  /* fragment shader */
-  uint32_t fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-  if (!Compile(fragmentShader, fShaderSrc.c_str()))
-  {
-    glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-    CONSOLE_WARN("ERROR::SHADER::FRAGMENT::COMPILATION_FAILED {}", infoLog);
-    return;
-  }
-
-  /* build and compile our shader program */
-  if (!CreateAndLink(vertexShader, fragmentShader))
-  {
-    glGetProgramInfoLog(_shaderID, 512, NULL, infoLog);
-    CONSOLE_WARN("ERROR::SHADER::PROGRAM::LINKING_FAILED {}", infoLog);
-    return;
-  }
-}
-void Shader::Use() const
-{ 
-  glUseProgram(_shaderID); 
-}
-
-void Shader::DestroyShader()
-{ 
-  glDeleteProgram(_shaderID); 
-}
 
 
 void Shader::SetBool(const char* name, bool value) const
@@ -111,54 +62,214 @@ void Shader::SetFloatArray(const char* name, uint32_t count, float* value)
 {
   glUniform1fv(glGetUniformLocation(_shaderID, name), count, value);
 }
+#endif
 
+/* ------------------------------
+      Shader object
+------------------------------ */
 
+Shader::Shader()
+  : id { static_cast<uint32_t>(-1) }
+{}
 
-/* -----------------------------------------------------
-  *          PRIVATE METHODS
-  * -----------------------------------------------------
-*/
-
-void Shader::GetSourceFromFile(const Path& sourceFile, String& dest)
+void Shader::Create(int shaderType)
 {
-  IFStream file(sourceFile, std::ios::in | std::ios::out | std::ios::binary | std::ios::ate);
-  
-  const size_t sz = file.tellg();
-  if (sz <= 0 || !file.is_open()) 
-  {
-    CONSOLE_ERROR("Shader::getSourceFromFile error on opening file {}", sourceFile.string());
-    return;
-  }
-  
-  file.seekg(0, std::ios::beg);
-  dest.assign(sz, '\0');
-  
-  file.read(&dest[0], sz);
-
-  file.close();
+  id = glCreateShader(shaderType);
 }
 
-bool Shader::Compile(uint32_t& shader, const char* src)
+void Shader::Delete()
 {
-  int success;
-  glShaderSource(shader, 1, &src, NULL);
-  glCompileShader(shader);
-  glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-  return (bool)success;
+  glDeleteShader(id);
+
+  id = static_cast<uint32_t>(-1);
 }
 
-bool Shader::CreateAndLink(uint32_t vShader, uint32_t fShader)
+void Shader::LoadSource(const char* string, int length) const
 {
-  int success;
-
-  _shaderID = glCreateProgram();
-  glAttachShader(_shaderID, vShader);
-  glAttachShader(_shaderID, fShader);
-  glLinkProgram(_shaderID);
-
-  glGetProgramiv(_shaderID, GL_LINK_STATUS, &success);
-
-  glDeleteShader(vShader);
-  glDeleteShader(fShader);
-  return (bool)success;
+  glShaderSource(id, 1, &string, &length);
 }
+
+bool Shader::Compile() const
+{
+  glCompileShader(id);
+
+  int success = GetParameteri(GL_COMPILE_STATUS);
+  return success == GL_TRUE;
+}
+
+int Shader::GetParameteri(int name) const
+{
+  int param;
+  glGetShaderiv(id, name, &param);
+  return param;
+}
+
+string Shader::GetShaderInfo() const
+{
+  char log[1024];
+  glGetShaderInfoLog(id, sizeof(log), nullptr, log);
+
+  return string(log);
+}
+
+/* ------------------------------
+      Program object
+------------------------------ */
+
+Program::Program()
+  : id{ static_cast<uint32_t>(-1) }
+{}
+
+void Program::Create()
+{
+  id = glCreateProgram();
+}
+
+void Program::Delete()
+{
+  glDeleteProgram(id);
+
+  id = static_cast<uint32_t>(-1);
+}
+
+void Program::AttachShader(const Shader& shader) const
+{
+  glAttachShader(id, shader.id);
+}
+
+void Program::DetachShader(const Shader& shader) const
+{
+  glDetachShader(id, shader.id);
+}
+
+bool Program::Link() const
+{
+  glLinkProgram(id);
+
+  int link = GetParameteri(GL_LINK_STATUS);
+  return link == GL_TRUE;
+}
+
+void Program::Use() const
+{
+  glUseProgram(id);
+}
+
+int Program::GetParameteri(int name) const
+{
+  int param;
+  glGetProgramiv(id, name, &param);
+  return param;
+}
+
+string Program::GetProgramInfo() const
+{
+  char log[1024];
+  glGetProgramInfoLog(id, sizeof(log), nullptr, log);
+  return string(log);
+}
+
+int Program::GetUniformLocation(const char* name) const 
+{ 
+  return glGetUniformLocation(id, name);
+}
+
+void Program::SetUniform1i(int location, int value) const 
+{ 
+  glProgramUniform1i(id, location, value); 
+}
+void Program::SetUniform2i(int location, const Vec2i32& value) const 
+{ 
+  glProgramUniform2i(id, location, value.x, value.y); 
+}
+void Program::SetUniform3i(int location, const Vec3i32& value) const 
+{ 
+  glProgramUniform3i(id, location, value.x, value.y, value.z); 
+}
+void Program::SetUniform4i(int location, const Vec4i32& value) const 
+{ 
+  glProgramUniform4i(id, location, value.x, value.y, value.z, value.w); 
+}
+void Program::SetUniform1f(int location, float value) const 
+{ 
+  glProgramUniform1f(id, location, value); 
+}
+void Program::SetUniform2f(int location, const Vec2f& value) const
+{
+  glProgramUniform2f(id, location, value.x, value.y);
+}
+void Program::SetUniform3f(int location, const Vec3f& value) const
+{
+  glProgramUniform3f(id, location, value.x, value.y, value.z);
+}
+void Program::SetUniform4f(int location, const Vec4f& value) const
+{ 
+  glProgramUniform4f(id, location, value.x, value.y, value.z, value.w); 
+}
+void Program::SetUniformMat2f(int location, const Mat2f& value, bool transpose) const
+{
+  glProgramUniformMatrix2fv(id, location, 1, transpose, &value[0][0]);
+}
+void Program::SetUniformMat3f(int location, const Mat3f& value, bool transpose) const
+{
+  glProgramUniformMatrix3fv(id, location, 1, transpose, &value[0][0]);
+}
+void Program::SetUniformMat4f(int location, const Mat4f& value, bool transpose) const
+{
+  glProgramUniformMatrix4fv(id, location, 1, transpose, &value[0][0]);
+}
+
+//void Program::SetUniformBool(const char* name, bool value) const
+//{
+//  glUniform1i(glGetUniformLocation(id, name), (int)value);
+//}
+//
+//void Program::SetUniformInt(const char* name, int value) const
+//{
+//  glUniform1i(glGetUniformLocation(id, name), value);
+//}
+//
+//void Program::SetUniformFloat(const char* name, float value) const
+//{
+//  glUniform1f(glGetUniformLocation(id, name), value);
+//}
+//
+//void Program::SetUniformVec2f(const char* name, const Vec2f& value) const
+//{
+//  glUniform2fv(glGetUniformLocation(id, name), 1, &value[0]);
+//}
+//
+//void Program::SetUniformVec3f(const char* name, const Vec3f& value) const
+//{
+//  glUniform3fv(glGetUniformLocation(id, name), 1, &value[0]);
+//}
+//
+//void Program::SetUniformVec4f(const char* name, const Vec4f& value) const
+//{
+//  glUniform4fv(glGetUniformLocation(id, name), 1, &value[0]);
+//}
+//
+//void Program::SetUniformMat2f(const char* name, const Mat2f& mat) const
+//{
+//  glUniformMatrix2fv(glGetUniformLocation(id, name), 1, GL_FALSE, &mat[0][0]);
+//}
+//
+//void Program::SetUniformMat3f(const char* name, const Mat3f& mat) const
+//{
+//  glUniformMatrix3fv(glGetUniformLocation(id, name), 1, GL_FALSE, &mat[0][0]);
+//}
+//
+//void Program::SetUniformMat4f(const char* name, const Mat4f& mat) const
+//{
+//  glUniformMatrix4fv(glGetUniformLocation(id, name), 1, GL_FALSE, &mat[0][0]);
+//}
+//
+//void Program::SetUniformIntArray(const char* name, uint32_t count, int* value) const
+//{
+//  glUniform1iv(glGetUniformLocation(id, name), count, value);
+//}
+//
+//void Program::SetUniformFloatArray(const char* name, uint32_t count, float* value) const
+//{
+//  glUniform1fv(glGetUniformLocation(id, name), count, value);
+//}

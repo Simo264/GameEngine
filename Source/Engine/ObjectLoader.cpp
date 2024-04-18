@@ -4,8 +4,8 @@
 #include "Core/Math/Math.hpp"
 #include "Core/Log/Logger.hpp"
 
-#include "Engine/Graphics/Buffers/VertexBuffer.hpp"
-#include "Engine/Graphics/Buffers/ElementBuffer.hpp"
+#include "Engine/Graphics/VertexBuffer.hpp"
+#include "Engine/Graphics/ElementBuffer.hpp"
 #include "Engine/Graphics/Texture2D.hpp"
 
 #include "Engine/Subsystems/TextureManager.hpp"
@@ -19,7 +19,7 @@
  * -----------------------------------------------------
 */
 
-ObjectLoader::ObjectLoader(const Path& filePath)
+ObjectLoader::ObjectLoader(const fspath& filePath)
 {
   _scene = _importer.ReadFile(filePath.string().c_str(),
     aiProcess_Triangulate | 

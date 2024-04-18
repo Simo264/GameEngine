@@ -18,7 +18,7 @@
  * -----------------------------------------------------
 */
 
-void SceneSerializer::SerializeScene(Scene& scene, const Path& filepath)
+void SceneSerializer::SerializeScene(Scene& scene, const fspath& filepath)
 {
 	INIFileParser conf(filepath);
 
@@ -30,12 +30,12 @@ void SceneSerializer::SerializeScene(Scene& scene, const Path& filepath)
 	conf.Write();
 }
 
-void SceneSerializer::DeserializeScene(Scene& scene, const Path& filepath)
+void SceneSerializer::DeserializeScene(Scene& scene, const fspath& filepath)
 {
 	INIFileParser conf(filepath);
 	conf.ReadData();
 
-	String buff;
+	string buff;
 	buff.reserve(128);
 
 	int nPointLights = 0; /* used for setting up shader uniforms */
@@ -43,10 +43,10 @@ void SceneSerializer::DeserializeScene(Scene& scene, const Path& filepath)
 	GameObject obj;
 	for (auto const& it : conf.GetData())
 	{
-		const String& section = it.first;
+		const string& section = it.first;
 
 		/* Parse object */
-		if (section.find(':') == String::npos)
+		if (section.find(':') == string::npos)
 		{
 			buff = conf.GetValue(section.c_str(), "label");
 			uint32_t type	= std::stoi(conf.GetValue(section.c_str(), "type"));
@@ -173,7 +173,7 @@ void SceneSerializer::SerializeObject(INIFileParser& conf, GameObject& object)
 		<component-attributes>
 		...
 	*/
-	String buffer;				
+	string buffer;				
 	buffer.reserve(512);
 
 	/* Set current section */
@@ -218,7 +218,7 @@ void SceneSerializer::SerializeObject(INIFileParser& conf, GameObject& object)
 }
 
 void SceneSerializer::SerializeComponent(
-	INIFileParser& conf, const char* section, const char* componentName, String& strComponent)
+	INIFileParser& conf, const char* section, const char* componentName, string& strComponent)
 {
 	char childSection[64]{};
 	std::strcat(childSection, section);

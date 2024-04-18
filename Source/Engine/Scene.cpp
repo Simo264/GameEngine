@@ -46,7 +46,7 @@ void Scene::DrawScene(Shader& shader)
 		if (TransformComponent* transComp = object.GetComponent<TransformComponent>())
 			transform = transComp->GetTransformation();
 		
-		shader.SetMat4f(SHADER_UNIFORM_MODEL, transform);
+		//shader.SetMat4f(SHADER_UNIFORM_MODEL, transform);
 		smeshComp.DrawMesh();
 	}
 }
@@ -69,13 +69,13 @@ void Scene::ClearScene()
 	_registry.clear();
 }
 
-void Scene::LoadScene(const Path& filepath)
+void Scene::LoadScene(const fspath& filepath)
 {
 	SceneSerializer serializer;
 	serializer.DeserializeScene(*this, filepath);
 }
 
-void Scene::SaveScene(const Path& filepath)
+void Scene::SaveScene(const fspath& filepath)
 {
 	SceneSerializer serializer;
 	serializer.SerializeScene(*this, filepath);

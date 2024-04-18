@@ -12,10 +12,10 @@ public:
 	~FileDialog() = delete;
 
 	/* Return empty path if cancelled */
-	static Path OpenFileDialog(
+	static fspath OpenFileDialog(
 		int numFilters, const char* filter[], const char* filterDescription, bool multipleSelects);
 	
-	static Path SaveFileDialog(
+	static fspath SaveFileDialog(
 		int numFilters, const char* filter[], const char* filterDescription);
 };
 

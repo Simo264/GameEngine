@@ -27,7 +27,7 @@ ShadowMap::ShadowMap(int width, int height)
 	/* Resolve the problem of over sampling */
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, Array<float, 4>{ 1.0f, 1.0f, 1.0f, 1.0f }.data());
+	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, array<float, 4>{ 1.0f, 1.0f, 1.0f, 1.0f }.data());
 
 
 	/* With the generated depth texture we can attach it as the framebuffer's depth buffer */

@@ -19,7 +19,7 @@
 
 DetailsPanel::DetailsPanel(const char* panelName, bool visible)
   : Panel(panelName, visible),
-  _grizmoMode{ static_cast<int>(ImGuizmo::OPERATION::TRANSLATE) }
+    _grizmoMode{ static_cast<int>(ImGuizmo::OPERATION::TRANSLATE) }
 {}
 
 void DetailsPanel::RenderPanel(Scene& scene, GameObject& selected)
@@ -119,7 +119,7 @@ void DetailsPanel::RenderPanel(Scene& scene, GameObject& selected)
         const float C3 = 0.2f * ImGui::GetContentRegionAvail().x;
         CreateTable<3>("##Material", { C1, C2, C3 });
 
-        const String diffusePathStr = 
+        const string diffusePathStr = 
           (meshComp->material.diffuse ? meshComp->material.diffuse->path.string() : "");
         const uint32_t diffuseID = 
           (meshComp->material.diffuse ? meshComp->material.diffuse->id : 0xFFFFFFFF);
@@ -133,14 +133,15 @@ void DetailsPanel::RenderPanel(Scene& scene, GameObject& selected)
         if (ImGui::BeginCombo("##Textures", diffusePathStr.c_str()))
         {
           auto& instanceTM = TextureManager::Instance();
-          std::for_each(instanceTM.Begin(), instanceTM.End(), [&](Texture2D& texture) {
-            String textPathStr = texture.path.string();
-            bool isSelected = (std::strcmp(diffusePathStr.c_str(), textPathStr.c_str()) == 0);
-            if (ImGui::Selectable(textPathStr.c_str(), isSelected))
+          for (auto& text : instanceTM.textures)
+          {
+            string textPathStr = text.path.string();
+            bool selected = (std::strcmp(diffusePathStr.c_str(), textPathStr.c_str()) == 0);
+            if (ImGui::Selectable(textPathStr.c_str(), selected))
               meshComp->material.diffuse = instanceTM.GetTextureByPath(textPathStr.c_str());
-            if (isSelected)
+            if (selected)
               ImGui::SetItemDefaultFocus();
-            });
+          }
 
           ImGui::EndCombo();
         }
@@ -175,7 +176,7 @@ void DetailsPanel::RenderPanel(Scene& scene, GameObject& selected)
 */
 
 template<int cols>
-void DetailsPanel::CreateTable(const char* label, Array<float, cols> sizes)
+void DetailsPanel::CreateTable(const char* label, array<float, cols> sizes)
 {
   ImGui::BeginTable(label, cols);
   for (int i = 0; i < cols; i++)

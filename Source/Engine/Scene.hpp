@@ -11,8 +11,8 @@ class Scene
 public:
 	Scene() = default;
 
-	void LoadScene(const Path& filepath);
-	void SaveScene(const Path& filepath);
+	void LoadScene(const fspath& filepath);
+	void SaveScene(const fspath& filepath);
 
 	void DrawScene(class Shader& shader);
 	

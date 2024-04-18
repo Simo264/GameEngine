@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Core/Core.hpp"
-#include "Editor/Editor.hpp"
 
 class Engine
 {
@@ -13,15 +12,5 @@ public:
 	void Run();
 	void CleanUp();
 
-	Editor editor;
-
-private:
-	void SetGLStates();
-
-	void LoadConfig();
-	
-	/**
-	 * Load shader programs from "Shaders/" directory
-	 */
-	void LoadShaders();
+	class Editor* editor;
 };

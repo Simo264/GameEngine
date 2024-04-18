@@ -75,7 +75,7 @@ public:
   void Create();
 
   /**
-   * Delete vertex array object and all attachments
+   * Delete vertex array object and all attachments and invalidates the name associated with the vertex array object 
    */
   void Delete();
 
@@ -158,7 +158,7 @@ public:
   int numIndices;
 
   ElementBuffer         eboAttachment;
-  Vector<VertexBuffer>  vboAttachments;
+  vector<VertexBuffer>  vboAttachments;
 
 };
 
