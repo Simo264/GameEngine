@@ -55,8 +55,8 @@ struct SpotLight_t {
 /* ------------------------------ */
 uniform Material_t    UMaterial;
 uniform DirLight_t    UDirLight;
-uniform PointLight_t  UPointLight[NR_POINT_LIGHTS];
-uniform SpotLight_t   USpotLight;
+//uniform PointLight_t  UPointLight[NR_POINT_LIGHTS];
+//uniform SpotLight_t   USpotLight;
 uniform vec3          UViewPos; 
 uniform float         UGamma;
 
@@ -70,8 +70,8 @@ vec3 specularColor;
 /* ---------- Functions ---------- */
 /* ------------------------------- */
 vec3 CalcDirLight(DirLight_t dirLight);
-vec3 BlinnPhong(PointLight_t pointLight); /* Function to calcolate point lights */
-vec3 CalcSpotLight(SpotLight_t spotLight);
+//vec3 BlinnPhong(PointLight_t pointLight); /* Function to calcolate point lights */
+//vec3 CalcSpotLight(SpotLight_t spotLight);
 void GammaCorrection(inout vec3 value); /* value to apply gamma correction */
 
 void main()
@@ -138,79 +138,79 @@ vec3 CalcDirLight(DirLight_t dirLight)
   return (ambient + diffuse + specular);
 }
 
-vec3 BlinnPhong(PointLight_t pointLight)
-{
-  /* attenuation */
-  float distance = length(pointLight.position - FragPos);
-  float attenuation;
-  if(UGamma != 0.0f)
-    attenuation = 1.0f / (distance);    
-  else
-    attenuation = 1.0f / (distance * distance);
+//vec3 BlinnPhong(PointLight_t pointLight)
+//{
+//  /* attenuation */
+//  float distance = length(pointLight.position - FragPos);
+//  float attenuation;
+//  if(UGamma != 0.0f)
+//    attenuation = 1.0f / (distance);    
+//  else
+//    attenuation = 1.0f / (distance * distance);
+//
+//  /* ambient shading */
+//  vec3 ambient = pointLight.ambient  * diffuseColor;
+//  ambient *= attenuation;
+//
+//  /* diffuse shading */
+//  vec3 lightDir = normalize(pointLight.position - FragPos);
+//  float diffuseFactor = max(dot(normal, lightDir), 0.0);
+//  if(diffuseFactor == 0.0f)
+//    return ambient;
+//    
+//  vec3 diffuse  = pointLight.diffuse * diffuseFactor * diffuseColor;
+//  diffuse *= attenuation;
+//
+//  /* specular shading */
+//  vec3 halfwayDir = normalize(lightDir + viewDir);  
+//  float specularFactor = pow(max(dot(normal, halfwayDir), 0.0), UMaterial.shininess);
+//  vec3 specular = pointLight.specular * specularFactor * specularColor;
+//  specular *= attenuation;
+//
+//  /* combine results */
+//  return (ambient + diffuse + specular);
+//}
 
-  /* ambient shading */
-  vec3 ambient = pointLight.ambient  * diffuseColor;
-  ambient *= attenuation;
-
-  /* diffuse shading */
-  vec3 lightDir = normalize(pointLight.position - FragPos);
-  float diffuseFactor = max(dot(normal, lightDir), 0.0);
-  if(diffuseFactor == 0.0f)
-    return ambient;
-    
-  vec3 diffuse  = pointLight.diffuse * diffuseFactor * diffuseColor;
-  diffuse *= attenuation;
-
-  /* specular shading */
-  vec3 halfwayDir = normalize(lightDir + viewDir);  
-  float specularFactor = pow(max(dot(normal, halfwayDir), 0.0), UMaterial.shininess);
-  vec3 specular = pointLight.specular * specularFactor * specularColor;
-  specular *= attenuation;
-
-  /* combine results */
-  return (ambient + diffuse + specular);
-}
-
-vec3 CalcSpotLight(SpotLight_t spotLight)
-{
-  vec3 lightDir = normalize(spotLight.position - FragPos);
-
-  /* check if lighting is inside the spotlight cone */
-  float theta = dot(lightDir, normalize(-spotLight.direction));
-
-  /* remember that we're working with angles as cosines instead of degrees so a '>' is used. */
-  if(theta > spotLight.cutOff) 
-  {
-    /* ambient */
-    vec3 ambient = spotLight.ambient * diffuseColor;
-    
-    /* diffuse */
-    vec3 norm     = normalize(normal);
-    float diff    = max(dot(norm, lightDir), 0.0);
-    vec3 diffuse  = spotLight.diffuse * diff * diffuseColor;  
-    
-    /* specular */
-    vec3 reflectDir = reflect(-lightDir, norm);  
-    float spec      = pow(max(dot(viewDir, reflectDir), 0.0), UMaterial.shininess);
-    vec3 specular   = spotLight.specular * spec * diffuseColor;  
-    
-    /* spotlight (soft edges) */
-    float intensity = 1.0 - (1.0 - theta) / (1.0 - spotLight.cutOff);
-    diffuse  *= intensity;
-    specular *= intensity;
-
-    /* attenuation */
-    float distance    = length(spotLight.position - FragPos);
-    float attenuation = 1.0 / (1.0 + spotLight.linear * distance + spotLight.quadratic * (distance * distance));    
-
-
-    /* remove attenuation from ambient, as otherwise at large distances the light would be 
-       darker inside than outside the spotlight due the ambient term in the else branch
-       ambient  *= attenuation; */
-    diffuse  *= attenuation;
-    specular *= attenuation;   
-    return vec3(ambient + diffuse + specular);
-  }
-  else
-    return vec3(0.f,0.f,0.f);
-}
+//vec3 CalcSpotLight(SpotLight_t spotLight)
+//{
+//  vec3 lightDir = normalize(spotLight.position - FragPos);
+//
+//  /* check if lighting is inside the spotlight cone */
+//  float theta = dot(lightDir, normalize(-spotLight.direction));
+//
+//  /* remember that we're working with angles as cosines instead of degrees so a '>' is used. */
+//  if(theta > spotLight.cutOff) 
+//  {
+//    /* ambient */
+//    vec3 ambient = spotLight.ambient * diffuseColor;
+//    
+//    /* diffuse */
+//    vec3 norm     = normalize(normal);
+//    float diff    = max(dot(norm, lightDir), 0.0);
+//    vec3 diffuse  = spotLight.diffuse * diff * diffuseColor;  
+//    
+//    /* specular */
+//    vec3 reflectDir = reflect(-lightDir, norm);  
+//    float spec      = pow(max(dot(viewDir, reflectDir), 0.0), UMaterial.shininess);
+//    vec3 specular   = spotLight.specular * spec * diffuseColor;  
+//    
+//    /* spotlight (soft edges) */
+//    float intensity = 1.0 - (1.0 - theta) / (1.0 - spotLight.cutOff);
+//    diffuse  *= intensity;
+//    specular *= intensity;
+//
+//    /* attenuation */
+//    float distance    = length(spotLight.position - FragPos);
+//    float attenuation = 1.0 / (1.0 + spotLight.linear * distance + spotLight.quadratic * (distance * distance));    
+//
+//
+//    /* remove attenuation from ambient, as otherwise at large distances the light would be 
+//       darker inside than outside the spotlight due the ambient term in the else branch
+//       ambient  *= attenuation; */
+//    diffuse  *= attenuation;
+//    specular *= attenuation;   
+//    return vec3(ambient + diffuse + specular);
+//  }
+//  else
+//    return vec3(0.f,0.f,0.f);
+//}

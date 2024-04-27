@@ -43,7 +43,4 @@ public:
 	
 	vector<Shader> shaders;
 	vector<Program> programs;
-
-private:
-	void LoadFileContent(const fspath& filepath, string& dest);
 };

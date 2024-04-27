@@ -19,7 +19,8 @@
 ViewportPanel::ViewportPanel(const char* panelName, bool visible)
   : Panel(panelName, visible),
     isFocused{ false },
-    viewportSize{ 0, 0 }, /* Set size on Render() function */
+    viewportSize{ 0, 0 }, 
+    viewportPosition{ 0 ,0 },
     _grizmoMode{ static_cast<int>(ImGuizmo::OPERATION::TRANSLATE) } 
 {}
 
@@ -37,12 +38,11 @@ void ViewportPanel::RenderPanel(Camera& camera, const uint32_t framebufferImage,
   /* Using a child allow to fill all the space of the window. It also alows customization */
   ImGui::BeginChild("GameRender");
   isFocused = isFocused || ImGui::IsWindowFocused();
+  
+  const ImVec2 size = ImGui::GetWindowSize();
+  viewportSize = { size.x, size.y };
 
-  /* Get the whole draw size of the window */
-  const ImVec2 viewport = ImGui::GetWindowSize();
-  viewportSize = { viewport.x, viewport.y };
-
-  ImGui::Image(reinterpret_cast<ImTextureID>(framebufferImage), viewport, ImVec2(0, 1), ImVec2(1, 0));
+  ImGui::Image(reinterpret_cast<ImTextureID>(framebufferImage), size, ImVec2(0, 1), ImVec2(1, 0));
   if (selected.IsValid())
   {
     auto component = selected.GetComponent<TransformComponent>();

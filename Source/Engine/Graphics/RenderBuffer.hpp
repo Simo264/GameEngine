@@ -36,7 +36,7 @@ public:
 	 * 
 	 * @param height: specifies the height of the renderbuffer, in pixels.
 	 */
-	void CreateStorage(int width, int height) const;
+	void CreateStorage(int width, int height);
 
 	/**
 	 * Establish data storage, format, dimensions and sample count of the renderbuffer object's image
@@ -47,7 +47,11 @@ public:
 	 * 
 	 * @param height:		specifies the height of the renderbuffer, in pixels.
 	 */
-	void CreateStorageMulstisampled(int samples, int width, int height) const;
+	void CreateStorageMulstisampled(int samples, int width, int height);
+
+	constexpr bool IsMultisampled() const { return _isMultisampled; }
+	
+	constexpr int GetSamples() const { return _samples; }
 
 	uint32_t id;
 
@@ -58,4 +62,8 @@ public:
 	 * https://www.khronos.org/opengl/wiki/Image_Format
 	 */
 	int internalformat;
+
+private:
+	int  _samples;
+	bool _isMultisampled;
 };

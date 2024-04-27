@@ -152,7 +152,7 @@ struct LightComponent : public IComponent
 {
 	LightComponent(const char* uniform);
 
-	virtual void RenderLight(class Shader& shader) = 0;
+	virtual void RenderLight(class Program& program) = 0;
 
 	/** 
 	 * Return following string representation:
@@ -184,7 +184,7 @@ struct DirLightComponent : public LightComponent
 
 	static const char* GetComponentName(bool lower = false);
 
-	void RenderLight(class Shader& shader) override;
+	void RenderLight(class Program& program) override;
 
 	/**  
 	 * Return following string representation:
@@ -211,7 +211,7 @@ struct PointLightComponent : public LightComponent
 
 	static const char* GetComponentName(bool lower = false);
 
-	void RenderLight(class Shader& shader) override;
+	void RenderLight(class Program& program) override;
 
 	/**  
 	 * Return following string representation:
@@ -243,7 +243,7 @@ struct SpotLightComponent : PointLightComponent
 
 	static const char* GetComponentName(bool lower = false);
 
-	void RenderLight(class Shader& shader) override;
+	void RenderLight(class Program& program) override;
 
 	/** 
 	 * Return following string representation:

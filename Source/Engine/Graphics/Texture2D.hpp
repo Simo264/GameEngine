@@ -78,7 +78,7 @@ public:
   /**
    * Generate mipmaps for the texture object
    */
-  void GenerateMipmap();
+  void GenerateMipmap() const;
 
   /**
    * The storage is created here, but the contents of that storage is undefined
@@ -140,9 +140,14 @@ public:
    */
   void CopyStorage(int level, const Texture2D& dest) const;
 
-  constexpr bool Compare(const Texture2D& other) const { return id == other.id; }
-
-  constexpr bool IsValid() const { return id != static_cast<uint32_t>(-1); }
+  constexpr bool  Compare(const Texture2D& other) const { return id == other.id; }
+  constexpr bool  IsValid() const { return id != static_cast<uint32_t>(-1); }
+  constexpr int   GetWidth() const { return _width; }
+  constexpr int   GetHeight() const { return _height; }
+  constexpr int   GetMipmapLevels() const { return _mipmapLevels; }
+  constexpr int   GetSamples() const { return _samples; }
+  constexpr bool  IsMultisampled() const { return _isMultisampled; }
+  
 
   uint32_t id; /* the texture object id */
   
@@ -160,10 +165,12 @@ public:
    */
   int internalformat;
 
-  int mipmapLevels;   
-
-  int width;          
-  int height;         
-
   fspath path; /* the texture path (if loaded from file) */
+
+private:
+  int   _mipmapLevels;
+  int   _width;
+  int   _height;
+  int   _samples;
+  bool  _isMultisampled;
 };

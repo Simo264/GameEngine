@@ -16,13 +16,6 @@ public:
 	bool isFocused;
 	Vec2i32 viewportSize;
 
-	/**
-	 * .
-	 * 
-	 * \param camera: used in Grizmo transformations
-	 * \param framebuffer: draw the framebuffer image 
-	 * \param selected: used in Grizmo transformations
-	 */
 	void RenderPanel(
 		class Camera& camera, 
 		const uint32_t framebufferImage, 

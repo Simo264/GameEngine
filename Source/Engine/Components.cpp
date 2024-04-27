@@ -301,30 +301,28 @@ const char* DirLightComponent::GetComponentName(bool lower)
 	return (lower ? "dirlightcomponent" : "DirLightComponent");
 }
 
-void DirLightComponent::RenderLight(Shader& shader)
+void DirLightComponent::RenderLight(Program& program)
 {
 	const uint64_t uniformNameSize = uniform.size();
 
-#if 0 
 	/* uniformName = "DirLight.direction" */
 	uniform.append(".direction");
-	shader.SetVec3f(uniform.c_str(), direction);
-
+	program.SetUniform3f(uniform.c_str(), direction);
+	
 	/* uniformName = "DirLight.ambient" */
 	uniform.erase(uniformNameSize);
 	uniform.append(".ambient");
-	shader.SetVec3f(uniform.c_str(), color * ambient);
+	program.SetUniform3f(uniform.c_str(), color * ambient);
 
 	/* uniformName = "DirLight.diffuse" */
 	uniform.erase(uniformNameSize);
 	uniform.append(".diffuse");
-	shader.SetVec3f(uniform.c_str(), color * diffuse);
+	program.SetUniform3f(uniform.c_str(), color * diffuse);
 
 	/* uniformName = "DirLight.specular" */
 	uniform.erase(uniformNameSize);
 	uniform.append(".specular");
-	shader.SetVec3f(uniform.c_str(), color * specular);
-#endif
+	program.SetUniform3f(uniform.c_str(), color * specular);
 
 	/* uniformName = "DirLight" */
 	uniform.erase(uniformNameSize);
@@ -355,39 +353,39 @@ const char* PointLightComponent::GetComponentName(bool lower)
 	return (lower ? "pointlightcomponent" : "PointLightComponent");
 }
 
-void PointLightComponent::RenderLight(Shader& shader)
+void PointLightComponent::RenderLight(Program& program)
 {
 	const uint64_t uniformNameSize = uniform.size();
-#if 0
+
 	/* shaderUName = "PointLight.position" */
 	uniform.append(".position");
-	shader.SetVec3f(uniform.c_str(), position);
+	program.SetUniform3f(uniform.c_str(), position);
 
 	/* shaderUName = "PointLight.ambient" */
 	uniform.erase(uniformNameSize);
 	uniform.append(".ambient");
-	shader.SetVec3f(uniform.c_str(), color * ambient);
+	program.SetUniform3f(uniform.c_str(), color * ambient);
 
 	/* shaderUName = "PointLight.diffuse" */
 	uniform.erase(uniformNameSize);
 	uniform.append(".diffuse");
-	shader.SetVec3f(uniform.c_str(), color * diffuse);
+	program.SetUniform3f(uniform.c_str(), color * diffuse);
 
 	/* shaderUName = "PointLight.specular" */
 	uniform.erase(uniformNameSize);
 	uniform.append(".specular");
-	shader.SetVec3f(uniform.c_str(), color * specular);
+	program.SetUniform3f(uniform.c_str(), color * specular);
 
 	/* shaderUName = "PointLight.linear" */
 	uniform.erase(uniformNameSize);
 	uniform.append(".linear");
-	shader.SetFloat(uniform.c_str(), linear);
+	program.SetUniform1f(uniform.c_str(), linear);
 
 	/* shaderUName = "PointLight.quadratic" */
 	uniform.erase(uniformNameSize);
 	uniform.append(".quadratic");
-	shader.SetFloat(uniform.c_str(), quadratic);
-#endif
+	program.SetUniform1f(uniform.c_str(), quadratic);
+
 	/* shaderUName = "PointLight" */
 	uniform.erase(uniformNameSize);
 }
@@ -417,42 +415,41 @@ const char* SpotLightComponent::GetComponentName(bool lower)
 	return (lower ? "spotlightcomponent" : "SpotLightComponent");
 }
 
-void SpotLightComponent::RenderLight(Shader& shader)
+void SpotLightComponent::RenderLight(Program& program)
 {
 	const int uniformNameSize = uniform.size();
 
-#if 0
 	uniform.append(".position");
-	shader.SetVec3f(uniform.c_str(), position);
+	program.SetUniform3f(uniform.c_str(), position);
 
 	uniform.erase(uniformNameSize);
 	uniform.append(".direction");
-	shader.SetVec3f(uniform.c_str(), direction);
+	program.SetUniform3f(uniform.c_str(), direction);
 
 	uniform.erase(uniformNameSize);
 	uniform.append(".ambient");
-	shader.SetVec3f(uniform.c_str(), color * ambient);
+	program.SetUniform3f(uniform.c_str(), color * ambient);
 
 	uniform.erase(uniformNameSize);
 	uniform.append(".diffuse");
-	shader.SetVec3f(uniform.c_str(), color * diffuse);
+	program.SetUniform3f(uniform.c_str(), color * diffuse);
 
 	uniform.erase(uniformNameSize);
 	uniform.append(".specular");
-	shader.SetVec3f(uniform.c_str(), color * specular);
+	program.SetUniform3f(uniform.c_str(), color * specular);
 
 	uniform.erase(uniformNameSize);
 	uniform.append(".linear");
-	shader.SetFloat(uniform.c_str(), linear);
+	program.SetUniform1f(uniform.c_str(), linear);
 
 	uniform.erase(uniformNameSize);
 	uniform.append(".quadratic");
-	shader.SetFloat(uniform.c_str(), quadratic);
+	program.SetUniform1f(uniform.c_str(), quadratic);
 
 	uniform.erase(uniformNameSize);
 	uniform.append(".cutOff");
-	shader.SetFloat(uniform.c_str(), Math::Cos(Math::Radians(cutOff)));
-#endif
+	program.SetUniform1f(uniform.c_str(), Math::Cos(Math::Radians(cutOff)));
+
 	uniform.erase(uniformNameSize);
 }
 

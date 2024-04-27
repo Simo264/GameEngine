@@ -15,8 +15,8 @@ out vec4 FragColor;
 /* ---------- Structs ---------- */
 /* ----------------------------- */
 struct Material_t {
-  sampler2D diffuse;    /* GL_TEXTURE0 */
-  sampler2D specular;   /* GL_TEXTURE1 */
+  sampler2D diffuse;    
+  sampler2D specular;   
   float     shininess;
 };
 struct DirLight_t {
@@ -28,7 +28,7 @@ struct DirLight_t {
 
 /* ---------- Uniforms ---------- */
 /* ------------------------------ */
-uniform sampler2D UShadowMap; /* GL_TEXTURE2 */
+uniform sampler2D UShadowMap; 
 uniform vec3 ULightPos;
 uniform vec3 UViewPos;
 

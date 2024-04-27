@@ -9,20 +9,22 @@
 Texture2D::Texture2D()
   : id{ static_cast<uint32_t>(-1) },
     path{},
-    mipmapLevels{ 0 },
-    width{ 0 },
-    height{ 0 },
     format{ 0 },
-    internalformat{ 0 }
+    internalformat{ 0 },
+    _mipmapLevels{ 0 },
+    _width{ 0 },
+    _height{ 0 },
+    _isMultisampled{ false }
 {}
 
 Texture2D::Texture2D(const fspath& path, bool gammaCorrection)
-  : path{},
-    mipmapLevels{ 0 },
-    width{ 0 },
-    height{ 0 },
+  : path{ },
     format{ 0 },
-    internalformat{ 0 }
+    internalformat{ 0 },
+    _mipmapLevels{ 0 },
+    _width{ 0 },
+    _height{ 0 },
+    _isMultisampled{ false }
 {
   Create(GL_TEXTURE_2D);
   LoadImageData(path, gammaCorrection);
@@ -60,7 +62,7 @@ void Texture2D::SetParameteri(int name, int value) const
   glTextureParameteri(id, name, value);
 }
 
-void Texture2D::GenerateMipmap()
+void Texture2D::GenerateMipmap() const
 {
   glGenerateTextureMipmap(id);
 }
@@ -70,11 +72,12 @@ void Texture2D::CreateStorage(int width, int height)
   if (internalformat == 0)
     CONSOLE_WARN("Invalid texure internalformat");
   
-  this->width  = width;
-  this->height = height;
-  mipmapLevels = 1 + std::floor(std::log2(std::max(width, height)));
-  
-  glTextureStorage2D(id, mipmapLevels, internalformat, width, height);
+  _width          = width;
+  _height         = height;
+  _isMultisampled = false;
+  _mipmapLevels   = 1 + std::floor(std::log2(std::max(width, height)));
+
+  glTextureStorage2D(id, _mipmapLevels, internalformat, width, height);
 }
 
 void Texture2D::CreateStorageMultisampled(int samples, int width, int height, bool fixedsamplelocations)
@@ -82,9 +85,11 @@ void Texture2D::CreateStorageMultisampled(int samples, int width, int height, bo
   if (internalformat == 0)
     CONSOLE_WARN("Invalid texure internalformat");
 
-  this->width = width;
-  this->height = height;
-  mipmapLevels = 1 + std::floor(std::log2(std::max(width, height)));
+  _width          = width;
+  _height         = height;
+  _samples        = samples;
+  _isMultisampled = true;
+  _mipmapLevels   = 1 + std::floor(std::log2(std::max(width, height)));
   
   glTextureStorage2DMultisample(id, samples, internalformat, width, height, fixedsamplelocations);
 }
@@ -94,7 +99,7 @@ void Texture2D::UpdateStorage(int level, int xoffset, int yoffset, int type, con
   if (internalformat == 0)
     CONSOLE_WARN("Invalid texure internalformat");
 
-  glTextureSubImage2D(id, level, xoffset, yoffset, width, height, format, type, pixels);
+  glTextureSubImage2D(id, level, xoffset, yoffset, _width, _height, format, type, pixels);
 }
 
 void Texture2D::ClearStorage(int level, int type, const void* data) const
@@ -112,14 +117,13 @@ void Texture2D::CopyStorage(int level, const Texture2D& dest) const
     CONSOLE_WARN("Invalid destination texture object!");
     return;
   }
-  
-  if (dest.width == 0 || dest.height == 0)
+  if (dest.GetWidth() == 0 || dest.GetHeight() == 0)
   {
-    CONSOLE_WARN("The destination texture storage is not allocated!");
+    CONSOLE_WARN("Invalid destination texture size!");
     return;
   }
 
-  glCopyImageSubData(id, GL_TEXTURE_2D, level, 0, 0, 0, dest.id, GL_TEXTURE_2D, 0, 0, 0, 0, width, height, 1);
+  glCopyImageSubData(id, GL_TEXTURE_2D, level, 0, 0, 0, dest.id, GL_TEXTURE_2D, 0, 0, 0, 0, _width, _height, 1);
 }
 
 void Texture2D::LoadImageData(const fspath& path, bool gammaCorrection)

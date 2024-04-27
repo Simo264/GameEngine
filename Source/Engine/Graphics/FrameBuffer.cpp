@@ -21,13 +21,13 @@ void FrameBuffer::Delete()
 
 	for (Texture2D& texture : _textAttachments)
 		texture.Delete();
-
 	for (RenderBuffer& rbo : _rboAttachments)
 		rbo.Delete();
-
-	id = static_cast<uint32_t>(-1);
+	
 	_textAttachments.clear();
 	_rboAttachments.clear();
+
+	id = static_cast<uint32_t>(-1);
 }
 
 void FrameBuffer::Bind(int target) const
@@ -73,5 +73,13 @@ void FrameBuffer::Blit(
 	int filter) const
 {
 	glBlitNamedFramebuffer(
-		id, dest.id, srcLowerX, srcLowerY, srcUpperX, srcUpperY, destLowerX, destLowerY, destUpperX, destUpperY, mask, filter);
+		id, dest.id, 
+		srcLowerX, srcLowerY, 
+		srcUpperX, srcUpperY, 
+		destLowerX, destLowerY, 
+		destUpperX, destUpperY, 
+		mask, 
+		filter);
 }
+
+

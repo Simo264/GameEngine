@@ -14,7 +14,7 @@ public:
 	void LoadScene(const fspath& filepath);
 	void SaveScene(const fspath& filepath);
 
-	void DrawScene(class Shader& shader);
+	void DrawScene(class Program& program);
 	
 	/**
 	 * Remove all objects from scene

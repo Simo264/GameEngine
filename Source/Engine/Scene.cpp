@@ -26,18 +26,19 @@ void Scene::DestroyObject(GameObject& object)
 	_registry.destroy(object.GetObjectID());
 }
 
-void Scene::DrawScene(Shader& shader)
+void Scene::DrawScene(Program& program)
 {
 	/* Render lights */
 	for (auto [entity, dLightComp] : _registry.view<DirLightComponent>().each())
-		dLightComp.RenderLight(shader);
+		dLightComp.RenderLight(program);
 
 	//for (auto [entity, pLightComp] : _registry.view<PointLightComponent>().each())
 	//	pLightComp.RenderLight(shader);
+	
 	//for (auto [entity, sLightComp] : _registry.view<SpotLightComponent>().each())
 	//	sLightComp.RenderLight(shader);
 
-	/* Render static meshes */
+	/* Render meshes */
 	for (auto [entity, smeshComp] : _registry.view<StaticMeshComponent>().each())
 	{
 		GameObject object{ entity, &_registry };
@@ -46,7 +47,7 @@ void Scene::DrawScene(Shader& shader)
 		if (TransformComponent* transComp = object.GetComponent<TransformComponent>())
 			transform = transComp->GetTransformation();
 		
-		//shader.SetMat4f(SHADER_UNIFORM_MODEL, transform);
+		program.SetUniformMat4f(SHADER_UNIFORM_MODEL, transform);
 		smeshComp.DrawMesh();
 	}
 }

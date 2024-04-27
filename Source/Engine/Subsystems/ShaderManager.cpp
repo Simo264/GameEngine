@@ -3,6 +3,21 @@
 #include "Core/Log/Logger.hpp"
 #include "Core/Platform/OpenGL/OpenGL.hpp"
 
+static void LoadFileContent(const fspath& filepath, string& dest)
+{
+  ifStream file(filepath);
+  if (file)
+  {
+    dest.assign(
+      std::istreambuf_iterator<char>(file),
+      std::istreambuf_iterator<char>()
+    );
+  }
+  else
+  {
+    CONSOLE_WARN("Error on opening '{}' file", filepath.string().c_str());
+  }
+}
 
 /* -----------------------------------------------------
  *          PUBLIC METHODS
@@ -107,27 +122,4 @@ Program* ShaderManager::GetProgram(const char* name)
   }
 
   return nullptr;
-}
-
-
-/* -----------------------------------------------------
- *          PRIVATE METHODS
- * -----------------------------------------------------
-*/
-
-
-void ShaderManager::LoadFileContent(const fspath& filepath, string& dest)
-{
-  ifStream file(filepath);
-  if (file)
-  {
-    dest.assign(
-      std::istreambuf_iterator<char>(file),
-      std::istreambuf_iterator<char>()
-    );
-  }
-  else
-  {
-    CONSOLE_WARN("Error on opening '{}' file", filepath.string().c_str());
-  }
 }

@@ -14,6 +14,20 @@ enum class PostProcessingType : int {
 	POST_PROC_BLUR			= 4,
 };
 
+//struct TextureAttachment
+//{
+//	Texture2D texture;
+//	int attachment;
+//	int index;
+//};
+//
+//struct RenderbufferAttachment
+//{
+//	RenderBuffer renderbuffer;
+//	int attachment;
+//	int index;
+//};
+
 /**
  *	https://www.khronos.org/opengl/wiki/Framebuffer_Object
  * 
@@ -157,8 +171,6 @@ public:
 	) const;
 
 	constexpr bool IsValid()	const { return id != static_cast<uint32_t>(-1); }
-	constexpr int GetWidth()	const { return _width; }
-	constexpr int GetHeigth() const { return _height; }
 
 	constexpr Texture2D& GetTextureAttachment(int i) { return _textAttachments.at(i); }
 	constexpr RenderBuffer& GetRenderBufferAttachment(int i) { return _rboAttachments.at(i); }
@@ -166,39 +178,9 @@ public:
 	constexpr int GetNumTextureAttachments() const { return _textAttachments.size(); }
 	constexpr int GetNumRenderBufferAttachments() const { return _rboAttachments.size(); }
 
-	constexpr float GetAspect() const { return static_cast<float>(_width) / static_cast<float>(_height); }
-
-
-
-#if 0
-	/* 
-		A multisampled image contains much more information than a normal image so 
-		what we need to do is downscale or resolve the image. 
-		Resolving a multisampled framebuffer is generally done through glBlitFramebuffer that
-		copies a region from one framebuffer to the other while also resolving any multisampled buffers 
-	*/
-	void Blit() const;
-
-	//void SetPostProcessing(PostProcessingType type) { _postprocType = type; }
-	
-	/* Resize the frame buffer viewport */
-	void Rescale(const Vec2i32& size);
-
-	/* Update multisampled buffers with new sample value */
-	void SetSamples(int samples);
-
-	/* Return the texture color attachment */
-	constexpr uint32_t GetImage() const { return _colorAttachment; }
-
-	constexpr int GetSamples() const { return _samples; }
-#endif
-
 	uint32_t id;
 
 private:
 	vector<Texture2D>			_textAttachments;	/* vector of all attached texture ids */
 	vector<RenderBuffer>	_rboAttachments;	/* vector of all attached renderbuffer ids */
-
-	int _width;
-	int _height;
 };
