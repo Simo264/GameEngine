@@ -159,6 +159,5 @@ public:
 
   ElementBuffer         eboAttachment;
   vector<VertexBuffer>  vboAttachments;
-
 };
 

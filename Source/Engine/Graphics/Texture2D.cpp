@@ -1,7 +1,7 @@
 #include "Texture2D.hpp"
 #include "Core/Log/Logger.hpp"
 
-#include "Core/Platform/OpenGL/OpenGL.hpp"
+#include "Core/OpenGL.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
@@ -14,6 +14,7 @@ Texture2D::Texture2D()
     _mipmapLevels{ 0 },
     _width{ 0 },
     _height{ 0 },
+    _samples{ 0 },
     _isMultisampled{ false }
 {}
 
@@ -24,6 +25,7 @@ Texture2D::Texture2D(const fspath& path, bool gammaCorrection)
     _mipmapLevels{ 0 },
     _width{ 0 },
     _height{ 0 },
+    _samples{ 0 },
     _isMultisampled{ false }
 {
   Create(GL_TEXTURE_2D);
@@ -55,11 +57,6 @@ void Texture2D::Unbind() const
 void Texture2D::BindTextureUnit(int unit) const
 {
   glBindTextureUnit(unit, id);
-}
-
-void Texture2D::SetParameteri(int name, int value) const
-{
-  glTextureParameteri(id, name, value);
 }
 
 void Texture2D::GenerateMipmap() const
@@ -181,3 +178,19 @@ void Texture2D::LoadImageData(const fspath& path, bool gammaCorrection)
   stbi_image_free(reinterpret_cast<void*>(data));
 }
 
+void Texture2D::SetParameteri(int name, int value) const
+{
+  glTextureParameteri(id, name, value);
+}
+void Texture2D::SetParameteriv(int name, int* values) const
+{
+  glTextureParameteriv(id, name, values);
+}
+void Texture2D::SetParameterf(int name, float value) const
+{
+  glTextureParameterf(id, name, value);
+}
+void Texture2D::SetParameterfv(int name, float* values) const
+{
+  glTextureParameterfv(id, name, values);
+}

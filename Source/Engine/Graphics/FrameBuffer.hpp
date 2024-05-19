@@ -6,28 +6,6 @@
 #include "Engine/Graphics/Texture2D.hpp"
 #include "Engine/Graphics/RenderBuffer.hpp"
 
-enum class PostProcessingType : int {
-	POST_PROC_NONE			= 0,
-	POST_PROC_INVERSION = 1,
-	POST_PROC_GRAYSCALE = 2,
-	POST_PROC_KERNEL		= 3,
-	POST_PROC_BLUR			= 4,
-};
-
-//struct TextureAttachment
-//{
-//	Texture2D texture;
-//	int attachment;
-//	int index;
-//};
-//
-//struct RenderbufferAttachment
-//{
-//	RenderBuffer renderbuffer;
-//	int attachment;
-//	int index;
-//};
-
 /**
  *	https://www.khronos.org/opengl/wiki/Framebuffer_Object
  * 
@@ -80,7 +58,6 @@ public:
 	 * 
 	 * @param target: specifies the framebuffer target of the binding operation, must be either 
 	 *								GL_DRAW_FRAMEBUFFER, GL_READ_FRAMEBUFFER or GL_FRAMEBUFFER
-	 *								
 	 */
 	void Bind(int target) const;
 
@@ -94,10 +71,8 @@ public:
 
 	/**
 	 * Check the completeness status of the framebuffer.
-	 * The return value is GL_FRAMEBUFFER_COMPLETE if the FBO can be used. If it is something else, then there is a problem.
-	 * 
-	 * 
-	 * 
+	 * The return value is GL_FRAMEBUFFER_COMPLETE if the FBO can be used. 
+	 * If it is something else, then there is a problem.
 	 */
 	int CheckStatus() const;
 
@@ -170,6 +145,14 @@ public:
 		int filter
 	) const;
 
+	/**
+	 * specify whether the individual color components in the frame buffer can or cannot be written.
+	 * If red is GL_FALSE, for example, no change is made to the red component of any pixel in any of the color buffers, 
+	 * regardless of the drawing operation attempted.
+	 *
+	 */
+	void SetWritingColorComponents(bool r, bool g, bool b, bool a);
+
 	constexpr bool IsValid()	const { return id != static_cast<uint32_t>(-1); }
 
 	constexpr Texture2D& GetTextureAttachment(int i) { return _textAttachments.at(i); }
@@ -177,6 +160,8 @@ public:
 
 	constexpr int GetNumTextureAttachments() const { return _textAttachments.size(); }
 	constexpr int GetNumRenderBufferAttachments() const { return _rboAttachments.size(); }
+
+
 
 	uint32_t id;
 

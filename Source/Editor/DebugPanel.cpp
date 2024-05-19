@@ -2,9 +2,9 @@
 
 #include "Core/Math/Math.hpp"
 
-#include "Engine/Graphics/Renderer.hpp"
-
 #include <imgui/imgui.h>
+
+extern uint32_t drawCalls;
 
 DebugPanel::DebugPanel(const char* panelName, bool visible)
 	: Panel(panelName, visible)
@@ -21,8 +21,6 @@ void DebugPanel::RenderFrame()
 	ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoDocking;
 	ImGui::SetNextWindowBgAlpha(0.15f); /* Transparent background */
 
-	//ImGuiWindowFlags flags = ImGuiWindowFlags_NoDocking;
-
 	ImGui::Begin(panelName.c_str(), &visible, flags);
 
 	_t2 = system_clock::now();
@@ -34,7 +32,7 @@ void DebugPanel::RenderFrame()
 	}
 
 	ImGui::Text("%.3f ms/frame (%d FPS)", 1000.0f / _framerate, (int)_framerate);
-	ImGui::Text("Draw calls: %d", Renderer::drawCalls);
+	ImGui::Text("Draw calls: %d", drawCalls);
 
 	//ImGui::DragFloat3("Light position", (float*)&lightPosition, 0.01f,-100.0f, 100.0);
 

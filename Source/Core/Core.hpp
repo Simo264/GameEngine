@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cassert>
 #include <chrono>
+#include <format>
 #include <fstream>
 #include <filesystem>
 #include <initializer_list>

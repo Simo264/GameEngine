@@ -74,6 +74,9 @@ public:
    * Set texture parameters
    */
   void SetParameteri(int name, int value) const;
+  void SetParameteriv(int name, int* values) const;
+  void SetParameterf(int name, float value) const;
+  void SetParameterfv(int name, float* values) const;
 
   /**
    * Generate mipmaps for the texture object
@@ -84,7 +87,6 @@ public:
    * The storage is created here, but the contents of that storage is undefined
    * 
    * @param width:  specifies the width of the texture, in texels
-   * 
    * @param height: specifies the height of the texture, in texels
    */
   void CreateStorage(int width, int height);
@@ -93,11 +95,8 @@ public:
    * Specify storage for multisample texture
    * 
    * @param samples:              specify the number of samples in the texture
-   * 
    * @param width:                specifies the width of the texture, in texels
-   * 
    * @param height:               specifies the height of the texture, in texels
-   * 
    * @param fixedsamplelocations: specifies whether the image will use identical sample locations and the same number 
    *                              of samples for all texels in the image
    */
@@ -107,9 +106,7 @@ public:
    * Specify a two-dimensional texture subimage
    * 
    * @param level:    specifies the level-of-detail number. Level 0 is the base image level
-   * 
    * @param xoffset:  specifies a texel offset in the x direction within the texture array.
-   * 
    * @param yoffset:  specifies a texel offset in the y direction within the texture array
    * 
    * @param type:     specifies the data type of the pixel data.

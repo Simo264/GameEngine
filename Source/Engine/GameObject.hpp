@@ -2,20 +2,7 @@
 
 #include "Core/Core.hpp"
 #include "Core/Log/Logger.hpp"
-#include <entt/entt.hpp> /* Entity component system */
-
-enum class GameObjectType : int
-{
-	GAME_OBJECT = 0, 
-
-	DIRECTIONAL_LIGHT,
-	POINT_LIGHT,
-	SPOT_LIGHT,
-
-	STATIC_MESH,
-
-	CAMERA,
-};
+#include <entt/entt.hpp> 
 
 
 /**

@@ -12,6 +12,9 @@
 #include <imgui/imgui.h>
 #include <imgui/ImGuizmo.h>
 
+
+
+
 /* -----------------------------------------------------
  *          PUBLIC METHODS
  * -----------------------------------------------------
@@ -22,6 +25,7 @@ DetailsPanel::DetailsPanel(const char* panelName, bool visible)
     _grizmoMode{ static_cast<int>(ImGuizmo::OPERATION::TRANSLATE) }
 {}
 
+#if 0
 void DetailsPanel::RenderPanel(Scene& scene, GameObject& selected)
 {
   ImGui::Begin(panelName.c_str(), &visible);
@@ -45,37 +49,38 @@ void DetailsPanel::RenderPanel(Scene& scene, GameObject& selected)
         CreateTable<2>("##DirectionalLightProps", { C1, C2 });
         ImGui::TableNextRow();
         EditVec3("Direction", 0.1f, { -FLT_MAX, +FLT_MAX }, dLightComp->direction, C2);
+        
         EndTable();
       }
     }
     
     /* Point light component */
-    else if (auto pLightComp = selected.GetComponent<PointLightComponent>())
-    {
-      if (ImGui::CollapsingHeader("Light properties", ImGuiTreeNodeFlags_DefaultOpen))
-      {
-        const float C1 = 0.30f * ImGui::GetContentRegionAvail().x;
-        const float C2 = 0.70f * ImGui::GetContentRegionAvail().x;
-        CreateTable<2>("##LighProps", { C1, C2 });
-        LightProperties(pLightComp);
-        EndTable();
-      }
-      if (ImGui::CollapsingHeader("Point light properties", ImGuiTreeNodeFlags_DefaultOpen))
-      {
-        const float C1 = 0.30f * ImGui::GetContentRegionAvail().x;
-        const float C2 = 0.70f * ImGui::GetContentRegionAvail().x;
-        CreateTable<2>("##PointLightProps", { C1, C2 });
-        ImGui::TableNextRow();
-        EditVec3("Position", 0.1f, { -FLT_MAX, +FLT_MAX }, pLightComp->position, C2);
-        EndTable();
-      }
-    }
+    //else if (auto pLightComp = selected.GetComponent<PointLightComponent>())
+    //{
+    //  if (ImGui::CollapsingHeader("Light properties", ImGuiTreeNodeFlags_DefaultOpen))
+    //  {
+    //    const float C1 = 0.30f * ImGui::GetContentRegionAvail().x;
+    //    const float C2 = 0.70f * ImGui::GetContentRegionAvail().x;
+    //    CreateTable<2>("##LighProps", { C1, C2 });
+    //    LightProperties(pLightComp);
+    //    EndTable();
+    //  }
+    //  if (ImGui::CollapsingHeader("Point light properties", ImGuiTreeNodeFlags_DefaultOpen))
+    //  {
+    //    const float C1 = 0.30f * ImGui::GetContentRegionAvail().x;
+    //    const float C2 = 0.70f * ImGui::GetContentRegionAvail().x;
+    //    CreateTable<2>("##PointLightProps", { C1, C2 });
+    //    ImGui::TableNextRow();
+    //    EditVec3("Position", 0.1f, { -FLT_MAX, +FLT_MAX }, pLightComp->position, C2);
+    //    EndTable();
+    //  }
+    //}
 
     /* Spot light component */
-    else if (auto sLightComp = selected.GetComponent<SpotLightComponent>())
-    {
-      /* TODO */
-    }
+    //else if (auto sLightComp = selected.GetComponent<SpotLightComponent>())
+    //{
+    //  /* TODO */
+    //}
 
     /* Transformation component */
     else if (auto transComp = selected.GetComponent<TransformComponent>())
@@ -242,3 +247,4 @@ void DetailsPanel::LightProperties(LightComponent* light)
   ImGui::SliderFloat("##specular", &light->specular, 0.0f, 1.0f);
 }
 
+#endif

@@ -9,7 +9,7 @@ public:
 	~Engine() = default;
 
 	void Initialize();
-	void Run();
+	void Run() const;
 	void CleanUp();
 
 	class Editor* editor;

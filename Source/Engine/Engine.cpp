@@ -1,6 +1,6 @@
 #include "Engine.hpp"
 
-#include "Core/Platform/OpenGL/OpenGL.hpp"
+#include "Core/OpenGL.hpp"
 #include "Core/Math/Math.hpp"
 #include "Core/Math/Extensions.hpp"
 #include "Core/Log/Logger.hpp"
@@ -9,7 +9,10 @@
 #include "Engine/Camera.hpp"
 #include "Engine/Scene.hpp"
 #include "Engine/ObjectLoader.hpp"
-#include "Engine/ShaderUniforms.hpp"
+
+#include "Engine/Graphics/Depth.hpp"
+#include "Engine/Graphics/Stencil.hpp"
+#include "Engine/Graphics/Culling.hpp"
 
 #include "Engine/Graphics/VertexBuffer.hpp"
 #include "Engine/Graphics/ElementBuffer.hpp"
@@ -27,42 +30,34 @@
 #include "Engine/Subsystems/ShaderManager.hpp"
 #include "Engine/Subsystems/TextureManager.hpp"
 
-#include "Editor/Editor.hpp"
-
 #include <GLFW/glfw3.h>
 
-static void SetGLStates()
+#include "Editor/Editor.hpp"
+
+#define GUI_MODE 0
+
+uint32_t drawCalls = 0;
+
+static void SetGlobalGlStates()
 {
-  /* Depth test ON */
-  glEnable(GL_DEPTH_TEST);
-  glDepthMask(GL_TRUE);   /* enable/disable writing into the depth buffer */
-  glDepthFunc(GL_LESS);   /* specify the value used for depth buffer comparisons */
+  /* Depth testing */
+  Depth::EnableTest();
+  Depth::EnableWritingBuffer();
+  Depth::SetFunction(GL_LESS);
 
-  /* Stencil test OFF */
-  glDisable(GL_STENCIL_TEST);
-  /*
-    only describes whether OpenGL should pass or discard fragments based on the stencil buffer's content,
-    not how we can actually update the buffer
-  */
-  glStencilFunc(GL_EQUAL, 0, 0xFF);
-  /*
-    whatever the outcome of any of the tests,the stencil buffer keeps its values.
-    The default behavior does not update the stencil buffer, so if you want to write to the
-    stencil buffer you need to specify at least one different action for any of the options
-  */
-  glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-  //glStencilMask(0xFF);  /* enable write to stencil buffer */
-  //glStencilMask(0x00);  /* disable write to stencil buffer */
-
+  /* Stencil testing */
+  Stencil::DisableTest();
+  Stencil::SetFunction(GL_ALWAYS, 0, 0xFF);
+  Stencil::SetOperation(GL_KEEP, GL_KEEP, GL_KEEP);
 
   /* Blending OFF */
   glDisable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
   /* Culling OFF */
-  glDisable(GL_CULL_FACE);
-  glCullFace(GL_FRONT);
-  glFrontFace(GL_CW);
+  Culling::DisableFaceCulling();
+  Culling::SetCullFace(GL_BACK);
+  Culling::SetFrontFace(GL_CCW);
 
   /* Gamma correction OFF */
   glDisable(GL_FRAMEBUFFER_SRGB);
@@ -70,7 +65,6 @@ static void SetGLStates()
   /* Antialising ON */
   glEnable(GL_MULTISAMPLE);
 }
-
 static void LoadConfig()
 {
   INIFileParser conf(ROOT_PATH / CONFIG_FILENAME);
@@ -129,28 +123,32 @@ static void LoadPrograms()
     "ShadowMap", 
     *instanceSM.GetShader("ShadowMap.vert"), 
     *instanceSM.GetShader("ShadowMap.frag"));
-
-  frameBufferProg.SetUniform1i(SHADER_UNIFORM_SCREEN_TEXTURE, 0);
-  frameBufferProg.SetUniform1i(SHADER_UNIFORM_POST_PROCESSING, 0);
-
-  instancingProg.SetUniform1i(SHADER_UNIFORM_MATERIAL_DIFFUSE, 0);
-  instancingProg.SetUniform1i(SHADER_UNIFORM_MATERIAL_SPECULAR, 1);
-  instancingProg.SetUniform1f(SHADER_UNIFORM_MATERIAL_SHININESS, 32.0f);
-  instancingProg.SetUniform1f(SHADER_UNIFORM_GAMMA, GAMMA_CORRECTION);
-
-  sceneProg.SetUniform1i(SHADER_UNIFORM_MATERIAL_DIFFUSE, 0);
-  sceneProg.SetUniform1i(SHADER_UNIFORM_MATERIAL_SPECULAR, 1);
-  sceneProg.SetUniform1f(SHADER_UNIFORM_MATERIAL_SHININESS, 32.0f);
-  sceneProg.SetUniform1f(SHADER_UNIFORM_GAMMA, GAMMA_CORRECTION);
-
-  shadowMapProg.SetUniform1i(SHADER_UNIFORM_MATERIAL_DIFFUSE, 0);
-  shadowMapProg.SetUniform1i(SHADER_UNIFORM_MATERIAL_SPECULAR, 1);
-  shadowMapProg.SetUniform1i(SHADER_UNIFORM_SHADOW_MAP, 10);
+}
+static void SetShadersUniforms()
+{
+  ShaderManager& instanceSM = ShaderManager::Instance();
+  
+  Program* frameBufferProg = instanceSM.GetProgram("Framebuffer");
+  frameBufferProg->SetUniform1i("u_screenTexture", 0);
+  frameBufferProg->SetUniform1i("u_postProcessingType", 0);
+  
+  Program* sceneProgram = instanceSM.GetProgram("Scene");
+  sceneProgram->SetUniform1i("u_material.diffuse", 0);
+  sceneProgram->SetUniform1i("u_material.specular", 1);
+  sceneProgram->SetUniform1f("u_material.shininess", 32.0f);
+  sceneProgram->SetUniform1f("u_gamma", 2.2f);
+  
+  Program* shadowMapProgram = instanceSM.GetProgram("ShadowMap");
+  shadowMapProgram->SetUniform1i("u_material.diffuse", 0);
+  shadowMapProgram->SetUniform1i("u_material.specular", 1);
+  shadowMapProgram->SetUniform1f("u_material.shininess", 32.0f);
+  shadowMapProgram->SetUniform1i("u_shadowMap", 10);
+  shadowMapProgram->SetUniform1f("u_gamma", 2.2f);
 }
 static void CreateScreenSquare(VertexArray& vao)
 {
   float vertices[] = {
-    // positions   // texCoords
+    // positions   texCoords
     -1.0f,  1.0f,  0.0f, 1.0f,
     -1.0f, -1.0f,  0.0f, 0.0f,
      1.0f, -1.0f,  1.0f, 0.0f,
@@ -184,14 +182,9 @@ static void CreateScreenSquare(VertexArray& vao)
   vao.numVertices = 6;
   vao.numIndices = 0;
 }
-static void CreateFramebufferMultisampled(
-  FrameBuffer& framebufferMultisampled, 
-  FrameBuffer& framebufferIntermediate, 
-  int samples, 
-  int width, 
-  int height)
+static void CreateFramebufferMultisampled(FrameBuffer& fboMultisampled,FrameBuffer& fboIntermediate,int samples, int width, int height)
 {
-  framebufferMultisampled.Create();
+  fboMultisampled.Create();
 
   /* Create a multisampled color attachment texture */
   Texture2D textColMultAtt;
@@ -206,14 +199,14 @@ static void CreateFramebufferMultisampled(
   depthStencMultAtt.Create();
   depthStencMultAtt.CreateStorageMulstisampled(samples, width, height);
 
-  framebufferMultisampled.AttachTexture(GL_COLOR_ATTACHMENT0, textColMultAtt, 0);
-  framebufferMultisampled.AttachRenderBuffer(GL_DEPTH_STENCIL_ATTACHMENT, depthStencMultAtt);
+  fboMultisampled.AttachTexture(GL_COLOR_ATTACHMENT0, textColMultAtt, 0);
+  fboMultisampled.AttachRenderBuffer(GL_DEPTH_STENCIL_ATTACHMENT, depthStencMultAtt);
 
-  if (framebufferMultisampled.CheckStatus() != GL_FRAMEBUFFER_COMPLETE)
+  if (fboMultisampled.CheckStatus() != GL_FRAMEBUFFER_COMPLETE)
     CONSOLE_WARN("Multisampled framebuffer is not complete!");
 
   /* Configure second post - processing framebuffer */
-  framebufferIntermediate.Create();
+  fboIntermediate.Create();
 
   /* Create a color attachment texture */
   Texture2D textColAtt;
@@ -224,12 +217,11 @@ static void CreateFramebufferMultisampled(
   textColAtt.SetParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   textColAtt.SetParameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-  framebufferIntermediate.AttachTexture(GL_COLOR_ATTACHMENT0, textColAtt, 0);
+  fboIntermediate.AttachTexture(GL_COLOR_ATTACHMENT0, textColAtt, 0);
 
-  if (framebufferIntermediate.CheckStatus() != GL_FRAMEBUFFER_COMPLETE)
+  if (fboIntermediate.CheckStatus() != GL_FRAMEBUFFER_COMPLETE)
     CONSOLE_WARN("Intermediate framebuffer is not complete!");
 }
-
 static void CreateShadowMapFramebuffer(FrameBuffer& framebuffer, int width, int height)
 {
   framebuffer.Create();
@@ -244,13 +236,13 @@ static void CreateShadowMapFramebuffer(FrameBuffer& framebuffer, int width, int 
   depthMap.CreateStorage(width, height);
   depthMap.SetParameteri(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   depthMap.SetParameteri(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  depthMap.SetParameteri(GL_TEXTURE_WRAP_S, GL_REPEAT);
-  depthMap.SetParameteri(GL_TEXTURE_WRAP_T, GL_REPEAT);
+
 
   /* Resolve the problem of over sampling */
-  //depthMap.SetParameteri(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-  //depthMap.SetParameteri(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-
+  depthMap.SetParameteri(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+  depthMap.SetParameteri(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+  depthMap.SetParameterfv(GL_TEXTURE_BORDER_COLOR, array<float,4>{ 1.0, 1.0, 1.0, 1.0 }.data());
+  
   /* With the generated depth texture we can attach it as the framebuffer's depth buffer */
   framebuffer.AttachTexture(GL_DEPTH_ATTACHMENT, depthMap, 0);
 }
@@ -267,18 +259,18 @@ void Engine::Initialize()
   WindowManager::Instance().Initialize();
   LoadConfig();
 
-  SetGLStates();
-
   ShaderManager::Instance().Initialize();
   LoadPrograms();
   
   TextureManager::Instance().Initialize();
 
+#if GUI_MODE
   editor = new Editor;
   editor->Initialize();
+#endif
 }
 
-void Engine::Run()
+void Engine::Run() const
 {
   WindowManager& window           = WindowManager::Instance();
   ShaderManager& instanceSM       = ShaderManager::Instance();
@@ -298,168 +290,244 @@ void Engine::Run()
   FrameBuffer framebufferMultisampled;
   FrameBuffer framebufferIntermediate;
   CreateFramebufferMultisampled(framebufferMultisampled, framebufferIntermediate, 4, viewportSize.x, viewportSize.y);
-
+  const Texture2D& framebufferTexture = framebufferIntermediate.GetTextureAttachment(0);
 
   /* -------------------------- Camera -------------------------- */
-  Camera camera(Vec3f(0.0f, 0.0f, 5.0f), 45.0f, static_cast<float>(viewportSize.x) / static_cast<float>(viewportSize.y));
-
+  Camera camera(Vec3f(30.0f, 15.0f, 10.0f), 45.0f, static_cast<float>(viewportSize.x) / static_cast<float>(viewportSize.y));
+  camera.cameraComponent->yaw = -180.0f;
+  camera.cameraComponent->pitch = -30.0f;
+  camera.cameraComponent->roll = 0.0f;
+  camera.cameraComponent->UpdateVectors();
 
   /* -------------------------- Scene -------------------------- */
   Scene scene;
-  scene.LoadScene(ROOT_PATH / "Scene.ini");
 
+  GameObject floor = scene.CreateObject();
+  {
+    auto& floorTransform = floor.AddComponent<TransformComponent>();
+    auto& floorMesh = floor.AddComponent<StaticMeshComponent>((ASSETS_PATH / "Shapes/Plane/Plane.obj").lexically_normal());
+    floorTransform.scale.x *= 20.0f;
+    floorTransform.scale.z *= 10.0f;
+    floorTransform.UpdateTransformation();
+    floorMesh.material.diffuse = instanceTM.GetTextureByPath((TEXTURES_PATH / "wood.png").lexically_normal());
+    floorMesh.material.specular = nullptr;
+  }
+  GameObject floor2 = scene.CreateObject();
+  {
+    auto& floorTransform = floor2.AddComponent<TransformComponent>();
+    auto& floorMesh = floor2.AddComponent<StaticMeshComponent>((ASSETS_PATH / "Shapes/Plane/Plane.obj").lexically_normal());
+    floorTransform.scale.x *= 20.0f;
+    floorTransform.scale.z *= 10.0f;
+    floorTransform.position.z = 20.0f;
+    floorTransform.UpdateTransformation();
+    floorMesh.material.diffuse = instanceTM.GetTextureByPath((TEXTURES_PATH / "wood.png").lexically_normal());
+    floorMesh.material.specular = nullptr;
+  }
+
+  GameObject cubes[3];
+  for (int i = 0; i < 3; i++)
+  {
+    cubes[i] = scene.CreateObject();
+    auto& transform = cubes[i].AddComponent<TransformComponent>();
+    transform.position.z = 15.0f;
+    transform.position.x = i * 4;
+    transform.position.y = 1;
+    transform.UpdateTransformation();
+    auto& mesh = cubes[i].AddComponent<StaticMeshComponent>((ASSETS_PATH / "Shapes/Cube/Cube.obj").lexically_normal());
+    mesh.material.diffuse = instanceTM.GetTextureByPath((TEXTURES_PATH / "container_diffuse.png").lexically_normal());
+    mesh.material.specular = instanceTM.GetTextureByPath((TEXTURES_PATH / "container_specular.png").lexically_normal());
+  }
+
+  GameObject dirLightObject = scene.CreateObject();
+  {
+    auto& directionalLight = dirLightObject.AddComponent<DirLightComponent>();
+    directionalLight.color = { 1.0f,1.0f,1.0f };
+    directionalLight.ambient = 0.0f;
+    directionalLight.diffuse = 0.0f;
+    directionalLight.specular = 1.0f;
+    directionalLight.direction = { -0.2f, -1.0f, -0.3f };
+  }
+
+  GameObject pointLightObjects[4];
+  {
+    Vec3f lightPositions[4] = {
+        Vec3f(-10.0f, 1.0f, 0.0f),
+        Vec3f(-5.0f, 1.0f, 0.0f),
+        Vec3f(0.0f, 1.0f, 0.0f),
+        Vec3f(5.0f, 1.0f, 0.0f),
+    };
+    Vec3f lightColors[4] = {
+        Vec3f(1, 0, 0),
+        Vec3f(0, 1, 0),
+        Vec3f(0, 1, 1),
+        Vec3f(1, 1, 1),
+    };
+
+    for (int i = 0; i < 4; i++)
+    {
+      pointLightObjects[i] = scene.CreateObject();
+      auto& pointLight = pointLightObjects[i].AddComponent<PointLightComponent>();
+      pointLight.color = lightColors[i];
+      pointLight.ambient = 0.0f;
+      pointLight.diffuse = 1.0f;
+      pointLight.specular = 1.0f;
+      pointLight.position = lightPositions[i];
+    }
+  }
 
   /* -------------------------- Shadow mapping -------------------------- */
-  FrameBuffer framebufferShadowMap;
-  CreateShadowMapFramebuffer(framebufferShadowMap, 1024, 1024);
-
-  const Vec3f lightPosition = { -2.0f, 4.0f, -1.0f };
-  const Mat4f lightProjection = Math::Ortho(-10.0f, 10.0f, -10.0f, 10.0f, INITIAL_ZNEAR, INITIAL_ZFAR);
-
+  //FrameBuffer framebufferShadowMap;
+  //CreateShadowMapFramebuffer(framebufferShadowMap, 1024, 1024);
+  //const Texture2D& DepthMapTexture = framebufferShadowMap.GetTextureAttachment(0);
 
   /* -------------------------- Pre-loop -------------------------- */
-  time_point lastUpdateTime = system_clock::now();
-  const double colorValue = Math::Pow(static_cast<double>(0.3), static_cast<double>(GAMMA_CORRECTION));
-  glClearColor(colorValue, colorValue, colorValue, 1.0f);
+  SetShadersUniforms();
+  SetGlobalGlStates();
+  glClearColor(0.15, 0.15, 0.15, 1.0f);
   glClearDepth(1.0f);
+  glClearStencil(0);
 
-  const Texture2D& framebufferTexture = framebufferIntermediate.GetTextureAttachment(0);
-  const Texture2D& DepthMapTexture    = framebufferShadowMap.GetTextureAttachment(0);
+  time_point lastUpdateTime = system_clock::now();
+
   
-
-#if 0
-  /* -------------------------- Loop -------------------------- */
+  /* -------------------------- loop -------------------------- */
   while (window.IsOpen())
   {
-    /* -------------------------- Per-frame time logic -------------------------- */
-    const auto now = system_clock::now();
-    const std::chrono::duration<double> diff = now - lastUpdateTime;
-    const double delta = diff.count();
-    Renderer::drawCalls = 0;
-
-    /* -------------------------- Input -------------------------- */
-    window.PoolEvents();
-    camera.ProcessInput(window, delta);
-
-
-    /* -------------------------- Update -------------------------- */
-    const auto& cameraViewMatrix = camera.cameraComponent->GetView();
-    const auto& cameraProjectionMatrix = camera.cameraComponent->GetProjection();
-    Mat4f lightView = Math::LookAt(lightPosition, Vec3f(0.0f, 0.0f, 0.0f), Vec3f(0.0f, 1.0f, 0.0f));
-    Mat4f lightSpaceMatrix = lightProjection * lightView;
-    
-    /* -------------------------- Rendering -------------------------- */
-    
-    /* 1. Render depth of scene to texture(from directional light's perspective) */
-    framebufferShadowMap.Bind(GL_FRAMEBUFFER);
-    {
-      glViewport(0, 0, 1024, 1024);
-      glClear(GL_DEPTH_BUFFER_BIT);
-      shadowMapDepthProgram->Use();
-      shadowMapDepthProgram->SetUniformMat4f(SHADER_UNIFORM_LIGHTSPACE, lightSpaceMatrix);
-      scene.DrawScene(*shadowMapDepthProgram);
-    }
-    framebufferShadowMap.Unbind(GL_FRAMEBUFFER);
-
-    /* 2. Render scene with shadow map */
-    framebufferMultisampled.Bind(GL_FRAMEBUFFER);
-    {
-      glViewport(0, 0, framebufferSize.x, framebufferSize.y);
-      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-      shadowMapProgram->Use();
-      shadowMapProgram->SetUniformMat4f(SHADER_UNIFORM_PROJECTION, cameraProjectionMatrix);
-      shadowMapProgram->SetUniformMat4f(SHADER_UNIFORM_VIEW, cameraViewMatrix);
-      shadowMapProgram->SetUniformMat4f(SHADER_UNIFORM_LIGHTSPACE, lightSpaceMatrix);
-      DepthMapTexture.BindTextureUnit(10);
-      scene.DrawScene(*shadowMapProgram);
-
-      /* Blit multisampled buffer to normal colorbuffer of intermediate FBO */
-      framebufferMultisampled.Blit(framebufferIntermediate,
-        0, 0, framebufferSize.x, framebufferSize.y,
-        0, 0, framebufferSize.x, framebufferSize.y,
-        GL_COLOR_BUFFER_BIT, GL_NEAREST);
-    }
-    framebufferMultisampled.Unbind(GL_FRAMEBUFFER);
-
-    /* 3. Render framebuffer image texture */
-    framebufferProgram->Use();
-    framebufferTexture.BindTextureUnit(0);
-    Renderer::DrawArrays(screenSquare);
-
-
-    /* Render Depth map texture for visual debugging */
-    {
-      //testingProgram->Use();
-      //testingProgram->SetUniform1i("depthMap", 0);
-      //testingProgram->SetUniform1f("near_plane", INITIAL_ZNEAR);
-      //testingProgram->SetUniform1f("far_plane", INITIAL_ZFAR);
-      //DepthMapTexture.BindTextureUnit(0);
-      //Renderer::DrawArrays(screenSquare);
-    }
-
-
-    window.SwapWindowBuffers();
-    lastUpdateTime = now;
-  }
+#if GUI_MODE
+    editor->Begin();
 #endif
 
-
-#if 1
-  /* -------------------------- Loop -------------------------- */
-  while (window.IsOpen())
-  {
-    editor->Begin();
-
     /* -------------------------- Per-frame time logic -------------------------- */
     const auto now = system_clock::now();
     const std::chrono::duration<double> diff = now - lastUpdateTime;
     const double delta = diff.count();
-    Renderer::drawCalls = 0;
+    drawCalls = 0;
 
     /* -------------------------- Input -------------------------- */
     window.PoolEvents();
+
+
+#if GUI_MODE
     if (editor->viewportPanel->isFocused)
       camera.ProcessInput(window, delta);
+#else
+    camera.ProcessInput(window, delta);
+#endif
 
     /* -------------------------- Update -------------------------- */
     const auto& cameraViewMatrix = camera.cameraComponent->GetView();
     const auto& cameraProjectionMatrix = camera.cameraComponent->GetProjection();
-    Mat4f lightView = Math::LookAt(lightPosition, Vec3f(0.0f, 0.0f, 0.0f), Vec3f(0.0f, 1.0f, 0.0f));
-    Mat4f lightSpaceMatrix = lightProjection * lightView;
+    const auto time = glfwGetTime();
+
+
+    //const Mat4f lightProjection = Math::Ortho(
+    //  -10.0f, 10.0f, -10.0f, 10.0f, INITIAL_ZNEAR, INITIAL_ZFAR);
+    //Mat4f lightView = Math::LookAt(
+    //  lightPosition,
+    //  Vec3f(0.0f, 0.0f, 0.0f), // Vec3f(0.0f, 0.0f, 0.0f) | dirLight->direction 
+    //  Vec3f(0.0f, 1.0f, 0.0f)
+    //);
+    //Mat4f lightSpaceMatrix = lightProjection * lightView;
 
     /* -------------------------- Rendering -------------------------- */
-    /* 1. Render depth of scene to texture(from directional light's perspective) */
-    framebufferShadowMap.Bind(GL_FRAMEBUFFER);
-    {
-      glViewport(0, 0, 1024, 1024);
-      glClear(GL_DEPTH_BUFFER_BIT);
-      shadowMapDepthProgram->Use();
-      shadowMapDepthProgram->SetUniformMat4f(SHADER_UNIFORM_LIGHTSPACE, lightSpaceMatrix);
-      scene.DrawScene(*shadowMapDepthProgram);
-    }
-    framebufferShadowMap.Unbind(GL_FRAMEBUFFER);
+    /* Render depth of scene to texture(from directional light's perspective) */
+    //framebufferShadowMap.Bind(GL_FRAMEBUFFER);
+    //{
+    //  glViewport(0, 0, 1024, 1024);
+    //  glClear(GL_DEPTH_BUFFER_BIT);
+    //  shadowMapDepthProgram->Use();
+    //  shadowMapDepthProgram->SetUniformMat4f(SHADER_UNIFORM_LIGHTSPACE, lightSpaceMatrix);
+    //  scene.DrawScene(*shadowMapDepthProgram);
+    //}
+    //framebufferShadowMap.Unbind(GL_FRAMEBUFFER);
 
-    /* 2. Render scene with shadow map */
+    /* Fill the framebuffer color texture */
     framebufferMultisampled.Bind(GL_FRAMEBUFFER);
-    {
+    { 
       glViewport(0, 0, viewportSize.x, viewportSize.y);
-      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-      shadowMapProgram->Use();
-      shadowMapProgram->SetUniformMat4f(SHADER_UNIFORM_PROJECTION, cameraProjectionMatrix);
-      shadowMapProgram->SetUniformMat4f(SHADER_UNIFORM_VIEW, cameraViewMatrix);
-      shadowMapProgram->SetUniformMat4f(SHADER_UNIFORM_LIGHTSPACE, lightSpaceMatrix);
-      DepthMapTexture.BindTextureUnit(10);
-      scene.DrawScene(*shadowMapProgram);
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+      /* Render scene without shadows map */
+      {
+        sceneProgram->Use();
+        sceneProgram->SetUniformMat4f("u_projection", cameraProjectionMatrix);
+        sceneProgram->SetUniformMat4f("u_view", cameraViewMatrix);
+        sceneProgram->SetUniform3f("u_viewPos", camera.cameraComponent->position);
+        sceneProgram->SetUniform1i("u_material.diffuseTexture", 0);
+        sceneProgram->SetUniform1i("u_material.specularTexture", 1);
+        sceneProgram->SetUniform1f("u_material.shininess", 32.0f);
+
+        auto dirlight = dirLightObject.GetComponent<DirLightComponent>();
+        sceneProgram->SetUniform3f("u_directionalLight.color", dirlight->color);
+        sceneProgram->SetUniform1f("u_directionalLight.ambient", dirlight->ambient);
+        sceneProgram->SetUniform1f("u_directionalLight.diffuse", dirlight->diffuse);
+        sceneProgram->SetUniform1f("u_directionalLight.specular", dirlight->specular);
+        sceneProgram->SetUniform3f("u_directionalLight.direction", dirlight->direction);
+
+        for (int i = 0; i < 4; i++)
+        {
+          auto* light = pointLightObjects[i].GetComponent<PointLightComponent>();
+          sceneProgram->SetUniform3f(std::format("u_pointLight[{}].color", i).c_str(), light->color);
+          sceneProgram->SetUniform1f(std::format("u_pointLight[{}].ambient", i).c_str(), light->ambient);
+          sceneProgram->SetUniform1f(std::format("u_pointLight[{}].diffuse", i).c_str(), light->diffuse);
+          sceneProgram->SetUniform1f(std::format("u_pointLight[{}].specular", i).c_str(), light->specular);
+          sceneProgram->SetUniform3f(std::format("u_pointLight[{}].position", i).c_str(), light->position);
+          sceneProgram->SetUniform1f(std::format("u_pointLight[{}].linear", i).c_str(), light->linear);
+          sceneProgram->SetUniform1f(std::format("u_pointLight[{}].quadratic", i).c_str(), light->quadratic);
+        }
+        
+        sceneProgram->SetUniformMat4f("u_model", floor.GetComponent<TransformComponent>()->GetTransformation());
+        floor.GetComponent<StaticMeshComponent>()->Draw();
+        sceneProgram->SetUniformMat4f("u_model", floor2.GetComponent<TransformComponent>()->GetTransformation());
+        floor2.GetComponent<StaticMeshComponent>()->Draw();
+
+        Culling::EnableFaceCulling();
+        for (int i = 0; i < 3; i++)
+        {
+          auto cubeTransform = cubes[i].GetComponent<TransformComponent>();
+          auto mesh = cubes[i].GetComponent<StaticMeshComponent>();
+          sceneProgram->SetUniformMat4f("u_model", cubeTransform->GetTransformation());
+          mesh->Draw();
+        }
+        Culling::DisableFaceCulling();
+      }
+
+      /* Render scene with shadows map */
+      {
+        //shadowMapProgram->Use();
+        //shadowMapProgram->SetUniformMat4f(SHADER_UNIFORM_PROJECTION, cameraProjectionMatrix);
+        //shadowMapProgram->SetUniformMat4f(SHADER_UNIFORM_VIEW, cameraViewMatrix);
+        //shadowMapProgram->SetUniformMat4f(SHADER_UNIFORM_LIGHTSPACE, lightSpaceMatrix);
+        //DepthMapTexture.BindTextureUnit(10);
+        //scene.DrawScene(*shadowMapProgram);
+      }
+
+      /* Render Depth map texture for visual debugging */
+      {
+        //testingProgram->Use();
+        //testingProgram->SetUniform1i("depthMap", 0);
+        //testingProgram->SetUniform1f("near_plane", INITIAL_ZNEAR);
+        //testingProgram->SetUniform1f("far_plane", INITIAL_ZFAR);
+        //DepthMapTexture.BindTextureUnit(0);
+        //DrawArrays(GL_TRIANGLES, screenSquare);
+      }
 
       /* Blit multisampled buffer to normal colorbuffer of intermediate FBO */
       framebufferMultisampled.Blit(framebufferIntermediate,
         0, 0, viewportSize.x, viewportSize.y,
         0, 0, viewportSize.x, viewportSize.y,
-        GL_COLOR_BUFFER_BIT, 
+        GL_COLOR_BUFFER_BIT,
         GL_NEAREST);
     }
     framebufferMultisampled.Unbind(GL_FRAMEBUFFER);
 
+#if !GUI_MODE
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    framebufferProgram->Use();
+    framebufferTexture.BindTextureUnit(0);
+    DrawArrays(GL_TRIANGLES, screenSquare);
+
+#else
     editor->Render(scene, camera, framebufferTexture.id);
     editor->End();
 
@@ -471,15 +539,15 @@ void Engine::Run()
       framebufferMultisampled.Delete();
       framebufferIntermediate.Delete();
       CreateFramebufferMultisampled(framebufferMultisampled, framebufferIntermediate, 4, viewportSize.x, viewportSize.y);
-      
+
       camera.cameraComponent->aspect = static_cast<float>(viewportSize.x) / static_cast<float>(viewportSize.y);
       camera.cameraComponent->UpdateProjection();
     }
+#endif
 
     window.SwapWindowBuffers();
     lastUpdateTime = now;
   }
-#endif
 }
 
 void Engine::CleanUp()
@@ -488,8 +556,10 @@ void Engine::CleanUp()
   
   TextureManager::Instance().CleanUp();
 
+#if GUI_MODE
   editor->CleanUp();
   delete editor;
+#endif
 
   WindowManager::Instance().CleanUp();
 }

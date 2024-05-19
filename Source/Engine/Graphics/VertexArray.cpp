@@ -1,7 +1,7 @@
 #include "VertexArray.hpp"
 #include "Core/Log/Logger.hpp"
 
-#include "Core/Platform/OpenGL/OpenGL.hpp"
+#include "Core/OpenGL.hpp"
 
 VertexArray::VertexArray()
   : id{ static_cast<uint32_t>(-1) },

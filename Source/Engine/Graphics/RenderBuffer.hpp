@@ -33,7 +33,6 @@ public:
 	 * Establish data storage, format and dimensions of the renderbuffer object's image
 	 * 
 	 * @param width:	specifies the width of the renderbuffer, in pixels.
-	 * 
 	 * @param height: specifies the height of the renderbuffer, in pixels.
 	 */
 	void CreateStorage(int width, int height);
@@ -42,9 +41,7 @@ public:
 	 * Establish data storage, format, dimensions and sample count of the renderbuffer object's image
 	 * 
 	 * @param samples:	specifies the number of samples to be used for the renderbuffer object's storage.
-	 * 
 	 * @param width:		specifies the width of the renderbuffer, in pixels.
-	 * 
 	 * @param height:		specifies the height of the renderbuffer, in pixels.
 	 */
 	void CreateStorageMulstisampled(int samples, int width, int height);

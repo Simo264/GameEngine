@@ -1,7 +1,7 @@
 #include "TextureManager.hpp"
 
 #include "Core/Log/Logger.hpp"
-#include "Core/Platform/OpenGL/OpenGL.hpp"
+#include "Core/OpenGL.hpp"
 
 /* -----------------------------------------------------
  *          PUBLIC METHODS

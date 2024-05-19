@@ -1,71 +1,11 @@
 #include "Shader.hpp"
 #include "Core/Log/Logger.hpp"
 
-#include "Core/Platform/OpenGL/OpenGL.hpp"
+#include "Core/OpenGL.hpp"
 
-
-#if 0
-
-
-
-void Shader::SetBool(const char* name, bool value) const
-{
-  glUniform1i(glGetUniformLocation(_shaderID, name), (int)value);
-}
-
-void Shader::SetInt(const char* name, int value) const
-{
-  glUniform1i(glGetUniformLocation(_shaderID, name), value);
-}
-
-void Shader::SetFloat(const char* name, float value) const
-{
-  glUniform1f(glGetUniformLocation(_shaderID, name), value);
-}
-
-void Shader::SetVec2f(const char* name, const Vec2f& value) const
-{
-  glUniform2fv(glGetUniformLocation(_shaderID, name), 1, &value[0]);
-}
-
-void Shader::SetVec3f(const char* name, const Vec3f& value) const
-{
-  glUniform3fv(glGetUniformLocation(_shaderID, name), 1, &value[0]);
-}
-
-void Shader::SetVec4f(const char* name, const Vec4f& value) const
-{
-  glUniform4fv(glGetUniformLocation(_shaderID, name), 1, &value[0]);
-}
-
-void Shader::SetMat2f(const char* name, const Mat2f& mat) const
-{
-  glUniformMatrix2fv(glGetUniformLocation(_shaderID, name), 1, GL_FALSE, &mat[0][0]);
-}
-
-void Shader::SetMat3f(const char* name, const Mat3f& mat) const
-{
-  glUniformMatrix3fv(glGetUniformLocation(_shaderID, name), 1, GL_FALSE, &mat[0][0]);
-}
-
-void Shader::SetMat4f(const char* name, const Mat4f& mat) const
-{
-  glUniformMatrix4fv(glGetUniformLocation(_shaderID, name), 1, GL_FALSE, &mat[0][0]);
-}
-
-void Shader::SetIntArray(const char* name, uint32_t count, int* value)
-{
-  glUniform1iv(glGetUniformLocation(_shaderID, name), count, value);
-}
-
-void Shader::SetFloatArray(const char* name, uint32_t count, float* value)
-{
-  glUniform1fv(glGetUniformLocation(_shaderID, name), count, value);
-}
-#endif
 
 /* ------------------------------
-      Shader object
+      Shader
 ------------------------------ */
 
 Shader::Shader()
@@ -113,7 +53,7 @@ string Shader::GetShaderInfo() const
 }
 
 /* ------------------------------
-      Program object
+      Program
 ------------------------------ */
 
 Program::Program()

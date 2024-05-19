@@ -24,7 +24,7 @@ public:
 	/**
 	 * Create object in scene
 	 */
-	class GameObject CreateObject(const char* label, uint32_t type);
+	class GameObject CreateObject();
 
 	/**
 	 * Destroy an entity and releases its identifier

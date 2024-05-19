@@ -1,6 +1,6 @@
 #include "Buffer.hpp"
 
-#include "Core/Platform/OpenGL/OpenGL.hpp"
+#include "Core/OpenGL.hpp"
 
 Buffer::Buffer()
 	: id{ static_cast<uint32_t>(-1) },
@@ -43,4 +43,9 @@ void* Buffer::MapStorage(int access)
 bool Buffer::UnmapStorage()
 {
 	return glUnmapNamedBuffer(id);
+}
+
+bool Buffer::IsBuffer(uint32_t buffer)
+{
+	return glIsBuffer(buffer);
 }

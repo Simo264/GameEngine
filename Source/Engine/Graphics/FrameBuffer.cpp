@@ -1,7 +1,8 @@
 #include "FrameBuffer.hpp"
 
-#include "Core/Platform/OpenGL/OpenGL.hpp"
+#include "Core/OpenGL.hpp"
 #include "Core/Log/Logger.hpp"
+
 
 
 FrameBuffer::FrameBuffer()
@@ -82,4 +83,7 @@ void FrameBuffer::Blit(
 		filter);
 }
 
-
+void FrameBuffer::SetWritingColorComponents(bool r, bool g, bool b, bool a)
+{
+	glColorMaski(id, r, g, b, a);
+}

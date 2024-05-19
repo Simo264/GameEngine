@@ -6,73 +6,14 @@
 #include "Engine/Graphics/VertexArray.hpp"
 
 
-/* 
-	--------------------- Component list ---------------------
-	 1. TypeComponent
-	 2. LabelComponent
-	 3. TransformComponent
-	 4. StaticMeshComponent
-	 5. LightComponent
-	 6. DirLightComponent
-	 7. PointLightComponent
-	 8. SpotLightComponent
-	 9. CameraComponent
-	----------------------------------------------------------
-*/
-
-
-
-struct IComponent
-{
-	IComponent() = default;
-	~IComponent() = default;
-
-	/**  
-	 * For ech attribute in component return the following string:
-	 * "<attr1>=<value1>"
-	 * "<attr2>=<value2>"
-	 * ...
-	 */
-	virtual void ToString(string& out) const = 0;
-};
-
-struct TypeComponent : public IComponent
-{
-	TypeComponent(uint32_t type);
-
-	static const char* GetComponentName(bool lower = false);
-
-	/**
-	 * Return "type=<type>"
-	 */
-	void ToString(string& out) const override;
-
-	uint32_t type;
-};
-
-struct LabelComponent : public IComponent
-{
-	LabelComponent(const char* label);
-	
-	static const char* GetComponentName(bool lower = false);
-
-	/**
-	 * Return string "label=<label>"
-	 */
-	void ToString(string& out) const override;
-
-	string label;
-};
-
-
 /**
  * Represents the GameObject's transformation (location, rotation, scale) in world space
  */
-struct TransformComponent : public IComponent
+class TransformComponent
 {
+public:
 	TransformComponent();
-
-	static const char* GetComponentName(bool lower = false);
+	~TransformComponent() = default;
 
 	/**  
 	 * Return following string representation:
@@ -80,7 +21,7 @@ struct TransformComponent : public IComponent
 	 * "scale=<scale.x,scale.y,scale.z>"
 	 * "rotation=<rotation.x,rotation.y,rotation.z>"
 	 */
-	void ToString(string& out) const override;
+	//void Format(string& out) const;
 
 	/**
 	 * Update the transformation matrix. Call this function after changing position, scale or rotation.
@@ -92,9 +33,9 @@ struct TransformComponent : public IComponent
 	 */
 	Mat4f& GetTransformation();
 
-	Vec3f position;
-	Vec3f scale;
-	Vec3f rotation;	/* In degrees */
+	Vec3f position{ 0.0f, 0.0f, 0.0f };
+	Vec3f scale{ 1.0f, 1.0f, 1.0f };
+	Vec3f rotation{ 0.0f, 0.0f, 0.0f };	/* In degrees */
 
 private:
 	Mat4f _transformation;
@@ -109,29 +50,21 @@ private:
  * Since they are cached in video memory, Static Meshes can be translated, rotated,
  * and scaled, but they cannot have their vertices animated in any way.
  */
-struct StaticMeshComponent : public IComponent
+class StaticMeshComponent
 {
-	StaticMeshComponent(
-		uint64_t				vertsize, 
-		const void*			vertdata, 
-		uint64_t				indsize = 0, 
-		const uint32_t* inddata = nullptr);
-
+public:
 	StaticMeshComponent(const fspath& filePath);
-
 	~StaticMeshComponent() = default;
 
-	static const char* GetComponentName(bool lower = false);
-
-	void DrawMesh();
+	void Draw();
 
 	/**  
 	 * Return following string representation:
-	 * "model-path=<path>"														if exists
-	 * "material-diffuse=<material.diffuse.path>"		if exists
-	 * "material-specular=<material.specular.path>"	if exists
+	 * "model-path=<path>"													(if exists)
+	 * "material-diffuse=<material.diffuse.path>"		(if exists)
+	 * "material-specular=<material.specular.path>"	(if exists)
 	 */
-	void ToString(string& out) const override;
+	//void Format(string& out) const;
 
 	/**
 	 * Free GPU memory
@@ -140,35 +73,9 @@ struct StaticMeshComponent : public IComponent
 
 	VertexArray vao;
 	Material		material;
-	fspath				modelPath;
+	fspath			modelPath;
 };
 
-
-/**
- * Contain base light attributes such as color, ambient, diffuse, specular.
- * DirectionalLight, PointLight and SpotLight inherit from this class.
- */
-struct LightComponent : public IComponent
-{
-	LightComponent(const char* uniform);
-
-	virtual void RenderLight(class Program& program) = 0;
-
-	/** 
-	 * Return following string representation:
-	 * "color=<color.x,color.y,color.z>"
-	 * "ambient=<ambient>"
-	 * "diffuse=<diffuse>"
-	 * "specular=<specular>"
-	 */
-	void ToString(string& out) const override;
-
-	Vec3f color;    /* light color */
-	float ambient;  /* ambient intensity */
-	float diffuse;  /* diffuse intensity */
-	float specular; /* specular intensity */
-	string uniform;	/* Used in shader */
-};
 
 /**
  * When a light source is modeled to be infinitely far away it is called a 
@@ -178,13 +85,13 @@ struct LightComponent : public IComponent
  * The sun is not infinitely far away from us, but it is so far away that we can 
  * perceive it as being infinitely far away in the lighting calculations
  */
-struct DirLightComponent : public LightComponent
+struct DirLightComponent
 {
-	DirLightComponent(const char* uniform);
+public:
+	DirLightComponent() = default;
+	~DirLightComponent() = default;
 
-	static const char* GetComponentName(bool lower = false);
-
-	void RenderLight(class Program& program) override;
+	void RenderLight(class Program& program) const;
 
 	/**  
 	 * Return following string representation:
@@ -194,9 +101,14 @@ struct DirLightComponent : public LightComponent
 	 * "specular=<specular>"
 	 * "direction=<direction.x,direction.y,direction.z>"
 	 */
-	void ToString(string& out) const override;
+	//void Format(string& out) const;
 
-	Vec3f direction;
+	Vec3f color{ 0.0f,0.0f,0.0f };  /* light color */
+	float ambient{ 0.0f };					/* light ambient intensity */
+	float diffuse{ 0.0f };					/* light diffuse intensity */
+	float specular{ 0.0f };					/* light specular intensity */
+
+	Vec3f direction{ 0.0f, -1.0f, 0.0f };
 };
 
 
@@ -205,13 +117,13 @@ struct DirLightComponent : public LightComponent
  * that illuminates in all directions, where the light rays fade out over distance.
  * Think of light bulbs and torches as light casters that act as a point light.
  */
-struct PointLightComponent : public LightComponent
+class PointLightComponent
 {
-	PointLightComponent(const char* uniform);
+public:
+	PointLightComponent() = default;
+	~PointLightComponent() = default;
 
-	static const char* GetComponentName(bool lower = false);
-
-	void RenderLight(class Program& program) override;
+	void RenderLight(class Program& program) const;
 
 	/**  
 	 * Return following string representation:
@@ -221,15 +133,20 @@ struct PointLightComponent : public LightComponent
 	 * "specular=<specular>"
 	 * "position=<position.x,position.y,position.z>"
 	 */
-	void ToString(string& out) const override;
+	//void ToString(string& out) const override;
 
-	Vec3f position;
+	Vec3f color{ 0.0f,0.0f,0.0f };  /* light color */
+	float ambient{ 0.0f };					/* light ambient intensity */
+	float diffuse{ 0.0f };					/* light diffuse intensity */
+	float specular{ 0.0f };					/* light specular intensity */
 
-	/* Attenuation */
-	float linear;
-	float quadratic;
+	Vec3f position{ 0.0f, 0.0f, 0.0f };
+
+	/* attenuation */
+	/* https://wiki.ogre3d.org/tiki-index.php?page=-Point+Light+Attenuation */
+	float linear{ 0.09f };
+	float quadratic{ 0.032f };
 };
-
 
 /**
  * A spotlight is a light source that is located somewhere in the environment 
@@ -237,13 +154,13 @@ struct PointLightComponent : public LightComponent
  * a specific direction.
  * A good example of a spotlight would be a street lamp or a flashlight.
  */
-struct SpotLightComponent : PointLightComponent
+class SpotLightComponent
 {
-	SpotLightComponent(const char* uniform);
+public:
+	SpotLightComponent() = default;
+	~SpotLightComponent() = default;
 
-	static const char* GetComponentName(bool lower = false);
-
-	void RenderLight(class Program& program) override;
+	void RenderLight(class Program& program) const;
 
 	/** 
 	 * Return following string representation:
@@ -253,13 +170,25 @@ struct SpotLightComponent : PointLightComponent
 	 * "direction=<direction.x,direction.y,direction.z>"
 	 * "cutoff=<cutoff>"
 	 */
-	void ToString(string& out) const override;
+	//void ToString(string& out) const override;
 		
-	Vec3f direction;
+	Vec3f color{ 0.0f,0.0f,0.0f };  /* light color */
+	float ambient{ 0.0f };					/* light ambient intensity */
+	float diffuse{ 0.0f };					/* light diffuse intensity */
+	float specular{ 0.0f };					/* light specular intensity */
 
-	float cutOff; /* the cutoff angle that specifies the spotlight's radius. */
+	Vec3f direction{ 0.0f, -1.0f, 0.0f };
+	Vec3f position{ 0.0f, 0.0f, 0.0f };
+	
+	/* attenuation */
+	/* https://wiki.ogre3d.org/tiki-index.php?page=-Point+Light+Attenuation */
+	float linear{ 0.09f };
+	float quadratic{ 0.032f };
+
+	/* spotlight's radius */
+	float cutOff{ Math::Cos(Math::Radians(12.5)) }; 
+	float outerCutOff{ Math::Cos(Math::Radians(17.5)) };
 };
-
 
 /**
  * When we're talking about camera/view space we're talking about all the vertex 
@@ -272,13 +201,15 @@ struct SpotLightComponent : PointLightComponent
  * A careful reader may notice that we're actually going to create a coordinate 
  * system with 3 perpendicular unit axes with the camera's position as the origin.
  */
-struct CameraComponent : public IComponent
+class CameraComponent
 {
+public:
 	CameraComponent(
 		const Vec3f& position = { 0.0f, 0.0f, 0.0f }, /* default position*/
 		float fov = 45.0f,					/* default field of view */
 		float aspect = 16.0f/9.0f		/* default aspect ratio 16:9 */
 	);
+	~CameraComponent() = default;
 
 	/** 
 	 * Return following string representation:
@@ -291,14 +222,14 @@ struct CameraComponent : public IComponent
 	 * "zNear=<zNear>"
 	 * "zFar=<zFar>"
 	 */
-	void ToString(string& out) const override;
+	//void Format(string& out) const;
 
-	Mat4f& GetView();
-	Mat4f& GetProjection();
+	const Mat4f& GetView() { return _viewMatrix; }
+	const Mat4f& GetProjection() { return _projectionMatrix; }
 
-	Vec3f& GetFrontVector();
-	Vec3f& GetRightVector();
-	Vec3f& GetUpVector();
+	const Vec3f& GetFrontVector() { return _front; }
+	const Vec3f& GetRightVector() { return _right; }
+	const Vec3f& GetUpVector() { return _up; }
 	
 	/**
 	 * Update Orientation vectors

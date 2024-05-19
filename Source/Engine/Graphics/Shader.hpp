@@ -45,7 +45,6 @@ public:
    * If shader previously had source code loaded into it, the existing source code is completely replaced.
    * 
    * @param string: specifies the source code to be loaded into the shader
-   * 
    * @param length: specifies the string length
    */
   void LoadSource(const char* string, int length) const;

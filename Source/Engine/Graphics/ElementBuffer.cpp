@@ -1,6 +1,6 @@
 #include "ElementBuffer.hpp"
 
-#include "Core/Platform/OpenGL/OpenGL.hpp"
+#include "Core/OpenGL.hpp"
 
 ElementBuffer::ElementBuffer()
 	: Buffer()

@@ -13,6 +13,7 @@ class Buffer
 {
 public:
 	Buffer();
+
 	~Buffer() = default;
 
 	/**
@@ -30,8 +31,9 @@ public:
 	 * While creating the new storage, any pre-existing data store is deleted.
 	 * The new data store is created with the specified size in bytes and usage
 	 *
-	 * @param usage:  the symbolic constant must be GL_STREAM_DRAW, GL_STREAM_READ, GL_STREAM_COPY, GL_STATIC_DRAW,
-	 *                GL_STATIC_READ, GL_STATIC_COPY, GL_DYNAMIC_DRAW, GL_DYNAMIC_READ, or GL_DYNAMIC_COPY
+	 * @param usage:	the symbolic constant must be 
+	 *								GL_STREAM_DRAW, GL_STREAM_READ, GL_STREAM_COPY, GL_STATIC_DRAW,
+	 *								GL_STATIC_READ, GL_STATIC_COPY, GL_DYNAMIC_DRAW, GL_DYNAMIC_READ, or GL_DYNAMIC_COPY
 	 */
 	void CreateStorage(uint64_t size, const void* data, int usage);
 
@@ -39,7 +41,6 @@ public:
 	 * Updates a subset of the buffer object's data store
 	 *
 	 * @param offset: specifies the offset (in bytes) into the buffer object's data store where data replacement will begin
-	 * 
 	 * @param size:   specifies the size in bytes of the data store region being replaced
 	 */
 	void UpdateStorage(int offset, uint32_t size, const void* data);
@@ -81,6 +82,12 @@ public:
 	 * Unbind the buffer object
 	 */
 	virtual void Unbind() const = 0;
+
+	/**
+	 * Returns TRUE if buffer is the name of a buffer object. 
+	 * If buffer is zero or if is a non-zero value that is not the name of a buffer object, returns FALSE
+	 */
+	static bool IsBuffer(uint32_t buffer);
 
 	constexpr bool Compare(const Buffer& other) const { return id == other.id; }
 

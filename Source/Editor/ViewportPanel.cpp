@@ -1,6 +1,5 @@
 #include "ViewportPanel.hpp"
 
-#include "Core/Platform/OpenGL/OpenGL.hpp"
 #include "Core/Math/Extensions.hpp"
 
 #include "Engine/Camera.hpp"
@@ -20,7 +19,6 @@ ViewportPanel::ViewportPanel(const char* panelName, bool visible)
   : Panel(panelName, visible),
     isFocused{ false },
     viewportSize{ 0, 0 }, 
-    viewportPosition{ 0 ,0 },
     _grizmoMode{ static_cast<int>(ImGuizmo::OPERATION::TRANSLATE) } 
 {}
 

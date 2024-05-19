@@ -1,7 +1,7 @@
 #include "ShaderManager.hpp"
 
 #include "Core/Log/Logger.hpp"
-#include "Core/Platform/OpenGL/OpenGL.hpp"
+#include "Core/OpenGL.hpp"
 
 static void LoadFileContent(const fspath& filepath, string& dest)
 {

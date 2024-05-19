@@ -4,9 +4,6 @@
 #include "Editor/Panel.hpp"
 #include "Engine/GameObject.hpp"
 
-/* ----------------------------------------
-			OutlinerPanel class
-	---------------------------------------- */
 class OutlinerPanel : public Panel
 {
 	friend class Editor;
@@ -14,7 +11,7 @@ class OutlinerPanel : public Panel
 public:
 	OutlinerPanel(const char* panelName, bool visible);
 
-	void RenderPanel(class Scene& scene);
+	void RenderPanel(class Scene& scene) {};
 	bool IsItemSelected() const { return false; }
 
 	/* The selected object can be invalid */
@@ -24,7 +21,7 @@ private:
 	const float _iconSize;
 	GameObject _selected;
 
-	const char* GetTypeName(GameObjectType objectType);
+	//const char* GetTypeName(GameObjectType objectType);
 
 	void AddSceneComponentButton(const char* labelPopup);
 	void AddSceneComponentPopup(class Scene& scene);

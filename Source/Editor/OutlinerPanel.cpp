@@ -3,7 +3,6 @@
 #include "Core/Log/Logger.hpp"
 
 #include "Engine/Scene.hpp"
-#include "Engine/ShaderUniforms.hpp"
 #include "Engine/Graphics/Texture2D.hpp"
 #include "Engine/Subsystems/TextureManager.hpp"
 
@@ -12,6 +11,8 @@
 
 #include <imgui/imgui.h>
 #include <imgui/imgui_internal.h>
+
+
 
 /* -----------------------------------------------------
  *          PUBLIC METHODS
@@ -24,6 +25,7 @@ OutlinerPanel::OutlinerPanel(const char* panelName, bool visible)
     _selected{} /* null entity */
 {}
 
+#if 0 
 void OutlinerPanel::RenderPanel(Scene& scene)
 {
   ImGui::Begin(panelName.c_str(), &visible);
@@ -80,11 +82,11 @@ const char* OutlinerPanel::GetTypeName(GameObjectType objectType)
   case GameObjectType::DIRECTIONAL_LIGHT:
     return "directional light";
     
-  case GameObjectType::POINT_LIGHT:
-    return "point light";
+  //case GameObjectType::POINT_LIGHT:
+  //  return "point light";
 
-  case GameObjectType::SPOT_LIGHT:
-    return "spot light";
+  //case GameObjectType::SPOT_LIGHT:
+  //  return "spot light";
     
   case GameObjectType::STATIC_MESH:
     return "static mesh";
@@ -124,7 +126,7 @@ void OutlinerPanel::AddSceneComponentPopup(Scene& scene)
             "Directional light",
             static_cast<uint32_t>(GameObjectType::DIRECTIONAL_LIGHT));
 
-          dLight.AddComponent<DirLightComponent>(SHADER_UNIFORM_DIRLIGHT);
+          //dLight.AddComponent<DirLightComponent>(SHADER_UNIFORM_DIRLIGHT);
         }
         else
           CONSOLE_WARN("Can't create more dir light objects");
@@ -194,3 +196,5 @@ void OutlinerPanel::AddSceneComponentPopup(Scene& scene)
   }
   ImGui::EndPopup();
 }
+
+#endif

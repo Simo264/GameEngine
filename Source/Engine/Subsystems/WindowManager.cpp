@@ -1,7 +1,7 @@
 #include "WindowManager.hpp"
 #include "Core/Log/Logger.hpp"
 
-#include "Core/Platform/OpenGL/OpenGL.hpp"
+#include "Core/OpenGL.hpp"
 #include <GLFW/glfw3.h>
 
 void WindowManager::Initialize()
