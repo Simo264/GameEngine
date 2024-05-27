@@ -13,7 +13,6 @@
 #include "Core/FileParser/INIFileParser.hpp"
 
 
-
 /* -----------------------------------------------------
  *          PUBLIC METHODS
  * -----------------------------------------------------
@@ -27,11 +26,9 @@ void SceneSerializer::SerializeScene(Scene& scene, const fspath& filepath)
 	{
 		GameObject object{ entity, &scene.Reg() };
 		const uint32_t objectID = static_cast<uint32_t>(object.GetObjectID());
-		
-		const char* label = lComp.label.c_str();
 
 		string section = std::format("entity{}:LabelComponent", objectID);
-		conf.Update(&section[0], "label", label);
+		conf.Update(section.c_str(), "label", lComp.label.c_str());
 
 		if (auto light = object.GetComponent<DirLightComponent>())
 		{
@@ -42,7 +39,7 @@ void SceneSerializer::SerializeScene(Scene& scene, const fspath& filepath)
 			conf.Update(section.c_str(), "specular",	std::format("{}", light->specular).c_str());
 			conf.Update(section.c_str(), "direction", std::format("{},{},{}", light->direction.x, light->direction.y, light->direction.z).c_str());
 		}
-		else if (auto light = object.GetComponent<PointLightComponent>())
+		if (auto light = object.GetComponent<PointLightComponent>())
 		{
 			string section = std::format("entity{}:PointLightComponent", objectID);
 			conf.Update(section.c_str(), "color",			std::format("{},{},{}", light->color.x, light->color.y, light->color.z).c_str());
@@ -53,7 +50,7 @@ void SceneSerializer::SerializeScene(Scene& scene, const fspath& filepath)
 			conf.Update(section.c_str(), "linear",		std::to_string(light->linear).c_str());
 			conf.Update(section.c_str(), "quadratic", std::to_string(light->quadratic).c_str());
 		}
-		else if (auto light = object.GetComponent<SpotLightComponent>())
+		if (auto light = object.GetComponent<SpotLightComponent>())
 		{
 			string section = std::format("entity{}:SpotLightComponent", objectID);
 			conf.Update(section.c_str(), "color",				std::format("{},{},{}", light->color.x, light->color.y, light->color.z).c_str());
@@ -67,7 +64,6 @@ void SceneSerializer::SerializeScene(Scene& scene, const fspath& filepath)
 			conf.Update(section.c_str(), "cutOff",			std::to_string(light->cutOff).c_str());
 			conf.Update(section.c_str(), "outerCutOff", std::to_string(light->outerCutOff).c_str());
 		}
-
 		if (auto transform = object.GetComponent<TransformComponent>())
 		{
 			string section = std::format("entity{}:TransformComponent", objectID);

@@ -10,7 +10,7 @@
 	*							GL_TRIANGLE_STRIP, GL_TRIANGLE_FAN, GL_TRIANGLES, GL_TRIANGLE_STRIP_ADJACENCY,
 	*							GL_TRIANGLES_ADJACENCY and GL_PATCHES
 	*/
-void DrawArrays(uint32_t mode, VertexArray& vertexArray);
+void DrawArrays(uint32_t mode, class VertexArray& vertexArray);
 
 /**
 	* Draw multiple instances of a range of elements.
@@ -22,7 +22,7 @@ void DrawArrays(uint32_t mode, VertexArray& vertexArray);
 	*
 	* @param nInstances: specifies the number of instances of the specified range of indices to be rendered.
 	*/
-void DrawArraysInstanced(uint32_t mode, VertexArray& vertexArray, int nInstances);
+void DrawArraysInstanced(uint32_t mode, class VertexArray& vertexArray, int nInstances);
 
 
 /**
@@ -33,7 +33,7 @@ void DrawArraysInstanced(uint32_t mode, VertexArray& vertexArray, int nInstances
 	*							GL_TRIANGLE_STRIP, GL_TRIANGLE_FAN, GL_TRIANGLES, GL_TRIANGLE_STRIP_ADJACENCY,
 	*							GL_TRIANGLES_ADJACENCY and GL_PATCHES
 	*/
-void DrawElements(uint32_t mode, VertexArray& vertexArray);
+void DrawElements(uint32_t mode, class VertexArray& vertexArray);
 
 /**
 	* Draw multiple instances of a set of elements.
@@ -45,5 +45,5 @@ void DrawElements(uint32_t mode, VertexArray& vertexArray);
 	*
 	* @param nInstances: specifies the number of instances of the specified range of indices to be rendered.
 	*/
-void DrawElementsInstanced(uint32_t mode, VertexArray& vertexArray, int nInstances);
+void DrawElementsInstanced(uint32_t mode, class VertexArray& vertexArray, int nInstances);
 

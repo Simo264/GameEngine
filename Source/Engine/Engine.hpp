@@ -10,7 +10,5 @@ public:
 
 	void Initialize();
 	void Run() const;
-	void CleanUp();
-
-	class Editor* editor;
+	void CleanUp() const;
 };

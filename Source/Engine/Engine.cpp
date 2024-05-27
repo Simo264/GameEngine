@@ -32,7 +32,7 @@
 
 #include <GLFW/glfw3.h>
 
-#include "Editor/Editor.hpp"
+#include "GUI/Gui.hpp"
 
 #define GUI_MODE 0
 
@@ -64,29 +64,19 @@ static void SetGlobalGlStates()
 
   /* Antialising ON */
   glEnable(GL_MULTISAMPLE);
+
+  glClearColor(0.15, 0.15, 0.15, 1.0f);
+  glClearDepth(1.0f);
+  glClearStencil(0);
 }
 static void LoadConfig()
 {
-  INIFileParser conf(ROOT_PATH / CONFIG_FILENAME);
-  conf.ReadData();
-
-  string title = conf.GetValue("window", "title");
-
-  string strResolution = conf.GetValue("window", "resolution");
-  string strAspect = conf.GetValue("window", "aspectratio");
-  string strPosition = conf.GetValue("window", "position");
-  string strVsync= conf.GetValue("window", "vsync");
-  vec2i32 resolution = INIFileParser::StringToVec2i32(strResolution, "x");
-  vec2i32 aspectratio = INIFileParser::StringToVec2i32(strAspect, ":");
-  vec2i32 position = INIFileParser::StringToVec2i32(strPosition, ",");
-  bool vsync = INIFileParser::StringToBool(strVsync);
-
   auto& window = WindowManager::Instance();
-  window.SetWindowTitle(title.c_str());
-  window.SetWindowSize(resolution.x, resolution.y);
-  window.SetWindowPosition(position.x, position.y);
-  window.SetWindowAspectRatio(aspectratio.x, aspectratio.y);
-  window.SetWindowVsync(vsync);
+  window.SetWindowTitle("ProjectGL");
+  window.SetWindowSize(1600, 900);
+  window.SetWindowPosition(50,50);
+  window.SetWindowAspectRatio(16, 9);
+  window.SetWindowVsync(false);
 }
 static void LoadPrograms()
 {
@@ -261,10 +251,7 @@ void Engine::Initialize()
   
   TextureManager::Instance().Initialize();
 
-#if GUI_MODE
-  editor = new Editor;
-  editor->Initialize();
-#endif
+  SetGlobalGlStates();
 }
 
 void Engine::Run() const
@@ -278,6 +265,7 @@ void Engine::Run() const
   Program* sceneProgram           = instanceSM.GetProgram("Scene");
   Program* shadowMapDepthProgram  = instanceSM.GetProgram("ShadowMapDepth");
   Program* shadowMapProgram       = instanceSM.GetProgram("ShadowMap");
+  SetShadersUniforms();
 
   VertexArray screenSquare;
   CreateScreenSquare(screenSquare);
@@ -306,38 +294,26 @@ void Engine::Run() const
   //const Texture2D& DepthMapTexture = framebufferShadowMap.GetTextureAttachment(0);
 
   /* -------------------------- Pre-loop -------------------------- */
-  SetShadersUniforms();
-  SetGlobalGlStates();
-  glClearColor(0.15, 0.15, 0.15, 1.0f);
-  glClearDepth(1.0f);
-  glClearStencil(0);
-
   time_point lastUpdateTime = system_clock::now();
+
+  unique_pointer<Gui> gui;
+  gui->SetupContext();
 
   
   /* -------------------------- loop -------------------------- */
   while (window.IsOpen())
   {
-#if GUI_MODE
-    editor->Begin();
-#endif
-
     /* -------------------------- Per-frame time logic -------------------------- */
     const auto now = system_clock::now();
     const std::chrono::duration<double> diff = now - lastUpdateTime;
     const double delta = diff.count();
+    gui->StartFrame();
     drawCalls = 0;
 
     /* -------------------------- Input -------------------------- */
     window.PoolEvents();
-
-
-#if GUI_MODE
-    if (editor->viewportPanel->isFocused)
-      camera.ProcessInput(window, delta);
-#else
     camera.ProcessInput(window, delta);
-#endif
+
 
     /* -------------------------- Update -------------------------- */
     const auto& cameraViewMatrix = camera.cameraComponent->GetView();
@@ -435,21 +411,19 @@ void Engine::Run() const
     }
     framebufferMultisampled.Unbind(GL_FRAMEBUFFER);
 
-#if !GUI_MODE
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     framebufferProgram->Use();
     framebufferTexture.BindTextureUnit(0);
     DrawArrays(GL_TRIANGLES, screenSquare);
 
-#else
-    editor->Render(scene, camera, framebufferTexture.id);
-    editor->End();
+    gui->Render();
+    gui->EndFrame();
 
     /* -------------------------- Resizing framebuffer -------------------------- */
-    const auto& viewportPanel = editor->viewportPanel;
-    if (viewportSize != viewportPanel->viewportSize)
+    const vec2i32 currentFramebufferSize = window.GetFramebufferSize();
+    if (viewportSize != currentFramebufferSize)
     {
-      viewportSize = viewportPanel->viewportSize;
+      viewportSize = currentFramebufferSize;
       framebufferMultisampled.Delete();
       framebufferIntermediate.Delete();
       CreateFramebufferMultisampled(framebufferMultisampled, framebufferIntermediate, 4, viewportSize.x, viewportSize.y);
@@ -457,23 +431,19 @@ void Engine::Run() const
       camera.cameraComponent->aspect = static_cast<float>(viewportSize.x) / static_cast<float>(viewportSize.y);
       camera.cameraComponent->UpdateProjection();
     }
-#endif
 
     window.SwapWindowBuffers();
     lastUpdateTime = now;
   }
+
+  gui->CleanUp();
 }
 
-void Engine::CleanUp()
+void Engine::CleanUp() const
 {
   ShaderManager::Instance().CleanUp();
   
   TextureManager::Instance().CleanUp();
-
-#if GUI_MODE
-  editor->CleanUp();
-  delete editor;
-#endif
 
   WindowManager::Instance().CleanUp();
 }

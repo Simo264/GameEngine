@@ -30,8 +30,6 @@ void WindowManager::Initialize()
   /* Load OpenGL functions, gladLoadGL returns the loaded version, 0 on error. */
   int version = gladLoadGL(glfwGetProcAddress);
   assert((version != 0) && "Failed to initialize OpenGL context");
-
-
 }
 
 void WindowManager::CleanUp()
@@ -118,5 +116,5 @@ void WindowManager::SetWindowPosition(int x, int y) const
 
 void WindowManager::SetWindowVsync(bool b) const
 {
-  glfwSwapInterval((int)b);
+  glfwSwapInterval(b);
 }
