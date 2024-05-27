@@ -14,7 +14,7 @@ public:
 	ViewportPanel(const char* panelName, bool visible);
 	
 	bool isFocused;
-	Vec2i32 viewportSize;
+	vec2i32 viewportSize;
 
 	void RenderPanel(
 		class Camera& camera, 

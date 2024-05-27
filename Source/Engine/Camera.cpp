@@ -3,6 +3,7 @@
 #include "Engine/Components.hpp"
 
 #include "Engine/Subsystems/WindowManager.hpp"
+
 #include <GLFW/glfw3.h>
 
 /* -----------------------------------------------------
@@ -10,7 +11,7 @@
  * -----------------------------------------------------
 */
 
-Camera::Camera(const Vec3f& position, float fov, float aspect) 
+Camera::Camera(const vec3f& position, float fov, float aspect) 
 {
 	cameraComponent = new CameraComponent(position, fov, aspect);
 }
@@ -76,8 +77,8 @@ void Camera::Move(WindowManager& window, const float movementSpeed, float delta)
 
 void Camera::Rotate(WindowManager& window, const float mouseSensitivity, float delta)
 {
-	Vec2d mousePos = window.GetCursorPosition();
-	Vec2i32 windowSize = window.GetWindowSize();
+	vec2d mousePos = window.GetCursorPosition();
+	vec2i32 windowSize = window.GetWindowSize();
 	static float lastX = ((float)windowSize.x / 2.0f);
 	static float lastY = ((float)windowSize.y / 2.0f);
 	static bool firstMouse = true;

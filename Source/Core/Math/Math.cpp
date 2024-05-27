@@ -36,17 +36,17 @@ namespace Math
 		return glm::pow(base, exponent);
 	}
 
-	Vec3f Cross(const Vec3f& v1, const Vec3f& v2)
+	vec3f Cross(const vec3f& v1, const vec3f& v2)
 	{
 		return glm::cross(v1, v2);
 	}
 
-	Vec3f Normalize(const Vec3f& v)
+	vec3f Normalize(const vec3f& v)
 	{
 		return glm::normalize(v);
 	}
 
-	float Length(const Vec3f& v)
+	float Length(const vec3f& v)
 	{
 		return glm::length(v);
 	}

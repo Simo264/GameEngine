@@ -48,7 +48,7 @@ vec3 g_viewDir;
 /* ------------------------------- */
 vec3 CalcDirLight(vec3 lightPos, DirLight_t dirLight, Material_t material);
 float CalcDirLightShadow(vec3 lightDir);
-vec3 GammaCorrection(vec3 value, float gamma);
+void GammaCorrection(inout vec3 value); 
 
 void main()
 {     
@@ -60,17 +60,22 @@ void main()
   vec3 result     = vec3(0.0f);
 
   /* If no texture: set diffuse to default color */
-  //if(length(g_diffuseColor) == 0)
-  //  g_diffuseColor = vec3(0.25f, 0.50f, 0.75f);
+  if(length(g_diffuseColor) == 0)
+    g_diffuseColor = vec3(0.25f, 0.50f, 0.75f);
 
   /* Phase 1: Directional lighting */
   result += CalcDirLight(ULightPos, UDirLight, UMaterial);
 
   /* Apply gamma correction */
   if(UGamma != 0.0f)
-    result = GammaCorrection(result, UGamma);
+    GammaCorrection(result);
 
   FragColor = vec4(result, 1.0);
+}
+
+void GammaCorrection(inout vec3 value)
+{
+  value = pow(value, vec3(1.0f / UGamma));
 }
 
 float CalcDirLightShadow(vec3 lightDir)
@@ -95,7 +100,7 @@ float CalcDirLightShadow(vec3 lightDir)
   
   /* Resolve the problem of shadow acne with bias */
   float bias = max(0.05 * (1.0 - dot(g_normal, lightDir)), 0.005);  
-  //return (currentDepth - bias > closestDepth) ? 1.0 : 0.0;
+  return (currentDepth - bias > closestDepth) ? 1.0 : 0.0;
 
   /* Percentage-closer filtering (PCF) */
   vec2 texelSize = 1.0 / textureSize(UShadowMap, 0);
@@ -113,7 +118,6 @@ float CalcDirLightShadow(vec3 lightDir)
 
 vec3 CalcDirLight(vec3 lightPos, DirLight_t dirLight, Material_t material)
 {
-  //vec3 lightDir = normalize(-dirLight.direction);
   vec3 lightDir = normalize(lightPos - FragPos);
   
   /* ambient shading */
@@ -121,8 +125,8 @@ vec3 CalcDirLight(vec3 lightPos, DirLight_t dirLight, Material_t material)
 
   /* diffuse shading */
   float diffuseFactor = max(dot(g_normal, lightDir), 0.0);
-  if(diffuseFactor == 0.0f)
-    return ambient;
+    if(diffuseFactor == 0.0f)
+      return ambient;
 
   vec3 diffuse = dirLight.diffuse * diffuseFactor * g_diffuseColor;
   
@@ -134,9 +138,4 @@ vec3 CalcDirLight(vec3 lightPos, DirLight_t dirLight, Material_t material)
   /* Calculate shadow */
   float shadow  = CalcDirLightShadow(lightDir);                      
   return (ambient + (1.0 - shadow) * (diffuse + specular)) * g_diffuseColor;   
-}
-
-vec3 GammaCorrection(vec3 value, float gamma)
-{
-  return pow(value, vec3(1.0f / UGamma));
 }

@@ -70,9 +70,9 @@ void WindowManager::SwapWindowBuffers() const
   glfwSwapBuffers(_context); 
 }
 
-Vec2i32 WindowManager::GetWindowSize() const
+vec2i32 WindowManager::GetWindowSize() const
 {
-  Vec2i32 res{};
+  vec2i32 res{};
   glfwGetWindowSize(_context, &res.x, &res.y);
   return res;
 }
@@ -82,9 +82,9 @@ void WindowManager::SetWindowSize(int w, int h) const
   glfwSetWindowSize(_context, w, h);
 }
 
-Vec2i32 WindowManager::GetFramebufferSize() const
+vec2i32 WindowManager::GetFramebufferSize() const
 {
-  Vec2i32 res{};
+  vec2i32 res{};
   glfwGetFramebufferSize(_context, &res.x, &res.y);
   return res;
 }
@@ -99,9 +99,9 @@ int WindowManager::GetMouseKey(uint32_t key) const
   return glfwGetMouseButton(_context, key); 
 }
 
-Vec2d WindowManager::GetCursorPosition() const
+vec2d WindowManager::GetCursorPosition() const
 {
-  Vec2d res{};
+  vec2d res{};
   glfwGetCursorPos(_context, &res.x, &res.y);
   return res;
 }

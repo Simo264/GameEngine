@@ -26,7 +26,7 @@ void ViewportPanel::RenderPanel(Camera& camera, const uint32_t framebufferImage,
 {
   /* Set viewport padding */
   ImGuiStyle& style = ImGui::GetStyle();
-  const Vec2i32 paddingTmp = { style.WindowPadding.x, style.WindowPadding.y };
+  const vec2i32 paddingTmp = { style.WindowPadding.x, style.WindowPadding.y };
   style.WindowPadding.x = 0;
   style.WindowPadding.y = 0;
 
@@ -63,7 +63,7 @@ void ViewportPanel::RenderPanel(Camera& camera, const uint32_t framebufferImage,
 
 void ViewportPanel::GrizmoTransformation(Camera& camera, TransformComponent& component)
 {
-  Mat4f& model = component.GetTransformation();
+  mat4f& model = component.GetTransformation();
 
   ImGuizmo::SetOrthographic(false);
   ImGuizmo::SetDrawlist();
@@ -83,16 +83,16 @@ void ViewportPanel::GrizmoTransformation(Camera& camera, TransformComponent& com
 
   if (ImGuizmo::IsUsing())
   {
-    static Vec3f translation;
-    static Vec3f scale;
+    static vec3f translation;
+    static vec3f scale;
     static Quat  rotation;
     Math::Decompose(model, translation, rotation, scale);
 
-    Vec3f rotationDegrees = Math::EulerAngles(rotation);  /* Get vector rotation in radians */
+    vec3f rotationDegrees = Math::EulerAngles(rotation);  /* Get vector rotation in radians */
     rotationDegrees.x = Math::Degrees(rotationDegrees.x); /* Convert it in degrees */
     rotationDegrees.y = Math::Degrees(rotationDegrees.y);
     rotationDegrees.z = Math::Degrees(rotationDegrees.z);
-    const Vec3f deltaRotation = rotationDegrees - component.rotation;
+    const vec3f deltaRotation = rotationDegrees - component.rotation;
     
     component.position = translation;
     component.scale = scale;

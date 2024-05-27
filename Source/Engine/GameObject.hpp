@@ -21,7 +21,7 @@ public:
 			_reg{ reg }
 	{}
 
-	template<class T, class...Args>
+	template<typename T, typename...Args>
 	T& AddComponent(Args&&... args)
 	{
 		if (GetComponent<T>())
@@ -30,18 +30,18 @@ public:
 		return _reg->emplace_or_replace<T>(_entity, std::forward<Args>(args)...);
 	}
 
-	template<class T>
+	template<typename T>
 	T* GetComponent()
 	{
 		return _reg->try_get<T>(_entity);
 	}
 
-	template<class T>
+	template<typename T>
 	void RemoveComponent()
 	{
 		if (!GetComponent<T>())
 			CONSOLE_WARN("Object does not have component!");
-		
+
 		_reg->remove<T>(_entity);
 	}
 
@@ -67,6 +67,6 @@ public:
 	}
 
 private:
-	entt::entity		_entity;	/* Object id */
-	entt::registry* _reg;			/* Pointer to scene registry */
+	entt::entity _entity;	/* Object id */
+	entt::registry* _reg;	/* Pointer to scene registry */
 };

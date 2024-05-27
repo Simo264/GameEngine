@@ -5,6 +5,13 @@
 #include "Engine/Material.hpp"
 #include "Engine/Graphics/VertexArray.hpp"
 
+class LabelComponent
+{
+public:
+	LabelComponent(const char* label) : label{label} {}
+
+	string label;
+};
 
 /**
  * Represents the GameObject's transformation (location, rotation, scale) in world space
@@ -15,14 +22,6 @@ public:
 	TransformComponent();
 	~TransformComponent() = default;
 
-	/**  
-	 * Return following string representation:
-	 * "position=<position.x,position.y,position.z>"
-	 * "scale=<scale.x,scale.y,scale.z>"
-	 * "rotation=<rotation.x,rotation.y,rotation.z>"
-	 */
-	//void Format(string& out) const;
-
 	/**
 	 * Update the transformation matrix. Call this function after changing position, scale or rotation.
 	 */
@@ -31,14 +30,14 @@ public:
 	/**
 	 * Calculate the model matrix
 	 */
-	Mat4f& GetTransformation();
+	mat4f& GetTransformation();
 
-	Vec3f position{ 0.0f, 0.0f, 0.0f };
-	Vec3f scale{ 1.0f, 1.0f, 1.0f };
-	Vec3f rotation{ 0.0f, 0.0f, 0.0f };	/* In degrees */
+	vec3f position{ 0.0f, 0.0f, 0.0f };
+	vec3f scale{ 1.0f, 1.0f, 1.0f };
+	vec3f rotation{ 0.0f, 0.0f, 0.0f };	/* In degrees */
 
 private:
-	Mat4f _transformation;
+	mat4f _transformation;
 };
 
 
@@ -57,14 +56,6 @@ public:
 	~StaticMeshComponent() = default;
 
 	void Draw();
-
-	/**  
-	 * Return following string representation:
-	 * "model-path=<path>"													(if exists)
-	 * "material-diffuse=<material.diffuse.path>"		(if exists)
-	 * "material-specular=<material.specular.path>"	(if exists)
-	 */
-	//void Format(string& out) const;
 
 	/**
 	 * Free GPU memory
@@ -85,30 +76,18 @@ public:
  * The sun is not infinitely far away from us, but it is so far away that we can 
  * perceive it as being infinitely far away in the lighting calculations
  */
-struct DirLightComponent
+class DirLightComponent
 {
 public:
 	DirLightComponent() = default;
 	~DirLightComponent() = default;
 
-	void RenderLight(class Program& program) const;
-
-	/**  
-	 * Return following string representation:
-	 * "color=<color.x,color.y,color.z>"
-	 * "ambient=<ambient>"
-	 * "diffuse=<diffuse>"
-	 * "specular=<specular>"
-	 * "direction=<direction.x,direction.y,direction.z>"
-	 */
-	//void Format(string& out) const;
-
-	Vec3f color{ 0.0f,0.0f,0.0f };  /* light color */
+	vec3f color{ 0.0f,0.0f,0.0f };  /* light color */
 	float ambient{ 0.0f };					/* light ambient intensity */
 	float diffuse{ 0.0f };					/* light diffuse intensity */
 	float specular{ 0.0f };					/* light specular intensity */
-
-	Vec3f direction{ 0.0f, -1.0f, 0.0f };
+	
+	vec3f direction{ 0.0f, -1.0f, 0.0f };
 };
 
 
@@ -123,24 +102,12 @@ public:
 	PointLightComponent() = default;
 	~PointLightComponent() = default;
 
-	void RenderLight(class Program& program) const;
-
-	/**  
-	 * Return following string representation:
-	 * "color=<color.x,color.y,color.z>"
-	 * "ambient=<ambient>"
-	 * "diffuse=<diffuse>"
-	 * "specular=<specular>"
-	 * "position=<position.x,position.y,position.z>"
-	 */
-	//void ToString(string& out) const override;
-
-	Vec3f color{ 0.0f,0.0f,0.0f };  /* light color */
+	vec3f color{ 0.0f,0.0f,0.0f };  /* light color */
 	float ambient{ 0.0f };					/* light ambient intensity */
 	float diffuse{ 0.0f };					/* light diffuse intensity */
 	float specular{ 0.0f };					/* light specular intensity */
 
-	Vec3f position{ 0.0f, 0.0f, 0.0f };
+	vec3f position{ 0.0f, 0.0f, 0.0f };
 
 	/* attenuation */
 	/* https://wiki.ogre3d.org/tiki-index.php?page=-Point+Light+Attenuation */
@@ -160,25 +127,13 @@ public:
 	SpotLightComponent() = default;
 	~SpotLightComponent() = default;
 
-	void RenderLight(class Program& program) const;
-
-	/** 
-	 * Return following string representation:
-	 * "color=<color.x,color.y,color.z>"
-	 * "ambient=<ambient>"
-	 * "diffuse=<diffuse>"
-	 * "direction=<direction.x,direction.y,direction.z>"
-	 * "cutoff=<cutoff>"
-	 */
-	//void ToString(string& out) const override;
-		
-	Vec3f color{ 0.0f,0.0f,0.0f };  /* light color */
+	vec3f color{ 0.0f,0.0f,0.0f };  /* light color */
 	float ambient{ 0.0f };					/* light ambient intensity */
 	float diffuse{ 0.0f };					/* light diffuse intensity */
 	float specular{ 0.0f };					/* light specular intensity */
 
-	Vec3f direction{ 0.0f, -1.0f, 0.0f };
-	Vec3f position{ 0.0f, 0.0f, 0.0f };
+	vec3f direction{ 0.0f, -1.0f, 0.0f };
+	vec3f position{ 0.0f, 0.0f, 0.0f };
 	
 	/* attenuation */
 	/* https://wiki.ogre3d.org/tiki-index.php?page=-Point+Light+Attenuation */
@@ -205,31 +160,18 @@ class CameraComponent
 {
 public:
 	CameraComponent(
-		const Vec3f& position = { 0.0f, 0.0f, 0.0f }, /* default position*/
+		const vec3f& position = { 0.0f, 0.0f, 0.0f }, /* default position*/
 		float fov = 45.0f,					/* default field of view */
 		float aspect = 16.0f/9.0f		/* default aspect ratio 16:9 */
 	);
 	~CameraComponent() = default;
 
-	/** 
-	 * Return following string representation:
-	 * "position=<position.x,position.y,position.z>"
-	 * "yaw=<yaw>"
-	 * "pitch=<pitch>"
-	 * "roll=<roll>"
-	 * "fov=<fov>"
-	 * "aspect=<aspect>"
-	 * "zNear=<zNear>"
-	 * "zFar=<zFar>"
-	 */
-	//void Format(string& out) const;
+	const mat4f& GetView() { return _viewMatrix; }
+	const mat4f& GetProjection() { return _projectionMatrix; }
 
-	const Mat4f& GetView() { return _viewMatrix; }
-	const Mat4f& GetProjection() { return _projectionMatrix; }
-
-	const Vec3f& GetFrontVector() { return _front; }
-	const Vec3f& GetRightVector() { return _right; }
-	const Vec3f& GetUpVector() { return _up; }
+	const vec3f& GetFrontVector() { return _front; }
+	const vec3f& GetRightVector() { return _right; }
+	const vec3f& GetUpVector() { return _up; }
 	
 	/**
 	 * Update Orientation vectors
@@ -246,7 +188,7 @@ public:
 	 */
 	void UpdateProjection();
 
-	Vec3f position;
+	vec3f position;
 
 	/* Euler angles (in degrees) */
 	float yaw;
@@ -259,11 +201,11 @@ public:
 	float zFar;
 
 private:
-	Mat4f _viewMatrix;
-	Mat4f _projectionMatrix;
+	mat4f _viewMatrix;
+	mat4f _projectionMatrix;
 
 	/* Orientation vectors */
-	Vec3f _front;
-	Vec3f _up;
-	Vec3f _right;
+	vec3f _front;
+	vec3f _up;
+	vec3f _right;
 };

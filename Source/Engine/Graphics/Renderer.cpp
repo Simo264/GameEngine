@@ -1,8 +1,9 @@
 #include "Renderer.hpp"
-#include "Engine/Graphics/VertexArray.hpp"
 
 #include "Core/OpenGL.hpp"
 #include "Core/Log/Logger.hpp"
+
+#include "Engine/Graphics/VertexArray.hpp"
 
 extern uint32_t drawCalls;
 

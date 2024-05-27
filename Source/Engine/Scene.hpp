@@ -12,10 +12,9 @@ public:
 	Scene() = default;
 
 	void LoadScene(const fspath& filepath);
+
 	void SaveScene(const fspath& filepath);
 
-	void DrawScene(class Program& program);
-	
 	/**
 	 * Remove all objects from scene
 	 */

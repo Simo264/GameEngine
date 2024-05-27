@@ -21,7 +21,7 @@ private:
 	template<int cols>
 	void CreateTable(const char* label, array<float, cols> sizes);
 	void EndTable();
-	void EditVec3(const char* label, float speed, Vec2f minMax, Vec3f& values, float colSize);
+	void EditVec3(const char* label, float speed, vec2f minMax, vec3f& values, float colSize);
 
 	void LightProperties(class LightComponent*);
 };

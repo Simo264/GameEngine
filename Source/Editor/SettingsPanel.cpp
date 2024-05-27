@@ -8,9 +8,9 @@
 struct WindowArgs 
 {
   string title;
-  Vec2i32 position;
-  Vec2i32 resolution;
-  Vec2i32 aspectratio;
+  vec2i32 position;
+  vec2i32 resolution;
+  vec2i32 aspectratio;
   bool vsync;
 
   WindowArgs()
@@ -37,13 +37,13 @@ SettingsPanel::SettingsPanel(const char* panelName, bool visible)
   value.reserve(32);
 
   value = _conf->GetValue("window", "position");
-  _windowArgs->position = INIFileParser::StringToVec2i(value, ",");
+  _windowArgs->position = INIFileParser::StringToVec2i32(value, ",");
   
   value = _conf->GetValue("window", "resolution");
-  _windowArgs->resolution = INIFileParser::StringToVec2i(value, "x");
+  _windowArgs->resolution = INIFileParser::StringToVec2i32(value, "x");
   
   value = _conf->GetValue("window", "aspectratio");
-  _windowArgs->aspectratio = INIFileParser::StringToVec2i(value, ":");
+  _windowArgs->aspectratio = INIFileParser::StringToVec2i32(value, ":");
   
   _windowArgs->vsync = INIFileParser::StringToBool(_conf->GetValue("window", "vsync"));
 
@@ -78,7 +78,7 @@ void SettingsPanel::RenderFrame()
   if (ImGui::Combo("Aspect ratio", &_aspectIndex, &_aspectRatioValues[0], IM_ARRAYSIZE(_aspectRatioValues)))
   {
     buffer = _aspectRatioValues[_aspectIndex];
-    _windowArgs->aspectratio = INIFileParser::StringToVec2i(buffer, ":");
+    _windowArgs->aspectratio = INIFileParser::StringToVec2i32(buffer, ":");
     buttonDisabled = false;
   }
 
@@ -86,7 +86,7 @@ void SettingsPanel::RenderFrame()
   if (ImGui::Combo("Resolution", &_resolutionIndex, _resolutionValues, IM_ARRAYSIZE(_resolutionValues)))
   {
     buffer = _resolutionValues[_resolutionIndex];
-    _windowArgs->resolution = INIFileParser::StringToVec2i(buffer, "x");
+    _windowArgs->resolution = INIFileParser::StringToVec2i32(buffer, "x");
     buttonDisabled = false;
   }
 

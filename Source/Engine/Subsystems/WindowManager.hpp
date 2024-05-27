@@ -43,17 +43,17 @@ public:
 
   void SetWindowAspectRatio(int numer, int denom) const;
 
-  Vec2i32 GetWindowSize() const;
+  vec2i32 GetWindowSize() const;
   
   void SetWindowSize(int w, int h) const;
 
-  Vec2i32 GetFramebufferSize() const;
+  vec2i32 GetFramebufferSize() const;
 
   int GetKey(uint32_t key) const;
 
   int GetMouseKey(uint32_t key) const; 
 
-  Vec2d GetCursorPosition() const;
+  vec2d GetCursorPosition() const;
 
   /**
    * @param value = GLFW_CURSOR_NORMAL | GLFW_CURSOR_HIDDEN | GLFW_CURSOR_DISABLED

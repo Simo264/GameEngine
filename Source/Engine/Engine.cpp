@@ -72,17 +72,14 @@ static void LoadConfig()
 
   string title = conf.GetValue("window", "title");
 
-  string tmp;
-  tmp.reserve(32);
-
-  tmp = conf.GetValue("window", "resolution");
-  Vec2i32 resolution = INIFileParser::StringToVec2i(tmp, "x");
-  tmp = conf.GetValue("window", "aspectratio");
-  Vec2i32 aspectratio = INIFileParser::StringToVec2i(tmp, ":");
-  tmp = conf.GetValue("window", "position");
-  Vec2i32 position = INIFileParser::StringToVec2i(tmp, ",");
-  tmp = conf.GetValue("window", "vsync");
-  bool vsync = INIFileParser::StringToBool(tmp);
+  string strResolution = conf.GetValue("window", "resolution");
+  string strAspect = conf.GetValue("window", "aspectratio");
+  string strPosition = conf.GetValue("window", "position");
+  string strVsync= conf.GetValue("window", "vsync");
+  vec2i32 resolution = INIFileParser::StringToVec2i32(strResolution, "x");
+  vec2i32 aspectratio = INIFileParser::StringToVec2i32(strAspect, ":");
+  vec2i32 position = INIFileParser::StringToVec2i32(strPosition, ",");
+  bool vsync = INIFileParser::StringToBool(strVsync);
 
   auto& window = WindowManager::Instance();
   window.SetWindowTitle(title.c_str());
@@ -286,14 +283,14 @@ void Engine::Run() const
   CreateScreenSquare(screenSquare);
 
   /* -------------------------- Framebuffer -------------------------- */
-  Vec2i32 viewportSize = window.GetFramebufferSize();
+  vec2i32 viewportSize = window.GetFramebufferSize();
   FrameBuffer framebufferMultisampled;
   FrameBuffer framebufferIntermediate;
   CreateFramebufferMultisampled(framebufferMultisampled, framebufferIntermediate, 4, viewportSize.x, viewportSize.y);
   const Texture2D& framebufferTexture = framebufferIntermediate.GetTextureAttachment(0);
 
   /* -------------------------- Camera -------------------------- */
-  Camera camera(Vec3f(30.0f, 15.0f, 10.0f), 45.0f, static_cast<float>(viewportSize.x) / static_cast<float>(viewportSize.y));
+  Camera camera(vec3f(30.0f, 15.0f, 10.0f), 45.0f, static_cast<float>(viewportSize.x) / static_cast<float>(viewportSize.y));
   camera.cameraComponent->yaw = -180.0f;
   camera.cameraComponent->pitch = -30.0f;
   camera.cameraComponent->roll = 0.0f;
@@ -301,79 +298,7 @@ void Engine::Run() const
 
   /* -------------------------- Scene -------------------------- */
   Scene scene;
-
-  GameObject floor = scene.CreateObject();
-  {
-    auto& floorTransform = floor.AddComponent<TransformComponent>();
-    auto& floorMesh = floor.AddComponent<StaticMeshComponent>((ASSETS_PATH / "Shapes/Plane/Plane.obj").lexically_normal());
-    floorTransform.scale.x *= 20.0f;
-    floorTransform.scale.z *= 10.0f;
-    floorTransform.UpdateTransformation();
-    floorMesh.material.diffuse = instanceTM.GetTextureByPath((TEXTURES_PATH / "wood.png").lexically_normal());
-    floorMesh.material.specular = nullptr;
-  }
-  GameObject floor2 = scene.CreateObject();
-  {
-    auto& floorTransform = floor2.AddComponent<TransformComponent>();
-    auto& floorMesh = floor2.AddComponent<StaticMeshComponent>((ASSETS_PATH / "Shapes/Plane/Plane.obj").lexically_normal());
-    floorTransform.scale.x *= 20.0f;
-    floorTransform.scale.z *= 10.0f;
-    floorTransform.position.z = 20.0f;
-    floorTransform.UpdateTransformation();
-    floorMesh.material.diffuse = instanceTM.GetTextureByPath((TEXTURES_PATH / "wood.png").lexically_normal());
-    floorMesh.material.specular = nullptr;
-  }
-
-  GameObject cubes[3];
-  for (int i = 0; i < 3; i++)
-  {
-    cubes[i] = scene.CreateObject();
-    auto& transform = cubes[i].AddComponent<TransformComponent>();
-    transform.position.z = 15.0f;
-    transform.position.x = i * 4;
-    transform.position.y = 1;
-    transform.UpdateTransformation();
-    auto& mesh = cubes[i].AddComponent<StaticMeshComponent>((ASSETS_PATH / "Shapes/Cube/Cube.obj").lexically_normal());
-    mesh.material.diffuse = instanceTM.GetTextureByPath((TEXTURES_PATH / "container_diffuse.png").lexically_normal());
-    mesh.material.specular = instanceTM.GetTextureByPath((TEXTURES_PATH / "container_specular.png").lexically_normal());
-  }
-
-  GameObject dirLightObject = scene.CreateObject();
-  {
-    auto& directionalLight = dirLightObject.AddComponent<DirLightComponent>();
-    directionalLight.color = { 1.0f,1.0f,1.0f };
-    directionalLight.ambient = 0.0f;
-    directionalLight.diffuse = 0.0f;
-    directionalLight.specular = 1.0f;
-    directionalLight.direction = { -0.2f, -1.0f, -0.3f };
-  }
-
-  GameObject pointLightObjects[4];
-  {
-    Vec3f lightPositions[4] = {
-        Vec3f(-10.0f, 1.0f, 0.0f),
-        Vec3f(-5.0f, 1.0f, 0.0f),
-        Vec3f(0.0f, 1.0f, 0.0f),
-        Vec3f(5.0f, 1.0f, 0.0f),
-    };
-    Vec3f lightColors[4] = {
-        Vec3f(1, 0, 0),
-        Vec3f(0, 1, 0),
-        Vec3f(0, 1, 1),
-        Vec3f(1, 1, 1),
-    };
-
-    for (int i = 0; i < 4; i++)
-    {
-      pointLightObjects[i] = scene.CreateObject();
-      auto& pointLight = pointLightObjects[i].AddComponent<PointLightComponent>();
-      pointLight.color = lightColors[i];
-      pointLight.ambient = 0.0f;
-      pointLight.diffuse = 1.0f;
-      pointLight.specular = 1.0f;
-      pointLight.position = lightPositions[i];
-    }
-  }
+  scene.LoadScene((ROOT_PATH / "Scene.ini"));
 
   /* -------------------------- Shadow mapping -------------------------- */
   //FrameBuffer framebufferShadowMap;
@@ -424,8 +349,8 @@ void Engine::Run() const
     //  -10.0f, 10.0f, -10.0f, 10.0f, INITIAL_ZNEAR, INITIAL_ZFAR);
     //Mat4f lightView = Math::LookAt(
     //  lightPosition,
-    //  Vec3f(0.0f, 0.0f, 0.0f), // Vec3f(0.0f, 0.0f, 0.0f) | dirLight->direction 
-    //  Vec3f(0.0f, 1.0f, 0.0f)
+    //  vec3f(0.0f, 0.0f, 0.0f), // vec3f(0.0f, 0.0f, 0.0f) | dirLight->direction 
+    //  vec3f(0.0f, 1.0f, 0.0f)
     //);
     //Mat4f lightSpaceMatrix = lightProjection * lightView;
 
@@ -457,39 +382,28 @@ void Engine::Run() const
         sceneProgram->SetUniform1i("u_material.specularTexture", 1);
         sceneProgram->SetUniform1f("u_material.shininess", 32.0f);
 
-        auto dirlight = dirLightObject.GetComponent<DirLightComponent>();
-        sceneProgram->SetUniform3f("u_directionalLight.color", dirlight->color);
-        sceneProgram->SetUniform1f("u_directionalLight.ambient", dirlight->ambient);
-        sceneProgram->SetUniform1f("u_directionalLight.diffuse", dirlight->diffuse);
-        sceneProgram->SetUniform1f("u_directionalLight.specular", dirlight->specular);
-        sceneProgram->SetUniform3f("u_directionalLight.direction", dirlight->direction);
-
-        for (int i = 0; i < 4; i++)
-        {
-          auto* light = pointLightObjects[i].GetComponent<PointLightComponent>();
-          sceneProgram->SetUniform3f(std::format("u_pointLight[{}].color", i).c_str(), light->color);
-          sceneProgram->SetUniform1f(std::format("u_pointLight[{}].ambient", i).c_str(), light->ambient);
-          sceneProgram->SetUniform1f(std::format("u_pointLight[{}].diffuse", i).c_str(), light->diffuse);
-          sceneProgram->SetUniform1f(std::format("u_pointLight[{}].specular", i).c_str(), light->specular);
-          sceneProgram->SetUniform3f(std::format("u_pointLight[{}].position", i).c_str(), light->position);
-          sceneProgram->SetUniform1f(std::format("u_pointLight[{}].linear", i).c_str(), light->linear);
-          sceneProgram->SetUniform1f(std::format("u_pointLight[{}].quadratic", i).c_str(), light->quadratic);
-        }
-        
-        sceneProgram->SetUniformMat4f("u_model", floor.GetComponent<TransformComponent>()->GetTransformation());
-        floor.GetComponent<StaticMeshComponent>()->Draw();
-        sceneProgram->SetUniformMat4f("u_model", floor2.GetComponent<TransformComponent>()->GetTransformation());
-        floor2.GetComponent<StaticMeshComponent>()->Draw();
-
-        Culling::EnableFaceCulling();
-        for (int i = 0; i < 3; i++)
-        {
-          auto cubeTransform = cubes[i].GetComponent<TransformComponent>();
-          auto mesh = cubes[i].GetComponent<StaticMeshComponent>();
-          sceneProgram->SetUniformMat4f("u_model", cubeTransform->GetTransformation());
-          mesh->Draw();
-        }
-        Culling::DisableFaceCulling();
+        scene.Reg().view<DirLightComponent>().each([sceneProgram](auto& light) {
+          sceneProgram->SetUniform3f("u_directionalLight.color",    light.color);
+          sceneProgram->SetUniform1f("u_directionalLight.ambient",  light.ambient);
+          sceneProgram->SetUniform1f("u_directionalLight.diffuse",  light.diffuse);
+          sceneProgram->SetUniform1f("u_directionalLight.specular", light.specular);
+          sceneProgram->SetUniform3f("u_directionalLight.direction",light.direction);
+        });
+        int i = 0;
+        scene.Reg().view<PointLightComponent>().each([sceneProgram, &i](auto& light) {
+          sceneProgram->SetUniform3f(std::format("u_pointLight[{}].color", i).c_str(),    light.color);
+          sceneProgram->SetUniform1f(std::format("u_pointLight[{}].ambient", i).c_str(),  light.ambient);
+          sceneProgram->SetUniform1f(std::format("u_pointLight[{}].diffuse", i).c_str(),  light.diffuse);
+          sceneProgram->SetUniform1f(std::format("u_pointLight[{}].specular", i).c_str(), light.specular);
+          sceneProgram->SetUniform3f(std::format("u_pointLight[{}].position", i).c_str(), light.position);
+          sceneProgram->SetUniform1f(std::format("u_pointLight[{}].linear", i).c_str(),   light.linear);
+          sceneProgram->SetUniform1f(std::format("u_pointLight[{}].quadratic", i).c_str(),light.quadratic);
+          i++;
+        });
+        scene.Reg().view<StaticMeshComponent, TransformComponent>().each([sceneProgram](auto& mesh, auto& transform) {
+          sceneProgram->SetUniformMat4f("u_model", transform.GetTransformation());
+          mesh.Draw();
+        });
       }
 
       /* Render scene with shadows map */

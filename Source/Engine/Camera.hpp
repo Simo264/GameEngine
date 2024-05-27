@@ -7,7 +7,7 @@ class Camera
 {
 public:
 	Camera(
-		const Vec3f& position = { 0.0f, 0.0f, 0.0f }, /* default position*/
+		const vec3f& position = { 0.0f, 0.0f, 0.0f }, /* default position*/
 		float fov = 45.0f,						/* default field of view */
 		float aspect = 16.0f / 9.0f		/* default aspect ratio 16:9 */
 	);

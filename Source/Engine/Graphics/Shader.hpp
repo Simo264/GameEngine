@@ -164,16 +164,16 @@ public:
    * Specify the value of a uniform variable for the program object
    */
   void SetUniform1i(const char* uniformname, int value) const;
-  void SetUniform2i(const char* uniformname, const Vec2i32& value) const;
-  void SetUniform3i(const char* uniformname, const Vec3i32& value) const;
-  void SetUniform4i(const char* uniformname, const Vec4i32& value) const;
+  void SetUniform2i(const char* uniformname, const vec2i32& value) const;
+  void SetUniform3i(const char* uniformname, const vec3i32& value) const;
+  void SetUniform4i(const char* uniformname, const vec4i32& value) const;
   void SetUniform1f(const char* uniformname, float value) const;
-  void SetUniform2f(const char* uniformname, const Vec2f& value) const;
-  void SetUniform3f(const char* uniformname, const Vec3f& value) const;
-  void SetUniform4f(const char* uniformname, const Vec4f& value) const;
-  void SetUniformMat2f(const char* uniformname, const Mat2f& value, bool transpose = false) const;
-  void SetUniformMat3f(const char* uniformname, const Mat3f& value, bool transpose = false) const;
-  void SetUniformMat4f(const char* uniformname, const Mat4f& value, bool transpose = false) const;
+  void SetUniform2f(const char* uniformname, const vec2f& value) const;
+  void SetUniform3f(const char* uniformname, const vec3f& value) const;
+  void SetUniform4f(const char* uniformname, const vec4f& value) const;
+  void SetUniformMat2f(const char* uniformname, const mat2f& value, bool transpose = false) const;
+  void SetUniformMat3f(const char* uniformname, const mat3f& value, bool transpose = false) const;
+  void SetUniformMat4f(const char* uniformname, const mat4f& value, bool transpose = false) const;
 
   uint32_t id;
 

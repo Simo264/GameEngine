@@ -8,22 +8,22 @@ using Quat = glm::quat;
 
 namespace Math
 {
-	Mat4f Perspective(float fovy, float aspect, float zNear, float zFar);
-	Mat4f Ortho(float left, float right, float bottom, float top, float zNear, float zFar);
+	mat4f Perspective(float fovy, float aspect, float zNear, float zFar);
+	mat4f Ortho(float left, float right, float bottom, float top, float zNear, float zFar);
 	
-	Mat4f Translate(const Mat4f& model, const Vec3f& position);
-	Mat4f Scale(const Mat4f& model, const Vec3f& scaling);
-	Mat4f Rotate(const Mat4f& model, float radians, const Vec3f& axis);
+	mat4f Translate(const mat4f& model, const vec3f& position);
+	mat4f Scale(const mat4f& model, const vec3f& scaling);
+	mat4f Rotate(const mat4f& model, float radians, const vec3f& axis);
 
-	Mat4f LookAt(const Vec3f& eye, const Vec3f& center, const Vec3f& up);
+	mat4f LookAt(const vec3f& eye, const vec3f& center, const vec3f& up);
 
 	/* Decomposes the model matrix to translations,rotation scale components */
-	void Decompose(const Mat4f& model, Vec3f& translation, Quat& rotation, Vec3f& scaling);
+	void Decompose(const mat4f& model, vec3f& translation, Quat& rotation, vec3f& scaling);
 	
 	Quat Conjugate(Quat& rotation);
 
-	Quat QuatCast(const Mat3f& m);
+	Quat QuatCast(const mat3f& m);
 
-	Vec3f EulerAngles(const Quat& q);
+	vec3f EulerAngles(const Quat& q);
 }
 

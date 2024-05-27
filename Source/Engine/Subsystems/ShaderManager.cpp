@@ -52,13 +52,13 @@ void ShaderManager::Initialize()
 
 void ShaderManager::CleanUp()
 {
-  /* Destoy all shaders objects */
-  for (auto& shader : shaders)
-    shader.Delete();
-
   /* Destoy all program objects */
   for (auto& program : programs)
     program.Delete();
+
+  /* Destoy all shaders objects */
+  for (auto& shader : shaders)
+    shader.Delete();
 
   shaders.clear();
   programs.clear();
@@ -89,10 +89,8 @@ Shader& ShaderManager::LoadShader(const fspath& filepath, int shaderType)
 Shader* ShaderManager::GetShader(const char* filename)
 {
   for (auto& shader : shaders)
-  {
     if (shader.filename.compare(filename) == 0)
       return &shader;
-  }
 
   return nullptr;
 }
@@ -116,10 +114,8 @@ Program& ShaderManager::LoadProgram(const char* programName, Shader& vertexShade
 Program* ShaderManager::GetProgram(const char* name)
 {
   for (auto& program : programs)
-  {
     if (program.name.compare(name) == 0)
       return &program;
-  }
 
   return nullptr;
 }

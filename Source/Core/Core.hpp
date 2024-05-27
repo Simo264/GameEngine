@@ -12,7 +12,9 @@
 #include <map>
 #include <memory>
 #include <numeric>
+#include <set>
 #include <string>
+#include <string_view>
 #include <sstream>
 #include <vector>
 
@@ -33,6 +35,8 @@ template<typename type>
 using vector	= std::vector<type>;
 template<typename typeName, typename typeVal>
 using map			= std::map<typeName, typeVal>;
+template<typename type>
+using set			= std::set<type>;
 
 /* Smart pointers*/
 template<typename type>
@@ -45,6 +49,7 @@ using system_clock	= std::chrono::system_clock;
 using time_point		= std::chrono::system_clock::time_point;
 
 using string				= std::string;
+using string_view		= std::string_view;
 using stringstream	= std::stringstream;
 using istringstream = std::istringstream;
 using ostringstream = std::ostringstream;

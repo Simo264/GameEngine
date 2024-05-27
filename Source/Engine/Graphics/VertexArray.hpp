@@ -4,8 +4,6 @@
 #include "Engine/Graphics/VertexBuffer.hpp"
 #include "Engine/Graphics/ElementBuffer.hpp"
 
-constexpr int MAX_VERTEX_ATTRIBUTES = 128;
-
 /**  
  *  https://www.khronos.org/opengl/wiki/Vertex_Specification 
  * 

@@ -118,15 +118,15 @@ void Program::SetUniform1i(const char* uniformname, int value) const
 {
   glProgramUniform1i(id, GetUniformLocation(uniformname), value);
 }
-void Program::SetUniform2i(const char* uniformname, const Vec2i32& value) const
+void Program::SetUniform2i(const char* uniformname, const vec2i32& value) const
 {
   glProgramUniform2i(id, GetUniformLocation(uniformname), value.x, value.y);
 }
-void Program::SetUniform3i(const char* uniformname, const Vec3i32& value) const
+void Program::SetUniform3i(const char* uniformname, const vec3i32& value) const
 {
   glProgramUniform3i(id, GetUniformLocation(uniformname), value.x, value.y, value.z);
 }
-void Program::SetUniform4i(const char* uniformname, const Vec4i32& value) const
+void Program::SetUniform4i(const char* uniformname, const vec4i32& value) const
 {
   glProgramUniform4i(id, GetUniformLocation(uniformname), value.x, value.y, value.z, value.w);
 }
@@ -134,27 +134,27 @@ void Program::SetUniform1f(const char* uniformname, float value) const
 {
   glProgramUniform1f(id, GetUniformLocation(uniformname), value);
 }
-void Program::SetUniform2f(const char* uniformname, const Vec2f& value) const
+void Program::SetUniform2f(const char* uniformname, const vec2f& value) const
 {
   glProgramUniform2f(id, GetUniformLocation(uniformname), value.x, value.y);
 }
-void Program::SetUniform3f(const char* uniformname, const Vec3f& value) const
+void Program::SetUniform3f(const char* uniformname, const vec3f& value) const
 {
   glProgramUniform3f(id, GetUniformLocation(uniformname), value.x, value.y, value.z);
 }
-void Program::SetUniform4f(const char* uniformname, const Vec4f& value) const
+void Program::SetUniform4f(const char* uniformname, const vec4f& value) const
 { 
   glProgramUniform4f(id, GetUniformLocation(uniformname), value.x, value.y, value.z, value.w);
 }
-void Program::SetUniformMat2f(const char* uniformname, const Mat2f& value, bool transpose) const
+void Program::SetUniformMat2f(const char* uniformname, const mat2f& value, bool transpose) const
 {
   glProgramUniformMatrix2fv(id, GetUniformLocation(uniformname), 1, transpose, &value[0][0]);
 }
-void Program::SetUniformMat3f(const char* uniformname, const Mat3f& value, bool transpose) const
+void Program::SetUniformMat3f(const char* uniformname, const mat3f& value, bool transpose) const
 {
   glProgramUniformMatrix3fv(id, GetUniformLocation(uniformname), 1, transpose, &value[0][0]);
 }
-void Program::SetUniformMat4f(const char* uniformname, const Mat4f& value, bool transpose) const
+void Program::SetUniformMat4f(const char* uniformname, const mat4f& value, bool transpose) const
 {
   glProgramUniformMatrix4fv(id, GetUniformLocation(uniformname), 1, transpose, &value[0][0]);
 }

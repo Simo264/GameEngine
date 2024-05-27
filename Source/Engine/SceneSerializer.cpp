@@ -12,7 +12,7 @@
 
 #include "Core/FileParser/INIFileParser.hpp"
 
-#if 0
+
 
 /* -----------------------------------------------------
  *          PUBLIC METHODS
@@ -23,14 +23,171 @@ void SceneSerializer::SerializeScene(Scene& scene, const fspath& filepath)
 {
 	INIFileParser conf(filepath);
 
-	for (auto entity : scene.Reg().view<LabelComponent>())
+	for (auto [entity, lComp] : scene.Reg().view<LabelComponent>().each())
 	{
-		GameObject obj{ entity, &scene.Reg() };
-		SerializeObject(conf, obj);
+		GameObject object{ entity, &scene.Reg() };
+		const uint32_t objectID = static_cast<uint32_t>(object.GetObjectID());
+		
+		const char* label = lComp.label.c_str();
+
+		string section = std::format("entity{}:LabelComponent", objectID);
+		conf.Update(&section[0], "label", label);
+
+		if (auto light = object.GetComponent<DirLightComponent>())
+		{
+			string section = std::format("entity{}:DirLightComponent", objectID);
+			conf.Update(section.c_str(), "color",			std::format("{},{},{}", light->color.x, light->color.y, light->color.z).c_str());
+			conf.Update(section.c_str(), "ambient",		std::format("{}", light->ambient).c_str());
+			conf.Update(section.c_str(), "diffuse",		std::format("{}", light->diffuse).c_str());
+			conf.Update(section.c_str(), "specular",	std::format("{}", light->specular).c_str());
+			conf.Update(section.c_str(), "direction", std::format("{},{},{}", light->direction.x, light->direction.y, light->direction.z).c_str());
+		}
+		else if (auto light = object.GetComponent<PointLightComponent>())
+		{
+			string section = std::format("entity{}:PointLightComponent", objectID);
+			conf.Update(section.c_str(), "color",			std::format("{},{},{}", light->color.x, light->color.y, light->color.z).c_str());
+			conf.Update(section.c_str(), "ambient",		std::to_string(light->ambient).c_str());
+			conf.Update(section.c_str(), "diffuse",		std::to_string(light->diffuse).c_str());
+			conf.Update(section.c_str(), "specular",	std::to_string(light->specular).c_str());
+			conf.Update(section.c_str(), "position",	std::format("{},{},{}", light->position.x, light->position.y, light->position.z).c_str());
+			conf.Update(section.c_str(), "linear",		std::to_string(light->linear).c_str());
+			conf.Update(section.c_str(), "quadratic", std::to_string(light->quadratic).c_str());
+		}
+		else if (auto light = object.GetComponent<SpotLightComponent>())
+		{
+			string section = std::format("entity{}:SpotLightComponent", objectID);
+			conf.Update(section.c_str(), "color",				std::format("{},{},{}", light->color.x, light->color.y, light->color.z).c_str());
+			conf.Update(section.c_str(), "ambient",			std::to_string(light->ambient).c_str());
+			conf.Update(section.c_str(), "diffuse",			std::to_string(light->diffuse).c_str());
+			conf.Update(section.c_str(), "specular",		std::to_string(light->specular).c_str());
+			conf.Update(section.c_str(), "direction",		std::format("{},{},{}", light->direction.x, light->direction.y, light->direction.z).c_str());
+			conf.Update(section.c_str(), "position",		std::format("{},{},{}", light->position.x, light->position.y, light->position.z).c_str());
+			conf.Update(section.c_str(), "linear",			std::to_string(light->linear).c_str());
+			conf.Update(section.c_str(), "quadratic",		std::to_string(light->quadratic).c_str());
+			conf.Update(section.c_str(), "cutOff",			std::to_string(light->cutOff).c_str());
+			conf.Update(section.c_str(), "outerCutOff", std::to_string(light->outerCutOff).c_str());
+		}
+
+		if (auto transform = object.GetComponent<TransformComponent>())
+		{
+			string section = std::format("entity{}:TransformComponent", objectID);
+			conf.Update(section.c_str(), "position",	std::format("{},{},{}", transform->position.x, transform->position.y, transform->position.z).c_str());
+			conf.Update(section.c_str(), "scale",			std::format("{},{},{}", transform->scale.x, transform->scale.y, transform->scale.z).c_str());
+			conf.Update(section.c_str(), "rotation",	std::format("{},{},{}", transform->rotation.x, transform->rotation.y, transform->rotation.z).c_str());
+		}
+		if (auto mesh = object.GetComponent<StaticMeshComponent>())
+		{
+			string section = std::format("entity{}:StaticMeshComponent", objectID);
+			string diffuse = (mesh->material.diffuse ? mesh->material.diffuse->path.string() : "");
+			string specular = (mesh->material.specular ? mesh->material.specular->path.string() : "");
+			conf.Update(section.c_str(), "model_path", mesh->modelPath.string().c_str());
+			conf.Update(section.c_str(), "material_diffuse", diffuse.c_str());
+			conf.Update(section.c_str(), "material_specular", specular.c_str());
+		}
 	}
-	conf.Write();
+	conf.Write(true);
 }
 
+void SceneSerializer::DeserializeScene(Scene& scene, const fspath& filepath)
+{ 
+	INIFileParser conf(filepath);
+	conf.ReadData();
+	
+	GameObject object{ entt::null, nullptr };
+	uint32_t currentObjectId = static_cast<uint32_t>(-1);
+
+	auto& instanceTM = TextureManager::Instance();
+
+	for (auto const& it : conf.GetData())
+	{
+		const string& section = it.first;
+		const char* dots = strchr(section.c_str(), ':');
+		const int dotsPosition = static_cast<int>(dots - section.c_str());
+		const char* componentName = dots + 1;
+		constexpr int entityWordLen = 6;
+		uint32_t objectId = std::stoul(section.substr(entityWordLen, dotsPosition - entityWordLen));
+		
+		if (currentObjectId != objectId)
+		{
+			currentObjectId = objectId;
+			object = scene.CreateObject();
+		}
+
+		if (std::strcmp(componentName, "labelcomponent") == 0)
+		{
+			string label = conf.GetValue(section.c_str(), "label");
+			object.GetComponent<LabelComponent>()->label = label;
+		}
+		else if (std::strcmp(componentName, "transformcomponent") == 0)
+		{
+			string strPosition = conf.GetValue(section.c_str(), "position");
+			string strRotation = conf.GetValue(section.c_str(), "rotation");
+			string strScale = conf.GetValue(section.c_str(), "scale");
+			
+			auto& transform = object.AddComponent<TransformComponent>();
+			transform.position = INIFileParser::StringToVec3f(strPosition);
+			transform.rotation = INIFileParser::StringToVec3f(strRotation);
+			transform.scale = INIFileParser::StringToVec3f(strScale);
+			transform.UpdateTransformation();
+		}
+		else if (std::strcmp(componentName, "staticmeshcomponent") == 0)
+		{
+			fspath model = fspath(conf.GetValue(section.c_str(), "model_path")).lexically_normal();
+			fspath diffuse = fspath(conf.GetValue(section.c_str(), "material_diffuse	")).lexically_normal();
+			fspath specular = fspath(conf.GetValue(section.c_str(), "material_specular")).lexically_normal();
+
+			auto& mesh = object.AddComponent<StaticMeshComponent>(model);
+			if (!diffuse.empty())
+				mesh.material.diffuse = instanceTM.GetTextureByPath(diffuse);
+			if(!specular.empty())
+				mesh.material.specular = instanceTM.GetTextureByPath(specular);
+		}
+		else if (std::strcmp(componentName, "dirlightcomponent") == 0)
+		{
+			string strColor = conf.GetValue(section.c_str(), "color");
+			string strDirection = conf.GetValue(section.c_str(), "direction");
+
+			auto& light = object.AddComponent<PointLightComponent>();
+			light.color = INIFileParser::StringToVec3f(strColor);
+			light.ambient = std::stof(conf.GetValue(section.c_str(), "ambient"));
+			light.diffuse = std::stof(conf.GetValue(section.c_str(), "diffuse"));
+			light.specular = std::stof(conf.GetValue(section.c_str(), "specular"));
+			light.position = INIFileParser::StringToVec3f(strDirection);
+		}
+		else if (std::strcmp(componentName, "pointlightcomponent") == 0)
+		{
+			string strColor = conf.GetValue(section.c_str(), "color");
+			string strPosition = conf.GetValue(section.c_str(), "position");
+
+			auto& light = object.AddComponent<PointLightComponent>();
+			light.color = INIFileParser::StringToVec3f(strColor);
+			light.ambient = std::stof(conf.GetValue(section.c_str(), "ambient"));
+			light.diffuse = std::stof(conf.GetValue(section.c_str(), "diffuse"));
+			light.specular = std::stof(conf.GetValue(section.c_str(), "specular"));
+			light.position = INIFileParser::StringToVec3f(strPosition);
+		}
+		else if (std::strcmp(componentName, "spotlightcomponent") == 0)
+		{
+			string strColor = conf.GetValue(section.c_str(), "color");
+			string strPosition = conf.GetValue(section.c_str(), "position");
+			string strDirection = conf.GetValue(section.c_str(), "direction");
+
+			auto& light = object.AddComponent<SpotLightComponent>();
+			light.color = INIFileParser::StringToVec3f(strColor);
+			light.ambient = std::stof(conf.GetValue(section.c_str(), "ambient"));
+			light.diffuse = std::stof(conf.GetValue(section.c_str(), "diffuse"));
+			light.specular = std::stof(conf.GetValue(section.c_str(), "specular"));
+			light.position = INIFileParser::StringToVec3f(strPosition);
+			light.direction = INIFileParser::StringToVec3f(strDirection);
+			light.linear = std::stof(conf.GetValue(section.c_str(), "linear"));
+			light.quadratic = std::stof(conf.GetValue(section.c_str(), "quadratic"));
+			light.cutOff = std::stof(conf.GetValue(section.c_str(), "cutOff"));
+			light.outerCutOff = std::stof(conf.GetValue(section.c_str(), "outerCutOff"));
+		}
+	}
+}
+
+#if 0
 void SceneSerializer::DeserializeScene(Scene& scene, const fspath& filepath)
 {
 	INIFileParser conf(filepath);
@@ -59,32 +216,32 @@ void SceneSerializer::DeserializeScene(Scene& scene, const fspath& filepath)
 			{
 				/* 
 					Parse DirLightComponent: 
-						.Vec3f color
+						.vec3f color
 						.float ambient
 						.float diffuse
 						.float specular
-						.Vec3f direction
+						.vec3f direction
 				*/
 				auto& dlightComp = obj.AddComponent<DirLightComponent>("");
 				buff = conf.GetValue(section.c_str(), "color");
 
-				dlightComp.color		= INIFileParser::StringToVec3f(buff);
+				dlightComp.color		= INIFileParser::StringTovec3f(buff);
 				dlightComp.ambient	= std::stof(conf.GetValue(section.c_str(), "ambient"));
 				dlightComp.diffuse	= std::stof(conf.GetValue(section.c_str(), "diffuse"));
 				dlightComp.specular = std::stof(conf.GetValue(section.c_str(), "specular"));
 				
 				buff = conf.GetValue(section.c_str(), "direction");
-				dlightComp.direction = INIFileParser::StringToVec3f(buff);
+				dlightComp.direction = INIFileParser::StringTovec3f(buff);
 			}
 			//else if (std::strcmp(componentName, PointLightComponent::GetComponentName(true)) == 0)
 			//{
 			//	/* 
 			//		Parse PointLightComponent: 
-			//			.Vec3f color
+			//			.vec3f color
 			//			.float ambient
 			//			.float diffuse
 			//			.float specular
-			//			.Vec3f position 
+			//			.vec3f position 
 			//	*/
 
 			//	/* TODO */
@@ -93,11 +250,11 @@ void SceneSerializer::DeserializeScene(Scene& scene, const fspath& filepath)
 			//{
 			//	/* 
 			//		Parse SpotLightComponent: 
-			//			.Vec3f color
+			//			.vec3f color
 			//			.float ambient
 			//			.float diffuse
 			//			.float specular
-			//			.Vec3f direction
+			//			.vec3f direction
 			//			.float cutoff
 			//	*/
 
@@ -107,17 +264,17 @@ void SceneSerializer::DeserializeScene(Scene& scene, const fspath& filepath)
 			{
 				/* 
 					Parse TransformComponent:
-						.Vec3f position;
-						.Vec3f scale;
-						.Vec3f rotation;	
+						.vec3f position;
+						.vec3f scale;
+						.vec3f rotation;	
 				*/
 				auto& transComp = obj.AddComponent<TransformComponent>();
 				buff = conf.GetValue(section.c_str(), "position");
-				transComp.position = INIFileParser::StringToVec3f(buff);
+				transComp.position = INIFileParser::StringTovec3f(buff);
 				buff = conf.GetValue(section.c_str(), "scale");
-				transComp.scale	= INIFileParser::StringToVec3f(buff);
+				transComp.scale	= INIFileParser::StringTovec3f(buff);
 				buff = conf.GetValue(section.c_str(), "rotation");
-				transComp.rotation = INIFileParser::StringToVec3f(buff);
+				transComp.rotation = INIFileParser::StringTovec3f(buff);
 				transComp.UpdateTransformation();
 			}
 			else if (component == static_cast<int>(Components::StaticMeshComponent))
@@ -145,100 +302,9 @@ void SceneSerializer::DeserializeScene(Scene& scene, const fspath& filepath)
 		}
 	}
 }
-
+#endif
 
 /* -----------------------------------------------------
  *          PRIVATE METHODS
  * -----------------------------------------------------
 */
-
-void SceneSerializer::SerializeObject(INIFileParser& conf, GameObject& object)
-{
-	/* 
-		Every object has both LabelComponent and TypeComponent: 
-			[Entity_<id>]
-			label=<label>
-			type=<type>
-
-		for each components:
-			[Entity_<id>:<component-name>]
-			<component-attributes>
-			...
-	*/
-	
-	char section[32]{};
-	sprintf_s(section, "Entity_%d", static_cast<uint32_t>(object.GetObjectID()));
-
-	LabelComponent* labelComp = object.GetComponent<LabelComponent>();
-	conf.Update(section, "label", labelComp->label.c_str());
-	
-	TypeComponent* typeComp = object.GetComponent<TypeComponent>();
-	char digits[8];
-	sprintf_s(digits, "%d", typeComp->type);
-	conf.Update(section, "type", digits);
-
-	string buffer;
-	buffer.reserve(512);
-
-	char childSection[64]{ '\0' };
-
-	/* Serialize components here */
-	if (auto dLightComp = object.GetComponent<DirLightComponent>())
-	{
-		buffer.clear();
-		dLightComp->Format(buffer);
-		sprintf_s(childSection, "%s:%d", section, static_cast<int>(Components::DirLightComponent));
-		SerializeComponent(conf, childSection, buffer);
-	}
-	//else if (auto pLightComp = object.GetComponent<PointLightComponent>())
-	//{
-	//	buffer.clear();
-	//	pLightComp->ToString(buffer);
-	//	SerializeComponent(conf, section, PointLightComponent::GetComponentName(), buffer);
-	//}
-	//else if (auto sLightComp = object.GetComponent<SpotLightComponent>())
-	//{
-	//	buffer.clear();
-	//	sLightComp->ToString(buffer);
-	//	SerializeComponent(conf, section, SpotLightComponent::GetComponentName(), buffer);
-	//}
-	if (auto transComp = object.GetComponent<TransformComponent>())
-	{
-		buffer.clear();
-		transComp->Format(buffer);
-		sprintf_s(childSection, "%s:%d", section, static_cast<int>(Components::TransformComponent));
-		SerializeComponent(conf, childSection, buffer);
-	}
-	if (auto meshComp = object.GetComponent<StaticMeshComponent>())
-	{
-		buffer.clear();
-		meshComp->Format(buffer);
-		sprintf_s(childSection, "%s:%d", section, static_cast<int>(Components::StaticMeshComponent));
-		SerializeComponent(conf, childSection, buffer);
-	}
-}
-
-void SceneSerializer::SerializeComponent(INIFileParser& conf, const char* childSection, string& formatted)
-{
-	/* Read line by line from string in C-Style to avoid slow memory allocations */
-	char* currentLine = formatted.data();
-	while (currentLine && std::strlen(currentLine) > 0)
-	{
-		char* nextLine = strchr(currentLine, '\n');
-		if (nextLine)
-			*nextLine = '\0';  /* temporarily terminate the current line */ 
-
-		char* value = std::strchr(currentLine, '=') + 1;
-		int sep = (value - 1) - currentLine;
-		char name[32]{};
-		std::copy(currentLine, currentLine + sep, name);
-		conf.Update(childSection, name, value);
-
-		if (nextLine)
-			*nextLine = '\n';  /* then restore newline-char, just to be tidy */ 
-
-		currentLine = nextLine ? (nextLine + 1) : nullptr;
-	}
-}
-
-#endif

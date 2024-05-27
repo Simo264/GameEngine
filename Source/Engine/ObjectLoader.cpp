@@ -12,8 +12,6 @@
 
 #include "Engine/Components.hpp"
 
-
-
 /* -----------------------------------------------------
  *          PUBLIC METHODS
  * -----------------------------------------------------
@@ -80,7 +78,7 @@ void ObjectLoader::LoadVertices(const aiMesh* aimesh, VertexBuffer& vbo)
   {
     const aiVector3D& vertPos = aimesh->mVertices[i];
     const aiVector3D& vertNor = aimesh->mNormals[i];
-    Vec2f vertTc;
+    vec2f vertTc;
     if (aimesh->HasTextureCoords(0))
       vertTc = { aimesh->mTextureCoords[0][i].x, aimesh->mTextureCoords[0][i].y };
     else
