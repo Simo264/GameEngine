@@ -10,31 +10,32 @@
 class TextureManager : public Manager<TextureManager>
 {
 public:
-	/**
-	 * Initialize the texture array and load images from "Textures/" and "Icons/" directories
-	 */
-	void Initialize() override;
-	
+
 	/**
 	 * Destroy all texture objects 
 	 */
-	void CleanUp() override;
+	void CleanUp();
 
 	/**
-	 * Load texture object in array
+	 * Load texture object in texture array
 	 */
 	Texture2D* LoadTexture(const fspath& filePath, bool gammaCorrection = true);
 		
 	/**
-	 * Retrieve texture object from pool
+	 * Load texture object in icon array
+	 */
+	Texture2D* LoadTextureIcon(const fspath& filePath);
+
+	/**
+	 * Retrieve texture object from texture array
 	 */
 	Texture2D* GetTextureByPath(const fspath& filePath);
-
-	constexpr auto Begin() const { return textures.begin(); }
-
-	constexpr auto End() const { return textures.end(); }
-
-	constexpr auto Size() const { return textures.size(); }
+	
+	/**
+	 * Retrieve texture object from icon array
+	 */
+	Texture2D* GetIconByPath(const fspath& filePath);
 
 	vector<Texture2D> textures;
+	vector<Texture2D> icons;
 };

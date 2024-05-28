@@ -21,15 +21,17 @@ Camera::~Camera()
 	delete cameraComponent; 
 }
 
-void Camera::ProcessInput(WindowManager& window, float delta)
+void Camera::ProcessInput(float delta)
 {
+	WindowManager* window = WindowManager::Instance();
+
 	const static float movementSpeed = 7.5f;
 	const static float mouseSensitivity = 25.0f; 
 
-	Move(window, movementSpeed, delta);
-	if (window.GetMouseKey(GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
+	Move(*window, movementSpeed, delta);
+	if (window->GetMouseKey(GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
 	{
-		Rotate(window, mouseSensitivity, delta);
+		Rotate(*window, mouseSensitivity, delta);
 		cameraComponent->UpdateVectors();
 	}
 	cameraComponent->UpdateView();

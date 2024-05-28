@@ -20,7 +20,7 @@ void Gui::SetupContext() const
   io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;       /* Enable Multi-Viewport / Platform Windows */
 
   /* Setup Platform/Renderer backends */
-  ImGui_ImplGlfw_InitForOpenGL(WindowManager::Instance().GetContext(), true);
+  ImGui_ImplGlfw_InitForOpenGL(WindowManager::Instance()->GetContext(), true);
   
   /* OpenGL version 4.6 */
   ImGui_ImplOpenGL3_Init("#version 460");
@@ -43,17 +43,17 @@ void Gui::StartFrame() const
 
 void Gui::EndFrame() const
 {
-  auto& window = WindowManager::Instance();
+  auto window = WindowManager::Instance();
 
   ImGui::RenderPanel();
   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
   ImGuiIO& io = ImGui::GetIO();
   if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
   {
-    WindowManager::Context backup_current_context = window.GetContext();
+    WindowManager::Context backup_current_context = window->GetContext();
     ImGui::UpdatePlatformWindows();
     ImGui::RenderPlatformWindowsDefault();
-    window.SetContext(backup_current_context);
+    window->SetContext(backup_current_context);
   }
 }
 

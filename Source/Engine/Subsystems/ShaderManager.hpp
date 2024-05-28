@@ -4,22 +4,16 @@
 #include "Engine/Subsystems/Manager.hpp"
 #include "Engine/Graphics/Shader.hpp"
 
-
 /**
- * Load and retrieve shader objects and program objects from the array
+ * Load and retrieve shaders and programs 
  */
 class ShaderManager : public Manager<ShaderManager>
 {
 public:
 	/**
-	 * Initialize shaders array and load shaders from files
-	 */
-	void Initialize() override;
-	
-	/**
 	 * Destroy all shader objects and program objects
 	 */
-	void CleanUp() override;
+	void CleanUp();
 
 	/**
 	 * Load the shader object in shaders array
@@ -41,6 +35,6 @@ public:
 	 */
 	Program* GetProgram(const char* name);
 	
-	vector<Shader> shaders;
+	vector<Shader>	shaders;
 	vector<Program> programs;
 };

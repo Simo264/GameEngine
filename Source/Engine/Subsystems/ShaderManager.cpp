@@ -3,52 +3,19 @@
 #include "Core/Log/Logger.hpp"
 #include "Core/OpenGL.hpp"
 
-static void LoadFileContent(const fspath& filepath, string& dest)
+static void LoadFileContent(const char* filepath, string& dest)
 {
   ifStream file(filepath);
   if (file)
-  {
-    dest.assign(
-      std::istreambuf_iterator<char>(file),
-      std::istreambuf_iterator<char>()
-    );
-  }
+    dest.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
   else
-  {
-    CONSOLE_WARN("Error on opening '{}' file", filepath.string().c_str());
-  }
+    CONSOLE_WARN("Error on opening '{}' file", filepath);
 }
 
 /* -----------------------------------------------------
  *          PUBLIC METHODS
  * -----------------------------------------------------
 */
-
-void ShaderManager::Initialize()
-{
-  /* Load all shader files in "Shaders/" directory */
-  for (auto& entry : std::filesystem::directory_iterator(SHADERS_PATH))
-  {
-    if (!std::filesystem::is_directory(entry))
-    {
-      auto filename = entry.path().filename().string();
-      auto pos = filename.find_last_of('.') + 1;
-      auto ext = filename.substr(pos);
-      if (ext.compare("vert") == 0)
-      {
-        LoadShader(entry, GL_VERTEX_SHADER);
-      }
-      else if (ext.compare("frag") == 0)
-      {
-        LoadShader(entry, GL_FRAGMENT_SHADER);
-      }
-      else
-      {
-        CONSOLE_WARN("Error on loading file '{}': unknown '.{}' file extension", filename.c_str(), ext.c_str());
-      }
-    }
-  }
-}
 
 void ShaderManager::CleanUp()
 {
@@ -66,12 +33,12 @@ void ShaderManager::CleanUp()
 
 Shader& ShaderManager::LoadShader(const fspath& filepath, int shaderType)
 {
-  string filepathstr = filepath.lexically_normal().string();
+  string filepathstr = filepath.string();
+  string filename = filepath.filename().string();
 
   Shader& shader = shaders.emplace_back();
   shader.Create(shaderType);
-
-  shader.filename = filepath.filename().string();
+  shader.filename = filename;
 
   string filecontent;
   LoadFileContent(filepathstr.c_str(), filecontent);
@@ -79,9 +46,7 @@ Shader& ShaderManager::LoadShader(const fspath& filepath, int shaderType)
   shader.LoadSource(filecontent.c_str(), filecontent.size());
   bool compiled = shader.Compile();
   if (!compiled)
-  {
     CONSOLE_WARN("Error on compiling shader '{}': {}", filepathstr.c_str(), shader.GetShaderInfo());
-  }
 
   return shader;
 }
@@ -102,11 +67,10 @@ Program& ShaderManager::LoadProgram(const char* programName, Shader& vertexShade
   program.name = programName;
   program.AttachShader(vertexShader);
   program.AttachShader(fragmentShader);
+  
   bool link = program.Link();
   if (!link)
-  {
     CONSOLE_WARN("Error on linking program {}: {}", programName, program.GetProgramInfo());
-  }
 
   return program;
 }

@@ -92,7 +92,7 @@ void SceneSerializer::DeserializeScene(Scene& scene, const fspath& filepath)
 	GameObject object{ entt::null, nullptr };
 	uint32_t currentObjectId = static_cast<uint32_t>(-1);
 
-	auto& instanceTM = TextureManager::Instance();
+	auto instanceTM = TextureManager::Instance();
 
 	for (auto const& it : conf.GetData())
 	{
@@ -134,9 +134,9 @@ void SceneSerializer::DeserializeScene(Scene& scene, const fspath& filepath)
 
 			auto& mesh = object.AddComponent<StaticMeshComponent>(model);
 			if (!diffuse.empty())
-				mesh.material.diffuse = instanceTM.GetTextureByPath(diffuse);
+				mesh.material.diffuse = instanceTM->GetTextureByPath(diffuse);
 			if(!specular.empty())
-				mesh.material.specular = instanceTM.GetTextureByPath(specular);
+				mesh.material.specular = instanceTM->GetTextureByPath(specular);
 		}
 		else if (std::strcmp(componentName, "dirlightcomponent") == 0)
 		{

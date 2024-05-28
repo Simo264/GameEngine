@@ -15,12 +15,12 @@ public:
   /**
    * Initialize GLFW and OpenGL libraries and create context
    */
-  void Initialize() override;
+  void Initialize();
 
   /**
    * Destroy window context and free GLFW resources
    */
-  void CleanUp() override;
+  void CleanUp() const;
 
   /**
    * Processes all pending events
@@ -56,7 +56,7 @@ public:
   vec2d GetCursorPosition() const;
 
   /**
-   * @param value = GLFW_CURSOR_NORMAL | GLFW_CURSOR_HIDDEN | GLFW_CURSOR_DISABLED
+   * @param value: GLFW_CURSOR_NORMAL or GLFW_CURSOR_HIDDEN or GLFW_CURSOR_DISABLED
    */
   void SetCursorMode(int value) const;
 

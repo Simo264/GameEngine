@@ -11,13 +11,10 @@ template<typename T>
 class Manager
 {
 public:
-	virtual void Initialize() = 0;
-	virtual void CleanUp() = 0;
-
-	static T& Instance()
+	static T* Instance()
 	{
 		static T instance;
-		return instance;
+		return &instance;
 	}
 
 protected:

@@ -32,7 +32,7 @@ void WindowManager::Initialize()
   assert((version != 0) && "Failed to initialize OpenGL context");
 }
 
-void WindowManager::CleanUp()
+void WindowManager::CleanUp() const
 {
   glfwDestroyWindow(_context);
   glfwTerminate();

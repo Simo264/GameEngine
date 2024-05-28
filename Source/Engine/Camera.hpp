@@ -14,7 +14,7 @@ public:
 
 	~Camera();
 
-	void ProcessInput(class WindowManager& window, float delta);
+	void ProcessInput(float delta);
 
 	class CameraComponent* cameraComponent;
 
