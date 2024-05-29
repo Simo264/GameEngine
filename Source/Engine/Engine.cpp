@@ -21,6 +21,8 @@
 #include "Engine/Graphics/Shader.hpp"
 #include "Engine/Graphics/Renderer.hpp"
 
+#include "GUI/ImGuiLayer.hpp"
+
 #include <GLFW/glfw3.h>
 
 uint32_t drawCalls = 0;
@@ -56,7 +58,6 @@ static void SetGlobalGlStates()
   glClearDepth(1.0f);
   glClearStencil(0);
 }
-
 static void CreateShadowMapFramebuffer(FrameBuffer& framebuffer, int width, int height)
 {
   framebuffer.Create();
@@ -115,8 +116,9 @@ void Engine::Initialize()
   CreateScreenSquare();
   framebufferTexture = &fboIntermediate.GetTextureAttachment(0);
 
-  /* Setup ImGui */
-  gui.SetupContext();
+  /* Setup ImGui context */
+  ImGuiLayer::SetupContext();
+  ImGuiLayer::SetFont((FONTS_PATH / "Karla-Regular.ttf"), 16);
 
   SetGlobalGlStates();
 }
@@ -153,11 +155,12 @@ void Engine::Run()
   /* -------------------------- loop -------------------------- */
   while (instanceWM->IsOpen())
   {
+    ImGuiLayer::NewFrame();
+
     /* -------------------------- Per-frame time logic -------------------------- */
     const auto now = system_clock::now();
     const std::chrono::duration<double> diff = now - lastUpdateTime;
     const double delta = diff.count();
-    gui.StartFrame();
     drawCalls = 0;
 
     /* -------------------------- Input -------------------------- */
@@ -266,18 +269,15 @@ void Engine::Run()
     framebufferTexture->BindTextureUnit(0);
     DrawArrays(GL_TRIANGLES, screenSquare);
 
-    gui.Render();
-    gui.EndFrame();
+    ImGuiLayer::RenderMenuBar();
+    ImGuiLayer::RenderScenePanel(scene);
+    ImGuiLayer::DrawData();
 
     /* -------------------------- Resizing framebuffer -------------------------- */
     const vec2i32 currentFramebufferSize = instanceWM->GetFramebufferSize();
     if (viewport != currentFramebufferSize)
     {
-      viewport = currentFramebufferSize;
-      fboMultisampled.Delete();
-      fboIntermediate.Delete();
-      CreateFramebuffer(4, viewport.x, viewport.y);
-
+      ResizeFramebuffer(currentFramebufferSize);
       camera.cameraComponent->aspect = static_cast<float>(viewport.x) / static_cast<float>(viewport.y);
       camera.cameraComponent->UpdateProjection();
     }
@@ -289,9 +289,12 @@ void Engine::Run()
 
 void Engine::CleanUp()
 {
+  fboIntermediate.Delete();
+  fboMultisampled.Delete();
   screenSquare.Delete();
 
-  gui.CleanUp();
+  ImGuiLayer::CleanUp();
+
   instanceSM->CleanUp();
   instanceTM->CleanUp();
   instanceWM->CleanUp();
@@ -324,7 +327,6 @@ void Engine::LoadShaders() const
     }
   }
 }
-
 void Engine::LoadPrograms() const
 {
   Program& testingProg = instanceSM->LoadProgram(
@@ -356,7 +358,6 @@ void Engine::LoadPrograms() const
   shadowMapProg.SetUniform1i("u_shadowMap", 10);
   shadowMapProg.SetUniform1f("u_gamma", 2.2f);
 }
-
 void Engine::LoadTextures() const
 {
   /* Load textures */
@@ -369,7 +370,6 @@ void Engine::LoadTextures() const
     if (!std::filesystem::is_directory(entry))
       instanceTM->LoadTextureIcon(entry.path().lexically_normal());
 }
-
 void Engine::CreateFramebuffer(int samples, int width, int height)
 {
   fboMultisampled.Create();
@@ -410,7 +410,6 @@ void Engine::CreateFramebuffer(int samples, int width, int height)
   if (fboIntermediate.CheckStatus() != GL_FRAMEBUFFER_COMPLETE)
     CONSOLE_WARN("Intermediate framebuffer is not complete!");
 }
-
 void Engine::CreateScreenSquare()
 {
   screenSquare.Create();
@@ -447,4 +446,11 @@ void Engine::CreateScreenSquare()
   
   screenSquare.numVertices = 6;
   screenSquare.numIndices = 0;
+}
+void Engine::ResizeFramebuffer(vec2i32 newViewportSize)
+{
+  viewport = newViewportSize;
+  fboMultisampled.Delete();
+  fboIntermediate.Delete();
+  CreateFramebuffer(4, newViewportSize.x, newViewportSize.y);
 }

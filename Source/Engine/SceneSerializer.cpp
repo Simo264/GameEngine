@@ -83,7 +83,6 @@ void SceneSerializer::SerializeScene(Scene& scene, const fspath& filepath)
 	}
 	conf.Write(true);
 }
-
 void SceneSerializer::DeserializeScene(Scene& scene, const fspath& filepath)
 { 
 	INIFileParser conf(filepath);
@@ -182,123 +181,6 @@ void SceneSerializer::DeserializeScene(Scene& scene, const fspath& filepath)
 		}
 	}
 }
-
-#if 0
-void SceneSerializer::DeserializeScene(Scene& scene, const fspath& filepath)
-{
-	INIFileParser conf(filepath);
-	conf.ReadData();
-
-	string buff;
-	buff.reserve(512);
-
-	GameObject obj;
-	for (auto const& it : conf.GetData())
-	{
-		const string& section = it.first;
-
-		/* Parse object */
-		if (section.find(':') == string::npos)
-		{
-			buff = conf.GetValue(section.c_str(), "label");
-			uint32_t type	= std::stoi(conf.GetValue(section.c_str(), "type"));
-			obj	= scene.CreateObject(buff.c_str(), type);
-		}
-		/* Parse components */
-		else
-		{
-			int component = std::stoi(std::strchr(section.c_str(), ':') + 1);
-			if (component == static_cast<int>(Components::DirLightComponent))
-			{
-				/* 
-					Parse DirLightComponent: 
-						.vec3f color
-						.float ambient
-						.float diffuse
-						.float specular
-						.vec3f direction
-				*/
-				auto& dlightComp = obj.AddComponent<DirLightComponent>("");
-				buff = conf.GetValue(section.c_str(), "color");
-
-				dlightComp.color		= INIFileParser::StringTovec3f(buff);
-				dlightComp.ambient	= std::stof(conf.GetValue(section.c_str(), "ambient"));
-				dlightComp.diffuse	= std::stof(conf.GetValue(section.c_str(), "diffuse"));
-				dlightComp.specular = std::stof(conf.GetValue(section.c_str(), "specular"));
-				
-				buff = conf.GetValue(section.c_str(), "direction");
-				dlightComp.direction = INIFileParser::StringTovec3f(buff);
-			}
-			//else if (std::strcmp(componentName, PointLightComponent::GetComponentName(true)) == 0)
-			//{
-			//	/* 
-			//		Parse PointLightComponent: 
-			//			.vec3f color
-			//			.float ambient
-			//			.float diffuse
-			//			.float specular
-			//			.vec3f position 
-			//	*/
-
-			//	/* TODO */
-			//}
-			//else if (std::strcmp(componentName, SpotLightComponent::GetComponentName(true)) == 0)
-			//{
-			//	/* 
-			//		Parse SpotLightComponent: 
-			//			.vec3f color
-			//			.float ambient
-			//			.float diffuse
-			//			.float specular
-			//			.vec3f direction
-			//			.float cutoff
-			//	*/
-
-			//	/* TODO */
-			//}
-			else if (component == static_cast<int>(Components::TransformComponent))
-			{
-				/* 
-					Parse TransformComponent:
-						.vec3f position;
-						.vec3f scale;
-						.vec3f rotation;	
-				*/
-				auto& transComp = obj.AddComponent<TransformComponent>();
-				buff = conf.GetValue(section.c_str(), "position");
-				transComp.position = INIFileParser::StringTovec3f(buff);
-				buff = conf.GetValue(section.c_str(), "scale");
-				transComp.scale	= INIFileParser::StringTovec3f(buff);
-				buff = conf.GetValue(section.c_str(), "rotation");
-				transComp.rotation = INIFileParser::StringTovec3f(buff);
-				transComp.UpdateTransformation();
-			}
-			else if (component == static_cast<int>(Components::StaticMeshComponent))
-			{
-				/* 
-					Parse StaticMeshComponent:
-						.string model-path			
-						.string material-diffuse
-						.string material-specular
-				*/
-				
-				buff = conf.GetValue(section.c_str(), "model-path");
-				if (buff.empty())
-					continue;
-
-				auto& smeshComp = obj.AddComponent<StaticMeshComponent>(buff);
-				buff = conf.GetValue(section.c_str(), "material-diffuse");
-				if (!buff.empty())
-					smeshComp.material.diffuse = TextureManager::Instance().GetTextureByPath(buff);
-
-				buff = conf.GetValue(section.c_str(), "material-specular");
-				if (!buff.empty())
-					smeshComp.material.specular = TextureManager::Instance().GetTextureByPath(buff);
-			}
-		}
-	}
-}
-#endif
 
 /* -----------------------------------------------------
  *          PRIVATE METHODS

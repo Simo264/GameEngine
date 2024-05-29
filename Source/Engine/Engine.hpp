@@ -9,8 +9,6 @@
 #include "Engine/Subsystems/ShaderManager.hpp"
 #include "Engine/Subsystems/TextureManager.hpp"
 
-#include "GUI/Gui.hpp"
-
 class Engine
 {
 public:
@@ -32,12 +30,12 @@ public:
 
 	class Texture2D* framebufferTexture;
 
-	Gui gui;
-
 private:
 	void LoadShaders() const;
 	void LoadPrograms() const;
 	void LoadTextures() const;
 	void CreateFramebuffer(int samples, int width, int height);
 	void CreateScreenSquare();
+
+	void ResizeFramebuffer(vec2i32 newViewportSize);
 };

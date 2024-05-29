@@ -4,7 +4,6 @@
 #include "Core/Log/Logger.hpp"
 #include <entt/entt.hpp> 
 
-
 /**
  * Represents the entity in Entity Component System
  */
