@@ -64,9 +64,11 @@ public:
 
   void SetWindowVsync(bool b) const;
 
-  constexpr Context GetContext() const { return _context; }
+  void MakeContextCurrent(Context context);
 
-  constexpr void SetContext(Context newcontext) { _context = newcontext; }
+  //Context GetCurrentContext();
+
+  constexpr Context GetCurrentContext() const { return _context; }
 
 private:
   Context _context;

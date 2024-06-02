@@ -7,11 +7,12 @@ class Camera
 {
 public:
 	Camera(
-		const vec3f& position = { 0.0f, 0.0f, 0.0f }, /* default position*/
-		float fov = 45.0f,						/* default field of view */
-		float aspect = 16.0f / 9.0f		/* default aspect ratio 16:9 */
+		const vec3f& position = { 0.0f, 0.0f, 0.0f },
+		float fov = 45.0f,	
+		float aspect = 16.0f / 9.0f,
+		float znear = 1.0f,
+		float zfar = 10.0f
 	);
-
 	~Camera();
 
 	void ProcessInput(float delta);

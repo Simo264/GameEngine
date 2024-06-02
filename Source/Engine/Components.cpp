@@ -131,19 +131,19 @@ void StaticMeshComponent::Draw()
 			CameraComponent
 	--------------------------------------------------------------------------- */
 
-CameraComponent::CameraComponent(const vec3f& position, float fov, float aspect)
+CameraComponent::CameraComponent(const vec3f& position, float fov, float aspect, float znear, float zfar)
 	: position{ position },
 		fov{ fov },
 		aspect{ aspect },
-		yaw { -90.0f }, /* Default orientation */
+		zNear{ znear },
+		zFar{ zfar },
+		yaw{ -90.0f },
 		pitch{ 0.0f },
 		roll{ 0.0f },
-		zNear{ INITIAL_ZNEAR }, 
-		zFar{ INITIAL_ZFAR },
-		_front{},	/* Deafult vector values */
+		_front{},	
 		_up{},
 		_right{},
-		_viewMatrix{}, /* Deafult matrix values */
+		_viewMatrix{}, 
 		_projectionMatrix{}
 {
 	/* Update vectors */

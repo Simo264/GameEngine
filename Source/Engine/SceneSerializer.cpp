@@ -80,6 +80,7 @@ void SceneSerializer::SerializeScene(Scene& scene, const fspath& filepath)
 			conf.Update(section.c_str(), "material_diffuse", diffuse.c_str());
 			conf.Update(section.c_str(), "material_specular", specular.c_str());
 		}
+	
 	}
 	conf.Write(true);
 }
@@ -142,12 +143,12 @@ void SceneSerializer::DeserializeScene(Scene& scene, const fspath& filepath)
 			string strColor = conf.GetValue(section.c_str(), "color");
 			string strDirection = conf.GetValue(section.c_str(), "direction");
 
-			auto& light = object.AddComponent<PointLightComponent>();
+			auto& light = object.AddComponent<DirLightComponent>();
 			light.color = INIFileParser::StringToVec3f(strColor);
 			light.ambient = std::stof(conf.GetValue(section.c_str(), "ambient"));
 			light.diffuse = std::stof(conf.GetValue(section.c_str(), "diffuse"));
 			light.specular = std::stof(conf.GetValue(section.c_str(), "specular"));
-			light.position = INIFileParser::StringToVec3f(strDirection);
+			light.direction = INIFileParser::StringToVec3f(strDirection);
 		}
 		else if (std::strcmp(componentName, "pointlightcomponent") == 0)
 		{

@@ -118,3 +118,9 @@ void WindowManager::SetWindowVsync(bool b) const
 {
   glfwSwapInterval(b);
 }
+
+void WindowManager::MakeContextCurrent(Context context)
+{
+  glfwMakeContextCurrent(context);
+  _context = context;
+}

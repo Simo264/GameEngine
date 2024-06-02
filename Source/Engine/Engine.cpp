@@ -25,6 +25,12 @@
 
 #include <GLFW/glfw3.h>
 
+constexpr int		INITIAL_WINDOW_W = 1600;
+constexpr int		INITIAL_WINDOW_H = 900;
+constexpr float	INITIAL_ZNEAR = 1.0f;
+constexpr float	INITIAL_ZFAR = 100.0f;
+constexpr float GAMMA_CORRECTION = 2.2f;
+
 uint32_t drawCalls = 0;
 
 static void SetGlobalGlStates()
@@ -58,29 +64,32 @@ static void SetGlobalGlStates()
   glClearDepth(1.0f);
   glClearStencil(0);
 }
-static void CreateShadowMapFramebuffer(FrameBuffer& framebuffer, int width, int height)
+static void RenderScene(Scene& scene, Program* sceneProgram)
 {
-  framebuffer.Create();
-   
-  /*
-    Create a 2D texture that we'll use as the framebuffer's depth buffer.
-    We also give the texture a width and height: this is the resolution of the depth map
-  */
-  Texture2D depthMap;
-  depthMap.internalformat = GL_DEPTH_COMPONENT16;
-  depthMap.Create(GL_TEXTURE_2D);
-  depthMap.CreateStorage(width, height);
-  depthMap.SetParameteri(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  depthMap.SetParameteri(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  scene.Reg().view<DirLightComponent>().each([sceneProgram](auto& light) {
+    sceneProgram->SetUniform3f("u_directionalLight.color", light.color);
+    sceneProgram->SetUniform1f("u_directionalLight.ambient", light.ambient);
+    sceneProgram->SetUniform1f("u_directionalLight.diffuse", light.diffuse);
+    sceneProgram->SetUniform1f("u_directionalLight.specular", light.specular);
+    sceneProgram->SetUniform3f("u_directionalLight.direction", light.direction);
+    });
 
+  int i = 0;
+  scene.Reg().view<PointLightComponent>().each([sceneProgram, &i](auto& light) {
+    sceneProgram->SetUniform3f(std::format("u_pointLight[{}].color", i).c_str(), light.color);
+    sceneProgram->SetUniform1f(std::format("u_pointLight[{}].ambient", i).c_str(), light.ambient);
+    sceneProgram->SetUniform1f(std::format("u_pointLight[{}].diffuse", i).c_str(), light.diffuse);
+    sceneProgram->SetUniform1f(std::format("u_pointLight[{}].specular", i).c_str(), light.specular);
+    sceneProgram->SetUniform3f(std::format("u_pointLight[{}].position", i).c_str(), light.position);
+    sceneProgram->SetUniform1f(std::format("u_pointLight[{}].linear", i).c_str(), light.linear);
+    sceneProgram->SetUniform1f(std::format("u_pointLight[{}].quadratic", i).c_str(), light.quadratic);
+    i++;
+  });
 
-  /* Resolve the problem of over sampling */
-  depthMap.SetParameteri(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-  depthMap.SetParameteri(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-  depthMap.SetParameterfv(GL_TEXTURE_BORDER_COLOR, array<float,4>{ 1.0, 1.0, 1.0, 1.0 }.data());
-  
-  /* With the generated depth texture we can attach it as the framebuffer's depth buffer */
-  framebuffer.AttachTexture(GL_DEPTH_ATTACHMENT, depthMap, 0);
+  scene.Reg().view<StaticMeshComponent, TransformComponent>().each([sceneProgram](auto& mesh, auto& transform) {
+    sceneProgram->SetUniformMat4f("u_model", transform.GetTransformation());
+    mesh.Draw();
+  });
 }
 
 /* -----------------------------------------------------
@@ -93,28 +102,30 @@ void Engine::Initialize()
   Logger::Initialize();
 
   /* Initialize window */
-  instanceWM = WindowManager::Instance();
-  instanceWM->Initialize();
-  instanceWM->SetWindowTitle("ProjectGL");
-  instanceWM->SetWindowSize(INITIAL_WINDOW_W, INITIAL_WINDOW_H);
-  instanceWM->SetWindowPosition(50, 50);
-  instanceWM->SetWindowAspectRatio(16, 9);
-  instanceWM->SetWindowVsync(false);
+  _instanceWM = WindowManager::Instance();
+  _instanceWM->Initialize();
+  _instanceWM->SetWindowTitle("ProjectGL");
+  _instanceWM->SetWindowSize(INITIAL_WINDOW_W, INITIAL_WINDOW_H);
+  _instanceWM->SetWindowPosition(50, 50);
+  _instanceWM->SetWindowAspectRatio(16, 9);
+  _instanceWM->SetWindowVsync(false);
   
   /* Initialize shaders */
-  instanceSM = ShaderManager::Instance();
+  _instanceSM = ShaderManager::Instance();
   LoadShaders();
   LoadPrograms();
 
   /* Initialize textures */
-  instanceTM = TextureManager::Instance();
+  _instanceTM = TextureManager::Instance();
   LoadTextures();
 
   /* Create Framebuffer object */
-  viewport = instanceWM->GetFramebufferSize();
-  CreateFramebuffer(4, viewport.x, viewport.y);
+  _viewport = _instanceWM->GetFramebufferSize();
+  CreateFramebuffer(4, _viewport.x, _viewport.y);
   CreateScreenSquare();
-  framebufferTexture = &fboIntermediate.GetTextureAttachment(0);
+  
+  /* Create Framebuffer object for shadows */
+  CreateFramebufferShadowMap(1024, 1024);
 
   /* Setup ImGui context */
   ImGuiLayer::SetupContext();
@@ -126,7 +137,13 @@ void Engine::Initialize()
 void Engine::Run()
 {
   /* -------------------------- Camera -------------------------- */
-  Camera camera(vec3f(30.0f, 15.0f, 10.0f), 45.0f, static_cast<float>(viewport.x) / static_cast<float>(viewport.y));
+  Camera camera(
+    vec3f( 30.0f, 15.0f, 10.0f ),
+    45.0f, 
+    static_cast<float>(_viewport.x) / static_cast<float>(_viewport.y), 
+    INITIAL_ZNEAR, 
+    INITIAL_ZFAR
+  );
   camera.cameraComponent->yaw = -180.0f;
   camera.cameraComponent->pitch = -30.0f;
   camera.cameraComponent->roll = 0.0f;
@@ -136,168 +153,148 @@ void Engine::Run()
   Scene scene;
   scene.LoadScene((ROOT_PATH / "Scene.ini"));
 
-  /* -------------------------- Shadow mapping -------------------------- */
-  //FrameBuffer framebufferShadowMap;
-  //CreateShadowMapFramebuffer(framebufferShadowMap, 1024, 1024);
-  //const Texture2D& DepthMapTexture = framebufferShadowMap.GetTextureAttachment(0);
-
   /* -------------------------- Pre-loop -------------------------- */
-  Program* testingProgram         = instanceSM->GetProgram("Testing");
-  Program* instancingProgram      = instanceSM->GetProgram("Instancing");
-  Program* framebufferProgram     = instanceSM->GetProgram("Framebuffer");
-  Program* sceneProgram           = instanceSM->GetProgram("Scene");
-  Program* shadowMapDepthProgram  = instanceSM->GetProgram("ShadowMapDepth");
-  Program* shadowMapProgram       = instanceSM->GetProgram("ShadowMap");
+  Program* framebufferProgram = _instanceSM->GetProgram("Framebuffer");
+  Program* sceneProgram = _instanceSM->GetProgram("Scene");
+  Program* shadowMapDepthProgram = _instanceSM->GetProgram("ShadowMapDepth");
+  Program* shadowMapProgram = _instanceSM->GetProgram("ShadowMap");
+  Program* visualshadowDepthProgram = _instanceSM->GetProgram("VisualShadowDepth");
+
+  Texture2D& fboImageTexture = _fboIntermediate.GetTextureAttachment(0);
+  Texture2D& fboImageTextureShadowMap = _fboShadowMap.GetTextureAttachment(0);
+  
+  const vec3f lightPosition{ -2.0f, 4.0f, -1.0f };
+  const vec3f lightDirection{ 0.0f, 0.0f, 4.0f }; // dirLight->direction
+  const mat4f lightProjection = Math::Ortho(-10.0f, 10.0f, -10.0f, 10.0f, INITIAL_ZNEAR, INITIAL_ZFAR);
+  mat4f lightView;
+  mat4f lightSpaceMatrix;
 
   time_point lastUpdateTime = system_clock::now();
-
   
   /* -------------------------- loop -------------------------- */
-  while (instanceWM->IsOpen())
+  while (_instanceWM->IsOpen())
   {
     ImGuiLayer::NewFrame();
+    ImGuiLayer::Docking();
 
     /* -------------------------- Per-frame time logic -------------------------- */
     const auto now = system_clock::now();
     const std::chrono::duration<double> diff = now - lastUpdateTime;
     const double delta = diff.count();
     drawCalls = 0;
+    const float time = glfwGetTime();
 
     /* -------------------------- Input -------------------------- */
-    instanceWM->PoolEvents();
+    _instanceWM->PoolEvents();
     camera.ProcessInput(delta);
-
 
     /* -------------------------- Update -------------------------- */
     const auto& cameraViewMatrix = camera.cameraComponent->GetView();
     const auto& cameraProjectionMatrix = camera.cameraComponent->GetProjection();
-    const auto time = glfwGetTime();
-
-
-    //const Mat4f lightProjection = Math::Ortho(
-    //  -10.0f, 10.0f, -10.0f, 10.0f, INITIAL_ZNEAR, INITIAL_ZFAR);
-    //Mat4f lightView = Math::LookAt(
-    //  lightPosition,
-    //  vec3f(0.0f, 0.0f, 0.0f), // vec3f(0.0f, 0.0f, 0.0f) | dirLight->direction 
-    //  vec3f(0.0f, 1.0f, 0.0f)
-    //);
-    //Mat4f lightSpaceMatrix = lightProjection * lightView;
+    lightView = Math::LookAt(lightPosition, lightDirection, vec3f(0.0f, 1.0f, 0.0f));
+    lightSpaceMatrix = lightProjection * lightView;
 
     /* -------------------------- Rendering -------------------------- */
     /* Render depth of scene to texture(from directional light's perspective) */
-    //framebufferShadowMap.Bind(GL_FRAMEBUFFER);
-    //{
-    //  glViewport(0, 0, 1024, 1024);
-    //  glClear(GL_DEPTH_BUFFER_BIT);
-    //  shadowMapDepthProgram->Use();
-    //  shadowMapDepthProgram->SetUniformMat4f(SHADER_UNIFORM_LIGHTSPACE, lightSpaceMatrix);
-    //  scene.DrawScene(*shadowMapDepthProgram);
-    //}
-    //framebufferShadowMap.Unbind(GL_FRAMEBUFFER);
+    _fboShadowMap.Bind(GL_FRAMEBUFFER);
+    {
+      glViewport(0, 0, 1024, 1024);
+      glClear(GL_DEPTH_BUFFER_BIT);
+      shadowMapDepthProgram->Use();
+      shadowMapDepthProgram->SetUniformMat4f("u_lightSpaceMatrix", lightSpaceMatrix);
+      
+      scene.Reg().view<StaticMeshComponent, TransformComponent>().each([shadowMapDepthProgram](auto& mesh, auto& transform) {
+        shadowMapDepthProgram->SetUniformMat4f("u_model", transform.GetTransformation());
+        mesh.Draw();
+      });
+    }
+    _fboShadowMap.Unbind(GL_FRAMEBUFFER);
 
     /* Fill the framebuffer color texture */
-    fboMultisampled.Bind(GL_FRAMEBUFFER);
+    _fboMultisampled.Bind(GL_FRAMEBUFFER);
     { 
-      glViewport(0, 0, viewport.x, viewport.y);
+      glViewport(0, 0, _viewport.x, _viewport.y);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-      /* Render scene without shadows map */
+      /* Render scene with no shadows */
       {
         sceneProgram->Use();
         sceneProgram->SetUniformMat4f("u_projection", cameraProjectionMatrix);
         sceneProgram->SetUniformMat4f("u_view", cameraViewMatrix);
         sceneProgram->SetUniform3f("u_viewPos", camera.cameraComponent->position);
-        sceneProgram->SetUniform1i("u_material.diffuseTexture", 0);
-        sceneProgram->SetUniform1i("u_material.specularTexture", 1);
-        sceneProgram->SetUniform1f("u_material.shininess", 32.0f);
-
-        scene.Reg().view<DirLightComponent>().each([sceneProgram](auto& light) {
-          sceneProgram->SetUniform3f("u_directionalLight.color",    light.color);
-          sceneProgram->SetUniform1f("u_directionalLight.ambient",  light.ambient);
-          sceneProgram->SetUniform1f("u_directionalLight.diffuse",  light.diffuse);
-          sceneProgram->SetUniform1f("u_directionalLight.specular", light.specular);
-          sceneProgram->SetUniform3f("u_directionalLight.direction",light.direction);
-        });
-        int i = 0;
-        scene.Reg().view<PointLightComponent>().each([sceneProgram, &i](auto& light) {
-          sceneProgram->SetUniform3f(std::format("u_pointLight[{}].color", i).c_str(),    light.color);
-          sceneProgram->SetUniform1f(std::format("u_pointLight[{}].ambient", i).c_str(),  light.ambient);
-          sceneProgram->SetUniform1f(std::format("u_pointLight[{}].diffuse", i).c_str(),  light.diffuse);
-          sceneProgram->SetUniform1f(std::format("u_pointLight[{}].specular", i).c_str(), light.specular);
-          sceneProgram->SetUniform3f(std::format("u_pointLight[{}].position", i).c_str(), light.position);
-          sceneProgram->SetUniform1f(std::format("u_pointLight[{}].linear", i).c_str(),   light.linear);
-          sceneProgram->SetUniform1f(std::format("u_pointLight[{}].quadratic", i).c_str(),light.quadratic);
-          i++;
-        });
-        scene.Reg().view<StaticMeshComponent, TransformComponent>().each([sceneProgram](auto& mesh, auto& transform) {
-          sceneProgram->SetUniformMat4f("u_model", transform.GetTransformation());
-          mesh.Draw();
-        });
+        RenderScene(scene, sceneProgram);
       }
 
       /* Render scene with shadows map */
       {
         //shadowMapProgram->Use();
-        //shadowMapProgram->SetUniformMat4f(SHADER_UNIFORM_PROJECTION, cameraProjectionMatrix);
-        //shadowMapProgram->SetUniformMat4f(SHADER_UNIFORM_VIEW, cameraViewMatrix);
-        //shadowMapProgram->SetUniformMat4f(SHADER_UNIFORM_LIGHTSPACE, lightSpaceMatrix);
-        //DepthMapTexture.BindTextureUnit(10);
-        //scene.DrawScene(*shadowMapProgram);
+
+        //shadowMapProgram->SetUniform1i("u_material.diffuse", 0);
+        //shadowMapProgram->SetUniform1i("u_material.specular", 1);
+        //shadowMapProgram->SetUniform1f("u_material.shininess", 32.0f);
+        //shadowMapProgram->SetUniform1i("u_shadowMap", 10);
+        //shadowMapProgram->SetUniform1f("u_gamma", 2.2f);
+
+        //shadowMapProgram->SetUniformMat4f("u_projection", cameraProjectionMatrix);
+        //shadowMapProgram->SetUniformMat4f("u_view", cameraViewMatrix);
+        //shadowMapProgram->SetUniform3f("u_viewPos", camera.cameraComponent->position);
+        //shadowMapProgram->SetUniform3f("u_lightPos", lightPosition);
+        //fboImageTextureShadowMap.BindTextureUnit(10);
+        //RenderScene(scene, shadowMapProgram);
       }
 
       /* Render Depth map texture for visual debugging */
       {
-        //testingProgram->Use();
-        //testingProgram->SetUniform1i("depthMap", 0);
-        //testingProgram->SetUniform1f("near_plane", INITIAL_ZNEAR);
-        //testingProgram->SetUniform1f("far_plane", INITIAL_ZFAR);
-        //DepthMapTexture.BindTextureUnit(0);
-        //DrawArrays(GL_TRIANGLES, screenSquare);
+        //visualshadowDepthProgram->Use();
+        //fboImageTextureShadowMap.BindTextureUnit(0);
+        //DrawArrays(GL_TRIANGLES, _screenSquare);
       }
 
       /* Blit multisampled buffer to normal colorbuffer of intermediate FBO */
-      fboMultisampled.Blit(fboIntermediate,
-        0, 0, viewport.x, viewport.y,
-        0, 0, viewport.x, viewport.y,
+      _fboMultisampled.Blit(_fboIntermediate,
+        0, 0, _viewport.x, _viewport.y,
+        0, 0, _viewport.x, _viewport.y,
         GL_COLOR_BUFFER_BIT,
         GL_NEAREST);
     }
-    fboMultisampled.Unbind(GL_FRAMEBUFFER);
+    _fboMultisampled.Unbind(GL_FRAMEBUFFER);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     framebufferProgram->Use();
-    framebufferTexture->BindTextureUnit(0);
-    DrawArrays(GL_TRIANGLES, screenSquare);
+    fboImageTexture.BindTextureUnit(0);
+    DrawArrays(GL_TRIANGLES, _screenSquare);
 
-    ImGuiLayer::RenderMenuBar();
-    ImGuiLayer::RenderScenePanel(scene);
+    ImGuiLayer::RenderDemo();
+    auto objectSelected = ImGuiLayer::RenderOutlinerPanel(scene);
+    if (objectSelected)
+      ImGuiLayer::RenderDetails(objectSelected);
     ImGuiLayer::DrawData();
-
+    
     /* -------------------------- Resizing framebuffer -------------------------- */
-    const vec2i32 currentFramebufferSize = instanceWM->GetFramebufferSize();
-    if (viewport != currentFramebufferSize)
+    const vec2i32 currentFramebufferSize = _instanceWM->GetFramebufferSize();
+    if (_viewport != currentFramebufferSize)
     {
       ResizeFramebuffer(currentFramebufferSize);
-      camera.cameraComponent->aspect = static_cast<float>(viewport.x) / static_cast<float>(viewport.y);
+      camera.cameraComponent->aspect = static_cast<float>(_viewport.x) / static_cast<float>(_viewport.y);
       camera.cameraComponent->UpdateProjection();
     }
 
-    instanceWM->SwapWindowBuffers();
+    _instanceWM->SwapWindowBuffers();
     lastUpdateTime = now;
   }
 }
 
 void Engine::CleanUp()
 {
-  fboIntermediate.Delete();
-  fboMultisampled.Delete();
-  screenSquare.Delete();
+  _fboIntermediate.Delete();
+  _fboMultisampled.Delete();
+  _screenSquare.Delete();
 
   ImGuiLayer::CleanUp();
 
-  instanceSM->CleanUp();
-  instanceTM->CleanUp();
-  instanceWM->CleanUp();
+  _instanceSM->CleanUp();
+  _instanceTM->CleanUp();
+  _instanceWM->CleanUp();
 }
 
 
@@ -319,9 +316,9 @@ void Engine::LoadShaders() const
       fspath path = entry.path().lexically_normal();
 
       if (ext.compare("vert") == 0)
-        instanceSM->LoadShader(path, GL_VERTEX_SHADER);
+        _instanceSM->LoadShader(path, GL_VERTEX_SHADER);
       else if (ext.compare("frag") == 0)
-        instanceSM->LoadShader(path, GL_FRAGMENT_SHADER);
+        _instanceSM->LoadShader(path, GL_FRAGMENT_SHADER);
       else
         CONSOLE_WARN("Error on loading file '{}': unknown '.{}' file extension", filename.c_str(), ext.c_str());
     }
@@ -329,50 +326,56 @@ void Engine::LoadShaders() const
 }
 void Engine::LoadPrograms() const
 {
-  Program& testingProg = instanceSM->LoadProgram(
-    "Testing", *instanceSM->GetShader("Testing.vert"), *instanceSM->GetShader("Testing.frag"));
+  Program& testingProg = _instanceSM->LoadProgram(
+    "Testing", *_instanceSM->GetShader("Testing.vert"), *_instanceSM->GetShader("Testing.frag"));
 
-  Program& instancingProg = instanceSM->LoadProgram(
-    "Instancing", *instanceSM->GetShader("Instancing.vert"), *instanceSM->GetShader("Scene.frag"));
+  Program& instancingProg = _instanceSM->LoadProgram(
+    "Instancing", *_instanceSM->GetShader("Instancing.vert"), *_instanceSM->GetShader("Scene.frag"));
 
-  Program& frameBufferProg = instanceSM->LoadProgram(
-    "Framebuffer", *instanceSM->GetShader("Framebuffer.vert"), *instanceSM->GetShader("Framebuffer.frag"));
+  Program& frameBufferProg = _instanceSM->LoadProgram(
+    "Framebuffer", *_instanceSM->GetShader("Framebuffer.vert"), *_instanceSM->GetShader("Framebuffer.frag"));
   frameBufferProg.SetUniform1i("u_screenTexture", 0);
   frameBufferProg.SetUniform1i("u_postProcessingType", 0);
 
-  Program& sceneProg = instanceSM->LoadProgram(
-    "Scene", *instanceSM->GetShader("Scene.vert"), *instanceSM->GetShader("Scene.frag"));
+  Program& sceneProg = _instanceSM->LoadProgram(
+    "Scene", *_instanceSM->GetShader("Scene.vert"), *_instanceSM->GetShader("Scene.frag"));
   sceneProg.SetUniform1i("u_material.diffuse", 0);
   sceneProg.SetUniform1i("u_material.specular", 1);
   sceneProg.SetUniform1f("u_material.shininess", 32.0f);
   sceneProg.SetUniform1f("u_gamma", 2.2f);
 
-  Program& shadowMapDepthProg = instanceSM->LoadProgram(
-    "ShadowMapDepth", *instanceSM->GetShader("ShadowMapDepth.vert"), *instanceSM->GetShader("ShadowMapDepth.frag"));
+  Program& shadowMapDepthProg = _instanceSM->LoadProgram(
+    "ShadowMapDepth", *_instanceSM->GetShader("ShadowMapDepth.vert"), *_instanceSM->GetShader("ShadowMapDepth.frag"));
 
-  Program& shadowMapProg = instanceSM->LoadProgram(
-    "ShadowMap", *instanceSM->GetShader("ShadowMap.vert"), *instanceSM->GetShader("ShadowMap.frag"));
+  Program& shadowMapProg = _instanceSM->LoadProgram(
+    "ShadowMap", *_instanceSM->GetShader("ShadowMap.vert"), *_instanceSM->GetShader("ShadowMap.frag"));
   shadowMapProg.SetUniform1i("u_material.diffuse", 0);
   shadowMapProg.SetUniform1i("u_material.specular", 1);
   shadowMapProg.SetUniform1f("u_material.shininess", 32.0f);
   shadowMapProg.SetUniform1i("u_shadowMap", 10);
   shadowMapProg.SetUniform1f("u_gamma", 2.2f);
+
+  Program& visualShadowDepthProg = _instanceSM->LoadProgram(
+    "VisualShadowDepth", *_instanceSM->GetShader("VisualShadowDepth.vert"), *_instanceSM->GetShader("VisualShadowDepth.frag"));
+  visualShadowDepthProg.SetUniform1i("u_depthMap", 0);
+  visualShadowDepthProg.SetUniform1f("u_nearPlane", INITIAL_ZNEAR);
+  visualShadowDepthProg.SetUniform1f("u_farPlane", INITIAL_ZFAR);
 }
 void Engine::LoadTextures() const
 {
   /* Load textures */
   for (auto& entry : std::filesystem::recursive_directory_iterator(TEXTURES_PATH))
     if (!std::filesystem::is_directory(entry))
-      instanceTM->LoadTexture(entry.path().lexically_normal());
+      _instanceTM->LoadTexture(entry.path().lexically_normal());
 
   /* Load icons */
   for (auto& entry : std::filesystem::recursive_directory_iterator(ICONS_PATH))
     if (!std::filesystem::is_directory(entry))
-      instanceTM->LoadTextureIcon(entry.path().lexically_normal());
+      _instanceTM->LoadTextureIcon(entry.path().lexically_normal());
 }
 void Engine::CreateFramebuffer(int samples, int width, int height)
 {
-  fboMultisampled.Create();
+  _fboMultisampled.Create();
 
   /* Create a multisampled color attachment texture */
   Texture2D textColMultAtt;
@@ -387,14 +390,14 @@ void Engine::CreateFramebuffer(int samples, int width, int height)
   depthStencMultAtt.Create();
   depthStencMultAtt.CreateStorageMulstisampled(samples, width, height);
 
-  fboMultisampled.AttachTexture(GL_COLOR_ATTACHMENT0, textColMultAtt, 0);
-  fboMultisampled.AttachRenderBuffer(GL_DEPTH_STENCIL_ATTACHMENT, depthStencMultAtt);
+  _fboMultisampled.AttachTexture(GL_COLOR_ATTACHMENT0, textColMultAtt, 0);
+  _fboMultisampled.AttachRenderBuffer(GL_DEPTH_STENCIL_ATTACHMENT, depthStencMultAtt);
 
-  if (fboMultisampled.CheckStatus() != GL_FRAMEBUFFER_COMPLETE)
+  if (_fboMultisampled.CheckStatus() != GL_FRAMEBUFFER_COMPLETE)
     CONSOLE_WARN("Multisampled framebuffer is not complete!");
 
   /* Configure second post - processing framebuffer */
-  fboIntermediate.Create();
+  _fboIntermediate.Create();
 
   /* Create normal color attachment texture */
   Texture2D textColAtt;
@@ -405,14 +408,38 @@ void Engine::CreateFramebuffer(int samples, int width, int height)
   textColAtt.SetParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   textColAtt.SetParameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-  fboIntermediate.AttachTexture(GL_COLOR_ATTACHMENT0, textColAtt, 0);
+  _fboIntermediate.AttachTexture(GL_COLOR_ATTACHMENT0, textColAtt, 0);
 
-  if (fboIntermediate.CheckStatus() != GL_FRAMEBUFFER_COMPLETE)
+  if (_fboIntermediate.CheckStatus() != GL_FRAMEBUFFER_COMPLETE)
     CONSOLE_WARN("Intermediate framebuffer is not complete!");
+}
+void Engine::CreateFramebufferShadowMap(int width, int height)
+{
+  _fboShadowMap.Create();
+
+  /*
+    Create a 2D texture that we'll use as the framebuffer's depth buffer.
+    We also give the texture a width and height: this is the resolution of the depth map
+  */
+  Texture2D depthMap;
+  depthMap.internalformat = GL_DEPTH_COMPONENT16;
+  depthMap.Create(GL_TEXTURE_2D);
+  depthMap.CreateStorage(width, height);
+  depthMap.SetParameteri(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  depthMap.SetParameteri(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+
+  /* Resolve the problem of over sampling */
+  depthMap.SetParameteri(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+  depthMap.SetParameteri(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+  depthMap.SetParameterfv(GL_TEXTURE_BORDER_COLOR, array<float, 4>{ 1.0, 1.0, 1.0, 1.0 }.data());
+
+  /* With the generated depth texture we can attach it as the framebuffer's depth buffer */
+  _fboShadowMap.AttachTexture(GL_DEPTH_ATTACHMENT, depthMap, 0);
 }
 void Engine::CreateScreenSquare()
 {
-  screenSquare.Create();
+  _screenSquare.Create();
 
   float vertices[] = {
     /* positions   texCoords */
@@ -424,7 +451,7 @@ void Engine::CreateScreenSquare()
      1.0f,  1.0f,  1.0f, 1.0f
   };
   VertexBuffer vbo(sizeof(vertices), vertices, GL_STATIC_DRAW);
-  screenSquare.AttachVertexBuffer(0, vbo, 0, 4 * sizeof(float));
+  _screenSquare.AttachVertexBuffer(0, vbo, 0, 4 * sizeof(float));
 
   VertexSpecifications specs{};
   specs.attrindex = 0;
@@ -433,7 +460,7 @@ void Engine::CreateScreenSquare()
   specs.normalized = true;
   specs.relativeoffset = 0;
   specs.type = GL_FLOAT;
-  screenSquare.SetVertexSpecifications(specs);
+  _screenSquare.SetVertexSpecifications(specs);
 
   specs.attrindex = 1;
   specs.bindingindex = 0;
@@ -441,16 +468,16 @@ void Engine::CreateScreenSquare()
   specs.normalized = true;
   specs.relativeoffset = 2 * sizeof(float);
   specs.type = GL_FLOAT;
-  screenSquare.SetVertexSpecifications(specs);
+  _screenSquare.SetVertexSpecifications(specs);
 
   
-  screenSquare.numVertices = 6;
-  screenSquare.numIndices = 0;
+  _screenSquare.numVertices = 6;
+  _screenSquare.numIndices = 0;
 }
 void Engine::ResizeFramebuffer(vec2i32 newViewportSize)
 {
-  viewport = newViewportSize;
-  fboMultisampled.Delete();
-  fboIntermediate.Delete();
+  _viewport = newViewportSize;
+  _fboMultisampled.Delete();
+  _fboIntermediate.Delete();
   CreateFramebuffer(4, newViewportSize.x, newViewportSize.y);
 }

@@ -6,14 +6,17 @@
 
 #include <GLFW/glfw3.h>
 
+constexpr static float movementSpeed = 7.5f;
+constexpr static float mouseSensitivity = 25.0f;
+
 /* -----------------------------------------------------
  *          PUBLIC METHODS
  * -----------------------------------------------------
 */
 
-Camera::Camera(const vec3f& position, float fov, float aspect) 
+Camera::Camera(const vec3f& position, float fov, float aspect, float znear, float zfar)
 {
-	cameraComponent = new CameraComponent(position, fov, aspect);
+	cameraComponent = new CameraComponent(position, fov, aspect, znear, zfar);
 }
 
 Camera::~Camera() 
@@ -24,9 +27,6 @@ Camera::~Camera()
 void Camera::ProcessInput(float delta)
 {
 	WindowManager* window = WindowManager::Instance();
-
-	const static float movementSpeed = 7.5f;
-	const static float mouseSensitivity = 25.0f; 
 
 	Move(*window, movementSpeed, delta);
 	if (window->GetMouseKey(GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
@@ -76,7 +76,6 @@ void Camera::Move(WindowManager& window, const float movementSpeed, float delta)
 		cameraComponent->position -= cameraComponent->GetUpVector() * velocity;
 	}
 }
-
 void Camera::Rotate(WindowManager& window, const float mouseSensitivity, float delta)
 {
 	vec2d mousePos = window.GetCursorPosition();

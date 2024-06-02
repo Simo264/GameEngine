@@ -44,25 +44,25 @@ public:
 		_reg->remove<T>(_entity);
 	}
 
-	bool Compare(const GameObject& other) const
-	{
-		return static_cast<uint32_t>(_entity) == static_cast<uint32_t>(other.GetObjectID());
-	}
-
 	entt::entity GetObjectID() const 
 	{ 
 		return _entity; 
 	}
 
-	bool IsValid() const 
-	{  
-		return (_reg && _entity != entt::null); 
-	}
-
-	void Invalidate() 
-	{ 
+	void Invalidate()
+	{
 		_entity = entt::null;
 		_reg = nullptr;
+	}
+
+	bool IsEqual(const GameObject& rhs) const 
+	{
+		return static_cast<uint32_t>(_entity) == static_cast<uint32_t>(rhs.GetObjectID());
+	}
+
+	operator bool() const 
+	{ 
+		return (_reg && _entity != entt::null); 
 	}
 
 private:

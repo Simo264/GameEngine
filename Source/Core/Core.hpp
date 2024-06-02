@@ -18,12 +18,6 @@
 #include <sstream>
 #include <vector>
 
-constexpr int		INITIAL_WINDOW_W	= 1600;
-constexpr int		INITIAL_WINDOW_H	= 900;
-constexpr float	INITIAL_ZNEAR			= 0.1f;
-constexpr float	INITIAL_ZFAR			= 100.0f;
-constexpr float GAMMA_CORRECTION	= 2.2f;
-
 
 /* -----------------------------
 			STL library layer

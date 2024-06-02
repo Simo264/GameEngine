@@ -18,7 +18,6 @@ struct Material{
   sampler2D specularTexture;
   float     shininess;
 };
-
 struct DirectionalLight{
   vec3  color;
   float ambient;
@@ -26,7 +25,6 @@ struct DirectionalLight{
   float specular;
   vec3  direction;
 };
-
 struct PointLight{
   vec3  color;
   float ambient;
@@ -36,7 +34,6 @@ struct PointLight{
   float linear;     /* attenuation */
   float quadratic;  /* attenuation */
 };
-
 struct SpotLight{
   vec3  color;
   float ambient;

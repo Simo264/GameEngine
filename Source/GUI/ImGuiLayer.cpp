@@ -11,6 +11,8 @@
 #include <imgui/imgui_impl_opengl3.h>
 #include <imgui/imgui_internal.h>
 
+#include <GLFW/glfw3.h>
+
 namespace ImGuiLayer
 {
   void SetupContext() 
@@ -23,10 +25,9 @@ namespace ImGuiLayer
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         /* Enable Docking */
     io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;       /* Enable Multi-Viewport / Platform Windows */
     
-    ImGui_ImplGlfw_InitForOpenGL(WindowManager::Instance()->GetContext(), true);
+    ImGui_ImplGlfw_InitForOpenGL(WindowManager::Instance()->GetCurrentContext(), true);
     ImGui_ImplOpenGL3_Init("#version 460");
   }
-
   void CleanUp()
   {
     ImGui_ImplOpenGL3_Shutdown();
@@ -46,7 +47,6 @@ namespace ImGuiLayer
     ImGui_ImplGlfw_NewFrame();
     ImGui::Begin();
   }
-
   void DrawData()
   {
     auto window = WindowManager::Instance();
@@ -56,13 +56,40 @@ namespace ImGuiLayer
     ImGuiIO& io = ImGui::GetIO();
     if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
     {
-      WindowManager::Context backup_current_context = window->GetContext();
+      WindowManager::Context backCurrentContext = window->GetCurrentContext();
       ImGui::UpdatePlatformWindows();
       ImGui::RenderPlatformWindowsDefault();
-      window->SetContext(backup_current_context);
+      window->MakeContextCurrent(backCurrentContext);
     }
   }
 
+  void Docking()
+  {
+    ImGuiWindowFlags windowFlags = ImGuiWindowFlags_MenuBar |
+      ImGuiWindowFlags_NoDocking |
+      ImGuiWindowFlags_NoBackground |
+      ImGuiWindowFlags_NoTitleBar |
+      ImGuiWindowFlags_NoCollapse |
+      ImGuiWindowFlags_NoResize |
+      ImGuiWindowFlags_NoBringToFrontOnFocus |
+      ImGuiWindowFlags_NoNavFocus |
+      ImGuiWindowFlags_NoMove;
+
+    const ImGuiViewport* viewport = ImGui::GetMainViewport();
+    ImGui::SetNextWindowPos(viewport->WorkPos);
+    ImGui::SetNextWindowSize(viewport->WorkSize);
+    ImGui::SetNextWindowViewport(viewport->ID);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+
+    ImGui::Begin("Dockspace", nullptr, windowFlags);
+
+    ImGui::PopStyleVar(3);
+    ImGuiID dockspaceID = ImGui::GetID("Dockspace");
+    ImGui::DockSpace(dockspaceID, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_PassthruCentralNode);
+    ImGui::End();
+  }
   void RenderMenuBar()
   {
     if (ImGui::BeginMainMenuBar())
@@ -84,22 +111,110 @@ namespace ImGuiLayer
       ImGui::EndMainMenuBar();
     }
   }
-
-  void RenderOutlinerPanel(Scene& scene)
+  GameObject RenderOutlinerPanel(Scene& scene)
   {
+    static char nodeName[64]{};
+    static GameObject objectSelected{};
+    
     static bool visible = true;
-    ImGui::Begin("Outliner", &visible);
+    if (visible)
     {
+      ImGui::SetNextWindowBgAlpha(0.0f);
+      ImGui::Begin("Outliner", &visible);
+      ImGui::SetNextItemOpen(true, ImGuiCond_Once);
       if (ImGui::TreeNode("Scene"))
       {
         for (auto [entity, lComp] : scene.Reg().view<LabelComponent>().each())
         {
-          ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-        }
+          GameObject object{ entity, &scene.Reg() };
 
+          ImGuiTreeNodeFlags flags =
+            ImGuiTreeNodeFlags_OpenOnArrow |
+            ImGuiTreeNodeFlags_OpenOnDoubleClick |
+            ImGuiTreeNodeFlags_SpanAvailWidth |
+            ImGuiTreeNodeFlags_Leaf |
+            ImGuiTreeNodeFlags_NoTreePushOnOpen;
+
+          if (objectSelected && objectSelected.IsEqual(object))
+            flags |= ImGuiTreeNodeFlags_Selected;
+
+          std::format_to(nodeName, "{}", lComp.label.c_str());
+          ImGui::TreeNodeEx(reinterpret_cast<void*>(entity), flags, nodeName);
+
+          if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
+            objectSelected = object;
+
+          std::fill_n(nodeName, 64, 0);
+        }
         ImGui::TreePop();
       }
+      ImGui::End();
     }
+
+    return objectSelected;
+  }
+  void RenderDetails(GameObject object)
+  {
+    static bool visible = true;
+    constexpr float infinity = 1'000'000;
+
+    if (!visible)
+      return;
+
+    ImGui::Begin("Details", &visible);
+    
+    if (auto light = object.GetComponent<DirLightComponent>())
+    {
+      if (ImGui::CollapsingHeader("DirLightComponent"))
+      {
+
+      }
+    }
+    if (auto light = object.GetComponent<PointLightComponent>())
+    {
+      if (ImGui::CollapsingHeader("PointLightComponent"))
+      {
+
+      }
+    }
+    if (auto light = object.GetComponent<SpotLightComponent>())
+    {
+      if (ImGui::CollapsingHeader("SpotLightComponent"))
+      {
+
+      }
+    }
+    if (auto transform = object.GetComponent<TransformComponent>())
+    {
+      if (ImGui::CollapsingHeader("TransformComponent"))
+      {
+        //vec3f position{ 0.0f, 0.0f, 0.0f };
+        //vec3f scale{ 1.0f, 1.0f, 1.0f };
+        //vec3f rotation{ 0.0f, 0.0f, 0.0f };
+        
+        ImGui::DragFloat3("position", (float*)&transform->position, 0.1f, -infinity, infinity);
+        ImGui::DragFloat3("scale", (float*)&transform->scale, 0.1f, -infinity, infinity);
+        ImGui::DragFloat3("rotation", (float*)&transform->rotation, 0.1f, -180.0f, 180.0f);
+        transform->UpdateTransformation();
+      }
+    }
+    if (auto mesh = object.GetComponent<StaticMeshComponent>())
+    {
+      if (ImGui::CollapsingHeader("StaticMeshComponent"))
+      {
+
+      }
+    }
+
     ImGui::End();
+  }
+  void RenderDemo()
+  {
+    static bool visible = true;
+    if (!visible)
+      return;
+    
+    ImGui::SetNextWindowBgAlpha(0.0f);
+    ImGui::ShowDemoWindow(&visible);
   }
 }
