@@ -72,7 +72,7 @@ static void RenderScene(Scene& scene, Program* sceneProgram)
     sceneProgram->SetUniform1f("u_directionalLight.diffuse", light.diffuse);
     sceneProgram->SetUniform1f("u_directionalLight.specular", light.specular);
     sceneProgram->SetUniform3f("u_directionalLight.direction", light.direction);
-    });
+  });
 
   int i = 0;
   scene.Reg().view<PointLightComponent>().each([sceneProgram, &i](auto& light) {
@@ -84,6 +84,19 @@ static void RenderScene(Scene& scene, Program* sceneProgram)
     sceneProgram->SetUniform1f(std::format("u_pointLight[{}].linear", i).c_str(), light.linear);
     sceneProgram->SetUniform1f(std::format("u_pointLight[{}].quadratic", i).c_str(), light.quadratic);
     i++;
+  });
+
+  scene.Reg().view<SpotLightComponent>().each([sceneProgram](auto& light) {
+    sceneProgram->SetUniform3f("u_spotLight.color", light.color);
+    sceneProgram->SetUniform1f("u_spotLight.ambient", light.ambient);
+    sceneProgram->SetUniform1f("u_spotLight.diffuse", light.diffuse);
+    sceneProgram->SetUniform1f("u_spotLight.specular", light.specular);
+    sceneProgram->SetUniform3f("u_spotLight.direction", light.direction);
+    sceneProgram->SetUniform3f("u_spotLight.position", light.position);
+    sceneProgram->SetUniform1f("u_spotLight.linear", light.linear);
+    sceneProgram->SetUniform1f("u_spotLight.quadratic", light.quadratic);
+    sceneProgram->SetUniform1f("u_spotLight.cutOff", light.cutOff);
+    sceneProgram->SetUniform1f("u_spotLight.outerCutOff", light.outerCutOff);
   });
 
   scene.Reg().view<StaticMeshComponent, TransformComponent>().each([sceneProgram](auto& mesh, auto& transform) {
@@ -152,6 +165,7 @@ void Engine::Run()
   /* -------------------------- Scene -------------------------- */
   Scene scene;
   scene.LoadScene((ROOT_PATH / "Scene.ini"));
+
 
   /* -------------------------- Pre-loop -------------------------- */
   Program* framebufferProgram = _instanceSM->GetProgram("Framebuffer");

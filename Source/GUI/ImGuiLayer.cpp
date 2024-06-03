@@ -167,31 +167,46 @@ namespace ImGuiLayer
     {
       if (ImGui::CollapsingHeader("DirLightComponent"))
       {
-
+        ImGui::ColorEdit3("color", (float*)&light->color);
+        ImGui::SliderFloat("ambient", &light->ambient, 0.0f, 1.0f);
+        ImGui::SliderFloat("diffuse", &light->diffuse,  0.0f, 1.0f);
+        ImGui::SliderFloat("specular", &light->specular, 0.0f, 1.0f);
+        ImGui::DragFloat3("direction", (float*)&light->direction, 0.1f, -infinity, infinity);
       }
     }
     if (auto light = object.GetComponent<PointLightComponent>())
     {
       if (ImGui::CollapsingHeader("PointLightComponent"))
       {
-
+        ImGui::ColorEdit3("color", (float*)&light->color);
+        ImGui::SliderFloat("ambient", &light->ambient, 0.0f, 1.0f);
+        ImGui::SliderFloat("diffuse", &light->diffuse, 0.0f, 1.0f);
+        ImGui::SliderFloat("specular", &light->specular, 0.0f, 1.0f);
+        ImGui::DragFloat3("position", (float*)&light->position, 0.1f, -infinity, infinity);
+        ImGui::SliderFloat("linear", &light->linear, 0.0f, 1.0f);
+        ImGui::SliderFloat("quadratic", &light->quadratic, 0.0f, 1.0f);
       }
     }
     if (auto light = object.GetComponent<SpotLightComponent>())
     {
       if (ImGui::CollapsingHeader("SpotLightComponent"))
       {
-
+        ImGui::ColorEdit3("color", (float*)&light->color);
+        ImGui::SliderFloat("ambient", &light->ambient, 0.0f, 1.0f);
+        ImGui::SliderFloat("diffuse", &light->diffuse, 0.0f, 1.0f);
+        ImGui::SliderFloat("specular", &light->specular, 0.0f, 1.0f);
+        ImGui::DragFloat3("direction", (float*)&light->direction, 0.1f, -infinity, infinity);
+        ImGui::DragFloat3("position", (float*)&light->position, 0.1f, -infinity, infinity);
+        ImGui::SliderFloat("linear", &light->linear, 0.0f, 1.0f);
+        ImGui::SliderFloat("quadratic", &light->quadratic, 0.0f, 1.0f);
+        ImGui::SliderFloat("cutoff", &light->cutOff, 1.0f, light->outerCutOff);
+        ImGui::SliderFloat("outer cutoff", &light->outerCutOff, light->cutOff, 30.0f);
       }
     }
     if (auto transform = object.GetComponent<TransformComponent>())
     {
       if (ImGui::CollapsingHeader("TransformComponent"))
       {
-        //vec3f position{ 0.0f, 0.0f, 0.0f };
-        //vec3f scale{ 1.0f, 1.0f, 1.0f };
-        //vec3f rotation{ 0.0f, 0.0f, 0.0f };
-        
         ImGui::DragFloat3("position", (float*)&transform->position, 0.1f, -infinity, infinity);
         ImGui::DragFloat3("scale", (float*)&transform->scale, 0.1f, -infinity, infinity);
         ImGui::DragFloat3("rotation", (float*)&transform->rotation, 0.1f, -180.0f, 180.0f);
@@ -202,10 +217,12 @@ namespace ImGuiLayer
     {
       if (ImGui::CollapsingHeader("StaticMeshComponent"))
       {
-
+        // VertexArray vao;
+        // Material		material;
+        // fspath			modelPath;
       }
     }
-
+    
     ImGui::End();
   }
   void RenderDemo()

@@ -141,8 +141,8 @@ public:
 	float quadratic{ 0.032f };
 
 	/* spotlight's radius */
-	float cutOff{ Math::Cos(Math::Radians(12.5)) }; 
-	float outerCutOff{ Math::Cos(Math::Radians(17.5)) };
+	float cutOff{ 12.5f };
+	float outerCutOff{ 17.5f };
 };
 
 /**

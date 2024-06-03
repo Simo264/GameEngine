@@ -33,43 +33,43 @@ void SceneSerializer::SerializeScene(Scene& scene, const fspath& filepath)
 		if (auto light = object.GetComponent<DirLightComponent>())
 		{
 			string section = std::format("entity{}:DirLightComponent", objectID);
-			conf.Update(section.c_str(), "color",			std::format("{},{},{}", light->color.x, light->color.y, light->color.z).c_str());
-			conf.Update(section.c_str(), "ambient",		std::format("{}", light->ambient).c_str());
-			conf.Update(section.c_str(), "diffuse",		std::format("{}", light->diffuse).c_str());
-			conf.Update(section.c_str(), "specular",	std::format("{}", light->specular).c_str());
+			conf.Update(section.c_str(), "color", std::format("{},{},{}", light->color.x, light->color.y, light->color.z).c_str());
+			conf.Update(section.c_str(), "ambient", std::format("{}", light->ambient).c_str());
+			conf.Update(section.c_str(), "diffuse", std::format("{}", light->diffuse).c_str());
+			conf.Update(section.c_str(), "specular", std::format("{}", light->specular).c_str());
 			conf.Update(section.c_str(), "direction", std::format("{},{},{}", light->direction.x, light->direction.y, light->direction.z).c_str());
 		}
 		if (auto light = object.GetComponent<PointLightComponent>())
 		{
 			string section = std::format("entity{}:PointLightComponent", objectID);
-			conf.Update(section.c_str(), "color",			std::format("{},{},{}", light->color.x, light->color.y, light->color.z).c_str());
-			conf.Update(section.c_str(), "ambient",		std::to_string(light->ambient).c_str());
-			conf.Update(section.c_str(), "diffuse",		std::to_string(light->diffuse).c_str());
-			conf.Update(section.c_str(), "specular",	std::to_string(light->specular).c_str());
-			conf.Update(section.c_str(), "position",	std::format("{},{},{}", light->position.x, light->position.y, light->position.z).c_str());
-			conf.Update(section.c_str(), "linear",		std::to_string(light->linear).c_str());
+			conf.Update(section.c_str(), "color", std::format("{},{},{}", light->color.x, light->color.y, light->color.z).c_str());
+			conf.Update(section.c_str(), "ambient", std::to_string(light->ambient).c_str());
+			conf.Update(section.c_str(), "diffuse", std::to_string(light->diffuse).c_str());
+			conf.Update(section.c_str(), "specular", std::to_string(light->specular).c_str());
+			conf.Update(section.c_str(), "position", std::format("{},{},{}", light->position.x, light->position.y, light->position.z).c_str());
+			conf.Update(section.c_str(), "linear", std::to_string(light->linear).c_str());
 			conf.Update(section.c_str(), "quadratic", std::to_string(light->quadratic).c_str());
 		}
 		if (auto light = object.GetComponent<SpotLightComponent>())
 		{
 			string section = std::format("entity{}:SpotLightComponent", objectID);
-			conf.Update(section.c_str(), "color",				std::format("{},{},{}", light->color.x, light->color.y, light->color.z).c_str());
-			conf.Update(section.c_str(), "ambient",			std::to_string(light->ambient).c_str());
-			conf.Update(section.c_str(), "diffuse",			std::to_string(light->diffuse).c_str());
-			conf.Update(section.c_str(), "specular",		std::to_string(light->specular).c_str());
-			conf.Update(section.c_str(), "direction",		std::format("{},{},{}", light->direction.x, light->direction.y, light->direction.z).c_str());
-			conf.Update(section.c_str(), "position",		std::format("{},{},{}", light->position.x, light->position.y, light->position.z).c_str());
-			conf.Update(section.c_str(), "linear",			std::to_string(light->linear).c_str());
-			conf.Update(section.c_str(), "quadratic",		std::to_string(light->quadratic).c_str());
-			conf.Update(section.c_str(), "cutOff",			std::to_string(light->cutOff).c_str());
-			conf.Update(section.c_str(), "outerCutOff", std::to_string(light->outerCutOff).c_str());
+			conf.Update(section.c_str(), "color", std::format("{},{},{}", light->color.x, light->color.y, light->color.z).c_str());
+			conf.Update(section.c_str(), "ambient", std::to_string(light->ambient).c_str());
+			conf.Update(section.c_str(), "diffuse", std::to_string(light->diffuse).c_str());
+			conf.Update(section.c_str(), "specular", std::to_string(light->specular).c_str());
+			conf.Update(section.c_str(), "direction", std::format("{},{},{}", light->direction.x, light->direction.y, light->direction.z).c_str());
+			conf.Update(section.c_str(), "position", std::format("{},{},{}", light->position.x, light->position.y, light->position.z).c_str());
+			conf.Update(section.c_str(), "linear", std::to_string(light->linear).c_str());
+			conf.Update(section.c_str(), "quadratic", std::to_string(light->quadratic).c_str());
+			conf.Update(section.c_str(), "cutoff", std::to_string(light->cutOff).c_str());
+			conf.Update(section.c_str(), "outercutoff", std::to_string(light->outerCutOff).c_str());
 		}
 		if (auto transform = object.GetComponent<TransformComponent>())
 		{
 			string section = std::format("entity{}:TransformComponent", objectID);
-			conf.Update(section.c_str(), "position",	std::format("{},{},{}", transform->position.x, transform->position.y, transform->position.z).c_str());
-			conf.Update(section.c_str(), "scale",			std::format("{},{},{}", transform->scale.x, transform->scale.y, transform->scale.z).c_str());
-			conf.Update(section.c_str(), "rotation",	std::format("{},{},{}", transform->rotation.x, transform->rotation.y, transform->rotation.z).c_str());
+			conf.Update(section.c_str(), "position", std::format("{},{},{}", transform->position.x, transform->position.y, transform->position.z).c_str());
+			conf.Update(section.c_str(), "scale", std::format("{},{},{}", transform->scale.x, transform->scale.y, transform->scale.z).c_str());
+			conf.Update(section.c_str(), "rotation", std::format("{},{},{}", transform->rotation.x, transform->rotation.y, transform->rotation.z).c_str());
 		}
 		if (auto mesh = object.GetComponent<StaticMeshComponent>())
 		{
@@ -82,7 +82,7 @@ void SceneSerializer::SerializeScene(Scene& scene, const fspath& filepath)
 		}
 	
 	}
-	conf.Write(true);
+	conf.Generate(true);
 }
 void SceneSerializer::DeserializeScene(Scene& scene, const fspath& filepath)
 { 
@@ -177,8 +177,8 @@ void SceneSerializer::DeserializeScene(Scene& scene, const fspath& filepath)
 			light.direction = INIFileParser::StringToVec3f(strDirection);
 			light.linear = std::stof(conf.GetValue(section.c_str(), "linear"));
 			light.quadratic = std::stof(conf.GetValue(section.c_str(), "quadratic"));
-			light.cutOff = std::stof(conf.GetValue(section.c_str(), "cutOff"));
-			light.outerCutOff = std::stof(conf.GetValue(section.c_str(), "outerCutOff"));
+			light.cutOff = std::stof(conf.GetValue(section.c_str(), "cutoff"));
+			light.outerCutOff = std::stof(conf.GetValue(section.c_str(), "outercutoff"));
 		}
 	}
 }
