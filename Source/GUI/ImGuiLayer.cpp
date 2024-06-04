@@ -161,6 +161,7 @@ namespace ImGuiLayer
     if (!visible)
       return;
 
+    ImGui::SetNextWindowBgAlpha(0.0f);
     ImGui::Begin("Details", &visible);
     
     if (auto light = object.GetComponent<DirLightComponent>())
@@ -234,4 +235,5 @@ namespace ImGuiLayer
     ImGui::SetNextWindowBgAlpha(0.0f);
     ImGui::ShowDemoWindow(&visible);
   }
+
 }

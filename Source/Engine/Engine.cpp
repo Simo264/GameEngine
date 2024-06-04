@@ -27,11 +27,17 @@
 
 constexpr int		INITIAL_WINDOW_W = 1600;
 constexpr int		INITIAL_WINDOW_H = 900;
-constexpr float	INITIAL_ZNEAR = 1.0f;
-constexpr float	INITIAL_ZFAR = 100.0f;
 constexpr float GAMMA_CORRECTION = 2.2f;
 
+constexpr float	Z_NEAR  = 1.0f;
+constexpr float	Z_FAR   = 100.0f;
+constexpr float LEFT    = -30.0f;
+constexpr float RIGHT   = 30.0f;
+constexpr float BOTTOM  = -30.0f;
+constexpr float TOP     = 30.0f;
+
 uint32_t drawCalls = 0;
+
 
 static void SetGlobalGlStates()
 {
@@ -154,8 +160,8 @@ void Engine::Run()
     vec3f( 30.0f, 15.0f, 10.0f ),
     45.0f, 
     static_cast<float>(_viewport.x) / static_cast<float>(_viewport.y), 
-    INITIAL_ZNEAR, 
-    INITIAL_ZFAR
+    Z_NEAR, 
+    Z_FAR
   );
   camera.cameraComponent->yaw = -180.0f;
   camera.cameraComponent->pitch = -30.0f;
@@ -165,6 +171,17 @@ void Engine::Run()
   /* -------------------------- Scene -------------------------- */
   Scene scene;
   scene.LoadScene((ROOT_PATH / "Scene.ini"));
+
+  DirLightComponent* dirlight = nullptr;
+  scene.Reg().view<DirLightComponent>().each([&dirlight](auto& light) {
+    dirlight = &light;
+  });
+
+  /* -------------------------- Scene -------------------------- */
+  const mat4f lightProjection = Math::Ortho(LEFT, RIGHT, BOTTOM, TOP, Z_NEAR, Z_FAR);
+  const vec3f lightPosition{ -2.0f, 20.0f, -1.0f };
+  mat4f lightView{};
+  mat4f lightSpaceMatrix{};
 
 
   /* -------------------------- Pre-loop -------------------------- */
@@ -176,14 +193,10 @@ void Engine::Run()
 
   Texture2D& fboImageTexture = _fboIntermediate.GetTextureAttachment(0);
   Texture2D& fboImageTextureShadowMap = _fboShadowMap.GetTextureAttachment(0);
-  
-  const vec3f lightPosition{ -2.0f, 4.0f, -1.0f };
-  const vec3f lightDirection{ 0.0f, 0.0f, 4.0f }; // dirLight->direction
-  const mat4f lightProjection = Math::Ortho(-10.0f, 10.0f, -10.0f, 10.0f, INITIAL_ZNEAR, INITIAL_ZFAR);
-  mat4f lightView;
-  mat4f lightSpaceMatrix;
 
   time_point lastUpdateTime = system_clock::now();
+
+  int toggle = 2;
   
   /* -------------------------- loop -------------------------- */
   while (_instanceWM->IsOpen())
@@ -195,19 +208,26 @@ void Engine::Run()
     const auto now = system_clock::now();
     const std::chrono::duration<double> diff = now - lastUpdateTime;
     const double delta = diff.count();
-    drawCalls = 0;
     const float time = glfwGetTime();
+    drawCalls = 0;
 
     /* -------------------------- Input -------------------------- */
     _instanceWM->PoolEvents();
     camera.ProcessInput(delta);
 
+    if (_instanceWM->GetKey(GLFW_KEY_1) == GLFW_PRESS)
+      toggle = 1;
+    else if (_instanceWM->GetKey(GLFW_KEY_2) == GLFW_PRESS)
+      toggle = 2;
+    else if (_instanceWM->GetKey(GLFW_KEY_3) == GLFW_PRESS)
+      toggle = 3;
+
     /* -------------------------- Update -------------------------- */
     const auto& cameraViewMatrix = camera.cameraComponent->GetView();
     const auto& cameraProjectionMatrix = camera.cameraComponent->GetProjection();
-    lightView = Math::LookAt(lightPosition, lightDirection, vec3f(0.0f, 1.0f, 0.0f));
+    lightView = Math::LookAt(lightPosition, dirlight->direction, vec3f(0.0f, 1.0f, 0.0f));
     lightSpaceMatrix = lightProjection * lightView;
-
+    
     /* -------------------------- Rendering -------------------------- */
     /* Render depth of scene to texture(from directional light's perspective) */
     _fboShadowMap.Bind(GL_FRAMEBUFFER);
@@ -216,7 +236,6 @@ void Engine::Run()
       glClear(GL_DEPTH_BUFFER_BIT);
       shadowMapDepthProgram->Use();
       shadowMapDepthProgram->SetUniformMat4f("u_lightSpaceMatrix", lightSpaceMatrix);
-      
       scene.Reg().view<StaticMeshComponent, TransformComponent>().each([shadowMapDepthProgram](auto& mesh, auto& transform) {
         shadowMapDepthProgram->SetUniformMat4f("u_model", transform.GetTransformation());
         mesh.Draw();
@@ -231,6 +250,7 @@ void Engine::Run()
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
       /* Render scene with no shadows */
+      if(toggle == 1)
       {
         sceneProgram->Use();
         sceneProgram->SetUniformMat4f("u_projection", cameraProjectionMatrix);
@@ -240,28 +260,25 @@ void Engine::Run()
       }
 
       /* Render scene with shadows map */
+      else if(toggle == 2)
       {
-        //shadowMapProgram->Use();
+        shadowMapProgram->Use();
+        shadowMapProgram->SetUniformMat4f("u_projection", cameraProjectionMatrix);
+        shadowMapProgram->SetUniformMat4f("u_view", cameraViewMatrix);
+        shadowMapProgram->SetUniformMat4f("u_lightSpaceMatrix", lightSpaceMatrix);
 
-        //shadowMapProgram->SetUniform1i("u_material.diffuse", 0);
-        //shadowMapProgram->SetUniform1i("u_material.specular", 1);
-        //shadowMapProgram->SetUniform1f("u_material.shininess", 32.0f);
-        //shadowMapProgram->SetUniform1i("u_shadowMap", 10);
-        //shadowMapProgram->SetUniform1f("u_gamma", 2.2f);
-
-        //shadowMapProgram->SetUniformMat4f("u_projection", cameraProjectionMatrix);
-        //shadowMapProgram->SetUniformMat4f("u_view", cameraViewMatrix);
-        //shadowMapProgram->SetUniform3f("u_viewPos", camera.cameraComponent->position);
-        //shadowMapProgram->SetUniform3f("u_lightPos", lightPosition);
-        //fboImageTextureShadowMap.BindTextureUnit(10);
-        //RenderScene(scene, shadowMapProgram);
+        shadowMapProgram->SetUniform3f("u_viewPos", camera.cameraComponent->position);
+        shadowMapProgram->SetUniform3f("u_lightPos", lightPosition);
+        fboImageTextureShadowMap.BindTextureUnit(10);
+        RenderScene(scene, shadowMapProgram);
       }
 
       /* Render Depth map texture for visual debugging */
+      else if(toggle == 3)
       {
-        //visualshadowDepthProgram->Use();
-        //fboImageTextureShadowMap.BindTextureUnit(0);
-        //DrawArrays(GL_TRIANGLES, _screenSquare);
+        visualshadowDepthProgram->Use();
+        fboImageTextureShadowMap.BindTextureUnit(0);
+        DrawArrays(GL_TRIANGLES, _screenSquare);
       }
 
       /* Blit multisampled buffer to normal colorbuffer of intermediate FBO */
@@ -278,7 +295,7 @@ void Engine::Run()
     fboImageTexture.BindTextureUnit(0);
     DrawArrays(GL_TRIANGLES, _screenSquare);
 
-    ImGuiLayer::RenderDemo();
+    //ImGuiLayer::RenderDemo();
     auto objectSelected = ImGuiLayer::RenderOutlinerPanel(scene);
     if (objectSelected)
       ImGuiLayer::RenderDetails(objectSelected);
@@ -372,8 +389,8 @@ void Engine::LoadPrograms() const
   Program& visualShadowDepthProg = _instanceSM->LoadProgram(
     "VisualShadowDepth", *_instanceSM->GetShader("VisualShadowDepth.vert"), *_instanceSM->GetShader("VisualShadowDepth.frag"));
   visualShadowDepthProg.SetUniform1i("u_depthMap", 0);
-  visualShadowDepthProg.SetUniform1f("u_nearPlane", INITIAL_ZNEAR);
-  visualShadowDepthProg.SetUniform1f("u_farPlane", INITIAL_ZFAR);
+  visualShadowDepthProg.SetUniform1f("u_nearPlane", Z_NEAR);
+  visualShadowDepthProg.SetUniform1f("u_farPlane", Z_FAR);
 }
 void Engine::LoadTextures() const
 {
@@ -441,7 +458,6 @@ void Engine::CreateFramebufferShadowMap(int width, int height)
   depthMap.CreateStorage(width, height);
   depthMap.SetParameteri(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   depthMap.SetParameteri(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
 
   /* Resolve the problem of over sampling */
   depthMap.SetParameteri(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);

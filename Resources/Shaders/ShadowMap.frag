@@ -50,22 +50,22 @@ float CalculateShadows(vec3 lightDir);
 
 void main()
 {     
-  /* Init globals */
-  g_normal        = normalize(Normal);
-  g_viewDir       = normalize(u_viewPos - FragPos);
-  g_diffuseColor  = texture(u_material.diffuseTexture, TexCoords).rgb;
-  g_specularColor = texture(u_material.specularTexture, TexCoords).rgb;
+    /* Init globals */
+    g_normal        = normalize(Normal);
+    g_viewDir       = normalize(u_viewPos - FragPos);
+    g_diffuseColor  = texture(u_material.diffuseTexture, TexCoords).rgb;
+    g_specularColor = texture(u_material.specularTexture, TexCoords).rgb;
+    
+    vec3 result = vec3(0, 0, 0);
   
-  vec3 result = vec3(0, 0, 0);
-
-  /* Phase 1: Directional lighting */
-  result += CalculateDirectionalLight(u_directionalLight);
-
-  /* Apply gamma correction */
-  if(u_gamma != 0)
-    result = pow(result, vec3(1.0 / u_gamma));
-
-  FragColor = vec4(result, 1.0);
+    /* Phase 1: Directional lighting */
+    result += CalculateDirectionalLight(u_directionalLight);
+  
+    /* Apply gamma correction */
+    if(u_gamma != 0)
+      result = pow(result, vec3(1.0 / u_gamma));
+  
+    FragColor = vec4(result, 1.0);
 }
 
 
@@ -86,7 +86,7 @@ vec3 CalculateDirectionalLight(DirectionalLight light)
   vec3 specular         = light.specular * specularFactor * g_specularColor;
 
   /* Calculate shadow */
-  float shadow = 1; //CalculateShadows(lightDir);                      
+  float shadow = CalculateShadows(lightDir);
   return (ambient + (1.0 - shadow) * (diffuse + specular)) * g_diffuseColor;   
 }
 
@@ -112,7 +112,6 @@ float CalculateShadows(vec3 lightDir)
   
   /* Resolve the problem of shadow acne with bias */
   float bias = max(0.05 * (1.0 - dot(g_normal, lightDir)), 0.005);  
-  return (currentDepth - bias > closestDepth) ? 1.0 : 0.0;
 
   /* Percentage-closer filtering (PCF) */
   vec2 texelSize = 1.0 / textureSize(u_shadowMap, 0);

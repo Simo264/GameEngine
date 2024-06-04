@@ -16,9 +16,9 @@ uniform mat4 u_lightSpaceMatrix;
 
 void main()
 {
-  FragPos           = vec3(u_model * vec4(aPos, 1.0));
-  Normal            = aNormal;
-  TexCoords         = aTexCoords;
-  FragPosLightSpace = u_lightSpaceMatrix * vec4(FragPos, 1.0);
-  gl_Position       = u_projection * u_view * u_model * vec4(aPos, 1.0);
+	  FragPos           = vec3(u_model * vec4(aPos, 1.0));
+	  Normal            = mat3(u_model) * aNormal;
+	  TexCoords         = aTexCoords;
+	  FragPosLightSpace = u_lightSpaceMatrix * vec4(FragPos, 1.0);
+	  gl_Position       = u_projection * u_view * u_model * vec4(aPos, 1.0);
 }
