@@ -9,9 +9,16 @@ out vec3 Normal;
 out vec2 TexCoords;
 out vec4 FragPosLightSpace;
 
-uniform mat4 u_projection;
-uniform mat4 u_view;
-uniform mat4 u_model;
+layout (std140) uniform u_mvpBlock
+{
+  mat4 u_model;
+  mat4 u_view;
+  mat4 u_projection;
+};
+
+//uniform mat4 u_model;
+//uniform mat4 u_view;
+//uniform mat4 u_projection;
 uniform mat4 u_lightSpaceMatrix;
 
 void main()

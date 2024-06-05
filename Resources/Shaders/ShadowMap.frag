@@ -13,19 +13,22 @@ out vec4 FragColor;
 
 /* ---------- Structs ---------- */
 /* ----------------------------- */
-struct Material{
+struct Material
+{
   sampler2D diffuseTexture;
   sampler2D specularTexture;
   float     shininess;
 };
-struct DirectionalLight{
+struct DirectionalLight
+{
   vec3  color;
   float ambient;
   float diffuse;
   float specular;
   vec3  direction;
 };
-struct PointLight{
+struct PointLight
+{
   vec3  color;
   float ambient;
   float diffuse;
@@ -34,7 +37,8 @@ struct PointLight{
   float linear;     /* attenuation */
   float quadratic;  /* attenuation */
 };
-struct SpotLight{
+struct SpotLight
+{
   vec3  color;
   float ambient;
   float diffuse;

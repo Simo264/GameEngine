@@ -68,15 +68,17 @@ StaticMeshComponent::StaticMeshComponent(const fspath& filePath)
 	specs.relativeoffset = 6 * sizeof(float);
 	vao.SetVertexSpecifications(specs);
 
-	ObjectLoader loader(filePath);
+	Buffer vbo;
+	vbo.target = GL_ARRAY_BUFFER;
+	Buffer ebo;
+	ebo.target = GL_ELEMENT_ARRAY_BUFFER;
 
-	VertexBuffer vbo;
-	ElementBuffer ebo;
+	ObjectLoader loader(filePath);
 	loader.LoadMesh(vbo, ebo);
 
 	material = loader.material;
-	vao.numVertices = vbo.GetSize() / (8 * sizeof(float));
-	vao.numIndices	= ebo.GetSize() / sizeof(uint32_t);
+	vao.numVertices = vbo.size / (8 * sizeof(float));
+	vao.numIndices	= ebo.size / sizeof(uint32_t);
 
 	if (vbo.IsValid())
 	{

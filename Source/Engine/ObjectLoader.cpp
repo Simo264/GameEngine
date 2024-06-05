@@ -4,13 +4,12 @@
 #include "Core/Math/Math.hpp"
 #include "Core/Log/Logger.hpp"
 
-#include "Engine/Graphics/VertexBuffer.hpp"
-#include "Engine/Graphics/ElementBuffer.hpp"
+#include "Engine/Components.hpp"
+
+#include "Engine/Graphics/Buffer.hpp"
 #include "Engine/Graphics/Texture2D.hpp"
 
 #include "Engine/Subsystems/TextureManager.hpp"
-
-#include "Engine/Components.hpp"
 
 /* -----------------------------------------------------
  *          PUBLIC METHODS
@@ -32,11 +31,11 @@ ObjectLoader::ObjectLoader(const fspath& filePath)
   }
 }
 
-void ObjectLoader::LoadMesh(VertexBuffer& vbo, ElementBuffer& ebo)
+void ObjectLoader::LoadMesh(Buffer& vbo, Buffer& ebo)
 {
   aiMesh* aimesh = _scene->mMeshes[0];
-  const uint64_t vertexDataSizeBytes  = aimesh->mNumVertices * 8 * sizeof(float);
-  const uint64_t indDatasizeBytes     = aimesh->mNumFaces * 3 * sizeof(uint32_t);
+  const uint64_t vertexDataSizeBytes = aimesh->mNumVertices * 8 * sizeof(float);
+  const uint64_t indDatasizeBytes = aimesh->mNumFaces * 3 * sizeof(uint32_t);
 
   if (vertexDataSizeBytes > 0)
   {
@@ -65,7 +64,7 @@ void ObjectLoader::LoadMesh(VertexBuffer& vbo, ElementBuffer& ebo)
  * -----------------------------------------------------
 */
 
-void ObjectLoader::LoadVertices(const aiMesh* aimesh, VertexBuffer& vbo)
+void ObjectLoader::LoadVertices(const aiMesh* aimesh, Buffer& vbo)
 {
   float* vboPtr = reinterpret_cast<float*>(vbo.MapStorage(GL_WRITE_ONLY));
   if (!vboPtr)
@@ -97,7 +96,7 @@ void ObjectLoader::LoadVertices(const aiMesh* aimesh, VertexBuffer& vbo)
   vbo.UnmapStorage();
 }
 
-void ObjectLoader::LoadIndices(const aiMesh* aimesh, ElementBuffer& ebo)
+void ObjectLoader::LoadIndices(const aiMesh* aimesh, Buffer& ebo)
 {
   uint32_t* eboPtr = reinterpret_cast<uint32_t*>(ebo.MapStorage(GL_WRITE_ONLY));
   if (!eboPtr)

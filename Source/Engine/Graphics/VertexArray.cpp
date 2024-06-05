@@ -1,7 +1,7 @@
 #include "VertexArray.hpp"
-#include "Core/Log/Logger.hpp"
 
 #include "Core/OpenGL.hpp"
+#include "Core/Log/Logger.hpp"
 
 VertexArray::VertexArray()
   : id{ static_cast<uint32_t>(-1) },
@@ -23,7 +23,7 @@ void VertexArray::Delete()
   if (eboAttachment.IsValid())
     eboAttachment.Delete();
 
-  for (VertexBuffer& vbo : vboAttachments)
+  for (Buffer& vbo : vboAttachments)
     if (vbo.IsValid())
       vbo.Delete();
 
@@ -52,13 +52,13 @@ void VertexArray::DisableAttribute(int attribindex) const
   glDisableVertexArrayAttrib(id, attribindex);
 }
 
-void VertexArray::AttachVertexBuffer(int bindingindex, VertexBuffer& buffer, int offset, int stride)
+void VertexArray::AttachVertexBuffer(int bindingindex, Buffer& buffer, int offset, int stride)
 {
   vboAttachments.push_back(buffer);
   glVertexArrayVertexBuffer(id, bindingindex, buffer.id, offset, stride);
 }
 
-void VertexArray::AttachElementBuffer(ElementBuffer& buffer)
+void VertexArray::AttachElementBuffer(Buffer& buffer)
 {
   eboAttachment = buffer;
   glVertexArrayElementBuffer(id, buffer.id);
@@ -77,8 +77,6 @@ void VertexArray::SetAttribBinding(int attribindex, int bindingindex) const
 void VertexArray::SetVertexSpecifications(const VertexSpecifications& specs) const
 {
   SetAttribFormat(specs.attrindex, specs.components, specs.type, specs.normalized, specs.relativeoffset);
-  
   SetAttribBinding(specs.attrindex, specs.bindingindex);
-  
   EnableAttribute(specs.attrindex);
 }

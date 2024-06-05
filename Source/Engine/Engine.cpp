@@ -11,12 +11,10 @@
 #include "Engine/GameObject.hpp"
 #include "Engine/Components.hpp"
 
+#include "Engine/Graphics/Buffer.hpp"
 #include "Engine/Graphics/Depth.hpp"
 #include "Engine/Graphics/Stencil.hpp"
 #include "Engine/Graphics/Culling.hpp"
-#include "Engine/Graphics/VertexBuffer.hpp"
-#include "Engine/Graphics/ElementBuffer.hpp"
-#include "Engine/Graphics/RenderBuffer.hpp"
 #include "Engine/Graphics/Texture2D.hpp"
 #include "Engine/Graphics/Shader.hpp"
 #include "Engine/Graphics/Renderer.hpp"
@@ -190,6 +188,7 @@ void Engine::Run()
   Program* shadowMapDepthProgram = _instanceSM->GetProgram("ShadowMapDepth");
   Program* shadowMapProgram = _instanceSM->GetProgram("ShadowMap");
   Program* visualshadowDepthProgram = _instanceSM->GetProgram("VisualShadowDepth");
+
 
   Texture2D& fboImageTexture = _fboIntermediate.GetTextureAttachment(0);
   Texture2D& fboImageTextureShadowMap = _fboShadowMap.GetTextureAttachment(0);
@@ -480,7 +479,12 @@ void Engine::CreateScreenSquare()
      1.0f, -1.0f,  1.0f, 0.0f,
      1.0f,  1.0f,  1.0f, 1.0f
   };
-  VertexBuffer vbo(sizeof(vertices), vertices, GL_STATIC_DRAW);
+  //Buffer vbo(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+  Buffer vbo;
+  vbo.target = GL_ARRAY_BUFFER;
+  vbo.Create();
+  vbo.CreateStorage(sizeof(vertices), vertices, GL_STATIC_DRAW);
+  
   _screenSquare.AttachVertexBuffer(0, vbo, 0, 4 * sizeof(float));
 
   VertexSpecifications specs{};

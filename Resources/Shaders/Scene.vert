@@ -8,14 +8,21 @@ out vec3 Normal;
 out vec2 TexCoords;
 out vec3 FragPos;
 
-uniform mat4 u_model;
-uniform mat4 u_view;
-uniform mat4 u_projection;
+layout (std140) uniform u_mvpBlock
+{
+  mat4 u_model;
+  mat4 u_view;
+  mat4 u_projection;
+};
+
+//uniform mat4 u_model;
+//uniform mat4 u_view;
+//uniform mat4 u_projection;
 
 void main()
 {
   FragPos     = vec3(u_model * vec4(aPos, 1.0));
-  Normal      = mat3(u_model) * aNormal;
+  Normal      = mat3(u_view) * aNormal;
   TexCoords   = aTexCoords;
   gl_Position = u_projection * u_view * u_model * vec4(aPos, 1.0f);
 }

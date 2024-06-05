@@ -1,8 +1,7 @@
 ﻿#pragma once
 
 #include "Core/Core.hpp"
-#include "Engine/Graphics/VertexBuffer.hpp"
-#include "Engine/Graphics/ElementBuffer.hpp"
+#include "Engine/Graphics/Buffer.hpp"
 
 /**  
  *  https://www.khronos.org/opengl/wiki/Vertex_Specification 
@@ -88,18 +87,18 @@ public:
   void Unbind() const;
 
   /**
-   * Bind the vertex buffer <vertexBuffer> to the binding point whose index is given by <bindingindex>
+   * Bind the vertex buffer to the binding point whose index is given by bindingindex
    * 
    * @param bindingindex: the index of the vertex buffer binding point to which to bind the buffer
    * @param offset:       the offset of the first element of the buffer
    * @param stride:       the distance between elements within the buffer
    */
-  void AttachVertexBuffer(int bindingindex, VertexBuffer& buffer, int offset, int stride);
+  void AttachVertexBuffer(int bindingindex, Buffer& buffer, int offset, int stride);
 
   /**
    * Configures element array buffer binding of a vertex array object
    */
-  void AttachElementBuffer(ElementBuffer& buffer);
+  void AttachElementBuffer(Buffer& buffer);
 
   /**
    * Enable a generic vertex attribute array
@@ -155,7 +154,7 @@ public:
   int numVertices;
   int numIndices;
 
-  ElementBuffer         eboAttachment;
-  vector<VertexBuffer>  vboAttachments;
+  Buffer         eboAttachment;
+  vector<Buffer> vboAttachments;
 };
 

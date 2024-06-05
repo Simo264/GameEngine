@@ -21,7 +21,7 @@ public:
 	 * @param vbo: create and initialize the vertex buffer object with vertices
 	 * @param ebo: create and initialize the vertex buffer object with indices
 	 */
-	void LoadMesh(class VertexBuffer& vbo, class ElementBuffer& ebo);
+	void LoadMesh(class Buffer& vbo, class Buffer& ebo);
 	
 	Material material;
 
@@ -29,7 +29,7 @@ private:
 	Assimp::Importer _importer;
 	const aiScene* _scene;
 
-	void LoadVertices(const aiMesh* aimesh, class VertexBuffer& vbo);
-	void LoadIndices(const	aiMesh* aimesh,	class ElementBuffer& ebo);
+	void LoadVertices(const aiMesh* aimesh, class Buffer& vbo);
+	void LoadIndices(const	aiMesh* aimesh,	class Buffer& ebo);
 	class Texture2D* LoadTexture(const aiMaterial* aimaterial, const char* textureType);
 };

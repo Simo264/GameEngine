@@ -13,7 +13,7 @@ class Buffer
 {
 public:
 	Buffer();
-
+	Buffer(int target, uint64_t size, const uint32_t* data, int usage);
 	~Buffer() = default;
 
 	/**
@@ -43,7 +43,7 @@ public:
 	 * @param offset: specifies the offset (in bytes) into the buffer object's data store where data replacement will begin
 	 * @param size:   specifies the size in bytes of the data store region being replaced
 	 */
-	void UpdateStorage(int offset, uint32_t size, const void* data);
+	void UpdateStorage(int offset, uint32_t size, const void* data) const;
 
 	/**
 	 * Copy all or part of the data store of the buffer object to the data store of another buffer object
@@ -57,7 +57,7 @@ public:
 	 * @para writeOffset: specifies the offset within the data store of the destination buffer
 	 *                     at which data will be written.
 	 */
-	void CopyStorage(const Buffer& writeBuffer, int readOffset, int writeOffset, uint64_t size);
+	void CopyStorage(const Buffer& writeBuffer, int readOffset, int writeOffset, uint64_t size) const;
 
 	/**
 	 * Map all of the buffer object's data store into the client's address space
@@ -66,37 +66,32 @@ public:
 	 *								or both read from and write to the buffer object's mapped data store.
 	 *								The symbolic constant must be GL_READ_ONLY, GL_WRITE_ONLY, or GL_READ_WRITE
 	 */
-	void* MapStorage(int access);
+	void* MapStorage(int access) const;
 
 	/**
 	 * Release the mapping of the buffer object's data store into the client's address space
 	 */
-	bool UnmapStorage();
+	bool UnmapStorage() const;
 
 	/**
 	 * Bind the buffer object
 	 */
-	virtual void Bind() const = 0;
+	void Bind() const;
 
 	/**
 	 * Unbind the buffer object
 	 */
-	virtual void Unbind() const = 0;
+	void Unbind() const;
 
+	constexpr bool IsValid() const { return id != static_cast<uint32_t>(-1) && target != -1; }
+	constexpr bool IsEqual(const Buffer& other) const { return id == other.id; }
+
+	uint32_t id;
+	
 	/**
-	 * Returns TRUE if buffer is the name of a buffer object. 
-	 * If buffer is zero or if is a non-zero value that is not the name of a buffer object, returns FALSE
+	 * https://registry.khronos.org/OpenGL-Refpages/gl4/html/glBindBuffer.xhtml
 	 */
-	static bool IsBuffer(uint32_t buffer);
-
-	constexpr bool Compare(const Buffer& other) const { return id == other.id; }
-
-	constexpr bool IsValid() const { return id != static_cast<uint32_t>(-1); }
-
-	constexpr uint64_t GetSize() const { return _size; }
-
-	uint32_t id;		/* the buffer id*/
-
-protected:
-	uint64_t _size;	/* the buffer size in bytes */
+	int target;
+	
+	uint64_t size; /* size in bytes */
 };

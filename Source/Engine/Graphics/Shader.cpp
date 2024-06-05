@@ -114,6 +114,16 @@ int Program::GetUniformLocation(const char* name) const
   return glGetUniformLocation(id, name);
 }
 
+int Program::GetUniformBlockIndex(const char* name) const
+{
+  return glGetUniformBlockIndex(id, name);
+}
+
+void Program::SetUniformBlockBinding(int uniformBlockIndex, int uniformBlockBinding) const
+{
+  glUniformBlockBinding(id, uniformBlockIndex, uniformBlockBinding);
+}
+
 void Program::SetUniform1i(const char* uniformname, int value) const
 {
   glProgramUniform1i(id, GetUniformLocation(uniformname), value);
