@@ -25,11 +25,35 @@ struct DirectionalLight{
   float specular;
   vec3  direction;
 };
+struct PointLight{
+  vec3  color;
+  float ambient;
+  float diffuse;
+  float specular;
+  vec3  position;
+  float linear;     /* attenuation */
+  float quadratic;  /* attenuation */
+};
+struct SpotLight{
+  vec3  color;
+  float ambient;
+  float diffuse;
+  float specular;
+  vec3  position;
+  vec3  direction;
+  float linear;     /* attenuation */
+  float quadratic;  /* attenuation */
+  float cutOff;
+  float outerCutOff; /* smoother edges */
+};
+
 
 /* ---------- Uniforms ---------- */
 /* ------------------------------ */
 uniform Material          u_material;
 uniform DirectionalLight  u_directionalLight;
+uniform PointLight        u_pointLight[4];
+uniform SpotLight         u_spotLight;
 
 uniform sampler2D u_shadowMap; 
 uniform vec3  u_lightPos;
@@ -47,6 +71,8 @@ vec3 g_viewDir;
 /* ------------------------------- */
 vec3 CalculateDirectionalLight(DirectionalLight light);
 float CalculateShadows(vec3 lightDir);
+vec3 CalculateBlinnPhongLight(PointLight light);
+vec3 CalculateSpotLight(SpotLight light);
 
 void main()
 {     
@@ -58,8 +84,15 @@ void main()
     
     vec3 result = vec3(0, 0, 0);
   
-    /* Phase 1: Directional lighting */
+    /* Calculate Directional lighting */
     result += CalculateDirectionalLight(u_directionalLight);
+
+    /* Calculate point lights */
+    for(int i = 0; i < 4; i++)
+      result += CalculateBlinnPhongLight(u_pointLight[i]);
+
+    /* Calculate spot light */
+    result += CalculateSpotLight(u_spotLight);
   
     /* Apply gamma correction */
     if(u_gamma != 0)
@@ -74,20 +107,20 @@ vec3 CalculateDirectionalLight(DirectionalLight light)
   vec3 lightDir = normalize(u_lightPos - FragPos);
   
   /* ambient shading */
-  vec3 ambient  = light.ambient * g_diffuseColor;
+  vec3 ambient = (light.color * light.ambient) * g_diffuseColor;
 
   /* diffuse shading */
   float diffuseFactor = max(dot(g_normal, lightDir), 0.0);
-  vec3 diffuse = light.diffuse * diffuseFactor * g_diffuseColor;
+  vec3 diffuse = (light.color * light.diffuse) * diffuseFactor * g_diffuseColor; 
   
   /* specular shading */
   vec3 reflectDir       = reflect(-lightDir, g_normal);
   float specularFactor  = pow(max(dot(g_viewDir, reflectDir), 0.0), u_material.shininess);
-  vec3 specular         = light.specular * specularFactor * g_specularColor;
+  vec3 specular         = (light.color * light.specular) * specularFactor * g_specularColor;  
 
   /* Calculate shadow */
   float shadow = CalculateShadows(lightDir);
-  return (ambient + (1.0 - shadow) * (diffuse + specular)) * g_diffuseColor;   
+  return (ambient + (1.0f - shadow) * (diffuse + specular)) * g_diffuseColor;   
 }
 
 float CalculateShadows(vec3 lightDir)
@@ -126,3 +159,70 @@ float CalculateShadows(vec3 lightDir)
   shadow /= 9.0;
   return shadow;
 }
+
+vec3 CalculateBlinnPhongLight(PointLight light)
+{
+  /* ambient */
+  vec3 ambient = (light.color * light.ambient) * g_diffuseColor;
+
+  /* diffuse */
+  vec3 lightDir = normalize(light.position - FragPos);
+  float diffuseFactor = max(dot(g_normal, lightDir), 0.0);
+  vec3 diffuse = (light.color * light.diffuse) * diffuseFactor * g_diffuseColor;  
+    
+  /* specular */
+  vec3 halfwayDir = normalize(lightDir + g_viewDir);
+  float specularFactor = pow(max(dot(g_normal, halfwayDir), 0.0), u_material.shininess);
+  vec3 specular = (light.color * light.specular) * specularFactor * g_specularColor;  
+    
+  /* attenuation */
+  float dist = length(light.position - FragPos);
+  /* linear attenuation */
+  //float attenuation = 1.0 / (dist);
+  /* quadratic attenuation */
+  //float attenuation = 1.0 / (dist * dist);
+  float attenuation = 1.0 / (u_gamma != 0 ? dist * dist : dist);
+
+
+  ambient  *= attenuation;  
+  diffuse  *= attenuation;
+  specular *= attenuation;   
+  return ambient + diffuse + specular;
+}
+
+vec3 CalculateSpotLight(SpotLight light)
+{
+  vec3 lightDir = normalize(light.position - FragPos);
+    
+  /* ambient */
+  vec3 ambient = (light.color * light.ambient) * g_diffuseColor;
+    
+  /* diffuse */
+  float diffuseFactor = max(dot(g_normal, lightDir), 0.0);
+  vec3 diffuse = (light.color * light.diffuse) * diffuseFactor * g_diffuseColor;  
+      
+  /* specular */
+  vec3 reflectDir = reflect(-lightDir, g_normal);  
+  float specularFactor = pow(max(dot(g_viewDir, reflectDir), 0.0), u_material.shininess);
+  vec3 specular = (light.color * light.specular) * specularFactor * g_specularColor;  
+            
+  /* soft edges + intensity */
+  float theta = dot(lightDir, normalize(-light.direction));
+  float cutoff = cos(radians(light.cutOff));
+  float outerCutoff = cos(radians(light.outerCutOff));
+
+  float epsilon = (cutoff - outerCutoff);
+  float intensity = clamp((theta - outerCutoff) / epsilon, 0.0, 1.0);
+  diffuse  *= intensity;
+  specular *= intensity;
+
+  float dist = length(light.position - FragPos);
+  float attenuation = 1.0 / (1.0 + (light.linear * dist) + (light.quadratic * dist * dist));    
+    
+  ambient  *= attenuation; 
+  diffuse  *= attenuation;
+  specular *= attenuation;   
+  return ambient + diffuse + specular;
+}
+
+
