@@ -61,6 +61,38 @@ void Buffer::Bind() const
 	glBindBuffer(target, id);
 }
 
+void Buffer::BindBase(int bindingpoint) const
+{
+	if (
+		target != GL_ATOMIC_COUNTER_BUFFER &&
+		target != GL_TRANSFORM_FEEDBACK_BUFFER &&
+		target != GL_UNIFORM_BUFFER &&
+		target != GL_SHADER_STORAGE_BUFFER
+		)
+	{
+		CONSOLE_ERROR("Target must be one of GL_ATOMIC_COUNTER_BUFFER, GL_TRANSFORM_FEEDBACK_BUFFER, GL_UNIFORM_BUFFER or GL_SHADER_STORAGE_BUFFER");
+		return;
+	}
+
+	glBindBufferBase(target, bindingpoint, id);
+}
+
+void Buffer::BindRange(int bindingpoint, int offset, uint64_t size)
+{
+	if (
+		target != GL_ATOMIC_COUNTER_BUFFER &&
+		target != GL_TRANSFORM_FEEDBACK_BUFFER &&
+		target != GL_UNIFORM_BUFFER &&
+		target != GL_SHADER_STORAGE_BUFFER
+		)
+	{
+		CONSOLE_ERROR("Target must be one of GL_ATOMIC_COUNTER_BUFFER, GL_TRANSFORM_FEEDBACK_BUFFER, GL_UNIFORM_BUFFER or GL_SHADER_STORAGE_BUFFER");
+		return;
+	}
+
+	glBindBufferRange(target, bindingpoint, id, offset, size);
+}
+
 void Buffer::Unbind() const
 {
 	if (target == -1)

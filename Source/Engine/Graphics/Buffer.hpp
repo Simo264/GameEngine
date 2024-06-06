@@ -79,6 +79,22 @@ public:
 	void Bind() const;
 
 	/**
+	 * Bind the buffer object to an indexed buffer target.
+	 * 
+	 * @param bindingpoint: specify the index of the binding point within the array specified by target.
+	 */
+	void BindBase(int bindingpoint) const;
+
+	/**
+	 * Bind a range within the buffer object to an indexed buffer target
+	 * 
+	 * @param bindingpoint: specify the index of the binding point 
+	 * @param offset: the starting offset in bytes into the buffer object buffer
+	 * @param size: the amount of data in bytes that can be read from the buffer
+	 */
+	void BindRange(int bindingpoint, int offset, uint64_t size);
+
+	/**
 	 * Unbind the buffer object
 	 */
 	void Unbind() const;

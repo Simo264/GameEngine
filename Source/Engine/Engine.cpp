@@ -189,9 +189,20 @@ void Engine::Run()
   Program* shadowMapProgram = _instanceSM->GetProgram("ShadowMap");
   Program* visualshadowDepthProgram = _instanceSM->GetProgram("VisualShadowDepth");
 
-
   Texture2D& fboImageTexture = _fboIntermediate.GetTextureAttachment(0);
   Texture2D& fboImageTextureShadowMap = _fboShadowMap.GetTextureAttachment(0);
+
+  /* Uniform block objects */
+  Buffer uboCamera;
+  uboCamera.target = GL_UNIFORM_BUFFER;
+  uboCamera.Create();
+  uboCamera.CreateStorage(2 * sizeof(mat4f), nullptr, GL_STATIC_DRAW);
+  uboCamera.BindBase(0); /* buffer bound to index 0 */
+  
+
+  sceneProgram->SetUniformBlockBinding("cameraBlock", 0); /* cameraBlock bound to index 0 */
+  shadowMapProgram->SetUniformBlockBinding("cameraBlock", 0); /* cameraBlock bound to index 0 */
+
 
   time_point lastUpdateTime = system_clock::now();
 
@@ -224,8 +235,12 @@ void Engine::Run()
     /* -------------------------- Update -------------------------- */
     const auto& cameraViewMatrix = camera.cameraComponent->GetView();
     const auto& cameraProjectionMatrix = camera.cameraComponent->GetProjection();
+    uboCamera.UpdateStorage(0, sizeof(mat4f), &cameraViewMatrix[0]);
+    uboCamera.UpdateStorage(sizeof(mat4f), sizeof(mat4f), &cameraProjectionMatrix[0]);
+
     lightView = Math::LookAt(lightPosition, dirlight->direction, vec3f(0.0f, 1.0f, 0.0f));
     lightSpaceMatrix = lightProjection * lightView;
+
     
     /* -------------------------- Rendering -------------------------- */
     /* Render depth of scene to texture(from directional light's perspective) */
@@ -252,8 +267,6 @@ void Engine::Run()
       if(toggle == 1)
       {
         sceneProgram->Use();
-        sceneProgram->SetUniformMat4f("u_projection", cameraProjectionMatrix);
-        sceneProgram->SetUniformMat4f("u_view", cameraViewMatrix);
         sceneProgram->SetUniform3f("u_viewPos", camera.cameraComponent->position);
         RenderScene(scene, sceneProgram);
       }
@@ -262,10 +275,7 @@ void Engine::Run()
       else if(toggle == 2)
       {
         shadowMapProgram->Use();
-        shadowMapProgram->SetUniformMat4f("u_projection", cameraProjectionMatrix);
-        shadowMapProgram->SetUniformMat4f("u_view", cameraViewMatrix);
         shadowMapProgram->SetUniformMat4f("u_lightSpaceMatrix", lightSpaceMatrix);
-
         shadowMapProgram->SetUniform3f("u_viewPos", camera.cameraComponent->position);
         shadowMapProgram->SetUniform3f("u_lightPos", lightPosition);
         fboImageTextureShadowMap.BindTextureUnit(10);

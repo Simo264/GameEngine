@@ -167,11 +167,8 @@ public:
 
   /**
    * Assign a binding point to an active uniform block
-   * 
-   * @param uniformBlockIndex: the index of the active uniform block within program whose binding to assign
-   * @param uniformBlockBinding: the binding point to which to bind the uniform block with index uniformBlockIndex
    */
-  void SetUniformBlockBinding(int uniformBlockIndex, int uniformBlockBinding) const;
+  void SetUniformBlockBinding(const char* blockname, int uniformBlockBinding) const;
 
   /**
    * Specify the value of a uniform variable for the program object

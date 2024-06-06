@@ -9,16 +9,13 @@ out vec3 Normal;
 out vec2 TexCoords;
 out vec4 FragPosLightSpace;
 
-layout (std140) uniform u_mvpBlock
+layout (std140, binding = 0) uniform cameraBlock
 {
-  mat4 u_model;
   mat4 u_view;
   mat4 u_projection;
 };
 
-//uniform mat4 u_model;
-//uniform mat4 u_view;
-//uniform mat4 u_projection;
+uniform mat4 u_model;
 uniform mat4 u_lightSpaceMatrix;
 
 void main()
