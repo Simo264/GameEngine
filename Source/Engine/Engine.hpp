@@ -2,6 +2,7 @@
 
 #include "Core/Core.hpp"
 
+#include "Engine/Graphics/Buffer.hpp"
 #include "Engine/Graphics/VertexArray.hpp"
 #include "Engine/Graphics/FrameBuffer.hpp"
 #include "Engine/Subsystems/WindowManager.hpp"
@@ -19,6 +20,8 @@ public:
 	void CleanUp();
 
 private:
+	void SetOpenGLStates();
+
 	void LoadShaders() const;
 	void LoadPrograms() const;
 	void LoadTextures() const;
@@ -34,6 +37,8 @@ private:
 	FrameBuffer _fboMultisampled;
 	FrameBuffer _fboIntermediate;
 	FrameBuffer _fboShadowMap;
+
+	Buffer _uboCamera; /* uniform block object */
 
 	VertexArray _screenSquare;
 	vec2i32 _viewport;

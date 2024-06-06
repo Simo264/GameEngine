@@ -11,7 +11,6 @@
 #include "Engine/GameObject.hpp"
 #include "Engine/Components.hpp"
 
-#include "Engine/Graphics/Buffer.hpp"
 #include "Engine/Graphics/Depth.hpp"
 #include "Engine/Graphics/Stencil.hpp"
 #include "Engine/Graphics/Culling.hpp"
@@ -36,38 +35,6 @@ constexpr float TOP     = 30.0f;
 
 uint32_t drawCalls = 0;
 
-
-static void SetGlobalGlStates()
-{
-  /* Depth testing */
-  Depth::EnableTest();
-  Depth::EnableWritingBuffer();
-  Depth::SetFunction(GL_LESS);
-
-  /* Stencil testing */
-  Stencil::DisableTest();
-  Stencil::SetFunction(GL_ALWAYS, 0, 0xFF);
-  Stencil::SetOperation(GL_KEEP, GL_KEEP, GL_KEEP);
-
-  /* Blending OFF */
-  glDisable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-  /* Culling OFF */
-  Culling::DisableFaceCulling();
-  Culling::SetCullFace(GL_BACK);
-  Culling::SetFrontFace(GL_CCW);
-
-  /* Gamma correction OFF */
-  glDisable(GL_FRAMEBUFFER_SRGB);
-
-  /* Antialising ON */
-  glEnable(GL_MULTISAMPLE);
-
-  glClearColor(0.15, 0.15, 0.15, 1.0f);
-  glClearDepth(1.0f);
-  glClearStencil(0);
-}
 static void RenderScene(Scene& scene, Program* sceneProgram)
 {
   scene.Reg().view<DirLightComponent>().each([sceneProgram](auto& light) {
@@ -148,9 +115,14 @@ void Engine::Initialize()
   ImGuiLayer::SetupContext();
   ImGuiLayer::SetFont((FONTS_PATH / "Karla-Regular.ttf"), 16);
 
-  SetGlobalGlStates();
-}
+  /* Initialize uniform block objects */
+  _uboCamera.target = GL_UNIFORM_BUFFER;
+  _uboCamera.Create();
+  _uboCamera.CreateStorage(2 * sizeof(mat4f), nullptr, GL_STATIC_DRAW);
+  _uboCamera.BindBase(0); /* cameraBlock to bindingpoint 0 */
 
+  SetOpenGLStates();
+}
 void Engine::Run()
 {
   /* -------------------------- Camera -------------------------- */
@@ -192,18 +164,6 @@ void Engine::Run()
   Texture2D& fboImageTexture = _fboIntermediate.GetTextureAttachment(0);
   Texture2D& fboImageTextureShadowMap = _fboShadowMap.GetTextureAttachment(0);
 
-  /* Uniform block objects */
-  Buffer uboCamera;
-  uboCamera.target = GL_UNIFORM_BUFFER;
-  uboCamera.Create();
-  uboCamera.CreateStorage(2 * sizeof(mat4f), nullptr, GL_STATIC_DRAW);
-  uboCamera.BindBase(0); /* buffer bound to index 0 */
-  
-
-  sceneProgram->SetUniformBlockBinding("cameraBlock", 0); /* cameraBlock bound to index 0 */
-  shadowMapProgram->SetUniformBlockBinding("cameraBlock", 0); /* cameraBlock bound to index 0 */
-
-
   time_point lastUpdateTime = system_clock::now();
 
   int toggle = 2;
@@ -225,18 +185,15 @@ void Engine::Run()
     _instanceWM->PoolEvents();
     camera.ProcessInput(delta);
 
-    if (_instanceWM->GetKey(GLFW_KEY_1) == GLFW_PRESS)
-      toggle = 1;
-    else if (_instanceWM->GetKey(GLFW_KEY_2) == GLFW_PRESS)
-      toggle = 2;
-    else if (_instanceWM->GetKey(GLFW_KEY_3) == GLFW_PRESS)
-      toggle = 3;
+    if (_instanceWM->GetKey(GLFW_KEY_1) == GLFW_PRESS)      toggle = 1; 
+    else if (_instanceWM->GetKey(GLFW_KEY_2) == GLFW_PRESS) toggle = 2; 
+    else if (_instanceWM->GetKey(GLFW_KEY_3) == GLFW_PRESS) toggle = 3; 
 
     /* -------------------------- Update -------------------------- */
     const auto& cameraViewMatrix = camera.cameraComponent->GetView();
     const auto& cameraProjectionMatrix = camera.cameraComponent->GetProjection();
-    uboCamera.UpdateStorage(0, sizeof(mat4f), &cameraViewMatrix[0]);
-    uboCamera.UpdateStorage(sizeof(mat4f), sizeof(mat4f), &cameraProjectionMatrix[0]);
+    _uboCamera.UpdateStorage(0, sizeof(mat4f), &cameraViewMatrix[0]);
+    _uboCamera.UpdateStorage(sizeof(mat4f), sizeof(mat4f), &cameraProjectionMatrix[0]);
 
     lightView = Math::LookAt(lightPosition, dirlight->direction, vec3f(0.0f, 1.0f, 0.0f));
     lightSpaceMatrix = lightProjection * lightView;
@@ -323,12 +280,12 @@ void Engine::Run()
     lastUpdateTime = now;
   }
 }
-
 void Engine::CleanUp()
 {
   _fboIntermediate.Delete();
   _fboMultisampled.Delete();
   _screenSquare.Delete();
+  _uboCamera.Delete();
 
   ImGuiLayer::CleanUp();
 
@@ -337,12 +294,42 @@ void Engine::CleanUp()
   _instanceWM->CleanUp();
 }
 
-
 /* -----------------------------------------------------
  *          PRIVATE METHODS
  * -----------------------------------------------------
 */
 
+void Engine::SetOpenGLStates()
+{
+  /* Depth testing */
+  Depth::EnableTest();
+  Depth::EnableWritingBuffer();
+  Depth::SetFunction(GL_LESS);
+
+  /* Stencil testing */
+  Stencil::DisableTest();
+  Stencil::SetFunction(GL_ALWAYS, 0, 0xFF);
+  Stencil::SetOperation(GL_KEEP, GL_KEEP, GL_KEEP);
+
+  /* Culling OFF */
+  Culling::DisableFaceCulling();
+  Culling::SetCullFace(GL_BACK);
+  Culling::SetFrontFace(GL_CCW);
+
+  /* Blending OFF */
+  glDisable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+  /* Gamma correction OFF */
+  glDisable(GL_FRAMEBUFFER_SRGB);
+
+  /* Antialising ON */
+  glEnable(GL_MULTISAMPLE);
+
+  glClearColor(0.15, 0.15, 0.15, 1.0f);
+  glClearDepth(1.0f);
+  glClearStencil(0);
+}
 void Engine::LoadShaders() const
 {
   /* Load all shader files in "Shaders/" directory */
