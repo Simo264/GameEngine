@@ -8,6 +8,7 @@
 
 Texture2D::Texture2D()
   : id{ static_cast<uint32_t>(-1) },
+    target{ 0 },
     path{},
     format{ 0 },
     internalformat{ 0 },
@@ -18,7 +19,7 @@ Texture2D::Texture2D()
     _isMultisampled{ false }
 {}
 
-Texture2D::Texture2D(const fspath& path, bool gammaCorrection)
+Texture2D::Texture2D(int target, const fspath& path, bool gammaCorrection)
   : path{ },
     format{ 0 },
     internalformat{ 0 },
@@ -28,37 +29,40 @@ Texture2D::Texture2D(const fspath& path, bool gammaCorrection)
     _samples{ 0 },
     _isMultisampled{ false }
 {
-  Create(GL_TEXTURE_2D);
+  Create(target);
   LoadImageData(path, gammaCorrection);
 }
 
 void Texture2D::Create(int target)
 {
+  if (
+    target != GL_TEXTURE_2D && 
+    target != GL_TEXTURE_2D_MULTISAMPLE
+  )
+  {
+    CONSOLE_ERROR("Invalid texture target");
+    return;
+  }
+  this->target = target;
   glCreateTextures(target, 1, &id);
 }
-
 void Texture2D::Delete() 
 { 
   glDeleteTextures(1, &id); 
-
   id = static_cast<uint32_t>(-1); 
 }
-
 void Texture2D::Bind() const 
 {
-  glBindTexture(GL_TEXTURE_2D, id); 
+  glBindTexture(target, id);
 }
-
 void Texture2D::Unbind() const
 {
-  glBindTexture(GL_TEXTURE_2D, 0);
+  glBindTexture(target, 0);
 }
-
 void Texture2D::BindTextureUnit(int unit) const
 {
   glBindTextureUnit(unit, id);
 }
-
 void Texture2D::GenerateMipmap() const
 {
   glGenerateTextureMipmap(id);
@@ -76,7 +80,6 @@ void Texture2D::CreateStorage(int width, int height)
 
   glTextureStorage2D(id, _mipmapLevels, internalformat, width, height);
 }
-
 void Texture2D::CreateStorageMultisampled(int samples, int width, int height, bool fixedsamplelocations)
 {
   if (internalformat == 0)
@@ -90,7 +93,6 @@ void Texture2D::CreateStorageMultisampled(int samples, int width, int height, bo
   
   glTextureStorage2DMultisample(id, samples, internalformat, width, height, fixedsamplelocations);
 }
-
 void Texture2D::UpdateStorage(int level, int xoffset, int yoffset, int type, const void* pixels) const
 {
   if (internalformat == 0)
@@ -98,7 +100,6 @@ void Texture2D::UpdateStorage(int level, int xoffset, int yoffset, int type, con
 
   glTextureSubImage2D(id, level, xoffset, yoffset, _width, _height, format, type, pixels);
 }
-
 void Texture2D::ClearStorage(int level, int type, const void* data) const
 {
   if (format == 0)
@@ -106,7 +107,6 @@ void Texture2D::ClearStorage(int level, int type, const void* data) const
 
   glClearTexImage(id, level, format, type, data);
 }
-
 void Texture2D::CopyStorage(int level, const Texture2D& dest) const
 {
   if (!dest.IsValid())
@@ -141,7 +141,8 @@ void Texture2D::LoadImageData(const fspath& path, bool gammaCorrection)
       GL_SRGB:        with gamma correction, no alpha component
       GL_SRGB_ALPHA:  with gamma correction, with alpha component
     */
-    switch (nrChannels) {
+    switch (nrChannels) 
+    {
     case 1:
       internalformat  = GL_R8;
       format          = GL_RED;
@@ -167,7 +168,6 @@ void Texture2D::LoadImageData(const fspath& path, bool gammaCorrection)
     
     CreateStorage(width, height);
     UpdateStorage(0, 0, 0, GL_UNSIGNED_BYTE, data);
-
     GenerateMipmap();
   }
   else

@@ -15,14 +15,13 @@
 #include "Engine/Graphics/Stencil.hpp"
 #include "Engine/Graphics/Culling.hpp"
 #include "Engine/Graphics/Texture2D.hpp"
+#include "Engine/Graphics/TextureCubemap.hpp"
 #include "Engine/Graphics/Shader.hpp"
 #include "Engine/Graphics/Renderer.hpp"
 
 #include "GUI/ImGuiLayer.hpp"
 
 #include <GLFW/glfw3.h>
-
-#include <stb_image.h>
 
 constexpr int	INITIAL_WINDOW_W    = 1600;
 constexpr int	INITIAL_WINDOW_H    = 900;
@@ -142,7 +141,6 @@ static void LoadSkybox(VertexArray& vao)
   vao.SetVertexSpecifications(specs);
 }
 
-
 /* -----------------------------------------------------
  *          PUBLIC METHODS
  * -----------------------------------------------------
@@ -192,32 +190,24 @@ void Engine::Initialize()
 }
 void Engine::Run()
 {
-  const vector<fspath> faces = {
-    fspath(TEXTURES_PATH / "skybox/right.jpg"),
-    fspath(TEXTURES_PATH / "skybox/left.jpg"),
-    fspath(TEXTURES_PATH / "skybox/top.jpg"),
-    fspath(TEXTURES_PATH / "skybox/bottom.jpg"),
-    fspath(TEXTURES_PATH / "skybox/front.jpg"),
-    fspath(TEXTURES_PATH / "skybox/back.jpg"),
+  const array<string, 6> faces = {
+    fspath(TEXTURES_PATH / "skybox/right.jpg").string(),
+    fspath(TEXTURES_PATH / "skybox/left.jpg").string(),
+    fspath(TEXTURES_PATH / "skybox/top.jpg").string(),
+    fspath(TEXTURES_PATH / "skybox/bottom.jpg").string(),
+    fspath(TEXTURES_PATH / "skybox/front.jpg").string(),
+    fspath(TEXTURES_PATH / "skybox/back.jpg").string(),
   };
-
-  uint32_t skyboxTexture;
-  glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &skyboxTexture);
-  glTextureParameteri(skyboxTexture, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTextureParameteri(skyboxTexture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTextureParameteri(skyboxTexture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTextureParameteri(skyboxTexture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  glTextureParameteri(skyboxTexture, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-  glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTexture);
-  for (unsigned int i = 0; i < 6; i++)
-  {
-    int width, height, nrChannels;
-    unsigned char* data = stbi_load(faces[i].string().c_str(), &width, &height, &nrChannels, 0);
-    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-    stbi_image_free(data);
-  }
-  glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
-
+  
+  TextureCubemap skyboxTexture;
+  skyboxTexture.Create();
+  skyboxTexture.SetParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  skyboxTexture.SetParameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  skyboxTexture.SetParameteri(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  skyboxTexture.SetParameteri(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  skyboxTexture.SetParameteri(GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+  skyboxTexture.LoadImages(faces);
+  
   VertexArray skyboxVAO;
   LoadSkybox(skyboxVAO);
 
@@ -349,7 +339,7 @@ void Engine::Run()
         skyboxProgram->SetUniformMat4f("u_projection", cameraProjectionMatrix);
         skyboxProgram->SetUniformMat4f("u_view", mat4f(mat3f(cameraViewMatrix)));
 
-        glBindTextureUnit(0, skyboxTexture);
+        skyboxTexture.BindTextureUnit(0);
         Depth::SetFunction(GL_LEQUAL); /* change depth function so depth test passes when values are equal to depth buffer's content */
         DrawArrays(GL_TRIANGLES, skyboxVAO);
         Depth::SetFunction(GL_LESS); /* set depth function back to default */

@@ -28,7 +28,7 @@ Texture2D* TextureManager::LoadTexture(const fspath& filePath, bool gammaCorrect
     return nullptr;
   }
 
-  auto& texture = textures.emplace_back(filePath, gammaCorrection);
+  auto& texture = textures.emplace_back(GL_TEXTURE_2D, filePath, gammaCorrection);
   return &texture;
 }
 
@@ -40,7 +40,7 @@ Texture2D* TextureManager::LoadTextureIcon(const fspath& filePath)
     return nullptr;
   }
 
-  auto& icon = icons.emplace_back(filePath, false);
+  auto& icon = icons.emplace_back(GL_TEXTURE_2D, filePath, false);
   return &icon;
 }
 
