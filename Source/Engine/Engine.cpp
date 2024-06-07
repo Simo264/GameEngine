@@ -15,6 +15,7 @@
 #include "Engine/Graphics/Stencil.hpp"
 #include "Engine/Graphics/Culling.hpp"
 #include "Engine/Graphics/Texture2D.hpp"
+#include "Engine/Graphics/TextureCubemap.hpp"
 #include "Engine/Graphics/Shader.hpp"
 #include "Engine/Graphics/Renderer.hpp"
 
@@ -22,9 +23,9 @@
 
 #include <GLFW/glfw3.h>
 
-constexpr int		INITIAL_WINDOW_W = 1600;
-constexpr int		INITIAL_WINDOW_H = 900;
-constexpr float GAMMA_CORRECTION = 2.2f;
+constexpr int	INITIAL_WINDOW_W    = 1600;
+constexpr int	INITIAL_WINDOW_H    = 900;
+constexpr float GAMMA_CORRECTION  = 2.2f;
 
 constexpr float	Z_NEAR  = 1.0f;
 constexpr float	Z_FAR   = 100.0f;
@@ -74,6 +75,70 @@ static void RenderScene(Scene& scene, Program* sceneProgram)
     sceneProgram->SetUniformMat4f("u_model", transform.GetTransformation());
     mesh.Draw();
   });
+}
+static void LoadSkybox(VertexArray& vao)
+{
+  float skyboxVertices[] = {
+    // positions 
+    -1.0f,  1.0f, -1.0f,
+    -1.0f, -1.0f, -1.0f,
+     1.0f, -1.0f, -1.0f,
+     1.0f, -1.0f, -1.0f,
+     1.0f,  1.0f, -1.0f,
+    -1.0f,  1.0f, -1.0f,
+
+    -1.0f, -1.0f,  1.0f,
+    -1.0f, -1.0f, -1.0f,
+    -1.0f,  1.0f, -1.0f,
+    -1.0f,  1.0f, -1.0f,
+    -1.0f,  1.0f,  1.0f,
+    -1.0f, -1.0f,  1.0f,
+
+     1.0f, -1.0f, -1.0f,
+     1.0f, -1.0f,  1.0f,
+     1.0f,  1.0f,  1.0f,
+     1.0f,  1.0f,  1.0f,
+     1.0f,  1.0f, -1.0f,
+     1.0f, -1.0f, -1.0f,
+
+    -1.0f, -1.0f,  1.0f,
+    -1.0f,  1.0f,  1.0f,
+     1.0f,  1.0f,  1.0f,
+     1.0f,  1.0f,  1.0f,
+     1.0f, -1.0f,  1.0f,
+    -1.0f, -1.0f,  1.0f,
+
+    -1.0f,  1.0f, -1.0f,
+     1.0f,  1.0f, -1.0f,
+     1.0f,  1.0f,  1.0f,
+     1.0f,  1.0f,  1.0f,
+    -1.0f,  1.0f,  1.0f,
+    -1.0f,  1.0f, -1.0f,
+
+    -1.0f, -1.0f, -1.0f,
+    -1.0f, -1.0f,  1.0f,
+     1.0f, -1.0f, -1.0f,
+     1.0f, -1.0f, -1.0f,
+    -1.0f, -1.0f,  1.0f,
+     1.0f, -1.0f,  1.0f
+  };
+
+  Buffer vbo(GL_ARRAY_BUFFER, sizeof(skyboxVertices), skyboxVertices, GL_STATIC_DRAW);
+
+  vao.Create();
+  vao.AttachVertexBuffer(0, vbo, 0, 3 * sizeof(float));
+  vao.numIndices = 0;
+  vao.numVertices = 36;
+  
+  VertexSpecifications specs;
+  specs.attrindex = 0;
+  specs.bindingindex = 0;
+  specs.components = 3;
+  specs.normalized = true;
+  specs.relativeoffset = 0;
+  specs.type = GL_FLOAT;
+
+  vao.SetVertexSpecifications(specs);
 }
 
 /* -----------------------------------------------------
@@ -125,6 +190,28 @@ void Engine::Initialize()
 }
 void Engine::Run()
 {
+  const array<string, 6> faces = {
+    fspath(TEXTURES_PATH / "skybox/right.jpg").string(),
+    fspath(TEXTURES_PATH / "skybox/left.jpg").string(),
+    fspath(TEXTURES_PATH / "skybox/top.jpg").string(),
+    fspath(TEXTURES_PATH / "skybox/bottom.jpg").string(),
+    fspath(TEXTURES_PATH / "skybox/front.jpg").string(),
+    fspath(TEXTURES_PATH / "skybox/back.jpg").string(),
+  };
+  
+  TextureCubemap skyboxTexture;
+  skyboxTexture.Create();
+  skyboxTexture.SetParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  skyboxTexture.SetParameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  skyboxTexture.SetParameteri(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  skyboxTexture.SetParameteri(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  skyboxTexture.SetParameteri(GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+  skyboxTexture.LoadImages(faces);
+  
+  VertexArray skyboxVAO;
+  LoadSkybox(skyboxVAO);
+
+
   /* -------------------------- Camera -------------------------- */
   Camera camera(
     vec3f( 30.0f, 15.0f, 10.0f ),
@@ -160,6 +247,7 @@ void Engine::Run()
   Program* shadowMapDepthProgram = _instanceSM->GetProgram("ShadowMapDepth");
   Program* shadowMapProgram = _instanceSM->GetProgram("ShadowMap");
   Program* visualshadowDepthProgram = _instanceSM->GetProgram("VisualShadowDepth");
+  Program* skyboxProgram = _instanceSM->GetProgram("Skybox");
 
   Texture2D& fboImageTexture = _fboIntermediate.GetTextureAttachment(0);
   Texture2D& fboImageTextureShadowMap = _fboShadowMap.GetTextureAttachment(0);
@@ -227,7 +315,6 @@ void Engine::Run()
         sceneProgram->SetUniform3f("u_viewPos", camera.cameraComponent->position);
         RenderScene(scene, sceneProgram);
       }
-
       /* Render scene with shadows map */
       else if(toggle == 2)
       {
@@ -238,13 +325,24 @@ void Engine::Run()
         fboImageTextureShadowMap.BindTextureUnit(10);
         RenderScene(scene, shadowMapProgram);
       }
-
       /* Render Depth map texture for visual debugging */
       else if(toggle == 3)
       {
         visualshadowDepthProgram->Use();
         fboImageTextureShadowMap.BindTextureUnit(0);
         DrawArrays(GL_TRIANGLES, _screenSquare);
+      }
+
+      /* Draw skybox as last */
+      {
+        skyboxProgram->Use();
+        skyboxProgram->SetUniformMat4f("u_projection", cameraProjectionMatrix);
+        skyboxProgram->SetUniformMat4f("u_view", mat4f(mat3f(cameraViewMatrix)));
+
+        skyboxTexture.BindTextureUnit(0);
+        Depth::SetFunction(GL_LEQUAL); /* change depth function so depth test passes when values are equal to depth buffer's content */
+        DrawArrays(GL_TRIANGLES, skyboxVAO);
+        Depth::SetFunction(GL_LESS); /* set depth function back to default */
       }
 
       /* Blit multisampled buffer to normal colorbuffer of intermediate FBO */
@@ -387,6 +485,10 @@ void Engine::LoadPrograms() const
   visualShadowDepthProg.SetUniform1i("u_depthMap", 0);
   visualShadowDepthProg.SetUniform1f("u_nearPlane", Z_NEAR);
   visualShadowDepthProg.SetUniform1f("u_farPlane", Z_FAR);
+
+  Program& skyboxProg = _instanceSM->LoadProgram(
+    "Skybox", *_instanceSM->GetShader("Skybox.vert"), *_instanceSM->GetShader("Skybox.frag"));
+  skyboxProg.SetUniform1i("u_skybox", 0);
 }
 void Engine::LoadTextures() const
 {

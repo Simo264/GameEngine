@@ -32,19 +32,14 @@ class Texture2D
 public:
   Texture2D();
 
-  Texture2D(const fspath& path, bool gammaCorrection);
+  Texture2D(int target, const fspath& path, bool gammaCorrection);
 
   void LoadImageData(const fspath& path, bool gammaCorrection);
 
   /**
    * Create texture object
    * 
-   * @param target: specifies an array in which names of the new texture objects are stored. Must be one of:
-   *                GL_TEXTURE_1D, GL_TEXTURE_2D, GL_TEXTURE_3D, GL_TEXTURE_1D_ARRAY, GL_TEXTURE_2D_ARRAY, 
-   *                GL_TEXTURE_RECTANGLE, GL_TEXTURE_CUBE_MAP, GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_BUFFER, 
-   *                GL_TEXTURE_2D_MULTISAMPLE or GL_TEXTURE_2D_MULTISAMPLE_ARRAY
-   * 
-   * https://registry.khronos.org/OpenGL-Refpages/gl4/html/glCreateTextures.xhtml
+   * @param target: Must be GL_TEXTURE_2D or GL_TEXTURE_2D_MULTISAMPLE
    */
   void Create(int target);
 
@@ -145,8 +140,9 @@ public:
   constexpr int GetSamples() const { return _samples; }
   constexpr bool IsMultisampled() const { return _isMultisampled; }
   
-
   uint32_t id; /* the texture object id */
+
+  int target;
   
   /**
    * Specifies the format of the pixel data.

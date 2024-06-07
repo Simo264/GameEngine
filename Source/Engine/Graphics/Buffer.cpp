@@ -9,7 +9,7 @@ Buffer::Buffer()
 		size{ 0 }
 {}
 
-Buffer::Buffer(int target, uint64_t size, const uint32_t* data, int usage)
+Buffer::Buffer(int target, uint64_t size, const float* data, int usage)
 	: target{ target }
 {
 	Create();
