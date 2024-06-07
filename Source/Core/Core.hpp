@@ -40,8 +40,9 @@ template<typename type>
 using shared_pointer = std::shared_ptr<type>;
 
 /* Chrono */
-using system_clock	= std::chrono::system_clock;
-using time_point		= std::chrono::system_clock::time_point;
+namespace chrono		= std::chrono;
+using system_clock	= chrono::system_clock;
+using time_point		= chrono::system_clock::time_point;
 
 using string				= std::string;
 using string_view		= std::string_view;
@@ -51,9 +52,11 @@ using ostringstream = std::ostringstream;
 using ifStream			= std::ifstream;
 using ofstream			= std::ofstream;
 using runtime_error	= std::runtime_error;
-using fspath				= std::filesystem::path;
 
-const fspath ROOT_PATH			= std::filesystem::current_path().parent_path();
+namespace fs				= std::filesystem;
+using fspath				= fs::path;
+
+const fspath ROOT_PATH			= fs::current_path().parent_path();
 const fspath SHADERS_PATH		= ROOT_PATH / (fspath("Resources/Shaders/").lexically_normal());
 const fspath TEXTURES_PATH	= ROOT_PATH / (fspath("Resources/Textures/").lexically_normal());
 const fspath ICONS_PATH			= ROOT_PATH / (fspath("Resources/Icons/").lexically_normal());

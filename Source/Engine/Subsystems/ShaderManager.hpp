@@ -11,6 +11,20 @@ class ShaderManager : public Manager<ShaderManager>
 {
 public:
 	/**
+	 * Load all shaders from directory <dirpath>
+	 */
+	void LoadShadersFromDir(const fspath& dirpath);
+
+	/**
+	 * Load all programs from configuration file SM_ProgConfig.ini
+	 * 
+	 */
+	void LoadPrograms();
+
+
+	void SetUpProgramsUniforms();
+
+	/**
 	 * Destroy all shader objects and program objects
 	 */
 	void CleanUp();

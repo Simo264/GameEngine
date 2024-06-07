@@ -2,6 +2,8 @@
 
 #include "Core/Core.hpp"
 #include "Core/Math/Math.hpp"
+
+#define MINI_CASE_SENSITIVE
 #include <mini/ini.h>
 
 /**
@@ -11,8 +13,6 @@ class INIFileParser{
 public:
 	INIFileParser(const fspath& filepath);
 
-	void PrintContent();
-
 	/* Return reference of ini data structure */
 	mINI::INIStructure& GetData() { return _iniData; }
 
@@ -20,6 +20,11 @@ public:
 	void ReadData()
 	{
 		_file->read(_iniData);
+	}
+
+	bool HasKey(const char* section, const char* key)
+	{
+		return _iniData.get(section).has(key);
 	}
 
 	/* Returns a copy of the data and doesn't create new items in the structure */

@@ -109,12 +109,12 @@ void SceneSerializer::DeserializeScene(Scene& scene, const fspath& filepath)
 			object = scene.CreateObject();
 		}
 
-		if (std::strcmp(componentName, "labelcomponent") == 0)
+		if (std::strcmp(componentName, "LabelComponent") == 0)
 		{
 			string label = conf.GetValue(section.c_str(), "label");
 			object.GetComponent<LabelComponent>()->label = label;
 		}
-		else if (std::strcmp(componentName, "transformcomponent") == 0)
+		else if (std::strcmp(componentName, "TransformComponent") == 0)
 		{
 			string strPosition = conf.GetValue(section.c_str(), "position");
 			string strRotation = conf.GetValue(section.c_str(), "rotation");
@@ -126,7 +126,7 @@ void SceneSerializer::DeserializeScene(Scene& scene, const fspath& filepath)
 			transform.scale = INIFileParser::StringToVec3f(strScale);
 			transform.UpdateTransformation();
 		}
-		else if (std::strcmp(componentName, "staticmeshcomponent") == 0)
+		else if (std::strcmp(componentName, "StaticMeshComponent") == 0)
 		{
 			fspath model = fspath(conf.GetValue(section.c_str(), "model_path")).lexically_normal();
 			fspath diffuse = fspath(conf.GetValue(section.c_str(), "material_diffuse	")).lexically_normal();
@@ -138,7 +138,7 @@ void SceneSerializer::DeserializeScene(Scene& scene, const fspath& filepath)
 			if(!specular.empty())
 				mesh.material.specular = instanceTM->GetTextureByPath(specular);
 		}
-		else if (std::strcmp(componentName, "dirlightcomponent") == 0)
+		else if (std::strcmp(componentName, "DirLightComponent") == 0)
 		{
 			string strColor = conf.GetValue(section.c_str(), "color");
 			string strDirection = conf.GetValue(section.c_str(), "direction");
@@ -150,7 +150,7 @@ void SceneSerializer::DeserializeScene(Scene& scene, const fspath& filepath)
 			light.specular = std::stof(conf.GetValue(section.c_str(), "specular"));
 			light.direction = INIFileParser::StringToVec3f(strDirection);
 		}
-		else if (std::strcmp(componentName, "pointlightcomponent") == 0)
+		else if (std::strcmp(componentName, "PointLightComponent") == 0)
 		{
 			string strColor = conf.GetValue(section.c_str(), "color");
 			string strPosition = conf.GetValue(section.c_str(), "position");
@@ -162,7 +162,7 @@ void SceneSerializer::DeserializeScene(Scene& scene, const fspath& filepath)
 			light.specular = std::stof(conf.GetValue(section.c_str(), "specular"));
 			light.position = INIFileParser::StringToVec3f(strPosition);
 		}
-		else if (std::strcmp(componentName, "spotlightcomponent") == 0)
+		else if (std::strcmp(componentName, "SpotLightComponent") == 0)
 		{
 			string strColor = conf.GetValue(section.c_str(), "color");
 			string strPosition = conf.GetValue(section.c_str(), "position");

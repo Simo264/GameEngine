@@ -1,10 +1,12 @@
 #include "ImGuiLayer.hpp"
 
+#include "Core/Dialog/FileDialog.hpp"
 #include "Core/Log/Logger.hpp"
 #include "Engine/Scene.hpp"
 #include "Engine/GameObject.hpp"
 #include "Engine/Components.hpp"
 #include "Engine/Subsystems/WindowManager.hpp"
+#include "Engine/Subsystems/ShaderManager.hpp"
 
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_glfw.h>
@@ -90,7 +92,7 @@ namespace ImGuiLayer
     ImGui::DockSpace(dockspaceID, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_PassthruCentralNode);
     ImGui::End();
   }
-  void RenderMenuBar()
+  void RenderMenuBar(Scene& scene)
   {
     if (ImGui::BeginMainMenuBar())
     {
@@ -98,11 +100,27 @@ namespace ImGuiLayer
       {
         if (ImGui::MenuItem("Open"))
         {
-          CONSOLE_TRACE("Open...");
+          static const char* filters[1] = { "*.ini" };
+          fspath filePath = FileDialog::OpenFileDialog(1, filters, "Open scene (.ini)", false);
+
+          if (!filePath.empty())
+          {
+            /* !IMPORTANT: before loading new scene it needed to relink all the programs to see changes */
+            auto instanceSM = ShaderManager::Instance();
+            for (const auto& program : instanceSM->programs)
+              program.Link();
+            
+            instanceSM->SetUpProgramsUniforms();
+
+            scene.ClearScene();
+            scene.LoadScene(filePath);
+            CONSOLE_INFO("New scene has been loaded");
+          }
         }
         if (ImGui::MenuItem("Save"))
         {
-          CONSOLE_TRACE("Save...");
+          scene.SaveScene(ROOT_PATH / "Scene.ini");
+          CONSOLE_TRACE("The scene has been saved");
         }
 
         ImGui::EndMenu();
