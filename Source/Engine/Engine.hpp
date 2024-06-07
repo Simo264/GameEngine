@@ -38,7 +38,7 @@ private:
 	FrameBuffer _fboIntermediate;
 	FrameBuffer _fboShadowMap;
 
-	Buffer _uboCamera; /* uniform block object */
+	Buffer _uboCamera; /* uniform cameraBlock object */
 
 	VertexArray _screenSquare;
 	vec2i32 _viewport;
