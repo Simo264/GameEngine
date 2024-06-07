@@ -19,20 +19,24 @@
 #include "Engine/Graphics/Shader.hpp"
 #include "Engine/Graphics/Renderer.hpp"
 
+#include "Engine/Subsystems/WindowManager.hpp"
+#include "Engine/Subsystems/ShaderManager.hpp"
+#include "Engine/Subsystems/TextureManager.hpp"
+
 #include "GUI/ImGuiLayer.hpp"
 
 #include <GLFW/glfw3.h>
 
-constexpr int	INITIAL_WINDOW_W    = 1600;
-constexpr int	INITIAL_WINDOW_H    = 900;
-constexpr float GAMMA_CORRECTION  = 2.2f;
+int	INITIAL_WINDOW_W = 1600;
+int	INITIAL_WINDOW_H = 900;
+float GAMMA_CORRECTION = 2.2f;
 
-constexpr float	Z_NEAR  = 1.0f;
-constexpr float	Z_FAR   = 100.0f;
-constexpr float LEFT    = -30.0f;
-constexpr float RIGHT   = 30.0f;
-constexpr float BOTTOM  = -30.0f;
-constexpr float TOP     = 30.0f;
+float	Z_NEAR = 1.0f;
+float	Z_FAR = 100.0f;
+float LEFT = -30.0f;
+float RIGHT = 30.0f;
+float BOTTOM = -30.0f;
+float TOP = 30.0f;
 
 uint32_t drawCalls = 0;
 
@@ -149,6 +153,7 @@ static void LoadSkybox(VertexArray& vao)
 void Engine::Initialize()
 {
   Logger::Initialize();
+  CONSOLE_INFO("Logger initialized");
 
   /* Initialize window */
   _instanceWM = WindowManager::Instance();
@@ -159,10 +164,15 @@ void Engine::Initialize()
   _instanceWM->SetWindowAspectRatio(16, 9);
   _instanceWM->SetWindowVsync(false);
   
+  /* Setup ImGui context */
+  ImGuiLayer::SetupContext();
+  ImGuiLayer::SetFont((FONTS_PATH / "Karla-Regular.ttf"), 16);
+  
   /* Initialize shaders */
   _instanceSM = ShaderManager::Instance();
-  LoadShaders();
-  LoadPrograms();
+  _instanceSM->LoadShadersFromDir(SHADERS_PATH);
+  _instanceSM->LoadPrograms();
+  _instanceSM->SetUpProgramsUniforms();
 
   /* Initialize textures */
   _instanceTM = TextureManager::Instance();
@@ -175,10 +185,6 @@ void Engine::Initialize()
   
   /* Create Framebuffer object for shadows */
   CreateFramebufferShadowMap(1024, 1024);
-
-  /* Setup ImGui context */
-  ImGuiLayer::SetupContext();
-  ImGuiLayer::SetFont((FONTS_PATH / "Karla-Regular.ttf"), 16);
 
   /* Initialize uniform block objects */
   _uboCamera.target = GL_UNIFORM_BUFFER;
@@ -283,7 +289,7 @@ void Engine::Run()
     _uboCamera.UpdateStorage(0, sizeof(mat4f), &cameraViewMatrix[0]);
     _uboCamera.UpdateStorage(sizeof(mat4f), sizeof(mat4f), &cameraProjectionMatrix[0]);
 
-    lightView = Math::LookAt(lightPosition, dirlight->direction, vec3f(0.0f, 1.0f, 0.0f));
+    lightView = Math::LookAt(lightPosition, vec3f(0), vec3f(0.0f, 1.0f, 0.0f));
     lightSpaceMatrix = lightProjection * lightView;
 
     
@@ -338,7 +344,6 @@ void Engine::Run()
         skyboxProgram->Use();
         skyboxProgram->SetUniformMat4f("u_projection", cameraProjectionMatrix);
         skyboxProgram->SetUniformMat4f("u_view", mat4f(mat3f(cameraViewMatrix)));
-
         skyboxTexture.BindTextureUnit(0);
         Depth::SetFunction(GL_LEQUAL); /* change depth function so depth test passes when values are equal to depth buffer's content */
         DrawArrays(GL_TRIANGLES, skyboxVAO);
@@ -360,6 +365,7 @@ void Engine::Run()
     DrawArrays(GL_TRIANGLES, _screenSquare);
 
     //ImGuiLayer::RenderDemo();
+    ImGuiLayer::RenderMenuBar(scene);
     auto objectSelected = ImGuiLayer::RenderOutlinerPanel(scene);
     if (objectSelected)
       ImGuiLayer::RenderDetails(objectSelected);
@@ -428,79 +434,27 @@ void Engine::SetOpenGLStates()
   glClearDepth(1.0f);
   glClearStencil(0);
 }
-void Engine::LoadShaders() const
-{
-  /* Load all shader files in "Shaders/" directory */
-  for (auto& entry : std::filesystem::directory_iterator(SHADERS_PATH))
-  {
-    if (!std::filesystem::is_directory(entry))
-    {
-      string filename = entry.path().filename().string();
-      uint32_t pos = filename.find_last_of('.') + 1;
-      string ext = filename.substr(pos);
-      fspath path = entry.path().lexically_normal();
-
-      if (ext.compare("vert") == 0)
-        _instanceSM->LoadShader(path, GL_VERTEX_SHADER);
-      else if (ext.compare("frag") == 0)
-        _instanceSM->LoadShader(path, GL_FRAGMENT_SHADER);
-      else
-        CONSOLE_WARN("Error on loading file '{}': unknown '.{}' file extension", filename.c_str(), ext.c_str());
-    }
-  }
-}
-void Engine::LoadPrograms() const
-{
-  Program& testingProg = _instanceSM->LoadProgram(
-    "Testing", *_instanceSM->GetShader("Testing.vert"), *_instanceSM->GetShader("Testing.frag"));
-
-  Program& instancingProg = _instanceSM->LoadProgram(
-    "Instancing", *_instanceSM->GetShader("Instancing.vert"), *_instanceSM->GetShader("Scene.frag"));
-
-  Program& frameBufferProg = _instanceSM->LoadProgram(
-    "Framebuffer", *_instanceSM->GetShader("Framebuffer.vert"), *_instanceSM->GetShader("Framebuffer.frag"));
-  frameBufferProg.SetUniform1i("u_screenTexture", 0);
-  frameBufferProg.SetUniform1i("u_postProcessingType", 0);
-
-  Program& sceneProg = _instanceSM->LoadProgram(
-    "Scene", *_instanceSM->GetShader("Scene.vert"), *_instanceSM->GetShader("Scene.frag"));
-  sceneProg.SetUniform1i("u_material.diffuse", 0);
-  sceneProg.SetUniform1i("u_material.specular", 1);
-  sceneProg.SetUniform1f("u_material.shininess", 32.0f);
-  sceneProg.SetUniform1f("u_gamma", 2.2f);
-
-  Program& shadowMapDepthProg = _instanceSM->LoadProgram(
-    "ShadowMapDepth", *_instanceSM->GetShader("ShadowMapDepth.vert"), *_instanceSM->GetShader("ShadowMapDepth.frag"));
-
-  Program& shadowMapProg = _instanceSM->LoadProgram(
-    "ShadowMap", *_instanceSM->GetShader("ShadowMap.vert"), *_instanceSM->GetShader("ShadowMap.frag"));
-  shadowMapProg.SetUniform1i("u_material.diffuse", 0);
-  shadowMapProg.SetUniform1i("u_material.specular", 1);
-  shadowMapProg.SetUniform1f("u_material.shininess", 32.0f);
-  shadowMapProg.SetUniform1i("u_shadowMap", 10);
-  shadowMapProg.SetUniform1f("u_gamma", 2.2f);
-
-  Program& visualShadowDepthProg = _instanceSM->LoadProgram(
-    "VisualShadowDepth", *_instanceSM->GetShader("VisualShadowDepth.vert"), *_instanceSM->GetShader("VisualShadowDepth.frag"));
-  visualShadowDepthProg.SetUniform1i("u_depthMap", 0);
-  visualShadowDepthProg.SetUniform1f("u_nearPlane", Z_NEAR);
-  visualShadowDepthProg.SetUniform1f("u_farPlane", Z_FAR);
-
-  Program& skyboxProg = _instanceSM->LoadProgram(
-    "Skybox", *_instanceSM->GetShader("Skybox.vert"), *_instanceSM->GetShader("Skybox.frag"));
-  skyboxProg.SetUniform1i("u_skybox", 0);
-}
 void Engine::LoadTextures() const
 {
   /* Load textures */
   for (auto& entry : std::filesystem::recursive_directory_iterator(TEXTURES_PATH))
+  {
     if (!std::filesystem::is_directory(entry))
-      _instanceTM->LoadTexture(entry.path().lexically_normal());
+    {
+      const auto path = entry.path().lexically_normal();
+      _instanceTM->LoadTexture(path);
+    }
+  }
 
   /* Load icons */
   for (auto& entry : std::filesystem::recursive_directory_iterator(ICONS_PATH))
+  {
     if (!std::filesystem::is_directory(entry))
-      _instanceTM->LoadTextureIcon(entry.path().lexically_normal());
+    {
+      const auto path = entry.path().lexically_normal();
+      _instanceTM->LoadTextureIcon(path);
+    }
+  }
 }
 void Engine::CreateFramebuffer(int samples, int width, int height)
 {

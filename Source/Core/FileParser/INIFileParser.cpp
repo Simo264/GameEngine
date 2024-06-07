@@ -9,13 +9,19 @@
 
 INIFileParser::INIFileParser(const fspath& filepath)
 {
+	if (!fs::exists(filepath) || !fs::is_regular_file(filepath))
+	{
+		CONSOLE_WARN("<filepath> is not a valid path");
+		return;
+	}
+
 	/* Create a file instance */
 	_file = std::make_unique<mINI::INIFile>(filepath.string());
 }
 
 vec2i32 INIFileParser::StringToVec2i32(string& str, const char* delimiter)
 {
-	vec2i32 vec;
+	vec2i32 vec{};
 	char* token = nullptr;
 	char* next_token = nullptr;
 	token = strtok_s(str.data(), delimiter, &next_token);
@@ -27,7 +33,7 @@ vec2i32 INIFileParser::StringToVec2i32(string& str, const char* delimiter)
 
 vec2f INIFileParser::StringToVec2f(string& str, const char* delimiter)
 {
-	vec2f vec;
+	vec2f vec{};
 	char* token = nullptr;
 	char* next_token = nullptr;
 	token = strtok_s(str.data(), delimiter, &next_token);
@@ -39,7 +45,7 @@ vec2f INIFileParser::StringToVec2f(string& str, const char* delimiter)
 
 vec3i32 INIFileParser::StringToVec3i32(string& str, const char* delimiter)
 {
-	vec3i32 vec;
+	vec3i32 vec{};
 	char* token = nullptr;
 	char* next_token = nullptr;
 	token = strtok_s(str.data(), delimiter, &next_token);
@@ -53,7 +59,7 @@ vec3i32 INIFileParser::StringToVec3i32(string& str, const char* delimiter)
 
 vec3f INIFileParser::StringToVec3f(string& str, const char* delimiter)
 {
-	vec3f vec;
+	vec3f vec{};
 	char* token = nullptr;
 	char* next_token = nullptr;
 	token = strtok_s(str.data(), delimiter, &next_token);

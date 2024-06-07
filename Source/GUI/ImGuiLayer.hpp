@@ -16,7 +16,7 @@ namespace ImGuiLayer
 	void DrawData();
 	void Docking();
 	
-	void RenderMenuBar();
+	void RenderMenuBar(Scene& scene);
 	GameObject RenderOutlinerPanel(Scene& scene);
 	void RenderDetails(GameObject object);
 	void RenderDemo();

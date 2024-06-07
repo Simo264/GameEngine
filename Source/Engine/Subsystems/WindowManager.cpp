@@ -7,7 +7,12 @@
 void WindowManager::Initialize()
 {
   int success = glfwInit();
-  assert(success && "GLFW initialization failed");
+  if (success != GLFW_TRUE)
+  {
+    CONSOLE_CRITICAL("Error on initialize GLFW");
+    exit(EXIT_FAILURE);
+  }
+  CONSOLE_INFO("GLFW initialized");
 
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);  /* Load OpenGL 4.6 */
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
@@ -16,7 +21,12 @@ void WindowManager::Initialize()
 
   /* Set default window values */
   _context = glfwCreateWindow(1600, 900, "GameEngine", nullptr, nullptr); /* 1600x900 */
-  assert(_context && "GLFW creation window failed");
+  if (!_context)
+  {
+    CONSOLE_CRITICAL("Error on creating window");
+    exit(EXIT_FAILURE);
+  }
+  CONSOLE_INFO("Window created");
 
   glfwMakeContextCurrent(_context);
   glfwSetWindowPos(_context, 50, 50);   
@@ -29,7 +39,12 @@ void WindowManager::Initialize()
 
   /* Load OpenGL functions, gladLoadGL returns the loaded version, 0 on error. */
   int version = gladLoadGL(glfwGetProcAddress);
-  assert((version != 0) && "Failed to initialize OpenGL context");
+  if (version == 0)
+  {
+    CONSOLE_CRITICAL("Error on loading OpenGL");
+    exit(EXIT_FAILURE);
+  }
+  CONSOLE_INFO("OpenGL loaded");
 }
 
 void WindowManager::CleanUp() const
