@@ -22,9 +22,12 @@
 
 #include <GLFW/glfw3.h>
 
-constexpr int		INITIAL_WINDOW_W = 1600;
-constexpr int		INITIAL_WINDOW_H = 900;
-constexpr float GAMMA_CORRECTION = 2.2f;
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+
+constexpr int	INITIAL_WINDOW_W    = 1600;
+constexpr int	INITIAL_WINDOW_H    = 900;
+constexpr float GAMMA_CORRECTION  = 2.2f;
 
 constexpr float	Z_NEAR  = 1.0f;
 constexpr float	Z_FAR   = 100.0f;
@@ -125,6 +128,33 @@ void Engine::Initialize()
 }
 void Engine::Run()
 {
+  const vector<fspath> faces = {
+    fspath(TEXTURES_PATH / "skybox/right.jpg"),
+    fspath(TEXTURES_PATH / "skybox/left.jpg"),
+    fspath(TEXTURES_PATH / "skybox/top.jpg"),
+    fspath(TEXTURES_PATH / "skybox/bottom.jpg"),
+    fspath(TEXTURES_PATH / "skybox/front.jpg"),
+    fspath(TEXTURES_PATH / "skybox/back.jpg"),
+  };
+
+  uint32_t cubemap;
+  glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &cubemap);
+  glTextureParameteri(cubemap, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTextureParameteri(cubemap, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTextureParameteri(cubemap, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTextureParameteri(cubemap, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTextureParameteri(cubemap, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+  int width, height, nrChannels;
+  unsigned char* data;
+  for (unsigned int i = 0; i < 6; i++)
+  {
+    data = stbi_load(faces[i].string().c_str(), &width, &height, &nrChannels, 0);
+    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    stbi_image_free(data);
+  }
+
+
   /* -------------------------- Camera -------------------------- */
   Camera camera(
     vec3f( 30.0f, 15.0f, 10.0f ),
