@@ -44,7 +44,7 @@ public:
   void SetParameterf(int name, float value) const;
   void SetParameterfv(int name, float* values) const;
 
-  void LoadImages(const array<string, 6>& images);
+  void LoadImages(const array<fspath, 6>& images);
 
 	uint32_t id;
 

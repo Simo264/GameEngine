@@ -196,13 +196,13 @@ void Engine::Initialize()
 }
 void Engine::Run()
 {
-  const array<string, 6> faces = {
-    fspath(TEXTURES_PATH / "skybox/right.jpg").string(),
-    fspath(TEXTURES_PATH / "skybox/left.jpg").string(),
-    fspath(TEXTURES_PATH / "skybox/top.jpg").string(),
-    fspath(TEXTURES_PATH / "skybox/bottom.jpg").string(),
-    fspath(TEXTURES_PATH / "skybox/front.jpg").string(),
-    fspath(TEXTURES_PATH / "skybox/back.jpg").string(),
+  const array<fspath, 6> faces = {
+    fspath(TEXTURES_PATH / "skybox/right.jpg"),
+    fspath(TEXTURES_PATH / "skybox/left.jpg"),
+    fspath(TEXTURES_PATH / "skybox/top.jpg"),
+    fspath(TEXTURES_PATH / "skybox/bottom.jpg"),
+    fspath(TEXTURES_PATH / "skybox/front.jpg"),
+    fspath(TEXTURES_PATH / "skybox/back.jpg"),
   };
   
   TextureCubemap skyboxTexture;

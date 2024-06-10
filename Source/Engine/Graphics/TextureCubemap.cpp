@@ -48,13 +48,13 @@ void TextureCubemap::SetParameterfv(int name, float* values) const
   glTextureParameterfv(id, name, values);
 }
 
-void TextureCubemap::LoadImages(const array<string, 6>& images)
+void TextureCubemap::LoadImages(const array<fspath, 6>& images)
 {
   Bind();
   for (int i = 0; i < 6; i++)
   {
     int width, height, nrChannels;
-    auto data = stbi_load(images[i].c_str(), &width, &height, &nrChannels, 0);
+    auto data = stbi_load(images[i].string().c_str(), &width, &height, &nrChannels, 0);
     
     int internalformat{ GL_R8 }, format{ GL_RED };
     switch (nrChannels) 
