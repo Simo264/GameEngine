@@ -43,6 +43,8 @@ void ShaderManager::LoadShadersFromDir(const fspath& dirpath)
         LoadShader(path, GL_VERTEX_SHADER);
       else if (ext.compare("frag") == 0)
         LoadShader(path, GL_FRAGMENT_SHADER);
+      else if (ext.compare("geom") == 0)
+        LoadShader(path, GL_GEOMETRY_SHADER);
       else
         CONSOLE_WARN("Error on loading file '{}': unknown '.{}' file extension", filename.c_str(), ext.c_str());
     }
@@ -57,19 +59,12 @@ void ShaderManager::LoadPrograms()
   {
     const string& section = it.first; /* section = program name */
     const string vertex   = conf.GetValue(section.c_str(), "vertex");
+    const string geometry = conf.GetValue(section.c_str(), "geometry");
     const string fragment = conf.GetValue(section.c_str(), "fragment");
     Shader* vs = GetShader(vertex.c_str());
+    Shader* gs = GetShader(geometry.c_str());
     Shader* fs = GetShader(fragment.c_str());
-    if (!conf.HasKey(section.c_str(), "geometry"))
-    {
-      LoadProgram(section.c_str(), *vs, *fs);
-    }
-    else
-    {
-      //string geometry = conf.GetValue(section.c_str(), "geometry");
-      //Shader* gs = GetShader(geometry.c_str());
-      //LoadProgram(section.c_str(), *vs, *fs, *gs);
-    }
+    LoadProgram(section.c_str(), vs, fs, gs);
   }
 }
 void ShaderManager::SetUpProgramsUniforms()
@@ -128,24 +123,27 @@ Shader& ShaderManager::LoadShader(const fspath& filepath, int shaderType)
 }
 Shader* ShaderManager::GetShader(const char* filename)
 {
+  if (!filename)
+    return nullptr;
+
   for (auto& shader : shaders)
     if (shader.filename.compare(filename) == 0)
       return &shader;
-
   return nullptr;
 }
 
-Program& ShaderManager::LoadProgram(const char* programName, Shader& vertexShader, Shader& fragmentShader)
+Program& ShaderManager::LoadProgram(const char* name, Shader* vertex, Shader* geometry, Shader* fragment)
 {
   Program& program = programs.emplace_back();
   program.Create();
-  program.name = programName;
-  program.AttachShader(vertexShader);
-  program.AttachShader(fragmentShader);
-  
+  program.name = name;
+  if(vertex) program.AttachShader(*vertex);
+  if(geometry) program.AttachShader(*geometry);
+  if(fragment) program.AttachShader(*fragment);
+
   bool link = program.Link();
   if (!link)
-    CONSOLE_WARN("Error on linking program {}: {}", programName, program.GetProgramInfo());
+    CONSOLE_WARN("Error on linking program {}: {}", name, program.GetProgramInfo());
 
   return program;
 }
