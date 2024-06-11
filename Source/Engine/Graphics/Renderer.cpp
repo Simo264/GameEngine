@@ -7,58 +7,58 @@
 
 extern uint32_t drawCalls;
 
-void DrawArrays(uint32_t mode, VertexArray& vertexArray)
+namespace Renderer
 {
-	if (vertexArray.numVertices == 0)
+	void DrawArrays(uint32_t mode, VertexArray& vertexArray)
 	{
-		CONSOLE_WARN("Invalid vertices number!");
-		return;
+		if (vertexArray.numVertices == 0)
+		{
+			CONSOLE_WARN("Invalid vertices number!");
+			return;
+		}
+
+		vertexArray.Bind();
+		glDrawArrays(mode, 0, vertexArray.numVertices);
+		drawCalls++;
+		vertexArray.Unbind();
 	}
-
-	vertexArray.Bind();
-	glDrawArrays(mode, 0, vertexArray.numVertices);
-	drawCalls++;
-	vertexArray.Unbind();
-}
-
-void DrawArraysInstanced(uint32_t mode, VertexArray& vertexArray, int nInstances)
-{
-	if (vertexArray.numVertices == 0)
+	void DrawArraysInstanced(uint32_t mode, VertexArray& vertexArray, int nInstances)
 	{
-		CONSOLE_WARN("Invalid vertices number!");
-		return;
+		if (vertexArray.numVertices == 0)
+		{
+			CONSOLE_WARN("Invalid vertices number!");
+			return;
+		}
+
+		vertexArray.Bind();
+		glDrawArraysInstanced(mode, 0, vertexArray.numVertices, nInstances);
+		drawCalls++;
+		vertexArray.Unbind();
 	}
-
-	vertexArray.Bind();
-	glDrawArraysInstanced(mode, 0, vertexArray.numVertices, nInstances);
-	drawCalls++;
-	vertexArray.Unbind();
-}
-
-void DrawElements(uint32_t mode, VertexArray& vertexArray)
-{
-	if (vertexArray.numIndices == 0)
+	void DrawElements(uint32_t mode, VertexArray& vertexArray)
 	{
-		CONSOLE_WARN("Invalid indices number!");
-		return;
+		if (vertexArray.numIndices == 0)
+		{
+			CONSOLE_WARN("Invalid indices number!");
+			return;
+		}
+
+		vertexArray.Bind();
+		glDrawElements(mode, vertexArray.numIndices, GL_UNSIGNED_INT, 0);
+		drawCalls++;
+		vertexArray.Unbind();
 	}
-
-	vertexArray.Bind();
-	glDrawElements(mode, vertexArray.numIndices, GL_UNSIGNED_INT, 0);
-	drawCalls++;
-	vertexArray.Unbind();
-}
-
-void DrawElementsInstanced(uint32_t mode, VertexArray& vertexArray, int nInstances)
-{
-	if (vertexArray.numIndices == 0)
+	void DrawElementsInstanced(uint32_t mode, VertexArray& vertexArray, int nInstances)
 	{
-		CONSOLE_WARN("Invalid indices number!");
-		return;
-	}
+		if (vertexArray.numIndices == 0)
+		{
+			CONSOLE_WARN("Invalid indices number!");
+			return;
+		}
 
-	vertexArray.Bind();
-	glDrawElementsInstanced(mode, vertexArray.numIndices, GL_UNSIGNED_INT, 0, nInstances);
-	drawCalls++;
-	vertexArray.Unbind();
+		vertexArray.Bind();
+		glDrawElementsInstanced(mode, vertexArray.numIndices, GL_UNSIGNED_INT, 0, nInstances);
+		drawCalls++;
+		vertexArray.Unbind();
+	}
 }

@@ -98,9 +98,6 @@ void StaticMeshComponent::DestroyMesh()
 }
 void StaticMeshComponent::Draw()
 {
-	glBindTextureUnit(0, 0); /* reset diffuse */
-	glBindTextureUnit(1, 0); /* reset specular */
-
 	if (material.diffuse)
 		material.diffuse->BindTextureUnit(0);
 
@@ -109,11 +106,14 @@ void StaticMeshComponent::Draw()
 
 	/* If vertex array does not contain indices call DrawArrays */
 	if (vao.numIndices == 0)
-		DrawArrays(GL_TRIANGLES, vao);
+		Renderer::DrawArrays(GL_TRIANGLES, vao);
 
 	/* If vertex array does contain indices call DrawIndexed */
 	else
-		DrawElements(GL_TRIANGLES, vao);
+		Renderer::DrawElements(GL_TRIANGLES, vao);
+
+	glBindTextureUnit(0, 0); /* reset diffuse */
+	glBindTextureUnit(1, 0); /* reset specular */
 }
 
 /* ---------------------------------------------------------------------------

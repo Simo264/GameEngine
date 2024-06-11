@@ -64,7 +64,7 @@ void ShaderManager::LoadPrograms()
     Shader* vs = GetShader(vertex.c_str());
     Shader* gs = GetShader(geometry.c_str());
     Shader* fs = GetShader(fragment.c_str());
-    LoadProgram(section.c_str(), vs, fs, gs);
+    LoadProgram(section.c_str(), vs, gs, fs);
   }
 }
 void ShaderManager::SetUpProgramsUniforms()
