@@ -236,7 +236,7 @@ void Engine::Run()
   Scene scene;
   scene.LoadScene((ROOT_PATH / "Scene.ini"));
 
-  /* -------------------------- Scene -------------------------- */
+  /* -------------------------- Shadow map -------------------------- */
   const mat4f lightProjection = Math::Ortho(LEFT, RIGHT, BOTTOM, TOP, Z_NEAR, Z_FAR);
   const vec3f lightPosition{ -2.0f, 20.0f, -1.0f };
   mat4f lightView{};
