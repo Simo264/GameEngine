@@ -40,12 +40,13 @@ public:
 	Shader* GetShader(const char* filename);
 
 	/**
-	 * Load the shader object in shaders array
+	 * Load the program object in program array
+	 * @param name: the program name
 	 */
-	Program& LoadProgram(const char* programName, Shader& vertexShader, Shader& fragmentShader);
+	Program& LoadProgram(const char* name, Shader* vertex, Shader* geometry, Shader* fragment);
 
 	/**
-	 * Retrieve the shader object from shaders array
+	 * Retrieve the program object from program array
 	 */
 	Program* GetProgram(const char* name);
 	

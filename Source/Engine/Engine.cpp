@@ -196,16 +196,17 @@ void Engine::Initialize()
 }
 void Engine::Run()
 {
-  const array<string, 6> faces = {
-    fspath(TEXTURES_PATH / "skybox/right.jpg").string(),
-    fspath(TEXTURES_PATH / "skybox/left.jpg").string(),
-    fspath(TEXTURES_PATH / "skybox/top.jpg").string(),
-    fspath(TEXTURES_PATH / "skybox/bottom.jpg").string(),
-    fspath(TEXTURES_PATH / "skybox/front.jpg").string(),
-    fspath(TEXTURES_PATH / "skybox/back.jpg").string(),
+  const array<fspath, 6> faces = {
+    fspath(TEXTURES_PATH / "skybox/right.jpg"),
+    fspath(TEXTURES_PATH / "skybox/left.jpg"),
+    fspath(TEXTURES_PATH / "skybox/top.jpg"),
+    fspath(TEXTURES_PATH / "skybox/bottom.jpg"),
+    fspath(TEXTURES_PATH / "skybox/front.jpg"),
+    fspath(TEXTURES_PATH / "skybox/back.jpg"),
   };
   
   TextureCubemap skyboxTexture;
+  skyboxTexture.size = 2048;
   skyboxTexture.Create();
   skyboxTexture.SetParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   skyboxTexture.SetParameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -234,11 +235,6 @@ void Engine::Run()
   /* -------------------------- Scene -------------------------- */
   Scene scene;
   scene.LoadScene((ROOT_PATH / "Scene.ini"));
-
-  DirLightComponent* dirlight = nullptr;
-  scene.Reg().view<DirLightComponent>().each([&dirlight](auto& light) {
-    dirlight = &light;
-  });
 
   /* -------------------------- Shadow map -------------------------- */
   const mat4f lightProjection = Math::Ortho(LEFT, RIGHT, BOTTOM, TOP, Z_NEAR, Z_FAR);
@@ -336,7 +332,7 @@ void Engine::Run()
       {
         visualshadowDepthProgram->Use();
         fboImageTextureShadowMap.BindTextureUnit(0);
-        DrawArrays(GL_TRIANGLES, _screenSquare);
+        Renderer::DrawArrays(GL_TRIANGLES, _screenSquare);
       }
 
       /* Draw skybox as last */
@@ -346,7 +342,7 @@ void Engine::Run()
         skyboxProgram->SetUniformMat4f("u_view", mat4f(mat3f(cameraViewMatrix)));
         skyboxTexture.BindTextureUnit(0);
         Depth::SetFunction(GL_LEQUAL); /* change depth function so depth test passes when values are equal to depth buffer's content */
-        DrawArrays(GL_TRIANGLES, skyboxVAO);
+        Renderer::DrawArrays(GL_TRIANGLES, skyboxVAO);
         Depth::SetFunction(GL_LESS); /* set depth function back to default */
       }
 
@@ -362,7 +358,7 @@ void Engine::Run()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     framebufferProgram->Use();
     fboImageTexture.BindTextureUnit(0);
-    DrawArrays(GL_TRIANGLES, _screenSquare);
+    Renderer::DrawArrays(GL_TRIANGLES, _screenSquare);
 
     //ImGuiLayer::RenderDemo();
     ImGuiLayer::RenderMenuBar(scene);
