@@ -74,6 +74,11 @@ void VertexArray::SetAttribBinding(int attribindex, int bindingindex) const
   glVertexArrayAttribBinding(id, attribindex, bindingindex);
 }
 
+void VertexArray::SetBindingDivisor(int bindingindex, int divisor)
+{
+  glVertexArrayBindingDivisor(id, bindingindex, divisor);
+}
+
 void VertexArray::SetVertexSpecifications(const VertexSpecifications& specs) const
 {
   SetAttribFormat(specs.attrindex, specs.components, specs.type, specs.normalized, specs.relativeoffset);
