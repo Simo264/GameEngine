@@ -7,7 +7,7 @@
 #include <GLFW/glfw3.h>
 
 constexpr static float movementSpeed = 7.5f;
-constexpr static float mouseSensitivity = 25.0f;
+constexpr static float mouseSensitivity = 50.0f;
 
 /* -----------------------------------------------------
  *          PUBLIC METHODS

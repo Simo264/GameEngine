@@ -147,6 +147,14 @@ public:
    */
   void SetAttribBinding(int attribindex, int bindingindex) const;
 
+  /**
+   * Modify the rate at which generic vertex attributes advance
+   * 
+   * @param bindingindex: the index of the binding whose divisor to modify
+   * @param divisor: the new value for the instance step rate to apply
+   */
+  void SetBindingDivisor(int bindingindex, int divisor);
+
   void SetVertexSpecifications(const VertexSpecifications& specs) const;
 
   uint32_t id;
