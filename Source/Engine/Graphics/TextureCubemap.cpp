@@ -1,12 +1,14 @@
 #include "TextureCubemap.hpp"
 
 #include "Core/OpenGL.hpp"
+#include "Core/Log/Logger.hpp"
 
 #include <stb_image.h>
 
 TextureCubemap::TextureCubemap()
 	: id{ static_cast<uint32_t>(-1) },
-    target{ GL_TEXTURE_CUBE_MAP }
+    target{ GL_TEXTURE_CUBE_MAP },
+    size{ 0 }
 {}
 
 void TextureCubemap::Create()
@@ -50,12 +52,19 @@ void TextureCubemap::SetParameterfv(int name, float* values) const
 
 void TextureCubemap::LoadImages(const array<fspath, 6>& images)
 {
+  if (size == 0)
+  {
+    CONSOLE_WARN("Invalid texture size");
+    return;
+  }
+
   Bind();
+  glTextureStorage2D(id, 1, GL_RGB8, size, size);
   for (int i = 0; i < 6; i++)
   {
-    int width, height, nrChannels;
+    int width{ 0 }, height{ 0 }, nrChannels{ 0 };
     auto data = stbi_load(images[i].string().c_str(), &width, &height, &nrChannels, 0);
-    
+
     int internalformat{ GL_R8 }, format{ GL_RED };
     switch (nrChannels) 
     {
@@ -76,8 +85,8 @@ void TextureCubemap::LoadImages(const array<fspath, 6>& images)
       format = GL_RGBA;
       break;
     }
-
-    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internalformat, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+    
+    glTextureSubImage3D(id, 0, 0, 0, i, width, height, 1, format, GL_UNSIGNED_BYTE, data);
     stbi_image_free(data);
   }
   Unbind();

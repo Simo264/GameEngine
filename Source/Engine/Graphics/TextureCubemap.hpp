@@ -48,5 +48,7 @@ public:
 
 	uint32_t id;
 
+  uint32_t size;
+
 	const int target;
 };

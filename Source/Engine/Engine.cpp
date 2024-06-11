@@ -206,6 +206,7 @@ void Engine::Run()
   };
   
   TextureCubemap skyboxTexture;
+  skyboxTexture.size = 2048;
   skyboxTexture.Create();
   skyboxTexture.SetParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   skyboxTexture.SetParameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -234,11 +235,6 @@ void Engine::Run()
   /* -------------------------- Scene -------------------------- */
   Scene scene;
   scene.LoadScene((ROOT_PATH / "Scene.ini"));
-
-  DirLightComponent* dirlight = nullptr;
-  scene.Reg().view<DirLightComponent>().each([&dirlight](auto& light) {
-    dirlight = &light;
-  });
 
   /* -------------------------- Scene -------------------------- */
   const mat4f lightProjection = Math::Ortho(LEFT, RIGHT, BOTTOM, TOP, Z_NEAR, Z_FAR);
