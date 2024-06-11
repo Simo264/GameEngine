@@ -336,7 +336,7 @@ void Engine::Run()
       {
         visualshadowDepthProgram->Use();
         fboImageTextureShadowMap.BindTextureUnit(0);
-        DrawArrays(GL_TRIANGLES, _screenSquare);
+        Renderer::DrawArrays(GL_TRIANGLES, _screenSquare);
       }
 
       /* Draw skybox as last */
@@ -346,7 +346,7 @@ void Engine::Run()
         skyboxProgram->SetUniformMat4f("u_view", mat4f(mat3f(cameraViewMatrix)));
         skyboxTexture.BindTextureUnit(0);
         Depth::SetFunction(GL_LEQUAL); /* change depth function so depth test passes when values are equal to depth buffer's content */
-        DrawArrays(GL_TRIANGLES, skyboxVAO);
+        Renderer::DrawArrays(GL_TRIANGLES, skyboxVAO);
         Depth::SetFunction(GL_LESS); /* set depth function back to default */
       }
 
@@ -362,7 +362,7 @@ void Engine::Run()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     framebufferProgram->Use();
     fboImageTexture.BindTextureUnit(0);
-    DrawArrays(GL_TRIANGLES, _screenSquare);
+    Renderer::DrawArrays(GL_TRIANGLES, _screenSquare);
 
     //ImGuiLayer::RenderDemo();
     ImGuiLayer::RenderMenuBar(scene);
