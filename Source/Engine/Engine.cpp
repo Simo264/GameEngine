@@ -71,70 +71,6 @@ static void RenderScene(Scene& scene, Program* sceneProgram)
     mesh.Draw();
   });
 }
-static void LoadSkybox(VertexArray& vao)
-{
-  float skyboxVertices[] = {
-    // positions 
-    -1.0f,  1.0f, -1.0f,
-    -1.0f, -1.0f, -1.0f,
-     1.0f, -1.0f, -1.0f,
-     1.0f, -1.0f, -1.0f,
-     1.0f,  1.0f, -1.0f,
-    -1.0f,  1.0f, -1.0f,
-
-    -1.0f, -1.0f,  1.0f,
-    -1.0f, -1.0f, -1.0f,
-    -1.0f,  1.0f, -1.0f,
-    -1.0f,  1.0f, -1.0f,
-    -1.0f,  1.0f,  1.0f,
-    -1.0f, -1.0f,  1.0f,
-
-     1.0f, -1.0f, -1.0f,
-     1.0f, -1.0f,  1.0f,
-     1.0f,  1.0f,  1.0f,
-     1.0f,  1.0f,  1.0f,
-     1.0f,  1.0f, -1.0f,
-     1.0f, -1.0f, -1.0f,
-
-    -1.0f, -1.0f,  1.0f,
-    -1.0f,  1.0f,  1.0f,
-     1.0f,  1.0f,  1.0f,
-     1.0f,  1.0f,  1.0f,
-     1.0f, -1.0f,  1.0f,
-    -1.0f, -1.0f,  1.0f,
-
-    -1.0f,  1.0f, -1.0f,
-     1.0f,  1.0f, -1.0f,
-     1.0f,  1.0f,  1.0f,
-     1.0f,  1.0f,  1.0f,
-    -1.0f,  1.0f,  1.0f,
-    -1.0f,  1.0f, -1.0f,
-
-    -1.0f, -1.0f, -1.0f,
-    -1.0f, -1.0f,  1.0f,
-     1.0f, -1.0f, -1.0f,
-     1.0f, -1.0f, -1.0f,
-    -1.0f, -1.0f,  1.0f,
-     1.0f, -1.0f,  1.0f
-  };
-
-  Buffer vbo(GL_ARRAY_BUFFER, sizeof(skyboxVertices), skyboxVertices, GL_STATIC_DRAW);
-
-  vao.Create();
-  vao.AttachVertexBuffer(0, vbo, 0, 3 * sizeof(float));
-  vao.numIndices = 0;
-  vao.numVertices = 36;
-  
-  VertexSpecifications specs;
-  specs.attrindex = 0;
-  specs.bindingindex = 0;
-  specs.components = 3;
-  specs.normalized = true;
-  specs.relativeoffset = 0;
-  specs.type = GL_FLOAT;
-
-  vao.SetVertexSpecifications(specs);
-}
 
 /* -----------------------------------------------------
  *          PUBLIC METHODS
@@ -187,72 +123,98 @@ void Engine::Initialize()
 }
 void Engine::Run()
 {
-  const array<fspath, 6> faces = {
-    fspath(TEXTURES_PATH / "skybox/right.jpg"),
-    fspath(TEXTURES_PATH / "skybox/left.jpg"),
-    fspath(TEXTURES_PATH / "skybox/top.jpg"),
-    fspath(TEXTURES_PATH / "skybox/bottom.jpg"),
-    fspath(TEXTURES_PATH / "skybox/front.jpg"),
-    fspath(TEXTURES_PATH / "skybox/back.jpg"),
+  float vertices[] = {
+    // positions          // normals           // texture coords
+    //-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f,  0.0f,
+    // 0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f,  0.0f,
+    // 0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f,  1.0f,
+    // 0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f,  1.0f,
+    //-0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f,  1.0f,
+    //-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f,  0.0f,
+
+    -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f,  0.0f,
+     0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f,  0.0f,
+     0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f,  1.0f,
+     0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f,  1.0f,
+    -0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f,  1.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f,  0.0f,
+
+    //-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
+    //-0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  1.0f,  1.0f,
+    //-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
+    //-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
+    //-0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  0.0f,  0.0f,
+    //-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
+
+    // 0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
+    // 0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f,  1.0f,
+    // 0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
+    // 0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
+    // 0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  0.0f,  0.0f,
+    // 0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
+
+    //-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f,  1.0f,
+    // 0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f,  1.0f,
+    // 0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f,  0.0f,
+    // 0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f,  0.0f,
+    //-0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  0.0f,  0.0f,
+    //-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f,  1.0f,
+
+    //-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  1.0f,
+    // 0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f,  1.0f,
+    // 0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f,  0.0f,
+    // 0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f,  0.0f,
+    //-0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  0.0f,
+    //-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  1.0f
   };
-  TextureCubemap skyboxTexture;
-  skyboxTexture.Create();
-  skyboxTexture.SetParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  skyboxTexture.SetParameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  skyboxTexture.SetParameteri(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  skyboxTexture.SetParameteri(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  skyboxTexture.SetParameteri(GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-  skyboxTexture.LoadImages(faces);
-  VertexArray skyboxVAO;
-  LoadSkybox(skyboxVAO);
+  Buffer vbo(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+  
+  VertexArray cube;
+  cube.Create();
+  cube.AttachVertexBuffer(0, vbo, 0, 8 * sizeof(float));
+  cube.EnableAttribute(0);
+  cube.SetAttribBinding(0, 0);
+  cube.SetAttribFormat(0, 3, GL_FLOAT, true, 0);
+  cube.EnableAttribute(1);
+  cube.SetAttribBinding(1, 0);
+  cube.SetAttribFormat(1, 3, GL_FLOAT, true, 3 * sizeof(float));
+  cube.EnableAttribute(2);
+  cube.SetAttribBinding(2, 0);
+  cube.SetAttribFormat(2, 2, GL_FLOAT, true, 6 * sizeof(float));
+  cube.numIndices = 0;
+  cube.numVertices = 6;
 
+  
 
-  /* -------------------------- Camera -------------------------- */
   Camera camera(
-    vec3f( 30.0f, 15.0f, 10.0f ),
+    vec3f( 0, 0, 5.0f ),
     45.0f, 
     static_cast<float>(_viewport.x) / static_cast<float>(_viewport.y), 
     Z_NEAR, 
     Z_FAR
   );
-  camera.cameraComponent->yaw = -180.0f;
-  camera.cameraComponent->pitch = -30.0f;
-  camera.cameraComponent->roll = 0.0f;
-  camera.cameraComponent->UpdateVectors();
 
-  /* -------------------------- Scene -------------------------- */
-  Scene scene;
-  scene.LoadScene((ROOT_PATH / "Scene.ini"));
-
-  DirLightComponent* dirlight = nullptr;
-  scene.Reg().view<DirLightComponent>().each([&dirlight](auto& light) {
-    dirlight = &light;
-  });
-
-  /* -------------------------- Scene -------------------------- */
-  const mat4f lightProjection = Math::Ortho(LEFT, RIGHT, BOTTOM, TOP, Z_NEAR, Z_FAR);
-  const vec3f lightPosition{ 0.0f, 30.0f, 0.0f };
-  mat4f lightView{};
-  mat4f lightSpaceMatrix{};
-  vec3f lightViewCenter{ 0.0f, 0.0f ,0.0f };
 
   /* -------------------------- Pre-loop -------------------------- */
+  Program* testingProgram = _instanceSM->GetProgram("Testing");
   Program* framebufferProgram = _instanceSM->GetProgram("Framebuffer");
-  Program* sceneProgram = _instanceSM->GetProgram("Scene");
-  Program* shadowMapDepthProgram = _instanceSM->GetProgram("ShadowMapDepth");
-  Program* shadowMapProgram = _instanceSM->GetProgram("ShadowMap");
-  Program* visualshadowDepthProgram = _instanceSM->GetProgram("VisualShadowDepth");
-  Program* skyboxProgram = _instanceSM->GetProgram("Skybox");
   Texture2D& fboImageTexture = _fboIntermediate.GetTextureAttachment(0);
-  Texture2D& fboImageTextureShadowMap = _fboShadowMap.GetTextureAttachment(0);
   
-  int toggle = 2;
-
-  scene.Reg().view<DirLightComponent>().each([&](DirLightComponent& light) {
-    lightViewCenter = light.direction;
-  });
-
   time_point lastUpdateTime = system_clock::now();
+
+  
+  Texture2D* brickwallTexture = _instanceTM->GetTextureByPath(TEXTURES_PATH / "brickwall.jpg");
+  Texture2D* brickwallNormalTexture = _instanceTM->GetTextureByPath(TEXTURES_PATH / "brickwall_normal.jpg");
+
+  vec3f lightPos{ 2.0f, 1.0f, 2.0f };
+  testingProgram->SetUniform3f("light.ambient", { 0.2f, 0.2f, 0.2f });
+  testingProgram->SetUniform3f("light.diffuse", { 1.0f, 1.0f, 1.0f });
+  testingProgram->SetUniform3f("light.specular", { 1.0f, 1.0f, 1.0f });
+  testingProgram->SetUniform1i("material.diffuseTexture", 0);
+  testingProgram->SetUniform1i("material.normalTexture", 1);
+  testingProgram->SetUniform3f("material.specular", { 0.2f, 0.2f, 0.2f });
+  testingProgram->SetUniform1f("material.shininess", 64.0f);
+  
   
   /* -------------------------- loop -------------------------- */
   while (_instanceWM->IsOpen())
@@ -271,76 +233,35 @@ void Engine::Run()
     _instanceWM->PoolEvents();
     camera.ProcessInput(delta);
 
-    if (_instanceWM->GetKey(GLFW_KEY_F1) == GLFW_PRESS) toggle = 1; 
-    else if (_instanceWM->GetKey(GLFW_KEY_F2) == GLFW_PRESS) toggle = 2;
-    else if (_instanceWM->GetKey(GLFW_KEY_F3) == GLFW_PRESS) toggle = 3; 
-
     /* -------------------------- Update -------------------------- */
     const auto& cameraViewMatrix = camera.cameraComponent->GetView();
     const auto& cameraProjectionMatrix = camera.cameraComponent->GetProjection();
     _uboCamera.UpdateStorage(0, sizeof(mat4f), &cameraViewMatrix[0]);
     _uboCamera.UpdateStorage(sizeof(mat4f), sizeof(mat4f), &cameraProjectionMatrix[0]);
 
-    lightView = Math::LookAt(lightPosition, lightViewCenter, vec3f(0.0f, 1.0f, 0.0f));
-    lightSpaceMatrix = lightProjection * lightView;
-
-    
     /* -------------------------- Rendering -------------------------- */
-    /* Render depth of scene to texture(from directional light's perspective) */
-    _fboShadowMap.Bind(GL_FRAMEBUFFER);
-    {
-      glViewport(0, 0, 1024, 1024);
-      glClear(GL_DEPTH_BUFFER_BIT);
-      shadowMapDepthProgram->Use();
-      shadowMapDepthProgram->SetUniformMat4f("u_lightSpaceMatrix", lightSpaceMatrix);
-      scene.Reg().view<StaticMeshComponent, TransformComponent>().each([shadowMapDepthProgram](auto& mesh, auto& transform) {
-        shadowMapDepthProgram->SetUniformMat4f("u_model", transform.GetTransformation());
-        mesh.Draw();
-      });
-    }
-    _fboShadowMap.Unbind(GL_FRAMEBUFFER);
-
     /* Fill the framebuffer color texture */
     _fboMultisampled.Bind(GL_FRAMEBUFFER);
     { 
       glViewport(0, 0, _viewport.x, _viewport.y);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-      /* Render scene with no shadows */
-      if(toggle == 1)
-      {
-        sceneProgram->Use();
-        sceneProgram->SetUniform3f("u_viewPos", camera.cameraComponent->position);
-        RenderScene(scene, sceneProgram);
-      }
-      /* Render scene with shadows map */
-      else if(toggle == 2)
-      {
-        shadowMapProgram->Use();
-        shadowMapProgram->SetUniformMat4f("u_lightSpaceMatrix", lightSpaceMatrix);
-        shadowMapProgram->SetUniform3f("u_viewPos", camera.cameraComponent->position);
-        shadowMapProgram->SetUniform3f("u_lightPos", lightPosition);
-        fboImageTextureShadowMap.BindTextureUnit(10);
-        RenderScene(scene, shadowMapProgram);
-      }
-      /* Render Depth map texture for visual debugging */
-      else if(toggle == 3)
-      {
-        visualshadowDepthProgram->Use();
-        fboImageTextureShadowMap.BindTextureUnit(0);
-        DrawArrays(GL_TRIANGLES, _screenSquare);
-      }
+      // render here
+      // ...
+      testingProgram->Use();
+      testingProgram->SetUniform3f("light.position", lightPos);
+      testingProgram->SetUniform3f("viewPos", camera.cameraComponent->position);
+      testingProgram->SetUniformMat4f("u_model", mat4f(1.0f));
+      brickwallTexture->BindTextureUnit(0);
+      brickwallNormalTexture->BindTextureUnit(1);
+      Renderer::DrawArrays(GL_TRIANGLES, cube);
+      glBindTexture(0, 0);
+      glBindTexture(0, 1);
 
-      /* Draw skybox as last */
-      {
-        skyboxProgram->Use();
-        skyboxProgram->SetUniformMat4f("u_projection", cameraProjectionMatrix);
-        skyboxProgram->SetUniformMat4f("u_view", mat4f(mat3f(cameraViewMatrix)));
-        skyboxTexture.BindTextureUnit(0);
-        Depth::SetFunction(GL_LEQUAL); /* change depth function so depth test passes when values are equal to depth buffer's content */
-        DrawArrays(GL_TRIANGLES, skyboxVAO);
-        Depth::SetFunction(GL_LESS); /* set depth function back to default */
-      }
+      //auto time = glfwGetTime();
+      //lightPos.x = Math::Cos(time) * 3;
+      //lightPos.z = Math::Sin(time) * 3;
+
 
       /* Blit multisampled buffer to normal colorbuffer of intermediate FBO */
       _fboMultisampled.Blit(_fboIntermediate,
@@ -354,13 +275,9 @@ void Engine::Run()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     framebufferProgram->Use();
     fboImageTexture.BindTextureUnit(0);
-    DrawArrays(GL_TRIANGLES, _screenSquare);
+    Renderer::DrawArrays(GL_TRIANGLES, _screenSquare);
 
-    //ImGuiLayer::RenderDemo();
-    ImGuiLayer::RenderMenuBar(scene);
-    auto objectSelected = ImGuiLayer::RenderOutlinerPanel(scene);
-    if (objectSelected)
-      ImGuiLayer::RenderDetails(objectSelected);
+
     ImGuiLayer::DrawData();
     
     /* -------------------------- Resizing framebuffer -------------------------- */
