@@ -23,20 +23,11 @@
 #include "Engine/Subsystems/ShaderManager.hpp"
 #include "Engine/Subsystems/TextureManager.hpp"
 
+#include "Engine/Globals.hpp"
+
 #include "GUI/ImGuiLayer.hpp"
 
 #include <GLFW/glfw3.h>
-
-int	INITIAL_WINDOW_W = 1600;
-int	INITIAL_WINDOW_H = 900;
-float GAMMA_CORRECTION = 2.2f;
-
-float	Z_NEAR = 1.0f;
-float	Z_FAR = 100.0f;
-float LEFT = -30.0f;
-float RIGHT = 30.0f;
-float BOTTOM = -30.0f;
-float TOP = 30.0f;
 
 uint32_t drawCalls = 0;
 
@@ -159,7 +150,7 @@ void Engine::Initialize()
   _instanceWM = WindowManager::Instance();
   _instanceWM->Initialize();
   _instanceWM->SetWindowTitle("ProjectGL");
-  _instanceWM->SetWindowSize(INITIAL_WINDOW_W, INITIAL_WINDOW_H);
+  _instanceWM->SetWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
   _instanceWM->SetWindowPosition(50, 50);
   _instanceWM->SetWindowAspectRatio(16, 9);
   _instanceWM->SetWindowVsync(false);
@@ -204,7 +195,6 @@ void Engine::Run()
     fspath(TEXTURES_PATH / "skybox/front.jpg"),
     fspath(TEXTURES_PATH / "skybox/back.jpg"),
   };
-  
   TextureCubemap skyboxTexture;
   skyboxTexture.size = 2048;
   skyboxTexture.Create();
@@ -214,7 +204,6 @@ void Engine::Run()
   skyboxTexture.SetParameteri(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   skyboxTexture.SetParameteri(GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
   skyboxTexture.LoadImages(faces);
-  
   VertexArray skyboxVAO;
   LoadSkybox(skyboxVAO);
 
@@ -238,10 +227,10 @@ void Engine::Run()
 
   /* -------------------------- Shadow map -------------------------- */
   const mat4f lightProjection = Math::Ortho(LEFT, RIGHT, BOTTOM, TOP, Z_NEAR, Z_FAR);
-  const vec3f lightPosition{ -2.0f, 20.0f, -1.0f };
+  const vec3f lightPosition{ 0.0f, 30.0f, 0.0f };
   mat4f lightView{};
   mat4f lightSpaceMatrix{};
-
+  vec3f lightViewCenter{ 0.0f, 0.0f ,0.0f };
 
   /* -------------------------- Pre-loop -------------------------- */
   Program* framebufferProgram = _instanceSM->GetProgram("Framebuffer");
@@ -250,13 +239,16 @@ void Engine::Run()
   Program* shadowMapProgram = _instanceSM->GetProgram("ShadowMap");
   Program* visualshadowDepthProgram = _instanceSM->GetProgram("VisualShadowDepth");
   Program* skyboxProgram = _instanceSM->GetProgram("Skybox");
-
   Texture2D& fboImageTexture = _fboIntermediate.GetTextureAttachment(0);
   Texture2D& fboImageTextureShadowMap = _fboShadowMap.GetTextureAttachment(0);
+  
+  int toggle = 2;
+
+  scene.Reg().view<DirLightComponent>().each([&](DirLightComponent& light) {
+    lightViewCenter = light.direction;
+  });
 
   time_point lastUpdateTime = system_clock::now();
-
-  int toggle = 2;
   
   /* -------------------------- loop -------------------------- */
   while (_instanceWM->IsOpen())
@@ -275,9 +267,9 @@ void Engine::Run()
     _instanceWM->PoolEvents();
     camera.ProcessInput(delta);
 
-    if (_instanceWM->GetKey(GLFW_KEY_1) == GLFW_PRESS)      toggle = 1; 
-    else if (_instanceWM->GetKey(GLFW_KEY_2) == GLFW_PRESS) toggle = 2; 
-    else if (_instanceWM->GetKey(GLFW_KEY_3) == GLFW_PRESS) toggle = 3; 
+    if (_instanceWM->GetKey(GLFW_KEY_F1) == GLFW_PRESS) toggle = 1; 
+    else if (_instanceWM->GetKey(GLFW_KEY_F2) == GLFW_PRESS) toggle = 2;
+    else if (_instanceWM->GetKey(GLFW_KEY_F3) == GLFW_PRESS) toggle = 3; 
 
     /* -------------------------- Update -------------------------- */
     const auto& cameraViewMatrix = camera.cameraComponent->GetView();
@@ -285,7 +277,7 @@ void Engine::Run()
     _uboCamera.UpdateStorage(0, sizeof(mat4f), &cameraViewMatrix[0]);
     _uboCamera.UpdateStorage(sizeof(mat4f), sizeof(mat4f), &cameraProjectionMatrix[0]);
 
-    lightView = Math::LookAt(lightPosition, vec3f(0), vec3f(0.0f, 1.0f, 0.0f));
+    lightView = Math::LookAt(lightPosition, lightViewCenter, vec3f(0.0f, 1.0f, 0.0f));
     lightSpaceMatrix = lightProjection * lightView;
 
     
@@ -401,12 +393,12 @@ void Engine::CleanUp()
 
 void Engine::SetOpenGLStates()
 {
-  /* Depth testing */
+  /* Depth testing ON */
   Depth::EnableTest();
   Depth::EnableWritingBuffer();
   Depth::SetFunction(GL_LESS);
 
-  /* Stencil testing */
+  /* Stencil testing OFF */
   Stencil::DisableTest();
   Stencil::SetFunction(GL_ALWAYS, 0, 0xFF);
   Stencil::SetOperation(GL_KEEP, GL_KEEP, GL_KEEP);
