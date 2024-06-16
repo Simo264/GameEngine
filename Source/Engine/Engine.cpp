@@ -164,6 +164,7 @@ void Engine::Run()
 
 
   /* -------------------------- Pre-loop -------------------------- */
+  Program* testingProgram = _instanceSM->GetProgram("Testing");
   Program* framebufferProgram = _instanceSM->GetProgram("Framebuffer");
   Program* testingProgram = _instanceSM->GetProgram("Testing");
   Texture2D& fboImageTexture = _fboIntermediate.GetTextureAttachment(0);
@@ -215,6 +216,9 @@ void Engine::Run()
 
       transform.rotation.x += 0.005;
       transform.UpdateTransformation();
+
+      
+      //lightPos.y = Math::Sin(time * 0.5);
 
       /* Blit multisampled buffer to normal colorbuffer of intermediate FBO */
       _fboMultisampled.Blit(_fboIntermediate,
