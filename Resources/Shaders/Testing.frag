@@ -3,6 +3,9 @@
 in vec3 FragPos;  
 in vec3 Normal;  
 in vec2 TexCoords;
+in vec3 TangentLightPos;
+in vec3 TangentViewPos;
+in vec3 TangentFragPos;
 
 out vec4 FragColor;
 
@@ -10,7 +13,6 @@ uniform sampler2D diffuseTexture;
 uniform sampler2D normalTexture;
 
 uniform vec3 viewPos;
-uniform vec3 lightPos;
 
 void main()
 {
@@ -19,27 +21,27 @@ void main()
   vec3 lightDiffuse = vec3(0.5f);
   vec3 lightSpecular = vec3(1.0f);
   vec3 materialSpecular = vec3(0.5f);
-  
+  vec3 lightPos = vec3(0.0f, 0.0f, 2.0f);
+
   vec3 normal;
-
   normal = texture(normalTexture, TexCoords).rgb;
-  normal = normalize(normal * 2.0 - 1.0);  
+  normal = normalize(normal * 2.0 - 1.0);  // this normal is in tangent space
 
-  vec3 viewDir = normalize(viewPos - FragPos);
-  vec3 lightDir = normalize(lightPos - FragPos);
-  vec3 reflectDir = reflect(-lightDir, normal); 
-
+  vec3 lightDir = normalize(TangentLightPos - TangentFragPos);
+  vec3 viewDir = normalize(TangentViewPos - TangentFragPos);
+  //vec3 reflectDir = reflect(-lightDir, normal);
+  vec3 halfwayDir = normalize(lightDir + viewDir);  
+   
   // ambient
   vec3 ambient = lightAmbient * diffColor;
-  	
-  // diffuse 
-  float diff = max(dot(normal, lightDir), 0.0);
-  vec3 diffuse = lightDiffuse * diff * diffColor;  
-    
+  
+  // diffuse
+  float diff = max(dot(lightDir, normal), 0.0);
+  vec3 diffuse = diff * diffColor;
+  
   // specular
-  float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0f);
-  vec3 specular = lightSpecular * spec * materialSpecular;  
-        
-  vec3 result = ambient + diffuse + specular;
-  FragColor = vec4(result, 1.0);
+  float spec = pow(max(dot(normal, halfwayDir), 0.0), 32.0);
+
+  vec3 specular = materialSpecular * spec;
+  FragColor = vec4(ambient + diffuse + specular, 1.0);
 } 
