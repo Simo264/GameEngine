@@ -82,77 +82,7 @@ void Engine::Initialize()
 }
 void Engine::Run()
 {
-  // vertex positions
-  const vec3f pos1{ -1.0,  1.0, 0.0 };
-  const vec3f pos2{ -1.0, -1.0, 0.0 };
-  const vec3f pos3{ 1.0, -1.0, 0.0 };
-  const vec3f pos4{ 1.0,  1.0, 0.0 };
-  // vertex texture coordinates
-  const vec2f uv1{ 0.0, 1.0 };
-  const vec2f uv2{ 0.0, 0.0 };
-  const vec2f uv3{ 1.0, 0.0 };
-  const vec2f uv4{ 1.0, 1.0 };
-  // vertex normal vector
-  const vec3f nm{ 0.0, 0.0, 1.0 };
-
-  // calculate the tangent vectors of both triangles
-  vec3f tangent1{}, tangent2{};
-  float f;
-
-  // triangle 1
-  // ----------
-  vec3f edge1 = pos2 - pos1;
-  vec3f edge2 = pos3 - pos1;
-  vec2f deltaUV1 = uv2 - uv1;
-  vec2f deltaUV2 = uv3 - uv1;
-
-  f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
-  tangent1.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
-  tangent1.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
-  tangent1.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
-
-  // triangle 2
-  // ----------
-  edge1 = pos3 - pos1;
-  edge2 = pos4 - pos1;
-  deltaUV1 = uv3 - uv1;
-  deltaUV2 = uv4 - uv1;
-
-  f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
-  tangent2.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
-  tangent2.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
-  tangent2.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
-  
-  float vertices[] = {
-    // positions            // normal         // texcoords  // tangent                          
-    pos1.x, pos1.y, pos1.z, nm.x, nm.y, nm.z, uv1.x, uv1.y, tangent1.x, tangent1.y, tangent1.z,
-    pos2.x, pos2.y, pos2.z, nm.x, nm.y, nm.z, uv2.x, uv2.y, tangent1.x, tangent1.y, tangent1.z,
-    pos3.x, pos3.y, pos3.z, nm.x, nm.y, nm.z, uv3.x, uv3.y, tangent1.x, tangent1.y, tangent1.z,
-
-    pos1.x, pos1.y, pos1.z, nm.x, nm.y, nm.z, uv1.x, uv1.y, tangent2.x, tangent2.y, tangent2.z,
-    pos3.x, pos3.y, pos3.z, nm.x, nm.y, nm.z, uv3.x, uv3.y, tangent2.x, tangent2.y, tangent2.z,
-    pos4.x, pos4.y, pos4.z, nm.x, nm.y, nm.z, uv4.x, uv4.y, tangent2.x, tangent2.y, tangent2.z,
-  };
-  Buffer vbo(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-  VertexArray cube;
-  cube.Create();
-  cube.AttachVertexBuffer(0, vbo, 0, 11 * sizeof(float));
-  cube.EnableAttribute(0);
-  cube.SetAttribBinding(0, 0);
-  cube.SetAttribFormat(0, 3, GL_FLOAT, true, 0);
-  cube.EnableAttribute(1);
-  cube.SetAttribBinding(1, 0);
-  cube.SetAttribFormat(1, 3, GL_FLOAT, true, 3 * sizeof(float));
-  cube.EnableAttribute(2);
-  cube.SetAttribBinding(2, 0);
-  cube.SetAttribFormat(2, 2, GL_FLOAT, true, 6 * sizeof(float));
-  cube.EnableAttribute(3);
-  cube.SetAttribBinding(3, 0);
-  cube.SetAttribFormat(3, 3, GL_FLOAT, true, 8 * sizeof(float));
-  cube.numIndices = 0;
-  cube.numVertices = 6;
-  
-  
+  StaticMeshComponent mesh(ASSETS_PATH / "Shapes/Cube/Cube.obj");
 
   Camera camera(
     vec3f(0.0f, 0.0f, 5.0f),
@@ -166,13 +96,12 @@ void Engine::Run()
   /* -------------------------- Pre-loop -------------------------- */
   Program* testingProgram = _instanceSM->GetProgram("Testing");
   Program* framebufferProgram = _instanceSM->GetProgram("Framebuffer");
-  Program* testingProgram = _instanceSM->GetProgram("Testing");
   Texture2D& fboImageTexture = _fboIntermediate.GetTextureAttachment(0);
   
   Texture2D* brickwallTexture = _instanceTM->GetTextureByPath(TEXTURES_PATH / "brickwall.jpg");
   Texture2D* brickwallNormalTexture = _instanceTM->GetTextureByPath(TEXTURES_PATH / "brickwall_normal.jpg");
   testingProgram->SetUniform1i("diffuseTexture", 0);
-  testingProgram->SetUniform1i("normalTexture", 1);
+  testingProgram->SetUniform1i("normalTexture", 2);
   TransformComponent transform{};
 
   time_point lastUpdateTime = system_clock::now();
@@ -210,15 +139,12 @@ void Engine::Run()
       testingProgram->Use();
       testingProgram->SetUniform3f("viewPos", camera.cameraComponent->position);
       testingProgram->SetUniformMat4f("u_model", transform.GetTransformation());
-      brickwallTexture->BindTextureUnit(0);
-      brickwallNormalTexture->BindTextureUnit(1);
-      Renderer::DrawArrays(GL_TRIANGLES, cube);
+      mesh.Draw();
+
+
 
       transform.rotation.x += 0.005;
       transform.UpdateTransformation();
-
-      
-      //lightPos.y = Math::Sin(time * 0.5);
 
       /* Blit multisampled buffer to normal colorbuffer of intermediate FBO */
       _fboMultisampled.Blit(_fboIntermediate,

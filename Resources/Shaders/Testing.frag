@@ -21,7 +21,6 @@ void main()
   vec3 lightDiffuse = vec3(0.5f);
   vec3 lightSpecular = vec3(1.0f);
   vec3 materialSpecular = vec3(0.5f);
-  vec3 lightPos = vec3(0.0f, 0.0f, 2.0f);
 
   vec3 normal;
   normal = texture(normalTexture, TexCoords).rgb;
