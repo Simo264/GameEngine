@@ -99,11 +99,17 @@ void Engine::Run()
   Program* framebufferProgram = _instanceSM->GetProgram("Framebuffer");
   Texture2D& fboImageTexture = _fboIntermediate.GetTextureAttachment(0);
   
-  Texture2D* brickwallTexture = _instanceTM->GetTextureByPath(TEXTURES_PATH / "brickwall.jpg");
+  Texture2D* brickwallTexture = _instanceTM->GetTextureByPath(TEXTURES_PATH / "brickwall_diffuse.jpg");
   Texture2D* brickwallNormalTexture = _instanceTM->GetTextureByPath(TEXTURES_PATH / "brickwall_normal.jpg");
+  
   Texture2D* bricksDiffuseTexture = _instanceTM->GetTextureByPath(TEXTURES_PATH / "bricks_diffuse.jpg");
   Texture2D* bricksNormalTexture = _instanceTM->GetTextureByPath(TEXTURES_PATH / "bricks_normal.jpg");
   Texture2D* brickwsHeightTexture = _instanceTM->GetTextureByPath(TEXTURES_PATH / "bricks_height.jpg");
+
+  Texture2D* woodDiffuseTexture = _instanceTM->GetTextureByPath(TEXTURES_PATH / "wood_diffuse.png");
+  Texture2D* woodNormalTexture = _instanceTM->GetTextureByPath(TEXTURES_PATH / "wood_normal.png");
+  Texture2D* woodHeightTexture = _instanceTM->GetTextureByPath(TEXTURES_PATH / "wood_height.png");
+  
   testingProgram->SetUniform1i("u_diffuseTexture", 0);
   testingProgram->SetUniform1i("u_normalTexture", 2);
   testingProgram->SetUniform1i("u_heightTexture", 3);
@@ -149,11 +155,12 @@ void Engine::Run()
       glBindTextureUnit(2, 0);
       glBindTextureUnit(3, 0);
       
-      //brickwallTexture->BindTextureUnit(0);
-      //brickwallNormalTexture->BindTextureUnit(2);
-      bricksDiffuseTexture->BindTextureUnit(0);
-      bricksNormalTexture->BindTextureUnit(2);
-      brickwsHeightTexture->BindTextureUnit(3);
+      //bricksDiffuseTexture->BindTextureUnit(0);
+      //bricksNormalTexture->BindTextureUnit(2);
+      //brickwsHeightTexture->BindTextureUnit(3);
+      woodDiffuseTexture->BindTextureUnit(0);
+      woodNormalTexture->BindTextureUnit(2);
+      woodHeightTexture->BindTextureUnit(3);
       mesh.Draw();
 
       transform.rotation.y += 0.005;

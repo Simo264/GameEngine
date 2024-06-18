@@ -93,16 +93,15 @@ StaticMeshComponent::StaticMeshComponent(const fspath& filePath)
 }
 void StaticMeshComponent::Draw()
 {
-	//glBindTextureUnit(0, 0); /* reset diffuse */
-	//glBindTextureUnit(1, 0); /* reset specular */
-	//glBindTextureUnit(2, 0); /* reset normal */
+	glBindTextureUnit(0, 0); /* reset diffuse */
+	glBindTextureUnit(1, 0); /* reset specular */
+	glBindTextureUnit(2, 0); /* reset normal */
+	glBindTextureUnit(3, 0); /* reset height */
 
-	//if (material.diffuse)
-	//	material.diffuse->BindTextureUnit(0);
-	//if (material.specular)
-	//	material.specular->BindTextureUnit(1);
-	//if (material.normal)
-	//	material.normal->BindTextureUnit(2);
+	if (material.diffuse) material.diffuse->BindTextureUnit(0);
+	if (material.specular) material.specular->BindTextureUnit(1);
+	if (material.normal) material.normal->BindTextureUnit(2);
+	if (material.height) material.height->BindTextureUnit(3);
 
 	if (vao.numIndices == 0)
 		Renderer::DrawArrays(GL_TRIANGLES, vao);

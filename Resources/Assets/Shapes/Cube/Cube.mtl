@@ -11,6 +11,6 @@ d 1.000000
 illum 2
 
 # the diffuse texture map
-map_Kd brickwall.jpg
+map_Kd brickwall_diffuse.jpg
 
 map_Bump brickwall_normal.jpg
