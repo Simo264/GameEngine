@@ -20,14 +20,15 @@ layout (std140, binding = 0) uniform cameraBlock
 uniform mat4 u_model;
 uniform vec3 u_viewPos;
 
-vec3 lightPos = vec3(-1.0f, 0.0f, 2.0f);
+/* Globals */
+const vec3 lightPos = vec3(-1.0f, 0.0f, 2.0f);
 
 void main()
 {
-  vec3 T   = normalize(mat3(u_model) * aTangent);
-  vec3 B   = normalize(mat3(u_model) * aBitangent);
-  vec3 N   = normalize(mat3(u_model) * aNormal);
-  mat3 TBN = transpose(mat3(T, B, N));
+  const vec3 T   = normalize(mat3(u_model) * aTangent);
+  const vec3 B   = normalize(mat3(u_model) * aBitangent);
+  const vec3 N   = normalize(mat3(u_model) * aNormal);
+  const mat3 TBN = transpose(mat3(T, B, N));
   
   TangentLightPos = TBN * lightPos;
   TangentViewPos  = TBN * u_viewPos;

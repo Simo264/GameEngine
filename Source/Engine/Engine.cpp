@@ -149,7 +149,6 @@ void Engine::Run()
       glBindTextureUnit(2, 0);
       glBindTextureUnit(3, 0);
       
-      
       //brickwallTexture->BindTextureUnit(0);
       //brickwallNormalTexture->BindTextureUnit(2);
       bricksDiffuseTexture->BindTextureUnit(0);

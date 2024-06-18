@@ -13,50 +13,71 @@ uniform sampler2D u_diffuseTexture;
 uniform sampler2D u_normalTexture;
 uniform sampler2D u_heightTexture;
 
-vec2 ParallaxMapping(vec2 texCoords, vec3 viewDir, float heightScale);
+vec2 ParallaxMapping(const vec2 texCoords, const vec3 viewDir, const float heightScale);
 
 
 /* Globals */
-vec3 lightAmbient = vec3(0.1f);
-vec3 lightDiffuse = vec3(1.0f);
-vec3 lightSpecular = vec3(1.0f);
-vec3 materialSpecular = vec3(0.0f);
-float heightScale = 0.1f;
+const vec3 lightAmbient = vec3(0.1f);
+const vec3 lightDiffuse = vec3(1.0f);
+const vec3 lightSpecular = vec3(1.0f);
+const vec3 materialSpecular = vec3(0.0f);
+const float heightScale = 0.1f;
 
 void main()
 {
   // offset texture coordinates with Parallax Mapping
-  vec3 viewDir   = normalize(TangentViewPos - TangentFragPos);
-  vec2 texCoords = ParallaxMapping(TexCoords, viewDir, heightScale);
+  const vec3 viewDir   = normalize(TangentViewPos - TangentFragPos);
+  const vec2 texCoords = ParallaxMapping(TexCoords, viewDir, heightScale);
   if(texCoords.x > 1.0 || texCoords.y > 1.0 || texCoords.x < 0.0 || texCoords.y < 0.0)
     discard;
 
   // then sample textures with new texture coords
-  vec3 diffColor = texture(u_diffuseTexture, texCoords).rgb;
+  const vec3 diffColor = texture(u_diffuseTexture, texCoords).rgb;
   vec3 normal = texture(u_normalTexture, texCoords).rgb;
   normal = normalize(normal * 2.0 - 1.0);
 
-  vec3 lightDir = normalize(TangentLightPos - TangentFragPos);
-  vec3 halfwayDir = normalize(lightDir + viewDir);  
+  const vec3 lightDir = normalize(TangentLightPos - TangentFragPos);
+  const vec3 halfwayDir = normalize(lightDir + viewDir);  
    
   // ambient
-  vec3 ambient = lightAmbient * diffColor;
+  const vec3 ambient = lightAmbient * diffColor;
   
   // diffuse
-  float diff = max(dot(lightDir, normal), 0.0);
-  vec3 diffuse = lightDiffuse * diff * diffColor;
+  const float diff = max(dot(lightDir, normal), 0.0);
+  const vec3 diffuse = lightDiffuse * diff * diffColor;
   
   // specular
-  float spec = pow(max(dot(normal, halfwayDir), 0.0), 32.0);
-
-  vec3 specular = materialSpecular * spec * lightSpecular;
+  const float spec = pow(max(dot(normal, halfwayDir), 0.0), 32.0);
+  const vec3 specular = materialSpecular * spec * lightSpecular;
+  
   FragColor = vec4(ambient + diffuse + specular, 1.0);
 } 
 
 
-vec2 ParallaxMapping(vec2 texCoords, vec3 viewDir, float heightScale)
+vec2 ParallaxMapping(const vec2 texCoords, const vec3 viewDir, const float heightScale)
 { 
-  float height = texture(u_heightTexture, texCoords).r;    
-  vec2 p = viewDir.xy / viewDir.z * (height * heightScale);
-  return texCoords - p;    
+  // number of depth layers
+  const float numLayers = 10;
+  
+  // calculate the size of each layer
+  const float layerDepth = 1.0 / numLayers;
+  // the amount to shift the texture coordinates per layer (from vector P)
+  const vec2 P = viewDir.xy * heightScale; 
+  const vec2 deltaTexCoords = P / numLayers;
+  
+  // get initial values
+  float currentLayerDepth = 0.0;
+  vec2 currentTexCoords = texCoords;
+  float currentDepthMapValue = texture(u_heightTexture, currentTexCoords).r;
+
+  while(currentLayerDepth < currentDepthMapValue)
+  {
+    // shift texture coordinates along direction of P
+    currentTexCoords -= deltaTexCoords;
+    // get depthmap value at current texture coordinates
+    currentDepthMapValue = texture(u_heightTexture, currentTexCoords).r;  
+    // get depth of next layer
+    currentLayerDepth += layerDepth;  
+  }
+  return currentTexCoords;
 } 
