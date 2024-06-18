@@ -17,16 +17,12 @@ layout (std140, binding = 0) uniform cameraBlock
   mat4 u_projection;
 };
 uniform mat4 u_model;
-
 uniform vec3 viewPos;
+
+vec3 lightPos = vec3(-1.0f, 0.0f, 2.0f);
 
 void main()
 {
-  FragPos = vec3(u_model * vec4(aPos, 1.0)); 
-  TexCoords = aTexCoords;
-
-  vec3 lightPos = vec3(-1.0f, 0.0f, 2.0f);
-
   mat3 normalMatrix = transpose(inverse(mat3(u_model)));
   vec3 T = normalize(normalMatrix * aTangent);
   vec3 N = normalize(normalMatrix * aNormal);
@@ -37,6 +33,7 @@ void main()
   TangentLightPos = TBN * lightPos;
   TangentViewPos  = TBN * viewPos;
   TangentFragPos  = TBN * FragPos;
-
+  FragPos = vec3(u_model * vec4(aPos, 1.0)); 
+  TexCoords = aTexCoords;
   gl_Position = u_projection * u_view * u_model * vec4(aPos, 1.0);
 }

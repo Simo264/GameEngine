@@ -83,6 +83,7 @@ void Engine::Initialize()
 void Engine::Run()
 {
   StaticMeshComponent mesh(ASSETS_PATH / "Shapes/Cube/Cube.obj");
+  TransformComponent transform{};
 
   Camera camera(
     vec3f(0.0f, 0.0f, 5.0f),
@@ -102,8 +103,7 @@ void Engine::Run()
   Texture2D* brickwallNormalTexture = _instanceTM->GetTextureByPath(TEXTURES_PATH / "brickwall_normal.jpg");
   testingProgram->SetUniform1i("diffuseTexture", 0);
   testingProgram->SetUniform1i("normalTexture", 2);
-  TransformComponent transform{};
-
+  
   time_point lastUpdateTime = system_clock::now();
   
   /* -------------------------- loop -------------------------- */
@@ -141,10 +141,6 @@ void Engine::Run()
       testingProgram->SetUniformMat4f("u_model", transform.GetTransformation());
       mesh.Draw();
 
-
-
-      transform.rotation.x += 0.005;
-      transform.UpdateTransformation();
 
       /* Blit multisampled buffer to normal colorbuffer of intermediate FBO */
       _fboMultisampled.Blit(_fboIntermediate,

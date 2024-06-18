@@ -44,6 +44,13 @@ void ObjectLoader::LoadMesh(int i)
 void ObjectLoader::LoadVertices(Buffer& vbo) const
 {
   float* vboPtr = reinterpret_cast<float*>(vbo.MapStorage(GL_WRITE_ONLY));
+
+  if (!vboPtr)
+  {
+    CONSOLE_WARN("Error on mapping vertex buffer storage");
+    return;
+  }
+
   for (uint32_t i = 0; i < mesh->mNumVertices; i++)
   {
     vec2f textureCoord{ 0.0f, 0.0f };
