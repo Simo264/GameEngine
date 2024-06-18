@@ -43,7 +43,8 @@ StaticMeshComponent::StaticMeshComponent(const fspath& filePath)
 		3 + // position -> x,y,z
 		2 +	// tc				-> u,v
 		3 +	// normal		-> x,y,z
-		3;	// tangent	-> b,t,n
+		3 +	// tangent	-> x,y,z
+		3;	// bitangent-> x,y,z
 
 	ObjectLoader loader(filePath);
 	loader.LoadMesh(0);
@@ -81,6 +82,10 @@ StaticMeshComponent::StaticMeshComponent(const fspath& filePath)
 	vao.EnableAttribute(3);
 	vao.SetAttribBinding(3, 0);
 	vao.SetAttribFormat(3, 3, GL_FLOAT, true, 8 * sizeof(float));
+	/* bitangent */
+	vao.EnableAttribute(4);
+	vao.SetAttribBinding(4, 0);
+	vao.SetAttribFormat(4, 3, GL_FLOAT, true, 11 * sizeof(float));
 
 	material.diffuse = loader.GetTexture(aiTextureType_DIFFUSE);
 	material.specular = loader.GetTexture(aiTextureType_SPECULAR);
@@ -88,17 +93,16 @@ StaticMeshComponent::StaticMeshComponent(const fspath& filePath)
 }
 void StaticMeshComponent::Draw()
 {
-	glBindTextureUnit(0, 0); /* reset diffuse */
-	glBindTextureUnit(1, 0); /* reset specular */
-	glBindTextureUnit(2, 0); /* reset normal */
+	//glBindTextureUnit(0, 0); /* reset diffuse */
+	//glBindTextureUnit(1, 0); /* reset specular */
+	//glBindTextureUnit(2, 0); /* reset normal */
 
-	if (material.diffuse)
-		material.diffuse->BindTextureUnit(0);
-	if (material.specular)
-		material.specular->BindTextureUnit(1);
-	if (material.normal)
-		material.normal->BindTextureUnit(2);
-
+	//if (material.diffuse)
+	//	material.diffuse->BindTextureUnit(0);
+	//if (material.specular)
+	//	material.specular->BindTextureUnit(1);
+	//if (material.normal)
+	//	material.normal->BindTextureUnit(2);
 
 	if (vao.numIndices == 0)
 		Renderer::DrawArrays(GL_TRIANGLES, vao);

@@ -101,8 +101,12 @@ void Engine::Run()
   
   Texture2D* brickwallTexture = _instanceTM->GetTextureByPath(TEXTURES_PATH / "brickwall.jpg");
   Texture2D* brickwallNormalTexture = _instanceTM->GetTextureByPath(TEXTURES_PATH / "brickwall_normal.jpg");
-  testingProgram->SetUniform1i("diffuseTexture", 0);
-  testingProgram->SetUniform1i("normalTexture", 2);
+  Texture2D* bricksDiffuseTexture = _instanceTM->GetTextureByPath(TEXTURES_PATH / "bricks_diffuse.jpg");
+  Texture2D* bricksNormalTexture = _instanceTM->GetTextureByPath(TEXTURES_PATH / "bricks_normal.jpg");
+  Texture2D* brickwsHeightTexture = _instanceTM->GetTextureByPath(TEXTURES_PATH / "bricks_height.jpg");
+  testingProgram->SetUniform1i("u_diffuseTexture", 0);
+  testingProgram->SetUniform1i("u_normalTexture", 2);
+  testingProgram->SetUniform1i("u_heightTexture", 3);
   
   time_point lastUpdateTime = system_clock::now();
   
@@ -137,10 +141,24 @@ void Engine::Run()
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
       testingProgram->Use();
-      testingProgram->SetUniform3f("viewPos", camera.cameraComponent->position);
+      testingProgram->SetUniform3f("u_viewPos", camera.cameraComponent->position);
       testingProgram->SetUniformMat4f("u_model", transform.GetTransformation());
+      
+      glBindTextureUnit(0, 0);
+      glBindTextureUnit(1, 0);
+      glBindTextureUnit(2, 0);
+      glBindTextureUnit(3, 0);
+      
+      
+      //brickwallTexture->BindTextureUnit(0);
+      //brickwallNormalTexture->BindTextureUnit(2);
+      bricksDiffuseTexture->BindTextureUnit(0);
+      bricksNormalTexture->BindTextureUnit(2);
+      brickwsHeightTexture->BindTextureUnit(3);
       mesh.Draw();
 
+      transform.rotation.y += 0.005;
+      transform.UpdateTransformation();
 
       /* Blit multisampled buffer to normal colorbuffer of intermediate FBO */
       _fboMultisampled.Blit(_fboIntermediate,

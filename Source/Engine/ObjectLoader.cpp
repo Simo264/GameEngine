@@ -72,6 +72,10 @@ void ObjectLoader::LoadVertices(Buffer& vbo) const
     *(vboPtr++) = static_cast<float>(mesh->mTangents[i].x);
     *(vboPtr++) = static_cast<float>(mesh->mTangents[i].y);
     *(vboPtr++) = static_cast<float>(mesh->mTangents[i].z);
+    /* bitangent */
+    *(vboPtr++) = static_cast<float>(mesh->mBitangents[i].x);
+    *(vboPtr++) = static_cast<float>(mesh->mBitangents[i].y);
+    *(vboPtr++) = static_cast<float>(mesh->mBitangents[i].z);
   }
   vbo.UnmapStorage();
 }
