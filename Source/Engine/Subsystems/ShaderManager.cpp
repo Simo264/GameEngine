@@ -4,8 +4,7 @@
 #include "Core/OpenGL.hpp"
 #include "Core/FileParser/INIFileParser.hpp"
 
-extern float Z_NEAR;
-extern float Z_FAR;
+#include "Engine/Globals.hpp"
 
 void ShaderManager::CleanUp()
 {

@@ -93,7 +93,7 @@ void main()
     result += CalculateBlinnPhongLight(u_pointLight[i]);
 
   /* Calculate spot light */
-  result += CalculateSpotLight(u_spotLight);
+  //result += CalculateSpotLight(u_spotLight);
 
   /* apply gamma correction */
   if(u_gamma != 0)

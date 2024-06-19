@@ -68,10 +68,21 @@ static void RenderScene(Scene& scene, Program* sceneProgram)
 
   scene.Reg().view<StaticMeshComponent, TransformComponent>().each([sceneProgram](auto& mesh, auto& transform) {
     sceneProgram->SetUniformMat4f("u_model", transform.GetTransformation());
+    
+    glBindTextureUnit(0, 0); /* reset diffuse */
+    glBindTextureUnit(1, 0); /* reset specular */
+    glBindTextureUnit(2, 0); /* reset normal */
+    glBindTextureUnit(3, 0); /* reset height */
+
+    if (mesh.material.diffuse) mesh.material.diffuse->BindTextureUnit(0);
+    if (mesh.material.specular) mesh.material.specular->BindTextureUnit(1);
+    if (mesh.material.normal) mesh.material.normal->BindTextureUnit(2);
+    if (mesh.material.height) mesh.material.height->BindTextureUnit(3);
+    
     mesh.Draw();
   });
 }
-static void LoadSkybox(VertexArray& vao)
+static void CreateSkybox(VertexArray& vao, TextureCubemap& skyboxTexture)
 {
   float skyboxVertices[] = {
     // positions 
@@ -117,23 +128,32 @@ static void LoadSkybox(VertexArray& vao)
     -1.0f, -1.0f,  1.0f,
      1.0f, -1.0f,  1.0f
   };
-
   Buffer vbo(GL_ARRAY_BUFFER, sizeof(skyboxVertices), skyboxVertices, GL_STATIC_DRAW);
 
   vao.Create();
   vao.AttachVertexBuffer(0, vbo, 0, 3 * sizeof(float));
+  vao.EnableAttribute(0);
+  vao.SetAttribBinding(0, 0);
+  vao.SetAttribFormat(0, 3, GL_FLOAT, true, 0);
   vao.numIndices = 0;
   vao.numVertices = 36;
-  
-  VertexSpecifications specs;
-  specs.attrindex = 0;
-  specs.bindingindex = 0;
-  specs.components = 3;
-  specs.normalized = true;
-  specs.relativeoffset = 0;
-  specs.type = GL_FLOAT;
 
-  vao.SetVertexSpecifications(specs);
+  const array<fspath, 6> faces = {
+    fspath(TEXTURES_PATH / "skybox/right.jpg"),
+    fspath(TEXTURES_PATH / "skybox/left.jpg"),
+    fspath(TEXTURES_PATH / "skybox/top.jpg"),
+    fspath(TEXTURES_PATH / "skybox/bottom.jpg"),
+    fspath(TEXTURES_PATH / "skybox/front.jpg"),
+    fspath(TEXTURES_PATH / "skybox/back.jpg"),
+  };
+  skyboxTexture.size = 2048;
+  skyboxTexture.Create();
+  skyboxTexture.SetParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  skyboxTexture.SetParameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  skyboxTexture.SetParameteri(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  skyboxTexture.SetParameteri(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  skyboxTexture.SetParameteri(GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+  skyboxTexture.LoadImages(faces);
 }
 
 /* -----------------------------------------------------
@@ -187,26 +207,9 @@ void Engine::Initialize()
 }
 void Engine::Run()
 {
-  const array<fspath, 6> faces = {
-    fspath(TEXTURES_PATH / "skybox/right.jpg"),
-    fspath(TEXTURES_PATH / "skybox/left.jpg"),
-    fspath(TEXTURES_PATH / "skybox/top.jpg"),
-    fspath(TEXTURES_PATH / "skybox/bottom.jpg"),
-    fspath(TEXTURES_PATH / "skybox/front.jpg"),
-    fspath(TEXTURES_PATH / "skybox/back.jpg"),
-  };
   TextureCubemap skyboxTexture;
-  skyboxTexture.size = 2048;
-  skyboxTexture.Create();
-  skyboxTexture.SetParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  skyboxTexture.SetParameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  skyboxTexture.SetParameteri(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  skyboxTexture.SetParameteri(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  skyboxTexture.SetParameteri(GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-  skyboxTexture.LoadImages(faces);
-  VertexArray skyboxVAO;
-  LoadSkybox(skyboxVAO);
-
+  VertexArray skybox;
+  CreateSkybox(skybox, skyboxTexture);
 
   /* -------------------------- Camera -------------------------- */
   Camera camera(
@@ -230,7 +233,7 @@ void Engine::Run()
   const vec3f lightPosition{ 0.0f, 30.0f, 0.0f };
   mat4f lightView{};
   mat4f lightSpaceMatrix{};
-  vec3f lightViewCenter{ 0.0f, 0.0f ,0.0f };
+  vec3f lightViewCenter{};
 
   /* -------------------------- Pre-loop -------------------------- */
   Program* framebufferProgram = _instanceSM->GetProgram("Framebuffer");
@@ -242,7 +245,7 @@ void Engine::Run()
   Texture2D& fboImageTexture = _fboIntermediate.GetTextureAttachment(0);
   Texture2D& fboImageTextureShadowMap = _fboShadowMap.GetTextureAttachment(0);
   
-  int toggle = 2;
+  int toggle = 1;
 
   scene.Reg().view<DirLightComponent>().each([&](DirLightComponent& light) {
     lightViewCenter = light.direction;
@@ -289,7 +292,7 @@ void Engine::Run()
       glClear(GL_DEPTH_BUFFER_BIT);
       shadowMapDepthProgram->Use();
       shadowMapDepthProgram->SetUniformMat4f("u_lightSpaceMatrix", lightSpaceMatrix);
-      scene.Reg().view<StaticMeshComponent, TransformComponent>().each([shadowMapDepthProgram](auto& mesh, auto& transform) {
+      scene.Reg().view<StaticMeshComponent, TransformComponent>().each([&](auto& mesh, auto& transform) {
         shadowMapDepthProgram->SetUniformMat4f("u_model", transform.GetTransformation());
         mesh.Draw();
       });
@@ -302,29 +305,31 @@ void Engine::Run()
       glViewport(0, 0, _viewport.x, _viewport.y);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-      /* Render scene with no shadows */
-      if(toggle == 1)
+      switch (toggle)
       {
+      case 1: /* Render scene with no shadows */
         sceneProgram->Use();
         sceneProgram->SetUniform3f("u_viewPos", camera.cameraComponent->position);
         RenderScene(scene, sceneProgram);
-      }
-      /* Render scene with shadows map */
-      else if(toggle == 2)
-      {
+        break;
+
+      case 2: /* Render scene with shadows map */
         shadowMapProgram->Use();
         shadowMapProgram->SetUniformMat4f("u_lightSpaceMatrix", lightSpaceMatrix);
         shadowMapProgram->SetUniform3f("u_viewPos", camera.cameraComponent->position);
         shadowMapProgram->SetUniform3f("u_lightPos", lightPosition);
         fboImageTextureShadowMap.BindTextureUnit(10);
         RenderScene(scene, shadowMapProgram);
-      }
-      /* Render Depth map texture for visual debugging */
-      else if(toggle == 3)
-      {
+        break;
+
+      case 3: /* Render Depth map texture for visual debugging */
         visualshadowDepthProgram->Use();
         fboImageTextureShadowMap.BindTextureUnit(0);
         Renderer::DrawArrays(GL_TRIANGLES, _screenSquare);
+        break;
+
+      default:
+        break;
       }
 
       /* Draw skybox as last */
@@ -334,7 +339,7 @@ void Engine::Run()
         skyboxProgram->SetUniformMat4f("u_view", mat4f(mat3f(cameraViewMatrix)));
         skyboxTexture.BindTextureUnit(0);
         Depth::SetFunction(GL_LEQUAL); /* change depth function so depth test passes when values are equal to depth buffer's content */
-        Renderer::DrawArrays(GL_TRIANGLES, skyboxVAO);
+        Renderer::DrawArrays(GL_TRIANGLES, skybox);
         Depth::SetFunction(GL_LESS); /* set depth function back to default */
       }
 
@@ -371,6 +376,10 @@ void Engine::Run()
     _instanceWM->SwapWindowBuffers();
     lastUpdateTime = now;
   }
+
+
+  skybox.Delete();
+  skyboxTexture.Delete();
 }
 void Engine::CleanUp()
 {
