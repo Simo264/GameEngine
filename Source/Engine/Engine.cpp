@@ -82,10 +82,10 @@ static void RenderScene(Scene& scene, Program* sceneProgram)
     mesh.Draw();
   });
 }
-static void CreateSkybox(VertexArray& vao, TextureCubemap& skyboxTexture)
+static void CreateSkybox(VertexArray& skybox, TextureCubemap& skyboxTexture)
 {
   float skyboxVertices[] = {
-    // positions 
+    /* positions */
     -1.0f,  1.0f, -1.0f,
     -1.0f, -1.0f, -1.0f,
      1.0f, -1.0f, -1.0f,
@@ -130,13 +130,13 @@ static void CreateSkybox(VertexArray& vao, TextureCubemap& skyboxTexture)
   };
   Buffer vbo(GL_ARRAY_BUFFER, sizeof(skyboxVertices), skyboxVertices, GL_STATIC_DRAW);
 
-  vao.Create();
-  vao.AttachVertexBuffer(0, vbo, 0, 3 * sizeof(float));
-  vao.EnableAttribute(0);
-  vao.SetAttribBinding(0, 0);
-  vao.SetAttribFormat(0, 3, GL_FLOAT, true, 0);
-  vao.numIndices = 0;
-  vao.numVertices = 36;
+  skybox.Create();
+  skybox.AttachVertexBuffer(0, vbo, 0, 3 * sizeof(float));
+  skybox.EnableAttribute(0);
+  skybox.SetAttribBinding(0, 0);
+  skybox.SetAttribFormat(0, 3, GL_FLOAT, true, 0);
+  skybox.numIndices = 0;
+  skybox.numVertices = 36;
 
   const array<fspath, 6> faces = {
     fspath(TEXTURES_PATH / "skybox/right.jpg"),
@@ -233,7 +233,11 @@ void Engine::Run()
   const vec3f lightPosition{ 0.0f, 30.0f, 0.0f };
   mat4f lightView{};
   mat4f lightSpaceMatrix{};
-  vec3f lightViewCenter{};
+  vec3f* lightViewCenter{ nullptr };
+  
+  scene.Reg().view<DirLightComponent>().each([&](DirLightComponent& light) {
+    lightViewCenter = &light.direction;
+  });
 
   /* -------------------------- Pre-loop -------------------------- */
   Program* framebufferProgram = _instanceSM->GetProgram("Framebuffer");
@@ -244,13 +248,8 @@ void Engine::Run()
   Program* skyboxProgram = _instanceSM->GetProgram("Skybox");
   Texture2D& fboImageTexture = _fboIntermediate.GetTextureAttachment(0);
   Texture2D& fboImageTextureShadowMap = _fboShadowMap.GetTextureAttachment(0);
-  
+
   int toggle = 1;
-
-  scene.Reg().view<DirLightComponent>().each([&](DirLightComponent& light) {
-    lightViewCenter = light.direction;
-  });
-
   time_point lastUpdateTime = system_clock::now();
   
   /* -------------------------- loop -------------------------- */
@@ -280,7 +279,7 @@ void Engine::Run()
     _uboCamera.UpdateStorage(0, sizeof(mat4f), &cameraViewMatrix[0]);
     _uboCamera.UpdateStorage(sizeof(mat4f), sizeof(mat4f), &cameraProjectionMatrix[0]);
 
-    lightView = Math::LookAt(lightPosition, lightViewCenter, vec3f(0.0f, 1.0f, 0.0f));
+    lightView = Math::LookAt(lightPosition, *lightViewCenter, vec3f(0.0f, 1.0f, 0.0f));
     lightSpaceMatrix = lightProjection * lightView;
 
     
