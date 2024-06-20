@@ -13,22 +13,20 @@ out vec4 FragColor;
 
 /* ---------- Structs ---------- */
 /* ----------------------------- */
-struct Material
-{
+struct Material{
   sampler2D diffuseTexture;
   sampler2D specularTexture;
-  float     shininess;
+  sampler2D normalTexture;
+  sampler2D heightTexture;
 };
-struct DirectionalLight
-{
+struct DirectionalLight{
   vec3  color;
   float ambient;
   float diffuse;
   float specular;
   vec3  direction;
 };
-struct PointLight
-{
+struct PointLight{
   vec3  color;
   float ambient;
   float diffuse;
@@ -37,8 +35,7 @@ struct PointLight
   float linear;     /* attenuation */
   float quadratic;  /* attenuation */
 };
-struct SpotLight
-{
+struct SpotLight{
   vec3  color;
   float ambient;
   float diffuse;
@@ -59,7 +56,7 @@ uniform DirectionalLight  u_directionalLight;
 uniform PointLight        u_pointLight[4];
 uniform SpotLight         u_spotLight;
 
-uniform sampler2D u_shadowMap; 
+uniform sampler2D u_shadowMapTexture; 
 uniform vec3  u_lightPos;
 uniform vec3  u_viewPos;
 uniform float u_gamma;
@@ -119,7 +116,7 @@ vec3 CalculateDirectionalLight(DirectionalLight light)
   
   /* specular shading */
   vec3 reflectDir       = reflect(-lightDir, g_normal);
-  float specularFactor  = pow(max(dot(g_viewDir, reflectDir), 0.0), u_material.shininess);
+  float specularFactor  = pow(max(dot(g_viewDir, reflectDir), 0.0), 64.0f);
   vec3 specular         = (light.color * light.specular) * specularFactor * g_specularColor;  
 
   /* Calculate shadow */
@@ -136,7 +133,7 @@ float CalculateShadows(vec3 lightDir)
   projCoords = projCoords * 0.5 + 0.5;
   
   /* Get closest depth value from light's perspective (using [0,1] range fragPosLight as coords) */
-  float closestDepth = texture(u_shadowMap, projCoords.xy).r; 
+  float closestDepth = texture(u_shadowMapTexture, projCoords.xy).r; 
   
   /* Get depth of current fragment from light's perspective */
   float currentDepth = projCoords.z;
@@ -151,12 +148,12 @@ float CalculateShadows(vec3 lightDir)
   float bias = max(0.05 * (1.0 - dot(g_normal, lightDir)), 0.005);  
 
   /* Percentage-closer filtering (PCF) */
-  vec2 texelSize = 1.0 / textureSize(u_shadowMap, 0);
+  vec2 texelSize = 1.0 / textureSize(u_shadowMapTexture, 0);
   for(int x = -1; x <= 1; ++x)
   {
     for(int y = -1; y <= 1; ++y)
     {
-      float pcfDepth = texture(u_shadowMap, projCoords.xy + vec2(x, y) * texelSize).r; 
+      float pcfDepth = texture(u_shadowMapTexture, projCoords.xy + vec2(x, y) * texelSize).r; 
       shadow += currentDepth - bias > pcfDepth ? 1.0 : 0.0;        
     }    
   }
@@ -176,7 +173,7 @@ vec3 CalculateBlinnPhongLight(PointLight light)
     
   /* specular */
   vec3 halfwayDir = normalize(lightDir + g_viewDir);
-  float specularFactor = pow(max(dot(g_normal, halfwayDir), 0.0), u_material.shininess);
+  float specularFactor = pow(max(dot(g_normal, halfwayDir), 0.0), 64.0f);
   vec3 specular = (light.color * light.specular) * specularFactor * g_specularColor;  
     
   /* attenuation */
@@ -207,7 +204,7 @@ vec3 CalculateSpotLight(SpotLight light)
       
   /* specular */
   vec3 reflectDir = reflect(-lightDir, g_normal);  
-  float specularFactor = pow(max(dot(g_viewDir, reflectDir), 0.0), u_material.shininess);
+  float specularFactor = pow(max(dot(g_viewDir, reflectDir), 0.0), 64.0f);
   vec3 specular = (light.color * light.specular) * specularFactor * g_specularColor;  
             
   /* soft edges + intensity */

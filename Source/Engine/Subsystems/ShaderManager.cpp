@@ -73,25 +73,27 @@ void ShaderManager::SetUpProgramsUniforms()
   framebufferProg->SetUniform1i("u_postProcessingType", 0);
 
   auto sceneProg = GetProgram("Scene");
-  sceneProg->SetUniform1i("u_material.diffuse", 0);
-  sceneProg->SetUniform1i("u_material.specular", 1);
-  sceneProg->SetUniform1f("u_material.shininess", 32.0f);
+  sceneProg->SetUniform1i("u_material.diffuseTexture", 0);
+  sceneProg->SetUniform1i("u_material.specularTexture", 1);
+  sceneProg->SetUniform1i("u_material.normalTexture", 2);
+  sceneProg->SetUniform1i("u_material.heightTexture", 3);
   sceneProg->SetUniform1f("u_gamma", 2.2f);
 
   auto shadowMapProg = GetProgram("ShadowMap");
-  shadowMapProg->SetUniform1i("u_material.diffuse", 0);
-  shadowMapProg->SetUniform1i("u_material.specular", 1);
-  shadowMapProg->SetUniform1f("u_material.shininess", 32.0f);
-  shadowMapProg->SetUniform1i("u_shadowMap", 10);
+  shadowMapProg->SetUniform1i("u_material.diffuseTexture", 0);
+  shadowMapProg->SetUniform1i("u_material.specularTexture", 1);
+  shadowMapProg->SetUniform1i("u_material.normalTexture", 2);
+  shadowMapProg->SetUniform1i("u_material.heightTexture", 3);
+  shadowMapProg->SetUniform1i("u_shadowMapTexture", 10);
   shadowMapProg->SetUniform1f("u_gamma", 2.2f);
 
   auto visualShadowDepthProg = GetProgram("VisualShadowDepth");
-  visualShadowDepthProg->SetUniform1i("u_depthMap", 0);
+  visualShadowDepthProg->SetUniform1i("u_depthMapTexture", 0);
   visualShadowDepthProg->SetUniform1f("u_nearPlane", Z_NEAR);
   visualShadowDepthProg->SetUniform1f("u_farPlane", Z_FAR);
 
   auto skyboxProg = GetProgram("Skybox");
-  skyboxProg->SetUniform1i("u_skybox", 0);
+  skyboxProg->SetUniform1i("u_skyboxTexture", 0);
 }
 
 Shader& ShaderManager::LoadShader(const fspath& filepath, int shaderType)
