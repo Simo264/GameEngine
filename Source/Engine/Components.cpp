@@ -39,81 +39,63 @@ StaticMeshComponent::StaticMeshComponent(const fspath& filePath)
 {
 	modelPath = filePath;
 
-	vao.Create();
-
-	/* position(x,y,z) normal(x,y,z) tc(x,y) */
-
-	VertexSpecifications specs{};
-	specs.bindingindex = 0;
-	specs.attrindex = 0;
-	specs.components = 3;
-	specs.type = GL_FLOAT;
-	specs.normalized = false;
-	specs.relativeoffset = 0;
-	vao.SetVertexSpecifications(specs);
-		
-	specs.bindingindex = 0;
-	specs.attrindex = 1;
-	specs.components = 3;
-	specs.type = GL_FLOAT;
-	specs.normalized = false;
-	specs.relativeoffset = 3 * sizeof(float);
-	vao.SetVertexSpecifications(specs);
-		
-	specs.bindingindex = 0;
-	specs.attrindex = 2;
-	specs.components = 2;
-	specs.type = GL_FLOAT;
-	specs.normalized = false;
-	specs.relativeoffset = 6 * sizeof(float);
-	vao.SetVertexSpecifications(specs);
-
-	Buffer vbo;
-	vbo.target = GL_ARRAY_BUFFER;
-	Buffer ebo;
-	ebo.target = GL_ELEMENT_ARRAY_BUFFER;
+	constexpr int components =
+		3 + // position -> x,y,z
+		2 +	// tc				-> u,v
+		3 +	// normal		-> x,y,z
+		3;	// tangent  -> x,y,z
 
 	ObjectLoader loader(filePath);
-	loader.LoadMesh(vbo, ebo);
+	loader.LoadMesh(0);
+	const auto mesh = loader.mesh;
+	const uint32_t vertices = loader.GetNumMeshVertices();
+	const uint32_t indices = loader.GetNumMeshIndices();
+	const uint64_t vDataBytes = vertices * components * sizeof(float);
+	const uint64_t iDataBytes = indices * sizeof(uint32_t);
 
-	material = loader.material;
-	vao.numVertices = vbo.size / (8 * sizeof(float));
-	vao.numIndices	= ebo.size / sizeof(uint32_t);
+	Buffer vbo(GL_ARRAY_BUFFER, vDataBytes, nullptr, GL_STATIC_DRAW);
+	Buffer ebo(GL_ELEMENT_ARRAY_BUFFER, iDataBytes, nullptr, GL_STATIC_DRAW);
+	loader.LoadVertices(vbo);
+	loader.LoadIndices(ebo);
 
-	if (vbo.IsValid())
-	{
-		vao.AttachVertexBuffer(0, vbo, 0, 8 * sizeof(float));
-		
-		if (ebo.IsValid())
-			vao.AttachElementBuffer(ebo);
-	}
+	vao.Create();
+	vao.numVertices = vertices;
+	vao.numIndices = indices;
+
+	vao.AttachVertexBuffer(0, vbo, 0, components * sizeof(float));
+	vao.AttachElementBuffer(ebo);
+
+	/* position */
+	vao.EnableAttribute(0);
+	vao.SetAttribBinding(0, 0);
+	vao.SetAttribFormat(0, 3, GL_FLOAT, true, 0);
+	/* texture coordinates */
+	vao.EnableAttribute(1);
+	vao.SetAttribBinding(1, 0);
+	vao.SetAttribFormat(1, 2, GL_FLOAT, true, 3 * sizeof(float));
+	/* normal */
+	vao.EnableAttribute(2);
+	vao.SetAttribBinding(2, 0);
+	vao.SetAttribFormat(2, 3, GL_FLOAT, true, 5 * sizeof(float));
+	/* tangent */
+	vao.EnableAttribute(3);
+	vao.SetAttribBinding(3, 0);
+	vao.SetAttribFormat(3, 3, GL_FLOAT, true, 8 * sizeof(float));
+
+	//material.diffuse = loader.GetTexture(aiTextureType_DIFFUSE);
+	//material.specular = loader.GetTexture(aiTextureType_SPECULAR);
+	//material.normal = loader.GetTexture(aiTextureType_HEIGHT);
+}
+void StaticMeshComponent::Draw()
+{
+	if (vao.numIndices == 0)
+		Renderer::DrawArrays(GL_TRIANGLES, vao);
 	else
-	{
-		CONSOLE_WARN("Invalid mesh's vertex buffer!");
-	}
+		Renderer::DrawElements(GL_TRIANGLES, vao);
 }
 void StaticMeshComponent::DestroyMesh()
 {
 	vao.Delete();
-}
-void StaticMeshComponent::Draw()
-{
-	if (material.diffuse)
-		material.diffuse->BindTextureUnit(0);
-
-	if (material.specular)
-		material.specular->BindTextureUnit(1);
-
-	/* If vertex array does not contain indices call DrawArrays */
-	if (vao.numIndices == 0)
-		Renderer::DrawArrays(GL_TRIANGLES, vao);
-
-	/* If vertex array does contain indices call DrawIndexed */
-	else
-		Renderer::DrawElements(GL_TRIANGLES, vao);
-
-	glBindTextureUnit(0, 0); /* reset diffuse */
-	glBindTextureUnit(1, 0); /* reset specular */
 }
 
 /* ---------------------------------------------------------------------------

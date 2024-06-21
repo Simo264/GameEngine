@@ -41,40 +41,53 @@ static void RenderScene(Scene& scene, Program* sceneProgram)
     sceneProgram->SetUniform3f("u_directionalLight.direction", light.direction);
   });
 
-  int i = 0;
-  scene.Reg().view<PointLightComponent>().each([sceneProgram, &i](auto& light) {
-    sceneProgram->SetUniform3f(std::format("u_pointLight[{}].color", i).c_str(), light.color);
-    sceneProgram->SetUniform1f(std::format("u_pointLight[{}].ambient", i).c_str(), light.ambient);
-    sceneProgram->SetUniform1f(std::format("u_pointLight[{}].diffuse", i).c_str(), light.diffuse);
-    sceneProgram->SetUniform1f(std::format("u_pointLight[{}].specular", i).c_str(), light.specular);
-    sceneProgram->SetUniform3f(std::format("u_pointLight[{}].position", i).c_str(), light.position);
-    sceneProgram->SetUniform1f(std::format("u_pointLight[{}].linear", i).c_str(), light.linear);
-    sceneProgram->SetUniform1f(std::format("u_pointLight[{}].quadratic", i).c_str(), light.quadratic);
-    i++;
-  });
+  //int i = 0;
+  //scene.Reg().view<PointLightComponent>().each([sceneProgram, &i](auto& light) {
+  //  sceneProgram->SetUniform3f(std::format("u_pointLight[{}].color", i).c_str(), light.color);
+  //  sceneProgram->SetUniform1f(std::format("u_pointLight[{}].ambient", i).c_str(), light.ambient);
+  //  sceneProgram->SetUniform1f(std::format("u_pointLight[{}].diffuse", i).c_str(), light.diffuse);
+  //  sceneProgram->SetUniform1f(std::format("u_pointLight[{}].specular", i).c_str(), light.specular);
+  //  sceneProgram->SetUniform3f(std::format("u_pointLight[{}].position", i).c_str(), light.position);
+  //  sceneProgram->SetUniform1f(std::format("u_pointLight[{}].linear", i).c_str(), light.linear);
+  //  sceneProgram->SetUniform1f(std::format("u_pointLight[{}].quadratic", i).c_str(), light.quadratic);
+  //  i++;
+  //});
 
-  scene.Reg().view<SpotLightComponent>().each([sceneProgram](auto& light) {
-    sceneProgram->SetUniform3f("u_spotLight.color", light.color);
-    sceneProgram->SetUniform1f("u_spotLight.ambient", light.ambient);
-    sceneProgram->SetUniform1f("u_spotLight.diffuse", light.diffuse);
-    sceneProgram->SetUniform1f("u_spotLight.specular", light.specular);
-    sceneProgram->SetUniform3f("u_spotLight.direction", light.direction);
-    sceneProgram->SetUniform3f("u_spotLight.position", light.position);
-    sceneProgram->SetUniform1f("u_spotLight.linear", light.linear);
-    sceneProgram->SetUniform1f("u_spotLight.quadratic", light.quadratic);
-    sceneProgram->SetUniform1f("u_spotLight.cutOff", light.cutOff);
-    sceneProgram->SetUniform1f("u_spotLight.outerCutOff", light.outerCutOff);
-  });
+  //scene.Reg().view<SpotLightComponent>().each([sceneProgram](auto& light) {
+  //  sceneProgram->SetUniform3f("u_spotLight.color", light.color);
+  //  sceneProgram->SetUniform1f("u_spotLight.ambient", light.ambient);
+  //  sceneProgram->SetUniform1f("u_spotLight.diffuse", light.diffuse);
+  //  sceneProgram->SetUniform1f("u_spotLight.specular", light.specular);
+  //  sceneProgram->SetUniform3f("u_spotLight.direction", light.direction);
+  //  sceneProgram->SetUniform3f("u_spotLight.position", light.position);
+  //  sceneProgram->SetUniform1f("u_spotLight.linear", light.linear);
+  //  sceneProgram->SetUniform1f("u_spotLight.quadratic", light.quadratic);
+  //  sceneProgram->SetUniform1f("u_spotLight.cutOff", light.cutOff);
+  //  sceneProgram->SetUniform1f("u_spotLight.outerCutOff", light.outerCutOff);
+  //});
 
   scene.Reg().view<StaticMeshComponent, TransformComponent>().each([sceneProgram](auto& mesh, auto& transform) {
     sceneProgram->SetUniformMat4f("u_model", transform.GetTransformation());
+    
+    glBindTextureUnit(0, 0); /* reset diffuse */
+    glBindTextureUnit(1, 0); /* reset specular */
+    glBindTextureUnit(2, 0); /* reset normal */
+    glBindTextureUnit(3, 0); /* reset height */
+
+    sceneProgram->SetUniform1i("u_hasNormalMap", (mesh.material.normal ? 1 : 0));
+
+    if (mesh.material.diffuse) mesh.material.diffuse->BindTextureUnit(0);
+    if (mesh.material.specular) mesh.material.specular->BindTextureUnit(1);
+    if (mesh.material.normal) mesh.material.normal->BindTextureUnit(2);
+    if (mesh.material.height) mesh.material.height->BindTextureUnit(3);
+    
     mesh.Draw();
   });
 }
-static void LoadSkybox(VertexArray& vao)
+static void CreateSkybox(VertexArray& skybox, TextureCubemap& skyboxTexture)
 {
   float skyboxVertices[] = {
-    // positions 
+    /* positions */
     -1.0f,  1.0f, -1.0f,
     -1.0f, -1.0f, -1.0f,
      1.0f, -1.0f, -1.0f,
@@ -117,23 +130,32 @@ static void LoadSkybox(VertexArray& vao)
     -1.0f, -1.0f,  1.0f,
      1.0f, -1.0f,  1.0f
   };
-
   Buffer vbo(GL_ARRAY_BUFFER, sizeof(skyboxVertices), skyboxVertices, GL_STATIC_DRAW);
 
-  vao.Create();
-  vao.AttachVertexBuffer(0, vbo, 0, 3 * sizeof(float));
-  vao.numIndices = 0;
-  vao.numVertices = 36;
-  
-  VertexSpecifications specs;
-  specs.attrindex = 0;
-  specs.bindingindex = 0;
-  specs.components = 3;
-  specs.normalized = true;
-  specs.relativeoffset = 0;
-  specs.type = GL_FLOAT;
+  skybox.Create();
+  skybox.AttachVertexBuffer(0, vbo, 0, 3 * sizeof(float));
+  skybox.EnableAttribute(0);
+  skybox.SetAttribBinding(0, 0);
+  skybox.SetAttribFormat(0, 3, GL_FLOAT, true, 0);
+  skybox.numIndices = 0;
+  skybox.numVertices = 36;
 
-  vao.SetVertexSpecifications(specs);
+  const array<fspath, 6> faces = {
+    fspath(TEXTURES_PATH / "skybox/right.jpg"),
+    fspath(TEXTURES_PATH / "skybox/left.jpg"),
+    fspath(TEXTURES_PATH / "skybox/top.jpg"),
+    fspath(TEXTURES_PATH / "skybox/bottom.jpg"),
+    fspath(TEXTURES_PATH / "skybox/front.jpg"),
+    fspath(TEXTURES_PATH / "skybox/back.jpg"),
+  };
+  skyboxTexture.size = 2048;
+  skyboxTexture.Create();
+  skyboxTexture.SetParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  skyboxTexture.SetParameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  skyboxTexture.SetParameteri(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  skyboxTexture.SetParameteri(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  skyboxTexture.SetParameteri(GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+  skyboxTexture.LoadImages(faces);
 }
 
 /* -----------------------------------------------------
@@ -187,26 +209,9 @@ void Engine::Initialize()
 }
 void Engine::Run()
 {
-  const array<fspath, 6> faces = {
-    fspath(TEXTURES_PATH / "skybox/right.jpg"),
-    fspath(TEXTURES_PATH / "skybox/left.jpg"),
-    fspath(TEXTURES_PATH / "skybox/top.jpg"),
-    fspath(TEXTURES_PATH / "skybox/bottom.jpg"),
-    fspath(TEXTURES_PATH / "skybox/front.jpg"),
-    fspath(TEXTURES_PATH / "skybox/back.jpg"),
-  };
   TextureCubemap skyboxTexture;
-  skyboxTexture.size = 2048;
-  skyboxTexture.Create();
-  skyboxTexture.SetParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  skyboxTexture.SetParameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  skyboxTexture.SetParameteri(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  skyboxTexture.SetParameteri(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  skyboxTexture.SetParameteri(GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-  skyboxTexture.LoadImages(faces);
-  VertexArray skyboxVAO;
-  LoadSkybox(skyboxVAO);
-
+  VertexArray skybox;
+  CreateSkybox(skybox, skyboxTexture);
 
   /* -------------------------- Camera -------------------------- */
   Camera camera(
@@ -230,7 +235,11 @@ void Engine::Run()
   const vec3f lightPosition{ 0.0f, 30.0f, 0.0f };
   mat4f lightView{};
   mat4f lightSpaceMatrix{};
-  vec3f lightViewCenter{ 0.0f, 0.0f ,0.0f };
+  vec3f* lightViewCenter{ nullptr };
+  
+  scene.Reg().view<DirLightComponent>().each([&](DirLightComponent& light) {
+    lightViewCenter = &light.direction;
+  });
 
   /* -------------------------- Pre-loop -------------------------- */
   Program* framebufferProgram = _instanceSM->GetProgram("Framebuffer");
@@ -241,13 +250,8 @@ void Engine::Run()
   Program* skyboxProgram = _instanceSM->GetProgram("Skybox");
   Texture2D& fboImageTexture = _fboIntermediate.GetTextureAttachment(0);
   Texture2D& fboImageTextureShadowMap = _fboShadowMap.GetTextureAttachment(0);
-  
-  int toggle = 2;
 
-  scene.Reg().view<DirLightComponent>().each([&](DirLightComponent& light) {
-    lightViewCenter = light.direction;
-  });
-
+  int toggle = 1;
   time_point lastUpdateTime = system_clock::now();
   
   /* -------------------------- loop -------------------------- */
@@ -277,7 +281,7 @@ void Engine::Run()
     _uboCamera.UpdateStorage(0, sizeof(mat4f), &cameraViewMatrix[0]);
     _uboCamera.UpdateStorage(sizeof(mat4f), sizeof(mat4f), &cameraProjectionMatrix[0]);
 
-    lightView = Math::LookAt(lightPosition, lightViewCenter, vec3f(0.0f, 1.0f, 0.0f));
+    lightView = Math::LookAt(lightPosition, *lightViewCenter, vec3f(0.0f, 1.0f, 0.0f));
     lightSpaceMatrix = lightProjection * lightView;
 
     
@@ -289,7 +293,7 @@ void Engine::Run()
       glClear(GL_DEPTH_BUFFER_BIT);
       shadowMapDepthProgram->Use();
       shadowMapDepthProgram->SetUniformMat4f("u_lightSpaceMatrix", lightSpaceMatrix);
-      scene.Reg().view<StaticMeshComponent, TransformComponent>().each([shadowMapDepthProgram](auto& mesh, auto& transform) {
+      scene.Reg().view<StaticMeshComponent, TransformComponent>().each([&](auto& mesh, auto& transform) {
         shadowMapDepthProgram->SetUniformMat4f("u_model", transform.GetTransformation());
         mesh.Draw();
       });
@@ -302,29 +306,28 @@ void Engine::Run()
       glViewport(0, 0, _viewport.x, _viewport.y);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-      /* Render scene with no shadows */
-      if(toggle == 1)
+      switch (toggle)
       {
+      case 1: /* Render scene with no shadows */
         sceneProgram->Use();
         sceneProgram->SetUniform3f("u_viewPos", camera.cameraComponent->position);
         RenderScene(scene, sceneProgram);
-      }
-      /* Render scene with shadows map */
-      else if(toggle == 2)
-      {
+        break;
+
+      case 2: /* Render scene with shadows map */
         shadowMapProgram->Use();
         shadowMapProgram->SetUniformMat4f("u_lightSpaceMatrix", lightSpaceMatrix);
         shadowMapProgram->SetUniform3f("u_viewPos", camera.cameraComponent->position);
         shadowMapProgram->SetUniform3f("u_lightPos", lightPosition);
         fboImageTextureShadowMap.BindTextureUnit(10);
         RenderScene(scene, shadowMapProgram);
-      }
-      /* Render Depth map texture for visual debugging */
-      else if(toggle == 3)
-      {
+        break;
+
+      case 3: /* Render Depth map texture for visual debugging */
         visualshadowDepthProgram->Use();
         fboImageTextureShadowMap.BindTextureUnit(0);
         Renderer::DrawArrays(GL_TRIANGLES, _screenSquare);
+        break;
       }
 
       /* Draw skybox as last */
@@ -334,7 +337,7 @@ void Engine::Run()
         skyboxProgram->SetUniformMat4f("u_view", mat4f(mat3f(cameraViewMatrix)));
         skyboxTexture.BindTextureUnit(0);
         Depth::SetFunction(GL_LEQUAL); /* change depth function so depth test passes when values are equal to depth buffer's content */
-        Renderer::DrawArrays(GL_TRIANGLES, skyboxVAO);
+        Renderer::DrawArrays(GL_TRIANGLES, skybox);
         Depth::SetFunction(GL_LESS); /* set depth function back to default */
       }
 
@@ -371,6 +374,10 @@ void Engine::Run()
     _instanceWM->SwapWindowBuffers();
     lastUpdateTime = now;
   }
+
+
+  skybox.Delete();
+  skyboxTexture.Delete();
 }
 void Engine::CleanUp()
 {

@@ -7,29 +7,25 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
-/**
- * Load mesh data from file
- */
 class ObjectLoader
 {
 public:
 	ObjectLoader(const fspath& filePath);
+	~ObjectLoader() = default;
 
-	/**
-	 * Read data from file and put them into buffers
-	 * 
-	 * @param vbo: create and initialize the vertex buffer object with vertices
-	 * @param ebo: create and initialize the vertex buffer object with indices
-	 */
-	void LoadMesh(class Buffer& vbo, class Buffer& ebo);
-	
-	Material material;
+	void LoadMesh(int i);
+	void LoadVertices(class Buffer& vbo) const;
+	void LoadIndices(class Buffer& ebo) const;
+	class Texture2D* GetTexture(aiTextureType materialType) const;
+
+	uint32_t GetNumMeshes() const { return _scene->mNumMeshes; }
+	uint32_t GetNumMeshVertices() const { return mesh->mNumVertices; }
+	uint32_t GetNumMeshIndices() const { return mesh->mNumFaces * 3; }
+
+	aiMesh* mesh;
+	aiMaterial* material;
 
 private:
 	Assimp::Importer _importer;
 	const aiScene* _scene;
-
-	void LoadVertices(const aiMesh* aimesh, class Buffer& vbo);
-	void LoadIndices(const	aiMesh* aimesh,	class Buffer& ebo);
-	class Texture2D* LoadTexture(const aiMaterial* aimaterial, const char* textureType);
 };
