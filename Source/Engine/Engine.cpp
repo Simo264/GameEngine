@@ -41,30 +41,30 @@ static void RenderScene(Scene& scene, Program* sceneProgram)
     sceneProgram->SetUniform3f("u_directionalLight.direction", light.direction);
   });
 
-  //int i = 0;
-  //scene.Reg().view<PointLightComponent>().each([sceneProgram, &i](auto& light) {
-  //  sceneProgram->SetUniform3f(std::format("u_pointLight[{}].color", i).c_str(), light.color);
-  //  sceneProgram->SetUniform1f(std::format("u_pointLight[{}].ambient", i).c_str(), light.ambient);
-  //  sceneProgram->SetUniform1f(std::format("u_pointLight[{}].diffuse", i).c_str(), light.diffuse);
-  //  sceneProgram->SetUniform1f(std::format("u_pointLight[{}].specular", i).c_str(), light.specular);
-  //  sceneProgram->SetUniform3f(std::format("u_pointLight[{}].position", i).c_str(), light.position);
-  //  sceneProgram->SetUniform1f(std::format("u_pointLight[{}].linear", i).c_str(), light.linear);
-  //  sceneProgram->SetUniform1f(std::format("u_pointLight[{}].quadratic", i).c_str(), light.quadratic);
-  //  i++;
-  //});
+  int i = 0;
+  scene.Reg().view<PointLightComponent>().each([sceneProgram, &i](auto& light) {
+    sceneProgram->SetUniform3f(std::format("u_pointLight[{}].color", i).c_str(), light.color);
+    sceneProgram->SetUniform1f(std::format("u_pointLight[{}].ambient", i).c_str(), light.ambient);
+    sceneProgram->SetUniform1f(std::format("u_pointLight[{}].diffuse", i).c_str(), light.diffuse);
+    sceneProgram->SetUniform1f(std::format("u_pointLight[{}].specular", i).c_str(), light.specular);
+    sceneProgram->SetUniform3f(std::format("u_pointLight[{}].position", i).c_str(), light.position);
+    sceneProgram->SetUniform1f(std::format("u_pointLight[{}].linear", i).c_str(), light.linear);
+    sceneProgram->SetUniform1f(std::format("u_pointLight[{}].quadratic", i).c_str(), light.quadratic);
+    i++;
+  });
 
-  //scene.Reg().view<SpotLightComponent>().each([sceneProgram](auto& light) {
-  //  sceneProgram->SetUniform3f("u_spotLight.color", light.color);
-  //  sceneProgram->SetUniform1f("u_spotLight.ambient", light.ambient);
-  //  sceneProgram->SetUniform1f("u_spotLight.diffuse", light.diffuse);
-  //  sceneProgram->SetUniform1f("u_spotLight.specular", light.specular);
-  //  sceneProgram->SetUniform3f("u_spotLight.direction", light.direction);
-  //  sceneProgram->SetUniform3f("u_spotLight.position", light.position);
-  //  sceneProgram->SetUniform1f("u_spotLight.linear", light.linear);
-  //  sceneProgram->SetUniform1f("u_spotLight.quadratic", light.quadratic);
-  //  sceneProgram->SetUniform1f("u_spotLight.cutOff", light.cutOff);
-  //  sceneProgram->SetUniform1f("u_spotLight.outerCutOff", light.outerCutOff);
-  //});
+  scene.Reg().view<SpotLightComponent>().each([sceneProgram](auto& light) {
+    sceneProgram->SetUniform3f("u_spotLight.color", light.color);
+    sceneProgram->SetUniform1f("u_spotLight.ambient", light.ambient);
+    sceneProgram->SetUniform1f("u_spotLight.diffuse", light.diffuse);
+    sceneProgram->SetUniform1f("u_spotLight.specular", light.specular);
+    sceneProgram->SetUniform3f("u_spotLight.direction", light.direction);
+    sceneProgram->SetUniform3f("u_spotLight.position", light.position);
+    sceneProgram->SetUniform1f("u_spotLight.linear", light.linear);
+    sceneProgram->SetUniform1f("u_spotLight.quadratic", light.quadratic);
+    sceneProgram->SetUniform1f("u_spotLight.cutOff", light.cutOff);
+    sceneProgram->SetUniform1f("u_spotLight.outerCutOff", light.outerCutOff);
+  });
 
   scene.Reg().view<StaticMeshComponent, TransformComponent>().each([sceneProgram](auto& mesh, auto& transform) {
     sceneProgram->SetUniformMat4f("u_model", transform.GetTransformation());

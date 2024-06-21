@@ -111,11 +111,11 @@ void main()
   result += CalculateDirectionalLight(lightDir, u_directionalLight);
 
   /* Calculate point light */
-  //for(int i = 0; i < 4; i++)
-  //  result += CalculateBlinnPhongLight(u_pointLight[i]);
+  for(int i = 0; i < 4; i++)
+    result += CalculateBlinnPhongLight(u_pointLight[i]);
 
   /* Calculate spot light */
-  //result += CalculateSpotLight(u_spotLight);
+  result += CalculateSpotLight(u_spotLight);
 
   /* apply gamma correction */
   if(u_gamma != 0)
