@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Core/Core.hpp"
+#include "Core/Math/Math.hpp"
 
 class Scene;
 class GameObject;
@@ -20,4 +21,5 @@ namespace ImGuiLayer
 	GameObject RenderOutlinerPanel(Scene& scene);
 	void RenderDetails(GameObject object);
 	void RenderDemo();
+
 }

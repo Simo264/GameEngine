@@ -74,7 +74,7 @@ static void RenderScene(Scene& scene, Program* sceneProgram)
     glBindTextureUnit(2, 0); /* reset normal */
     glBindTextureUnit(3, 0); /* reset height */
 
-    sceneProgram->SetUniform1i("u_hasNormal", (mesh.material.normal ? 1 : 0));
+    sceneProgram->SetUniform1i("u_hasNormalMap", (mesh.material.normal ? 1 : 0));
 
     if (mesh.material.diffuse) mesh.material.diffuse->BindTextureUnit(0);
     if (mesh.material.specular) mesh.material.specular->BindTextureUnit(1);
