@@ -235,11 +235,6 @@ void Engine::Run()
   const vec3f lightPosition{ 0.0f, 30.0f, 0.0f };
   mat4f lightView{};
   mat4f lightSpaceMatrix{};
-  vec3f* lightViewCenter{ nullptr };
-  
-  scene.Reg().view<DirLightComponent>().each([&](DirLightComponent& light) {
-    lightViewCenter = &light.direction;
-  });
 
   /* -------------------------- Pre-loop -------------------------- */
   Program* framebufferProgram = _instanceSM->GetProgram("Framebuffer");
@@ -281,7 +276,7 @@ void Engine::Run()
     _uboCamera.UpdateStorage(0, sizeof(mat4f), &cameraViewMatrix[0]);
     _uboCamera.UpdateStorage(sizeof(mat4f), sizeof(mat4f), &cameraProjectionMatrix[0]);
 
-    lightView = Math::LookAt(lightPosition, *lightViewCenter, vec3f(0.0f, 1.0f, 0.0f));
+    lightView = Math::LookAt(lightPosition, vec3f(0.0f, 0.0f, 30.0f), vec3f(0.0f, 1.0f, 0.0f));
     lightSpaceMatrix = lightProjection * lightView;
 
     

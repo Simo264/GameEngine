@@ -70,14 +70,13 @@ const vec3 lightPos = vec3(0.0f, 30.0f, -100.0f);
 vec3 g_diffuseColor;
 vec3 g_specularColor;
 vec3 g_normal; 
-vec3 g_viewdir;
+vec3 g_viewDir;
 vec3 g_tangentFragPos;
 vec3 g_tangentViewPos;
-vec3 g_tangentLightPos;
 
 /* ---------- Functions ---------- */
 /* ------------------------------- */
-vec3 CalculateDirectionalLight(vec3 lightDir, DirectionalLight light);
+vec3 CalculateDirectionalLight(DirectionalLight light);
 vec3 CalculateBlinnPhongLight(PointLight light);
 vec3 CalculateSpotLight(SpotLight light);
 
@@ -89,26 +88,21 @@ void main()
 
   g_tangentFragPos  = TBN * FragPos;
   g_tangentViewPos  = TBN * u_viewPos;
-  g_tangentLightPos = TBN * lightPos;
 
   g_normal = normalize(Normal);
-  g_viewdir = normalize(u_viewPos - FragPos);
+  g_viewDir = normalize(u_viewPos - FragPos);
 
   if(u_hasNormalMap != 0)
   {
     g_normal = texture(u_material.normalTexture, TexCoords).rgb;
     g_normal = normalize(g_normal * 2.0 - 1.0);
-    g_viewdir = normalize(g_tangentViewPos - g_tangentFragPos);
+    g_viewDir = normalize(g_tangentViewPos - g_tangentFragPos);
   }
 
   vec3 result = vec3(0, 0, 0);
   
   /* Calculate directional light */
-  vec3 lightDir = normalize(-u_directionalLight.direction);
-  if(u_hasNormalMap != 0)
-    lightDir = normalize(g_tangentLightPos - g_tangentFragPos);
-
-  result += CalculateDirectionalLight(lightDir, u_directionalLight);
+  result += CalculateDirectionalLight(u_directionalLight);
 
   /* Calculate point light */
   for(int i = 0; i < 4; i++)
@@ -126,10 +120,11 @@ void main()
 
 
 
-vec3 CalculateDirectionalLight(vec3 lightDir, DirectionalLight light)
+vec3 CalculateDirectionalLight(DirectionalLight light) 
 {
+  vec3 lightDir = normalize(-light.direction);
   const vec3 reflectDir = reflect(-lightDir, g_normal);
-  const vec3 halfwayDir = normalize(lightDir + g_viewdir);
+  const vec3 halfwayDir = normalize(lightDir + g_viewDir);
     
   /* ambient shading */
   const vec3 lightAmbientColor = light.color * light.ambient;
@@ -148,21 +143,28 @@ vec3 CalculateDirectionalLight(vec3 lightDir, DirectionalLight light)
   return vec3(ambient + diffuse + specular);
 }
 
-vec3 CalculateBlinnPhongLight(PointLight light)
+vec3 CalculateBlinnPhongLight(PointLight light) 
 {
+  vec3 lightDir = normalize(light.position - FragPos);
+  if(u_hasNormalMap != 0)
+  {
+    vec3 tangentLightPos = TBN * light.position;
+    lightDir = TBN * normalize(tangentLightPos - g_tangentFragPos);
+  }
+
   /* ambient */
   vec3 ambient = (light.color * light.ambient) * g_diffuseColor;
 
   /* diffuse */
-  vec3 lightDir = normalize(light.position - FragPos);
   float diffuseFactor = max(dot(g_normal, lightDir), 0.0);
   vec3 diffuse = (light.color * light.diffuse) * diffuseFactor * g_diffuseColor;  
     
   /* specular */
-  vec3 halfwayDir = normalize(lightDir + g_viewdir);
+  vec3 halfwayDir = normalize(lightDir + g_viewDir);
   float specularFactor = pow(max(dot(g_normal, halfwayDir), 0.0), shininess);
   vec3 specular = (light.color * light.specular) * specularFactor * g_specularColor;  
-    
+
+
   /* attenuation */
   float dist = length(light.position - FragPos);
   /* linear attenuation */
@@ -181,6 +183,11 @@ vec3 CalculateBlinnPhongLight(PointLight light)
 vec3 CalculateSpotLight(SpotLight light)
 {
   vec3 lightDir = normalize(light.position - FragPos);
+  if(u_hasNormalMap != 0)
+  {
+    vec3 tangentLightPos = TBN * light.position;
+    lightDir = TBN * normalize(tangentLightPos - g_tangentFragPos);
+  }
     
   /* ambient */
   vec3 ambient = (light.color * light.ambient) * g_diffuseColor;
@@ -191,7 +198,7 @@ vec3 CalculateSpotLight(SpotLight light)
       
   /* specular */
   vec3 reflectDir = reflect(-lightDir, g_normal);  
-  float specularFactor = pow(max(dot(g_viewdir, reflectDir), 0.0), shininess);
+  float specularFactor = pow(max(dot(g_viewDir, reflectDir), 0.0), shininess);
   vec3 specular = (light.color * light.specular) * specularFactor * g_specularColor;  
             
   /* soft edges + intensity */
