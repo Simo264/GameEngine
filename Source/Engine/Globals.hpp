@@ -10,3 +10,5 @@ extern float LEFT;
 extern float RIGHT;
 extern float BOTTOM;
 extern float TOP;
+
+extern int VERTEX_COMPONENTS;

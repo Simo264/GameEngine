@@ -42,31 +42,62 @@ private:
 
 
 /**
- * A Static Mesh is a piece of geometry that consists of a set of polygons that
- * can be cached in video memory and rendered by the graphics card.
- * This allows them to be rendered efficiently, meaning they can be much more
- * complex than other types of geometry such as Brushes.
- * Since they are cached in video memory, Static Meshes can be translated, rotated,
- * and scaled, but they cannot have their vertices animated in any way.
+ * A mesh typically refers to a collection of vertices, edges, and faces that define the shape of a 3D object.
+ * A mesh is a fundamental concept in 3D computer graphics and is used to represent the geometry of objects
+ * that are rendered in a scene.
+ * Is composed of vertices, which are points in 3D space, connected by edges, which are line segments
+ * that define the boundaries of the mesh, and faces, which are polygons formed by
+ * connecting three or more vertices. These elements collectively define the shape and structure of the object
+ * being rendered.
+ * Meshes are often represented using vertex buffer objects (VBOs) and index buffer objects (IBOs) to efficiently
+ * store and manipulate the vertex data on the GPU.
  */
-class StaticMeshComponent
+class MeshComponent
 {
 public:
-	StaticMeshComponent(const fspath& filePath);
-	~StaticMeshComponent() = default;
+	MeshComponent();
+	MeshComponent(void* vertices, uint32_t numVertices, void* indices, uint32_t numIndices);
 
-	void Draw();
-
-	/**
-	 * Free GPU memory
-	 */
-	void DestroyMesh();
+	~MeshComponent() = default;
 
 	VertexArray vao;
-	Material		material;
-	fspath			modelPath;
+	Buffer vbo;
+	Buffer ebo;
+	Material material;
+
+	void DestroyMesh();
+	void DrawMesh(int mode);
+
+private:
+	void Init();
 };
 
+
+/**
+ * A model contains multiple meshes, possibly with multiple textures.
+ * A house, that contains a wooden balcony, a tower, and perhaps a swimming pool, could still be loaded as a single model.
+ * We'll load the model via Assimp and translate it to multiple Mesh objects.
+ */
+class ModelComponent
+{
+public:
+	ModelComponent(const fspath& path);
+
+	MeshComponent* meshes;
+	uint32_t numMeshes;
+
+	fspath modelPath;
+
+	void DestroyModel();
+	void DrawModel(int mode);
+
+private:
+	void ProcessNode(struct aiNode* node, const struct aiScene* scene);
+	void LoadVertices(struct aiMesh* aimesh, Buffer& vbo);
+	void LoadIndices(struct aiMesh* aimesh, Buffer& ebo);
+	class Texture2D* GetTexture(struct aiMaterial* material, enum aiTextureType type);
+
+};
 
 /**
  * When a light source is modeled to be infinitely far away it is called a 

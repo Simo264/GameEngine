@@ -60,7 +60,6 @@ uniform SpotLight         u_spotLight;
 
 uniform vec3  u_viewPos;
 uniform float u_gamma;
-uniform int   u_hasNormalMap;
 
 /* ---------- Globals variable ---------- */
 /* -------------------------------------- */
@@ -89,20 +88,14 @@ void main()
   g_tangentFragPos  = TBN * FragPos;
   g_tangentViewPos  = TBN * u_viewPos;
 
-  g_normal = normalize(Normal);
-  g_viewDir = normalize(u_viewPos - FragPos);
-
-  if(u_hasNormalMap != 0)
-  {
-    g_normal = texture(u_material.normalTexture, TexCoords).rgb;
-    g_normal = normalize(g_normal * 2.0 - 1.0);
-    g_viewDir = normalize(g_tangentViewPos - g_tangentFragPos);
-  }
+  g_normal = texture(u_material.normalTexture, TexCoords).rgb;
+  g_normal = normalize(g_normal * 2.0 - 1.0);
+  g_viewDir = normalize(g_tangentViewPos - g_tangentFragPos);
 
   vec3 result = vec3(0, 0, 0);
   
   /* Calculate directional light */
-  result += CalculateDirectionalLight(u_directionalLight);
+  //result += CalculateDirectionalLight(u_directionalLight);
 
   /* Calculate point light */
   for(int i = 0; i < 4; i++)
@@ -145,12 +138,8 @@ vec3 CalculateDirectionalLight(DirectionalLight light)
 
 vec3 CalculateBlinnPhongLight(PointLight light) 
 {
-  vec3 lightDir = normalize(light.position - FragPos);
-  if(u_hasNormalMap != 0)
-  {
-    vec3 tangentLightPos = TBN * light.position;
-    lightDir = TBN * normalize(tangentLightPos - g_tangentFragPos);
-  }
+  vec3 tangentLightPos = TBN * light.position;
+  vec3 lightDir = TBN * normalize(tangentLightPos - g_tangentFragPos);
 
   /* ambient */
   vec3 ambient = (light.color * light.ambient) * g_diffuseColor;
@@ -182,12 +171,8 @@ vec3 CalculateBlinnPhongLight(PointLight light)
 
 vec3 CalculateSpotLight(SpotLight light)
 {
-  vec3 lightDir = normalize(light.position - FragPos);
-  if(u_hasNormalMap != 0)
-  {
-    vec3 tangentLightPos = TBN * light.position;
-    lightDir = TBN * normalize(tangentLightPos - g_tangentFragPos);
-  }
+  vec3 tangentLightPos = TBN * light.position;
+  vec3 lightDir = TBN * normalize(tangentLightPos - g_tangentFragPos);
     
   /* ambient */
   vec3 ambient = (light.color * light.ambient) * g_diffuseColor;

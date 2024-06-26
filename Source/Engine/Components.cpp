@@ -1,14 +1,19 @@
 #include "Components.hpp"
 
+#include "Core/OpenGL.hpp"
 #include "Core/Log/Logger.hpp"
 #include "Core/Math/Extensions.hpp"
-#include "Core/OpenGL.hpp"
 
-#include "Engine/ObjectLoader.hpp"
+#include "Engine/Globals.hpp"
 
 #include "Engine/Graphics/Shader.hpp"
 #include "Engine/Graphics/Texture2D.hpp"
 #include "Engine/Graphics/Renderer.hpp"
+#include "Engine/Subsystems/TextureManager.hpp"
+
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
 
 /* ---------------------------------------------------------------------------
 			TransformComponent
@@ -32,37 +37,53 @@ mat4f& TransformComponent::GetTransformation()
 }
 
 /* ---------------------------------------------------------------------------
-			StaticMeshComponent
+			MeshComponent
 	--------------------------------------------------------------------------- */
 
-StaticMeshComponent::StaticMeshComponent(const fspath& filePath)
+MeshComponent::MeshComponent()
 {
-	modelPath = filePath;
+	Init();
+}
+MeshComponent::MeshComponent(void* vertices, uint32_t numVertices, void* indices, uint32_t numIndices)
+{
+	Init();
 
-	constexpr int components =
-		3 + // position -> x,y,z
-		2 +	// tc				-> u,v
-		3 +	// normal		-> x,y,z
-		3;	// tangent  -> x,y,z
+	int size = numVertices * sizeof(float) * VERTEX_COMPONENTS;
+	vbo.CreateStorage(size, vertices, GL_STATIC_DRAW);
+	size = numIndices * sizeof(uint32_t);
+	ebo.CreateStorage(size, indices, GL_STATIC_DRAW);
 
-	ObjectLoader loader(filePath);
-	loader.LoadMesh(0);
-	const auto mesh = loader.mesh;
-	const uint32_t vertices = loader.GetNumMeshVertices();
-	const uint32_t indices = loader.GetNumMeshIndices();
-	const uint64_t vDataBytes = vertices * components * sizeof(float);
-	const uint64_t iDataBytes = indices * sizeof(uint32_t);
+	vao.numVertices = numVertices;
+	vao.numIndices = numIndices;
+}
+void MeshComponent::DestroyMesh()
+{
+	vao.Delete();
+	vbo.Delete();
+	ebo.Delete();
 
-	Buffer vbo(GL_ARRAY_BUFFER, vDataBytes, nullptr, GL_STATIC_DRAW);
-	Buffer ebo(GL_ELEMENT_ARRAY_BUFFER, iDataBytes, nullptr, GL_STATIC_DRAW);
-	loader.LoadVertices(vbo);
-	loader.LoadIndices(ebo);
+	material.diffuse = nullptr;
+	material.specular = nullptr;
+	material.normal = nullptr;
+	material.height = nullptr;
+}
+void MeshComponent::DrawMesh(int mode)
+{
+	if (vao.numIndices == 0)
+		Renderer::DrawArrays(mode, vao);
+	else
+		Renderer::DrawElements(mode, vao);
+}
 
+void MeshComponent::Init()
+{
 	vao.Create();
-	vao.numVertices = vertices;
-	vao.numIndices = indices;
+	vbo.Create();
+	vbo.target = GL_ARRAY_BUFFER;
+	ebo.Create();
+	ebo.target = GL_ELEMENT_ARRAY_BUFFER;
 
-	vao.AttachVertexBuffer(0, vbo, 0, components * sizeof(float));
+	vao.AttachVertexBuffer(0, vbo, 0, VERTEX_COMPONENTS * sizeof(float));
 	vao.AttachElementBuffer(ebo);
 
 	/* position */
@@ -81,23 +102,189 @@ StaticMeshComponent::StaticMeshComponent(const fspath& filePath)
 	vao.EnableAttribute(3);
 	vao.SetAttribBinding(3, 0);
 	vao.SetAttribFormat(3, 3, GL_FLOAT, true, 8 * sizeof(float));
-
-	//material.diffuse = loader.GetTexture(aiTextureType_DIFFUSE);
-	//material.specular = loader.GetTexture(aiTextureType_SPECULAR);
-	//material.normal = loader.GetTexture(aiTextureType_HEIGHT);
-}
-void StaticMeshComponent::Draw()
-{
-	if (vao.numIndices == 0)
-		Renderer::DrawArrays(GL_TRIANGLES, vao);
-	else
-		Renderer::DrawElements(GL_TRIANGLES, vao);
-}
-void StaticMeshComponent::DestroyMesh()
-{
-	vao.Delete();
+	/* bitangent */
+	vao.EnableAttribute(4);
+	vao.SetAttribBinding(4, 0);
+	vao.SetAttribFormat(4, 3, GL_FLOAT, true, 11 * sizeof(float));
 }
 
+
+/* ---------------------------------------------------------------------------
+			ModelComponent
+	--------------------------------------------------------------------------- */
+
+static uint32_t totalVertices = 0;
+static uint32_t totalIndices = 0;
+static uint32_t totalSize = 0;
+
+ModelComponent::ModelComponent(const fspath& path)
+	: modelPath{ path },
+		meshes{ nullptr },
+		numMeshes{ 0 }
+{
+	Assimp::Importer importer;
+	const aiScene* scene = importer.ReadFile(path.string().c_str(),
+		aiProcess_Triangulate |
+		aiProcess_CalcTangentSpace |
+		aiProcess_GenSmoothNormals |
+		aiProcess_FlipUVs |
+		aiProcess_JoinIdenticalVertices);
+
+	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
+	{
+		CONSOLE_ERROR("ERROR::ASSIMP::{}", importer.GetErrorString());
+		return;
+	}
+
+	CONSOLE_TRACE("==================== Loading model {} ====================", path.string().c_str());
+
+	totalVertices = 0;
+	totalIndices = 0;
+	totalSize = 0;
+	meshes = new MeshComponent[scene->mNumMeshes];
+
+	ProcessNode(scene->mRootNode, scene);
+
+	CONSOLE_TRACE(".numMeshes={}", numMeshes);
+	CONSOLE_TRACE(".totalVertices={} ", totalVertices);
+	CONSOLE_TRACE(".totalIndices={}", totalIndices);
+	CONSOLE_TRACE(".totalSize={} bytes", totalSize);
+}
+void ModelComponent::DestroyModel()
+{
+	for (int i = 0; i < numMeshes; i++)
+	{
+		MeshComponent& mesh = meshes[i];
+		mesh.DestroyMesh();
+	}
+
+	delete[] meshes;
+	meshes = nullptr;
+	numMeshes = 0;
+
+	CONSOLE_TRACE("Model {} destroyed", modelPath.string().c_str());
+}
+void ModelComponent::DrawModel(int mode)
+{
+	for (int i = 0; i < numMeshes; i++)
+	{
+		MeshComponent& mesh = meshes[i];
+
+		glBindTextureUnit(0, 0);
+		glBindTextureUnit(1, 0);
+		glBindTextureUnit(2, 0);
+		glBindTextureUnit(3, 0);
+
+		if (mesh.material.diffuse) mesh.material.diffuse->BindTextureUnit(0);
+		if (mesh.material.specular) mesh.material.specular->BindTextureUnit(1);
+		if (mesh.material.normal) mesh.material.normal->BindTextureUnit(2);
+		if (mesh.material.height) mesh.material.height->BindTextureUnit(3);
+
+		mesh.DrawMesh(mode);
+	}
+}
+
+void ModelComponent::ProcessNode(aiNode* node, const aiScene* scene)
+{
+	/* Process all the node's meshes */
+	for (int i = 0; i < node->mNumMeshes; i++)
+	{
+		MeshComponent& mesh = meshes[numMeshes++];
+		aiMesh* aimesh = scene->mMeshes[node->mMeshes[i]];
+
+		const uint32_t numVertices = aimesh->mNumVertices;
+		const int vSize = numVertices * sizeof(float) * VERTEX_COMPONENTS;
+		mesh.vbo.CreateStorage(vSize, nullptr, GL_STATIC_DRAW);
+		mesh.vao.numVertices = numVertices;
+		LoadVertices(aimesh, mesh.vbo);
+
+		const uint32_t numIndices = std::reduce(
+			aimesh->mFaces,
+			aimesh->mFaces + aimesh->mNumFaces,
+			0,
+			[](int n, aiFace& face) { return n + face.mNumIndices; });
+
+		const uint32_t iSize = numIndices * sizeof(uint32_t);
+		mesh.ebo.CreateStorage(iSize, nullptr, GL_STATIC_DRAW);
+		mesh.vao.numIndices = numIndices;
+		LoadIndices(aimesh, mesh.ebo);
+
+		totalVertices += numVertices;
+		totalIndices += numIndices;
+		totalSize += vSize + iSize;
+
+		if (aimesh->mMaterialIndex >= 0)
+		{
+			aiMaterial* material = scene->mMaterials[aimesh->mMaterialIndex];
+			mesh.material.diffuse = GetTexture(material, aiTextureType_DIFFUSE);
+			mesh.material.specular = GetTexture(material, aiTextureType_SPECULAR);
+			mesh.material.normal = GetTexture(material, aiTextureType_NORMALS);
+			mesh.material.height = GetTexture(material, aiTextureType_HEIGHT);
+		}
+	}
+
+	/* Then do the same for each of its children */
+	for (int i = 0; i < node->mNumChildren; i++)
+		ProcessNode(node->mChildren[i], scene);
+}
+void ModelComponent::LoadVertices(aiMesh* aimesh, Buffer& vbo)
+{
+	float* vboPtr = static_cast<float*>(vbo.MapStorage(GL_WRITE_ONLY));
+	if (!vboPtr)
+	{
+		CONSOLE_WARN("Error on mapping vertex buffer storage");
+		return;
+	}
+
+	for (uint32_t i = 0; i < aimesh->mNumVertices; i++)
+	{
+		/* position */
+		*(vboPtr++) = static_cast<float>(aimesh->mVertices[i].x);
+		*(vboPtr++) = static_cast<float>(aimesh->mVertices[i].y);
+		*(vboPtr++) = static_cast<float>(aimesh->mVertices[i].z);
+		/* texture coordinates */
+		*(vboPtr++) = static_cast<float>(aimesh->mTextureCoords[0][i].x);
+		*(vboPtr++) = static_cast<float>(aimesh->mTextureCoords[0][i].y);
+		/* normal */
+		*(vboPtr++) = static_cast<float>(aimesh->mNormals[i].x);
+		*(vboPtr++) = static_cast<float>(aimesh->mNormals[i].y);
+		*(vboPtr++) = static_cast<float>(aimesh->mNormals[i].z);
+		/* tangent */
+		*(vboPtr++) = static_cast<float>(aimesh->mTangents[i].x);
+		*(vboPtr++) = static_cast<float>(aimesh->mTangents[i].y);
+		*(vboPtr++) = static_cast<float>(aimesh->mTangents[i].z);
+		/* bitangent */
+		*(vboPtr++) = static_cast<float>(aimesh->mBitangents[i].x);
+		*(vboPtr++) = static_cast<float>(aimesh->mBitangents[i].y);
+		*(vboPtr++) = static_cast<float>(aimesh->mBitangents[i].z);
+	}
+	vbo.UnmapStorage();
+}
+void ModelComponent::LoadIndices(aiMesh* aimesh, Buffer& ebo)
+{
+	uint32_t* eboPtr = static_cast<uint32_t*>(ebo.MapStorage(GL_WRITE_ONLY));
+	if (!eboPtr)
+	{
+		CONSOLE_WARN("Error on mapping element buffer storage");
+		return;
+	}
+
+	for (uint32_t i = 0; i < aimesh->mNumFaces; i++)
+	{
+		const aiFace& face = aimesh->mFaces[i];
+		for (int i = 0; i < face.mNumIndices; i++)
+			*(eboPtr++) = static_cast<uint32_t>(face.mIndices[i]);
+	}
+	ebo.UnmapStorage();
+}
+Texture2D* ModelComponent::GetTexture(aiMaterial* material, aiTextureType type)
+{
+	aiString fileName;
+	if (material->GetTexture(type, 0, &fileName) == aiReturn_SUCCESS)
+		return TextureManager::Instance()->GetTextureByPath(TEXTURES_PATH / fileName.C_Str());
+
+	return nullptr;
+}
 /* ---------------------------------------------------------------------------
 			CameraComponent
 	--------------------------------------------------------------------------- */

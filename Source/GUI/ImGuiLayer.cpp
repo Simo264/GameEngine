@@ -232,15 +232,15 @@ namespace ImGuiLayer
         transform->UpdateTransformation();
       }
     }
-    if (auto mesh = object.GetComponent<StaticMeshComponent>())
-    {
-      if (ImGui::CollapsingHeader("StaticMeshComponent"))
-      {
-        // VertexArray vao;
-        // Material		material;
-        // fspath			modelPath;
-      }
-    }
+    //if (auto mesh = object.GetComponent<StaticMeshComponent>())
+    //{
+    //  if (ImGui::CollapsingHeader("StaticMeshComponent"))
+    //  {
+    //    // VertexArray vao;
+    //    // Material		material;
+    //    // fspath			modelPath;
+    //  }
+    //}
     
     ImGui::End();
   }

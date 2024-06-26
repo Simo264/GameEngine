@@ -66,22 +66,9 @@ static void RenderScene(Scene& scene, Program* sceneProgram)
     sceneProgram->SetUniform1f("u_spotLight.outerCutOff", light.outerCutOff);
   });
 
-  scene.Reg().view<StaticMeshComponent, TransformComponent>().each([sceneProgram](auto& mesh, auto& transform) {
+  scene.Reg().view<ModelComponent, TransformComponent>().each([sceneProgram](auto& model, auto& transform) {
     sceneProgram->SetUniformMat4f("u_model", transform.GetTransformation());
-    
-    glBindTextureUnit(0, 0); /* reset diffuse */
-    glBindTextureUnit(1, 0); /* reset specular */
-    glBindTextureUnit(2, 0); /* reset normal */
-    glBindTextureUnit(3, 0); /* reset height */
-
-    sceneProgram->SetUniform1i("u_hasNormalMap", (mesh.material.normal ? 1 : 0));
-
-    if (mesh.material.diffuse) mesh.material.diffuse->BindTextureUnit(0);
-    if (mesh.material.specular) mesh.material.specular->BindTextureUnit(1);
-    if (mesh.material.normal) mesh.material.normal->BindTextureUnit(2);
-    if (mesh.material.height) mesh.material.height->BindTextureUnit(3);
-    
-    mesh.Draw();
+    model.DrawModel(GL_TRIANGLES);
   });
 }
 static void CreateSkybox(VertexArray& skybox, TextureCubemap& skyboxTexture)
@@ -288,9 +275,11 @@ void Engine::Run()
       glClear(GL_DEPTH_BUFFER_BIT);
       shadowMapDepthProgram->Use();
       shadowMapDepthProgram->SetUniformMat4f("u_lightSpaceMatrix", lightSpaceMatrix);
-      scene.Reg().view<StaticMeshComponent, TransformComponent>().each([&](auto& mesh, auto& transform) {
+      scene.Reg().view<ModelComponent, TransformComponent>().each([&](auto& model, auto& transform) {
         shadowMapDepthProgram->SetUniformMat4f("u_model", transform.GetTransformation());
-        mesh.Draw();
+        std::for_each_n(model.meshes, model.numMeshes, [](MeshComponent& mesh) {
+          mesh.DrawMesh(GL_TRIANGLES);
+        });
       });
     }
     _fboShadowMap.Unbind(GL_FRAMEBUFFER);

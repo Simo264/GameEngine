@@ -8,3 +8,10 @@ float LEFT			= -30.0f;
 float RIGHT			= 30.0f;
 float BOTTOM		= -30.0f;
 float TOP				= 30.0f;
+
+int VERTEX_COMPONENTS =
+	3 + // position -> x,y,z
+	2 +	// tc				-> u,v
+	3 +	// normal		-> x,y,z
+	3 +	// tangent	-> x,y,z
+	3;	// bitangent-> x,y,z
