@@ -1,0 +1,14 @@
+# Blender 3.3.1 MTL File: 'AK-74.blend'
+# www.blender.org
+
+newmtl AK74
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd AK-74/AK-74HP_Material.001_BaseColor.1001.png
+map_Ns AK-74/AK-74HP_Material.001_Roughness.1001.png
+map_refl AK-74/AK-74HP_Material.001_Metallic.1001.png
+map_Bump -bm 1.000000 AK-74/AK-74HP_Material.001_Normal.1001.png
