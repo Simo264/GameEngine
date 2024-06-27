@@ -8,6 +8,24 @@
  * -----------------------------------------------------
 */
 
+void TextureManager::LoadTexturesFromDir(const fspath& dirpath)
+{
+  if (!fs::exists(dirpath) || !fs::is_directory(dirpath))
+  {
+    CONSOLE_WARN("<dirpath> is not a valid path", dirpath.string().c_str());
+    return;
+  }
+
+  for (auto& entry : fs::recursive_directory_iterator(dirpath))
+  {
+    if (!fs::is_directory(entry))
+    {
+      const auto path = entry.path().lexically_normal();
+      LoadTexture(path);
+    }
+  }
+}
+
 void TextureManager::CleanUp()
 {
   for (auto& text : textures)

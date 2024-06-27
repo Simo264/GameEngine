@@ -28,7 +28,7 @@ void main()
   TBN    = mat3(T, B, N);
 
 	FragPos           = vec3(u_model * vec4(aPos, 1.0));
-	Normal						= mat3(transpose(inverse(u_model))) * aNormal;  
+	Normal						= N;  
 	TexCoords         = aTexCoords;
 	FragPosLightSpace = u_lightSpaceMatrix * vec4(FragPos, 1.0);
 	gl_Position       = u_projection * u_view * u_model * vec4(aPos, 1.0);

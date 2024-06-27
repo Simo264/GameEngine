@@ -10,6 +10,10 @@
 class TextureManager : public Manager<TextureManager>
 {
 public:
+	/**
+	 * Load all textures from directory <dirpath>
+	 */
+	void LoadTexturesFromDir(const fspath& dirpath);
 
 	/**
 	 * Destroy all texture objects 

@@ -5,6 +5,7 @@
 
 class Scene;
 class GameObject;
+class TransformComponent;
 
 namespace ImGuiLayer
 {
@@ -13,13 +14,12 @@ namespace ImGuiLayer
 	
 	void SetFont(const fspath& fontpath, int fontsize);
 	
-	void NewFrame();
-	void DrawData();
+	void BeginFrame();
+	void EndFrame();
 	void Docking();
 	
 	void RenderMenuBar(Scene& scene);
 	GameObject RenderOutlinerPanel(Scene& scene);
 	void RenderDetails(GameObject object);
 	void RenderDemo();
-
 }

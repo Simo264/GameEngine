@@ -68,7 +68,24 @@ static void RenderScene(Scene& scene, Program* sceneProgram)
 
   scene.Reg().view<ModelComponent, TransformComponent>().each([sceneProgram](auto& model, auto& transform) {
     sceneProgram->SetUniformMat4f("u_model", transform.GetTransformation());
-    model.DrawModel(GL_TRIANGLES);
+    
+    std::for_each_n(model.meshes, model.numMeshes, [&sceneProgram](MeshComponent& mesh) {
+      glBindTextureUnit(0, 0);
+      glBindTextureUnit(1, 0);
+      glBindTextureUnit(2, 0);
+      glBindTextureUnit(3, 0);
+      
+      if (mesh.material.diffuse) mesh.material.diffuse->BindTextureUnit(0);
+      if (mesh.material.specular) mesh.material.specular->BindTextureUnit(1);
+      if (mesh.material.normal) mesh.material.normal->BindTextureUnit(2);
+      if (mesh.material.height) mesh.material.height->BindTextureUnit(3);
+      
+      sceneProgram->SetUniform1i("u_hasNormalMap", mesh.material.normal ? 1 : 0);
+      sceneProgram->SetUniform1i("u_hasHeightMap", mesh.material.height ? 1 : 0);
+      
+      mesh.DrawMesh(GL_TRIANGLES);
+    });
+    
   });
 }
 static void CreateSkybox(VertexArray& skybox, TextureCubemap& skyboxTexture)
@@ -153,11 +170,13 @@ static void CreateSkybox(VertexArray& skybox, TextureCubemap& skyboxTexture)
 void Engine::Initialize()
 {
   Logger::Initialize();
-  CONSOLE_INFO("Logger initialized");
+  CONSOLE_INFO("Logger ready");
 
   /* Initialize window */
   _instanceWM = WindowManager::Instance();
   _instanceWM->Initialize();
+  CONSOLE_INFO("WindowManager ready");
+  
   _instanceWM->SetWindowTitle("ProjectGL");
   _instanceWM->SetWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
   _instanceWM->SetWindowPosition(50, 50);
@@ -167,16 +186,19 @@ void Engine::Initialize()
   /* Setup ImGui context */
   ImGuiLayer::SetupContext();
   ImGuiLayer::SetFont((FONTS_PATH / "Karla-Regular.ttf"), 16);
+  CONSOLE_INFO("ImGuiLayer ready");
   
   /* Initialize shaders */
   _instanceSM = ShaderManager::Instance();
   _instanceSM->LoadShadersFromDir(SHADERS_PATH);
   _instanceSM->LoadPrograms();
   _instanceSM->SetUpProgramsUniforms();
+  CONSOLE_INFO("ShaderManager ready!");
 
   /* Initialize textures */
   _instanceTM = TextureManager::Instance();
-  LoadTextures();
+  _instanceTM->LoadTexturesFromDir(TEXTURES_PATH);
+  CONSOLE_INFO("TextureManager ready!");
 
   /* Create Framebuffer object */
   _viewport = _instanceWM->GetFramebufferSize();
@@ -239,7 +261,7 @@ void Engine::Run()
   /* -------------------------- loop -------------------------- */
   while (_instanceWM->IsOpen())
   {
-    ImGuiLayer::NewFrame();
+    ImGuiLayer::BeginFrame();
     ImGuiLayer::Docking();
 
     /* -------------------------- Per-frame time logic -------------------------- */
@@ -339,12 +361,14 @@ void Engine::Run()
     fboImageTexture.BindTextureUnit(0);
     Renderer::DrawArrays(GL_TRIANGLES, _screenSquare);
 
-    //ImGuiLayer::RenderDemo();
+    ImGuiLayer::RenderDemo();
     ImGuiLayer::RenderMenuBar(scene);
     auto objectSelected = ImGuiLayer::RenderOutlinerPanel(scene);
     if (objectSelected)
+    {
       ImGuiLayer::RenderDetails(objectSelected);
-    ImGuiLayer::DrawData();
+    }
+    ImGuiLayer::EndFrame();
     
     /* -------------------------- Resizing framebuffer -------------------------- */
     const vec2i32 currentFramebufferSize = _instanceWM->GetFramebufferSize();
@@ -412,28 +436,6 @@ void Engine::SetOpenGLStates()
   glClearColor(0.15, 0.15, 0.15, 1.0f);
   glClearDepth(1.0f);
   glClearStencil(0);
-}
-void Engine::LoadTextures() const
-{
-  /* Load textures */
-  for (auto& entry : std::filesystem::recursive_directory_iterator(TEXTURES_PATH))
-  {
-    if (!std::filesystem::is_directory(entry))
-    {
-      const auto path = entry.path().lexically_normal();
-      _instanceTM->LoadTexture(path);
-    }
-  }
-
-  /* Load icons */
-  for (auto& entry : std::filesystem::recursive_directory_iterator(ICONS_PATH))
-  {
-    if (!std::filesystem::is_directory(entry))
-    {
-      const auto path = entry.path().lexically_normal();
-      _instanceTM->LoadTextureIcon(path);
-    }
-  }
 }
 void Engine::CreateFramebuffer(int samples, int width, int height)
 {

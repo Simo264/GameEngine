@@ -19,7 +19,6 @@ public:
 private:
 	void SetOpenGLStates();
 
-	void LoadTextures() const;
 	void CreateFramebuffer(int samples, int width, int height);
 	void CreateFramebufferShadowMap(int width, int height);
 	void CreateScreenSquare();

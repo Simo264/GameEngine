@@ -1,7 +1,9 @@
 #include "ImGuiLayer.hpp"
 
+#include "Core/Math/Extensions.hpp"
 #include "Core/Dialog/FileDialog.hpp"
 #include "Core/Log/Logger.hpp"
+
 #include "Engine/Scene.hpp"
 #include "Engine/GameObject.hpp"
 #include "Engine/Components.hpp"
@@ -12,6 +14,7 @@
 #include <imgui/imgui_impl_glfw.h>
 #include <imgui/imgui_impl_opengl3.h>
 #include <imgui/imgui_internal.h>
+#include <imgui/ImGuizmo.h>
 
 #include <GLFW/glfw3.h>
 
@@ -43,13 +46,14 @@ namespace ImGuiLayer
     io.Fonts->AddFontFromFileTTF(fontpath.string().c_str(), fontsize);
   }
 
-  void NewFrame()
+  void BeginFrame()
   {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::Begin();
+    ImGuizmo::BeginFrame();
   }
-  void DrawData()
+  void EndFrame()
   {
     auto window = WindowManager::Instance();
 
@@ -253,5 +257,4 @@ namespace ImGuiLayer
     ImGui::SetNextWindowBgAlpha(0.0f);
     ImGui::ShowDemoWindow(&visible);
   }
-
 }
