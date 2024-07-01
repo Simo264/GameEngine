@@ -61,50 +61,49 @@ uniform SpotLight         u_spotLight;
 uniform vec3  u_viewPos;
 uniform float u_gamma;
 uniform int   u_hasNormalMap;
-uniform int   u_hasHeightMap;
 
 /* ---------- Globals variable ---------- */
 /* -------------------------------------- */
 const float shininess = 32.0f;
-const vec3 lightPos = vec3(0.0f, 30.0f, -100.0f);
-
-vec4 g_diffuseColor;
-vec4 g_specularColor;
-vec3 g_normal; 
-vec3 g_viewDir;
 vec3 g_tangentFragPos;
 vec3 g_tangentViewPos;
+vec2 g_textCoords;
+vec3 g_normal; 
+vec3 g_viewDir;
+vec4 g_diffuseColor;
+vec4 g_specularColor;
+
 
 /* ---------- Functions ---------- */
 /* ------------------------------- */
 vec3 CalculateDirectionalLight(DirectionalLight light);
 vec3 CalculateBlinnPhongLight(PointLight light);
 vec3 CalculateSpotLight(SpotLight light);
+vec2 ParallaxMapping(const vec2 texCoords, const vec3 viewDir, const float heightScale);
 
 void main()
 {
   /* Init globals */
-  g_diffuseColor  = texture(u_material.diffuseTexture, TexCoords);
-  if(g_diffuseColor.a < 0.1)
-    discard;
-
-  g_specularColor = texture(u_material.specularTexture, TexCoords);
-
   g_tangentFragPos  = TBN * FragPos;
   g_tangentViewPos  = TBN * u_viewPos;
 
-  switch(u_hasNormalMap){
-    case 0: 
-      g_normal = normalize(Normal);
-      g_viewDir = normalize(u_viewPos - FragPos);
-      break;
+  g_viewDir = normalize(u_viewPos - FragPos);
+  if(u_hasNormalMap != 0)
+    g_viewDir = normalize(g_tangentViewPos - g_tangentFragPos);
+  
+  g_textCoords = TexCoords;
 
-    default:
-      g_normal = texture(u_material.normalTexture, TexCoords).rgb;
-      g_normal = normalize(g_normal * 2.0 - 1.0);
-      g_viewDir = normalize(g_tangentViewPos - g_tangentFragPos);
-      break;
-  };
+  g_normal = normalize(Normal);
+  if(u_hasNormalMap != 0)
+  {
+    g_normal = texture(u_material.normalTexture, g_textCoords).rgb;
+    g_normal = normalize(g_normal * 2.0 - 1.0);
+  }
+
+  g_diffuseColor  = texture(u_material.diffuseTexture, TexCoords);
+  g_specularColor = texture(u_material.specularTexture, TexCoords);
+  if(g_diffuseColor.a < 0.1)
+    discard;
 
   vec3 result = vec3(0, 0, 0);
   
@@ -116,7 +115,7 @@ void main()
     result += CalculateBlinnPhongLight(u_pointLight[i]);
 
   /* Calculate spot light */
-  result += CalculateSpotLight(u_spotLight);
+  //result += CalculateSpotLight(u_spotLight);
 
   /* apply gamma correction */
   if(u_gamma != 0)
@@ -127,8 +126,7 @@ void main()
 
 
 
-vec3 CalculateDirectionalLight(DirectionalLight light) 
-{
+vec3 CalculateDirectionalLight(DirectionalLight light){
   vec3 lightDir = normalize(-light.direction);
   if(u_hasNormalMap != 0)
     lightDir = TBN * normalize(-light.direction);
@@ -153,15 +151,13 @@ vec3 CalculateDirectionalLight(DirectionalLight light)
   return vec3(ambient + diffuse + specular);
 }
 
-vec3 CalculateBlinnPhongLight(PointLight light) 
-{
+vec3 CalculateBlinnPhongLight(PointLight light) {
   vec3 lightDir = normalize(light.position - FragPos);;
   if(u_hasNormalMap != 0)
   {
     const vec3 tangentLightPos = TBN * light.position;
     lightDir = TBN * normalize(tangentLightPos - g_tangentFragPos);
   }
-  
 
   /* ambient */
   vec3 ambient = (light.color * light.ambient) * g_diffuseColor.rgb;
@@ -191,12 +187,12 @@ vec3 CalculateBlinnPhongLight(PointLight light)
   return ambient + diffuse + specular;
 }
 
-vec3 CalculateSpotLight(SpotLight light)
-{
+vec3 CalculateSpotLight(SpotLight light){
   vec3 lightDir = normalize(light.position - FragPos);
   if(u_hasNormalMap != 0)
   {
-    const vec3 tangentLightPos = TBN * light.position;
+    /* TODO: BUG HERE!! */
+    const vec3 tangentLightPos = TBN * light.position; 
     lightDir = TBN * normalize(tangentLightPos - g_tangentFragPos);
   }
     

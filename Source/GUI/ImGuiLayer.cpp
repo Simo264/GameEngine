@@ -236,15 +236,6 @@ namespace ImGuiLayer
         transform->UpdateTransformation();
       }
     }
-    //if (auto mesh = object.GetComponent<StaticMeshComponent>())
-    //{
-    //  if (ImGui::CollapsingHeader("StaticMeshComponent"))
-    //  {
-    //    // VertexArray vao;
-    //    // Material		material;
-    //    // fspath			modelPath;
-    //  }
-    //}
     
     ImGui::End();
   }
@@ -257,4 +248,5 @@ namespace ImGuiLayer
     ImGui::SetNextWindowBgAlpha(0.0f);
     ImGui::ShowDemoWindow(&visible);
   }
+
 }
