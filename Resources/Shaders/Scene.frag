@@ -152,7 +152,7 @@ vec3 CalculateDirectionalLight(DirectionalLight light){
 }
 
 vec3 CalculateBlinnPhongLight(PointLight light) {
-  vec3 lightDir = normalize(light.position - FragPos);;
+  vec3 lightDir = normalize(light.position - FragPos);
   if(u_hasNormalMap != 0)
   {
     const vec3 tangentLightPos = TBN * light.position;

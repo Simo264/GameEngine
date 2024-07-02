@@ -1,14 +1,21 @@
 newmtl Trank_bark
-Ka 1.000000 1.000000 1.000000
-Kd 1.000000 1.000000 1.000000
-Ks 0.000000 0.000000 0.000000
-Ns 16
-map_Kd Tree/bark_0004.jpg
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.00 0.00 0.00
+Ns 16.00
+map_Kd Tree\bark_0021.jpg
 
-newmtl DB2X2_L01
-Ka 1.000000 1.000000 1.000000
-Kd 1.000000 1.000000 1.000000
-Ks 0.000000 0.000000 0.000000
-Ns 16
-map_Kd Tree/DB2X2_L01.png
-
+newmtl polySurface1SG1
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ns 5.89
+Ni 1.00
+Ks 0.00 0.00 0.00
+map_Ks Tree\DB2X2_L01_Spec.png
+map_Kd Tree\DB2X2_L01.png
+map_kn Tree\DB2X2_L01_Nor.png
