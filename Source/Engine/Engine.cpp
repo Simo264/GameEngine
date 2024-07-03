@@ -183,7 +183,11 @@ void Engine::Initialize()
   _instanceWM->SetWindowPosition(50, 50);
   _instanceWM->SetWindowAspectRatio(16, 9);
   _instanceWM->SetWindowVsync(false);
-  
+
+  /* initialize viewport */
+  _viewportSize.x = WINDOW_WIDTH;
+  _viewportSize.y = WINDOW_HEIGHT;
+
   /* Setup ImGui context */
   ImGuiLayer::SetupContext();
   ImGuiLayer::SetFont((FONTS_PATH / "Karla-Regular.ttf"), 16);
@@ -202,8 +206,7 @@ void Engine::Initialize()
   CONSOLE_INFO("TextureManager ready!");
 
   /* Create Framebuffer object */
-  _viewport = _instanceWM->GetFramebufferSize();
-  CreateFramebuffer(4, _viewport.x, _viewport.y);
+  CreateFramebuffer(4, _viewportSize.x, _viewportSize.y);
   CreateScreenSquare();
   
   /* Create Framebuffer object for shadows */
@@ -225,9 +228,9 @@ void Engine::Run()
 
   /* -------------------------- Camera -------------------------- */
   Camera camera(
-    vec3f( 30.0f, 15.0f, 10.0f ),
+    vec3f(30.0f, 15.0f, 10.0f),
     45.0f, 
-    static_cast<float>(_viewport.x) / static_cast<float>(_viewport.y), 
+    static_cast<float>(_viewportSize.x) / static_cast<float>(_viewportSize.y), 
     Z_NEAR, 
     Z_FAR
   );
@@ -312,7 +315,7 @@ void Engine::Run()
     /* Fill the framebuffer color texture */
     _fboMultisampled.Bind(GL_FRAMEBUFFER);
     { 
-      glViewport(0, 0, _viewport.x, _viewport.y);
+      glViewport(0, 0, _viewportSize.x, _viewportSize.y);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
       switch (toggle)
@@ -352,40 +355,42 @@ void Engine::Run()
 
       /* Blit multisampled buffer to normal colorbuffer of intermediate FBO */
       _fboMultisampled.Blit(_fboIntermediate,
-        0, 0, _viewport.x, _viewport.y,
-        0, 0, _viewport.x, _viewport.y,
+        0, 0, _viewportSize.x, _viewportSize.y,
+        0, 0, _viewportSize.x, _viewportSize.y,
         GL_COLOR_BUFFER_BIT,
         GL_NEAREST);
     }
     _fboMultisampled.Unbind(GL_FRAMEBUFFER);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    framebufferProgram->Use();
-    fboImageTexture.BindTextureUnit(0);
-    Renderer::DrawArrays(GL_TRIANGLES, _screenSquare);
+    
+    /* Render to GLFW framebuffer */
+    //framebufferProgram->Use();
+    //fboImageTexture.BindTextureUnit(0);
+    //Renderer::DrawArrays(GL_TRIANGLES, _screenSquare);
 
-    //ImGuiLayer::RenderDemo();
+    ImGuiLayer::RenderDemo();
     ImGuiLayer::RenderMenuBar(scene);
     ImGuiLayer::RenderTesting();
     GameObject objectSelected = ImGuiLayer::RenderOutlinerPanel(scene);
     if (objectSelected.IsValid()) 
       ImGuiLayer::RenderDetails(objectSelected);
-    ImGuiLayer::RenderViewportAndGuizmo(fboImageTexture, objectSelected, cameraView, cameraProj);
+    vec2i32 viewport = ImGuiLayer::RenderViewportAndGuizmo(fboImageTexture, objectSelected, cameraView, cameraProj);
     ImGuiLayer::EndFrame();
-    
-    /* -------------------------- Resizing framebuffer -------------------------- */
-    const vec2i32 currentFramebufferSize = _instanceWM->GetFramebufferSize();
-    if (_viewport != currentFramebufferSize)
+
+    /* Checking viewport size and resize framebuffer */
+    if (viewport != _viewportSize)
     {
-      ResizeFramebuffer(currentFramebufferSize);
-      camera.cameraComponent->aspect = static_cast<float>(_viewport.x) / static_cast<float>(_viewport.y);
+      _viewportSize = viewport;
+      
+      ResizeFramebuffer(viewport.x, viewport.y);
+      camera.cameraComponent->aspect = static_cast<float>(viewport.x) / static_cast<float>(viewport.y);
       camera.cameraComponent->UpdateProjection();
     }
 
     _instanceWM->SwapWindowBuffers();
     lastUpdateTime = now;
   }
-
 
   skybox.Delete();
   skyboxTexture.Delete();
@@ -545,10 +550,10 @@ void Engine::CreateScreenSquare()
   _screenSquare.numVertices = 6;
   _screenSquare.numIndices = 0;
 }
-void Engine::ResizeFramebuffer(vec2i32 newViewportSize)
+void Engine::ResizeFramebuffer(int width, int height)
 {
-  _viewport = newViewportSize;
+  _viewportSize = vec2i32(width, height);
   _fboMultisampled.Delete();
   _fboIntermediate.Delete();
-  CreateFramebuffer(4, newViewportSize.x, newViewportSize.y);
+  CreateFramebuffer(4, width, height);
 }

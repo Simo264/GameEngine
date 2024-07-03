@@ -219,7 +219,7 @@ namespace ImGuiLayer
       ImGui::EndMainMenuBar();
     }
   }
-  void RenderViewportAndGuizmo(const Texture2D& image, GameObject& object, const mat4f& view, const mat4f& proj)
+  vec2i32 RenderViewportAndGuizmo(const Texture2D& image, GameObject& object, const mat4f& view, const mat4f& proj)
   {
     ImGuiStyle& style = ImGui::GetStyle();
     const ImVec2 paddingTmp = style.WindowPadding;
@@ -227,9 +227,10 @@ namespace ImGuiLayer
     
     ImGui::Begin("Viewport", nullptr);
     ImGui::BeginChild("GameRender");
-
-    const ImVec2 size = ImGui::GetWindowSize();
-    ImGui::Image(reinterpret_cast<ImTextureID>(image.id), size, ImVec2(0, 1), ImVec2(1, 0));
+    
+    const ImVec2 viewport = ImGui::GetWindowSize();
+    
+    ImGui::Image(reinterpret_cast<ImTextureID>(image.id), viewport, ImVec2(0, 1), ImVec2(1, 0));
 
     if (object.IsValid())
     {
@@ -267,6 +268,8 @@ namespace ImGuiLayer
     ImGui::End();
 
     style.WindowPadding = paddingTmp;
+
+    return vec2i32(viewport.x, viewport.y);
   }
 
   GameObject RenderOutlinerPanel(Scene& scene)
