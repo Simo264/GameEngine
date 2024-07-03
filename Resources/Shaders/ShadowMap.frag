@@ -3,7 +3,6 @@
 /* ---------- IN attributes ---------- */
 /* ----------------------------------- */
 in vec3 FragPos;
-in vec3 Normal;
 in vec2 TexCoords;
 in vec4 FragPosLightSpace;
 in mat3 TBN;
@@ -58,7 +57,6 @@ uniform PointLight        u_pointLight[4];
 uniform SpotLight         u_spotLight;
 
 uniform sampler2D u_shadowMapTexture; 
-uniform int   u_hasNormalMap;
 uniform vec3  u_lightPos;
 uniform vec3  u_viewPos;
 uniform float u_gamma;
@@ -87,22 +85,16 @@ void main()
   g_tangentFragPos  = TBN * FragPos;
   g_tangentViewPos  = TBN * u_viewPos;
 
-  g_viewDir = normalize(u_viewPos - FragPos);
-  if(u_hasNormalMap != 0)
-    g_viewDir = normalize(g_tangentViewPos - g_tangentFragPos);
-    
-  g_textCoords = TexCoords;
+  g_viewDir = normalize(g_tangentViewPos - g_tangentFragPos);
   
-  g_normal = normalize(Normal);
-  if(u_hasNormalMap != 0)
-  {
-    g_normal = texture(u_material.normalTexture, g_textCoords).rgb;
-    g_normal = normalize(g_normal * 2.0 - 1.0);
-  }
+  g_textCoords = TexCoords;
+  g_normal = texture(u_material.normalTexture, g_textCoords).rgb;
+  g_normal = normalize(g_normal * 2.0 - 1.0);
+  g_normal = normalize(TBN * g_normal);
     
   g_diffuseColor  = texture(u_material.diffuseTexture, g_textCoords);
   g_specularColor = texture(u_material.specularTexture, g_textCoords);
-  if(g_diffuseColor.a < 0.1)
+  if(g_diffuseColor.a < 0.5)
     discard;
 
   vec3 result = vec3(0, 0, 0);
@@ -115,7 +107,7 @@ void main()
     result += CalculateBlinnPhongLight(u_pointLight[i]);
 
   /* Calculate spot light */
-  //result += CalculateSpotLight(u_spotLight);
+  result += CalculateSpotLight(u_spotLight);
   
   /* Apply gamma correction */
   if(u_gamma != 0)
@@ -126,9 +118,7 @@ void main()
 
 
 vec3 CalculateDirectionalLight(DirectionalLight light) {
-  vec3 lightDir = normalize(-light.direction);
-  if(u_hasNormalMap != 0)
-    lightDir = TBN * normalize(-light.direction);
+  const vec3 lightDir = normalize(-light.direction);
   
   /* ambient shading */
   vec3 ambient = (light.color * light.ambient) * g_diffuseColor.rgb;
@@ -138,9 +128,9 @@ vec3 CalculateDirectionalLight(DirectionalLight light) {
   vec3 diffuse = (light.color * light.diffuse) * diffuseFactor * g_diffuseColor.rgb; 
   
   /* specular shading */
-  vec3 reflectDir       = reflect(-lightDir, g_normal);
-  float specularFactor  = pow(max(dot(g_viewDir, reflectDir), 0.0), shininess);
-  vec3 specular         = (light.color * light.specular) * specularFactor * g_specularColor.rgb;  
+  vec3 halfwayDir = normalize(lightDir + g_viewDir);
+  float specularFactor = pow(max(dot(g_normal, halfwayDir), 0.0), shininess);
+  vec3 specular        = (light.color * light.specular) * specularFactor * g_specularColor.rgb;  
 
   /* Calculate shadow */
   float shadow = CalculateShadows(lightDir);
@@ -185,11 +175,6 @@ float CalculateShadows(vec3 lightDir){
 
 vec3 CalculateBlinnPhongLight(PointLight light){
   vec3 lightDir = normalize(light.position - FragPos);
-  if(u_hasNormalMap != 0)
-  {
-    vec3 tangentLightPos = TBN * light.position;
-    lightDir = TBN * normalize(tangentLightPos - g_tangentFragPos);
-  }
 
   /* ambient */
   vec3 ambient = (light.color * light.ambient) * g_diffuseColor.rgb;
@@ -220,12 +205,6 @@ vec3 CalculateBlinnPhongLight(PointLight light){
 
 vec3 CalculateSpotLight(SpotLight light){
   vec3 lightDir = normalize(light.position - FragPos);
-  if(u_hasNormalMap != 0)
-  {
-    /* TODO: BUG HERE!! */
-    vec3 tangentLightPos = TBN * light.position;
-    lightDir = TBN * normalize(tangentLightPos - g_tangentFragPos);
-  }
   
   /* ambient */
   vec3 ambient = (light.color * light.ambient) * g_diffuseColor.rgb;

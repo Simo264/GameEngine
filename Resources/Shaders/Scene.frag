@@ -3,7 +3,6 @@
 /* ---------- IN attributes ---------- */
 /* ----------------------------------- */
 in vec3 FragPos;  
-in vec3 Normal;
 in vec2 TexCoords;
 in mat3 TBN;
 
@@ -57,10 +56,8 @@ uniform DirectionalLight  u_directionalLight;
 uniform PointLight        u_pointLight[4];
 uniform SpotLight         u_spotLight;
 
-
 uniform vec3  u_viewPos;
 uniform float u_gamma;
-uniform int   u_hasNormalMap;
 
 /* ---------- Globals variable ---------- */
 /* -------------------------------------- */
@@ -87,22 +84,16 @@ void main()
   g_tangentFragPos  = TBN * FragPos;
   g_tangentViewPos  = TBN * u_viewPos;
 
-  g_viewDir = normalize(u_viewPos - FragPos);
-  if(u_hasNormalMap != 0)
-    g_viewDir = normalize(g_tangentViewPos - g_tangentFragPos);
+  g_viewDir = normalize(g_tangentViewPos - g_tangentFragPos);
   
   g_textCoords = TexCoords;
-
-  g_normal = normalize(Normal);
-  if(u_hasNormalMap != 0)
-  {
-    g_normal = texture(u_material.normalTexture, g_textCoords).rgb;
-    g_normal = normalize(g_normal * 2.0 - 1.0);
-  }
+  g_normal = texture(u_material.normalTexture, g_textCoords).rgb;
+  g_normal = normalize(g_normal * 2.0 - 1.0);
+  g_normal = normalize(TBN * g_normal);
 
   g_diffuseColor  = texture(u_material.diffuseTexture, TexCoords);
   g_specularColor = texture(u_material.specularTexture, TexCoords);
-  if(g_diffuseColor.a < 0.1)
+  if(g_diffuseColor.a < 0.5)
     discard;
 
   vec3 result = vec3(0, 0, 0);
@@ -115,7 +106,7 @@ void main()
     result += CalculateBlinnPhongLight(u_pointLight[i]);
 
   /* Calculate spot light */
-  //result += CalculateSpotLight(u_spotLight);
+  result += CalculateSpotLight(u_spotLight);
 
   /* apply gamma correction */
   if(u_gamma != 0)
@@ -124,40 +115,26 @@ void main()
   FragColor = vec4(result, 1.0);
 }
 
-
-
 vec3 CalculateDirectionalLight(DirectionalLight light){
-  vec3 lightDir = normalize(-light.direction);
-  if(u_hasNormalMap != 0)
-    lightDir = TBN * normalize(-light.direction);
-
-  const vec3 reflectDir = reflect(-lightDir, g_normal);
-  const vec3 halfwayDir = normalize(lightDir + g_viewDir);
+  const vec3 lightDir = normalize(-light.direction);
     
   /* ambient shading */
-  const vec3 lightAmbientColor = light.color * light.ambient;
-  const vec3 ambient = lightAmbientColor * g_diffuseColor.rgb;
+  const vec3 ambient = (light.color * light.ambient) * g_diffuseColor.rgb;
 
   /* diffuse shading */ 
-  const vec3 lightDiffuseColor = light.color * light.diffuse;
   const float diff = max(dot(lightDir, g_normal), 0.0);
-  const vec3 diffuse = lightDiffuseColor * diff * g_diffuseColor.rgb;
+  const vec3 diffuse = (light.color * light.diffuse) * diff * g_diffuseColor.rgb;
 
   /* specular shading */ 
-  const vec3 lightSpecularColor = light.color * light.specular;
+  const vec3 halfwayDir = normalize(lightDir + g_viewDir);
   const float spec = pow(max(dot(g_normal, halfwayDir), 0.0), shininess);
-  const vec3 specular = lightSpecularColor * spec * g_specularColor.rgb;
+  const vec3 specular = (light.color * light.specular) * spec * g_specularColor.rgb;
 
   return vec3(ambient + diffuse + specular);
 }
 
 vec3 CalculateBlinnPhongLight(PointLight light) {
   vec3 lightDir = normalize(light.position - FragPos);
-  if(u_hasNormalMap != 0)
-  {
-    const vec3 tangentLightPos = TBN * light.position;
-    lightDir = TBN * normalize(tangentLightPos - g_tangentFragPos);
-  }
 
   /* ambient */
   vec3 ambient = (light.color * light.ambient) * g_diffuseColor.rgb;
@@ -171,16 +148,10 @@ vec3 CalculateBlinnPhongLight(PointLight light) {
   float specularFactor = pow(max(dot(g_normal, halfwayDir), 0.0), shininess);
   vec3 specular = (light.color * light.specular) * specularFactor * g_specularColor.rgb;  
 
-
   /* attenuation */
   float dist = length(light.position - FragPos);
-  /* linear attenuation */
-  //float attenuation = 1.0 / (dist);
-  /* quadratic attenuation */
-  //float attenuation = 1.0 / (dist * dist);
   float attenuation = 1.0 / (u_gamma != 0 ? dist * dist : dist);
-
-
+  
   ambient  *= attenuation;  
   diffuse  *= attenuation;
   specular *= attenuation;   
@@ -189,12 +160,6 @@ vec3 CalculateBlinnPhongLight(PointLight light) {
 
 vec3 CalculateSpotLight(SpotLight light){
   vec3 lightDir = normalize(light.position - FragPos);
-  if(u_hasNormalMap != 0)
-  {
-    /* TODO: BUG HERE!! */
-    const vec3 tangentLightPos = TBN * light.position; 
-    lightDir = TBN * normalize(tangentLightPos - g_tangentFragPos);
-  }
     
   /* ambient */
   vec3 ambient = (light.color * light.ambient) * g_diffuseColor.rgb;
@@ -219,7 +184,8 @@ vec3 CalculateSpotLight(SpotLight light){
   specular *= intensity;
 
   float dist = length(light.position - FragPos);
-  float attenuation = 1.0 / (1.0 + (light.linear * dist) + (light.quadratic * dist * dist));    
+  //float attenuation = 1.0 / (1.0 + (light.linear * dist) + (light.quadratic * dist * dist));    
+  float attenuation = 1.0 / (u_gamma != 0 ? dist * dist : dist);
     
   ambient  *= attenuation; 
   diffuse  *= attenuation;

@@ -30,6 +30,7 @@
 #include <GLFW/glfw3.h>
 
 uint32_t drawCalls = 0;
+vec3f lightPosition = vec3f{ 0.0f, 2.0f, -7.0f };
 
 static void RenderScene(Scene& scene, Program* sceneProgram)
 {
@@ -83,7 +84,7 @@ static void RenderScene(Scene& scene, Program* sceneProgram)
       sceneProgram->SetUniform1i("u_hasNormalMap", mesh.material.normal ? 1 : 0);
       sceneProgram->SetUniform1i("u_hasHeightMap", mesh.material.height ? 1 : 0);
       
-      mesh.DrawMesh(GL_TRIANGLES);
+      mesh.DrawMesh(DRAW_MODE);
     });
     
   });
@@ -240,8 +241,7 @@ void Engine::Run()
   scene.LoadScene((ROOT_PATH / "Scene.ini"));
 
   /* -------------------------- Shadow map -------------------------- */
-  const mat4f lightProjection = Math::Ortho(LEFT, RIGHT, BOTTOM, TOP, Z_NEAR, Z_FAR);
-  const vec3f lightPosition{ 0.0f, 30.0f, 0.0f };
+  mat4f lightProjection{};
   mat4f lightView{};
   mat4f lightSpaceMatrix{};
   vec3f* lightDirection = nullptr;
@@ -284,11 +284,11 @@ void Engine::Run()
     else if (_instanceWM->GetKey(GLFW_KEY_F3) == GLFW_PRESS) toggle = 3; 
 
     /* -------------------------- Update -------------------------- */
-    const auto& cameraViewMatrix = camera.cameraComponent->GetView();
-    const auto& cameraProjectionMatrix = camera.cameraComponent->GetProjection();
-    _uboCamera.UpdateStorage(0, sizeof(mat4f), &cameraViewMatrix[0]);
-    _uboCamera.UpdateStorage(sizeof(mat4f), sizeof(mat4f), &cameraProjectionMatrix[0]);
-
+    const auto& cameraView = camera.cameraComponent->GetView();
+    const auto& cameraProj = camera.cameraComponent->GetProjection();
+    _uboCamera.UpdateStorage(0, sizeof(mat4f), &cameraView[0]);
+    _uboCamera.UpdateStorage(sizeof(mat4f), sizeof(mat4f), &cameraProj[0]);
+    lightProjection = Math::Ortho(LEFT, RIGHT, BOTTOM, TOP, Z_NEAR, Z_FAR);
     lightView = Math::LookAt(lightPosition, *lightDirection, vec3f(0.0f, 1.0f, 0.0f));
     lightSpaceMatrix = lightProjection * lightView;
 
@@ -303,7 +303,7 @@ void Engine::Run()
       scene.Reg().view<ModelComponent, TransformComponent>().each([&](auto& model, auto& transform) {
         shadowMapDepthProgram->SetUniformMat4f("u_model", transform.GetTransformation());
         std::for_each_n(model.meshes, model.numMeshes, [](MeshComponent& mesh) {
-          mesh.DrawMesh(GL_TRIANGLES);
+          mesh.DrawMesh(DRAW_MODE);
         });
       });
     }
@@ -335,15 +335,15 @@ void Engine::Run()
       case 3: /* Render Depth map texture for visual debugging */
         visualshadowDepthProgram->Use();
         fboImageTextureShadowMap.BindTextureUnit(0);
-        Renderer::DrawArrays(GL_TRIANGLES, _screenSquare);
+        Renderer::DrawArrays(DRAW_MODE, _screenSquare);
         break;
       }
 
       /* Draw skybox as last */
       {
         skyboxProgram->Use();
-        skyboxProgram->SetUniformMat4f("u_projection", cameraProjectionMatrix);
-        skyboxProgram->SetUniformMat4f("u_view", mat4f(mat3f(cameraViewMatrix)));
+        skyboxProgram->SetUniformMat4f("u_projection", cameraProj);
+        skyboxProgram->SetUniformMat4f("u_view", mat4f(mat3f(cameraView)));
         skyboxTexture.BindTextureUnit(0);
         Depth::SetFunction(GL_LEQUAL); /* change depth function so depth test passes when values are equal to depth buffer's content */
         Renderer::DrawArrays(GL_TRIANGLES, skybox);
@@ -364,13 +364,13 @@ void Engine::Run()
     fboImageTexture.BindTextureUnit(0);
     Renderer::DrawArrays(GL_TRIANGLES, _screenSquare);
 
-    ImGuiLayer::RenderDemo();
+    //ImGuiLayer::RenderDemo();
     ImGuiLayer::RenderMenuBar(scene);
-    auto objectSelected = ImGuiLayer::RenderOutlinerPanel(scene);
-    if (objectSelected)
-    {
+    ImGuiLayer::RenderTesting();
+    GameObject objectSelected = ImGuiLayer::RenderOutlinerPanel(scene);
+    if (objectSelected.IsValid()) 
       ImGuiLayer::RenderDetails(objectSelected);
-    }
+    ImGuiLayer::RenderViewportAndGuizmo(fboImageTexture, objectSelected, cameraView, cameraProj);
     ImGuiLayer::EndFrame();
     
     /* -------------------------- Resizing framebuffer -------------------------- */

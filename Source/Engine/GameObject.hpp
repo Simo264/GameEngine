@@ -44,7 +44,7 @@ public:
 		_reg->remove<T>(_entity);
 	}
 
-	entt::entity GetObjectID() const 
+	constexpr entt::entity GetObjectID() const 
 	{ 
 		return _entity; 
 	}
@@ -55,14 +55,14 @@ public:
 		_reg = nullptr;
 	}
 
-	bool IsEqual(const GameObject& rhs) const 
+	constexpr bool IsValid() const
 	{
-		return static_cast<uint32_t>(_entity) == static_cast<uint32_t>(rhs.GetObjectID());
+		return (_reg && _entity != entt::null);
 	}
 
-	operator bool() const 
-	{ 
-		return (_reg && _entity != entt::null); 
+	bool IsEqual(const GameObject& rhs) const
+	{
+		return static_cast<uint32_t>(_entity) == static_cast<uint32_t>(rhs.GetObjectID());
 	}
 
 private:

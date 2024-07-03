@@ -11,9 +11,11 @@
 #include "Engine/Graphics/Renderer.hpp"
 #include "Engine/Subsystems/TextureManager.hpp"
 
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
+#include "assimp/Importer.hpp"
+#include "assimp/scene.h"
+#include "assimp/postprocess.h"
+
+#include "GLFW/glfw3.h"
 
 /* ---------------------------------------------------------------------------
 			TransformComponent
@@ -48,7 +50,7 @@ MeshComponent::MeshComponent(void* vertices, uint32_t numVertices, void* indices
 {
 	Init();
 
-	int size = numVertices * sizeof(float) * VERTEX_COMPONENTS;
+	int size = numVertices * sizeof(float) * VERTEX_SIZE;
 	vbo.CreateStorage(size, vertices, GL_STATIC_DRAW);
 	size = numIndices * sizeof(uint32_t);
 	ebo.CreateStorage(size, indices, GL_STATIC_DRAW);
@@ -83,7 +85,7 @@ void MeshComponent::Init()
 	ebo.Create();
 	ebo.target = GL_ELEMENT_ARRAY_BUFFER;
 
-	vao.AttachVertexBuffer(0, vbo, 0, VERTEX_COMPONENTS * sizeof(float));
+	vao.AttachVertexBuffer(0, vbo, 0, VERTEX_SIZE * sizeof(float));
 	vao.AttachElementBuffer(ebo);
 
 	/* position */
@@ -102,10 +104,6 @@ void MeshComponent::Init()
 	vao.EnableAttribute(3);
 	vao.SetAttribBinding(3, 0);
 	vao.SetAttribFormat(3, 3, GL_FLOAT, true, 8 * sizeof(float));
-	/* bitangent */
-	vao.EnableAttribute(4);
-	vao.SetAttribBinding(4, 0);
-	vao.SetAttribFormat(4, 3, GL_FLOAT, true, 11 * sizeof(float));
 }
 
 
@@ -116,6 +114,8 @@ void MeshComponent::Init()
 static uint32_t totalVertices = 0;
 static uint32_t totalIndices = 0;
 static uint32_t totalSize = 0;
+static double timeStart = 0;
+static double timeEnd = 0;
 
 ModelComponent::ModelComponent(const fspath& path)
 	: modelPath{ path },
@@ -142,13 +142,17 @@ ModelComponent::ModelComponent(const fspath& path)
 	totalIndices = 0;
 	totalSize = 0;
 	meshes = new MeshComponent[scene->mNumMeshes];
+	timeStart = glfwGetTime();
 
 	ProcessNode(scene->mRootNode, scene);
+
+	timeEnd = glfwGetTime();
 
 	CONSOLE_TRACE(".numMeshes={}", numMeshes);
 	CONSOLE_TRACE(".totalVertices={} ", totalVertices);
 	CONSOLE_TRACE(".totalIndices={}", totalIndices);
 	CONSOLE_TRACE(".totalSize={} bytes", totalSize);
+	CONSOLE_TRACE(".time={}s", timeEnd - timeStart);
 }
 void ModelComponent::DestroyModel()
 {
@@ -193,7 +197,7 @@ void ModelComponent::ProcessNode(aiNode* node, const aiScene* scene)
 		aiMesh* aimesh = scene->mMeshes[node->mMeshes[i]];
 
 		const uint32_t numVertices = aimesh->mNumVertices;
-		const int vSize = numVertices * sizeof(float) * VERTEX_COMPONENTS;
+		const int vSize = numVertices * sizeof(float) * VERTEX_SIZE;
 		mesh.vbo.CreateStorage(vSize, nullptr, GL_STATIC_DRAW);
 		mesh.vao.numVertices = numVertices;
 		LoadVertices(aimesh, mesh.vbo);
@@ -253,10 +257,6 @@ void ModelComponent::LoadVertices(aiMesh* aimesh, Buffer& vbo)
 		*(vboPtr++) = static_cast<float>(aimesh->mTangents[i].x);
 		*(vboPtr++) = static_cast<float>(aimesh->mTangents[i].y);
 		*(vboPtr++) = static_cast<float>(aimesh->mTangents[i].z);
-		/* bitangent */
-		*(vboPtr++) = static_cast<float>(aimesh->mBitangents[i].x);
-		*(vboPtr++) = static_cast<float>(aimesh->mBitangents[i].y);
-		*(vboPtr++) = static_cast<float>(aimesh->mBitangents[i].z);
 	}
 	vbo.UnmapStorage();
 }

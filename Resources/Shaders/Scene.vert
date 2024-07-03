@@ -5,7 +5,6 @@ layout (location = 1) in vec2 aTexCoords;
 layout (location = 2) in vec3 aNormal;
 layout (location = 3) in vec3 aTangent;
 
-out vec3 Normal;
 out vec2 TexCoords;
 out vec3 FragPos;
 out mat3 TBN;
@@ -26,7 +25,6 @@ void main()
   TBN    = mat3(T, B, N);
 
   FragPos     = vec3(u_model * vec4(aPos, 1.0));
-  Normal      = N;
   TexCoords   = aTexCoords;
   gl_Position = u_projection * u_view * u_model * vec4(aPos, 1.0f);
 }

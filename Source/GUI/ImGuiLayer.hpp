@@ -6,6 +6,7 @@
 class Scene;
 class GameObject;
 class TransformComponent;
+class Texture2D;
 
 namespace ImGuiLayer
 {
@@ -18,8 +19,10 @@ namespace ImGuiLayer
 	void EndFrame();
 	void Docking();
 	
+	void RenderDemo();
 	void RenderMenuBar(Scene& scene);
+	void RenderViewportAndGuizmo(const Texture2D& image, GameObject& object, const mat4f& view, const mat4f& proj);
 	GameObject RenderOutlinerPanel(Scene& scene);
 	void RenderDetails(GameObject object);
-	void RenderDemo();
+	void RenderTesting();
 }
