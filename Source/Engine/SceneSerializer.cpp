@@ -1,17 +1,14 @@
 #include "SceneSerializer.hpp"
 
+#include "Core/FileParser/INIFileParser.hpp"
+
 #include "Engine/Scene.hpp"
 #include "Engine/ObjectLoader.hpp"
-
 #include "Engine/GameObject.hpp"
 #include "Engine/Components.hpp"
 
-
 #include "Engine/Graphics/Texture2D.hpp"
 #include "Engine/Subsystems/TextureManager.hpp"
-
-#include "Core/FileParser/INIFileParser.hpp"
-
 
 /* -----------------------------------------------------
  *          PUBLIC METHODS
@@ -71,15 +68,10 @@ void SceneSerializer::SerializeScene(Scene& scene, const fspath& filepath)
 			conf.Update(section.c_str(), "scale", std::format("{},{},{}", transform->scale.x, transform->scale.y, transform->scale.z).c_str());
 			conf.Update(section.c_str(), "rotation", std::format("{},{},{}", transform->rotation.x, transform->rotation.y, transform->rotation.z).c_str());
 		}
-		if (auto mesh = object.GetComponent<StaticMeshComponent>())
+		if (auto model = object.GetComponent<ModelComponent>())
 		{
-			string section = std::format("entity{}:StaticMeshComponent", objectID);
-			conf.Update(section.c_str(), "model_path", mesh->modelPath.string().c_str());
-			
-			if (mesh->material.diffuse) conf.Update(section.c_str(), "material_diffuse", mesh->material.diffuse->path.string().c_str());
-			if (mesh->material.specular) conf.Update(section.c_str(), "material_specular", mesh->material.specular->path.string().c_str());
-			if (mesh->material.normal) conf.Update(section.c_str(), "material_normal", mesh->material.normal->path.string().c_str());
-			if (mesh->material.height) conf.Update(section.c_str(), "material_height", mesh->material.height->path.string().c_str());
+			string section = std::format("entity{}:ModelComponent", objectID);
+			conf.Update(section.c_str(), "model_path", model->modelPath.string().c_str());
 		}
 	}
 	conf.Generate(true);
@@ -126,19 +118,10 @@ void SceneSerializer::DeserializeScene(Scene& scene, const fspath& filepath)
 			transform.scale = INIFileParser::StringToVec3f(strScale);
 			transform.UpdateTransformation();
 		}
-		else if (std::strcmp(componentName, "StaticMeshComponent") == 0)
+		else if (std::strcmp(componentName, "ModelComponent") == 0)
 		{
-			fspath model = fspath(conf.GetValue(section.c_str(), "model_path")).lexically_normal();
-			auto& mesh = object.AddComponent<StaticMeshComponent>(model);
-
-			if (conf.HasKey(section.c_str(), "material_diffuse"))
-				mesh.material.diffuse = instanceTM->GetTextureByPath(conf.GetValue(section.c_str(), "material_diffuse"));
-			if (conf.HasKey(section.c_str(), "material_specular"))
-				mesh.material.specular = instanceTM->GetTextureByPath(conf.GetValue(section.c_str(), "material_specular"));
-			if (conf.HasKey(section.c_str(), "material_normal"))
-				mesh.material.normal = instanceTM->GetTextureByPath(conf.GetValue(section.c_str(), "material_normal"));
-			if (conf.HasKey(section.c_str(), "material_height"))
-				mesh.material.height = instanceTM->GetTextureByPath(conf.GetValue(section.c_str(), "material_height"));
+			fspath modelPath = fspath(conf.GetValue(section.c_str(), "model_path")).lexically_normal();
+			auto& model = object.AddComponent<ModelComponent>(modelPath);
 		}
 		else if (std::strcmp(componentName, "DirLightComponent") == 0)
 		{

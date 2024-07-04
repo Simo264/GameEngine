@@ -19,11 +19,10 @@ public:
 private:
 	void SetOpenGLStates();
 
-	void LoadTextures() const;
 	void CreateFramebuffer(int samples, int width, int height);
 	void CreateFramebufferShadowMap(int width, int height);
 	void CreateScreenSquare();
-	void ResizeFramebuffer(vec2i32 newViewportSize);
+	void ResizeFramebuffer(int width, int height);
 
 	class WindowManager*	_instanceWM;
 	class ShaderManager*	_instanceSM;
@@ -36,5 +35,5 @@ private:
 	Buffer _uboCamera; /* uniform cameraBlock object */
 
 	VertexArray _screenSquare;
-	vec2i32 _viewport;
+	vec2i32 _viewportSize;
 };

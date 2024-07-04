@@ -1,10 +1,10 @@
-int	WINDOW_WIDTH				= 1600;
-int	WINDOW_HEIGHT				= 900;
-float GAMMA_CORRECTION	= 2.2f;
+#include "Core/OpenGL.hpp"
 
-float	Z_NEAR		= 0.1f;
-float	Z_FAR			= 100.0f;
-float LEFT			= -30.0f;
-float RIGHT			= 30.0f;
-float BOTTOM		= -30.0f;
-float TOP				= 30.0f;
+float	Z_NEAR		=  0.1f;
+float	Z_FAR			=  50.0f;
+float LEFT			= -20.0f;
+float RIGHT			=  20.0f;
+float BOTTOM		= -20.0f;
+float TOP				=  20.0f;
+
+int DRAW_MODE = GL_TRIANGLES;

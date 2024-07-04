@@ -30,6 +30,7 @@
 #include <GLFW/glfw3.h>
 
 uint32_t drawCalls = 0;
+vec3f lightPosition = vec3f{ 0.0f, 2.0f, -7.0f };
 
 static void RenderScene(Scene& scene, Program* sceneProgram)
 {
@@ -41,47 +42,51 @@ static void RenderScene(Scene& scene, Program* sceneProgram)
     sceneProgram->SetUniform3f("u_directionalLight.direction", light.direction);
   });
 
-  //int i = 0;
-  //scene.Reg().view<PointLightComponent>().each([sceneProgram, &i](auto& light) {
-  //  sceneProgram->SetUniform3f(std::format("u_pointLight[{}].color", i).c_str(), light.color);
-  //  sceneProgram->SetUniform1f(std::format("u_pointLight[{}].ambient", i).c_str(), light.ambient);
-  //  sceneProgram->SetUniform1f(std::format("u_pointLight[{}].diffuse", i).c_str(), light.diffuse);
-  //  sceneProgram->SetUniform1f(std::format("u_pointLight[{}].specular", i).c_str(), light.specular);
-  //  sceneProgram->SetUniform3f(std::format("u_pointLight[{}].position", i).c_str(), light.position);
-  //  sceneProgram->SetUniform1f(std::format("u_pointLight[{}].linear", i).c_str(), light.linear);
-  //  sceneProgram->SetUniform1f(std::format("u_pointLight[{}].quadratic", i).c_str(), light.quadratic);
-  //  i++;
-  //});
+  int i = 0;
+  scene.Reg().view<PointLightComponent>().each([sceneProgram, &i](auto& light) {
+    sceneProgram->SetUniform3f(std::format("u_pointLight[{}].color", i).c_str(), light.color);
+    sceneProgram->SetUniform1f(std::format("u_pointLight[{}].ambient", i).c_str(), light.ambient);
+    sceneProgram->SetUniform1f(std::format("u_pointLight[{}].diffuse", i).c_str(), light.diffuse);
+    sceneProgram->SetUniform1f(std::format("u_pointLight[{}].specular", i).c_str(), light.specular);
+    sceneProgram->SetUniform3f(std::format("u_pointLight[{}].position", i).c_str(), light.position);
+    sceneProgram->SetUniform1f(std::format("u_pointLight[{}].linear", i).c_str(), light.linear);
+    sceneProgram->SetUniform1f(std::format("u_pointLight[{}].quadratic", i).c_str(), light.quadratic);
+    i++;
+  });
 
-  //scene.Reg().view<SpotLightComponent>().each([sceneProgram](auto& light) {
-  //  sceneProgram->SetUniform3f("u_spotLight.color", light.color);
-  //  sceneProgram->SetUniform1f("u_spotLight.ambient", light.ambient);
-  //  sceneProgram->SetUniform1f("u_spotLight.diffuse", light.diffuse);
-  //  sceneProgram->SetUniform1f("u_spotLight.specular", light.specular);
-  //  sceneProgram->SetUniform3f("u_spotLight.direction", light.direction);
-  //  sceneProgram->SetUniform3f("u_spotLight.position", light.position);
-  //  sceneProgram->SetUniform1f("u_spotLight.linear", light.linear);
-  //  sceneProgram->SetUniform1f("u_spotLight.quadratic", light.quadratic);
-  //  sceneProgram->SetUniform1f("u_spotLight.cutOff", light.cutOff);
-  //  sceneProgram->SetUniform1f("u_spotLight.outerCutOff", light.outerCutOff);
-  //});
+  scene.Reg().view<SpotLightComponent>().each([sceneProgram](auto& light) {
+    sceneProgram->SetUniform3f("u_spotLight.color", light.color);
+    sceneProgram->SetUniform1f("u_spotLight.ambient", light.ambient);
+    sceneProgram->SetUniform1f("u_spotLight.diffuse", light.diffuse);
+    sceneProgram->SetUniform1f("u_spotLight.specular", light.specular);
+    sceneProgram->SetUniform3f("u_spotLight.direction", light.direction);
+    sceneProgram->SetUniform3f("u_spotLight.position", light.position);
+    sceneProgram->SetUniform1f("u_spotLight.linear", light.linear);
+    sceneProgram->SetUniform1f("u_spotLight.quadratic", light.quadratic);
+    sceneProgram->SetUniform1f("u_spotLight.cutOff", light.cutOff);
+    sceneProgram->SetUniform1f("u_spotLight.outerCutOff", light.outerCutOff);
+  });
 
-  scene.Reg().view<StaticMeshComponent, TransformComponent>().each([sceneProgram](auto& mesh, auto& transform) {
+  scene.Reg().view<ModelComponent, TransformComponent>().each([sceneProgram](auto& model, auto& transform) {
     sceneProgram->SetUniformMat4f("u_model", transform.GetTransformation());
     
-    glBindTextureUnit(0, 0); /* reset diffuse */
-    glBindTextureUnit(1, 0); /* reset specular */
-    glBindTextureUnit(2, 0); /* reset normal */
-    glBindTextureUnit(3, 0); /* reset height */
-
-    sceneProgram->SetUniform1i("u_hasNormalMap", (mesh.material.normal ? 1 : 0));
-
-    if (mesh.material.diffuse) mesh.material.diffuse->BindTextureUnit(0);
-    if (mesh.material.specular) mesh.material.specular->BindTextureUnit(1);
-    if (mesh.material.normal) mesh.material.normal->BindTextureUnit(2);
-    if (mesh.material.height) mesh.material.height->BindTextureUnit(3);
+    std::for_each_n(model.meshes, model.numMeshes, [&sceneProgram](MeshComponent& mesh) {
+      glBindTextureUnit(0, 0);
+      glBindTextureUnit(1, 0);
+      glBindTextureUnit(2, 0);
+      glBindTextureUnit(3, 0);
+      
+      if (mesh.material.diffuse) mesh.material.diffuse->BindTextureUnit(0);
+      if (mesh.material.specular) mesh.material.specular->BindTextureUnit(1);
+      if (mesh.material.normal) mesh.material.normal->BindTextureUnit(2);
+      if (mesh.material.height) mesh.material.height->BindTextureUnit(3);
+      
+      sceneProgram->SetUniform1i("u_hasNormalMap", mesh.material.normal ? 1 : 0);
+      sceneProgram->SetUniform1i("u_hasHeightMap", mesh.material.height ? 1 : 0);
+      
+      mesh.DrawMesh(DRAW_MODE);
+    });
     
-    mesh.Draw();
   });
 }
 static void CreateSkybox(VertexArray& skybox, TextureCubemap& skyboxTexture)
@@ -166,34 +171,42 @@ static void CreateSkybox(VertexArray& skybox, TextureCubemap& skyboxTexture)
 void Engine::Initialize()
 {
   Logger::Initialize();
-  CONSOLE_INFO("Logger initialized");
+  CONSOLE_INFO("Logger ready");
 
   /* Initialize window */
   _instanceWM = WindowManager::Instance();
   _instanceWM->Initialize();
+  CONSOLE_INFO("WindowManager ready");
+  
   _instanceWM->SetWindowTitle("ProjectGL");
   _instanceWM->SetWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
   _instanceWM->SetWindowPosition(50, 50);
   _instanceWM->SetWindowAspectRatio(16, 9);
   _instanceWM->SetWindowVsync(false);
-  
+
+  /* initialize viewport */
+  _viewportSize.x = WINDOW_WIDTH;
+  _viewportSize.y = WINDOW_HEIGHT;
+
   /* Setup ImGui context */
   ImGuiLayer::SetupContext();
   ImGuiLayer::SetFont((FONTS_PATH / "Karla-Regular.ttf"), 16);
+  CONSOLE_INFO("ImGuiLayer ready");
   
   /* Initialize shaders */
   _instanceSM = ShaderManager::Instance();
   _instanceSM->LoadShadersFromDir(SHADERS_PATH);
   _instanceSM->LoadPrograms();
   _instanceSM->SetUpProgramsUniforms();
+  CONSOLE_INFO("ShaderManager ready!");
 
   /* Initialize textures */
   _instanceTM = TextureManager::Instance();
-  LoadTextures();
+  _instanceTM->LoadTexturesFromDir(TEXTURES_PATH);
+  CONSOLE_INFO("TextureManager ready!");
 
   /* Create Framebuffer object */
-  _viewport = _instanceWM->GetFramebufferSize();
-  CreateFramebuffer(4, _viewport.x, _viewport.y);
+  CreateFramebuffer(4, _viewportSize.x, _viewportSize.y);
   CreateScreenSquare();
   
   /* Create Framebuffer object for shadows */
@@ -215,9 +228,9 @@ void Engine::Run()
 
   /* -------------------------- Camera -------------------------- */
   Camera camera(
-    vec3f( 30.0f, 15.0f, 10.0f ),
+    vec3f(30.0f, 15.0f, 10.0f),
     45.0f, 
-    static_cast<float>(_viewport.x) / static_cast<float>(_viewport.y), 
+    static_cast<float>(_viewportSize.x) / static_cast<float>(_viewportSize.y), 
     Z_NEAR, 
     Z_FAR
   );
@@ -231,14 +244,12 @@ void Engine::Run()
   scene.LoadScene((ROOT_PATH / "Scene.ini"));
 
   /* -------------------------- Shadow map -------------------------- */
-  const mat4f lightProjection = Math::Ortho(LEFT, RIGHT, BOTTOM, TOP, Z_NEAR, Z_FAR);
-  const vec3f lightPosition{ 0.0f, 30.0f, 0.0f };
+  mat4f lightProjection{};
   mat4f lightView{};
   mat4f lightSpaceMatrix{};
-  vec3f* lightViewCenter{ nullptr };
-  
-  scene.Reg().view<DirLightComponent>().each([&](DirLightComponent& light) {
-    lightViewCenter = &light.direction;
+  vec3f* lightDirection = nullptr;
+  scene.Reg().view<DirLightComponent>().each([&lightDirection](auto& light) {
+    lightDirection = &light.direction;
   });
 
   /* -------------------------- Pre-loop -------------------------- */
@@ -257,7 +268,7 @@ void Engine::Run()
   /* -------------------------- loop -------------------------- */
   while (_instanceWM->IsOpen())
   {
-    ImGuiLayer::NewFrame();
+    ImGuiLayer::BeginFrame();
     ImGuiLayer::Docking();
 
     /* -------------------------- Per-frame time logic -------------------------- */
@@ -276,15 +287,14 @@ void Engine::Run()
     else if (_instanceWM->GetKey(GLFW_KEY_F3) == GLFW_PRESS) toggle = 3; 
 
     /* -------------------------- Update -------------------------- */
-    const auto& cameraViewMatrix = camera.cameraComponent->GetView();
-    const auto& cameraProjectionMatrix = camera.cameraComponent->GetProjection();
-    _uboCamera.UpdateStorage(0, sizeof(mat4f), &cameraViewMatrix[0]);
-    _uboCamera.UpdateStorage(sizeof(mat4f), sizeof(mat4f), &cameraProjectionMatrix[0]);
-
-    lightView = Math::LookAt(lightPosition, *lightViewCenter, vec3f(0.0f, 1.0f, 0.0f));
+    const auto& cameraView = camera.cameraComponent->GetView();
+    const auto& cameraProj = camera.cameraComponent->GetProjection();
+    _uboCamera.UpdateStorage(0, sizeof(mat4f), &cameraView[0]);
+    _uboCamera.UpdateStorage(sizeof(mat4f), sizeof(mat4f), &cameraProj[0]);
+    lightProjection = Math::Ortho(LEFT, RIGHT, BOTTOM, TOP, Z_NEAR, Z_FAR);
+    lightView = Math::LookAt(lightPosition, *lightDirection, vec3f(0.0f, 1.0f, 0.0f));
     lightSpaceMatrix = lightProjection * lightView;
 
-    
     /* -------------------------- Rendering -------------------------- */
     /* Render depth of scene to texture(from directional light's perspective) */
     _fboShadowMap.Bind(GL_FRAMEBUFFER);
@@ -293,9 +303,11 @@ void Engine::Run()
       glClear(GL_DEPTH_BUFFER_BIT);
       shadowMapDepthProgram->Use();
       shadowMapDepthProgram->SetUniformMat4f("u_lightSpaceMatrix", lightSpaceMatrix);
-      scene.Reg().view<StaticMeshComponent, TransformComponent>().each([&](auto& mesh, auto& transform) {
+      scene.Reg().view<ModelComponent, TransformComponent>().each([&](auto& model, auto& transform) {
         shadowMapDepthProgram->SetUniformMat4f("u_model", transform.GetTransformation());
-        mesh.Draw();
+        std::for_each_n(model.meshes, model.numMeshes, [](MeshComponent& mesh) {
+          mesh.DrawMesh(DRAW_MODE);
+        });
       });
     }
     _fboShadowMap.Unbind(GL_FRAMEBUFFER);
@@ -303,7 +315,7 @@ void Engine::Run()
     /* Fill the framebuffer color texture */
     _fboMultisampled.Bind(GL_FRAMEBUFFER);
     { 
-      glViewport(0, 0, _viewport.x, _viewport.y);
+      glViewport(0, 0, _viewportSize.x, _viewportSize.y);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
       switch (toggle)
@@ -326,15 +338,15 @@ void Engine::Run()
       case 3: /* Render Depth map texture for visual debugging */
         visualshadowDepthProgram->Use();
         fboImageTextureShadowMap.BindTextureUnit(0);
-        Renderer::DrawArrays(GL_TRIANGLES, _screenSquare);
+        Renderer::DrawArrays(DRAW_MODE, _screenSquare);
         break;
       }
 
       /* Draw skybox as last */
       {
         skyboxProgram->Use();
-        skyboxProgram->SetUniformMat4f("u_projection", cameraProjectionMatrix);
-        skyboxProgram->SetUniformMat4f("u_view", mat4f(mat3f(cameraViewMatrix)));
+        skyboxProgram->SetUniformMat4f("u_projection", cameraProj);
+        skyboxProgram->SetUniformMat4f("u_view", mat4f(mat3f(cameraView)));
         skyboxTexture.BindTextureUnit(0);
         Depth::SetFunction(GL_LEQUAL); /* change depth function so depth test passes when values are equal to depth buffer's content */
         Renderer::DrawArrays(GL_TRIANGLES, skybox);
@@ -343,38 +355,42 @@ void Engine::Run()
 
       /* Blit multisampled buffer to normal colorbuffer of intermediate FBO */
       _fboMultisampled.Blit(_fboIntermediate,
-        0, 0, _viewport.x, _viewport.y,
-        0, 0, _viewport.x, _viewport.y,
+        0, 0, _viewportSize.x, _viewportSize.y,
+        0, 0, _viewportSize.x, _viewportSize.y,
         GL_COLOR_BUFFER_BIT,
         GL_NEAREST);
     }
     _fboMultisampled.Unbind(GL_FRAMEBUFFER);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    framebufferProgram->Use();
-    fboImageTexture.BindTextureUnit(0);
-    Renderer::DrawArrays(GL_TRIANGLES, _screenSquare);
-
-    //ImGuiLayer::RenderDemo();
-    ImGuiLayer::RenderMenuBar(scene);
-    auto objectSelected = ImGuiLayer::RenderOutlinerPanel(scene);
-    if (objectSelected)
-      ImGuiLayer::RenderDetails(objectSelected);
-    ImGuiLayer::DrawData();
     
-    /* -------------------------- Resizing framebuffer -------------------------- */
-    const vec2i32 currentFramebufferSize = _instanceWM->GetFramebufferSize();
-    if (_viewport != currentFramebufferSize)
+    /* Render to GLFW framebuffer */
+    //framebufferProgram->Use();
+    //fboImageTexture.BindTextureUnit(0);
+    //Renderer::DrawArrays(GL_TRIANGLES, _screenSquare);
+
+    ImGuiLayer::RenderDemo();
+    ImGuiLayer::RenderMenuBar(scene);
+    ImGuiLayer::RenderTesting();
+    GameObject objectSelected = ImGuiLayer::RenderOutlinerPanel(scene);
+    if (objectSelected.IsValid()) 
+      ImGuiLayer::RenderDetails(objectSelected);
+    vec2i32 viewport = ImGuiLayer::RenderViewportAndGuizmo(fboImageTexture, objectSelected, cameraView, cameraProj);
+    ImGuiLayer::EndFrame();
+
+    /* Checking viewport size and resize framebuffer */
+    if (viewport != _viewportSize)
     {
-      ResizeFramebuffer(currentFramebufferSize);
-      camera.cameraComponent->aspect = static_cast<float>(_viewport.x) / static_cast<float>(_viewport.y);
+      _viewportSize = viewport;
+      
+      ResizeFramebuffer(viewport.x, viewport.y);
+      camera.cameraComponent->aspect = static_cast<float>(viewport.x) / static_cast<float>(viewport.y);
       camera.cameraComponent->UpdateProjection();
     }
 
     _instanceWM->SwapWindowBuffers();
     lastUpdateTime = now;
   }
-
 
   skybox.Delete();
   skyboxTexture.Delete();
@@ -416,7 +432,7 @@ void Engine::SetOpenGLStates()
   Culling::SetFrontFace(GL_CCW);
 
   /* Blending OFF */
-  glDisable(GL_BLEND);
+  glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
   /* Gamma correction OFF */
@@ -428,28 +444,6 @@ void Engine::SetOpenGLStates()
   glClearColor(0.15, 0.15, 0.15, 1.0f);
   glClearDepth(1.0f);
   glClearStencil(0);
-}
-void Engine::LoadTextures() const
-{
-  /* Load textures */
-  for (auto& entry : std::filesystem::recursive_directory_iterator(TEXTURES_PATH))
-  {
-    if (!std::filesystem::is_directory(entry))
-    {
-      const auto path = entry.path().lexically_normal();
-      _instanceTM->LoadTexture(path);
-    }
-  }
-
-  /* Load icons */
-  for (auto& entry : std::filesystem::recursive_directory_iterator(ICONS_PATH))
-  {
-    if (!std::filesystem::is_directory(entry))
-    {
-      const auto path = entry.path().lexically_normal();
-      _instanceTM->LoadTextureIcon(path);
-    }
-  }
 }
 void Engine::CreateFramebuffer(int samples, int width, int height)
 {
@@ -556,10 +550,10 @@ void Engine::CreateScreenSquare()
   _screenSquare.numVertices = 6;
   _screenSquare.numIndices = 0;
 }
-void Engine::ResizeFramebuffer(vec2i32 newViewportSize)
+void Engine::ResizeFramebuffer(int width, int height)
 {
-  _viewport = newViewportSize;
+  _viewportSize = vec2i32(width, height);
   _fboMultisampled.Delete();
   _fboIntermediate.Delete();
-  CreateFramebuffer(4, newViewportSize.x, newViewportSize.y);
+  CreateFramebuffer(4, width, height);
 }
