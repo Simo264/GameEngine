@@ -2,6 +2,7 @@
 
 #include "Core/FileParser/INIFileParser.hpp"
 
+#include "Engine/Utils.hpp"
 #include "Engine/Scene.hpp"
 #include "Engine/ObjectLoader.hpp"
 #include "Engine/GameObject.hpp"
@@ -113,9 +114,9 @@ void SceneSerializer::DeserializeScene(Scene& scene, const fspath& filepath)
 			string strScale = conf.GetValue(section.c_str(), "scale");
 			
 			auto& transform = object.AddComponent<TransformComponent>();
-			transform.position = INIFileParser::StringToVec3f(strPosition);
-			transform.rotation = INIFileParser::StringToVec3f(strRotation);
-			transform.scale = INIFileParser::StringToVec3f(strScale);
+			transform.position = Utils::StringToVec3f(strPosition);
+			transform.rotation = Utils::StringToVec3f(strRotation);
+			transform.scale = Utils::StringToVec3f(strScale);
 			transform.UpdateTransformation();
 		}
 		else if (std::strcmp(componentName, "ModelComponent") == 0)
@@ -129,11 +130,11 @@ void SceneSerializer::DeserializeScene(Scene& scene, const fspath& filepath)
 			string strDirection = conf.GetValue(section.c_str(), "direction");
 
 			auto& light = object.AddComponent<DirLightComponent>();
-			light.color = INIFileParser::StringToVec3f(strColor);
+			light.color = Utils::StringToVec3f(strColor);
 			light.ambient = std::stof(conf.GetValue(section.c_str(), "ambient"));
 			light.diffuse = std::stof(conf.GetValue(section.c_str(), "diffuse"));
 			light.specular = std::stof(conf.GetValue(section.c_str(), "specular"));
-			light.direction = INIFileParser::StringToVec3f(strDirection);
+			light.direction = Utils::StringToVec3f(strDirection);
 		}
 		else if (std::strcmp(componentName, "PointLightComponent") == 0)
 		{
@@ -141,11 +142,11 @@ void SceneSerializer::DeserializeScene(Scene& scene, const fspath& filepath)
 			string strPosition = conf.GetValue(section.c_str(), "position");
 
 			auto& light = object.AddComponent<PointLightComponent>();
-			light.color = INIFileParser::StringToVec3f(strColor);
+			light.color = Utils::StringToVec3f(strColor);
 			light.ambient = std::stof(conf.GetValue(section.c_str(), "ambient"));
 			light.diffuse = std::stof(conf.GetValue(section.c_str(), "diffuse"));
 			light.specular = std::stof(conf.GetValue(section.c_str(), "specular"));
-			light.position = INIFileParser::StringToVec3f(strPosition);
+			light.position = Utils::StringToVec3f(strPosition);
 		}
 		else if (std::strcmp(componentName, "SpotLightComponent") == 0)
 		{
@@ -154,12 +155,12 @@ void SceneSerializer::DeserializeScene(Scene& scene, const fspath& filepath)
 			string strDirection = conf.GetValue(section.c_str(), "direction");
 
 			auto& light = object.AddComponent<SpotLightComponent>();
-			light.color = INIFileParser::StringToVec3f(strColor);
+			light.color = Utils::StringToVec3f(strColor);
 			light.ambient = std::stof(conf.GetValue(section.c_str(), "ambient"));
 			light.diffuse = std::stof(conf.GetValue(section.c_str(), "diffuse"));
 			light.specular = std::stof(conf.GetValue(section.c_str(), "specular"));
-			light.position = INIFileParser::StringToVec3f(strPosition);
-			light.direction = INIFileParser::StringToVec3f(strDirection);
+			light.position = Utils::StringToVec3f(strPosition);
+			light.direction = Utils::StringToVec3f(strDirection);
 			light.linear = std::stof(conf.GetValue(section.c_str(), "linear"));
 			light.quadratic = std::stof(conf.GetValue(section.c_str(), "quadratic"));
 			light.cutOff = std::stof(conf.GetValue(section.c_str(), "cutoff"));

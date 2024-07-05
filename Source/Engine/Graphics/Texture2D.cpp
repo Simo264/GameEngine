@@ -35,14 +35,12 @@ Texture2D::Texture2D(int target, const fspath& path, bool gammaCorrection)
 
 void Texture2D::Create(int target)
 {
-  if (
-    target != GL_TEXTURE_2D && 
-    target != GL_TEXTURE_2D_MULTISAMPLE
-  )
+  if (target != GL_TEXTURE_2D && target != GL_TEXTURE_2D_MULTISAMPLE)
   {
     CONSOLE_ERROR("Invalid texture target");
     return;
   }
+
   this->target = target;
   glCreateTextures(target, 1, &id);
 }
