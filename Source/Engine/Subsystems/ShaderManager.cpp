@@ -37,6 +37,7 @@ void ShaderManager::LoadShadersFromDir(const fspath& dirpath)
       uint32_t pos = filename.find_last_of('.') + 1;
       string ext = filename.substr(pos);
       fspath path = entry.path().lexically_normal();
+      CONSOLE_TRACE("Loading shader: {}", path.string().c_str());
 
       if (ext.compare("vert") == 0)
         LoadShader(path, GL_VERTEX_SHADER);

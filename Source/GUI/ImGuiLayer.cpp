@@ -23,6 +23,7 @@
 
 extern vec3f lightPosition;
 
+static constexpr int infinity = 1'000'000;
 static int guizmode = ImGuizmo::OPERATION::TRANSLATE;
 
 static void GuizmoWorldTranslation(TransformComponent& transform, const mat4f& view, const mat4f& proj)
@@ -317,7 +318,6 @@ namespace ImGuiLayer
   void RenderDetails(GameObject object)
   {
     static bool visible = true;
-    constexpr float infinity = 1'000'000;
 
     if (!visible)
       return;
@@ -375,7 +375,7 @@ namespace ImGuiLayer
 
         ImGui::DragFloat3("position", (float*)&transform->position, 0.1f, -infinity, infinity);
         ImGui::DragFloat3("scale", (float*)&transform->scale, 0.1f, -infinity, infinity);
-        ImGui::DragFloat3("rotation", (float*)&transform->rotation, 0.1f, -180.0f, 180.0f);
+        ImGui::DragFloat3("rotation", (float*)&transform->rotation, 0.1f, -infinity, infinity);
         transform->UpdateTransformation();
       }
     }
