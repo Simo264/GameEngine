@@ -5,7 +5,7 @@
 #include "Core/Math/Extensions.hpp"
 #include "Core/Log/Logger.hpp"
 
-#include "Engine/Camera.hpp"
+#include "Engine/PrimaryCamera.hpp"
 #include "Engine/Scene.hpp"
 #include "Engine/ObjectLoader.hpp"
 #include "Engine/GameObject.hpp"
@@ -34,43 +34,40 @@ vec3f lightPosition = vec3f{ 0.0f, 2.0f, -7.0f };
 
 static void RenderScene(Scene& scene, Program* sceneProgram)
 {
-  scene.Reg().view<DirLightComponent>().each([sceneProgram](auto& light) {
+  scene.Reg().view<Components::DirectionalLight>().each([sceneProgram](auto& light) {
     sceneProgram->SetUniform3f("u_directionalLight.color", light.color);
-    sceneProgram->SetUniform1f("u_directionalLight.ambient", light.ambient);
-    sceneProgram->SetUniform1f("u_directionalLight.diffuse", light.diffuse);
-    sceneProgram->SetUniform1f("u_directionalLight.specular", light.specular);
+    sceneProgram->SetUniform1f("u_directionalLight.diffuseIntensity", light.diffuseIntensity);
+    sceneProgram->SetUniform1f("u_directionalLight.specularIntensity", light.specularIntensity);
     sceneProgram->SetUniform3f("u_directionalLight.direction", light.direction);
   });
 
   int i = 0;
-  scene.Reg().view<PointLightComponent>().each([sceneProgram, &i](auto& light) {
+  scene.Reg().view<Components::PointLight>().each([sceneProgram, &i](auto& light) {
     sceneProgram->SetUniform3f(std::format("u_pointLight[{}].color", i).c_str(), light.color);
-    sceneProgram->SetUniform1f(std::format("u_pointLight[{}].ambient", i).c_str(), light.ambient);
-    sceneProgram->SetUniform1f(std::format("u_pointLight[{}].diffuse", i).c_str(), light.diffuse);
-    sceneProgram->SetUniform1f(std::format("u_pointLight[{}].specular", i).c_str(), light.specular);
+    sceneProgram->SetUniform1f(std::format("u_pointLight[{}].diffuseIntensity", i).c_str(), light.diffuseIntensity);
+    sceneProgram->SetUniform1f(std::format("u_pointLight[{}].specularIntensity", i).c_str(), light.specularIntensity);
     sceneProgram->SetUniform3f(std::format("u_pointLight[{}].position", i).c_str(), light.position);
-    sceneProgram->SetUniform1f(std::format("u_pointLight[{}].linear", i).c_str(), light.linear);
-    sceneProgram->SetUniform1f(std::format("u_pointLight[{}].quadratic", i).c_str(), light.quadratic);
+    sceneProgram->SetUniform1f(std::format("u_pointLight[{}].attenuation.kl", i).c_str(), light.attenuation.kl);
+    sceneProgram->SetUniform1f(std::format("u_pointLight[{}].attenuation.kq", i).c_str(), light.attenuation.kq);
     i++;
   });
 
-  scene.Reg().view<SpotLightComponent>().each([sceneProgram](auto& light) {
+  scene.Reg().view<Components::SpotLight>().each([sceneProgram](auto& light) {
     sceneProgram->SetUniform3f("u_spotLight.color", light.color);
-    sceneProgram->SetUniform1f("u_spotLight.ambient", light.ambient);
-    sceneProgram->SetUniform1f("u_spotLight.diffuse", light.diffuse);
-    sceneProgram->SetUniform1f("u_spotLight.specular", light.specular);
+    sceneProgram->SetUniform1f("u_spotLight.diffuseIntensity", light.diffuseIntensity);
+    sceneProgram->SetUniform1f("u_spotLight.specularIntensity", light.specularIntensity);
     sceneProgram->SetUniform3f("u_spotLight.direction", light.direction);
     sceneProgram->SetUniform3f("u_spotLight.position", light.position);
-    sceneProgram->SetUniform1f("u_spotLight.linear", light.linear);
-    sceneProgram->SetUniform1f("u_spotLight.quadratic", light.quadratic);
+    sceneProgram->SetUniform1f("u_spotLight.attenuation.kl", light.attenuation.kl);
+    sceneProgram->SetUniform1f("u_spotLight.attenuation.kq", light.attenuation.kq);
     sceneProgram->SetUniform1f("u_spotLight.cutOff", light.cutOff);
     sceneProgram->SetUniform1f("u_spotLight.outerCutOff", light.outerCutOff);
   });
 
-  scene.Reg().view<ModelComponent, TransformComponent>().each([sceneProgram](auto& model, auto& transform) {
+  scene.Reg().view<Components::Model, Components::Transform>().each([sceneProgram](auto& model, auto& transform) {
     sceneProgram->SetUniformMat4f("u_model", transform.GetTransformation());
     
-    std::for_each_n(model.meshes, model.numMeshes, [&sceneProgram](MeshComponent& mesh) {
+    std::for_each_n(model.meshes, model.numMeshes, [&sceneProgram](auto& mesh) {
       glBindTextureUnit(0, 0);
       glBindTextureUnit(1, 0);
       glBindTextureUnit(2, 0);
@@ -227,7 +224,7 @@ void Engine::Run()
   CreateSkybox(skybox, skyboxTexture);
 
   /* -------------------------- Camera -------------------------- */
-  Camera camera(
+  PrimaryCamera camera(
     vec3f(30.0f, 15.0f, 10.0f),
     45.0f, 
     static_cast<float>(_viewportSize.x) / static_cast<float>(_viewportSize.y), 
@@ -248,7 +245,7 @@ void Engine::Run()
   mat4f lightView{};
   mat4f lightSpaceMatrix{};
   vec3f* lightDirection = nullptr;
-  scene.Reg().view<DirLightComponent>().each([&lightDirection](auto& light) {
+  scene.Reg().view<Components::DirectionalLight>().each([&lightDirection](auto& light) {
     lightDirection = &light.direction;
   });
 
@@ -303,9 +300,9 @@ void Engine::Run()
       glClear(GL_DEPTH_BUFFER_BIT);
       shadowMapDepthProgram->Use();
       shadowMapDepthProgram->SetUniformMat4f("u_lightSpaceMatrix", lightSpaceMatrix);
-      scene.Reg().view<ModelComponent, TransformComponent>().each([&](auto& model, auto& transform) {
+      scene.Reg().view<Components::Model, Components::Transform>().each([&](auto& model, auto& transform) {
         shadowMapDepthProgram->SetUniformMat4f("u_model", transform.GetTransformation());
-        std::for_each_n(model.meshes, model.numMeshes, [](MeshComponent& mesh) {
+        std::for_each_n(model.meshes, model.numMeshes, [](auto& mesh) {
           mesh.DrawMesh(DRAW_MODE);
         });
       });
@@ -323,6 +320,8 @@ void Engine::Run()
       case 1: /* Render scene with no shadows */
         sceneProgram->Use();
         sceneProgram->SetUniform3f("u_viewPos", camera.cameraComponent->position);
+        sceneProgram->SetUniform3f("u_ambientLightColor", AMBIENT_COLOR);
+        sceneProgram->SetUniform1f("u_ambientLightIntensity", AMBIENT_INTENSITY);
         RenderScene(scene, sceneProgram);
         break;
 
@@ -331,6 +330,8 @@ void Engine::Run()
         shadowMapProgram->SetUniformMat4f("u_lightSpaceMatrix", lightSpaceMatrix);
         shadowMapProgram->SetUniform3f("u_viewPos", camera.cameraComponent->position);
         shadowMapProgram->SetUniform3f("u_lightPos", lightPosition);
+        shadowMapProgram->SetUniform3f("u_ambientLightColor", AMBIENT_COLOR);
+        shadowMapProgram->SetUniform1f("u_ambientLightIntensity", AMBIENT_INTENSITY);
         fboImageTextureShadowMap.BindTextureUnit(10);
         RenderScene(scene, shadowMapProgram);
         break;
@@ -371,7 +372,7 @@ void Engine::Run()
 
     ImGuiLayer::RenderDemo();
     ImGuiLayer::RenderMenuBar(scene);
-    ImGuiLayer::RenderTesting();
+    ImGuiLayer::RenderGlobals();
     GameObject objectSelected = ImGuiLayer::RenderOutlinerPanel(scene);
     if (objectSelected.IsValid()) 
       ImGuiLayer::RenderDetails(objectSelected);

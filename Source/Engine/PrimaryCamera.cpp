@@ -1,6 +1,4 @@
-#include "Camera.hpp"
-
-#include "Engine/Components.hpp"
+#include "PrimaryCamera.hpp"
 
 #include "Engine/Subsystems/WindowManager.hpp"
 
@@ -14,17 +12,17 @@ constexpr static float mouseSensitivity = 50.0f;
  * -----------------------------------------------------
 */
 
-Camera::Camera(const vec3f& position, float fov, float aspect, float znear, float zfar)
+PrimaryCamera::PrimaryCamera(const vec3f& position, float fov, float aspect, float znear, float zfar)
 {
-	cameraComponent = new CameraComponent(position, fov, aspect, znear, zfar);
+	cameraComponent = new Components::Camera(position, fov, aspect, znear, zfar);
 }
 
-Camera::~Camera() 
+PrimaryCamera::~PrimaryCamera() 
 { 
 	delete cameraComponent; 
 }
 
-void Camera::ProcessInput(float delta)
+void PrimaryCamera::ProcessInput(float delta)
 {
 	WindowManager* window = WindowManager::Instance();
 
@@ -42,7 +40,7 @@ void Camera::ProcessInput(float delta)
  * -----------------------------------------------------
 */
 
-void Camera::Move(WindowManager& window, const float movementSpeed, float delta)
+void PrimaryCamera::Move(WindowManager& window, const float movementSpeed, float delta)
 {
 	const float velocity = movementSpeed * delta;
 
@@ -76,7 +74,7 @@ void Camera::Move(WindowManager& window, const float movementSpeed, float delta)
 		cameraComponent->position -= cameraComponent->GetUpVector() * velocity;
 	}
 }
-void Camera::Rotate(WindowManager& window, const float mouseSensitivity, float delta)
+void PrimaryCamera::Rotate(WindowManager& window, const float mouseSensitivity, float delta)
 {
 	vec2d mousePos = window.GetCursorPosition();
 	vec2i32 windowSize = window.GetWindowSize();

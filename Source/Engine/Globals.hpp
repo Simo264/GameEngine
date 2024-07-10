@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Core/Math/Math.hpp"
+
 constexpr int	WINDOW_WIDTH = 1600;
 constexpr int	WINDOW_HEIGHT = 900;
 constexpr float GAMMA_CORRECTION = 2.2f;
@@ -18,3 +20,6 @@ extern float BOTTOM;
 extern float TOP;
 
 extern int DRAW_MODE;
+
+extern float AMBIENT_INTENSITY;
+extern vec3f AMBIENT_COLOR;

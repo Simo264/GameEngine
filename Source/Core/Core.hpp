@@ -16,14 +16,14 @@
 #include <string>
 #include <string_view>
 #include <sstream>
+#include <tuple>
 #include <vector>
 
 
 /* -----------------------------
-			STL library layer
+			STL aliases
    ----------------------------- */
 
-/* Containers */
 template<typename type, size_t size> 
 using array		= std::array<type, size>;
 template<typename type>
@@ -32,14 +32,14 @@ template<typename typeName, typename typeVal>
 using map			= std::map<typeName, typeVal>;
 template<typename type>
 using set			= std::set<type>;
+template<typename... types>
+using tuple		= std::tuple<types...>;
 
-/* Smart pointers*/
 template<typename type>
 using unique_pointer = std::unique_ptr<type>;
 template<typename type>
 using shared_pointer = std::shared_ptr<type>;
 
-/* Chrono */
 namespace chrono		= std::chrono;
 using system_clock	= chrono::system_clock;
 using time_point		= chrono::system_clock::time_point;

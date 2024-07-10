@@ -6,11 +6,12 @@ layout (location = 2) in vec3 aNormal;
 layout (location = 3) in vec3 aTangent;
 
 out vec2 TexCoords;
+out vec3 Normals;
 out vec3 FragPos;
 out mat3 TBN;
 out vec3 TangentViewPos;
 out vec3 TangentFragPos;
-
+out vec3 ViewPos;
 
 layout (std140, binding = 0) uniform cameraBlock
 {
@@ -32,6 +33,8 @@ void main()
 
   TangentViewPos = TBN * u_viewPos;
   TangentFragPos = TBN * FragPos;
+  Normals = N;
+  ViewPos = u_viewPos;
 
   gl_Position = u_projection * u_view * u_model * vec4(aPos, 1.0f);
 }

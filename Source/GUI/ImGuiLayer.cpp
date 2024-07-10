@@ -26,7 +26,36 @@ extern vec3f lightPosition;
 static constexpr int infinity = 1'000'000;
 static int guizmode = ImGuizmo::OPERATION::TRANSLATE;
 
-static void GuizmoWorldTranslation(TransformComponent& transform, const mat4f& view, const mat4f& proj)
+static const char* ATTENUATION_LABELS[]{
+  "7m",
+  "13m",
+  "20m",
+  "32m",
+  "50m",
+  "65m",
+  "100m",
+  "160m",
+  "200m",
+  "325m",
+  "600m",
+  "3250m"
+};
+static const array<tuple<float, float>, 12> ATTENUATION_VALUES = {
+  std::make_tuple<float,float>(0.7f, 1.8f),         // 7 meters
+  std::make_tuple<float,float>(0.35f, 0.44f),       // 13 meters
+  std::make_tuple<float,float>(0.22f, 0.20f),       // 20 meters
+  std::make_tuple<float,float>(0.14f, 0.07f),       // 32 meters
+  std::make_tuple<float,float>(0.09f, 0.032f),      // 50 meters
+  std::make_tuple<float,float>(0.07f, 0.017f),      // 65 meters
+  std::make_tuple<float,float>(0.045f, 0.0075f),    // 100 meters
+  std::make_tuple<float,float>(0.027f, 0.0028f),    // 160 meters
+  std::make_tuple<float,float>(0.022f, 0.0019f),    // 200 meters
+  std::make_tuple<float,float>(0.014f, 0.0007f),    // 325 meters
+  std::make_tuple<float,float>(0.007f, 0.0002f),    // 600 meters
+  std::make_tuple<float,float>(0.0014f, 0.000007f), // 3250 meters
+};
+
+static void GuizmoWorldTranslation(Components::Transform& transform, const mat4f& view, const mat4f& proj)
 {
   mat4f& model = transform.GetTransformation();
   ImGuizmo::Manipulate(
@@ -47,7 +76,7 @@ static void GuizmoWorldTranslation(TransformComponent& transform, const mat4f& v
     transform.UpdateTransformation();
   }
 }
-static void GuizmoWorldRotation(TransformComponent& transform, const mat4f& view, const mat4f& proj)
+static void GuizmoWorldRotation(Components::Transform& transform, const mat4f& view, const mat4f& proj)
 {
   mat4f& model = transform.GetTransformation();
   ImGuizmo::Manipulate(
@@ -74,7 +103,7 @@ static void GuizmoWorldRotation(TransformComponent& transform, const mat4f& view
     transform.UpdateTransformation();
   }
 }
-static void GuizmoWorldScaling(TransformComponent& transform, const mat4f& view, const mat4f& proj)
+static void GuizmoWorldScaling(Components::Transform& transform, const mat4f& view, const mat4f& proj)
 {
   mat4f& model = transform.GetTransformation();
   ImGuizmo::Manipulate(
@@ -208,9 +237,12 @@ namespace ImGuiLayer
             CONSOLE_INFO("New scene has been loaded");
           }
         }
-        if (ImGui::MenuItem("Save"))
+        if (ImGui::MenuItem("Save as..."))
         {
-          scene.SaveScene(ROOT_PATH / "Scene.ini");
+          static const char* filters[1] = { "*.ini" };
+          fspath filepath = FileDialog::SaveFileDialog(1, filters, "Save scene");
+
+          scene.SaveScene(filepath);
           CONSOLE_TRACE("The scene has been saved");
         }
 
@@ -235,7 +267,7 @@ namespace ImGuiLayer
 
     if (object.IsValid())
     {
-      TransformComponent* transform = object.GetComponent<TransformComponent>();
+      auto* transform = object.GetComponent<Components::Transform>();
       if (transform)
       {
         ImGuizmo::SetOrthographic(false);
@@ -286,7 +318,7 @@ namespace ImGuiLayer
       ImGui::SetNextItemOpen(true, ImGuiCond_Once);
       if (ImGui::TreeNode("Scene"))
       {
-        for (auto [entity, lComp] : scene.Reg().view<LabelComponent>().each())
+        for (auto [entity, label] : scene.Reg().view<Components::Label>().each())
         {
           GameObject object{ entity, &scene.Reg() };
 
@@ -300,7 +332,7 @@ namespace ImGuiLayer
           if (objectSelected.IsValid() && objectSelected.IsEqual(object))
             flags |= ImGuiTreeNodeFlags_Selected;
 
-          std::format_to(nodeName, "{}", lComp.label.c_str());
+          std::format_to(nodeName, "{}", label.label.c_str());
           ImGui::TreeNodeEx(reinterpret_cast<void*>(entity), flags, nodeName);
 
           if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
@@ -325,67 +357,83 @@ namespace ImGuiLayer
     ImGui::SetNextWindowBgAlpha(0.0f);
     ImGui::Begin("Details", &visible);
     
-    if (auto light = object.GetComponent<DirLightComponent>())
+    if (auto light = object.GetComponent<Components::DirectionalLight>())
     {
-      if (ImGui::CollapsingHeader("DirLightComponent", ImGuiTreeNodeFlags_DefaultOpen))
+      if (ImGui::CollapsingHeader("Directional light", ImGuiTreeNodeFlags_DefaultOpen))
       {
-        ImGui::ColorEdit3("color", (float*)&light->color);
-        ImGui::SliderFloat("ambient", &light->ambient, 0.0f, 1.0f);
-        ImGui::SliderFloat("diffuse", &light->diffuse,  0.0f, 1.0f);
-        ImGui::SliderFloat("specular", &light->specular, 0.0f, 1.0f);
-        ImGui::DragFloat3("direction", (float*)&light->direction, 0.1f, -infinity, infinity);
+        ImGui::ColorEdit3("Color", (float*)&light->color);
+        ImGui::SliderFloat("Diffuse intensity", &light->diffuseIntensity, 0.0f, 1.0f);
+        ImGui::SliderFloat("Specular intensity", &light->specularIntensity, 0.0f, 1.0f);
+        ImGui::DragFloat3("Direction", (float*)&light->direction, 0.1f, -infinity, infinity);
       }
     }
-    if (auto light = object.GetComponent<PointLightComponent>())
+    if (auto light = object.GetComponent<Components::PointLight>())
     {
-      if (ImGui::CollapsingHeader("PointLightComponent", ImGuiTreeNodeFlags_DefaultOpen))
+      if (ImGui::CollapsingHeader("Point light", ImGuiTreeNodeFlags_DefaultOpen))
       {
-        ImGui::ColorEdit3("color", (float*)&light->color);
-        ImGui::SliderFloat("ambient", &light->ambient, 0.0f, 1.0f);
-        ImGui::SliderFloat("diffuse", &light->diffuse, 0.0f, 1.0f);
-        ImGui::SliderFloat("specular", &light->specular, 0.0f, 1.0f);
-        ImGui::DragFloat3("position", (float*)&light->position, 0.1f, -infinity, infinity);
-        ImGui::SliderFloat("linear", &light->linear, 0.0f, 1.0f);
-        ImGui::SliderFloat("quadratic", &light->quadratic, 0.0f, 1.0f);
+        ImGui::ColorEdit3("Color", (float*)&light->color);
+        ImGui::SliderFloat("Diffuse intensity", &light->diffuseIntensity, 0.0f, 1.0f);
+        ImGui::SliderFloat("Specular intensity", &light->specularIntensity, 0.0f, 1.0f);
+        ImGui::DragFloat3("Position", (float*)&light->position, 0.1f, -infinity, infinity);
+
+        ImGui::Text("Attenuation");
+        ImGui::Separator();
+        static int index = 0;
+        if (ImGui::Combo("Distance", &index, ATTENUATION_LABELS, IM_ARRAYSIZE(ATTENUATION_LABELS)))
+        {
+          const auto& selected = ATTENUATION_VALUES.at(index);
+          light->attenuation.kl = std::get<0>(selected);
+          light->attenuation.kq = std::get<1>(selected);
+        }
       }
     }
-    if (auto light = object.GetComponent<SpotLightComponent>())
+    if (auto light = object.GetComponent<Components::SpotLight>())
     {
-      if (ImGui::CollapsingHeader("SpotLightComponent", ImGuiTreeNodeFlags_DefaultOpen))
+      if (ImGui::CollapsingHeader("Spot light", ImGuiTreeNodeFlags_DefaultOpen))
       {
-        ImGui::ColorEdit3("color", (float*)&light->color);
-        ImGui::SliderFloat("ambient", &light->ambient, 0.0f, 1.0f);
-        ImGui::SliderFloat("diffuse", &light->diffuse, 0.0f, 1.0f);
-        ImGui::SliderFloat("specular", &light->specular, 0.0f, 1.0f);
-        ImGui::DragFloat3("direction", (float*)&light->direction, 0.1f, -infinity, infinity);
-        ImGui::DragFloat3("position", (float*)&light->position, 0.1f, -infinity, infinity);
-        ImGui::SliderFloat("linear", &light->linear, 0.0f, 1.0f);
-        ImGui::SliderFloat("quadratic", &light->quadratic, 0.0f, 1.0f);
-        ImGui::SliderFloat("cutoff", &light->cutOff, 1.0f, light->outerCutOff);
-        ImGui::SliderFloat("outer cutoff", &light->outerCutOff, light->cutOff, 30.0f);
+        ImGui::ColorEdit3("Color", (float*)&light->color);
+        ImGui::SliderFloat("Diffuse intensity", &light->diffuseIntensity, 0.0f, 1.0f);
+        ImGui::SliderFloat("Specular intensity", &light->specularIntensity, 0.0f, 1.0f);
+        ImGui::DragFloat3("Direction", (float*)&light->direction, 0.1f, -infinity, infinity);
+        ImGui::DragFloat3("Position", (float*)&light->position, 0.1f, -infinity, infinity);
+        
+        ImGui::Text("Radius");
+        ImGui::Separator();
+        ImGui::SliderFloat("Inner cutoff", &light->cutOff, 1.0f, light->outerCutOff);
+        ImGui::SliderFloat("Outer cutoff", &light->outerCutOff, light->cutOff, 45.0f);
+
+        ImGui::Text("Attenuation");
+        ImGui::Separator();
+        static int index = 0;
+        if (ImGui::Combo("Distance", &index, ATTENUATION_LABELS, IM_ARRAYSIZE(ATTENUATION_LABELS)))
+        {
+          const auto& selected = ATTENUATION_VALUES.at(index);
+          light->attenuation.kl = std::get<0>(selected);
+          light->attenuation.kq = std::get<1>(selected);
+        }
       }
     }
-    if (auto transform = object.GetComponent<TransformComponent>())
+    if (auto transform = object.GetComponent<Components::Transform>())
     {
-      if (ImGui::CollapsingHeader("TransformComponent", ImGuiTreeNodeFlags_DefaultOpen))
+      if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
       {
         ImGui::RadioButton("Translate", &guizmode, ImGuizmo::OPERATION::TRANSLATE);
         ImGui::RadioButton("Rotate", &guizmode, ImGuizmo::OPERATION::ROTATE);
         ImGui::RadioButton("Scale", &guizmode, ImGuizmo::OPERATION::SCALE);
 
-        ImGui::DragFloat3("position", (float*)&transform->position, 0.1f, -infinity, infinity);
-        ImGui::DragFloat3("scale", (float*)&transform->scale, 0.1f, -infinity, infinity);
-        ImGui::DragFloat3("rotation", (float*)&transform->rotation, 0.1f, -infinity, infinity);
+        ImGui::DragFloat3("Position", (float*)&transform->position, 0.1f, -infinity, infinity);
+        ImGui::DragFloat3("Scale", (float*)&transform->scale, 0.1f, -infinity, infinity);
+        ImGui::DragFloat3("Rotation", (float*)&transform->rotation, 0.1f, -infinity, infinity);
         transform->UpdateTransformation();
       }
     }
     
     ImGui::End();
   }
-  void RenderTesting()
+  void RenderGlobals()
   {
     ImGui::SetNextWindowBgAlpha(0.0f);
-    ImGui::Begin("Testing", nullptr);
+    ImGui::Begin("Globals", nullptr);
 
     if (ImGui::CollapsingHeader("Draw mode"))
     {
@@ -400,7 +448,7 @@ namespace ImGuiLayer
       ImGui::RadioButton("GL_QUAD_STRIP", &DRAW_MODE, GL_QUAD_STRIP);
       ImGui::RadioButton("GL_POLYGON", &DRAW_MODE, GL_POLYGON);
     }
-    if (ImGui::CollapsingHeader("Shadow map"))
+    if (ImGui::CollapsingHeader("Clip space"))
     {
       ImGui::SliderFloat("Z_NEAR", &Z_NEAR, 0.0f, 1.0f);
       ImGui::SliderFloat("Z_FAR", &Z_FAR, 0.0f, 500.0f);
@@ -409,8 +457,15 @@ namespace ImGuiLayer
       ImGui::SliderFloat("BOTTOM", &BOTTOM, 0.0f, -100.0f);
       ImGui::SliderFloat("TOP", &TOP, 0.0f, 100.0f);
     }
-
-    ImGui::DragFloat3("Light position", &lightPosition[0], 0.1f, -100, 100);
+    if (ImGui::CollapsingHeader("World"))
+    {
+      ImGui::ColorEdit3("Ambient color", (float*)&AMBIENT_COLOR);
+      ImGui::SliderFloat("Ambient intensity", &AMBIENT_INTENSITY, 0.0f, 1.0f);
+    }
+    if (ImGui::CollapsingHeader("Shadows"))
+    {
+      ImGui::DragFloat3("Light position", &lightPosition[0], 0.1f, -100, 100);
+    }
     
     ImGui::End();
   }
