@@ -8,7 +8,6 @@ in vec3 FragPos;
 in mat3 TBN;
 in vec3 TangentViewPos;
 in vec3 TangentFragPos;
-in vec3 ViewPos;
 
 /* ---------- OUT attributes ---------- */
 /* ------------------------------------ */
@@ -89,11 +88,9 @@ void main() {
 
   /* Init globals */
   g_normal = texture(u_material.normalTexture, TexCoords).rgb;
-  g_normal = normalize(g_normal * 2.0 - 1.0);
-  //g_normal = normalize(Normals);
+  g_normal = normalize(g_normal*2.0 - 1.0);
 
   g_viewDir = normalize(TangentViewPos - TangentFragPos);
-  //g_viewDir = normalize(ViewPos - FragPos);
 
   g_diffuseColor  = texture(u_material.diffuseTexture, TexCoords);
   g_specularColor = vec4(0.2f,0.2f,0.2f,1.0f); //texture(u_material.specularTexture, TexCoords); //vec4(0.2f,0.2f,0.2f,1.0f); 
@@ -140,9 +137,8 @@ vec3 CalculateDirectionalLight(DirectionalLight light){
   return diffuse + specular;
 }
 vec3 CalculateBlinnPhongLight(PointLight light) {
-  const vec3 tangentLightPos = TBN * light.position;
+  const vec3 tangentLightPos = TBN*light.position;
   const vec3 lightDir = normalize(tangentLightPos - TangentFragPos);
-  //const vec3 lightDir = normalize(light.position - FragPos);
 
   /* diffuse */
   const float diffFactor = max(dot(g_normal, lightDir), 0.0);
@@ -155,7 +151,6 @@ vec3 CalculateBlinnPhongLight(PointLight light) {
 
   /* attenuation */
   const float d = length(tangentLightPos - TangentFragPos);
-  //const float d = length(light.position - FragPos);
   const float attenuation = CalculateAttenuation(d, light.attenuation.kl, light.attenuation.kq);
     
   diffuse  *= attenuation;
@@ -165,7 +160,7 @@ vec3 CalculateBlinnPhongLight(PointLight light) {
 vec3 CalculateSpotLight(SpotLight light){
   const vec3 tangentLightPos = TBN * light.position;
   const vec3 lightDir = normalize(tangentLightPos - TangentFragPos);
-    
+
   /* diffuse */
   const float diffFactor = max(dot(g_normal, lightDir), 0.0);
   vec3 diffuse = light.color * light.diffuseIntensity * diffFactor * g_diffuseColor.rgb;

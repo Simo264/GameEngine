@@ -123,10 +123,11 @@ namespace Components
 		Assimp::Importer importer;
 		const aiScene* scene = importer.ReadFile(path.string().c_str(),
 			aiProcess_Triangulate |
-			aiProcess_CalcTangentSpace |
-			aiProcess_GenSmoothNormals |
+			aiProcess_JoinIdenticalVertices |
 			aiProcess_FlipUVs |
-			aiProcess_JoinIdenticalVertices);
+			aiProcess_GenSmoothNormals |
+			aiProcess_CalcTangentSpace 
+		);
 
 		if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
 		{
