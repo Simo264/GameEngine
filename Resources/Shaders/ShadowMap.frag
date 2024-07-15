@@ -15,40 +15,42 @@ out vec4 FragColor;
 
 /* ---------- Structs ---------- */
 /* ----------------------------- */
-struct Material{
+struct Attenuation{
+  float kl; /* linear attenuation factor */
+  float kq; /* quadratic attenuation factor */
+};
+struct Material {
   sampler2D diffuseTexture;
   sampler2D specularTexture;
   sampler2D normalTexture;
   sampler2D heightTexture;
 };
-struct DirectionalLight{
+struct DirectionalLight {
   vec3  color;
-  float ambient;
-  float diffuse;
-  float specular;
+  float diffuseIntensity;
+  float specularIntensity;
   vec3  direction;
 };
-struct PointLight{
+struct PointLight {
   vec3  color;
-  float ambient;
-  float diffuse;
-  float specular;
+  float diffuseIntensity;
+  float specularIntensity;
   vec3  position;
-  float linear;     /* attenuation */
-  float quadratic;  /* attenuation */
+  
+  Attenuation attenuation;
 };
-struct SpotLight{
+struct SpotLight {
   vec3  color;
-  float ambient;
-  float diffuse;
-  float specular;
+  float diffuseIntensity;
+  float specularIntensity;
   vec3  position;
   vec3  direction;
-  float linear;     /* attenuation */
-  float quadratic;  /* attenuation */
   float cutOff;
   float outerCutOff; /* smoother edges */
+
+  Attenuation attenuation;
 };
+
 
 
 /* ---------- Uniforms ---------- */
@@ -58,12 +60,15 @@ uniform DirectionalLight  u_directionalLight;
 uniform PointLight        u_pointLight[4];
 uniform SpotLight         u_spotLight;
 
+uniform vec3  u_ambientLightColor;
+uniform float u_ambientLightIntensity;  
+
 uniform sampler2D u_shadowMapTexture; 
-uniform float u_gamma;
+uniform float     u_gamma;
 
 /* ---------- Globals variable ---------- */
 /* -------------------------------------- */
-const float shininess = 32.0f;
+const float g_shininess = 32.0f;
 vec3 g_normal;
 vec3 g_viewDir;
 vec4 g_diffuseColor;
@@ -71,6 +76,7 @@ vec4 g_specularColor;
 
 /* ---------- Functions ---------- */
 /* ------------------------------- */
+float CalculateAttenuation(float d, float kl, float kq);
 vec3 CalculateDirectionalLight(DirectionalLight light);
 float CalculateShadows(vec3 lightDir);
 vec3 CalculateBlinnPhongLight(PointLight light);
@@ -80,16 +86,19 @@ void main()
 {    
   /* Init globals */
   g_normal = texture(u_material.normalTexture, TexCoords).rgb;
-  g_normal = normalize(g_normal * 2.0 - 1.0);
+  g_normal = normalize(g_normal*2.0 - 1.0);
 
   g_viewDir = normalize(TangentViewPos - TangentFragPos);
     
   g_diffuseColor  = texture(u_material.diffuseTexture, TexCoords);
   g_specularColor = texture(u_material.specularTexture, TexCoords);
-  if(g_diffuseColor.a < 0.5)
+  //g_diffuseColor  = vec4(1.0f,0.25f,0.75f,1.0f); 
+  //g_specularColor = vec4(0.2f,0.2f,0.2f,1.0f);
+  if(g_diffuseColor.a < 0.1)
     discard;
 
-  vec3 result = vec3(0, 0, 0);
+  const vec3 ambientLight = u_ambientLightColor * u_ambientLightIntensity;
+  vec3 result = ambientLight;
   
   /* Calculate Directional lighting */
   result += CalculateDirectionalLight(u_directionalLight);
@@ -108,27 +117,11 @@ void main()
   FragColor = vec4(result, 1.0);
 }
 
-
-vec3 CalculateDirectionalLight(DirectionalLight light) {
-  const vec3 lightDir = normalize(-light.direction);
+float CalculateAttenuation(float d, float kl, float kq){
+  // https://imdoingitwrong.wordpress.com/2011/01/31/light-attenuation/ 
   
-  /* ambient shading */
-  vec3 ambient = (light.color * light.ambient) * g_diffuseColor.rgb;
-
-  /* diffuse shading */
-  float diffuseFactor = max(dot(g_normal, lightDir), 0.0);
-  vec3 diffuse = (light.color * light.diffuse) * diffuseFactor * g_diffuseColor.rgb; 
-  
-  /* specular shading */
-  vec3 halfwayDir = normalize(lightDir + g_viewDir);
-  float specularFactor = pow(max(dot(g_normal, halfwayDir), 0.0), shininess);
-  vec3 specular        = (light.color * light.specular) * specularFactor * g_specularColor.rgb;  
-
-  /* Calculate shadow */
-  float shadow = CalculateShadows(lightDir);
-  return (ambient + (1.0f - shadow) * (diffuse + specular)) * g_diffuseColor.rgb;   
+  return 1.0f / (1.0f + kl*d + kq*pow(d,2));  
 }
-
 float CalculateShadows(vec3 lightDir){
   /* Perform perspective divide */
   vec3 projCoords = FragPosLightSpace.xyz / FragPosLightSpace.w;
@@ -165,64 +158,71 @@ float CalculateShadows(vec3 lightDir){
   return shadow;
 }
 
-vec3 CalculateBlinnPhongLight(PointLight light){
-  const vec3 tangentLightPos = TBN * light.position;
+vec3 CalculateDirectionalLight(DirectionalLight light) {
+  const vec3 lightDir = normalize(-light.direction);
+    
+  /* diffuse shading */ 
+  const float diffFactor = max(dot(lightDir, g_normal), 0.0);
+  const vec3 diffuse = light.color * light.diffuseIntensity * diffFactor * g_diffuseColor.rgb;
+
+  /* specular shading */ 
+  const vec3 halfwayDir = normalize(lightDir + g_viewDir);
+  const float specFactor = pow(max(dot(g_normal, halfwayDir), 0.0), g_shininess);
+  const vec3 specular = light.color * light.specularIntensity * specFactor * g_specularColor.rgb;
+
+  /* calculate shadow */
+  const float shadow = CalculateShadows(lightDir);
+
+  return ((1.0f - shadow) * (diffuse + specular)) * g_diffuseColor.rgb;  
+}
+vec3 CalculateBlinnPhongLight(PointLight light) {
+  const vec3 tangentLightPos = TBN*light.position;
   const vec3 lightDir = normalize(tangentLightPos - TangentFragPos);
 
-  /* ambient */
-  vec3 ambient = (light.color * light.ambient) * g_diffuseColor.rgb;
-
   /* diffuse */
-  float diffuseFactor = max(dot(g_normal, lightDir), 0.0);
-  vec3 diffuse = (light.color * light.diffuse) * diffuseFactor * g_diffuseColor.rgb;  
-    
+  const float diffFactor = max(dot(g_normal, lightDir), 0.0);
+  vec3 diffuse = light.color * light.diffuseIntensity * diffFactor * g_diffuseColor.rgb;
+   
   /* specular */
-  vec3 halfwayDir = normalize(lightDir + g_viewDir);
-  float specularFactor = pow(max(dot(g_normal, halfwayDir), 0.0), shininess);
-  vec3 specular = (light.color * light.specular) * specularFactor * g_specularColor.rgb;  
-    
-  /* attenuation */
-  float dist = length(tangentLightPos - TangentFragPos);
-  const float attenuation = 1.0f / pow(dist, 2);
+  const vec3 halfwayDir = normalize(lightDir + g_viewDir);
+  const float specFactor = pow(max(dot(g_normal, halfwayDir), 0.0), g_shininess);
+  vec3 specular = light.color * light.specularIntensity * specFactor * g_specularColor.rgb;
 
-  ambient  *= attenuation;  
+  /* attenuation */
+  const float d = length(tangentLightPos - TangentFragPos);
+  const float attenuation = CalculateAttenuation(d, light.attenuation.kl, light.attenuation.kq);
+    
   diffuse  *= attenuation;
   specular *= attenuation;   
-  return ambient + diffuse + specular;
+  return diffuse + specular;
 }
-
 vec3 CalculateSpotLight(SpotLight light){
   const vec3 tangentLightPos = TBN * light.position;
   const vec3 lightDir = normalize(tangentLightPos - TangentFragPos);
-    
-  /* ambient */
-  vec3 ambient = (light.color * light.ambient) * g_diffuseColor.rgb;
-    
+
   /* diffuse */
-  const float diffuseFactor = max(dot(g_normal, lightDir), 0.0);
-  vec3 diffuse = (light.color * light.diffuse) * diffuseFactor * g_diffuseColor.rgb;  
+  const float diffFactor = max(dot(g_normal, lightDir), 0.0);
+  vec3 diffuse = light.color * light.diffuseIntensity * diffFactor * g_diffuseColor.rgb;
       
   /* specular */
   const vec3 halfwayDir = normalize(lightDir + g_viewDir);
-  const float specularFactor = pow(max(dot(g_normal, halfwayDir), 0.0), shininess);
-  vec3 specular = (light.color * light.specular) * specularFactor * g_specularColor.rgb;  
+  const float specFactor = pow(max(dot(g_normal, halfwayDir), 0.0), g_shininess);
+  vec3 specular = light.color * light.specularIntensity * specFactor * g_specularColor.rgb;
             
   /* soft edges + intensity */
-  const float theta = dot(lightDir, normalize(-light.direction));
   const float cutoff = cos(radians(light.cutOff));
   const float outerCutoff = cos(radians(light.outerCutOff));
-  float epsilon = (cutoff - outerCutoff);
-  float intensity = clamp((theta - outerCutoff) / epsilon, 0.0, 1.0);
+  const float theta = dot(lightDir, normalize(-light.direction));
+  const float epsilon = (cutoff - outerCutoff);
+  const float intensity = clamp((theta - outerCutoff) / epsilon, 0.0, 1.0);
   diffuse  *= intensity;
   specular *= intensity;
 
   /* attenuation */
-  float dist = length(tangentLightPos - TangentFragPos);
-  float attenuation = 1.0f / (1.0f + light.linear * dist + light.quadratic * pow(dist, 2));    
-  //const float attenuation = 1.0f / pow(dist, 2);
+  const float d = length(tangentLightPos - TangentFragPos);
+  const float attenuation = CalculateAttenuation(d, light.attenuation.kl, light.attenuation.kq);
 
-  ambient  *= attenuation; 
   diffuse  *= attenuation;
   specular *= attenuation;
-  return ambient + diffuse + specular;
+  return diffuse + specular;
 }

@@ -68,8 +68,6 @@ uniform float u_gamma;
 /* ---------- Globals variable ---------- */
 /* -------------------------------------- */
 const float g_shininess = 32.0f;
-vec3 g_tangentFragPos;
-vec3 g_tangentViewPos;
 vec3 g_normal; 
 vec3 g_viewDir;
 vec4 g_diffuseColor;
@@ -93,7 +91,9 @@ void main() {
   g_viewDir = normalize(TangentViewPos - TangentFragPos);
 
   g_diffuseColor  = texture(u_material.diffuseTexture, TexCoords);
-  g_specularColor = vec4(0.2f,0.2f,0.2f,1.0f); //texture(u_material.specularTexture, TexCoords); //vec4(0.2f,0.2f,0.2f,1.0f); 
+  g_specularColor = texture(u_material.specularTexture, TexCoords);
+  //g_diffuseColor  = vec4(1.0f,0.25f,0.75f,1.0f); 
+  //g_specularColor = vec4(0.2f,0.2f,0.2f,1.0f);
   if(g_diffuseColor.a < 0.1)
     discard;
 
@@ -101,14 +101,14 @@ void main() {
   vec3 result = ambientLight;
   
   /* Calculate directional light */
-  //result += CalculateDirectionalLight(u_directionalLight);
+  result += CalculateDirectionalLight(u_directionalLight);
 
   /* Calculate point light */
   for(int i = 0; i < 4; i++)
     result += CalculateBlinnPhongLight(u_pointLight[i]);
 
   /* Calculate spot light */
-  //result += CalculateSpotLight(u_spotLight);
+  result += CalculateSpotLight(u_spotLight);
 
   /* apply gamma correction */
   if(u_gamma != 0)
@@ -122,6 +122,7 @@ float CalculateAttenuation(float d, float kl, float kq){
   
   return 1.0f / (1.0f + kl*d + kq*pow(d,2));  
 }
+
 vec3 CalculateDirectionalLight(DirectionalLight light){
   const vec3 lightDir = normalize(-light.direction);
     

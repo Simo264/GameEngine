@@ -34,7 +34,6 @@ void main()
 
   TangentViewPos = TBN * u_viewPos;
   TangentFragPos = TBN * FragPos;
-  //ViewPos = u_viewPos;
 
   gl_Position = u_projection * u_view * u_model * vec4(aPos, 1.0f);
 }

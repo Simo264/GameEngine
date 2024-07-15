@@ -26,10 +26,12 @@ void main()
 	FragPos = vec3(u_model * vec4(aPos, 1.0));
 	TexCoords = aTexCoords;
 
-  vec3 T = normalize(vec3(u_model * vec4(aTangent,0.0)));
-  vec3 N = normalize(vec3(u_model * vec4(aNormal,0.0)));
-  vec3 B = normalize(cross(N, T));
-  TBN = transpose(mat3(T, B, N));
+  const mat3 normalMatrix = transpose(inverse(mat3(u_model)));
+  vec3 T = normalize(normalMatrix * aTangent);
+  vec3 N = normalize(normalMatrix * aNormal);
+  T = normalize(T - dot(T, N) * N);
+  vec3 B = cross(N, T);
+  TBN = transpose(mat3(T, B, N));  
 
   TangentViewPos = TBN * u_viewPos;
   TangentFragPos = TBN * FragPos;
