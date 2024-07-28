@@ -98,6 +98,8 @@ void SceneSerializer::SerializeScene(Scene& scene, const fspath& filepath)
 }
 void SceneSerializer::DeserializeScene(Scene& scene, const fspath& filepath)
 { 
+	CONSOLE_INFO("Loading scene {}...", filepath.string().c_str());
+
 	INIFileParser conf(filepath);
 	conf.ReadData();
 	

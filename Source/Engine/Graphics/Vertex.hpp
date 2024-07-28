@@ -9,10 +9,3 @@ struct Vertex
 	vec3f normal;
 	vec3f tangent;
 };
-
-/* Number of vertex components */
-constexpr int VERTEX_SIZE =
-	3 +
-	2 +
-	3 +
-	3;

@@ -49,7 +49,7 @@ namespace Components
 	{
 		Init();
 
-		int size = numVertices * sizeof(float) * VERTEX_SIZE;
+		int size = numVertices * sizeof(Vertex);
 		vbo.CreateStorage(size, vertices, GL_STATIC_DRAW);
 		size = numIndices * sizeof(uint32_t);
 		ebo.CreateStorage(size, indices, GL_STATIC_DRAW);
@@ -84,25 +84,25 @@ namespace Components
 		ebo.Create();
 		ebo.target = GL_ELEMENT_ARRAY_BUFFER;
 
-		vao.AttachVertexBuffer(0, vbo, 0, VERTEX_SIZE * sizeof(float));
+		vao.AttachVertexBuffer(0, vbo, 0, sizeof(Vertex));
 		vao.AttachElementBuffer(ebo);
 
 		/* position */
 		vao.EnableAttribute(0);
 		vao.SetAttribBinding(0, 0);
-		vao.SetAttribFormat(0, 3, GL_FLOAT, true, 0);
+		vao.SetAttribFormat(0, 3, GL_FLOAT, true, offsetof(Vertex, position));
 		/* texture coordinates */
 		vao.EnableAttribute(1);
 		vao.SetAttribBinding(1, 0);
-		vao.SetAttribFormat(1, 2, GL_FLOAT, true, 3 * sizeof(float));
+		vao.SetAttribFormat(1, 2, GL_FLOAT, true, offsetof(Vertex, texCoord));
 		/* normal */
 		vao.EnableAttribute(2);
 		vao.SetAttribBinding(2, 0);
-		vao.SetAttribFormat(2, 3, GL_FLOAT, true, 5 * sizeof(float));
+		vao.SetAttribFormat(2, 3, GL_FLOAT, true, offsetof(Vertex, normal));
 		/* tangent */
 		vao.EnableAttribute(3);
 		vao.SetAttribBinding(3, 0);
-		vao.SetAttribFormat(3, 3, GL_FLOAT, true, 8 * sizeof(float));
+		vao.SetAttribFormat(3, 3, GL_FLOAT, true, offsetof(Vertex, tangent));
 	}
 
 
@@ -121,6 +121,9 @@ namespace Components
 			meshes{ nullptr },
 			numMeshes{ 0 }
 	{
+		CONSOLE_TRACE("Loading model {}...", path.string().c_str());
+		timeStart = glfwGetTime();
+
 		Assimp::Importer importer;
 		const aiScene* scene = importer.ReadFile(path.string().c_str(),
 			aiProcess_Triangulate |
@@ -136,13 +139,10 @@ namespace Components
 			return;
 		}
 
-		CONSOLE_TRACE("==================== Loading model {} ====================", path.string().c_str());
-
 		totalVertices = 0;
 		totalIndices = 0;
 		totalSize = 0;
 		meshes = new Mesh[scene->mNumMeshes];
-		timeStart = glfwGetTime();
 
 		ProcessNode(scene->mRootNode, scene);
 
@@ -172,19 +172,15 @@ namespace Components
 	{
 		for (int i = 0; i < numMeshes; i++)
 		{
-			Mesh& mesh = meshes[i];
+			auto& mesh = meshes[i];
+			auto& material = mesh.material;
 
-			glBindTextureUnit(0, 0);
-			glBindTextureUnit(1, 0);
-			glBindTextureUnit(2, 0);
-			glBindTextureUnit(3, 0);
+			if (material.diffuse)  material.diffuse->BindTextureUnit(0);  else glBindTextureUnit(0, 0);
+			if (material.specular) material.specular->BindTextureUnit(1); else glBindTextureUnit(1, 0);
+			if (material.normal)   material.normal->BindTextureUnit(2);   else glBindTextureUnit(2, 0);
+			if (material.height)   material.height->BindTextureUnit(3);   else glBindTextureUnit(3, 0);
 
-			if (mesh.material.diffuse) mesh.material.diffuse->BindTextureUnit(0);
-			if (mesh.material.specular) mesh.material.specular->BindTextureUnit(1);
-			if (mesh.material.normal) mesh.material.normal->BindTextureUnit(2);
-			if (mesh.material.height) mesh.material.height->BindTextureUnit(3);
-
-			mesh.DrawMesh(mode);
+			mesh.DrawMesh(DRAW_MODE);
 		}
 	}
 
@@ -197,7 +193,7 @@ namespace Components
 			aiMesh* aimesh = scene->mMeshes[node->mMeshes[i]];
 
 			const uint32_t numVertices = aimesh->mNumVertices;
-			const int vSize = numVertices * sizeof(float) * VERTEX_SIZE;
+			const int vSize = numVertices * sizeof(Vertex);
 			mesh.vbo.CreateStorage(vSize, nullptr, GL_STATIC_DRAW);
 			mesh.vao.numVertices = numVertices;
 			LoadVertices(aimesh, mesh.vbo);

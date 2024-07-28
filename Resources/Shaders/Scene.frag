@@ -64,9 +64,8 @@ uniform SpotLight         u_spotLight;
 uniform vec3  u_ambientLightColor;
 uniform float u_ambientLightIntensity;  
 
-uniform float u_gamma;
 uniform int   u_useNormalMap;
-uniform int   u_useHeightMap;
+uniform int   u_useParallaxMap;
 uniform float u_heightScale;
 
 /* ---------- Globals variable ---------- */
@@ -92,7 +91,7 @@ void main() {
 
   vec3 viewDir = CalculateViewDirVector();
   vec2 textureCoord = TexCoord;
-  if(u_useNormalMap != 0 && u_useHeightMap != 0)
+  if(u_useNormalMap != 0 && u_useParallaxMap != 0)
     textureCoord = CalculateParallaxCoord(viewDir, u_heightScale);
   
   vec3 normal = CalculateNormalVector(textureCoord);

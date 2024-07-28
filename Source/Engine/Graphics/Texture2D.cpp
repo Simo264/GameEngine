@@ -144,8 +144,6 @@ void Texture2D::LoadImageData(const fspath& path, bool gammaCorrection)
   auto data = stbi_load(stringPath.c_str(), &width, &height, &nrChannels, 0);
   if (data)
   {
-    CONSOLE_TRACE("width={} height={} nrChannels={}", width, height, nrChannels);
-
     /*
       From https://registry.khronos.org/OpenGL-Refpages/gl4/html/glTexStorage2D.xhtml
      
