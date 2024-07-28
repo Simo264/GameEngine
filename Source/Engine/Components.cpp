@@ -6,6 +6,7 @@
 
 #include "Engine/Globals.hpp"
 
+#include "Engine/Graphics/Vertex.hpp"
 #include "Engine/Graphics/Shader.hpp"
 #include "Engine/Graphics/Texture2D.hpp"
 #include "Engine/Graphics/Renderer.hpp"
@@ -280,7 +281,7 @@ namespace Components
 	{
 		aiString fileName;
 		if (material->GetTexture(type, 0, &fileName) == aiReturn_SUCCESS)
-			return TextureManager::Instance()->GetTextureByPath(TEXTURES_PATH / fileName.C_Str());
+			return g_textureManager.GetTextureByPath(TEXTURES_PATH / fileName.C_Str());
 
 		return nullptr;
 	}

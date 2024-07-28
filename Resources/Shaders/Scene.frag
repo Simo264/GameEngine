@@ -2,9 +2,10 @@
 
 /* ---------- IN attributes ---------- */
 /* ----------------------------------- */
-in vec2 TexCoords;
-in vec3 Normals;
+in vec2 TexCoord;
+in vec3 Normal;
 in vec3 FragPos;  
+in vec3 ViewPos;
 in mat3 TBN;
 in vec3 TangentViewPos;
 in vec3 TangentFragPos;
@@ -64,51 +65,60 @@ uniform vec3  u_ambientLightColor;
 uniform float u_ambientLightIntensity;  
 
 uniform float u_gamma;
+uniform int   u_useNormalMap;
+uniform int   u_useHeightMap;
+uniform float u_heightScale;
 
 /* ---------- Globals variable ---------- */
 /* -------------------------------------- */
 const float g_shininess = 32.0f;
-vec3 g_normal; 
-vec3 g_viewDir;
 vec4 g_diffuseColor;
 vec4 g_specularColor;
 
 
 /* ---------- Functions ---------- */
 /* ------------------------------- */
+vec2 CalculateParallaxCoord(vec3 viewDir, float heightScale);
+vec3 CalculateNormalVector(vec2 textureCoord);
+vec3 CalculateViewDirVector();
+
 float CalculateAttenuation(float d, float kl, float kq);
-vec3 CalculateDirectionalLight(DirectionalLight light);
-vec3 CalculateBlinnPhongLight(PointLight light);
-vec3 CalculateSpotLight(SpotLight light);
-vec2 ParallaxMapping(const vec2 texCoords, const vec3 viewDir, const float heightScale);
+vec3 CalculateDirectionalLight(DirectionalLight light, vec3 normal, vec3 viewDir);
+vec3 CalculateBlinnPhongLight(PointLight light, vec3 normal, vec3 viewDir);
+vec3 CalculateSpotLight(SpotLight light, vec3 normal, vec3 viewDir);
 
 void main() {
 
-  /* Init globals */
-  g_normal = texture(u_material.normalTexture, TexCoords).rgb;
-  g_normal = normalize(g_normal*2.0 - 1.0);
+  vec3 viewDir = CalculateViewDirVector();
+  vec2 textureCoord = TexCoord;
+  if(u_useNormalMap != 0 && u_useHeightMap != 0)
+    textureCoord = CalculateParallaxCoord(viewDir, u_heightScale);
+  
+  vec3 normal = CalculateNormalVector(textureCoord);
 
-  g_viewDir = normalize(TangentViewPos - TangentFragPos);
-
-  g_diffuseColor  = texture(u_material.diffuseTexture, TexCoords);
-  g_specularColor = texture(u_material.specularTexture, TexCoords);
-  //g_diffuseColor  = vec4(1.0f,0.25f,0.75f,1.0f); 
-  //g_specularColor = vec4(0.2f,0.2f,0.2f,1.0f);
-  if(g_diffuseColor.a < 0.1)
-    discard;
+  g_diffuseColor  = texture(u_material.diffuseTexture, textureCoord);
+  g_specularColor = vec4(vec3(0.2f), 1.0f); 
 
   const vec3 ambientLight = u_ambientLightColor * u_ambientLightIntensity;
-  vec3 result = ambientLight;
-  
+  vec3 result = vec3(0.0f);
+
+  /* =========================== */
   /* Calculate directional light */
-  result += CalculateDirectionalLight(u_directionalLight);
+  /* =========================== */
+  result += CalculateDirectionalLight(u_directionalLight, normal, viewDir);
 
+
+  /* ===================== */
   /* Calculate point light */
+  /* ===================== */
   for(int i = 0; i < 4; i++)
-    result += CalculateBlinnPhongLight(u_pointLight[i]);
+    result += CalculateBlinnPhongLight(u_pointLight[i], normal, viewDir);
 
+
+  /* ==================== */
   /* Calculate spot light */
-  result += CalculateSpotLight(u_spotLight);
+  /* ==================== */
+  result += CalculateSpotLight(u_spotLight, normal, viewDir);
 
   /* apply gamma correction */
   if(u_gamma != 0)
@@ -117,61 +127,146 @@ void main() {
   FragColor = vec4(result, 1.0);
 }
 
-float CalculateAttenuation(float d, float kl, float kq){
+vec2 CalculateParallaxCoord(vec3 viewDir, float heightScale) {
+
+  /* Number of depth layers */ 
+  const float minLayers = 8;
+  const float maxLayers = 32;
+  const float numLayers = mix(maxLayers, minLayers, abs(dot(vec3(0.0, 0.0, 1.0), viewDir)));  
+  
+  /* Calculate the size of each layer */ 
+  const float layerDepth = 1.0 / numLayers;
+  
+  /* Depth of current layer */ 
+  float currentLayerDepth = 0.0;
+
+  /* The amount to shift the texture coordinates per layer (from vector P) */ 
+  const vec2 P = viewDir.xy / viewDir.z * heightScale; 
+  const vec2 deltaTexCoords = P / numLayers;
+  
+  /* Get initial values */ 
+  vec2 currentTexCoords = TexCoord;
+  float currentDepthMapValue = texture(u_material.heightTexture, currentTexCoords).r;
+      
+  while(currentLayerDepth < currentDepthMapValue)
+  {
+    /* Shift texture coordinates along direction of P */ 
+    currentTexCoords -= deltaTexCoords;
+    /* Get depthmap value at current texture coordinates */ 
+    currentDepthMapValue = texture(u_material.heightTexture, currentTexCoords).r;  
+    /* Get depth of next layer */ 
+    currentLayerDepth += layerDepth;  
+  }
+    
+  /* Get texture coordinates before collision (reverse operations) */ 
+  const vec2 prevTexCoords = currentTexCoords + deltaTexCoords;
+
+  /* Get depth after and before collision for linear interpolation */ 
+  const float afterDepth  = currentDepthMapValue - currentLayerDepth;
+  const float beforeDepth = texture(u_material.heightTexture, prevTexCoords).r - currentLayerDepth + layerDepth;
+ 
+  /* Interpolation of texture coordinates */ 
+  const float weight = afterDepth / (afterDepth - beforeDepth);
+  const vec2 finalTexCoords = prevTexCoords * weight + currentTexCoords * (1.0 - weight);
+
+  return finalTexCoords;
+}
+vec3 CalculateNormalVector(vec2 textureCoord) {
+  vec3 N;
+ 
+  if(u_useNormalMap != 0){
+    /* Obtain normal from normal map in range [0,1] */
+    N = texture(u_material.normalTexture, textureCoord).rgb;
+    /* Transform normal vector to range [-1,1] */
+    N = N * 2.0 - 1.0;
+  }
+  else 
+    N = Normal;
+
+ return N;
+}
+vec3 CalculateViewDirVector() {
+  vec3 viewDir;
+  
+  if(u_useNormalMap != 0)
+    viewDir = normalize(TangentViewPos - TangentFragPos);
+  else
+    viewDir = normalize(ViewPos - FragPos);
+
+  return viewDir;
+}
+float CalculateAttenuation(float d, float kl, float kq) {
   // https://imdoingitwrong.wordpress.com/2011/01/31/light-attenuation/ 
   
   return 1.0f / (1.0f + kl*d + kq*pow(d,2));  
 }
 
-vec3 CalculateDirectionalLight(DirectionalLight light){
+vec3 CalculateDirectionalLight(DirectionalLight light, vec3 normal, vec3 viewDir) {
   const vec3 lightDir = normalize(-light.direction);
     
   /* diffuse shading */ 
-  const float diffFactor = max(dot(lightDir, g_normal), 0.0);
-  const vec3 diffuse = light.color * light.diffuseIntensity * diffFactor * g_diffuseColor.rgb;
+  const float diffFactor = max(dot(lightDir, normal), 0.0);
+  const vec3 diffuse = (light.color * light.diffuseIntensity) * diffFactor * g_diffuseColor.rgb;
 
   /* specular shading */ 
-  const vec3 halfwayDir = normalize(lightDir + g_viewDir);
-  const float specFactor = pow(max(dot(g_normal, halfwayDir), 0.0), g_shininess);
-  const vec3 specular = light.color * light.specularIntensity * specFactor * g_specularColor.rgb;
+  const vec3 halfwayDir = normalize(lightDir + viewDir);
+  const float specFactor = pow(max(dot(normal, halfwayDir), 0.0), g_shininess);
+  const vec3 specular = (light.color * light.specularIntensity) * specFactor * g_specularColor.rgb;
 
   return diffuse + specular;
 }
-vec3 CalculateBlinnPhongLight(PointLight light) {
-  const vec3 tangentLightPos = TBN*light.position;
-  const vec3 lightDir = normalize(tangentLightPos - TangentFragPos);
-
-  /* diffuse */
-  const float diffFactor = max(dot(g_normal, lightDir), 0.0);
-  vec3 diffuse = light.color * light.diffuseIntensity * diffFactor * g_diffuseColor.rgb;
+vec3 CalculateBlinnPhongLight(PointLight light, vec3 normal, vec3 viewDir) {
+  const vec3 tangentLightPosition = TBN * light.position;
+  
+  /* Light direction */
+  vec3 lightDir;
+  if(u_useNormalMap != 0)
+    lightDir = normalize(tangentLightPosition - TangentFragPos);
+  else
+    lightDir = normalize(light.position - FragPos);
    
-  /* specular */
-  const vec3 halfwayDir = normalize(lightDir + g_viewDir);
-  const float specFactor = pow(max(dot(g_normal, halfwayDir), 0.0), g_shininess);
-  vec3 specular = light.color * light.specularIntensity * specFactor * g_specularColor.rgb;
+  /* Diffuse */
+  const float diffFactor = max(dot(normal, lightDir), 0.0);
+  vec3 diffuse = (light.color * light.diffuseIntensity) * diffFactor * g_diffuseColor.rgb;
+   
+  /* Specular */
+  const vec3 halfwayDir = normalize(lightDir + viewDir);  
+  const float specFactor = pow(max(dot(normal, halfwayDir), 0.0), g_shininess);
+  vec3 specular = (light.color * light.specularIntensity) * specFactor * g_specularColor.rgb;
 
-  /* attenuation */
-  const float d = length(tangentLightPos - TangentFragPos);
-  const float attenuation = CalculateAttenuation(d, light.attenuation.kl, light.attenuation.kq);
+  /* Attenuation */
+  float lightDist;
+  if(u_useNormalMap != 0)
+    lightDist = length(tangentLightPosition - TangentFragPos);
+  else
+    lightDist = length(light.position - FragPos);
+
+  const float attenuation = CalculateAttenuation(lightDist, light.attenuation.kl, light.attenuation.kq);
     
   diffuse  *= attenuation;
-  specular *= attenuation;   
+  specular *= attenuation;
   return diffuse + specular;
 }
-vec3 CalculateSpotLight(SpotLight light){
-  const vec3 tangentLightPos = TBN * light.position;
-  const vec3 lightDir = normalize(tangentLightPos - TangentFragPos);
+vec3 CalculateSpotLight(SpotLight light, vec3 normal, vec3 viewDir) {
+  const vec3 tangentLightPosition = TBN * light.position;
 
-  /* diffuse */
-  const float diffFactor = max(dot(g_normal, lightDir), 0.0);
-  vec3 diffuse = light.color * light.diffuseIntensity * diffFactor * g_diffuseColor.rgb;
-      
-  /* specular */
-  const vec3 halfwayDir = normalize(lightDir + g_viewDir);
-  const float specFactor = pow(max(dot(g_normal, halfwayDir), 0.0), g_shininess);
-  vec3 specular = light.color * light.specularIntensity * specFactor * g_specularColor.rgb;
-            
-  /* soft edges + intensity */
+  /* Light direction */
+  vec3 lightDir;
+  if(u_useNormalMap != 0)
+    lightDir = normalize(tangentLightPosition - TangentFragPos);
+  else
+    lightDir = normalize(light.position - FragPos);
+
+  /* Diffuse */
+  const float diffFactor = max(dot(normal, lightDir), 0.0f);
+  vec3 diffuse = (light.color * light.diffuseIntensity) * diffFactor * g_diffuseColor.rgb;
+
+  /* Specular */
+  const vec3 halfwayDir = normalize(lightDir + viewDir);
+  const float specFactor = pow(max(dot(normal, halfwayDir), 0.0f), g_shininess);
+  vec3 specular = (light.color * light.specularIntensity) * specFactor * g_specularColor.rgb;
+
+  /* Soft edges + intensity */
   const float cutoff = cos(radians(light.cutOff));
   const float outerCutoff = cos(radians(light.outerCutOff));
   const float theta = dot(lightDir, normalize(-light.direction));
@@ -180,10 +275,15 @@ vec3 CalculateSpotLight(SpotLight light){
   diffuse  *= intensity;
   specular *= intensity;
 
-  /* attenuation */
-  const float d = length(tangentLightPos - TangentFragPos);
-  const float attenuation = CalculateAttenuation(d, light.attenuation.kl, light.attenuation.kq);
-
+  /* Attenuation */
+  float lightDist;
+  if(u_useNormalMap != 0)
+    lightDist = length(tangentLightPosition - TangentFragPos);
+  else
+    lightDist = length(light.position - FragPos);
+  
+  const float attenuation = CalculateAttenuation(lightDist, light.attenuation.kl, light.attenuation.kq);
+  
   diffuse  *= attenuation;
   specular *= attenuation;
   return diffuse + specular;

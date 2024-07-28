@@ -137,7 +137,7 @@ namespace ImGuiLayer
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         /* Enable Docking */
     io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;       /* Enable Multi-Viewport / Platform Windows */
     
-    ImGui_ImplGlfw_InitForOpenGL(WindowManager::Instance()->GetCurrentContext(), true);
+    ImGui_ImplGlfw_InitForOpenGL(g_windowManager.GetCurrentContext(), true);
     ImGui_ImplOpenGL3_Init("#version 460");
   }
   void CleanUp()
@@ -162,17 +162,15 @@ namespace ImGuiLayer
   }
   void EndFrame()
   {
-    auto window = WindowManager::Instance();
-
     ImGui::RenderPanel();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     ImGuiIO& io = ImGui::GetIO();
     if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
     {
-      WindowManager::Context backCurrentContext = window->GetCurrentContext();
+      WindowManager::Context backCurrentContext = g_windowManager.GetCurrentContext();
       ImGui::UpdatePlatformWindows();
       ImGui::RenderPlatformWindowsDefault();
-      window->MakeContextCurrent(backCurrentContext);
+      g_windowManager.MakeContextCurrent(backCurrentContext);
     }
   }
 
@@ -226,11 +224,10 @@ namespace ImGuiLayer
           if (!filePath.empty())
           {
             /* !IMPORTANT: before loading new scene it needed to relink all the programs to see changes */
-            auto instanceSM = ShaderManager::Instance();
-            for (const auto& program : instanceSM->programs)
+            for (const auto& program : g_shaderManager.programs)
               program.Link();
             
-            instanceSM->SetUpProgramsUniforms();
+            g_shaderManager.SetUpProgramsUniforms();
 
             scene.ClearScene();
             scene.LoadScene(filePath);

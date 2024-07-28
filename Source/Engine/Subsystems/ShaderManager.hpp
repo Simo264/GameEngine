@@ -1,13 +1,12 @@
 #pragma once
 
 #include "Core/Core.hpp"
-#include "Engine/Subsystems/Manager.hpp"
 #include "Engine/Graphics/Shader.hpp"
 
 /**
  * Load and retrieve shaders and programs 
  */
-class ShaderManager : public Manager<ShaderManager>
+class ShaderManager
 {
 public:
 	/**

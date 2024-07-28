@@ -24,15 +24,11 @@ private:
 	void CreateScreenSquare();
 	void ResizeFramebuffer(int width, int height);
 
-	class WindowManager*	_instanceWM;
-	class ShaderManager*	_instanceSM;
-	class TextureManager* _instanceTM;
-
 	FrameBuffer _fboMultisampled;
 	FrameBuffer _fboIntermediate;
 	FrameBuffer _fboShadowMap;
 
-	Buffer _uboCamera; /* uniform cameraBlock object */
+	Buffer _uboCamera; /* Uniform cameraBlock object */
 
 	VertexArray _screenSquare;
 	vec2i32 _viewportSize;

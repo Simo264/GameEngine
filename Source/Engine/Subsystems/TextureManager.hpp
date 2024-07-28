@@ -1,13 +1,12 @@
 #pragma once
 
 #include "Core/Core.hpp"
-#include "Engine/Subsystems/Manager.hpp"
 #include "Engine/Graphics/Texture2D.hpp"
 
 /**
  * Load and retrieve texture objects from the array
  */
-class TextureManager : public Manager<TextureManager>
+class TextureManager
 {
 public:
 	/**
@@ -23,7 +22,7 @@ public:
 	/**
 	 * Load texture object in texture array
 	 */
-	Texture2D* LoadTexture(const fspath& filePath, bool gammaCorrection = true);
+	Texture2D* LoadTexture(const fspath& filePath, bool gammaCorrection = false);
 		
 	/**
 	 * Load texture object in icon array

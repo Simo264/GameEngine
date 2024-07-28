@@ -4,8 +4,6 @@
 #include "Core/Math/Math.hpp"
 #include "Engine/Components.hpp"
 
-class WindowManager;
-
 class PrimaryCamera
 {
 public:
@@ -23,6 +21,6 @@ public:
 	Components::Camera* cameraComponent;
 
 private:
-	void Move(WindowManager& window, const float movementSpeed, float delta);
-	void Rotate(WindowManager& window, const float mouseSensitivity, float delta);
+	void Move(const float movementSpeed, float delta);
+	void Rotate(const float mouseSensitivity, float delta);
 };

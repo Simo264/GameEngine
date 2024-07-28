@@ -1,5 +1,6 @@
 #include "PrimaryCamera.hpp"
 
+#include "Engine/Globals.hpp"
 #include "Engine/Subsystems/WindowManager.hpp"
 
 #include <GLFW/glfw3.h>
@@ -24,12 +25,10 @@ PrimaryCamera::~PrimaryCamera()
 
 void PrimaryCamera::ProcessInput(float delta)
 {
-	WindowManager* window = WindowManager::Instance();
-
-	Move(*window, movementSpeed, delta);
-	if (window->GetMouseKey(GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
+	Move(movementSpeed, delta);
+	if (g_windowManager.GetMouseKey(GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
 	{
-		Rotate(*window, mouseSensitivity, delta);
+		Rotate(mouseSensitivity, delta);
 		cameraComponent->UpdateVectors();
 	}
 	cameraComponent->UpdateView();
@@ -40,44 +39,44 @@ void PrimaryCamera::ProcessInput(float delta)
  * -----------------------------------------------------
 */
 
-void PrimaryCamera::Move(WindowManager& window, const float movementSpeed, float delta)
+void PrimaryCamera::Move(const float movementSpeed, float delta)
 {
 	const float velocity = movementSpeed * delta;
 
 	/* W-S */
-	if (window.GetKey(GLFW_KEY_W) == GLFW_PRESS)
+	if (g_windowManager.GetKey(GLFW_KEY_W) == GLFW_PRESS)
 	{
 		cameraComponent->position += cameraComponent->GetFrontVector() * velocity;
 	}
-	else if (window.GetKey(GLFW_KEY_S) == GLFW_PRESS)
+	else if (g_windowManager.GetKey(GLFW_KEY_S) == GLFW_PRESS)
 	{
 		cameraComponent->position -= cameraComponent->GetFrontVector() * velocity;
 	}
 
 	/* A-D */
-	if (window.GetKey(GLFW_KEY_A) == GLFW_PRESS)
+	if (g_windowManager.GetKey(GLFW_KEY_A) == GLFW_PRESS)
 	{
 		cameraComponent->position -= cameraComponent->GetRightVector() * velocity;
 	}
-	else if (window.GetKey(GLFW_KEY_D) == GLFW_PRESS)
+	else if (g_windowManager.GetKey(GLFW_KEY_D) == GLFW_PRESS)
 	{
 		cameraComponent->position += cameraComponent->GetRightVector() * velocity;
 	}
 
 	/* SPACE-LCTRL */
-	if (window.GetKey(GLFW_KEY_SPACE) == GLFW_PRESS)
+	if (g_windowManager.GetKey(GLFW_KEY_SPACE) == GLFW_PRESS)
 	{
 		cameraComponent->position += cameraComponent->GetUpVector() * velocity;
 	}
-	else if (window.GetKey(GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
+	else if (g_windowManager.GetKey(GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
 	{
 		cameraComponent->position -= cameraComponent->GetUpVector() * velocity;
 	}
 }
-void PrimaryCamera::Rotate(WindowManager& window, const float mouseSensitivity, float delta)
+void PrimaryCamera::Rotate(const float mouseSensitivity, float delta)
 {
-	vec2d mousePos = window.GetCursorPosition();
-	vec2i32 windowSize = window.GetWindowSize();
+	vec2d mousePos = g_windowManager.GetCursorPosition();
+	vec2i32 windowSize = g_windowManager.GetWindowSize();
 	static float lastX = ((float)windowSize.x / 2.0f);
 	static float lastY = ((float)windowSize.y / 2.0f);
 	static bool firstMouse = true;
