@@ -68,8 +68,12 @@ void Texture2D::GenerateMipmap() const
 
 void Texture2D::CreateStorage(int width, int height)
 {
-  if (internalformat == 0)
+  if (internalformat == 0) 
+  {
     CONSOLE_WARN("Invalid texure internalformat");
+    return;
+  }
+    
   
   _width          = width;
   _height         = height;
@@ -81,7 +85,10 @@ void Texture2D::CreateStorage(int width, int height)
 void Texture2D::CreateStorageMultisampled(int samples, int width, int height, bool fixedsamplelocations)
 {
   if (internalformat == 0)
+  {
     CONSOLE_WARN("Invalid texure internalformat");
+    return;
+  }
 
   _width          = width;
   _height         = height;
@@ -94,14 +101,20 @@ void Texture2D::CreateStorageMultisampled(int samples, int width, int height, bo
 void Texture2D::UpdateStorage(int level, int xoffset, int yoffset, int type, const void* pixels) const
 {
   if (internalformat == 0)
+  {
     CONSOLE_WARN("Invalid texure internalformat");
+    return;
+  }
 
   glTextureSubImage2D(id, level, xoffset, yoffset, _width, _height, format, type, pixels);
 }
 void Texture2D::ClearStorage(int level, int type, const void* data) const
 {
   if (format == 0)
+  {
     CONSOLE_WARN("Invalid texure format");
+    return;
+  }
 
   glClearTexImage(id, level, format, type, data);
 }
@@ -131,13 +144,15 @@ void Texture2D::LoadImageData(const fspath& path, bool gammaCorrection)
   auto data = stbi_load(stringPath.c_str(), &width, &height, &nrChannels, 0);
   if (data)
   {
+    CONSOLE_TRACE("width={} height={} nrChannels={}", width, height, nrChannels);
+
     /*
       From https://registry.khronos.org/OpenGL-Refpages/gl4/html/glTexStorage2D.xhtml
      
-      GL_RGB:         no gamma correction, no alpha component
-      GL_RGBA:        no gamma correction, with alpha component
-      GL_SRGB:        with gamma correction, no alpha component
-      GL_SRGB_ALPHA:  with gamma correction, with alpha component
+      GL_RGB:         gamma correction: no;   alpha component: no
+      GL_RGBA:        gamma correction: no;   alpha component: yes
+      GL_SRGB:        gamma correction: yes;  alpha component: no
+      GL_SRGB_ALPHA:  gamma correction: yes;  alpha component: yes
     */
     switch (nrChannels) 
     {
@@ -170,7 +185,7 @@ void Texture2D::LoadImageData(const fspath& path, bool gammaCorrection)
   }
   else
   {
-    CONSOLE_ERROR("Failed to load texture `{}`", stringPath);
+    CONSOLE_ERROR("Failed to load texture {}", stringPath);
   }
 
   stbi_image_free(reinterpret_cast<void*>(data));

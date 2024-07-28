@@ -72,6 +72,7 @@ uniform float u_heightScale;
 /* ---------- Globals variable ---------- */
 /* -------------------------------------- */
 const float g_shininess = 32.0f;
+const float g_gamma = 2.2f;
 vec4 g_diffuseColor;
 vec4 g_specularColor;
 
@@ -120,9 +121,8 @@ void main() {
   /* ==================== */
   result += CalculateSpotLight(u_spotLight, normal, viewDir);
 
-  /* apply gamma correction */
-  if(u_gamma != 0)
-    result = pow(result, vec3(1.0 / u_gamma));
+  /* Apply gamma correction */
+  result = pow(result, vec3(1.0 / g_gamma));
   
   FragColor = vec4(result, 1.0);
 }

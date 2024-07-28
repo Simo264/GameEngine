@@ -20,7 +20,7 @@ void TextureManager::LoadTexturesFromDir(const fspath& dirpath)
   {
     if (!fs::is_directory(entry))
     {
-      const auto path = entry.path().lexically_normal();
+      const fspath path = entry.path().lexically_normal();
       CONSOLE_TRACE("Loading texture: {}", path.string().c_str());
       LoadTexture(path);
     }

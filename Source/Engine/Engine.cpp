@@ -72,16 +72,12 @@ static void RenderScene(Scene& scene, Program* sceneProgram)
     for (int i = 0; i < model.numMeshes; i++)
     {
       auto& mesh = model.meshes[i];
-
-      glBindTextureUnit(0, 0);
-      glBindTextureUnit(1, 0);
-      glBindTextureUnit(2, 0);
-      glBindTextureUnit(3, 0);
-
-      if (mesh.material.diffuse) mesh.material.diffuse->BindTextureUnit(0);
-      if (mesh.material.specular) mesh.material.specular->BindTextureUnit(1);
-      if (mesh.material.normal) mesh.material.normal->BindTextureUnit(2);
-      if (mesh.material.height) mesh.material.height->BindTextureUnit(3);
+      auto& material = mesh.material;
+      
+      if (material.diffuse)   material.diffuse->BindTextureUnit(0);   else glBindTextureUnit(0, 0);
+      if (material.specular)  material.specular->BindTextureUnit(1);  else glBindTextureUnit(1, 0);
+      if (material.normal)    material.normal->BindTextureUnit(2);    else glBindTextureUnit(2, 0);
+      if (material.height)    material.height->BindTextureUnit(3);    else glBindTextureUnit(3, 0);
 
       sceneProgram->SetUniform1i("u_useNormalMap", mesh.material.normal ? 1 : 0);
       sceneProgram->SetUniform1i("u_useHeightMap", mesh.material.height ? 1 : 0);

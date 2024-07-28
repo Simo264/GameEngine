@@ -78,7 +78,6 @@ void ShaderManager::SetUpProgramsUniforms()
   sceneProg->SetUniform1i("u_material.specularTexture", 1);
   sceneProg->SetUniform1i("u_material.normalTexture", 2);
   sceneProg->SetUniform1i("u_material.heightTexture", 3);
-  sceneProg->SetUniform1f("u_gamma", 2.2f);
 
   auto shadowMapProg = GetProgram("ShadowMap");
   shadowMapProg->SetUniform1i("u_material.diffuseTexture", 0);
@@ -86,7 +85,6 @@ void ShaderManager::SetUpProgramsUniforms()
   shadowMapProg->SetUniform1i("u_material.normalTexture", 2);
   shadowMapProg->SetUniform1i("u_material.heightTexture", 3);
   shadowMapProg->SetUniform1i("u_shadowMapTexture", 10);
-  shadowMapProg->SetUniform1f("u_gamma", 2.2f);
 
   auto visualShadowDepthProg = GetProgram("VisualShadowDepth");
   visualShadowDepthProg->SetUniform1i("u_depthMapTexture", 0);
