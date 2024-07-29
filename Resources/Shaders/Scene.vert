@@ -23,7 +23,7 @@ uniform vec3 u_viewPos;
 
 void main()
 {
-  const mat3 normalMatrix = mat3(transpose(inverse(u_model)));
+  mat3 normalMatrix = mat3(transpose(inverse(u_model)));
   vec3 N = normalize(normalMatrix * aNormal);
   vec3 T = normalize(mat3(u_model) * aTangent);
   T = normalize(T - dot(T, N) * N);

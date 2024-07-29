@@ -22,7 +22,7 @@ public:
 	/**
 	 * Load texture object in texture array
 	 */
-	Texture2D* LoadTexture(const fspath& filePath, bool gammaCorrection = false);
+	Texture2D* LoadTexture(const fspath& filePath, bool gammaCorrection);
 		
 	/**
 	 * Load texture object in icon array

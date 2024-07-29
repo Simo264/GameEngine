@@ -88,6 +88,9 @@ void ShaderManager::SetUpProgramsUniforms()
   shadowMapProg->SetUniform1i("u_material.normalTexture", 2);
   shadowMapProg->SetUniform1i("u_material.heightTexture", 3);
   shadowMapProg->SetUniform1i("u_shadowMapTexture", 10);
+  shadowMapProg->SetUniform1i("u_useNormalMap", 0);
+  shadowMapProg->SetUniform1i("u_useParallaxMap", 0);
+  shadowMapProg->SetUniform1f("u_heightScale", 0.0f);
 
   auto visualShadowDepthProg = GetProgram("VisualShadowDepth");
   visualShadowDepthProg->SetUniform1i("u_depthMapTexture", 0);

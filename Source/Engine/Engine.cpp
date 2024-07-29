@@ -316,17 +316,16 @@ void Engine::Run()
         sceneProgram->SetUniform3f("u_ambientLightColor", AMBIENT_COLOR);
         sceneProgram->SetUniform1f("u_ambientLightIntensity", AMBIENT_INTENSITY);
         sceneProgram->SetUniform1i("u_useNormalMap", useNormalMap);
-        //sceneProgram->SetUniform1i("u_useParallaxMap", 0);
         RenderScene(scene, sceneProgram);
         break;
 
       case 2: /* Render scene with shadows map */
         shadowMapProgram->Use();
-        shadowMapProgram->SetUniformMat4f("u_lightSpaceMatrix", lightSpaceMatrix);
         shadowMapProgram->SetUniform3f("u_viewPos", camera.cameraComponent->position);
-        shadowMapProgram->SetUniform3f("u_lightPos", lightPosition);
+        shadowMapProgram->SetUniformMat4f("u_lightSpaceMatrix", lightSpaceMatrix);
         shadowMapProgram->SetUniform3f("u_ambientLightColor", AMBIENT_COLOR);
         shadowMapProgram->SetUniform1f("u_ambientLightIntensity", AMBIENT_INTENSITY);
+        shadowMapProgram->SetUniform1i("u_useNormalMap", useNormalMap);
         fboImageTextureShadowMap.BindTextureUnit(10);
         RenderScene(scene, shadowMapProgram);
         break;
