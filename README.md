@@ -1,18 +1,18 @@
 ﻿# GameEngine
 
-### Current features following https://learnopengl.com/Advanced-Lighting/Gamma-Correction
-1. Lighting
+### Current features following https://learnopengl.com/
+- Lighting
     + [X] Colors
     + [X] Basic lighting
     + [X] Materials
     + [X] Lighting maps
     + [X] Light casters
     + [X] Multiple lights
-2. [X] Model loader with Assimp
-3. Advanced OpenGL
+- [X] Model loader with Assimp
+- Advanced OpenGL
     + [X] Depth testin
     + [X] Stencil testing
-    + [ ] Blending
+    + [X] Blending
     + [X] Face culling
     + [X] Framebuffers
     + [X] Cubemaps
@@ -21,7 +21,7 @@
     + [X] Geometry Shader
     + [X] Instancing
     + [X] Anti aliasing
-4. Advanced lighting
+- Advanced lighting
     + [X] Advanced lighting
     + Shadows
         - [X] Shadow mapping
@@ -32,3 +32,24 @@
     + [ ] Bloom
     + [ ] Deferred Shading
     + [ ] SSAO
+- PBR
+    + [ ] Theory
+    + [ ] Lighting
+    + IBL
+        + [ ] Diffuse irradiance
+        + [ ] Specular IBL
+- [ ] Text rendering
+- Order-independent transparency (OIT)
+    + [ ] Introduction
+    + [ ] Weighted Blended
+- [ ] Skeletal Animation
+- [ ] Cascaded Shadow Mapping
+- Scene
+    + [ ] Scene Graph
+    + [ ] Frustum Culling
+- Tessellation
+    + [ ] Height Maps
+    + [ ] Tessellation
+- [ ] Compute shaders
+- [ ] Physically Based Bloom
+- [ ] Area Lights

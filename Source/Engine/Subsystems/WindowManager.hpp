@@ -2,12 +2,11 @@
 
 #include "Core/Core.hpp"
 #include "Core/Math/Math.hpp"
-#include "Engine/Subsystems/Manager.hpp"
 
 /**
  *  Window manager class built above GLFW
  */
-class WindowManager : public Manager<WindowManager>
+class WindowManager
 {
 public:
   using Context = struct GLFWwindow*;

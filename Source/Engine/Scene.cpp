@@ -17,7 +17,7 @@
 GameObject Scene::CreateObject()
 {
 	GameObject object = GameObject(_registry.create(), &_registry);
-	object.AddComponent<LabelComponent>("Object");
+	object.AddComponent<Components::Label>("Object");
 	return object;
 }
 
@@ -28,13 +28,15 @@ void Scene::DestroyObject(GameObject& object)
 
 void Scene::ClearScene()
 {
-	for (auto [entity, lComp] : _registry.view<LabelComponent>().each())
+	for (auto [entity, lComp] : _registry.view<Components::Label>().each())
 	{
 		GameObject object{ entity, &_registry };
 		
 		/* Free GPU memory */
-		if(auto model = object.GetComponent<ModelComponent>())
+		if(auto* model = object.GetComponent<Components::Model>())
 			model->DestroyModel();
+		if (auto* mesh = object.GetComponent<Components::Mesh>())
+			mesh->DestroyMesh();
 
 		object.Invalidate();
 	}

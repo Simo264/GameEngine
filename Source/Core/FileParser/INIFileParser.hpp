@@ -14,7 +14,10 @@ public:
 	INIFileParser(const fspath& filepath);
 
 	/* Return reference of ini data structure */
-	mINI::INIStructure& GetData() { return _iniData; }
+	mINI::INIStructure& GetData() 
+	{ 
+		return _iniData; 
+	}
 
 	/* Read data from file */
 	void ReadData()
@@ -76,7 +79,7 @@ public:
 	}
 	
 	/* To write back to a file while preserving comments and custom formatting */
-	bool Write(bool prettyprint=false)
+	bool Write(bool prettyprint = false)
 	{
 		return _file->write(_iniData, prettyprint);
 	}
@@ -86,17 +89,6 @@ public:
 	{
 		_file->generate(_iniData, prettyprint);
 	}
-
-	/* From string "50,50" -> to Vec2i(50,50) */
-	static vec2i32 StringToVec2i32(string& str, const char* delimiter = ",");
-	static vec2f StringToVec2f(string& str, const char* delimiter = ",");
-	
-	/* From string "50,50,50" -> to Vec3i(50,50,50) */
-	static vec3i32 StringToVec3i32(string& str, const char* delimiter = ",");
-	static vec3f StringToVec3f(string& str, const char* delimiter = ",");
-
-	/* Parse strings { "1" "0" "true" "false" } to boolean */
-	static bool StringToBool(const string& str);
 
 private:
 	unique_pointer<mINI::INIFile> _file;

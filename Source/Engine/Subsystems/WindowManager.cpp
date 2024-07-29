@@ -9,12 +9,12 @@ void WindowManager::Initialize()
   int success = glfwInit();
   if (success != GLFW_TRUE)
   {
-    CONSOLE_CRITICAL("Error on initialize GLFW");
+    CONSOLE_CRITICAL("Error on initializing GLFW");
     exit(EXIT_FAILURE);
   }
   CONSOLE_INFO("GLFW initialized");
 
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);  /* Load OpenGL 4.6 */
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_SAMPLES, 4);  /* Enable 4x MSAA on GLFW frame buffer */

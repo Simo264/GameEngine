@@ -20,8 +20,18 @@ void TextureManager::LoadTexturesFromDir(const fspath& dirpath)
   {
     if (!fs::is_directory(entry))
     {
-      const auto path = entry.path().lexically_normal();
-      LoadTexture(path);
+      const fspath path = entry.path().lexically_normal();
+
+      bool gamma = false;
+      string filename = path.filename().string();
+      
+      if (filename.find("diff") != string::npos || filename.find("diffuse") != string::npos)
+        gamma = true;
+      else if (filename.compare("broken_wall_nor_gl_4k.jpg") == 0)
+        gamma = true;
+
+      CONSOLE_TRACE("Loading texture: {} (gamma: {})", path.string().c_str(), gamma ? "true" : "false");
+      LoadTexture(path, gamma);
     }
   }
 }
