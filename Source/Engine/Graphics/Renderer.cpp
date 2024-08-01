@@ -4,8 +4,7 @@
 #include "Core/Log/Logger.hpp"
 
 #include "Engine/Graphics/VertexArray.hpp"
-
-extern uint32_t drawCalls;
+#include "Engine/Globals.hpp"
 
 namespace Renderer
 {
@@ -19,7 +18,7 @@ namespace Renderer
 
 		vertexArray.Bind();
 		glDrawArrays(mode, 0, vertexArray.numVertices);
-		drawCalls++;
+		g_drawCalls++;
 		vertexArray.Unbind();
 	}
 	void DrawArraysInstanced(uint32_t mode, VertexArray& vertexArray, int nInstances)
@@ -32,7 +31,7 @@ namespace Renderer
 
 		vertexArray.Bind();
 		glDrawArraysInstanced(mode, 0, vertexArray.numVertices, nInstances);
-		drawCalls++;
+		g_drawCalls++;
 		vertexArray.Unbind();
 	}
 	void DrawElements(uint32_t mode, VertexArray& vertexArray)
@@ -45,7 +44,7 @@ namespace Renderer
 
 		vertexArray.Bind();
 		glDrawElements(mode, vertexArray.numIndices, GL_UNSIGNED_INT, 0);
-		drawCalls++;
+		g_drawCalls++;
 		vertexArray.Unbind();
 	}
 	void DrawElementsInstanced(uint32_t mode, VertexArray& vertexArray, int nInstances)
@@ -58,7 +57,7 @@ namespace Renderer
 
 		vertexArray.Bind();
 		glDrawElementsInstanced(mode, vertexArray.numIndices, GL_UNSIGNED_INT, 0, nInstances);
-		drawCalls++;
+		g_drawCalls++;
 		vertexArray.Unbind();
 	}
 }

@@ -8,6 +8,8 @@ class GameObject;
 class TransformComponent;
 class Texture2D;
 
+class Camera;
+
 namespace ImGuiLayer
 {
 	void SetupContext();
@@ -25,4 +27,8 @@ namespace ImGuiLayer
 	GameObject RenderOutlinerPanel(Scene& scene);
 	void RenderDetails(GameObject object);
 	void RenderGlobals();
+
+	void RenderDepthMap(const Texture2D& image);
+
+	void RenderDebug(Camera& camera);
 }

@@ -5,17 +5,11 @@
 #include "Engine/Subsystems/ShaderManager.hpp"
 #include "Engine/Subsystems/TextureManager.hpp"
 
-float	Z_NEAR		=  0.1f;
-float	Z_FAR			=  50.0f;
-float LEFT			= -20.0f;
-float RIGHT			=  20.0f;
-float BOTTOM		= -20.0f;
-float TOP				=  20.0f;
+int g_drawMode = GL_TRIANGLES;
+uint32_t g_drawCalls = 0;
 
-int DRAW_MODE = GL_TRIANGLES;
-
-float AMBIENT_INTENSITY = 0.0f;
-vec3f AMBIENT_COLOR = vec3f(1.0f, 1.0f, 1.0f);
+float g_ambientIntensity = 0.0f;
+vec3f g_ambientColor = vec3f(1.0f, 1.0f, 1.0f);
 
 WindowManager g_windowManager;
 ShaderManager g_shaderManager;

@@ -30,7 +30,6 @@ void TextureManager::LoadTexturesFromDir(const fspath& dirpath)
       else if (filename.compare("broken_wall_nor_gl_4k.jpg") == 0)
         gamma = true;
 
-      CONSOLE_TRACE("Loading texture: {} (gamma: {})", path.string().c_str(), gamma ? "true" : "false");
       LoadTexture(path, gamma);
     }
   }

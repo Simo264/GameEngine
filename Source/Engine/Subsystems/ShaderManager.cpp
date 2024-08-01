@@ -57,7 +57,7 @@ void ShaderManager::LoadPrograms()
 
   for (auto const& it : conf.GetData())
   {
-    const string& section = it.first; /* section = program name */
+    const string& section = it.first;
     const string vertex   = conf.GetValue(section.c_str(), "vertex");
     const string geometry = conf.GetValue(section.c_str(), "geometry");
     const string fragment = conf.GetValue(section.c_str(), "fragment");
@@ -91,11 +91,6 @@ void ShaderManager::SetUpProgramsUniforms()
   shadowMapProg->SetUniform1i("u_useNormalMap", 0);
   shadowMapProg->SetUniform1i("u_useParallaxMap", 0);
   shadowMapProg->SetUniform1f("u_heightScale", 0.0f);
-
-  auto visualShadowDepthProg = GetProgram("VisualShadowDepth");
-  visualShadowDepthProg->SetUniform1i("u_depthMapTexture", 0);
-  visualShadowDepthProg->SetUniform1f("u_nearPlane", Z_NEAR);
-  visualShadowDepthProg->SetUniform1f("u_farPlane", Z_FAR);
 
   auto skyboxProg = GetProgram("Skybox");
   skyboxProg->SetUniform1i("u_skyboxTexture", 0);

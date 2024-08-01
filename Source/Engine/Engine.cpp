@@ -5,7 +5,7 @@
 #include "Core/Math/Extensions.hpp"
 #include "Core/Log/Logger.hpp"
 
-#include "Engine/PrimaryCamera.hpp"
+#include "Engine/Camera.hpp"
 #include "Engine/Scene.hpp"
 #include "Engine/ObjectLoader.hpp"
 #include "Engine/GameObject.hpp"
@@ -28,9 +28,6 @@
 #include "GUI/ImGuiLayer.hpp"
 
 #include <GLFW/glfw3.h>
-
-uint32_t drawCalls = 0;
-vec3f lightPosition = vec3f{ 0.0f, 2.0f, -7.0f };
 
 static void RenderDirectionalLight(Program* program, const Components::DirectionalLight& light)
 {
@@ -78,7 +75,7 @@ static void RenderScene(Scene& scene, Program* program)
 
   scene.Reg().view<Components::Model, Components::Transform>().each([&](auto& model, auto& transform) {
     program->SetUniformMat4f("u_model", transform.GetTransformation());
-    model.DrawModel(DRAW_MODE);
+    model.DrawModel(g_drawMode);
   });
 }
 static void CreateSkybox(VertexArray& skybox, TextureCubemap& skyboxTexture)
@@ -216,25 +213,20 @@ void Engine::Run()
   CreateSkybox(skybox, skyboxTexture);
 
   /* -------------------------- Camera -------------------------- */
-  PrimaryCamera camera(
-    vec3f(0.0f, 2.0f, 5.0f),
-    45.0f, 
-    static_cast<float>(_viewportSize.x) / static_cast<float>(_viewportSize.y), 
-    Z_NEAR, 
-    Z_FAR
-  );
+  Camera camera(vec3f(0.0f, 5.0f, 10.0f));
+  camera.frustum.zFar = 50.0f;
 
   /* -------------------------- Scene -------------------------- */
   Scene scene;
   scene.LoadScene((ROOT_PATH / "Scene.ini"));
 
   /* -------------------------- Shadow map -------------------------- */
-  mat4f lightProjection{};
-  mat4f lightView{};
-  mat4f lightSpaceMatrix{};
-  vec3f* lightDirection = nullptr;
-  scene.Reg().view<Components::DirectionalLight>().each([&lightDirection](auto& light) {
-    lightDirection = &light.direction;
+  Camera cameraLight(vec3f(0.0f, 10.0f, 10.0f));
+  cameraLight.frustum.zFar = 30.0f;
+
+  Components::DirectionalLight* directionalLight = nullptr;
+  scene.Reg().view<Components::DirectionalLight>().each([&](auto& light) {
+    directionalLight = &light;
   });
 
   /* -------------------------- Pre-loop -------------------------- */
@@ -242,12 +234,11 @@ void Engine::Run()
   Program* sceneProgram = g_shaderManager.GetProgram("Scene");
   Program* shadowMapDepthProgram = g_shaderManager.GetProgram("ShadowMapDepth");
   Program* shadowMapProgram = g_shaderManager.GetProgram("ShadowMap");
-  Program* visualshadowDepthProgram = g_shaderManager.GetProgram("VisualShadowDepth");
   Program* skyboxProgram = g_shaderManager.GetProgram("Skybox");
   Texture2D& fboImageTexture = _fboIntermediate.GetTextureAttachment(0);
   Texture2D& fboImageTextureShadowMap = _fboShadowMap.GetTextureAttachment(0);
 
-  time_point lastUpdateTime = system_clock::now();
+  auto lastUpdateTime = chrono::high_resolution_clock::now();
   int toggleMode = 1;
   int useNormalMap = 1;
   int useParallaxMap = 0;
@@ -259,31 +250,34 @@ void Engine::Run()
     ImGuiLayer::Docking();
 
     /* -------------------------- Per-frame time logic -------------------------- */
-    const auto now = system_clock::now();
-    const std::chrono::duration<double> diff = now - lastUpdateTime;
-    const double delta = diff.count();
-    const float time = glfwGetTime();
-    drawCalls = 0;
+    float aspect = static_cast<float>(_viewportSize.x) / static_cast<float>(_viewportSize.y);
+
+    auto now = chrono::high_resolution_clock::now();
+    chrono::duration<double> diff = now - lastUpdateTime;
+    double delta = diff.count();
+    g_drawCalls = 0;
 
     /* -------------------------- Input -------------------------- */
     g_windowManager.PoolEvents();
-    camera.ProcessInput(delta);
+    camera.ProcessKeyboard(delta);
+    camera.ProcessMouse(delta);
 
     if (g_windowManager.GetKey(GLFW_KEY_F1) == GLFW_PRESS) toggleMode = 1;
     else if (g_windowManager.GetKey(GLFW_KEY_F2) == GLFW_PRESS) toggleMode = 2;
-    else if (g_windowManager.GetKey(GLFW_KEY_F3) == GLFW_PRESS) toggleMode = 3;
 
     if (g_windowManager.GetKey(GLFW_KEY_F5) == GLFW_PRESS) useNormalMap = 1;
     else if (g_windowManager.GetKey(GLFW_KEY_F6) == GLFW_PRESS) useNormalMap = 0;
 
     /* -------------------------- Update -------------------------- */
-    const auto& cameraView = camera.cameraComponent->GetView();
-    const auto& cameraProj = camera.cameraComponent->GetProjection();
+    camera.UpdateOrientation();
+    mat4f cameraView = camera.CalculateView(camera.position + camera.GetFrontVector());
+    mat4f cameraProj = camera.CalculatePerspective(aspect);
     _uboCamera.UpdateStorage(0, sizeof(mat4f), &cameraView[0]);
     _uboCamera.UpdateStorage(sizeof(mat4f), sizeof(mat4f), &cameraProj[0]);
-    lightProjection = Math::Ortho(LEFT, RIGHT, BOTTOM, TOP, Z_NEAR, Z_FAR);
-    lightView = Math::LookAt(lightPosition, *lightDirection, vec3f(0.0f, 1.0f, 0.0f));
-    lightSpaceMatrix = lightProjection * lightView;
+
+    cameraLight.UpdateOrientation();
+    mat4f lightProjection = cameraLight.CalculateOrtho();
+    mat4f lightView = cameraLight.CalculateView(directionalLight->direction);
 
     /* -------------------------- Rendering -------------------------- */
     /* Render depth of scene to texture(from directional light's perspective) */
@@ -292,11 +286,12 @@ void Engine::Run()
       glViewport(0, 0, 1024, 1024);
       glClear(GL_DEPTH_BUFFER_BIT);
       shadowMapDepthProgram->Use();
-      shadowMapDepthProgram->SetUniformMat4f("u_lightSpaceMatrix", lightSpaceMatrix);
+      shadowMapDepthProgram->SetUniformMat4f("u_lightView", lightProjection);
+      shadowMapDepthProgram->SetUniformMat4f("u_lightProjection", lightView);
       scene.Reg().view<Components::Model, Components::Transform>().each([&](auto& model, auto& transform) {
         shadowMapDepthProgram->SetUniformMat4f("u_model", transform.GetTransformation());
-        std::for_each_n(model.meshes, model.numMeshes, [](auto& mesh) {
-          mesh.DrawMesh(DRAW_MODE);
+        std::for_each_n(model.meshes, model.numMeshes, [&](auto& mesh) {
+          mesh.DrawMesh(g_drawMode);
         });
       });
     }
@@ -312,28 +307,23 @@ void Engine::Run()
       {
       case 1: /* Render scene with no shadows */
         sceneProgram->Use();
-        sceneProgram->SetUniform3f("u_viewPos", camera.cameraComponent->position);
-        sceneProgram->SetUniform3f("u_ambientLightColor", AMBIENT_COLOR);
-        sceneProgram->SetUniform1f("u_ambientLightIntensity", AMBIENT_INTENSITY);
+        sceneProgram->SetUniform3f("u_viewPos", camera.position);
+        sceneProgram->SetUniform3f("u_ambientLightColor", g_ambientColor);
+        sceneProgram->SetUniform1f("u_ambientLightIntensity", g_ambientIntensity);
         sceneProgram->SetUniform1i("u_useNormalMap", useNormalMap);
         RenderScene(scene, sceneProgram);
         break;
 
       case 2: /* Render scene with shadows map */
         shadowMapProgram->Use();
-        shadowMapProgram->SetUniform3f("u_viewPos", camera.cameraComponent->position);
-        shadowMapProgram->SetUniformMat4f("u_lightSpaceMatrix", lightSpaceMatrix);
-        shadowMapProgram->SetUniform3f("u_ambientLightColor", AMBIENT_COLOR);
-        shadowMapProgram->SetUniform1f("u_ambientLightIntensity", AMBIENT_INTENSITY);
+        shadowMapProgram->SetUniform3f("u_viewPos", camera.position);
+        shadowMapProgram->SetUniformMat4f("u_lightView", lightProjection);
+        shadowMapProgram->SetUniformMat4f("u_lightProjection", lightView);
+        shadowMapProgram->SetUniform3f("u_ambientLightColor", g_ambientColor);
+        shadowMapProgram->SetUniform1f("u_ambientLightIntensity", g_ambientIntensity);
         shadowMapProgram->SetUniform1i("u_useNormalMap", useNormalMap);
         fboImageTextureShadowMap.BindTextureUnit(10);
         RenderScene(scene, shadowMapProgram);
-        break;
-
-      case 3: /* Render Depth map texture for visual debugging */
-        visualshadowDepthProgram->Use();
-        fboImageTextureShadowMap.BindTextureUnit(0);
-        Renderer::DrawArrays(DRAW_MODE, _screenSquare);
         break;
       }
 
@@ -364,8 +354,10 @@ void Engine::Run()
     //fboImageTexture.BindTextureUnit(0);
     //Renderer::DrawArrays(GL_TRIANGLES, _screenSquare);
 
-    ImGuiLayer::RenderDemo();
+    //ImGuiLayer::RenderDemo();
     ImGuiLayer::RenderMenuBar(scene);
+    ImGuiLayer::RenderDebug(cameraLight);
+    ImGuiLayer::RenderDepthMap(fboImageTextureShadowMap);
     ImGuiLayer::RenderGlobals();
     GameObject objectSelected = ImGuiLayer::RenderOutlinerPanel(scene);
     if (objectSelected.IsValid()) 
@@ -377,10 +369,7 @@ void Engine::Run()
     if (viewport != _viewportSize)
     {
       _viewportSize = viewport;
-      
       ResizeFramebuffer(viewport.x, viewport.y);
-      camera.cameraComponent->aspect = static_cast<float>(viewport.x) / static_cast<float>(viewport.y);
-      camera.cameraComponent->UpdateProjection();
     }
 
     g_windowManager.SwapWindowBuffers();
@@ -489,11 +478,13 @@ void Engine::CreateFramebufferShadowMap(int width, int height)
     We also give the texture a width and height: this is the resolution of the depth map
   */
   Texture2D depthMap;
-  depthMap.internalformat = GL_DEPTH_COMPONENT16;
+  depthMap.internalformat = GL_DEPTH_COMPONENT24;
   depthMap.Create(GL_TEXTURE_2D);
   depthMap.CreateStorage(width, height);
-  depthMap.SetParameteri(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  depthMap.SetParameteri(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  depthMap.SetParameteri(GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+  depthMap.SetParameteri(GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+  depthMap.SetParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  depthMap.SetParameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
   /* Resolve the problem of over sampling */
   depthMap.SetParameteri(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);

@@ -1,7 +1,10 @@
 #include "WindowManager.hpp"
-#include "Core/Log/Logger.hpp"
 
 #include "Core/OpenGL.hpp"
+#include "Core/Log/Logger.hpp"
+
+#include "Engine/Globals.hpp"
+
 #include <GLFW/glfw3.h>
 
 void WindowManager::Initialize()
@@ -20,7 +23,7 @@ void WindowManager::Initialize()
   glfwWindowHint(GLFW_SAMPLES, 4);  /* Enable 4x MSAA on GLFW frame buffer */
 
   /* Set default window values */
-  _context = glfwCreateWindow(1600, 900, "GameEngine", nullptr, nullptr); /* 1600x900 */
+  _context = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "GameEngine", nullptr, nullptr);
   if (!_context)
   {
     CONSOLE_CRITICAL("Error on creating window");
@@ -28,9 +31,11 @@ void WindowManager::Initialize()
   }
   CONSOLE_INFO("Window created");
 
+  _aspectRatio = vec2i32(16, 9); /* 16:9 */
+
   glfwMakeContextCurrent(_context);
   glfwSetWindowPos(_context, 50, 50);   
-  glfwSetWindowAspectRatio(_context, 16, 9);   /* 16:9 */
+  glfwSetWindowAspectRatio(_context, _aspectRatio.x, _aspectRatio.y); 
   glfwSwapInterval(0);  /* No vsync */
 
   glfwSetWindowSizeCallback(_context, [](GLFWwindow* window, int width, int height) {

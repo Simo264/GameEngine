@@ -16,8 +16,6 @@
 #include "assimp/scene.h"
 #include "assimp/postprocess.h"
 
-#include "GLFW/glfw3.h"
-
 namespace Components
 {
 	/* ---------------------------------------------------------------------------
@@ -113,8 +111,8 @@ namespace Components
 	static uint32_t totalVertices = 0;
 	static uint32_t totalIndices = 0;
 	static uint32_t totalSize = 0;
-	static double timeStart = 0;
-	static double timeEnd = 0;
+	static chrono::steady_clock::time_point timeStart;
+	static chrono::steady_clock::time_point timeEnd;
 
 	Model::Model(const fspath& path)
 		: modelPath{ path },
@@ -122,7 +120,7 @@ namespace Components
 			numMeshes{ 0 }
 	{
 		CONSOLE_TRACE("Loading model {}...", path.string().c_str());
-		timeStart = glfwGetTime();
+		timeStart = chrono::high_resolution_clock::now();
 
 		Assimp::Importer importer;
 		const aiScene* scene = importer.ReadFile(path.string().c_str(),
@@ -146,13 +144,14 @@ namespace Components
 
 		ProcessNode(scene->mRootNode, scene);
 
-		timeEnd = glfwGetTime();
+		timeEnd = chrono::high_resolution_clock::now();
+		chrono::duration<double> diff = timeEnd - timeStart;
 
 		CONSOLE_TRACE(".numMeshes={}", numMeshes);
 		CONSOLE_TRACE(".totalVertices={} ", totalVertices);
 		CONSOLE_TRACE(".totalIndices={}", totalIndices);
 		CONSOLE_TRACE(".totalSize={} bytes", totalSize);
-		CONSOLE_TRACE(".time={}s", timeEnd - timeStart);
+		CONSOLE_TRACE(".time={}s", diff.count());
 	}
 	void Model::DestroyModel()
 	{
@@ -180,7 +179,7 @@ namespace Components
 			if (material.normal)   material.normal->BindTextureUnit(2);   else glBindTextureUnit(2, 0);
 			if (material.height)   material.height->BindTextureUnit(3);   else glBindTextureUnit(3, 0);
 
-			mesh.DrawMesh(DRAW_MODE);
+			mesh.DrawMesh(g_drawMode);
 		}
 	}
 
@@ -281,55 +280,5 @@ namespace Components
 
 		return nullptr;
 	}
-	
-	/* ---------------------------------------------------------------------------
-				CameraComponent
-		--------------------------------------------------------------------------- */
 
-	Camera::Camera(const vec3f& position, float fov, float aspect, float znear, float zfar)
-		: position{ position },
-			fov{ fov },
-			aspect{ aspect },
-			zNear{ znear },
-			zFar{ zfar },
-			yaw{ -90.0f },
-			pitch{ 0.0f },
-			roll{ 0.0f },
-			_front{},	
-			_up{},
-			_right{},
-			_viewMatrix{}, 
-			_projectionMatrix{}
-	{
-		/* Update vectors */
-		UpdateVectors();
-
-		/* Update matrices */
-		UpdateView();
-		UpdateProjection();
-	}
-	void Camera::UpdateVectors()
-	{
-		static const vec3f WorldUp = vec3f(0.0f, 1.0f, 0.0f);
-
-		vec3f calcFront{};
-		calcFront.x = Math::Cos(Math::Radians(yaw)) * cos(Math::Radians(pitch));
-		calcFront.y = Math::Sin(Math::Radians(pitch));
-		calcFront.z = Math::Sin(Math::Radians(yaw)) * cos(Math::Radians(pitch));
-
-		_front = Math::Normalize(calcFront);
-		_right = Math::Normalize(Math::Cross(_front, WorldUp));
-
-		const mat4f rollMat = Math::Rotate(mat4f(1.0f), Math::Radians(roll), _front);
-		_up = Math::Normalize(Math::Cross(_right, _front));
-		_up = mat3f(rollMat) * _up;
-	}
-	void Camera::UpdateView()
-	{
-		_viewMatrix = Math::LookAt(position, position + _front, _up);
-	}
-	void Camera::UpdateProjection()
-	{
-		_projectionMatrix = Math::Perspective(fov, aspect, zNear, zFar);
-	}
 };

@@ -41,8 +41,6 @@ template<typename type>
 using shared_pointer = std::shared_ptr<type>;
 
 namespace chrono		= std::chrono;
-using system_clock	= chrono::system_clock;
-using time_point		= chrono::system_clock::time_point;
 
 using string				= std::string;
 using string_view		= std::string_view;

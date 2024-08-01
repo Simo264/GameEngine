@@ -5,17 +5,11 @@
 constexpr int	WINDOW_WIDTH = 1600;
 constexpr int	WINDOW_HEIGHT = 900;
 
-extern float Z_NEAR;
-extern float Z_FAR;
-extern float LEFT;
-extern float RIGHT;
-extern float BOTTOM;
-extern float TOP;
+extern int g_drawMode;
+extern uint32_t g_drawCalls;
 
-extern int DRAW_MODE;
-
-extern float AMBIENT_INTENSITY;
-extern vec3f AMBIENT_COLOR;
+extern float g_ambientIntensity;
+extern vec3f g_ambientColor;
 
 extern class WindowManager g_windowManager;
 extern class ShaderManager g_shaderManager;
