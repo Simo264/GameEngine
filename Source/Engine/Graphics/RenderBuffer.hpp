@@ -16,7 +16,6 @@ class RenderBuffer
 {
 public:
 	RenderBuffer();
-
 	~RenderBuffer() = default;
 
 	/**
@@ -35,7 +34,7 @@ public:
 	 * @param width:	specifies the width of the renderbuffer, in pixels.
 	 * @param height: specifies the height of the renderbuffer, in pixels.
 	 */
-	void CreateStorage(int width, int height);
+	void CreateStorage(int internalFormat, int width, int height);
 
 	/**
 	 * Establish data storage, format, dimensions and sample count of the renderbuffer object's image
@@ -44,11 +43,7 @@ public:
 	 * @param width:		specifies the width of the renderbuffer, in pixels.
 	 * @param height:		specifies the height of the renderbuffer, in pixels.
 	 */
-	void CreateStorageMulstisampled(int samples, int width, int height);
-
-	constexpr bool IsMultisampled() const { return _isMultisampled; }
-	
-	constexpr int GetSamples() const { return _samples; }
+	void CreateStorageMulstisampled(int internalFormat, int samples, int width, int height);
 
 	uint32_t id;
 
@@ -58,9 +53,5 @@ public:
 	 * 
 	 * https://www.khronos.org/opengl/wiki/Image_Format
 	 */
-	int internalformat;
-
-private:
-	int  _samples;
-	bool _isMultisampled;
+	int internalFormat;
 };

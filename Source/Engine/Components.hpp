@@ -91,12 +91,12 @@ namespace Components
 	class Model
 	{
 	public:
-		Model(const fspath& path);
+		Model(const fs::path& path);
 
 		Mesh* meshes;
 		uint32_t numMeshes;
 
-		fspath modelPath;
+		fs::path modelPath;
 
 		void DestroyModel();
 		void DrawModel(int mode);

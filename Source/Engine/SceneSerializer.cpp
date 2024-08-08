@@ -4,7 +4,6 @@
 
 #include "Engine/Utils.hpp"
 #include "Engine/Scene.hpp"
-#include "Engine/ObjectLoader.hpp"
 #include "Engine/GameObject.hpp"
 #include "Engine/Components.hpp"
 
@@ -16,7 +15,7 @@
  * -----------------------------------------------------
 */
 
-void SceneSerializer::SerializeScene(Scene& scene, const fspath& filepath)
+void SceneSerializer::SerializeScene(Scene& scene, const fs::path& filepath)
 {
 	INIFileParser conf(filepath);
 
@@ -96,7 +95,7 @@ void SceneSerializer::SerializeScene(Scene& scene, const fspath& filepath)
 	}
 	conf.Generate(true);
 }
-void SceneSerializer::DeserializeScene(Scene& scene, const fspath& filepath)
+void SceneSerializer::DeserializeScene(Scene& scene, const fs::path& filepath)
 { 
 	CONSOLE_INFO("Loading scene {}...", filepath.string().c_str());
 
@@ -141,7 +140,7 @@ void SceneSerializer::DeserializeScene(Scene& scene, const fspath& filepath)
 		else if (std::strcmp(componentName, "Model") == 0)
 		{
 			string path = conf.GetValue(section.c_str(), "path");
-			fspath modelPath = fspath(path).lexically_normal();
+			fs::path modelPath = fs::path(path).lexically_normal();
 			auto& model = object.AddComponent<Components::Model>(modelPath);
 		}
 		else if (std::strcmp(componentName, "DirectionalLight") == 0)

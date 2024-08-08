@@ -146,7 +146,7 @@ namespace ImGuiLayer
     ImGui::DestroyContext();
   }
 
-  void SetFont(const fspath& fontpath, int fontsize)
+  void SetFont(const fs::path& fontpath, int fontsize)
   {
     ImGuiIO& io = ImGui::GetIO();
     io.Fonts->AddFontFromFileTTF(fontpath.string().c_str(), fontsize);
@@ -218,7 +218,7 @@ namespace ImGuiLayer
         if (ImGui::MenuItem("Open"))
         {
           static const char* filters[1] = { "*.ini" };
-          fspath filePath = FileDialog::OpenFileDialog(1, filters, "Open scene (.ini)", false);
+          fs::path filePath = FileDialog::OpenFileDialog(1, filters, "Open scene (.ini)", false);
 
           if (!filePath.empty())
           {
@@ -236,7 +236,7 @@ namespace ImGuiLayer
         if (ImGui::MenuItem("Save as..."))
         {
           static const char* filters[1] = { "*.ini" };
-          fspath filepath = FileDialog::SaveFileDialog(1, filters, "Save scene");
+          fs::path filepath = FileDialog::SaveFileDialog(1, filters, "Save scene");
 
           scene.SaveScene(filepath);
           CONSOLE_TRACE("The scene has been saved");
@@ -248,7 +248,7 @@ namespace ImGuiLayer
       ImGui::EndMainMenuBar();
     }
   }
-  vec2i32 RenderViewportAndGuizmo(const Texture2D& image, GameObject& object, const mat4f& view, const mat4f& proj)
+  vec2i32 RenderViewportAndGuizmo(uint32_t tetxureID, GameObject& object, const mat4f& view, const mat4f& proj)
   {
     ImGuiStyle& style = ImGui::GetStyle();
     const ImVec2 paddingTmp = style.WindowPadding;
@@ -259,7 +259,7 @@ namespace ImGuiLayer
     
     const ImVec2 viewport = ImGui::GetWindowSize();
     
-    ImGui::Image(reinterpret_cast<ImTextureID>(image.id), viewport, ImVec2(0, 1), ImVec2(1, 0));
+    ImGui::Image(reinterpret_cast<void*>(tetxureID), viewport, ImVec2(0, 1), ImVec2(1, 0));
 
     if (object.IsValid())
     {
@@ -453,7 +453,7 @@ namespace ImGuiLayer
     ImGui::End();
   }
 
-  void RenderDepthMap(const Texture2D& image)
+  void RenderDepthMap(uint32_t tetxureID)
   {
     ImGuiStyle& style = ImGui::GetStyle();
     const ImVec2 paddingTmp = style.WindowPadding;
@@ -462,12 +462,33 @@ namespace ImGuiLayer
     ImGui::Begin("Depth map", nullptr);
     ImGui::BeginChild("Map");
 
-    ImGui::Image(reinterpret_cast<ImTextureID>(image.id), { 1024,1024 }, ImVec2(0, 1), ImVec2(1, 0));
+    ImGui::Image(reinterpret_cast<void*>(tetxureID), { 1024,1024 }, ImVec2(0, 1), ImVec2(1, 0));
 
     ImGui::EndChild();
     ImGui::End();
 
     style.WindowPadding = paddingTmp;
+  }
+
+  void RenderCameraProps(const char* label, Camera& camera)
+  {
+    ImGui::Begin(label, nullptr);
+
+    ImGui::DragFloat("zNear", &camera.frustum.zNear, 0.1f, 0.1f, 200.0f);
+    ImGui::DragFloat("zFar", &camera.frustum.zFar, 0.1f, 0.1f, 200.0f);
+    ImGui::DragFloat("Left", &camera.frustum.left, 0.1f, -100.0f, 0.0f);
+    ImGui::DragFloat("Right", &camera.frustum.right, 0.1f, 0.0f, 100.0f);
+    ImGui::DragFloat("Top", &camera.frustum.top, 0.1f, 0.0f, 100.0f);
+    ImGui::DragFloat("Bottom", &camera.frustum.bottom, 0.1f, -100.0f, 0.0);
+
+    ImGui::DragFloat("Yaw", &camera.yaw, 0.1f, -360.0f, 360);
+    ImGui::DragFloat("Pitch", &camera.pitch, 0.1f, -360, 360);
+    ImGui::DragFloat("Roll", &camera.roll, 0.1f, -360, 360.0f);
+    ImGui::DragFloat3("Position", (float*)&camera.position, 0.1f, -infinity, infinity);
+
+    ImGui::DragFloat("Fov", &camera.fov, 0.1f, 0.0f, 180.0f);
+
+    ImGui::End();
   }
 
   void RenderDebug(Camera& camera)

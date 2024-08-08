@@ -41,6 +41,7 @@ template<typename type>
 using shared_pointer = std::shared_ptr<type>;
 
 namespace chrono		= std::chrono;
+namespace fs				= std::filesystem;
 
 using string				= std::string;
 using string_view		= std::string_view;
@@ -49,14 +50,11 @@ using istringstream = std::istringstream;
 using ostringstream = std::ostringstream;
 using ifStream			= std::ifstream;
 using ofstream			= std::ofstream;
-using runtime_error	= std::runtime_error;
+using byte					= std::byte;
 
-namespace fs				= std::filesystem;
-using fspath				= fs::path;
-
-const fspath ROOT_PATH			= fs::current_path().parent_path();
-const fspath SHADERS_PATH		= ROOT_PATH / (fspath("Resources/Shaders/").lexically_normal());
-const fspath TEXTURES_PATH	= ROOT_PATH / (fspath("Resources/Textures/").lexically_normal());
-const fspath ICONS_PATH			= ROOT_PATH / (fspath("Resources/Icons/").lexically_normal());
-const fspath FONTS_PATH			= ROOT_PATH / (fspath("Resources/Fonts/").lexically_normal());
-const fspath ASSETS_PATH		= ROOT_PATH / (fspath("Resources/Assets/").lexically_normal());
+const fs::path ROOT_PATH			= fs::current_path().parent_path();
+const fs::path SHADERS_PATH		= ROOT_PATH / (fs::path("Resources/Shaders/").lexically_normal());
+const fs::path TEXTURES_PATH	= ROOT_PATH / (fs::path("Resources/Textures/").lexically_normal());
+const fs::path ICONS_PATH			= ROOT_PATH / (fs::path("Resources/Icons/").lexically_normal());
+const fs::path FONTS_PATH			= ROOT_PATH / (fs::path("Resources/Fonts/").lexically_normal());
+const fs::path ASSETS_PATH		= ROOT_PATH / (fs::path("Resources/Assets/").lexically_normal());

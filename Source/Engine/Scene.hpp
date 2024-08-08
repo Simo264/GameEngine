@@ -10,10 +10,11 @@ class Scene
 {
 public:
 	Scene() = default;
+	~Scene() = default;
 
-	void LoadScene(const fspath& filepath);
+	void LoadScene(const fs::path& filepath);
 
-	void SaveScene(const fspath& filepath);
+	void SaveScene(const fs::path& filepath);
 
 	/**
 	 * Remove all objects from scene

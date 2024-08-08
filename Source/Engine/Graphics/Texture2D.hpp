@@ -30,18 +30,19 @@
 class Texture2D
 {
 public:
-  Texture2D();
+  /**
+   * @param target: must be GL_TEXTURE_2D or GL_TEXTURE_2D_MULTISAMPLE
+   */
+  Texture2D(int target);
+  Texture2D(int target, const fs::path& path, bool gammaCorrection);
+  ~Texture2D() = default;
 
-  Texture2D(int target, const fspath& path, bool gammaCorrection);
-
-  void LoadImageData(const fspath& path, bool gammaCorrection);
+  void LoadImageData(const fs::path& path, bool gammaCorrection);
 
   /**
    * Create texture object
-   * 
-   * @param target: Must be GL_TEXTURE_2D or GL_TEXTURE_2D_MULTISAMPLE
    */
-  void Create(int target);
+  void Create();
 
   /**
    * Delete texture object and invalidates the name associated with the texture object 
@@ -84,7 +85,7 @@ public:
    * @param width:  specifies the width of the texture, in texels
    * @param height: specifies the height of the texture, in texels
    */
-  void CreateStorage(int width, int height);
+  void CreateStorage(int internalFormat, int width, int height);
 
   /**
    * Specify storage for multisample texture
@@ -95,7 +96,7 @@ public:
    * @param fixedsamplelocations: specifies whether the image will use identical sample locations and the same number 
    *                              of samples for all texels in the image
    */
-  void CreateStorageMultisampled(int samples, int width, int height, bool fixedsamplelocations = true);
+  void CreateStorageMultisampled(int internalFormat, int samples, int width, int height);
 
   /**
    * Specify a two-dimensional texture subimage
@@ -125,24 +126,28 @@ public:
   void ClearStorage(int level, int type, const void* data) const;
   
   /**
-   * Perform a raw data copy between two images. 
-   * This requires the destination texture to already be allocated with an image of appropriate size and format
+   * Return a texture image into pixels
    * 
-   * @param level: the mipmap level to read from the source. Level 0 is the base image level
+   * @param level: specifies the level-of-detail number of the desired image. Level 0 is the base image level. Level n is the nth mipmap reduction image
+   * @param type: specifies a pixel type for the returned data. The supported types are GL_UNSIGNED_BYTE, GL_BYTE, ...
+   * @param bufSize: specifies the size of the buffer pixels for glGetnTexImage and glGetTextureImage functions
+   * @param pixels: returns the texture image. Should be a pointer to an array of the type specified by type
    */
-  void CopyStorage(int level, const Texture2D& dest) const;
+  void GetTextureImage(int level, int type, int bufSize, void* pixels) const;
 
   constexpr bool Compare(const Texture2D& other) const { return id == other.id; }
   constexpr bool IsValid() const { return id != static_cast<uint32_t>(-1); }
-  constexpr int GetWidth() const { return _width; }
-  constexpr int GetHeight() const { return _height; }
-  constexpr int GetMipmapLevels() const { return _mipmapLevels; }
-  constexpr int GetSamples() const { return _samples; }
-  constexpr bool IsMultisampled() const { return _isMultisampled; }
   
-  uint32_t id; /* the texture object id */
+  uint32_t id;
 
-  int target;
+  const int target;
+
+  /**
+   * Specifies the sized internal format to be used to store texture image data.
+   * Must be one of the sized internal formats given in Table 1 below:
+   * https://registry.khronos.org/OpenGL-Refpages/gl4/html/glTexStorage2D.xhtml
+   */
+  int internalFormat;
   
   /**
    * Specifies the format of the pixel data.
@@ -151,19 +156,11 @@ public:
    */
   int format;
 
-  /**
-   * Specifies the sized internal format to be used to store texture image data.
-   * Must be one of the sized internal formats given in Table 1 below:
-   * https://registry.khronos.org/OpenGL-Refpages/gl4/html/glTexStorage2D.xhtml
-   */
-  int internalformat;
+  int width;
 
-  fspath path; /* the texture path (if loaded from file) */
+  int height;
 
-private:
-  int   _mipmapLevels;
-  int   _width;
-  int   _height;
-  int   _samples;
-  bool  _isMultisampled;
+  int nrChannels;
+  
+  fs::path path;
 };

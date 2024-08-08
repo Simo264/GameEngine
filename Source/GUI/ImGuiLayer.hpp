@@ -6,7 +6,6 @@
 class Scene;
 class GameObject;
 class TransformComponent;
-class Texture2D;
 
 class Camera;
 
@@ -15,7 +14,7 @@ namespace ImGuiLayer
 	void SetupContext();
 	void CleanUp();
 	
-	void SetFont(const fspath& fontpath, int fontsize);
+	void SetFont(const fs::path& fontpath, int fontsize);
 	
 	void BeginFrame();
 	void EndFrame();
@@ -23,12 +22,12 @@ namespace ImGuiLayer
 	
 	void RenderDemo();
 	void RenderMenuBar(Scene& scene);
-	vec2i32 RenderViewportAndGuizmo(const Texture2D& image, GameObject& object, const mat4f& view, const mat4f& proj);
+	vec2i32 RenderViewportAndGuizmo(uint32_t tetxureID, GameObject& object, const mat4f& view, const mat4f& proj);
 	GameObject RenderOutlinerPanel(Scene& scene);
 	void RenderDetails(GameObject object);
 	void RenderGlobals();
-
-	void RenderDepthMap(const Texture2D& image);
+	void RenderCameraProps(const char* label, Camera& camera);
+	void RenderDepthMap(uint32_t tetxureID);
 
 	void RenderDebug(Camera& camera);
 }

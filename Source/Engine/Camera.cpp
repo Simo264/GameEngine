@@ -12,10 +12,10 @@
 
 Camera::Camera(vec3f position, float yaw, float pitch, float roll)
 	: position{ position },
-	yaw{ yaw },
-	pitch{ pitch },
-	roll{ roll },
-	fov{ 45.0f }
+		yaw{ yaw },
+		pitch{ pitch },
+		roll{ roll },
+		fov{ 45.0f }
 {
 	UpdateOrientation();
 }
@@ -43,7 +43,7 @@ mat4f Camera::CalculateView(vec3f center) const
 
 mat4f Camera::CalculatePerspective(float aspect) const
 {
-	return Math::Perspective(fov, aspect, frustum.zNear, frustum.zFar);
+	return Math::Perspective(Math::Radians(fov), aspect, frustum.zNear, frustum.zFar);
 }
 
 mat4f Camera::CalculateOrtho() const
@@ -89,7 +89,7 @@ void Camera::ProcessKeyboard(float delta)
 
 void Camera::ProcessMouse(float delta)
 {
-	constexpr static float mouseSensitivity = 50.0f;
+	constexpr static float mouseSensitivity = 25.0f;
 
 	if (g_windowManager.GetMouseKey(GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
 	{

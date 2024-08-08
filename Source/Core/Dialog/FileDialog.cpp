@@ -1,7 +1,7 @@
 #include "FileDialog.hpp"
 #include <tinyfiledialogs/tinyfiledialogs.h>
 
-fspath FileDialog::OpenFileDialog(
+fs::path FileDialog::OpenFileDialog(
 	int numFilters, const char* filter[], const char* filterDescription, bool multipleSelects)
 {
 	const char* filename = tinyfd_openFileDialog(
@@ -14,12 +14,12 @@ fspath FileDialog::OpenFileDialog(
 	);
 
 	if(filename)
-		return fspath(filename);
+		return fs::path(filename);
 	
-	return fspath();
+	return fs::path();
 }
 
-fspath FileDialog::SaveFileDialog(int numFilters, const char* filter[], const char* filterDescription)
+fs::path FileDialog::SaveFileDialog(int numFilters, const char* filter[], const char* filterDescription)
 {
 	const char* filename = tinyfd_saveFileDialog(
 		"Tiny save file dialog",					/* title */
@@ -30,8 +30,8 @@ fspath FileDialog::SaveFileDialog(int numFilters, const char* filter[], const ch
 	);
 
 	if (filename)
-		return fspath(filename);
+		return fs::path(filename);
 
-	return fspath();
+	return fs::path();
 }
 

@@ -5,8 +5,7 @@
 
 RenderBuffer::RenderBuffer()
 	: id{ static_cast<uint32_t>(-1) },
-		internalformat{ 0 },
-		_isMultisampled{ false } 
+	internalFormat{ GL_RGB8 }
 {}
 
 void RenderBuffer::Create()
@@ -21,23 +20,14 @@ void RenderBuffer::Delete()
 	id = static_cast<uint32_t>(-1);
 }
 
-void RenderBuffer::CreateStorage(int width, int height)
+void RenderBuffer::CreateStorage(int internalFormat, int width, int height)
 {
-	if(internalformat == 0)
-		CONSOLE_WARN("Invalid renderbuffer internalformat");
-
-	_isMultisampled = false;
-
-	glNamedRenderbufferStorage(id, internalformat, width, height);
+	this->internalFormat = internalFormat;
+	glNamedRenderbufferStorage(id, internalFormat, width, height);
 }
 
-void RenderBuffer::CreateStorageMulstisampled(int samples, int width, int height)
+void RenderBuffer::CreateStorageMulstisampled(int internalFormat, int samples, int width, int height)
 {
-	if (internalformat == 0)
-		CONSOLE_WARN("Invalid renderbuffer internalformat");
-
-	_samples				= samples;
-	_isMultisampled = true;
-
-	glNamedRenderbufferStorageMultisample(id, samples, internalformat, width, height);
+	this->internalFormat = internalFormat;
+	glNamedRenderbufferStorageMultisample(id, samples, internalFormat, width, height);
 }

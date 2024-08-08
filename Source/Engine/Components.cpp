@@ -114,7 +114,7 @@ namespace Components
 	static chrono::steady_clock::time_point timeStart;
 	static chrono::steady_clock::time_point timeEnd;
 
-	Model::Model(const fspath& path)
+	Model::Model(const fs::path& path)
 		: modelPath{ path },
 			meshes{ nullptr },
 			numMeshes{ 0 }
@@ -280,5 +280,4 @@ namespace Components
 
 		return nullptr;
 	}
-
 };

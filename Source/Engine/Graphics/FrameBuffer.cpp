@@ -3,8 +3,6 @@
 #include "Core/OpenGL.hpp"
 #include "Core/Log/Logger.hpp"
 
-
-
 FrameBuffer::FrameBuffer()
 	: id{ static_cast<uint32_t>(-1) },
 		_textAttachments{},
@@ -18,16 +16,20 @@ void FrameBuffer::Create()
 
 void FrameBuffer::Delete()
 {
-	glDeleteFramebuffers(1, &id);
+	uint64_t numTextures = _textAttachments.size();
+	if (numTextures > 0)
+		glDeleteTextures(numTextures, _textAttachments.data());
+	
+	uint64_t numRBOs = _rboAttachments.size();
+	if (numRBOs > 0)
+		glDeleteRenderbuffers(numRBOs, _rboAttachments.data());
 
-	for (Texture2D& texture : _textAttachments)
-		texture.Delete();
-	for (RenderBuffer& rbo : _rboAttachments)
-		rbo.Delete();
+	glDeleteFramebuffers(1, &id);
 	
 	_textAttachments.clear();
 	_rboAttachments.clear();
 
+	glDeleteFramebuffers(1, &id);
 	id = static_cast<uint32_t>(-1);
 }
 
@@ -46,18 +48,16 @@ int FrameBuffer::CheckStatus() const
 	return glCheckNamedFramebufferStatus(id, GL_FRAMEBUFFER);
 }
 
-void FrameBuffer::AttachTexture(int attachment, const Texture2D& texture, int level)
+void FrameBuffer::AttachTexture(int attachment, uint32_t textureID, int level)
 {
-	glNamedFramebufferTexture(id, attachment, texture.id, level);
-
-	_textAttachments.push_back(texture);
+	glNamedFramebufferTexture(id, attachment, textureID, level);
+	_textAttachments.push_back(textureID);
 }
 
-void FrameBuffer::AttachRenderBuffer(int attachment, const RenderBuffer& renderbuffer)
+void FrameBuffer::AttachRenderBuffer(int attachment, uint32_t renderbufferID)
 {
-	glNamedFramebufferRenderbuffer(id, attachment, GL_RENDERBUFFER, renderbuffer.id);
-	
-	_rboAttachments.push_back(renderbuffer);
+	glNamedFramebufferRenderbuffer(id, attachment, GL_RENDERBUFFER, renderbufferID);
+	_rboAttachments.push_back(renderbufferID);
 }
 
 void FrameBuffer::Blit(
@@ -83,7 +83,7 @@ void FrameBuffer::Blit(
 		filter);
 }
 
-void FrameBuffer::SetWritingColorComponents(bool r, bool g, bool b, bool a)
+void FrameBuffer::SetWritingColorComponents(bool r, bool g, bool b, bool a) const
 {
 	glColorMaski(id, r, g, b, a);
 }
