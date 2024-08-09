@@ -8,7 +8,7 @@
 #include "Engine/Subsystems/TextureManager.hpp"
 
 TextureCubemap::TextureCubemap()
-	: id{ static_cast<uint32_t>(-1) },
+	: id{ 0 },
     target{ GL_TEXTURE_CUBE_MAP }
 {}
 
@@ -40,7 +40,7 @@ void TextureCubemap::SubImage3D(
 void TextureCubemap::Delete()
 {
   glDeleteTextures(1, &id);
-  id = static_cast<uint32_t>(-1);
+  id = 0;
 }
 void TextureCubemap::Bind() const
 {

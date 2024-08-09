@@ -4,7 +4,7 @@
 #include "Core/Log/Logger.hpp"
 
 RenderBuffer::RenderBuffer()
-	: id{ static_cast<uint32_t>(-1) },
+	: id{ 0 },
 	internalFormat{ GL_RGB8 }
 {}
 
@@ -16,8 +16,7 @@ void RenderBuffer::Create()
 void RenderBuffer::Delete()
 {
 	glDeleteRenderbuffers(1, &id);
-	
-	id = static_cast<uint32_t>(-1);
+	id = 0;
 }
 
 void RenderBuffer::CreateStorage(int internalFormat, int width, int height)

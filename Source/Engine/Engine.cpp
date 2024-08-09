@@ -29,8 +29,30 @@
 
 #include <GLFW/glfw3.h>
 
+static void GLAPIENTRY MessageCallback(
+  GLenum source,
+  GLenum type,
+  GLuint id,
+  GLenum severity,
+  GLsizei length,
+  const GLchar* message,
+  const void* userParam)
+{
+  /* Ignore non-significant error/warning codes */ 
+  if (id == 131169 || id == 131185 || id == 131218 || id == 131204) 
+    return;
+
+  CONSOLE_ERROR("GL callback: {} ", message);
+}
+
 static void SetOpenGLStates()
 {
+  /* Enable debug output */ 
+  glEnable(GL_DEBUG_OUTPUT);
+  glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+  glDebugMessageCallback(MessageCallback, 0);
+  glDebugMessageControl(GL_DEBUG_SOURCE_API, GL_DEBUG_TYPE_ERROR, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+
   /* Depth testing ON */
   Depth::EnableTest();
   Depth::EnableWritingBuffer();
@@ -159,7 +181,7 @@ static void CreateSkybox(VertexArray& skybox, TextureCubemap& skyboxTexture)
   Buffer vbo(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
   skybox.Create();
-  skybox.AttachVertexBuffer(0, vbo, 0, 3 * sizeof(float));
+  skybox.AttachVertexBuffer(0, vbo.id, 0, 3 * sizeof(float));
   skybox.EnableAttribute(0);
   skybox.SetAttribBinding(0, 0);
   skybox.SetAttribFormat(0, 3, GL_FLOAT, true, 0);
@@ -355,8 +377,8 @@ void Engine::Run()
   uint32_t depthCubeMapTexture = fboDepthCubeMap.GetTextureAttachment(0);
 
   auto lastUpdateTime = chrono::high_resolution_clock::now();
-  bool renderingShadowsMode = true;
-  bool useNormalMap = true;
+  bool renderingShadowsMode = false;
+  bool useNormalMap = false;
   
   /* ------------------------------------------------------------------ */
   /* -------------------------- loop section -------------------------- */
@@ -491,6 +513,12 @@ void Engine::Run()
         sceneProgram->SetUniform3f("u_ambientLightColor", g_ambientColor);
         sceneProgram->SetUniform1f("u_ambientLightIntensity", g_ambientIntensity);
         sceneProgram->SetUniform1i("u_useNormalMap", useNormalMap);
+
+        sceneProgram->SetUniform1i("u_material.diffuseTexture", 0);
+        sceneProgram->SetUniform1i("u_material.specularTexture", 1);
+        sceneProgram->SetUniform1i("u_material.normalTexture", 2);
+        sceneProgram->SetUniform1i("u_material.heightTexture", 3);
+
         RenderScene(scene, sceneProgram);
       }
 
@@ -620,31 +648,16 @@ void Engine::CreateScreenSquare()
      1.0f, -1.0f,  1.0f, 0.0f,
      1.0f,  1.0f,  1.0f, 1.0f
   };
-  //Buffer vbo(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-  Buffer vbo;
-  vbo.target = GL_ARRAY_BUFFER;
-  vbo.Create();
-  vbo.CreateStorage(sizeof(vertices), vertices, GL_STATIC_DRAW);
-  
-  _screenSquare.AttachVertexBuffer(0, vbo, 0, 4 * sizeof(float));
+  Buffer vbo(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+  _screenSquare.AttachVertexBuffer(0, vbo.id, 0, 4 * sizeof(float));
 
-  VertexSpecifications specs{};
-  specs.attrindex = 0;
-  specs.bindingindex = 0;
-  specs.components = 2;
-  specs.normalized = true;
-  specs.relativeoffset = 0;
-  specs.type = GL_FLOAT;
-  _screenSquare.SetVertexSpecifications(specs);
+  _screenSquare.SetAttribFormat(0, 2, GL_FLOAT, true, 0);
+  _screenSquare.SetAttribBinding(0, 0);
+  _screenSquare.EnableAttribute(0);
 
-  specs.attrindex = 1;
-  specs.bindingindex = 0;
-  specs.components = 2;
-  specs.normalized = true;
-  specs.relativeoffset = 2 * sizeof(float);
-  specs.type = GL_FLOAT;
-  _screenSquare.SetVertexSpecifications(specs);
-
+  _screenSquare.SetAttribFormat(1, 2, GL_FLOAT, true, 2 * sizeof(float));
+  _screenSquare.SetAttribBinding(1, 0);
+  _screenSquare.EnableAttribute(1);
   
   _screenSquare.numVertices = 6;
   _screenSquare.numIndices = 0;

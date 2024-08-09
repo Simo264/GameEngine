@@ -9,7 +9,7 @@
 ------------------------------ */
 
 Shader::Shader()
-  : id { static_cast<uint32_t>(-1) }
+  : id { 0 }
 {}
 
 void Shader::Create(int shaderType)
@@ -20,8 +20,7 @@ void Shader::Create(int shaderType)
 void Shader::Delete()
 {
   glDeleteShader(id);
-
-  id = static_cast<uint32_t>(-1);
+  id = 0;
 }
 
 void Shader::LoadSource(const char* string, int length) const
@@ -57,7 +56,7 @@ string Shader::GetShaderInfo() const
 ------------------------------ */
 
 Program::Program()
-  : id{ static_cast<uint32_t>(-1) }
+  : id{ 0 }
 {}
 
 void Program::Create()
@@ -68,8 +67,7 @@ void Program::Create()
 void Program::Delete()
 {
   glDeleteProgram(id);
-
-  id = static_cast<uint32_t>(-1);
+  id = 0;
 }
 
 void Program::AttachShader(const Shader& shader) const

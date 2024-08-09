@@ -25,7 +25,7 @@ void SceneSerializer::SerializeScene(Scene& scene, const fs::path& filepath)
 		const uint32_t objectID = static_cast<uint32_t>(object.GetObjectID());
 
 		string section = std::format("entity{}:Label", objectID);
-		conf.Update(section.c_str(), "label", label.label.c_str());
+		conf.Update(section.c_str(), "label", label.value.c_str());
 		
 		if (auto* light = object.GetComponent<Components::DirectionalLight>())
 		{
@@ -123,7 +123,7 @@ void SceneSerializer::DeserializeScene(Scene& scene, const fs::path& filepath)
 		if (std::strcmp(componentName, "Label") == 0)
 		{
 			string label = conf.GetValue(section.c_str(), "label");
-			object.GetComponent<Components::Label>()->label = label;
+			object.GetComponent<Components::Label>()->value = label;
 		}
 		else if (std::strcmp(componentName, "Transform") == 0)
 		{

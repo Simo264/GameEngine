@@ -43,26 +43,9 @@ namespace Components
 	{
 		Init();
 	}
-	Mesh::Mesh(void* vertices, uint32_t numVertices, void* indices, uint32_t numIndices)
-	{
-		Init();
-
-		uint64_t size = numVertices * sizeof(Vertex);
-		vbo.CreateStorage(size, vertices, GL_STATIC_DRAW);
-		size = numIndices * sizeof(uint32_t);
-		ebo.CreateStorage(size, indices, GL_STATIC_DRAW);
-
-		vao.numVertices = numVertices;
-		vao.numIndices = numIndices;
-	}
 	void Mesh::DestroyMesh()
 	{
 		vao.Delete();
-		
-		if(vbo.IsValid())
-			vbo.Delete();
-		if(ebo.IsValid())
-			ebo.Delete();
 
 		material.diffuse = nullptr;
 		material.specular = nullptr;
@@ -79,20 +62,10 @@ namespace Components
 
 	void Mesh::Init()
 	{
-		material.diffuse = g_textureManager.GetTextureAt(0);
-		material.specular = g_textureManager.GetTextureAt(1);
-		material.normal = g_textureManager.GetTextureAt(2);
-		material.height = g_textureManager.GetTextureAt(3);
-
+		/* Set up vertex attributes */
+		/* ------------------------ */
 		vao.Create();
-		vbo.Create();
-		vbo.target = GL_ARRAY_BUFFER;
-		ebo.Create();
-		ebo.target = GL_ELEMENT_ARRAY_BUFFER;
-
-		vao.AttachVertexBuffer(0, vbo, 0, sizeof(Vertex));
-		vao.AttachElementBuffer(ebo);
-
+		
 		/* position */
 		vao.EnableAttribute(0);
 		vao.SetAttribBinding(0, 0);
@@ -109,6 +82,11 @@ namespace Components
 		vao.EnableAttribute(3);
 		vao.SetAttribBinding(3, 0);
 		vao.SetAttribFormat(3, 3, GL_FLOAT, true, offsetof(Vertex, tangent));
+
+		material.diffuse = g_textureManager.GetTextureAt(0);
+		material.specular = g_textureManager.GetTextureAt(1);
+		material.normal = g_textureManager.GetTextureAt(2);
+		material.height = g_textureManager.GetTextureAt(3);
 	}
 
 
@@ -192,22 +170,26 @@ namespace Components
 			Mesh& mesh = meshes.emplace_back();
 			aiMesh* aimesh = scene->mMeshes[node->mMeshes[i]];
 
+			/* Load vertex buffer */
 			const int numVertices = aimesh->mNumVertices;
 			const uint64_t vSize = numVertices * sizeof(Vertex);
-			mesh.vbo.CreateStorage(vSize, nullptr, GL_STATIC_DRAW);
-			mesh.vao.numVertices = numVertices;
-			LoadVertices(aimesh, mesh.vbo);
+			Buffer vbo(GL_ARRAY_BUFFER, vSize, nullptr, GL_STATIC_DRAW);
+			LoadVertices(aimesh, vbo);
+			mesh.vao.AttachVertexBuffer(0, vbo.id, 0, sizeof(Vertex));
 
+			/* Load index buffer */
 			const int numIndices = std::reduce(
 				aimesh->mFaces,
 				aimesh->mFaces + aimesh->mNumFaces,
 				0,
 				[](int n, aiFace& face) { return n + face.mNumIndices; });
-
 			const uint64_t iSize = numIndices * sizeof(uint32_t);
-			mesh.ebo.CreateStorage(iSize, nullptr, GL_STATIC_DRAW);
+			Buffer ebo(GL_ELEMENT_ARRAY_BUFFER, iSize, nullptr, GL_STATIC_DRAW);
+			LoadIndices(aimesh, ebo);
+			mesh.vao.AttachElementBuffer(ebo.id);
+
+			mesh.vao.numVertices = numVertices;
 			mesh.vao.numIndices = numIndices;
-			LoadIndices(aimesh, mesh.ebo);
 
 			totalVertices += numVertices;
 			totalIndices += numIndices;
@@ -218,10 +200,13 @@ namespace Components
 				aiMaterial* material = scene->mMaterials[aimesh->mMaterialIndex];
 				if (Texture2D* diffuse = GetTexture(material, aiTextureType_DIFFUSE))
 					mesh.material.diffuse = diffuse;
+
 				if(Texture2D* specular = GetTexture(material, aiTextureType_SPECULAR))
 					mesh.material.specular = specular;
+
 				if(Texture2D* normal = GetTexture(material, aiTextureType_NORMALS))
 					mesh.material.normal = normal;
+
 				if(Texture2D* height = GetTexture(material, aiTextureType_HEIGHT))
 					mesh.material.height = height;
 			}

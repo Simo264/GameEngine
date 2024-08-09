@@ -93,12 +93,12 @@ public:
    * @param offset:       the offset of the first element of the buffer
    * @param stride:       the distance between elements within the buffer
    */
-  void AttachVertexBuffer(int bindingindex, Buffer& buffer, int offset, int stride);
+  void AttachVertexBuffer(int bindingindex, uint32_t bufferID, int offset, int stride);
 
   /**
    * Configures element array buffer binding of a vertex array object
    */
-  void AttachElementBuffer(Buffer& buffer);
+  void AttachElementBuffer(uint32_t bufferID);
 
   /**
    * Enable a generic vertex attribute array
@@ -153,7 +153,7 @@ public:
    * @param bindingindex: the index of the binding whose divisor to modify
    * @param divisor: the new value for the instance step rate to apply
    */
-  void SetBindingDivisor(int bindingindex, int divisor);
+  void SetBindingDivisor(int bindingindex, int divisor) const;
 
   void SetVertexSpecifications(const VertexSpecifications& specs) const;
 
@@ -162,7 +162,7 @@ public:
   uint32_t numVertices;
   uint32_t numIndices;
 
-  Buffer         eboAttachment;
-  vector<Buffer> vboAttachments;
+  uint32_t eboAttachmentID;
+  vector<uint32_t> vboAttachmentIDs;
 };
 

@@ -4,9 +4,8 @@
 #include "Core/Log/Logger.hpp"
 
 Buffer::Buffer()
-	: id{ static_cast<uint32_t>(-1) },
-		target{ -1 },
-		size{ 0 }
+	: id{ 0 },
+		target{ 0 }
 {}
 
 Buffer::Buffer(int target, uint64_t size, const float* data, int usage)
@@ -24,7 +23,7 @@ void Buffer::Create()
 void Buffer::Delete()
 {
 	glDeleteBuffers(1, &id);
-	id = static_cast<uint32_t>(-1);
+	id = 0;
 }
 
 void Buffer::CopyStorage(const Buffer& writeBuffer, int readOffset, int writeOffset, uint64_t size) const
@@ -32,9 +31,8 @@ void Buffer::CopyStorage(const Buffer& writeBuffer, int readOffset, int writeOff
 	glCopyNamedBufferSubData(id, writeBuffer.id, readOffset, writeOffset, size);
 }
 
-void Buffer::CreateStorage(uint64_t size, const void* data, int usage)
+void Buffer::CreateStorage(uint64_t size, const void* data, int usage) const
 {
-	this->size = size;
 	glNamedBufferData(id, size, data, usage);
 }
 
@@ -55,48 +53,20 @@ bool Buffer::UnmapStorage() const
 
 void Buffer::Bind() const
 {
-	if (target == -1)
-		CONSOLE_WARN("Invalid buffer target!");
-
 	glBindBuffer(target, id);
 }
 
 void Buffer::BindBase(int bindingpoint) const
 {
-	if (
-		target != GL_ATOMIC_COUNTER_BUFFER &&
-		target != GL_TRANSFORM_FEEDBACK_BUFFER &&
-		target != GL_UNIFORM_BUFFER &&
-		target != GL_SHADER_STORAGE_BUFFER
-		)
-	{
-		CONSOLE_ERROR("Target must be one of GL_ATOMIC_COUNTER_BUFFER, GL_TRANSFORM_FEEDBACK_BUFFER, GL_UNIFORM_BUFFER or GL_SHADER_STORAGE_BUFFER");
-		return;
-	}
-
 	glBindBufferBase(target, bindingpoint, id);
 }
 
-void Buffer::BindRange(int bindingpoint, int offset, uint64_t size)
+void Buffer::BindRange(int bindingpoint, int offset, uint64_t size) const
 {
-	if (
-		target != GL_ATOMIC_COUNTER_BUFFER &&
-		target != GL_TRANSFORM_FEEDBACK_BUFFER &&
-		target != GL_UNIFORM_BUFFER &&
-		target != GL_SHADER_STORAGE_BUFFER
-		)
-	{
-		CONSOLE_ERROR("Target must be one of GL_ATOMIC_COUNTER_BUFFER, GL_TRANSFORM_FEEDBACK_BUFFER, GL_UNIFORM_BUFFER or GL_SHADER_STORAGE_BUFFER");
-		return;
-	}
-
 	glBindBufferRange(target, bindingpoint, id, offset, size);
 }
 
 void Buffer::Unbind() const
 {
-	if (target == -1)
-		CONSOLE_WARN("Invalid buffer target!");
-
 	glBindBuffer(target, 0);
 }

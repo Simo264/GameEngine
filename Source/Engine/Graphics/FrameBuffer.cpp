@@ -4,9 +4,9 @@
 #include "Core/Log/Logger.hpp"
 
 FrameBuffer::FrameBuffer()
-	: id{ static_cast<uint32_t>(-1) },
-		_textAttachments{},
-		_rboAttachments{}
+	: id{ 0 },
+		_textAttachmentIDs{},
+		_rboAttachmentIDs{}
 {}
 
 void FrameBuffer::Create()
@@ -16,21 +16,19 @@ void FrameBuffer::Create()
 
 void FrameBuffer::Delete()
 {
-	uint64_t numTextures = _textAttachments.size();
+	uint64_t numTextures = _textAttachmentIDs.size();
 	if (numTextures > 0)
-		glDeleteTextures(numTextures, _textAttachments.data());
+		glDeleteTextures(numTextures, _textAttachmentIDs.data());
 	
-	uint64_t numRBOs = _rboAttachments.size();
+	uint64_t numRBOs = _rboAttachmentIDs.size();
 	if (numRBOs > 0)
-		glDeleteRenderbuffers(numRBOs, _rboAttachments.data());
+		glDeleteRenderbuffers(numRBOs, _rboAttachmentIDs.data());
+
+	vector<uint32_t>().swap(_textAttachmentIDs);
+	vector<uint32_t>().swap(_rboAttachmentIDs);
 
 	glDeleteFramebuffers(1, &id);
-	
-	_textAttachments.clear();
-	_rboAttachments.clear();
-
-	glDeleteFramebuffers(1, &id);
-	id = static_cast<uint32_t>(-1);
+	id = 0;
 }
 
 void FrameBuffer::Bind(int target) const
@@ -51,13 +49,13 @@ int FrameBuffer::CheckStatus() const
 void FrameBuffer::AttachTexture(int attachment, uint32_t textureID, int level)
 {
 	glNamedFramebufferTexture(id, attachment, textureID, level);
-	_textAttachments.push_back(textureID);
+	_textAttachmentIDs.push_back(textureID);
 }
 
 void FrameBuffer::AttachRenderBuffer(int attachment, uint32_t renderbufferID)
 {
 	glNamedFramebufferRenderbuffer(id, attachment, GL_RENDERBUFFER, renderbufferID);
-	_rboAttachments.push_back(renderbufferID);
+	_rboAttachmentIDs.push_back(renderbufferID);
 }
 
 void FrameBuffer::Blit(

@@ -94,8 +94,6 @@ vec3 CalculateBlinnPhongLight(PointLight light, vec3 normal, vec3 viewDir);
 vec3 CalculateSpotLight(SpotLight light, vec3 normal, vec3 viewDir);
 
 
-
-
 /* ---------- Main function ---------- */
 /* ----------------------------------- */
 
@@ -128,6 +126,7 @@ void main()
   /* ===================== */
   //for(int i = 0; i < 4; i++)
   //  result += CalculateBlinnPhongLight(u_pointLight[i], normal, viewDir);
+  result += CalculateBlinnPhongLight(u_pointLight[0], normal, viewDir);
 
 
   /* ==================== */

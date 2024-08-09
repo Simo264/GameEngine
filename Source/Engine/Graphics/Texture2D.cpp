@@ -7,7 +7,7 @@
 #include <stb_image.h>
 
 Texture2D::Texture2D(int target)
-  : id{ static_cast<uint32_t>(-1) },
+  : id{ 0 },
     target{ target },
     path{},
     internalFormat{ GL_RGB8 },
@@ -18,7 +18,7 @@ Texture2D::Texture2D(int target)
 {}
 
 Texture2D::Texture2D(int target, const fs::path& path, bool gammaCorrection)
-  : id{ static_cast<uint32_t>(-1) },
+  : id{ 0 },
     target{ target },
     path{},
     internalFormat{ GL_RGB8 },
@@ -38,7 +38,7 @@ void Texture2D::Create()
 void Texture2D::Delete() 
 { 
   glDeleteTextures(1, &id); 
-  id = static_cast<uint32_t>(-1);
+  id = 0;
 }
 void Texture2D::Bind() const 
 {

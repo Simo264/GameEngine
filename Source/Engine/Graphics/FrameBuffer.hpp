@@ -149,17 +149,15 @@ public:
 	 */
 	void SetWritingColorComponents(bool r, bool g, bool b, bool a) const;
 
-	constexpr bool IsValid()	const { return id != static_cast<uint32_t>(-1); }
+	constexpr uint32_t GetTextureAttachment(int i) { return _textAttachmentIDs.at(i); }
+	constexpr uint32_t GetRenderBufferAttachment(int i) { return _rboAttachmentIDs.at(i); }
 
-	constexpr uint32_t& GetTextureAttachment(int i) { return _textAttachments.at(i); }
-	constexpr uint32_t& GetRenderBufferAttachment(int i) { return _rboAttachments.at(i); }
-
-	constexpr int GetNumTextureAttachments() const { return _textAttachments.size(); }
-	constexpr int GetNumRenderBufferAttachments() const { return _rboAttachments.size(); }
+	constexpr int GetNumTextureAttachments() const { return _textAttachmentIDs.size(); }
+	constexpr int GetNumRenderBufferAttachments() const { return _rboAttachmentIDs.size(); }
 
 	uint32_t id;
 
 private:
-	vector<uint32_t>	_textAttachments;	/* vector of all attached texture ids */
-	vector<uint32_t>	_rboAttachments;	/* vector of all attached renderbuffer ids */
+	vector<uint32_t>	_textAttachmentIDs;
+	vector<uint32_t>	_rboAttachmentIDs;
 };

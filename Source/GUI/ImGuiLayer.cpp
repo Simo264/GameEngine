@@ -328,7 +328,7 @@ namespace ImGuiLayer
           if (objectSelected.IsValid() && objectSelected.IsEqual(object))
             flags |= ImGuiTreeNodeFlags_Selected;
 
-          std::format_to(nodeName, "{}", label.label.c_str());
+          std::format_to(nodeName, "{}", label.value.c_str());
           ImGui::TreeNodeEx(reinterpret_cast<void*>(entity), flags, nodeName);
 
           if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())

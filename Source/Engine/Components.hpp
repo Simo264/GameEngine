@@ -18,9 +18,10 @@ namespace Components
 	class Label
 	{
 	public:
-		Label(const char* label) : label{label} {}
+		Label(const char* label) : value{ label } {}
+		~Label() = default;
 
-		string label;
+		string value;
 	};
 
 	/**
@@ -66,13 +67,9 @@ namespace Components
 	{
 	public:
 		Mesh();
-		Mesh(void* vertices, uint32_t numVertices, void* indices, uint32_t numIndices);
-
 		~Mesh() = default;
 
 		VertexArray vao;
-		Buffer vbo;
-		Buffer ebo;
 		Material material;
 
 		void DestroyMesh();
@@ -92,6 +89,7 @@ namespace Components
 	{
 	public:
 		Model(const fs::path& path);
+		~Model() = default;
 
 		vector<Mesh> meshes;
 
