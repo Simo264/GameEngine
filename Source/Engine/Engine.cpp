@@ -229,6 +229,17 @@ static void CreateDepthCubeMapFbo(FrameBuffer& fbo, int width, int height)
   fbo.AttachTexture(GL_DEPTH_ATTACHMENT, texture.id, 0);
 }
 
+static void CreateDefaultTexture(Texture2D& texture, array<byte, 3> textureData)
+{
+  texture.Create();
+  texture.CreateStorage(GL_RGB8, 1, 1);
+  texture.UpdateStorage(0, 0, 0, GL_UNSIGNED_BYTE, textureData.data());
+  texture.SetParameteri(GL_TEXTURE_WRAP_S, GL_REPEAT);
+  texture.SetParameteri(GL_TEXTURE_WRAP_T, GL_REPEAT);
+  texture.SetParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  texture.SetParameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+}
+
 /* -----------------------------------------------------
  *          PUBLIC METHODS
  * -----------------------------------------------------
@@ -240,6 +251,7 @@ void Engine::Initialize()
   CONSOLE_INFO("Logger ready");
 
   /* Initialize window */
+  /* ----------------- */
   g_windowManager.Initialize();
   CONSOLE_INFO("WindowManager ready");
   
@@ -250,10 +262,12 @@ void Engine::Initialize()
   g_windowManager.SetWindowVsync(false);
 
   /* initialize viewport */
+  /* ------------------- */
   _viewportSize.x = WINDOW_WIDTH;
   _viewportSize.y = WINDOW_HEIGHT;
 
   /* Setup ImGui context */
+  /* ------------------- */
   ImGuiLayer::SetupContext();
   ImGuiLayer::SetFont((FONTS_PATH / "Karla-Regular.ttf"), 16);
   CONSOLE_INFO("ImGuiLayer ready");
@@ -264,7 +278,21 @@ void Engine::Initialize()
   g_shaderManager.SetUpProgramsUniforms();
   CONSOLE_INFO("ShaderManager ready!");
 
-  /* Initialize textures */
+  /* Load textures */
+  /* ------------- */
+  /* !!The first 4 positions are reserved for the default textures */
+  Texture2D defaultDiffuseTexture(GL_TEXTURE_2D);
+  CreateDefaultTexture(defaultDiffuseTexture, array<byte, 3>{ byte(105), byte(105), byte(255) });
+  Texture2D defaultSpecularTexture(GL_TEXTURE_2D);
+  CreateDefaultTexture(defaultSpecularTexture, array<byte, 3>{ byte(255), byte(255), byte(255) });
+  Texture2D defaultNormalTexture(GL_TEXTURE_2D);
+  CreateDefaultTexture(defaultNormalTexture, array<byte, 3>{ byte(0), byte(0), byte(0) });
+  Texture2D defaultHeightTexture(GL_TEXTURE_2D);
+  CreateDefaultTexture(defaultHeightTexture, array<byte, 3>{ byte(0), byte(0), byte(0) });
+  g_textureManager.LoadTexture(defaultDiffuseTexture);
+  g_textureManager.LoadTexture(defaultSpecularTexture);
+  g_textureManager.LoadTexture(defaultNormalTexture);
+  g_textureManager.LoadTexture(defaultHeightTexture);
   g_textureManager.LoadTexturesFromDir(TEXTURES_PATH);
   CONSOLE_INFO("TextureManager ready!");
 
@@ -327,8 +355,8 @@ void Engine::Run()
   uint32_t depthCubeMapTexture = fboDepthCubeMap.GetTextureAttachment(0);
 
   auto lastUpdateTime = chrono::high_resolution_clock::now();
-  int toggleMode = 1;
-  int useNormalMap = 1;
+  bool renderingShadowsMode = true;
+  bool useNormalMap = true;
   
   /* ------------------------------------------------------------------ */
   /* -------------------------- loop section -------------------------- */
@@ -354,11 +382,11 @@ void Engine::Run()
     primaryCamera.ProcessKeyboard(delta);
     primaryCamera.ProcessMouse(delta);
 
-    if (g_windowManager.GetKey(GLFW_KEY_F1) == GLFW_PRESS) toggleMode = 1;
-    else if (g_windowManager.GetKey(GLFW_KEY_F2) == GLFW_PRESS) toggleMode = 2;
+    if (g_windowManager.GetKey(GLFW_KEY_F1) == GLFW_PRESS) renderingShadowsMode = false;
+    else if (g_windowManager.GetKey(GLFW_KEY_F2) == GLFW_PRESS) renderingShadowsMode = true;
 
-    if (g_windowManager.GetKey(GLFW_KEY_F5) == GLFW_PRESS) useNormalMap = 1;
-    else if (g_windowManager.GetKey(GLFW_KEY_F6) == GLFW_PRESS) useNormalMap = 0;
+    if (g_windowManager.GetKey(GLFW_KEY_F5) == GLFW_PRESS) useNormalMap = false;
+    else if (g_windowManager.GetKey(GLFW_KEY_F6) == GLFW_PRESS) useNormalMap = true;
 
     /* -------------------------------------------------------------------- */
     /* -------------------------- Update section -------------------------- */
@@ -383,11 +411,11 @@ void Engine::Run()
       glViewport(0, 0, 1024, 1024);
       glClear(GL_DEPTH_BUFFER_BIT);
       depthMapProgram->Use();
-      depthMapProgram->SetUniformMat4f("u_lightView", directLightProjection);
-      depthMapProgram->SetUniformMat4f("u_lightProjection", directLightView);
+      depthMapProgram->SetUniformMat4f("u_lightView", directLightView);
+      depthMapProgram->SetUniformMat4f("u_lightProjection", directLightProjection);
       scene.Reg().view<Components::Model, Components::Transform>().each([&](auto& model, auto& transform) {
         depthMapProgram->SetUniformMat4f("u_model", transform.GetTransformation());
-        std::for_each_n(model.meshes, model.numMeshes, [&](auto& mesh) {
+        std::for_each(model.meshes.begin(), model.meshes.end(), [&](auto& mesh) {
           mesh.DrawMesh(GL_TRIANGLES);
         });
       });
@@ -419,12 +447,12 @@ void Engine::Run()
       depthCubeMapProgram->SetUniformMat4f("u_lightViews[3]", pointLightViews.at(3));
       depthCubeMapProgram->SetUniformMat4f("u_lightViews[4]", pointLightViews.at(4));
       depthCubeMapProgram->SetUniformMat4f("u_lightViews[5]", pointLightViews.at(5));
-      depthCubeMapProgram->SetUniform3f("u_lightPosition", lightPos);
+      depthCubeMapProgram->SetUniform3f("u_lightPos", lightPos);
       depthCubeMapProgram->SetUniform1f("u_zFar", 30.0f);
 
       scene.Reg().view<Components::Model, Components::Transform>().each([&](auto& model, auto& transform) {
         depthCubeMapProgram->SetUniformMat4f("u_model", transform.GetTransformation());
-        std::for_each_n(model.meshes, model.numMeshes, [&](auto& mesh) {
+        std::for_each(model.meshes.begin(), model.meshes.end(), [&](auto& mesh) {
           mesh.DrawMesh(GL_TRIANGLES);
           });
         });
@@ -438,41 +466,44 @@ void Engine::Run()
       glViewport(0, 0, _viewportSize.x, _viewportSize.y);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-      switch (toggleMode)
+      /* Render scene with shadows map */
+      if (renderingShadowsMode)
       {
-      case 1: /* Render scene with no shadows */
+        sceneShadowsProgram->Use();
+        sceneShadowsProgram->SetUniform3f("u_viewPos", primaryCamera.position);
+        sceneShadowsProgram->SetUniform3f("u_ambientLightColor", g_ambientColor);
+        sceneShadowsProgram->SetUniform1f("u_ambientLightIntensity", g_ambientIntensity);
+        sceneShadowsProgram->SetUniformMat4f("u_lightView", directLightView);
+        sceneShadowsProgram->SetUniformMat4f("u_lightProjection", directLightProjection);
+        sceneShadowsProgram->SetUniform1i("u_useNormalMap", useNormalMap);
+
+        sceneShadowsProgram->SetUniform1i("u_depthMapTexture", 10);
+        sceneShadowsProgram->SetUniform1i("u_depthCubeMapTexture", 11);
+        glBindTextureUnit(10, depthMapTexture);
+        glBindTextureUnit(11, depthCubeMapTexture);
+        RenderScene(scene, sceneShadowsProgram);
+      }
+      /* Render scene with no shadows */
+      else
+      {
         sceneProgram->Use();
         sceneProgram->SetUniform3f("u_viewPos", primaryCamera.position);
         sceneProgram->SetUniform3f("u_ambientLightColor", g_ambientColor);
         sceneProgram->SetUniform1f("u_ambientLightIntensity", g_ambientIntensity);
         sceneProgram->SetUniform1i("u_useNormalMap", useNormalMap);
         RenderScene(scene, sceneProgram);
-        break;
-
-      case 2: /* Render scene with shadows map */
-        sceneShadowsProgram->Use();
-        sceneShadowsProgram->SetUniform3f("u_viewPos", primaryCamera.position);
-        sceneShadowsProgram->SetUniform3f("u_ambientLightColor", g_ambientColor);
-        sceneShadowsProgram->SetUniform1f("u_ambientLightIntensity", g_ambientIntensity);
-        sceneShadowsProgram->SetUniformMat4f("u_lightView", directLightProjection);
-        sceneShadowsProgram->SetUniformMat4f("u_lightProjection", directLightView);
-        sceneShadowsProgram->SetUniform1i("u_useNormalMap", useNormalMap);
-        glBindTextureUnit(10, depthMapTexture);
-        glBindTextureUnit(11, depthCubeMapTexture);
-        RenderScene(scene, sceneShadowsProgram);
-        break;
       }
 
       /* Draw skybox as last */
-      {
-        skyboxProgram->Use();
-        skyboxProgram->SetUniformMat4f("u_projection", cameraProj);
-        skyboxProgram->SetUniformMat4f("u_view", mat4f(mat3f(cameraView)));
-        skyboxTexture.BindTextureUnit(0);
-        Depth::SetFunction(GL_LEQUAL); 
-        Renderer::DrawArrays(GL_TRIANGLES, skybox);
-        Depth::SetFunction(GL_LESS); 
-      }
+      //{
+      //  skyboxProgram->Use();
+      //  skyboxProgram->SetUniformMat4f("u_projection", cameraProj);
+      //  skyboxProgram->SetUniformMat4f("u_view", mat4f(mat3f(cameraView)));
+      //  skyboxTexture.BindTextureUnit(0);
+      //  Depth::SetFunction(GL_LEQUAL); 
+      //  Renderer::DrawArrays(GL_TRIANGLES, skybox);
+      //  Depth::SetFunction(GL_LESS); 
+      //}
 
       /* Blit multisampled buffer to normal colorbuffer of intermediate FBO */
       _fboMultisampled.Blit(_fboIntermediate,
@@ -494,6 +525,7 @@ void Engine::Run()
     ImGuiLayer::RenderMenuBar(scene);
     ImGuiLayer::RenderDepthMap(depthMapTexture);
     ImGuiLayer::RenderCameraProps("Primary camera", primaryCamera);
+    ImGuiLayer::RenderCameraProps("DirecLight camera", directLightCamera);
     ImGuiLayer::RenderGlobals();
     GameObject objectSelected = ImGuiLayer::RenderOutlinerPanel(scene);
     if (objectSelected.IsValid()) 

@@ -159,8 +159,8 @@ public:
 
   uint32_t id;
 
-  int numVertices;
-  int numIndices;
+  uint32_t numVertices;
+  uint32_t numIndices;
 
   Buffer         eboAttachment;
   vector<Buffer> vboAttachments;

@@ -47,7 +47,7 @@ namespace Components
 	{
 		Init();
 
-		int size = numVertices * sizeof(Vertex);
+		uint64_t size = numVertices * sizeof(Vertex);
 		vbo.CreateStorage(size, vertices, GL_STATIC_DRAW);
 		size = numIndices * sizeof(uint32_t);
 		ebo.CreateStorage(size, indices, GL_STATIC_DRAW);
@@ -58,8 +58,11 @@ namespace Components
 	void Mesh::DestroyMesh()
 	{
 		vao.Delete();
-		vbo.Delete();
-		ebo.Delete();
+		
+		if(vbo.IsValid())
+			vbo.Delete();
+		if(ebo.IsValid())
+			ebo.Delete();
 
 		material.diffuse = nullptr;
 		material.specular = nullptr;
@@ -76,6 +79,11 @@ namespace Components
 
 	void Mesh::Init()
 	{
+		material.diffuse = g_textureManager.GetTextureAt(0);
+		material.specular = g_textureManager.GetTextureAt(1);
+		material.normal = g_textureManager.GetTextureAt(2);
+		material.height = g_textureManager.GetTextureAt(3);
+
 		vao.Create();
 		vbo.Create();
 		vbo.target = GL_ARRAY_BUFFER;
@@ -115,9 +123,7 @@ namespace Components
 	static chrono::steady_clock::time_point timeEnd;
 
 	Model::Model(const fs::path& path)
-		: modelPath{ path },
-			meshes{ nullptr },
-			numMeshes{ 0 }
+		: modelPath{ path }
 	{
 		CONSOLE_TRACE("Loading model {}...", path.string().c_str());
 		timeStart = chrono::high_resolution_clock::now();
@@ -140,14 +146,14 @@ namespace Components
 		totalVertices = 0;
 		totalIndices = 0;
 		totalSize = 0;
-		meshes = new Mesh[scene->mNumMeshes];
+		meshes.reserve(scene->mNumMeshes);
 
 		ProcessNode(scene->mRootNode, scene);
 
 		timeEnd = chrono::high_resolution_clock::now();
 		chrono::duration<double> diff = timeEnd - timeStart;
 
-		CONSOLE_TRACE(".numMeshes={}", numMeshes);
+		CONSOLE_TRACE(".numMeshes={}", scene->mNumMeshes);
 		CONSOLE_TRACE(".totalVertices={} ", totalVertices);
 		CONSOLE_TRACE(".totalIndices={}", totalIndices);
 		CONSOLE_TRACE(".totalSize={} bytes", totalSize);
@@ -155,32 +161,27 @@ namespace Components
 	}
 	void Model::DestroyModel()
 	{
-		for (int i = 0; i < numMeshes; i++)
-		{
-			Mesh& mesh = meshes[i];
+		/* Destroy all meshes */
+		std::for_each(meshes.begin(), meshes.end(), [&](auto& mesh) {
 			mesh.DestroyMesh();
-		}
+		});
 
-		delete[] meshes;
-		meshes = nullptr;
-		numMeshes = 0;
+		/* Destroy vector */
+		vector<Mesh>().swap(meshes);
 
-		CONSOLE_TRACE("Model {} destroyed", modelPath.string().c_str());
+		CONSOLE_TRACE("Model {} destroyed", modelPath.string());
 	}
 	void Model::DrawModel(int mode)
 	{
-		for (int i = 0; i < numMeshes; i++)
-		{
-			auto& mesh = meshes[i];
+		std::for_each(meshes.begin(), meshes.end(), [&](auto& mesh) {
 			auto& material = mesh.material;
+			material.diffuse->BindTextureUnit(0);
+			material.specular->BindTextureUnit(1);
+			material.normal->BindTextureUnit(2);
+			material.height->BindTextureUnit(3);
 
-			if (material.diffuse)  material.diffuse->BindTextureUnit(0);  else glBindTextureUnit(0, 0);
-			if (material.specular) material.specular->BindTextureUnit(1); else glBindTextureUnit(1, 0);
-			if (material.normal)   material.normal->BindTextureUnit(2);   else glBindTextureUnit(2, 0);
-			if (material.height)   material.height->BindTextureUnit(3);   else glBindTextureUnit(3, 0);
-
-			mesh.DrawMesh(g_drawMode);
-		}
+			mesh.DrawMesh(mode);
+		});
 	}
 
 	void Model::ProcessNode(aiNode* node, const aiScene* scene)
@@ -188,22 +189,22 @@ namespace Components
 		/* Process all the node's meshes */
 		for (int i = 0; i < node->mNumMeshes; i++)
 		{
-			Mesh& mesh = meshes[numMeshes++];
+			Mesh& mesh = meshes.emplace_back();
 			aiMesh* aimesh = scene->mMeshes[node->mMeshes[i]];
 
-			const uint32_t numVertices = aimesh->mNumVertices;
-			const int vSize = numVertices * sizeof(Vertex);
+			const int numVertices = aimesh->mNumVertices;
+			const uint64_t vSize = numVertices * sizeof(Vertex);
 			mesh.vbo.CreateStorage(vSize, nullptr, GL_STATIC_DRAW);
 			mesh.vao.numVertices = numVertices;
 			LoadVertices(aimesh, mesh.vbo);
 
-			const uint32_t numIndices = std::reduce(
+			const int numIndices = std::reduce(
 				aimesh->mFaces,
 				aimesh->mFaces + aimesh->mNumFaces,
 				0,
 				[](int n, aiFace& face) { return n + face.mNumIndices; });
 
-			const uint32_t iSize = numIndices * sizeof(uint32_t);
+			const uint64_t iSize = numIndices * sizeof(uint32_t);
 			mesh.ebo.CreateStorage(iSize, nullptr, GL_STATIC_DRAW);
 			mesh.vao.numIndices = numIndices;
 			LoadIndices(aimesh, mesh.ebo);
@@ -215,10 +216,14 @@ namespace Components
 			if (aimesh->mMaterialIndex >= 0)
 			{
 				aiMaterial* material = scene->mMaterials[aimesh->mMaterialIndex];
-				mesh.material.diffuse = GetTexture(material, aiTextureType_DIFFUSE);
-				mesh.material.specular = GetTexture(material, aiTextureType_SPECULAR);
-				mesh.material.normal = GetTexture(material, aiTextureType_NORMALS);
-				mesh.material.height = GetTexture(material, aiTextureType_HEIGHT);
+				if (Texture2D* diffuse = GetTexture(material, aiTextureType_DIFFUSE))
+					mesh.material.diffuse = diffuse;
+				if(Texture2D* specular = GetTexture(material, aiTextureType_SPECULAR))
+					mesh.material.specular = specular;
+				if(Texture2D* normal = GetTexture(material, aiTextureType_NORMALS))
+					mesh.material.normal = normal;
+				if(Texture2D* height = GetTexture(material, aiTextureType_HEIGHT))
+					mesh.material.height = height;
 			}
 		}
 

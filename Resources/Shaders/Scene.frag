@@ -62,42 +62,57 @@ uniform PointLight        u_pointLight[4];
 uniform SpotLight         u_spotLight;
 
 uniform vec3  u_ambientLightColor;
-uniform float u_ambientLightIntensity;  
+uniform float u_ambientLightIntensity;
 
 uniform int   u_useNormalMap;
 uniform int   u_useParallaxMap;
-uniform float u_heightScale;
+uniform float u_parallaxHeight;
 
 /* ---------- Globals variable ---------- */
 /* -------------------------------------- */
 const float g_shininess = 32.0f;
-const float g_gamma = 2.2f;
 vec4 g_diffuseColor;
 vec4 g_specularColor;
 
+ivec2 g_normalTexSize;
+ivec2 g_heightTexSize;
 
-/* ---------- Functions ---------- */
-/* ------------------------------- */
+/* ---------- Function headers ---------- */
+/* -------------------------------------- */
+bool IsNormalMapActive();
+bool HasNormalTexture();
+bool IsParallaxMapActive();
+bool HasHeightTexture();
+
 vec2 CalculateParallaxCoord(vec3 viewDir, float heightScale);
 vec3 CalculateNormalVector(vec2 textureCoord);
 vec3 CalculateViewDirVector();
-
 float CalculateAttenuation(float d, float kl, float kq);
+
 vec3 CalculateDirectionalLight(DirectionalLight light, vec3 normal, vec3 viewDir);
 vec3 CalculateBlinnPhongLight(PointLight light, vec3 normal, vec3 viewDir);
 vec3 CalculateSpotLight(SpotLight light, vec3 normal, vec3 viewDir);
 
-void main() {
 
-  vec3 viewDir = CalculateViewDirVector();
+
+
+/* ---------- Main function ---------- */
+/* ----------------------------------- */
+
+void main() 
+{
+  g_normalTexSize = textureSize(u_material.normalTexture, 0);
+  g_heightTexSize = textureSize(u_material.heightTexture, 0);
+
+  const vec3 viewDir = CalculateViewDirVector();
   vec2 textureCoord = TexCoord;
-  if(u_useNormalMap != 0 && u_useParallaxMap != 0)
-    textureCoord = CalculateParallaxCoord(viewDir, u_heightScale);
+  //if(IsParallaxMapActive() && HasHeightTexture())
+  //  textureCoord = CalculateParallaxCoord(viewDir, u_parallaxHeight);
   
-  vec3 normal = CalculateNormalVector(textureCoord);
+  const vec3 normal = CalculateNormalVector(textureCoord);
 
   g_diffuseColor  = texture(u_material.diffuseTexture, textureCoord);
-  g_specularColor = vec4(vec3(0.2f), 1.0f); 
+  g_specularColor = texture(u_material.specularTexture, textureCoord);
 
   const vec3 ambientLight = u_ambientLightColor * u_ambientLightIntensity;
   vec3 result = vec3(0.0f);
@@ -111,23 +126,46 @@ void main() {
   /* ===================== */
   /* Calculate point light */
   /* ===================== */
-  for(int i = 0; i < 4; i++)
-    result += CalculateBlinnPhongLight(u_pointLight[i], normal, viewDir);
+  //for(int i = 0; i < 4; i++)
+  //  result += CalculateBlinnPhongLight(u_pointLight[i], normal, viewDir);
 
 
   /* ==================== */
   /* Calculate spot light */
   /* ==================== */
-  result += CalculateSpotLight(u_spotLight, normal, viewDir);
+  //result += CalculateSpotLight(u_spotLight, normal, viewDir);
 
   /* Apply gamma correction */
-  result = pow(result, vec3(1.0 / g_gamma));
+  result = pow(result, vec3(1.0 / 2.2f));
   
   FragColor = vec4(result, 1.0);
 }
 
-vec2 CalculateParallaxCoord(vec3 viewDir, float heightScale) {
 
+
+
+/* ---------- Function bodys ------------ */
+/* -------------------------------------- */
+bool IsNormalMapActive()
+{
+  return u_useNormalMap != 0;
+}
+bool HasNormalTexture()
+{
+  return g_normalTexSize != ivec2(1);
+}
+bool IsParallaxMapActive()
+{
+  return u_useParallaxMap != 0;
+}
+bool HasHeightTexture()
+{
+  return g_heightTexSize != ivec2(1);
+}
+
+
+vec2 CalculateParallaxCoord(vec3 viewDir, float heightScale)
+{
   /* Number of depth layers */ 
   const float minLayers = 8;
   const float maxLayers = 32;
@@ -170,37 +208,35 @@ vec2 CalculateParallaxCoord(vec3 viewDir, float heightScale) {
 
   return finalTexCoords;
 }
-vec3 CalculateNormalVector(vec2 textureCoord) {
-  vec3 N;
- 
-  if(u_useNormalMap != 0){
+vec3 CalculateNormalVector(vec2 textureCoord) 
+{
+  if(HasNormalTexture() && IsNormalMapActive())
+  {
     /* Obtain normal from normal map in range [0,1] */
-    N = texture(u_material.normalTexture, textureCoord).rgb;
+    vec3 N = texture(u_material.normalTexture, textureCoord).rgb;
     /* Transform normal vector to range [-1,1] */
     N = N * 2.0 - 1.0;
+    return N;
   }
-  else 
-    N = Normal;
-
- return N;
-}
-vec3 CalculateViewDirVector() {
-  vec3 viewDir;
   
-  if(u_useNormalMap != 0)
-    viewDir = normalize(TangentViewPos - TangentFragPos);
-  else
-    viewDir = normalize(ViewPos - FragPos);
-
-  return viewDir;
+  return Normal;
 }
-float CalculateAttenuation(float d, float kl, float kq) {
+vec3 CalculateViewDirVector()
+{
+  if(HasNormalTexture() && IsNormalMapActive())
+    return normalize(TangentViewPos - TangentFragPos);
+  
+  return normalize(ViewPos - FragPos);
+}
+float CalculateAttenuation(float d, float kl, float kq) 
+{
   // https://imdoingitwrong.wordpress.com/2011/01/31/light-attenuation/ 
   
   return 1.0f / (1.0f + kl*d + kq*pow(d,2));  
 }
 
-vec3 CalculateDirectionalLight(DirectionalLight light, vec3 normal, vec3 viewDir) {
+vec3 CalculateDirectionalLight(DirectionalLight light, vec3 normal, vec3 viewDir)
+{
   const vec3 lightDir = normalize(-light.direction);
     
   /* diffuse shading */ 
@@ -214,12 +250,13 @@ vec3 CalculateDirectionalLight(DirectionalLight light, vec3 normal, vec3 viewDir
 
   return diffuse + specular;
 }
-vec3 CalculateBlinnPhongLight(PointLight light, vec3 normal, vec3 viewDir) {
+vec3 CalculateBlinnPhongLight(PointLight light, vec3 normal, vec3 viewDir) 
+{
   const vec3 tangentLightPosition = TBN * light.position;
   
   /* Light direction */
   vec3 lightDir;
-  if(u_useNormalMap != 0)
+  if(IsNormalMapActive() && HasNormalTexture())
     lightDir = normalize(tangentLightPosition - TangentFragPos);
   else
     lightDir = normalize(light.position - FragPos);
@@ -235,23 +272,24 @@ vec3 CalculateBlinnPhongLight(PointLight light, vec3 normal, vec3 viewDir) {
 
   /* Attenuation */
   float lightDist;
-  if(u_useNormalMap != 0)
+  if(IsNormalMapActive() && HasNormalTexture())
     lightDist = length(tangentLightPosition - TangentFragPos);
   else
     lightDist = length(light.position - FragPos);
 
   const float attenuation = CalculateAttenuation(lightDist, light.attenuation.kl, light.attenuation.kq);
-    
   diffuse  *= attenuation;
   specular *= attenuation;
+
   return diffuse + specular;
 }
-vec3 CalculateSpotLight(SpotLight light, vec3 normal, vec3 viewDir) {
+vec3 CalculateSpotLight(SpotLight light, vec3 normal, vec3 viewDir)
+{
   const vec3 tangentLightPosition = TBN * light.position;
 
   /* Light direction */
   vec3 lightDir;
-  if(u_useNormalMap != 0)
+  if(IsNormalMapActive() && HasNormalTexture())
     lightDir = normalize(tangentLightPosition - TangentFragPos);
   else
     lightDir = normalize(light.position - FragPos);
@@ -276,14 +314,14 @@ vec3 CalculateSpotLight(SpotLight light, vec3 normal, vec3 viewDir) {
 
   /* Attenuation */
   float lightDist;
-  if(u_useNormalMap != 0)
+  if(IsNormalMapActive() && HasNormalTexture())
     lightDist = length(tangentLightPosition - TangentFragPos);
   else
     lightDist = length(light.position - FragPos);
   
   const float attenuation = CalculateAttenuation(lightDist, light.attenuation.kl, light.attenuation.kq);
-  
   diffuse  *= attenuation;
   specular *= attenuation;
+
   return diffuse + specular;
 }

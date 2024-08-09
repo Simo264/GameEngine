@@ -93,8 +93,7 @@ namespace Components
 	public:
 		Model(const fs::path& path);
 
-		Mesh* meshes;
-		uint32_t numMeshes;
+		vector<Mesh> meshes;
 
 		fs::path modelPath;
 

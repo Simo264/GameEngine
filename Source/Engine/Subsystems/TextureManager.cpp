@@ -36,25 +36,24 @@ void TextureManager::LoadTexturesFromDir(const fs::path& dirpath)
 
 void TextureManager::CleanUp()
 {
-  uint64_t numTextures = textures.size();
-  uint64_t numIcons = icons.size();
-  uint64_t total = numTextures + numIcons;
+  uint64_t total = _textures.size() + _icons.size();
   if (total > 0)
   {
-    vector<uint32_t> texIDs(total);
+    vector<uint32_t> texIDs;
+    texIDs.reserve(total);
 
-    std::transform(textures.begin(), textures.end(), std::back_inserter(texIDs), [](const Texture2D& texture) {
+    std::transform(_textures.begin(), _textures.end(), std::back_inserter(texIDs), [](const Texture2D& texture) {
       return texture.id;
     });
-    std::transform(icons.begin(), icons.end(), std::back_inserter(texIDs), [](const Texture2D& texture) {
+    std::transform(_icons.begin(), _icons.end(), std::back_inserter(texIDs), [](const Texture2D& texture) {
       return texture.id;
     });
 
     glDeleteTextures(total, texIDs.data());
   }
 
-  textures.clear();
-  icons.clear();
+  vector<Texture2D>().swap(_textures);
+  vector<Texture2D>().swap(_icons);
 }
 
 Texture2D& TextureManager::LoadTexture(int target, const fs::path& filePath, bool gammaCorrection)
@@ -62,7 +61,7 @@ Texture2D& TextureManager::LoadTexture(int target, const fs::path& filePath, boo
   if (!fs::exists(filePath))
     CONSOLE_WARN("Texture '{}' does not exists", filePath.string());
 
-  auto& texture = textures.emplace_back(target, filePath, gammaCorrection);
+  auto& texture = _textures.emplace_back(target, filePath, gammaCorrection);
   return texture;
 }
 
@@ -71,13 +70,13 @@ Texture2D& TextureManager::LoadTextureIcon(int target, const fs::path& filePath)
   if (!fs::exists(filePath))
     CONSOLE_WARN("Texture '{}' does not exists", filePath.string());
 
-  auto& icon = icons.emplace_back(target, filePath, false);
+  auto& icon = _icons.emplace_back(target, filePath, false);
   return icon;
 }
 
 Texture2D* TextureManager::GetTextureByPath(const fs::path& filePath)
 {
-  for (auto& text : textures)
+  for (auto& text : _textures)
     if (text.path.compare(filePath) == 0)
       return &text;
 
@@ -87,7 +86,7 @@ Texture2D* TextureManager::GetTextureByPath(const fs::path& filePath)
 
 Texture2D* TextureManager::GetIconByPath(const fs::path& filePath)
 {
-  for (auto& icon: icons)
+  for (auto& icon: _icons)
     if (icon.path.compare(filePath) == 0)
       return &icon;
 
