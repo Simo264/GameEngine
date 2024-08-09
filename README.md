@@ -25,7 +25,7 @@
     + [X] Advanced lighting
     + Shadows
         - [X] Shadow mapping
-        - [ ] Point Shadows
+        - [X] Point Shadows
     + [X] Normal mapping
     + [X] Parallax mapping
     + [ ] HDR
