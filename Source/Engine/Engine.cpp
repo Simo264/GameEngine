@@ -377,7 +377,7 @@ void Engine::Run()
   uint32_t depthCubeMapTexture = fboDepthCubeMap.GetTextureAttachment(0);
 
   auto lastUpdateTime = chrono::high_resolution_clock::now();
-  bool renderingShadowsMode = false;
+  bool renderingShadowsMode = true;
   bool useNormalMap = true;
   
   /* ------------------------------------------------------------------ */
@@ -517,15 +517,15 @@ void Engine::Run()
       }
 
       /* Draw skybox as last */
-      //{
-      //  skyboxProgram->Use();
-      //  skyboxProgram->SetUniformMat4f("u_projection", cameraProj);
-      //  skyboxProgram->SetUniformMat4f("u_view", mat4f(mat3f(cameraView)));
-      //  skyboxTexture.BindTextureUnit(0);
-      //  Depth::SetFunction(GL_LEQUAL); 
-      //  Renderer::DrawArrays(GL_TRIANGLES, skybox);
-      //  Depth::SetFunction(GL_LESS); 
-      //}
+      {
+        skyboxProgram->Use();
+        skyboxProgram->SetUniformMat4f("u_projection", cameraProj);
+        skyboxProgram->SetUniformMat4f("u_view", mat4f(mat3f(cameraView)));
+        skyboxTexture.BindTextureUnit(0);
+        Depth::SetFunction(GL_LEQUAL); 
+        Renderer::DrawArrays(GL_TRIANGLES, skybox);
+        Depth::SetFunction(GL_LESS); 
+      }
 
       /* Blit multisampled buffer to normal colorbuffer of intermediate FBO */
       _fboMultisampled.Blit(_fboIntermediate,
