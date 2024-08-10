@@ -1,37 +1,33 @@
 #version 460
 
 in vec2 TextCoords;
+
 out vec4 FragColor;
 
-uniform sampler2D u_screenTexture;
+uniform sampler2D u_fboImageTexture;
+uniform int u_postProcessingType;
 
-/*
-	UPostProcessingType=0 -> POST_PROC_NONE			
-	UPostProcessingType=1 -> POST_PROC_INVERSION 
-	UPostProcessingType=2 -> POST_PROC_GRAYSCALE 
-	UPostProcessingType=3 -> POST_PROC_KERNEL		
-	UPostProcessingType=4 -> POST_PROC_BLUR			
-*/
-//uniform int UPostProcessingType;
+/**
+	* UPostProcessingType=0 -> POST_PROC_NONE			
+	* UPostProcessingType=1 -> POST_PROC_INVERSION 
+	* UPostProcessingType=2 -> POST_PROC_GRAYSCALE 
+	* UPostProcessingType=3 -> POST_PROC_KERNEL		
+	* UPostProcessingType=4 -> POST_PROC_BLUR			
+  */
 
-/* ----------------------------
-			Post Processing
----------------------------- */
+
+
+
 //vec4 InversionEffect();
 //vec4 GrayscaleEffect();
 //vec4 KernelEffect();
 //vec4 BlurEffect();
 
 
-/* ----------------------------
-			Global variables 
----------------------------- */
-vec3 texColor;
-
 void main()
 {
-	texColor = texture(u_screenTexture, TextCoords).rgb;
-	FragColor = vec4(texColor, 1.0);
+	vec4 texColor = texture(u_fboImageTexture, TextCoords);
+	FragColor = vec4(texColor.rgb, 1.0);
 
 	//	switch(UPostProcessingType)
 	//	{

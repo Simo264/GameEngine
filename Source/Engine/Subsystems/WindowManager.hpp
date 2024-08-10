@@ -65,10 +65,11 @@ public:
 
   void MakeContextCurrent(Context context);
 
-  //Context GetCurrentContext();
-
   constexpr Context GetCurrentContext() const { return _context; }
+
+  constexpr vec2i32 GetAspectRatio() const { return _aspectRatio; }
 
 private:
   Context _context;
+  vec2i32 _aspectRatio;
 };

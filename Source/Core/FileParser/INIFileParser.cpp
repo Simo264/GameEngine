@@ -7,7 +7,7 @@
  * -----------------------------------------------------
 */
 
-INIFileParser::INIFileParser(const fspath& filepath)
+INIFileParser::INIFileParser(const fs::path& filepath)
 {
 	if (!fs::exists(filepath) || !fs::is_regular_file(filepath))
 	{

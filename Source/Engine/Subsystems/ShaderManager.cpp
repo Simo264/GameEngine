@@ -20,7 +20,7 @@ void ShaderManager::CleanUp()
   programs.clear();
 }
 
-void ShaderManager::LoadShadersFromDir(const fspath& dirpath)
+void ShaderManager::LoadShadersFromDir(const fs::path& dirpath)
 {
   if (!fs::exists(dirpath) || !fs::is_directory(dirpath))
   {
@@ -36,8 +36,8 @@ void ShaderManager::LoadShadersFromDir(const fspath& dirpath)
       string filename = entry.path().filename().string();
       uint32_t pos = filename.find_last_of('.') + 1;
       string ext = filename.substr(pos);
-      fspath path = entry.path().lexically_normal();
-      CONSOLE_TRACE("Loading shader: {}", path.string().c_str());
+      fs::path path = entry.path().lexically_normal();
+      CONSOLE_TRACE("Loading shader {}", path.string().c_str());
 
       if (ext.compare("vert") == 0)
         LoadShader(path, GL_VERTEX_SHADER);
@@ -46,7 +46,7 @@ void ShaderManager::LoadShadersFromDir(const fspath& dirpath)
       else if (ext.compare("geom") == 0)
         LoadShader(path, GL_GEOMETRY_SHADER);
       else
-        CONSOLE_WARN("Error on loading file '{}': unknown '.{}' file extension", filename.c_str(), ext.c_str());
+        CONSOLE_WARN("Error on loading shader {}: unknown .{} file extension", filename.c_str(), ext.c_str());
     }
   }
 }
@@ -57,7 +57,7 @@ void ShaderManager::LoadPrograms()
 
   for (auto const& it : conf.GetData())
   {
-    const string& section = it.first; /* section = program name */
+    const string& section = it.first;
     const string vertex   = conf.GetValue(section.c_str(), "vertex");
     const string geometry = conf.GetValue(section.c_str(), "geometry");
     const string fragment = conf.GetValue(section.c_str(), "fragment");
@@ -70,7 +70,7 @@ void ShaderManager::LoadPrograms()
 void ShaderManager::SetUpProgramsUniforms()
 {
   auto framebufferProg = GetProgram("Framebuffer");
-  framebufferProg->SetUniform1i("u_screenTexture", 0);
+  framebufferProg->SetUniform1i("u_fboImageTexture", 0);
   framebufferProg->SetUniform1i("u_postProcessingType", 0);
 
   auto sceneProg = GetProgram("Scene");
@@ -80,31 +80,27 @@ void ShaderManager::SetUpProgramsUniforms()
   sceneProg->SetUniform1i("u_material.heightTexture", 3);
   sceneProg->SetUniform1i("u_useNormalMap", 0);
   sceneProg->SetUniform1i("u_useParallaxMap", 0);
-  sceneProg->SetUniform1f("u_heightScale", 0.0f);
+  sceneProg->SetUniform1f("u_parallaxHeight", 0.0f);
 
-  auto shadowMapProg = GetProgram("ShadowMap");
-  shadowMapProg->SetUniform1i("u_material.diffuseTexture", 0);
-  shadowMapProg->SetUniform1i("u_material.specularTexture", 1);
-  shadowMapProg->SetUniform1i("u_material.normalTexture", 2);
-  shadowMapProg->SetUniform1i("u_material.heightTexture", 3);
-  shadowMapProg->SetUniform1i("u_shadowMapTexture", 10);
-  shadowMapProg->SetUniform1i("u_useNormalMap", 0);
-  shadowMapProg->SetUniform1i("u_useParallaxMap", 0);
-  shadowMapProg->SetUniform1f("u_heightScale", 0.0f);
-
-  auto visualShadowDepthProg = GetProgram("VisualShadowDepth");
-  visualShadowDepthProg->SetUniform1i("u_depthMapTexture", 0);
-  visualShadowDepthProg->SetUniform1f("u_nearPlane", Z_NEAR);
-  visualShadowDepthProg->SetUniform1f("u_farPlane", Z_FAR);
+  auto sceneShadowsProg = GetProgram("SceneShadows");
+  sceneShadowsProg->SetUniform1i("u_material.diffuseTexture", 0);
+  sceneShadowsProg->SetUniform1i("u_material.specularTexture", 1);
+  sceneShadowsProg->SetUniform1i("u_material.normalTexture", 2);
+  sceneShadowsProg->SetUniform1i("u_material.heightTexture", 3);
+  sceneShadowsProg->SetUniform1i("u_depthMapTexture", 10);
+  sceneShadowsProg->SetUniform1i("u_depthCubeMapTexture", 11);
+  sceneShadowsProg->SetUniform1i("u_useNormalMap", 0);
+  sceneShadowsProg->SetUniform1i("u_useParallaxMap", 0);
+  sceneShadowsProg->SetUniform1f("u_parallaxHeight", 0.0f);
 
   auto skyboxProg = GetProgram("Skybox");
   skyboxProg->SetUniform1i("u_skyboxTexture", 0);
 }
 
-Shader& ShaderManager::LoadShader(const fspath& filepath, int shaderType)
+Shader& ShaderManager::LoadShader(const fs::path& filepath, int shaderType)
 {
   if (!fs::exists(filepath))
-    CONSOLE_WARN("File '{}' does not exist", filepath.string().c_str());
+    CONSOLE_WARN("File {} does not exist", filepath.string().c_str());
 
   string filepathstr = filepath.string();
   string filename = filepath.filename().string();
@@ -118,12 +114,12 @@ Shader& ShaderManager::LoadShader(const fspath& filepath, int shaderType)
   if (file)
     filecontent.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
   else
-    CONSOLE_WARN("Error on opening '{}' file", filepath.string().c_str());
+    CONSOLE_WARN("Error on opening file {}", filepath.string().c_str());
 
   shader.LoadSource(filecontent.c_str(), filecontent.size());
   bool compiled = shader.Compile();
   if (!compiled)
-    CONSOLE_WARN("Error on compiling shader '{}': {}", filepathstr.c_str(), shader.GetShaderInfo());
+    CONSOLE_WARN("Error on compiling shader {}: {}", filepathstr.c_str(), shader.GetShaderInfo());
 
   return shader;
 }

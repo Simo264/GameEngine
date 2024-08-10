@@ -11,7 +11,7 @@
  */
 class INIFileParser{
 public:
-	INIFileParser(const fspath& filepath);
+	INIFileParser(const fs::path& filepath);
 
 	/* Return reference of ini data structure */
 	mINI::INIStructure& GetData() 

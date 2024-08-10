@@ -12,7 +12,7 @@ public:
 	/**
 	 * Load all shaders from directory <dirpath>
 	 */
-	void LoadShadersFromDir(const fspath& dirpath);
+	void LoadShadersFromDir(const fs::path& dirpath);
 
 	/**
 	 * Load all programs from configuration file SM_ProgConfig.ini
@@ -31,7 +31,7 @@ public:
 	/**
 	 * Load the shader object in shaders array
 	 */
-	Shader& LoadShader(const fspath& filepath, int shaderType);
+	Shader& LoadShader(const fs::path& filepath, int shaderType);
 	
 	/**
 	 * Retrieve the shader object from shaders array 

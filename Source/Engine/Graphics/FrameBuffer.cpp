@@ -3,12 +3,10 @@
 #include "Core/OpenGL.hpp"
 #include "Core/Log/Logger.hpp"
 
-
-
 FrameBuffer::FrameBuffer()
-	: id{ static_cast<uint32_t>(-1) },
-		_textAttachments{},
-		_rboAttachments{}
+	: id{ 0 },
+		_textAttachmentIDs{},
+		_rboAttachmentIDs{}
 {}
 
 void FrameBuffer::Create()
@@ -18,17 +16,19 @@ void FrameBuffer::Create()
 
 void FrameBuffer::Delete()
 {
-	glDeleteFramebuffers(1, &id);
-
-	for (Texture2D& texture : _textAttachments)
-		texture.Delete();
-	for (RenderBuffer& rbo : _rboAttachments)
-		rbo.Delete();
+	uint64_t numTextures = _textAttachmentIDs.size();
+	if (numTextures > 0)
+		glDeleteTextures(numTextures, _textAttachmentIDs.data());
 	
-	_textAttachments.clear();
-	_rboAttachments.clear();
+	uint64_t numRBOs = _rboAttachmentIDs.size();
+	if (numRBOs > 0)
+		glDeleteRenderbuffers(numRBOs, _rboAttachmentIDs.data());
 
-	id = static_cast<uint32_t>(-1);
+	vector<uint32_t>().swap(_textAttachmentIDs);
+	vector<uint32_t>().swap(_rboAttachmentIDs);
+
+	glDeleteFramebuffers(1, &id);
+	id = 0;
 }
 
 void FrameBuffer::Bind(int target) const
@@ -46,18 +46,16 @@ int FrameBuffer::CheckStatus() const
 	return glCheckNamedFramebufferStatus(id, GL_FRAMEBUFFER);
 }
 
-void FrameBuffer::AttachTexture(int attachment, const Texture2D& texture, int level)
+void FrameBuffer::AttachTexture(int attachment, uint32_t textureID, int level)
 {
-	glNamedFramebufferTexture(id, attachment, texture.id, level);
-
-	_textAttachments.push_back(texture);
+	glNamedFramebufferTexture(id, attachment, textureID, level);
+	_textAttachmentIDs.push_back(textureID);
 }
 
-void FrameBuffer::AttachRenderBuffer(int attachment, const RenderBuffer& renderbuffer)
+void FrameBuffer::AttachRenderBuffer(int attachment, uint32_t renderbufferID)
 {
-	glNamedFramebufferRenderbuffer(id, attachment, GL_RENDERBUFFER, renderbuffer.id);
-	
-	_rboAttachments.push_back(renderbuffer);
+	glNamedFramebufferRenderbuffer(id, attachment, GL_RENDERBUFFER, renderbufferID);
+	_rboAttachmentIDs.push_back(renderbufferID);
 }
 
 void FrameBuffer::Blit(
@@ -83,7 +81,7 @@ void FrameBuffer::Blit(
 		filter);
 }
 
-void FrameBuffer::SetWritingColorComponents(bool r, bool g, bool b, bool a)
+void FrameBuffer::SetWritingColorComponents(bool r, bool g, bool b, bool a) const
 {
 	glColorMaski(id, r, g, b, a);
 }

@@ -3,9 +3,6 @@
 #include "Core/Core.hpp"
 #include "Core/Math/Math.hpp"
 
-#include "Engine/Graphics/Texture2D.hpp"
-#include "Engine/Graphics/RenderBuffer.hpp"
-
 /**
  *	https://www.khronos.org/opengl/wiki/Framebuffer_Object
  * 
@@ -40,7 +37,6 @@ class FrameBuffer
 {
 public:
 	FrameBuffer();
-
 	~FrameBuffer() = default;
 
 	/**
@@ -94,7 +90,7 @@ public:
 	 * 
 	 * @param level:			specifies the mipmap level of the texture object to attach
 	 */ 
-	void AttachTexture(int attachment, const Texture2D& texture, int level);
+	void AttachTexture(int attachment, uint32_t textureID, int level);
 
 	/**
 	 * Attach a renderbuffer as a logical buffer of the framebuffer object
@@ -107,7 +103,7 @@ public:
 	 * 
 	 * @param renderbuffer: specifies the name of an existing renderbuffer object of type renderbuffertarget to attach
 	 */
-	void AttachRenderBuffer(int attachment, const RenderBuffer& renderbuffer);
+	void AttachRenderBuffer(int attachment, uint32_t renderbufferID);
 
 	/**
 	 * Copy a block of pixels from one framebuffer object to another.
@@ -151,21 +147,17 @@ public:
 	 * regardless of the drawing operation attempted.
 	 *
 	 */
-	void SetWritingColorComponents(bool r, bool g, bool b, bool a);
+	void SetWritingColorComponents(bool r, bool g, bool b, bool a) const;
 
-	constexpr bool IsValid()	const { return id != static_cast<uint32_t>(-1); }
+	constexpr uint32_t GetTextureAttachment(int i) { return _textAttachmentIDs.at(i); }
+	constexpr uint32_t GetRenderBufferAttachment(int i) { return _rboAttachmentIDs.at(i); }
 
-	constexpr Texture2D& GetTextureAttachment(int i) { return _textAttachments.at(i); }
-	constexpr RenderBuffer& GetRenderBufferAttachment(int i) { return _rboAttachments.at(i); }
-
-	constexpr int GetNumTextureAttachments() const { return _textAttachments.size(); }
-	constexpr int GetNumRenderBufferAttachments() const { return _rboAttachments.size(); }
-
-
+	constexpr int GetNumTextureAttachments() const { return _textAttachmentIDs.size(); }
+	constexpr int GetNumRenderBufferAttachments() const { return _rboAttachmentIDs.size(); }
 
 	uint32_t id;
 
 private:
-	vector<Texture2D>			_textAttachments;	/* vector of all attached texture ids */
-	vector<RenderBuffer>	_rboAttachments;	/* vector of all attached renderbuffer ids */
+	vector<uint32_t>	_textAttachmentIDs;
+	vector<uint32_t>	_rboAttachmentIDs;
 };

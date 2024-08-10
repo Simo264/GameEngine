@@ -5,9 +5,9 @@
 /**
  * https://www.khronos.org/opengl/wiki/Buffer_Object
  * 
- * Buffer Objects are OpenGL Objects that store an array of unformatted memory allocated by the OpenGL context (AKA the GPU). 
- * These can be used to store vertex data, pixel data retrieved from images or the framebuffer, and a variety of other things.
- * 
+ * Buffer Objects are OpenGL Objects that store an array of unformatted memory allocated by the OpenGL context.
+ * These can be used to store vertex data, pixel data retrieved from images or the framebuffer, 
+ * and a variety of other things.
  */
 class Buffer
 {
@@ -35,7 +35,7 @@ public:
 	 *								GL_STREAM_DRAW, GL_STREAM_READ, GL_STREAM_COPY, GL_STATIC_DRAW,
 	 *								GL_STATIC_READ, GL_STATIC_COPY, GL_DYNAMIC_DRAW, GL_DYNAMIC_READ, or GL_DYNAMIC_COPY
 	 */
-	void CreateStorage(uint64_t size, const void* data, int usage);
+	void CreateStorage(uint64_t size, const void* data, int usage) const;
 
 	/**
 	 * Updates a subset of the buffer object's data store
@@ -79,28 +79,27 @@ public:
 	void Bind() const;
 
 	/**
-	 * Bind the buffer object to an indexed buffer target.
+	 * Bind the buffer object to an indexed buffer target. With glBindBufferBase target must be one of 
+	 * GL_ATOMIC_COUNTER_BUFFER, GL_TRANSFORM_FEEDBACK_BUFFER, GL_UNIFORM_BUFFER or GL_SHADER_STORAGE_BUFFER.
 	 * 
 	 * @param bindingpoint: specify the index of the binding point within the array specified by target.
 	 */
 	void BindBase(int bindingpoint) const;
 
 	/**
-	 * Bind a range within the buffer object to an indexed buffer target
+	 * Bind a range within the buffer object to an indexed buffer target. With glBindBufferRange target must be one of 
+	 * GL_ATOMIC_COUNTER_BUFFER, GL_TRANSFORM_FEEDBACK_BUFFER, GL_UNIFORM_BUFFER, or GL_SHADER_STORAGE_BUFFER.
 	 * 
 	 * @param bindingpoint: specify the index of the binding point 
 	 * @param offset: the starting offset in bytes into the buffer object buffer
 	 * @param size: the amount of data in bytes that can be read from the buffer
 	 */
-	void BindRange(int bindingpoint, int offset, uint64_t size);
+	void BindRange(int bindingpoint, int offset, uint64_t size) const;
 
 	/**
 	 * Unbind the buffer object
 	 */
 	void Unbind() const;
-
-	constexpr bool IsValid() const { return id != static_cast<uint32_t>(-1) && target != -1; }
-	constexpr bool IsEqual(const Buffer& other) const { return id == other.id; }
 
 	uint32_t id;
 	
@@ -108,6 +107,4 @@ public:
 	 * https://registry.khronos.org/OpenGL-Refpages/gl4/html/glBindBuffer.xhtml
 	 */
 	int target;
-	
-	uint64_t size; /* size in bytes */
 };

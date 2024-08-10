@@ -1,13 +1,13 @@
-# Blender 4.0.2 MTL File: 'untitled.blend'
+# Blender 4.0.2 MTL File: 'ground.blend'
 # www.blender.org
 
-newmtl lynn_mar624_1_u1_v1
-Ns 4.999998
+newmtl Material.001
+Ns 0.000000
 Ka 1.000000 1.000000 1.000000
-Ks 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
 Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 2
-map_Kd ground/ground_diffuse.jpg
-map_kn ground/ground_normal.jpg
+map_Kd coast_sand_rocks/coast_sand_rocks_diff_4k.jpg
+map_kn coast_sand_rocks/coast_sand_rocks_nor_4k.jpg

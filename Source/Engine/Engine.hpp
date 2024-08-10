@@ -17,16 +17,11 @@ public:
 	void CleanUp();
 
 private:
-	void SetOpenGLStates();
-
 	void CreateFramebuffer(int samples, int width, int height);
-	void CreateFramebufferShadowMap(int width, int height);
 	void CreateScreenSquare();
-	void ResizeFramebuffer(int width, int height);
 
 	FrameBuffer _fboMultisampled;
 	FrameBuffer _fboIntermediate;
-	FrameBuffer _fboShadowMap;
 
 	Buffer _uboCamera; /* Uniform cameraBlock object */
 

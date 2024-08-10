@@ -3,22 +3,44 @@
 #include "Core/OpenGL.hpp"
 #include "Core/Log/Logger.hpp"
 
-#include <stb_image.h>
+#include "Engine/Globals.hpp"
+#include "Engine/Graphics/Texture2D.hpp"
+#include "Engine/Subsystems/TextureManager.hpp"
 
 TextureCubemap::TextureCubemap()
-	: id{ static_cast<uint32_t>(-1) },
-    target{ GL_TEXTURE_CUBE_MAP },
-    size{ 0 }
+	: id{ 0 },
+    target{ GL_TEXTURE_CUBE_MAP }
 {}
 
 void TextureCubemap::Create()
 {
 	glCreateTextures(target, 1, &id);
 }
+
+void TextureCubemap::CreateStorage(int internalFormat, int width, int height) const
+{
+  glTextureStorage2D(id, 1, internalFormat, width, height);
+}
+
+void TextureCubemap::SubImage3D(
+  int level,
+  int xoffset,
+  int yoffset,
+  int zoffset,
+  int width,
+  int height,
+  int depth,
+  int format,
+  int type,
+  const void* pixels) const
+{
+  glTextureSubImage3D(id, level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels);
+}
+
 void TextureCubemap::Delete()
 {
   glDeleteTextures(1, &id);
-  id = static_cast<uint32_t>(-1);
+  id = 0;
 }
 void TextureCubemap::Bind() const
 {
@@ -50,44 +72,22 @@ void TextureCubemap::SetParameterfv(int name, float* values) const
   glTextureParameterfv(id, name, values);
 }
 
-void TextureCubemap::LoadImages(const array<fspath, 6>& images)
+void TextureCubemap::LoadImages(const array<Texture2D*, 6>& images) const
 {
-  if (size == 0)
-  {
-    CONSOLE_WARN("Invalid texture size");
-    return;
-  }
+  int nrChannels = images.at(0)->nrChannels;
+  int width = images.at(0)->width;
+  int height = images.at(0)->height;
+  int bufsize = width * height * nrChannels;
+  int format = images.at(0)->format;
+  vector<byte> pixels(bufsize);
 
-  Bind();
-  glTextureStorage2D(id, 1, GL_RGB8, size, size);
   for (int i = 0; i < 6; i++)
   {
-    int width{ 0 }, height{ 0 }, nrChannels{ 0 };
-    auto data = stbi_load(images[i].string().c_str(), &width, &height, &nrChannels, 0);
+    auto* texture = images.at(i);
 
-    int internalformat{ GL_R8 }, format{ GL_RED };
-    switch (nrChannels) 
-    {
-    case 1:
-      internalformat = GL_R8;
-      format = GL_RED;
-      break;
-    case 2:
-      internalformat = GL_RG8;
-      format = GL_RG;
-      break;
-    case 3:
-      internalformat = GL_RGB8;
-      format = GL_RGB;
-      break;
-    case 4:
-      internalformat = GL_RGBA8;
-      format = GL_RGBA;
-      break;
-    }
-    
-    glTextureSubImage3D(id, 0, 0, 0, i, width, height, 1, format, GL_UNSIGNED_BYTE, data);
-    stbi_image_free(data);
+    pixels.clear();
+    texture->GetTextureImage(0, GL_UNSIGNED_BYTE, bufsize, reinterpret_cast<void*>(pixels.data()));
+
+    SubImage3D(0, 0, 0, i, width, height, 1, format, GL_UNSIGNED_BYTE, reinterpret_cast<void*>(pixels.data()));
   }
-  Unbind();
 }

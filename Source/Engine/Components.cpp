@@ -16,8 +16,6 @@
 #include "assimp/scene.h"
 #include "assimp/postprocess.h"
 
-#include "GLFW/glfw3.h"
-
 namespace Components
 {
 	/* ---------------------------------------------------------------------------
@@ -45,23 +43,9 @@ namespace Components
 	{
 		Init();
 	}
-	Mesh::Mesh(void* vertices, uint32_t numVertices, void* indices, uint32_t numIndices)
-	{
-		Init();
-
-		int size = numVertices * sizeof(Vertex);
-		vbo.CreateStorage(size, vertices, GL_STATIC_DRAW);
-		size = numIndices * sizeof(uint32_t);
-		ebo.CreateStorage(size, indices, GL_STATIC_DRAW);
-
-		vao.numVertices = numVertices;
-		vao.numIndices = numIndices;
-	}
 	void Mesh::DestroyMesh()
 	{
 		vao.Delete();
-		vbo.Delete();
-		ebo.Delete();
 
 		material.diffuse = nullptr;
 		material.specular = nullptr;
@@ -78,15 +62,10 @@ namespace Components
 
 	void Mesh::Init()
 	{
+		/* Set up vertex attributes */
+		/* ------------------------ */
 		vao.Create();
-		vbo.Create();
-		vbo.target = GL_ARRAY_BUFFER;
-		ebo.Create();
-		ebo.target = GL_ELEMENT_ARRAY_BUFFER;
-
-		vao.AttachVertexBuffer(0, vbo, 0, sizeof(Vertex));
-		vao.AttachElementBuffer(ebo);
-
+		
 		/* position */
 		vao.EnableAttribute(0);
 		vao.SetAttribBinding(0, 0);
@@ -103,6 +82,11 @@ namespace Components
 		vao.EnableAttribute(3);
 		vao.SetAttribBinding(3, 0);
 		vao.SetAttribFormat(3, 3, GL_FLOAT, true, offsetof(Vertex, tangent));
+
+		material.diffuse = g_textureManager.GetTextureAt(0);
+		material.specular = g_textureManager.GetTextureAt(1);
+		material.normal = g_textureManager.GetTextureAt(2);
+		material.height = g_textureManager.GetTextureAt(3);
 	}
 
 
@@ -113,16 +97,14 @@ namespace Components
 	static uint32_t totalVertices = 0;
 	static uint32_t totalIndices = 0;
 	static uint32_t totalSize = 0;
-	static double timeStart = 0;
-	static double timeEnd = 0;
+	static chrono::steady_clock::time_point timeStart;
+	static chrono::steady_clock::time_point timeEnd;
 
-	Model::Model(const fspath& path)
-		: modelPath{ path },
-			meshes{ nullptr },
-			numMeshes{ 0 }
+	Model::Model(const fs::path& path)
+		: modelPath{ path }
 	{
 		CONSOLE_TRACE("Loading model {}...", path.string().c_str());
-		timeStart = glfwGetTime();
+		timeStart = chrono::high_resolution_clock::now();
 
 		Assimp::Importer importer;
 		const aiScene* scene = importer.ReadFile(path.string().c_str(),
@@ -142,46 +124,42 @@ namespace Components
 		totalVertices = 0;
 		totalIndices = 0;
 		totalSize = 0;
-		meshes = new Mesh[scene->mNumMeshes];
+		meshes.reserve(scene->mNumMeshes);
 
 		ProcessNode(scene->mRootNode, scene);
 
-		timeEnd = glfwGetTime();
+		timeEnd = chrono::high_resolution_clock::now();
+		chrono::duration<double> diff = timeEnd - timeStart;
 
-		CONSOLE_TRACE(".numMeshes={}", numMeshes);
+		CONSOLE_TRACE(".numMeshes={}", scene->mNumMeshes);
 		CONSOLE_TRACE(".totalVertices={} ", totalVertices);
 		CONSOLE_TRACE(".totalIndices={}", totalIndices);
 		CONSOLE_TRACE(".totalSize={} bytes", totalSize);
-		CONSOLE_TRACE(".time={}s", timeEnd - timeStart);
+		CONSOLE_TRACE(".time={}s", diff.count());
 	}
 	void Model::DestroyModel()
 	{
-		for (int i = 0; i < numMeshes; i++)
-		{
-			Mesh& mesh = meshes[i];
+		/* Destroy all meshes */
+		std::for_each(meshes.begin(), meshes.end(), [&](auto& mesh) {
 			mesh.DestroyMesh();
-		}
+		});
 
-		delete[] meshes;
-		meshes = nullptr;
-		numMeshes = 0;
+		/* Destroy vector */
+		vector<Mesh>().swap(meshes);
 
-		CONSOLE_TRACE("Model {} destroyed", modelPath.string().c_str());
+		CONSOLE_TRACE("Model {} destroyed", modelPath.string());
 	}
 	void Model::DrawModel(int mode)
 	{
-		for (int i = 0; i < numMeshes; i++)
-		{
-			auto& mesh = meshes[i];
+		std::for_each(meshes.begin(), meshes.end(), [&](auto& mesh) {
 			auto& material = mesh.material;
+			material.diffuse->BindTextureUnit(0);
+			material.specular->BindTextureUnit(1);
+			material.normal->BindTextureUnit(2);
+			material.height->BindTextureUnit(3);
 
-			if (material.diffuse)  material.diffuse->BindTextureUnit(0);  else glBindTextureUnit(0, 0);
-			if (material.specular) material.specular->BindTextureUnit(1); else glBindTextureUnit(1, 0);
-			if (material.normal)   material.normal->BindTextureUnit(2);   else glBindTextureUnit(2, 0);
-			if (material.height)   material.height->BindTextureUnit(3);   else glBindTextureUnit(3, 0);
-
-			mesh.DrawMesh(DRAW_MODE);
-		}
+			mesh.DrawMesh(mode);
+		});
 	}
 
 	void Model::ProcessNode(aiNode* node, const aiScene* scene)
@@ -189,25 +167,29 @@ namespace Components
 		/* Process all the node's meshes */
 		for (int i = 0; i < node->mNumMeshes; i++)
 		{
-			Mesh& mesh = meshes[numMeshes++];
+			Mesh& mesh = meshes.emplace_back();
 			aiMesh* aimesh = scene->mMeshes[node->mMeshes[i]];
 
-			const uint32_t numVertices = aimesh->mNumVertices;
-			const int vSize = numVertices * sizeof(Vertex);
-			mesh.vbo.CreateStorage(vSize, nullptr, GL_STATIC_DRAW);
-			mesh.vao.numVertices = numVertices;
-			LoadVertices(aimesh, mesh.vbo);
+			/* Load vertex buffer */
+			const int numVertices = aimesh->mNumVertices;
+			const uint64_t vSize = numVertices * sizeof(Vertex);
+			Buffer vbo(GL_ARRAY_BUFFER, vSize, nullptr, GL_STATIC_DRAW);
+			LoadVertices(aimesh, vbo);
+			mesh.vao.AttachVertexBuffer(0, vbo.id, 0, sizeof(Vertex));
 
-			const uint32_t numIndices = std::reduce(
+			/* Load index buffer */
+			const int numIndices = std::reduce(
 				aimesh->mFaces,
 				aimesh->mFaces + aimesh->mNumFaces,
 				0,
 				[](int n, aiFace& face) { return n + face.mNumIndices; });
+			const uint64_t iSize = numIndices * sizeof(uint32_t);
+			Buffer ebo(GL_ELEMENT_ARRAY_BUFFER, iSize, nullptr, GL_STATIC_DRAW);
+			LoadIndices(aimesh, ebo);
+			mesh.vao.AttachElementBuffer(ebo.id);
 
-			const uint32_t iSize = numIndices * sizeof(uint32_t);
-			mesh.ebo.CreateStorage(iSize, nullptr, GL_STATIC_DRAW);
+			mesh.vao.numVertices = numVertices;
 			mesh.vao.numIndices = numIndices;
-			LoadIndices(aimesh, mesh.ebo);
 
 			totalVertices += numVertices;
 			totalIndices += numIndices;
@@ -216,10 +198,17 @@ namespace Components
 			if (aimesh->mMaterialIndex >= 0)
 			{
 				aiMaterial* material = scene->mMaterials[aimesh->mMaterialIndex];
-				mesh.material.diffuse = GetTexture(material, aiTextureType_DIFFUSE);
-				mesh.material.specular = GetTexture(material, aiTextureType_SPECULAR);
-				mesh.material.normal = GetTexture(material, aiTextureType_NORMALS);
-				mesh.material.height = GetTexture(material, aiTextureType_HEIGHT);
+				if (Texture2D* diffuse = GetTexture(material, aiTextureType_DIFFUSE))
+					mesh.material.diffuse = diffuse;
+
+				if(Texture2D* specular = GetTexture(material, aiTextureType_SPECULAR))
+					mesh.material.specular = specular;
+
+				if(Texture2D* normal = GetTexture(material, aiTextureType_NORMALS))
+					mesh.material.normal = normal;
+
+				if(Texture2D* height = GetTexture(material, aiTextureType_HEIGHT))
+					mesh.material.height = height;
 			}
 		}
 
@@ -280,56 +269,5 @@ namespace Components
 			return g_textureManager.GetTextureByPath(TEXTURES_PATH / fileName.C_Str());
 
 		return nullptr;
-	}
-	
-	/* ---------------------------------------------------------------------------
-				CameraComponent
-		--------------------------------------------------------------------------- */
-
-	Camera::Camera(const vec3f& position, float fov, float aspect, float znear, float zfar)
-		: position{ position },
-			fov{ fov },
-			aspect{ aspect },
-			zNear{ znear },
-			zFar{ zfar },
-			yaw{ -90.0f },
-			pitch{ 0.0f },
-			roll{ 0.0f },
-			_front{},	
-			_up{},
-			_right{},
-			_viewMatrix{}, 
-			_projectionMatrix{}
-	{
-		/* Update vectors */
-		UpdateVectors();
-
-		/* Update matrices */
-		UpdateView();
-		UpdateProjection();
-	}
-	void Camera::UpdateVectors()
-	{
-		static const vec3f WorldUp = vec3f(0.0f, 1.0f, 0.0f);
-
-		vec3f calcFront{};
-		calcFront.x = Math::Cos(Math::Radians(yaw)) * cos(Math::Radians(pitch));
-		calcFront.y = Math::Sin(Math::Radians(pitch));
-		calcFront.z = Math::Sin(Math::Radians(yaw)) * cos(Math::Radians(pitch));
-
-		_front = Math::Normalize(calcFront);
-		_right = Math::Normalize(Math::Cross(_front, WorldUp));
-
-		const mat4f rollMat = Math::Rotate(mat4f(1.0f), Math::Radians(roll), _front);
-		_up = Math::Normalize(Math::Cross(_right, _front));
-		_up = mat3f(rollMat) * _up;
-	}
-	void Camera::UpdateView()
-	{
-		_viewMatrix = Math::LookAt(position, position + _front, _up);
-	}
-	void Camera::UpdateProjection()
-	{
-		_projectionMatrix = Math::Perspective(fov, aspect, zNear, zFar);
 	}
 };

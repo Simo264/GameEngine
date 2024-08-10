@@ -45,13 +45,13 @@ void Scene::ClearScene()
 	_registry.clear();
 }
 
-void Scene::LoadScene(const fspath& filepath)
+void Scene::LoadScene(const fs::path& filepath)
 {
 	SceneSerializer serializer;
 	serializer.DeserializeScene(*this, filepath);
 }
 
-void Scene::SaveScene(const fspath& filepath)
+void Scene::SaveScene(const fs::path& filepath)
 {
 	SceneSerializer serializer;
 	serializer.SerializeScene(*this, filepath);

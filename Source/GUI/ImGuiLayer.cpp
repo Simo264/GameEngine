@@ -7,6 +7,7 @@
 #include "Engine/Globals.hpp"
 
 #include "Engine/Scene.hpp"
+#include "Engine/Camera.hpp"
 #include "Engine/GameObject.hpp"
 #include "Engine/Components.hpp"
 #include "Engine/Graphics/Texture2D.hpp"
@@ -20,8 +21,6 @@
 #include <imgui/ImGuizmo.h>
 
 #include <GLFW/glfw3.h>
-
-extern vec3f lightPosition;
 
 static constexpr int infinity = 1'000'000;
 static int guizmode = ImGuizmo::OPERATION::TRANSLATE;
@@ -147,7 +146,7 @@ namespace ImGuiLayer
     ImGui::DestroyContext();
   }
 
-  void SetFont(const fspath& fontpath, int fontsize)
+  void SetFont(const fs::path& fontpath, int fontsize)
   {
     ImGuiIO& io = ImGui::GetIO();
     io.Fonts->AddFontFromFileTTF(fontpath.string().c_str(), fontsize);
@@ -219,7 +218,7 @@ namespace ImGuiLayer
         if (ImGui::MenuItem("Open"))
         {
           static const char* filters[1] = { "*.ini" };
-          fspath filePath = FileDialog::OpenFileDialog(1, filters, "Open scene (.ini)", false);
+          fs::path filePath = FileDialog::OpenFileDialog(1, filters, "Open scene (.ini)", false);
 
           if (!filePath.empty())
           {
@@ -237,7 +236,7 @@ namespace ImGuiLayer
         if (ImGui::MenuItem("Save as..."))
         {
           static const char* filters[1] = { "*.ini" };
-          fspath filepath = FileDialog::SaveFileDialog(1, filters, "Save scene");
+          fs::path filepath = FileDialog::SaveFileDialog(1, filters, "Save scene");
 
           scene.SaveScene(filepath);
           CONSOLE_TRACE("The scene has been saved");
@@ -249,7 +248,7 @@ namespace ImGuiLayer
       ImGui::EndMainMenuBar();
     }
   }
-  vec2i32 RenderViewportAndGuizmo(const Texture2D& image, GameObject& object, const mat4f& view, const mat4f& proj)
+  vec2i32 RenderViewportAndGuizmo(uint32_t tetxureID, GameObject& object, const mat4f& view, const mat4f& proj)
   {
     ImGuiStyle& style = ImGui::GetStyle();
     const ImVec2 paddingTmp = style.WindowPadding;
@@ -260,7 +259,7 @@ namespace ImGuiLayer
     
     const ImVec2 viewport = ImGui::GetWindowSize();
     
-    ImGui::Image(reinterpret_cast<ImTextureID>(image.id), viewport, ImVec2(0, 1), ImVec2(1, 0));
+    ImGui::Image(reinterpret_cast<void*>(tetxureID), viewport, ImVec2(0, 1), ImVec2(1, 0));
 
     if (object.IsValid())
     {
@@ -329,7 +328,7 @@ namespace ImGuiLayer
           if (objectSelected.IsValid() && objectSelected.IsEqual(object))
             flags |= ImGuiTreeNodeFlags_Selected;
 
-          std::format_to(nodeName, "{}", label.label.c_str());
+          std::format_to(nodeName, "{}", label.value.c_str());
           ImGui::TreeNodeEx(reinterpret_cast<void*>(entity), flags, nodeName);
 
           if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
@@ -434,36 +433,80 @@ namespace ImGuiLayer
 
     if (ImGui::CollapsingHeader("Draw mode"))
     {
-      ImGui::RadioButton("GL_POINTS", &DRAW_MODE, GL_POINTS);
-      ImGui::RadioButton("GL_LINES", &DRAW_MODE, GL_LINES);
-      ImGui::RadioButton("GL_LINE_LOOP", &DRAW_MODE, GL_LINE_LOOP);
-      ImGui::RadioButton("GL_LINE_STRIP", &DRAW_MODE, GL_LINE_STRIP);
-      ImGui::RadioButton("GL_TRIANGLES", &DRAW_MODE, GL_TRIANGLES);
-      ImGui::RadioButton("GL_TRIANGLE_STRIP", &DRAW_MODE, GL_TRIANGLE_STRIP);
-      ImGui::RadioButton("GL_TRIANGLE_FAN", &DRAW_MODE, GL_TRIANGLE_FAN);
-      ImGui::RadioButton("GL_QUADS", &DRAW_MODE, GL_QUADS);
-      ImGui::RadioButton("GL_QUAD_STRIP", &DRAW_MODE, GL_QUAD_STRIP);
-      ImGui::RadioButton("GL_POLYGON", &DRAW_MODE, GL_POLYGON);
-    }
-    if (ImGui::CollapsingHeader("Clip space"))
-    {
-      ImGui::SliderFloat("Z_NEAR", &Z_NEAR, 0.0f, 1.0f);
-      ImGui::SliderFloat("Z_FAR", &Z_FAR, 0.0f, 500.0f);
-      ImGui::SliderFloat("LEFT", &LEFT, 0.0f, -100.0f);
-      ImGui::SliderFloat("RIGHT", &RIGHT, 0.0f, 100.0f);
-      ImGui::SliderFloat("BOTTOM", &BOTTOM, 0.0f, -100.0f);
-      ImGui::SliderFloat("TOP", &TOP, 0.0f, 100.0f);
+      ImGui::RadioButton("GL_POINTS", &g_drawMode, GL_POINTS);
+      ImGui::RadioButton("GL_LINES", &g_drawMode, GL_LINES);
+      ImGui::RadioButton("GL_LINE_LOOP", &g_drawMode, GL_LINE_LOOP);
+      ImGui::RadioButton("GL_LINE_STRIP", &g_drawMode, GL_LINE_STRIP);
+      ImGui::RadioButton("GL_TRIANGLES", &g_drawMode, GL_TRIANGLES);
+      ImGui::RadioButton("GL_TRIANGLE_STRIP", &g_drawMode, GL_TRIANGLE_STRIP);
+      ImGui::RadioButton("GL_TRIANGLE_FAN", &g_drawMode, GL_TRIANGLE_FAN);
+      ImGui::RadioButton("GL_QUADS", &g_drawMode, GL_QUADS);
+      ImGui::RadioButton("GL_QUAD_STRIP", &g_drawMode, GL_QUAD_STRIP);
+      ImGui::RadioButton("GL_POLYGON", &g_drawMode, GL_POLYGON);
     }
     if (ImGui::CollapsingHeader("World"))
     {
-      ImGui::ColorEdit3("Ambient color", (float*)&AMBIENT_COLOR);
-      ImGui::SliderFloat("Ambient intensity", &AMBIENT_INTENSITY, 0.0f, 1.0f);
-    }
-    if (ImGui::CollapsingHeader("Shadows"))
-    {
-      ImGui::DragFloat3("Light position", &lightPosition[0], 0.1f, -100, 100);
+      ImGui::ColorEdit3("Ambient color", (float*)&g_ambientColor);
+      ImGui::SliderFloat("Ambient intensity", &g_ambientIntensity, 0.0f, 1.0f);
     }
     
+    ImGui::End();
+  }
+
+  void RenderDepthMap(uint32_t tetxureID)
+  {
+    ImGuiStyle& style = ImGui::GetStyle();
+    const ImVec2 paddingTmp = style.WindowPadding;
+    style.WindowPadding = { 0.0f, 0.0f };
+
+    ImGui::Begin("Depth map", nullptr);
+    ImGui::BeginChild("Map");
+
+    ImGui::Image(reinterpret_cast<void*>(tetxureID), { 1024,1024 }, ImVec2(0, 1), ImVec2(1, 0));
+
+    ImGui::EndChild();
+    ImGui::End();
+
+    style.WindowPadding = paddingTmp;
+  }
+
+  void RenderCameraProps(const char* label, Camera& camera)
+  {
+    ImGui::Begin(label, nullptr);
+
+    ImGui::DragFloat("zNear", &camera.frustum.zNear, 0.1f, 0.1f, 200.0f);
+    ImGui::DragFloat("zFar", &camera.frustum.zFar, 0.1f, 0.1f, 200.0f);
+    ImGui::DragFloat("Left", &camera.frustum.left, 0.1f, -100.0f, 0.0f);
+    ImGui::DragFloat("Right", &camera.frustum.right, 0.1f, 0.0f, 100.0f);
+    ImGui::DragFloat("Top", &camera.frustum.top, 0.1f, 0.0f, 100.0f);
+    ImGui::DragFloat("Bottom", &camera.frustum.bottom, 0.1f, -100.0f, 0.0);
+
+    ImGui::DragFloat("Yaw", &camera.yaw, 0.1f, -360.0f, 360);
+    ImGui::DragFloat("Pitch", &camera.pitch, 0.1f, -360, 360);
+    ImGui::DragFloat("Roll", &camera.roll, 0.1f, -360, 360.0f);
+    ImGui::DragFloat3("Position", (float*)&camera.position, 0.1f, -infinity, infinity);
+
+    ImGui::DragFloat("Fov", &camera.fov, 0.1f, 0.0f, 180.0f);
+
+    ImGui::End();
+  }
+
+  void RenderDebug(Camera& camera)
+  {
+    ImGui::Begin("Debug", nullptr);
+
+    ImGui::DragFloat("zNear", &camera.frustum.zNear, 0.1f, 0.1f, 200.0f);
+    ImGui::DragFloat("zFar", &camera.frustum.zFar, 0.1f, 0.1f, 100.0f);
+    ImGui::DragFloat("Left", &camera.frustum.left, 0.1f, -100.0f, 100.0f);
+    ImGui::DragFloat("Right", &camera.frustum.right, 0.1f, -100.0f, 100.0f);
+    ImGui::DragFloat("Top", &camera.frustum.top, 0.1f, -100.0f, 100.0f);
+    ImGui::DragFloat("Bottom", &camera.frustum.bottom, 0.1f, -100.0f, 100.0f);
+
+    ImGui::DragFloat("Yaw", &camera.yaw, 0.1f, -180.0f, 180.0f);
+    ImGui::DragFloat("Pitch", &camera.pitch, 0.1f, -180.0f, 180.0f);
+    ImGui::DragFloat("Roll", &camera.roll, 0.1f, -180.0f, 180.0f);
+    ImGui::DragFloat3("Position", (float*)&camera.position, 0.1f, -1000.0f, 1000.0f);
+
     ImGui::End();
   }
 }
