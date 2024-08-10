@@ -378,7 +378,7 @@ void Engine::Run()
 
   auto lastUpdateTime = chrono::high_resolution_clock::now();
   bool renderingShadowsMode = false;
-  bool useNormalMap = false;
+  bool useNormalMap = true;
   
   /* ------------------------------------------------------------------ */
   /* -------------------------- loop section -------------------------- */
@@ -451,7 +451,7 @@ void Engine::Run()
       glClear(GL_DEPTH_BUFFER_BIT);
 
       const vec3f& lightPos = pointLight->position;
-      mat4f pointLightProj = Math::Perspective(Math::Radians(90.0f), 1.0f, 0.1f, 30.0f);
+      mat4f pointLightProj = Math::Perspective(Math::Radians(90.0f), 1.0f, 0.1f, 15.0f);
 
       array<mat4f, 6> pointLightViews{};
       pointLightViews[0] = Math::LookAt(lightPos, lightPos + vec3f(1.0f, 0.0f, 0.0f), vec3f(0.0f, -1.0f, 0.0f));
@@ -470,7 +470,7 @@ void Engine::Run()
       depthCubeMapProgram->SetUniformMat4f("u_lightViews[4]", pointLightViews.at(4));
       depthCubeMapProgram->SetUniformMat4f("u_lightViews[5]", pointLightViews.at(5));
       depthCubeMapProgram->SetUniform3f("u_lightPos", lightPos);
-      depthCubeMapProgram->SetUniform1f("u_zFar", 30.0f);
+      depthCubeMapProgram->SetUniform1f("u_zFar", 15.0f);
 
       scene.Reg().view<Components::Model, Components::Transform>().each([&](auto& model, auto& transform) {
         depthCubeMapProgram->SetUniformMat4f("u_model", transform.GetTransformation());
@@ -513,12 +513,6 @@ void Engine::Run()
         sceneProgram->SetUniform3f("u_ambientLightColor", g_ambientColor);
         sceneProgram->SetUniform1f("u_ambientLightIntensity", g_ambientIntensity);
         sceneProgram->SetUniform1i("u_useNormalMap", useNormalMap);
-
-        sceneProgram->SetUniform1i("u_material.diffuseTexture", 0);
-        sceneProgram->SetUniform1i("u_material.specularTexture", 1);
-        sceneProgram->SetUniform1i("u_material.normalTexture", 2);
-        sceneProgram->SetUniform1i("u_material.heightTexture", 3);
-
         RenderScene(scene, sceneProgram);
       }
 

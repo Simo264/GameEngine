@@ -252,7 +252,7 @@ vec3 CalculateDirectionalLight(DirectionalLight light, vec3 normal, vec3 viewDir
 vec3 CalculateBlinnPhongLight(PointLight light, vec3 normal, vec3 viewDir) 
 {
   const vec3 tangentLightPosition = TBN * light.position;
-  const float zFar = 30.0f;
+  const float zFar = 15.0f;
   
   /* Light direction */
   vec3 lightDir;
@@ -281,12 +281,7 @@ vec3 CalculateBlinnPhongLight(PointLight light, vec3 normal, vec3 viewDir)
   diffuse  *= attenuation;
   specular *= attenuation;
 
-  float shadow = 0.0f;
-  if(IsNormalMapActive() && HasNormalTexture())
-    shadow = CalculatePointLightShadows(zFar,  tangentLightPosition);
-  else
-    shadow = CalculatePointLightShadows(zFar,  light.position);
-  
+  float shadow = CalculatePointLightShadows(zFar, light.position);
   return ((1.0 - shadow) * (diffuse + specular)) * g_diffuseColor.rgb;   
 }
 vec3 CalculateSpotLight(SpotLight light, vec3 normal, vec3 viewDir) 
