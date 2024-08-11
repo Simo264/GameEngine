@@ -251,11 +251,11 @@ static void CreateDepthCubeMapFbo(FrameBuffer& fbo, int width, int height)
   fbo.AttachTexture(GL_DEPTH_ATTACHMENT, texture.id, 0);
 }
 
-static void CreateDefaultTexture(Texture2D& texture, array<byte, 3> textureData)
+static void CreateDefaultTexture(Texture2D& texture, byte* textureData)
 {
   texture.Create();
   texture.CreateStorage(GL_RGB8, 1, 1);
-  texture.UpdateStorage(0, 0, 0, GL_UNSIGNED_BYTE, textureData.data());
+  texture.UpdateStorage(0, 0, 0, GL_UNSIGNED_BYTE, textureData);
   texture.SetParameteri(GL_TEXTURE_WRAP_S, GL_REPEAT);
   texture.SetParameteri(GL_TEXTURE_WRAP_T, GL_REPEAT);
   texture.SetParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -304,13 +304,13 @@ void Engine::Initialize()
   /* ------------- */
   /* !!The first 4 positions are reserved for the default textures */
   Texture2D defaultDiffuseTexture(GL_TEXTURE_2D);
-  CreateDefaultTexture(defaultDiffuseTexture, array<byte, 3>{ byte(105), byte(105), byte(255) });
+  CreateDefaultTexture(defaultDiffuseTexture, array<byte, 3>{ byte(105), byte(105), byte(255) }.data());
   Texture2D defaultSpecularTexture(GL_TEXTURE_2D);
-  CreateDefaultTexture(defaultSpecularTexture, array<byte, 3>{ byte(255), byte(255), byte(255) });
+  CreateDefaultTexture(defaultSpecularTexture, array<byte, 3>{ byte(255), byte(255), byte(255) }.data());
   Texture2D defaultNormalTexture(GL_TEXTURE_2D);
-  CreateDefaultTexture(defaultNormalTexture, array<byte, 3>{ byte(0), byte(0), byte(0) });
+  CreateDefaultTexture(defaultNormalTexture, array<byte, 3>{ byte(0), byte(0), byte(0) }.data());
   Texture2D defaultHeightTexture(GL_TEXTURE_2D);
-  CreateDefaultTexture(defaultHeightTexture, array<byte, 3>{ byte(0), byte(0), byte(0) });
+  CreateDefaultTexture(defaultHeightTexture, array<byte, 3>{ byte(0), byte(0), byte(0) }.data());
   g_textureManager.LoadTexture(defaultDiffuseTexture);
   g_textureManager.LoadTexture(defaultSpecularTexture);
   g_textureManager.LoadTexture(defaultNormalTexture);
@@ -323,9 +323,7 @@ void Engine::Initialize()
   CreateScreenSquare();
 
   /* Initialize uniform block objects */
-  _uboCamera.target = GL_UNIFORM_BUFFER;
-  _uboCamera.Create();
-  _uboCamera.CreateStorage(2 * sizeof(mat4f), nullptr, GL_STATIC_DRAW);
+  _uboCamera = Buffer(GL_UNIFORM_BUFFER, 2 * sizeof(mat4f), nullptr, GL_STATIC_DRAW);
   _uboCamera.BindBase(0); /* cameraBlock to bindingpoint 0 */
 
   SetOpenGLStates();
