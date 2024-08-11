@@ -187,5 +187,5 @@ public:
 
   uint32_t id;
 
-  string name; /* The name of the program */
+  string name;
 };

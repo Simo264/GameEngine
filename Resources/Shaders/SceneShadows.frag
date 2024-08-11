@@ -115,7 +115,7 @@ void main()
   g_diffuseColor  = texture(u_material.diffuseTexture, textureCoord);
   g_specularColor = texture(u_material.specularTexture, textureCoord);
 
-  const vec3 ambientLight = u_ambientLightColor * u_ambientLightIntensity;
+  const vec3 ambientLight = (u_ambientLightColor * u_ambientLightIntensity) * g_diffuseColor.rgb;
   vec3 result = vec3(0.0f);
 
   /* =========================== */
@@ -271,12 +271,7 @@ vec3 CalculateBlinnPhongLight(PointLight light, vec3 normal, vec3 viewDir)
   vec3 specular = (light.color * light.specularIntensity) * specFactor * g_specularColor.rgb;
 
   /* Attenuation */
-  float lightDist;
-  if(IsNormalMapActive() && HasNormalTexture())
-    lightDist = length(tangentLightPosition - TangentFragPos);
-  else
-    lightDist = length(light.position - FragPos);
-
+  const float lightDist = length(light.position - FragPos);
   const float attenuation = CalculateAttenuation(lightDist, light.attenuation.kl, light.attenuation.kq);
   diffuse  *= attenuation;
   specular *= attenuation;
@@ -314,16 +309,11 @@ vec3 CalculateSpotLight(SpotLight light, vec3 normal, vec3 viewDir)
   specular *= intensity;
 
   /* Attenuation */
-  float lightDist;
-  if(IsNormalMapActive() && HasNormalTexture())
-    lightDist = length(tangentLightPosition - TangentFragPos);
-  else
-    lightDist = length(light.position - FragPos);
-  
+  const float lightDist = length(light.position - FragPos);
   const float attenuation = CalculateAttenuation(lightDist, light.attenuation.kl, light.attenuation.kq);
-  
   diffuse  *= attenuation;
   specular *= attenuation;
+  
   return diffuse + specular;
 }
 
@@ -342,40 +332,56 @@ float CalculateDirLightShadows(vec3 normal, vec3 lightDir)
   if(projCoords.z > 1.0) 
     return 0.0;
   
-  /* Resolve the problem of shadow acne with bias */
-  float bias = 0.005f;
-  float shadow = currentDepth - bias > closestDepth  ? 1.0 : 0.0;  
-  return shadow; 
-
-  /* Percentage-closer filtering (PCF) */
-  //float shadow = 0.0f;
-  //vec2 texelSize = 1.0 / textureSize(u_depthMapTexture, 0);
-  //for(int x = -1; x <= 1; ++x)
-  //{
-  //  for(int y = -1; y <= 1; ++y)
-  //  {
-  //    float pcfDepth = texture(u_depthMapTexture, projCoords.xy + vec2(x, y) * texelSize).r; 
-  //    shadow += currentDepth - bias > pcfDepth ? 1.0 : 0.0;        
-  //  }    
-  //}
-  //shadow /= 9.0;
-  //return shadow;
+  /* Percentage-closer filtering */
+  const float bias = 0.002f;
+  const int pcfCount = 2;
+  const int totalTexels = (pcfCount * 2 + 1) * (pcfCount * 2 + 1);
+  const vec2 texelSize = 1.0 / textureSize(u_depthMapTexture, 0);
+  float shadow = 0.0f;
+  for(int x = -pcfCount; x <= pcfCount; ++x)
+  {
+    for(int y = -pcfCount; y <= pcfCount; ++y)
+    {
+      const float pcfDepth = texture(u_depthMapTexture, projCoords.xy + vec2(x, y) * texelSize).r; 
+      if(currentDepth - bias > pcfDepth)
+        shadow++;
+    }    
+  }
+  shadow /= totalTexels;
+  return shadow;
 }
 float CalculatePointLightShadows(float zFar, vec3 lightPos)
 {
-  // get vector between fragment position and light position
-  vec3 fragToLight = FragPos - lightPos;
-  // ise the fragment to light vector to sample from the depth map    
-  float closestDepth = texture(u_depthCubeMapTexture, fragToLight).r;
-  // it is currently in linear range between [0,1], let's re-transform it back to original depth value
-  closestDepth *= zFar;
-  // now get current linear depth as the length between the fragment and light position
-  float currentDepth = length(fragToLight);
-  
-  float bias = 0.05; 
-  float shadow = currentDepth -  bias > closestDepth ? 1.0 : 0.0; 
-  return shadow;
+  /* get vector between fragment position and light position */ 
+  const vec3 fragToLight = FragPos - lightPos;
+  /* now get current linear depth as the length between the fragment and light position */ 
+  const float currentDepth = length(fragToLight);
+
+  const float viewDistance = length(ViewPos - FragPos);
 
   /* Percentage-closer filtering (PCF) */
-  // ....
+  const vec3 sampleOffsetDirections[20] = vec3[]
+  (
+     vec3( 1,  1,  1), vec3( 1, -1,  1), vec3(-1, -1,  1), vec3(-1,  1,  1), 
+     vec3( 1,  1, -1), vec3( 1, -1, -1), vec3(-1, -1, -1), vec3(-1,  1, -1),
+     vec3( 1,  1,  0), vec3( 1, -1,  0), vec3(-1, -1,  0), vec3(-1,  1,  0),
+     vec3( 1,  0,  1), vec3(-1,  0,  1), vec3( 1,  0, -1), vec3(-1,  0, -1),
+     vec3( 0,  1,  1), vec3( 0, -1,  1), vec3( 0, -1, -1), vec3( 0,  1, -1)
+  );
+  const int samples = 20;
+  const float offset  = 0.1f;
+  const float diskRadius = 0.05;
+  const float bias = 0.10f;
+  float shadow = 0.0f;
+  for(int i = 0; i < samples; i++)
+  {
+    float closestDepth = texture(u_depthCubeMapTexture, fragToLight + sampleOffsetDirections[i] * diskRadius).r;
+    closestDepth *= zFar;
+
+    if(currentDepth - bias > closestDepth)
+        shadow++;
+  }
+
+  shadow /= samples;
+  return shadow;
 }

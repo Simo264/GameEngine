@@ -121,7 +121,7 @@ void Program::SetUniformBlockBinding(const char* blockname, int uniformBlockBind
 {
   int blockIndex = GetUniformBlockIndex(blockname);
   if (blockIndex == GL_INVALID_INDEX)
-    CONSOLE_WARN("Invalid uniform block index");
+    CONSOLE_WARN("Program {}: invalid uniform block index '{}'", name, blockname);
 
   glUniformBlockBinding(id, blockIndex, uniformBlockBinding);
 }
@@ -129,88 +129,88 @@ void Program::SetUniformBlockBinding(const char* blockname, int uniformBlockBind
 void Program::SetUniform1i(const char* uniformname, int value) const
 {
   int loc = GetUniformLocation(uniformname);
-  if(loc == GL_INVALID_VALUE)
-    CONSOLE_WARN("Invalid uniform location value");
+  if (loc == -1)
+    CONSOLE_WARN("Program {}: '{}' is not an active uniform variable", name, uniformname);
 
   glProgramUniform1i(id, loc, value);
 }
 void Program::SetUniform2i(const char* uniformname, const vec2i32& value) const
 {
   int loc = GetUniformLocation(uniformname);
-  if (loc == GL_INVALID_VALUE)
-    CONSOLE_WARN("Invalid uniform location value");
+  if (loc == -1)
+    CONSOLE_WARN("Program {}: '{}' is not an active uniform variable", name, uniformname);
 
   glProgramUniform2i(id, loc, value.x, value.y);
 }
 void Program::SetUniform3i(const char* uniformname, const vec3i32& value) const
 {
   int loc = GetUniformLocation(uniformname);
-  if (loc == GL_INVALID_VALUE)
-    CONSOLE_WARN("Invalid uniform location value");
+  if (loc == -1)
+    CONSOLE_WARN("Program {}: '{}' is not an active uniform variable", name, uniformname);
 
   glProgramUniform3i(id, loc, value.x, value.y, value.z);
 }
 void Program::SetUniform4i(const char* uniformname, const vec4i32& value) const
 {
   int loc = GetUniformLocation(uniformname);
-  if (loc == GL_INVALID_VALUE)
-    CONSOLE_WARN("Invalid uniform location value");
+  if (loc == -1)
+    CONSOLE_WARN("Program {}: '{}' is not an active uniform variable", name, uniformname);
 
   glProgramUniform4i(id, loc, value.x, value.y, value.z, value.w);
 }
 void Program::SetUniform1f(const char* uniformname, float value) const
 {
   int loc = GetUniformLocation(uniformname);
-  if (loc == GL_INVALID_VALUE)
-    CONSOLE_WARN("Invalid uniform location value");
+  if (loc == -1)
+    CONSOLE_WARN("Program {}: '{}' is not an active uniform variable", name, uniformname);
 
   glProgramUniform1f(id, loc, value);
 }
 void Program::SetUniform2f(const char* uniformname, const vec2f& value) const
 {
   int loc = GetUniformLocation(uniformname);
-  if (loc == GL_INVALID_VALUE)
-    CONSOLE_WARN("Invalid uniform location value");
+  if (loc == -1)
+    CONSOLE_WARN("Program {}: '{}' is not an active uniform variable", name, uniformname);
 
   glProgramUniform2f(id, loc, value.x, value.y);
 }
 void Program::SetUniform3f(const char* uniformname, const vec3f& value) const
 {
   int loc = GetUniformLocation(uniformname);
-  if (loc == GL_INVALID_VALUE)
-    CONSOLE_WARN("Invalid uniform location value");
+  if (loc == -1)
+    CONSOLE_WARN("Program {}: '{}' is not an active uniform variable", name, uniformname);
 
   glProgramUniform3f(id, loc, value.x, value.y, value.z);
 }
 void Program::SetUniform4f(const char* uniformname, const vec4f& value) const
 { 
   int loc = GetUniformLocation(uniformname);
-  if (loc == GL_INVALID_VALUE)
-    CONSOLE_WARN("Invalid uniform location value");
+  if (loc == -1)
+    CONSOLE_WARN("Program {}: '{}' is not an active uniform variable", name, uniformname);
 
   glProgramUniform4f(id, loc, value.x, value.y, value.z, value.w);
 }
 void Program::SetUniformMat2f(const char* uniformname, const mat2f& value, bool transpose) const
 {
   int loc = GetUniformLocation(uniformname);
-  if (loc == GL_INVALID_VALUE)
-    CONSOLE_WARN("Invalid uniform location value");
+  if (loc == -1)
+    CONSOLE_WARN("Program {}: '{}' is not an active uniform variable", name, uniformname);
 
   glProgramUniformMatrix2fv(id, loc, 1, transpose, &value[0][0]);
 }
 void Program::SetUniformMat3f(const char* uniformname, const mat3f& value, bool transpose) const
 {
   int loc = GetUniformLocation(uniformname);
-  if (loc == GL_INVALID_VALUE)
-    CONSOLE_WARN("Invalid uniform location value");
+  if (loc == -1)
+    CONSOLE_WARN("Program {}: '{}' is not an active uniform variable", name, uniformname);
 
   glProgramUniformMatrix3fv(id, loc, 1, transpose, &value[0][0]);
 }
 void Program::SetUniformMat4f(const char* uniformname, const mat4f& value, bool transpose) const
 {
   int loc = GetUniformLocation(uniformname);
-  if (loc == GL_INVALID_VALUE)
-    CONSOLE_WARN("Invalid uniform location value");
+  if (loc == -1)
+    CONSOLE_WARN("Program {}: '{}' is not an active uniform variable", name, uniformname);
 
   glProgramUniformMatrix4fv(id, loc, 1, transpose, &value[0][0]);
 }
