@@ -121,7 +121,7 @@ void main()
   /* =========================== */
   /* Calculate directional light */
   /* =========================== */
-  result += CalculateDirectionalLight(u_directionalLight, normal, viewDir);
+  //result += CalculateDirectionalLight(u_directionalLight, normal, viewDir);
 
 
   /* ===================== */
@@ -170,10 +170,9 @@ vec2 CalculateParallaxCoord(vec3 viewDir, float heightScale)
   
   /* Calculate the size of each layer */ 
   const float layerDepth = 1.0 / numLayers;
-  
   /* Depth of current layer */ 
   float currentLayerDepth = 0.0;
-
+  
   /* The amount to shift the texture coordinates per layer (from vector P) */ 
   const vec2 P = viewDir.xy / viewDir.z * heightScale; 
   const vec2 deltaTexCoords = P / numLayers;
@@ -236,23 +235,22 @@ vec3 CalculateDirectionalLight(DirectionalLight light, vec3 normal, vec3 viewDir
 {
   const vec3 lightDir = normalize(-light.direction);
     
-  /* diffuse shading */ 
+  /* Diffuse shading */ 
   const float diffFactor = max(dot(lightDir, normal), 0.0);
   const vec3 diffuse = (light.color * light.diffuseIntensity) * diffFactor * g_diffuseColor.rgb;
 
-  /* specular shading */ 
+  /* Specular shading */ 
   const vec3 halfwayDir = normalize(lightDir + viewDir);
   const float specFactor = pow(max(dot(normal, halfwayDir), 0.0), g_shininess);
   const vec3 specular = (light.color * light.specularIntensity) * specFactor * g_specularColor.rgb;
 
-  /* calculate shadow */
+  /* Calculate shadow */
   const float shadow = CalculateDirLightShadows(normal, lightDir);
   return ((1.0f - shadow) * (diffuse + specular)) * g_diffuseColor.rgb;  
 }
 vec3 CalculateBlinnPhongLight(PointLight light, vec3 normal, vec3 viewDir) 
 {
   const vec3 tangentLightPosition = TBN * light.position;
-  const float zFar = 15.0f;
   
   /* Light direction */
   vec3 lightDir;
@@ -261,11 +259,11 @@ vec3 CalculateBlinnPhongLight(PointLight light, vec3 normal, vec3 viewDir)
   else
     lightDir = normalize(light.position - FragPos);
    
-  /* Diffuse */
+  /* Diffuse shading */
   const float diffFactor = max(dot(normal, lightDir), 0.0);
   vec3 diffuse = (light.color * light.diffuseIntensity) * diffFactor * g_diffuseColor.rgb;
    
-  /* Specular */
+  /* Specular shading */
   const vec3 halfwayDir = normalize(lightDir + viewDir);  
   const float specFactor = pow(max(dot(normal, halfwayDir), 0.0), g_shininess);
   vec3 specular = (light.color * light.specularIntensity) * specFactor * g_specularColor.rgb;
@@ -276,7 +274,8 @@ vec3 CalculateBlinnPhongLight(PointLight light, vec3 normal, vec3 viewDir)
   diffuse  *= attenuation;
   specular *= attenuation;
 
-  float shadow = CalculatePointLightShadows(zFar, light.position);
+  const float zFar = 15.0f;
+  const float shadow = CalculatePointLightShadows(zFar, light.position);
   return ((1.0 - shadow) * (diffuse + specular)) * g_diffuseColor.rgb;   
 }
 vec3 CalculateSpotLight(SpotLight light, vec3 normal, vec3 viewDir) 

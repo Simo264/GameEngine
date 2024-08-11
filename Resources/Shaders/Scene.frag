@@ -118,7 +118,7 @@ void main()
   /* =========================== */
   /* Calculate directional light */
   /* =========================== */
-  result += CalculateDirectionalLight(u_directionalLight, normal, viewDir);
+  //result += CalculateDirectionalLight(u_directionalLight, normal, viewDir);
 
 
   /* ===================== */
@@ -238,11 +238,11 @@ vec3 CalculateDirectionalLight(DirectionalLight light, vec3 normal, vec3 viewDir
 {
   const vec3 lightDir = normalize(-light.direction);
     
-  /* diffuse shading */ 
+  /* Diffuse shading */ 
   const float diffFactor = max(dot(lightDir, normal), 0.0);
   const vec3 diffuse = (light.color * light.diffuseIntensity) * diffFactor * g_diffuseColor.rgb;
 
-  /* specular shading */ 
+  /* Specular shading */ 
   const vec3 halfwayDir = normalize(lightDir + viewDir);
   const float specFactor = pow(max(dot(normal, halfwayDir), 0.0), g_shininess);
   const vec3 specular = (light.color * light.specularIntensity) * specFactor * g_specularColor.rgb;
@@ -260,22 +260,17 @@ vec3 CalculateBlinnPhongLight(PointLight light, vec3 normal, vec3 viewDir)
   else
     lightDir = normalize(light.position - FragPos);
    
-  /* Diffuse */
+  /* Diffuse shading */
   const float diffFactor = max(dot(normal, lightDir), 0.0);
   vec3 diffuse = (light.color * light.diffuseIntensity) * diffFactor * g_diffuseColor.rgb;
    
-  /* Specular */
+  /* Specular shading */
   const vec3 halfwayDir = normalize(lightDir + viewDir);  
   const float specFactor = pow(max(dot(normal, halfwayDir), 0.0), g_shininess);
   vec3 specular = (light.color * light.specularIntensity) * specFactor * g_specularColor.rgb;
 
   /* Attenuation */
-  float lightDist;
-  if(IsNormalMapActive() && HasNormalTexture())
-    lightDist = length(tangentLightPosition - TangentFragPos);
-  else
-    lightDist = length(light.position - FragPos);
-
+  const float lightDist = length(light.position - FragPos);
   const float attenuation = CalculateAttenuation(lightDist, light.attenuation.kl, light.attenuation.kq);
   diffuse  *= attenuation;
   specular *= attenuation;
@@ -312,12 +307,7 @@ vec3 CalculateSpotLight(SpotLight light, vec3 normal, vec3 viewDir)
   specular *= intensity;
 
   /* Attenuation */
-  float lightDist;
-  if(IsNormalMapActive() && HasNormalTexture())
-    lightDist = length(tangentLightPosition - TangentFragPos);
-  else
-    lightDist = length(light.position - FragPos);
-  
+  const float lightDist = length(light.position - FragPos);
   const float attenuation = CalculateAttenuation(lightDist, light.attenuation.kl, light.attenuation.kq);
   diffuse  *= attenuation;
   specular *= attenuation;
