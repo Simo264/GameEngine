@@ -1,7 +1,7 @@
 ﻿#pragma once
 
 #include "Core/Core.hpp"
-#include "Engine/Graphics/Buffer.hpp"
+#include "Engine/Graphics/Objects/Buffer.hpp"
 
 /**  
  *  https://www.khronos.org/opengl/wiki/Vertex_Specification 

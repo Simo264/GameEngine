@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Core/Core.hpp"
-#include "Engine/Graphics/Texture2D.hpp"
+#include "Engine/Graphics/Objects/Texture2D.hpp"
 
 /**
  * Load and retrieve texture objects from the array

@@ -3,7 +3,7 @@
 #include "Core/OpenGL.hpp"
 #include "Core/Log/Logger.hpp"
 
-#include "Engine/Graphics/VertexArray.hpp"
+#include "Engine/Graphics/Containers/VertexArray.hpp"
 #include "Engine/Globals.hpp"
 
 namespace Renderer

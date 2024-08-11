@@ -13,9 +13,9 @@
 #include "Engine/Graphics/Depth.hpp"
 #include "Engine/Graphics/Stencil.hpp"
 #include "Engine/Graphics/Culling.hpp"
-#include "Engine/Graphics/RenderBuffer.hpp"
-#include "Engine/Graphics/Texture2D.hpp"
-#include "Engine/Graphics/TextureCubemap.hpp"
+#include "Engine/Graphics/Objects/RenderBuffer.hpp"
+#include "Engine/Graphics/Objects/Texture2D.hpp"
+#include "Engine/Graphics/Objects/TextureCubemap.hpp"
 #include "Engine/Graphics/Shader.hpp"
 #include "Engine/Graphics/Renderer.hpp"
 

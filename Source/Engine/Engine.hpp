@@ -2,9 +2,9 @@
 
 #include "Core/Core.hpp"
 
-#include "Engine/Graphics/Buffer.hpp"
-#include "Engine/Graphics/VertexArray.hpp"
-#include "Engine/Graphics/FrameBuffer.hpp"
+#include "Engine/Graphics/Objects/Buffer.hpp"
+#include "Engine/Graphics/Containers/VertexArray.hpp"
+#include "Engine/Graphics/Containers/FrameBuffer.hpp"
 
 class Engine
 {

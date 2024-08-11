@@ -8,7 +8,7 @@
 
 #include "Engine/Graphics/Vertex.hpp"
 #include "Engine/Graphics/Shader.hpp"
-#include "Engine/Graphics/Texture2D.hpp"
+#include "Engine/Graphics/Objects/Texture2D.hpp"
 #include "Engine/Graphics/Renderer.hpp"
 #include "Engine/Subsystems/TextureManager.hpp"
 

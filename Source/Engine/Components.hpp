@@ -3,7 +3,7 @@
 #include "Core/Core.hpp"
 #include "Core/Math/Math.hpp"
 #include "Engine/Material.hpp"
-#include "Engine/Graphics/VertexArray.hpp"
+#include "Engine/Graphics/Containers/VertexArray.hpp"
 
 class Texture2D;
 
