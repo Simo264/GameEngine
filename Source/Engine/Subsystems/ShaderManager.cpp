@@ -79,8 +79,6 @@ void ShaderManager::SetUpProgramsUniforms()
   sceneProg->SetUniform1i("u_material.normalTexture", 2);
   sceneProg->SetUniform1i("u_material.heightTexture", 3);
   sceneProg->SetUniform1i("u_useNormalMap", 0);
-  sceneProg->SetUniform1i("u_useParallaxMap", 0);
-  sceneProg->SetUniform1f("u_parallaxHeight", 0.0f);
 
   auto sceneShadowsProg = GetProgram("SceneShadows");
   sceneShadowsProg->SetUniform1i("u_material.diffuseTexture", 0);
@@ -90,8 +88,6 @@ void ShaderManager::SetUpProgramsUniforms()
   sceneShadowsProg->SetUniform1i("u_depthMapTexture", 10);
   sceneShadowsProg->SetUniform1i("u_depthCubeMapTexture", 11);
   sceneShadowsProg->SetUniform1i("u_useNormalMap", 0);
-  sceneShadowsProg->SetUniform1i("u_useParallaxMap", 0);
-  sceneShadowsProg->SetUniform1f("u_parallaxHeight", 0.0f);
 
   auto skyboxProg = GetProgram("Skybox");
   skyboxProg->SetUniform1i("u_skyboxTexture", 0);

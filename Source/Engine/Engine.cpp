@@ -251,11 +251,11 @@ static void CreateDepthCubeMapFbo(FrameBuffer& fbo, int width, int height)
   fbo.AttachTexture(GL_DEPTH_ATTACHMENT, texture.id, 0);
 }
 
-static void CreateDefaultTexture(Texture2D& texture, byte* textureData)
+static void CreateDefaultTexture(Texture2D& texture, array<byte, 3> textureData)
 {
   texture.Create();
   texture.CreateStorage(GL_RGB8, 1, 1);
-  texture.UpdateStorage(0, 0, 0, GL_UNSIGNED_BYTE, textureData);
+  texture.UpdateStorage(0, 0, 0, GL_UNSIGNED_BYTE, textureData.data());
   texture.SetParameteri(GL_TEXTURE_WRAP_S, GL_REPEAT);
   texture.SetParameteri(GL_TEXTURE_WRAP_T, GL_REPEAT);
   texture.SetParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -304,13 +304,13 @@ void Engine::Initialize()
   /* ------------- */
   /* !!The first 4 positions are reserved for the default textures */
   Texture2D defaultDiffuseTexture(GL_TEXTURE_2D);
-  CreateDefaultTexture(defaultDiffuseTexture, array<byte, 3>{ byte(105), byte(105), byte(255) }.data());
+  CreateDefaultTexture(defaultDiffuseTexture, array<byte, 3>{ byte(128), byte(128), byte(255) });
   Texture2D defaultSpecularTexture(GL_TEXTURE_2D);
-  CreateDefaultTexture(defaultSpecularTexture, array<byte, 3>{ byte(255), byte(255), byte(255) }.data());
+  CreateDefaultTexture(defaultSpecularTexture, array<byte, 3>{ byte(255), byte(255), byte(255) });
   Texture2D defaultNormalTexture(GL_TEXTURE_2D);
-  CreateDefaultTexture(defaultNormalTexture, array<byte, 3>{ byte(0), byte(0), byte(0) }.data());
+  CreateDefaultTexture(defaultNormalTexture, array<byte, 3>{ byte(0), byte(0), byte(0) });
   Texture2D defaultHeightTexture(GL_TEXTURE_2D);
-  CreateDefaultTexture(defaultHeightTexture, array<byte, 3>{ byte(0), byte(0), byte(0) }.data());
+  CreateDefaultTexture(defaultHeightTexture, array<byte, 3>{ byte(0), byte(0), byte(0) });
   g_textureManager.LoadTexture(defaultDiffuseTexture);
   g_textureManager.LoadTexture(defaultSpecularTexture);
   g_textureManager.LoadTexture(defaultNormalTexture);
