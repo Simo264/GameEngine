@@ -74,7 +74,7 @@ void TextureCubemap::SetParameterfv(int name, float* values) const
 
 void TextureCubemap::LoadImages(const array<Texture2D*, 6>& images) const
 {
-  int nrChannels = images.at(0)->nrChannels;
+  int nrChannels = images.at(0)->nChannels;
   int width = images.at(0)->width;
   int height = images.at(0)->height;
   int bufsize = width * height * nrChannels;

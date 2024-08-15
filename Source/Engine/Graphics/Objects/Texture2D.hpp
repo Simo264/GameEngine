@@ -160,7 +160,7 @@ public:
 
   int height;
 
-  int nrChannels;
+  int nChannels;
   
   fs::path path;
 };

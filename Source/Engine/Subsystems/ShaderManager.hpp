@@ -42,7 +42,13 @@ public:
 	 * Load the program object in program array
 	 * @param name: the program name
 	 */
-	Program& LoadProgram(const char* name, Shader* vertex, Shader* geometry, Shader* fragment);
+	Program& LoadProgram(const char* name,
+		Shader* vertex,
+		Shader* tesc,
+		Shader* tese,
+		Shader* geometry,
+		Shader* fragment
+	);
 
 	/**
 	 * Retrieve the program object from program array

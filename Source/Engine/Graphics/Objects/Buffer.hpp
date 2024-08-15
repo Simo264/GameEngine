@@ -13,7 +13,7 @@ class Buffer
 {
 public:
 	Buffer();
-	Buffer(int target, uint64_t size, const float* data, int usage);
+	Buffer(int target, uint64_t size, const void* data, int usage);
 	~Buffer() = default;
 
 	/**

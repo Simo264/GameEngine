@@ -70,8 +70,8 @@ public:
 	 */
 	mat4f CalculateOrtho() const;
 
-	void ProcessKeyboard(float delta);
-	void ProcessMouse(float delta);
+	void ProcessKeyboard(float delta, float movementSpeed);
+	void ProcessMouse(float delta, float mouseSensitivity);
 
 private:
 	/* Orientation vectors */

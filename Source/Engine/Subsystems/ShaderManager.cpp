@@ -41,10 +41,15 @@ void ShaderManager::LoadShadersFromDir(const fs::path& dirpath)
 
       if (ext.compare("vert") == 0)
         LoadShader(path, GL_VERTEX_SHADER);
-      else if (ext.compare("frag") == 0)
-        LoadShader(path, GL_FRAGMENT_SHADER);
+
+      else if (ext.compare("tesc") == 0)
+        LoadShader(path, GL_TESS_CONTROL_SHADER);
+      else if (ext.compare("tese") == 0)
+        LoadShader(path, GL_TESS_EVALUATION_SHADER);
       else if (ext.compare("geom") == 0)
         LoadShader(path, GL_GEOMETRY_SHADER);
+      else if (ext.compare("frag") == 0)
+        LoadShader(path, GL_FRAGMENT_SHADER);
       else
         CONSOLE_WARN("Error on loading shader {}: unknown .{} file extension", filename.c_str(), ext.c_str());
     }
@@ -58,13 +63,17 @@ void ShaderManager::LoadPrograms()
   for (auto const& it : conf.GetData())
   {
     const string& section = it.first;
-    const string vertex   = conf.GetValue(section.c_str(), "vertex");
+    const string vertex = conf.GetValue(section.c_str(), "vertex");
+    const string tesc = conf.GetValue(section.c_str(), "tess_control");
+    const string tese = conf.GetValue(section.c_str(), "tess_eval");
     const string geometry = conf.GetValue(section.c_str(), "geometry");
     const string fragment = conf.GetValue(section.c_str(), "fragment");
-    Shader* vs = GetShader(vertex.c_str());
-    Shader* gs = GetShader(geometry.c_str());
-    Shader* fs = GetShader(fragment.c_str());
-    LoadProgram(section.c_str(), vs, gs, fs);
+    Shader* vertShader = GetShader(vertex.c_str());
+    Shader* tescShader = GetShader(tesc.c_str());
+    Shader* teseShader = GetShader(tese.c_str());
+    Shader* geomShader = GetShader(geometry.c_str());
+    Shader* fragShader = GetShader(fragment.c_str());
+    LoadProgram(section.c_str(), vertShader, tescShader, teseShader, geomShader, fragShader);
   }
 }
 void ShaderManager::SetUpProgramsUniforms()
@@ -95,27 +104,26 @@ void ShaderManager::SetUpProgramsUniforms()
 
 Shader& ShaderManager::LoadShader(const fs::path& filepath, int shaderType)
 {
-  if (!fs::exists(filepath))
-    CONSOLE_WARN("File {} does not exist", filepath.string().c_str());
-
   string filepathstr = filepath.string();
-  string filename = filepath.filename().string();
+  if (!fs::exists(filepath))
+    CONSOLE_WARN("File {} does not exist", filepathstr);
 
+  
   Shader& shader = shaders.emplace_back();
   shader.Create(shaderType);
-  shader.filename = filename;
+  shader.filename = filepath.filename().string();
 
-  string filecontent;
+  string source;
   ifStream file(filepath);
   if (file)
-    filecontent.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
+    source.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
   else
-    CONSOLE_WARN("Error on opening file {}", filepath.string().c_str());
+    CONSOLE_WARN("Error on opening file {}", filepathstr);
 
-  shader.LoadSource(filecontent.c_str(), filecontent.size());
+  shader.LoadSource(source);
   bool compiled = shader.Compile();
   if (!compiled)
-    CONSOLE_WARN("Error on compiling shader {}: {}", filepathstr.c_str(), shader.GetShaderInfo());
+    CONSOLE_WARN("Error on compiling shader {}: {}", filepathstr, shader.GetShaderInfo());
 
   return shader;
 }
@@ -127,17 +135,26 @@ Shader* ShaderManager::GetShader(const char* filename)
   for (auto& shader : shaders)
     if (shader.filename.compare(filename) == 0)
       return &shader;
+
   return nullptr;
 }
 
-Program& ShaderManager::LoadProgram(const char* name, Shader* vertex, Shader* geometry, Shader* fragment)
+Program& ShaderManager::LoadProgram(const char* name,
+  Shader* vertex,
+  Shader* tesc,
+  Shader* tese,
+  Shader* geometry,
+  Shader* fragment
+)
 {
   Program& program = programs.emplace_back();
   program.Create();
   program.name = name;
-  if(vertex) program.AttachShader(*vertex);
-  if(geometry) program.AttachShader(*geometry);
-  if(fragment) program.AttachShader(*fragment);
+  if (vertex)    program.AttachShader(*vertex);
+  if (tesc)      program.AttachShader(*tesc);
+  if (tese)      program.AttachShader(*tese);
+  if (geometry)  program.AttachShader(*geometry);
+  if (fragment)  program.AttachShader(*fragment);
 
   bool link = program.Link();
   if (!link)
@@ -147,6 +164,9 @@ Program& ShaderManager::LoadProgram(const char* name, Shader* vertex, Shader* ge
 }
 Program* ShaderManager::GetProgram(const char* name)
 {
+  if (!name)
+    return nullptr;
+
   for (auto& program : programs)
     if (program.name.compare(name) == 0)
       return &program;

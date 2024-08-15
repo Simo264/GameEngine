@@ -19,4 +19,10 @@ namespace Utils
 
 	/* Parse strings { "1" "0" "true" "false" } to boolean */
 	bool StringToBool(const string& str);
+
+	/* Load image data with stbi_load function */
+	byte* LoadImageData(const fs::path& path, int& width, int& height, int& nChannels);
+
+	/* Call stbi_image_free function */
+	void FreeImageData(byte* data);
 };

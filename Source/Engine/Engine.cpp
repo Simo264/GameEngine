@@ -399,8 +399,8 @@ void Engine::Run()
     /* -------------------------- Input section -------------------------- */
     /* ------------------------------------------------------------------- */
     g_windowManager.PoolEvents();
-    primaryCamera.ProcessKeyboard(delta);
-    primaryCamera.ProcessMouse(delta);
+    primaryCamera.ProcessKeyboard(delta, 5.0f);
+    primaryCamera.ProcessMouse(delta, 15.0f);
 
     if (g_windowManager.GetKey(GLFW_KEY_F1) == GLFW_PRESS) renderingShadowsMode = false;
     else if (g_windowManager.GetKey(GLFW_KEY_F2) == GLFW_PRESS) renderingShadowsMode = true;

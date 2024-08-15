@@ -1,5 +1,10 @@
 #include "Utils.hpp"
 
+#include "Core/Log/Logger.hpp"
+
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
 namespace Utils
 {
 	vec2i32 StringToVec2i32(string& str, const char* sep)
@@ -57,5 +62,16 @@ namespace Utils
 	bool StringToBool(const string& str)
 	{
 		return (str.compare("1") == 0 || str.compare("true") == 0);
+	}
+
+	byte* LoadImageData(const fs::path& path, int& width, int& height, int& nChannels)
+	{
+		byte* data = reinterpret_cast<byte*>(stbi_load(path.string().c_str(), &width, &height, &nChannels, 0));
+		return data;
+	}
+
+	void FreeImageData(byte* data)
+	{
+		stbi_image_free(reinterpret_cast<void*>(data));
 	}
 };

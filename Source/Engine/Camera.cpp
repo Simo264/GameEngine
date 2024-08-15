@@ -51,9 +51,8 @@ mat4f Camera::CalculateOrtho() const
 	return Math::Ortho(frustum.left, frustum.right, frustum.bottom, frustum.top, frustum.zNear, frustum.zFar);
 }
 
-void Camera::ProcessKeyboard(float delta)
+void Camera::ProcessKeyboard(float delta, float movementSpeed)
 {
-	constexpr static float movementSpeed = 7.5f;
 	const float velocity = movementSpeed * delta;
 
 	/* W-S */
@@ -87,10 +86,8 @@ void Camera::ProcessKeyboard(float delta)
 	}
 }
 
-void Camera::ProcessMouse(float delta)
+void Camera::ProcessMouse(float delta, float mouseSensitivity)
 {
-	constexpr static float mouseSensitivity = 25.0f;
-
 	if (g_windowManager.GetMouseKey(GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
 	{
 		vec2d mousePos = g_windowManager.GetCursorPosition();

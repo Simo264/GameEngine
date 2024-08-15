@@ -1,10 +1,9 @@
 #include "Texture2D.hpp"
-#include "Core/Log/Logger.hpp"
 
 #include "Core/OpenGL.hpp"
+#include "Core/Log/Logger.hpp"
 
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
+#include "Engine/Utils.hpp"
 
 Texture2D::Texture2D(int target)
   : id{ 0 },
@@ -12,7 +11,7 @@ Texture2D::Texture2D(int target)
     path{},
     internalFormat{ GL_RGB8 },
     format{ GL_RGB },
-    nrChannels{ 3 },
+    nChannels{ 3 },
     width{ 0 },
     height{ 0 }
 {}
@@ -23,7 +22,7 @@ Texture2D::Texture2D(int target, const fs::path& path, bool gammaCorrection)
     path{},
     internalFormat{ GL_RGB8 },
     format{ GL_RGB },
-    nrChannels{ 3 },
+    nChannels{ 3 },
     width{ 0 },
     height{ 0 }
 {
@@ -87,8 +86,8 @@ void Texture2D::LoadImageData(const fs::path& path, bool gammaCorrection)
 {
   const string stringPath = path.string();
   
-  int width, height, nrChannels, internalFormat{ GL_RGB8 };
-  auto* data = stbi_load(stringPath.c_str(), &width, &height, &nrChannels, 0);
+  int width, height, nChannels, internalFormat{ GL_RGB8 };
+  byte* data = Utils::LoadImageData(path, width, height, nChannels);
   if (data)
   {
     /**
@@ -100,7 +99,7 @@ void Texture2D::LoadImageData(const fs::path& path, bool gammaCorrection)
      * GL_SRGB_ALPHA:  gamma correction: yes;  alpha component: yes   
      */
 
-    switch (nrChannels) 
+    switch (nChannels) 
     {
     case 1:
       internalFormat = GL_R8;
@@ -120,7 +119,7 @@ void Texture2D::LoadImageData(const fs::path& path, bool gammaCorrection)
       break;
     }
 
-    this->nrChannels = nrChannels;
+    this->nChannels = nChannels;
     this->path = path;
 
     SetParameteri(GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -137,7 +136,7 @@ void Texture2D::LoadImageData(const fs::path& path, bool gammaCorrection)
     CONSOLE_ERROR("Failed to load texture {}", stringPath);
   }
 
-  stbi_image_free(reinterpret_cast<void*>(data));
+  Utils::FreeImageData(data);
 }
 
 void Texture2D::GetTextureImage(int level, int type, int bufSize, void* pixels) const

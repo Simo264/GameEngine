@@ -23,9 +23,11 @@ void Shader::Delete()
   id = 0;
 }
 
-void Shader::LoadSource(const char* string, int length) const
+void Shader::LoadSource(const string& source) const
 {
-  glShaderSource(id, 1, &string, &length);
+  const char* ptr = source.c_str();
+  const int len = source.size();
+  glShaderSource(id, 1, &ptr, &len);
 }
 
 bool Shader::Compile() const

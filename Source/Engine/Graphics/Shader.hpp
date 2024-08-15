@@ -22,7 +22,6 @@ class Shader
 {
 public:
   Shader();
-
   ~Shader() = default;
 
   /**
@@ -47,7 +46,7 @@ public:
    * @param string: specifies the source code to be loaded into the shader
    * @param length: specifies the string length
    */
-  void LoadSource(const char* string, int length) const;
+  void LoadSource(const string& source) const;
 
   /**
    * Compiles the source code strings that have been stored in the shader object.
@@ -69,11 +68,9 @@ public:
    */
   string GetShaderInfo() const;
 
-  constexpr bool IsValid() const { return id != static_cast<uint32_t>(-1); }
-
   uint32_t id;
 
-  string filename; /* The shader file name */
+  string filename;
 };
 
 /**
@@ -100,7 +97,6 @@ class Program
 {
 public:
   Program();
-
   ~Program() = default;
 
   /**
