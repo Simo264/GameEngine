@@ -5,7 +5,6 @@
 constexpr int	WINDOW_WIDTH = 1600;
 constexpr int	WINDOW_HEIGHT = 900;
 
-extern int g_drawMode;
 extern uint32_t g_drawCalls;
 
 extern float g_ambientIntensity;

@@ -426,28 +426,15 @@ namespace ImGuiLayer
     
     ImGui::End();
   }
-  void RenderGlobals()
+  void RenderWorld()
   {
     ImGui::SetNextWindowBgAlpha(0.0f);
-    ImGui::Begin("Globals", nullptr);
+    ImGui::Begin("World", nullptr);
 
-    if (ImGui::CollapsingHeader("Draw mode"))
+    if (ImGui::CollapsingHeader("Ambient"))
     {
-      ImGui::RadioButton("GL_POINTS", &g_drawMode, GL_POINTS);
-      ImGui::RadioButton("GL_LINES", &g_drawMode, GL_LINES);
-      ImGui::RadioButton("GL_LINE_LOOP", &g_drawMode, GL_LINE_LOOP);
-      ImGui::RadioButton("GL_LINE_STRIP", &g_drawMode, GL_LINE_STRIP);
-      ImGui::RadioButton("GL_TRIANGLES", &g_drawMode, GL_TRIANGLES);
-      ImGui::RadioButton("GL_TRIANGLE_STRIP", &g_drawMode, GL_TRIANGLE_STRIP);
-      ImGui::RadioButton("GL_TRIANGLE_FAN", &g_drawMode, GL_TRIANGLE_FAN);
-      ImGui::RadioButton("GL_QUADS", &g_drawMode, GL_QUADS);
-      ImGui::RadioButton("GL_QUAD_STRIP", &g_drawMode, GL_QUAD_STRIP);
-      ImGui::RadioButton("GL_POLYGON", &g_drawMode, GL_POLYGON);
-    }
-    if (ImGui::CollapsingHeader("World"))
-    {
-      ImGui::ColorEdit3("Ambient color", (float*)&g_ambientColor);
-      ImGui::SliderFloat("Ambient intensity", &g_ambientIntensity, 0.0f, 1.0f);
+      ImGui::ColorEdit3("Light color", (float*)&g_ambientColor);
+      ImGui::SliderFloat("Light intensity", &g_ambientIntensity, 0.0f, 1.0f);
     }
     
     ImGui::End();

@@ -25,7 +25,7 @@ namespace ImGuiLayer
 	vec2i32 RenderViewportAndGuizmo(uint32_t tetxureID, GameObject& object, const mat4f& view, const mat4f& proj);
 	GameObject RenderOutlinerPanel(Scene& scene);
 	void RenderDetails(GameObject object);
-	void RenderGlobals();
+	void RenderWorld();
 	void RenderCameraProps(const char* label, Camera& camera);
 	void RenderDepthMap(uint32_t tetxureID);
 

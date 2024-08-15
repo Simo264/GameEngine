@@ -129,7 +129,7 @@ static void RenderScene(Scene& scene, Program* program)
 
   scene.Reg().view<Components::Model, Components::Transform>().each([&](auto& model, auto& transform) {
     program->SetUniformMat4f("u_model", transform.GetTransformation());
-    model.DrawModel(g_drawMode);
+    model.DrawModel(GL_TRIANGLES);
   });
 }
 static void CreateSkybox(VertexArray& skybox, TextureCubemap& skyboxTexture)
@@ -261,6 +261,58 @@ static void CreateDefaultTexture(Texture2D& texture, array<byte, 3> textureData)
   texture.SetParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   texture.SetParameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 }
+static void CreateTerrain(VertexArray& vao, int rez)
+{
+  vao.Create();
+  vao.SetAttribFormat(0, 3, GL_FLOAT, false, 0);
+  vao.SetAttribBinding(0, 0);
+  vao.EnableAttribute(0);
+
+  vao.SetAttribFormat(1, 2, GL_FLOAT, false, 3 * sizeof(float));
+  vao.SetAttribBinding(1, 0);
+  vao.EnableAttribute(1);
+
+  Texture2D* heightMap = g_textureManager.GetTextureByPath(TEXTURES_PATH / "iceland_heightmap.png");
+  int width = heightMap->width;
+  int height = heightMap->height;
+
+  // vertex generation
+  vector<float> vertices;
+  for (int i = 0; i <= rez - 1; i++)
+  {
+    for (int j = 0; j <= rez - 1; j++)
+    {
+      vertices.push_back(-width / 2.0f + width * i / (float)rez); // v.x
+      vertices.push_back(0.0f); // v.y
+      vertices.push_back(-height / 2.0f + height * j / (float)rez); // v.z
+      vertices.push_back(i / (float)rez); // u
+      vertices.push_back(j / (float)rez); // v
+
+      vertices.push_back(-width / 2.0f + width * (i + 1) / (float)rez); // v.x
+      vertices.push_back(0.0f); // v.y
+      vertices.push_back(-height / 2.0f + height * j / (float)rez); // v.z
+      vertices.push_back((i + 1) / (float)rez); // u
+      vertices.push_back(j / (float)rez); // v
+
+      vertices.push_back(-width / 2.0f + width * i / (float)rez); // v.x
+      vertices.push_back(0.0f); // v.y
+      vertices.push_back(-height / 2.0f + height * (j + 1) / (float)rez); // v.z
+      vertices.push_back(i / (float)rez); // u
+      vertices.push_back((j + 1) / (float)rez); // v
+
+      vertices.push_back(-width / 2.0f + width * (i + 1) / (float)rez); // v.x
+      vertices.push_back(0.0f); // v.y
+      vertices.push_back(-height / 2.0f + height * (j + 1) / (float)rez); // v.z
+      vertices.push_back((i + 1) / (float)rez); // u
+      vertices.push_back((j + 1) / (float)rez); // v
+    }
+  }
+  Buffer vbo(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
+  vao.AttachVertexBuffer(0, vbo.id, 0, 5 * sizeof(float));
+
+  vao.numVertices = 4 * pow(rez, 2);
+  vao.numIndices = 0;
+}
 
 /* -----------------------------------------------------
  *          PUBLIC METHODS
@@ -346,8 +398,8 @@ void Engine::Run()
   scene.Reg().view<Components::PointLight>().each([&](auto& light) { pointLight = &light; });
 
   /* Create primary camera object */
-  Camera primaryCamera(vec3f(0.0f, 5.0f, 10.0f));
-  primaryCamera.frustum.zFar = 50.0f;
+  Camera primaryCamera(vec3f(70.0f, 600.0f, 170.0f));
+  primaryCamera.frustum.zFar = 100'000.0f;
 
   /* Setting up the directional shadow mapping  */
   FrameBuffer fboDepthMap;
@@ -361,6 +413,11 @@ void Engine::Run()
   CreateDepthCubeMapFbo(fboDepthCubeMap, 1024, 1024);
 
 
+  /* Prepare vertices for terrain */
+  VertexArray terrain;
+  int rez = 20;
+  CreateTerrain(terrain, rez);
+
   /* ---------------------------------------------------------------------- */
   /* -------------------------- Pre-loop section -------------------------- */
   /* ---------------------------------------------------------------------- */
@@ -370,13 +427,19 @@ void Engine::Run()
   Program* depthMapProgram = g_shaderManager.GetProgram("DepthMap");
   Program* depthCubeMapProgram = g_shaderManager.GetProgram("DepthCubeMap");
   Program* skyboxProgram = g_shaderManager.GetProgram("Skybox");
+  Program* terrainProgram = g_shaderManager.GetProgram("Terrain");
   uint32_t fboTexture = _fboIntermediate.GetTextureAttachment(0);
   uint32_t depthMapTexture = fboDepthMap.GetTextureAttachment(0);
   uint32_t depthCubeMapTexture = fboDepthCubeMap.GetTextureAttachment(0);
+  
+  Texture2D* heightMap = g_textureManager.GetTextureByPath(TEXTURES_PATH / "iceland_heightmap.png");
 
   auto lastUpdateTime = chrono::high_resolution_clock::now();
   bool renderingShadowsMode = true;
   bool useNormalMap = true;
+  bool wireframeEnabled = false;
+
+  glPatchParameteri(GL_PATCH_VERTICES, 4);
   
   /* ------------------------------------------------------------------ */
   /* -------------------------- loop section -------------------------- */
@@ -404,9 +467,10 @@ void Engine::Run()
 
     if (g_windowManager.GetKey(GLFW_KEY_F1) == GLFW_PRESS) renderingShadowsMode = false;
     else if (g_windowManager.GetKey(GLFW_KEY_F2) == GLFW_PRESS) renderingShadowsMode = true;
-
     if (g_windowManager.GetKey(GLFW_KEY_F5) == GLFW_PRESS) useNormalMap = false;
     else if (g_windowManager.GetKey(GLFW_KEY_F6) == GLFW_PRESS) useNormalMap = true;
+    if (g_windowManager.GetKey(GLFW_KEY_F9) == GLFW_PRESS) wireframeEnabled = false;
+    else if (g_windowManager.GetKey(GLFW_KEY_F10) == GLFW_PRESS) wireframeEnabled = true;
 
     /* -------------------------------------------------------------------- */
     /* -------------------------- Update section -------------------------- */
@@ -486,6 +550,20 @@ void Engine::Run()
       glViewport(0, 0, _viewportSize.x, _viewportSize.y);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
+      glPolygonMode(GL_FRONT, wireframeEnabled ? GL_LINE : GL_FILL);
+      glPolygonMode(GL_BACK, wireframeEnabled ? GL_LINE : GL_FILL);
+
+      /* Render terrain */
+      {
+        terrainProgram->Use();
+        terrainProgram->SetUniformMat4f("u_model", mat4f(1.0f));
+        terrainProgram->SetUniformMat4f("u_view", cameraView);
+        terrainProgram->SetUniformMat4f("u_projection", cameraProj);
+        terrainProgram->SetUniform1i("u_heightMap", 0);
+        heightMap->BindTextureUnit(0);
+        Renderer::DrawArrays(GL_PATCHES, terrain);
+      }
+
       /* Render scene with shadows map */
       if (renderingShadowsMode)
       {
@@ -496,9 +574,6 @@ void Engine::Run()
         sceneShadowsProgram->SetUniformMat4f("u_lightView", directLightView);
         sceneShadowsProgram->SetUniformMat4f("u_lightProjection", directLightProjection);
         sceneShadowsProgram->SetUniform1i("u_useNormalMap", useNormalMap);
-
-        sceneShadowsProgram->SetUniform1i("u_depthMapTexture", 10);
-        sceneShadowsProgram->SetUniform1i("u_depthCubeMapTexture", 11);
         glBindTextureUnit(10, depthMapTexture);
         glBindTextureUnit(11, depthCubeMapTexture);
         RenderScene(scene, sceneShadowsProgram);
@@ -541,12 +616,13 @@ void Engine::Run()
     //fboImageTexture.BindTextureUnit(0);
     //Renderer::DrawArrays(GL_TRIANGLES, _screenSquare);
 
+
     //ImGuiLayer::RenderDemo();
     ImGuiLayer::RenderMenuBar(scene);
     ImGuiLayer::RenderDepthMap(depthMapTexture);
     ImGuiLayer::RenderCameraProps("Primary camera", primaryCamera);
     ImGuiLayer::RenderCameraProps("DirecLight camera", directLightCamera);
-    ImGuiLayer::RenderGlobals();
+    ImGuiLayer::RenderWorld();
     GameObject objectSelected = ImGuiLayer::RenderOutlinerPanel(scene);
     if (objectSelected.IsValid()) 
       ImGuiLayer::RenderDetails(objectSelected);

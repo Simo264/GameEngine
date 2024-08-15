@@ -5,7 +5,6 @@
 #include "Engine/Subsystems/ShaderManager.hpp"
 #include "Engine/Subsystems/TextureManager.hpp"
 
-int g_drawMode = GL_TRIANGLES;
 uint32_t g_drawCalls = 0;
 
 float g_ambientIntensity = 0.0f;
