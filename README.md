@@ -48,8 +48,8 @@
     + [ ] Scene Graph
     + [ ] Frustum Culling
 - Tessellation
-    + [ ] Height Maps
-    + [ ] Tessellation
+    + [x] Height Maps
+    + [x] Tessellation
 - [ ] Compute shaders
 - [ ] Physically Based Bloom
 - [ ] Area Lights
