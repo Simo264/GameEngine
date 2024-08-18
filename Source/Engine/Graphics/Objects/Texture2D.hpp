@@ -33,8 +33,8 @@ public:
   /**
    * @param target: must be GL_TEXTURE_2D or GL_TEXTURE_2D_MULTISAMPLE
    */
-  Texture2D(int target);
-  Texture2D(int target, const fs::path& path, bool gammaCorrection);
+  Texture2D(i32 target);
+  Texture2D(i32 target, const fs::path& path, bool gammaCorrection);
   ~Texture2D() = default;
 
   void LoadImageData(const fs::path& path, bool gammaCorrection);
@@ -64,15 +64,15 @@ public:
    *
    * @param unit: specifies the texture unit, to which the texture object should be bound to
    */
-  void BindTextureUnit(int unit) const;
+  void BindTextureUnit(i32 unit) const;
 
   /**
    * Set texture parameters
    */
-  void SetParameteri(int name, int value) const;
-  void SetParameteriv(int name, int* values) const;
-  void SetParameterf(int name, float value) const;
-  void SetParameterfv(int name, float* values) const;
+  void SetParameteri(i32 name, i32 value) const;
+  void SetParameteriv(i32 name, int* values) const;
+  void SetParameterf(i32 name, f32 value) const;
+  void SetParameterfv(i32 name, f32* values) const;
 
   /**
    * Generate mipmaps for the texture object
@@ -85,7 +85,7 @@ public:
    * @param width:  specifies the width of the texture, in texels
    * @param height: specifies the height of the texture, in texels
    */
-  void CreateStorage(int internalFormat, int width, int height);
+  void CreateStorage(i32 internalFormat, i32 width, i32 height);
 
   /**
    * Specify storage for multisample texture
@@ -96,7 +96,7 @@ public:
    * @param fixedsamplelocations: specifies whether the image will use identical sample locations and the same number 
    *                              of samples for all texels in the image
    */
-  void CreateStorageMultisampled(int internalFormat, int samples, int width, int height);
+  void CreateStorageMultisampled(i32 internalFormat, i32 samples, i32 width, i32 height);
 
   /**
    * Specify a two-dimensional texture subimage
@@ -111,7 +111,7 @@ public:
    * 
    * @param pixels:   specifies a pointer to the image data in memory
    */
-  void UpdateStorage(int level, int xoffset, int yoffset, int type, const void* pixels) const;
+  void UpdateStorage(i32 level, i32 xoffset, i32 yoffset, i32 type, const void* pixels) const;
 
   /**
    * Fills all the texture image with a constant value
@@ -123,7 +123,7 @@ public:
    * 
    * @param data:   the address in memory of the data to be used to clear the specified region
    */
-  void ClearStorage(int level, int type, const void* data) const;
+  void ClearStorage(i32 level, i32 type, const void* data) const;
   
   /**
    * Return a texture image into pixels
@@ -133,34 +133,34 @@ public:
    * @param bufSize: specifies the size of the buffer pixels for glGetnTexImage and glGetTextureImage functions
    * @param pixels: returns the texture image. Should be a pointer to an array of the type specified by type
    */
-  void GetTextureImage(int level, int type, int bufSize, void* pixels) const;
+  void GetTextureImage(i32 level, i32 type, i32 bufSize, void* pixels) const;
 
   constexpr bool Compare(const Texture2D& other) const { return id == other.id; }
-  constexpr bool IsValid() const { return id != static_cast<uint32_t>(-1); }
+  constexpr bool IsValid() const { return id != static_cast<u32>(-1); }
   
-  uint32_t id;
+  u32 id;
 
-  const int target;
+  const i32 target;
 
   /**
    * Specifies the sized internal format to be used to store texture image data.
    * Must be one of the sized internal formats given in Table 1 below:
    * https://registry.khronos.org/OpenGL-Refpages/gl4/html/glTexStorage2D.xhtml
    */
-  int internalFormat;
+  i32 internalFormat;
   
   /**
    * Specifies the format of the pixel data.
    * The following symbolic values are accepted:
    * GL_RED, GL_RG, GL_RGB, GL_BGR, GL_RGBA, GL_BGRA, GL_DEPTH_COMPONENT, and GL_STENCIL_INDEX.
    */
-  int format;
+  i32 format;
 
-  int width;
+  i32 width;
 
-  int height;
+  i32 height;
 
-  int nChannels;
+  i32 nChannels;
   
   fs::path path;
 };

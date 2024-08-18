@@ -7,17 +7,17 @@
 
 namespace Math
 {
-	mat4f Perspective(float fovy, float aspect, float zNear, float zFar)
+	mat4f Perspective(f32 fovy, f32 aspect, f32 zNear, f32 zFar)
 	{
 		return glm::perspective(fovy, aspect, zNear, zFar);
 	}
 
-	mat4f Ortho(float left, float right, float bottom, float top, float zNear, float zFar)
+	mat4f Ortho(f32 left, f32 right, f32 bottom, f32 top, f32 zNear, f32 zFar)
 	{
 		return glm::ortho(left, right, bottom, top, zNear, zFar);
 	}
 
-	void Decompose(const mat4f& model, vec3f& translation, Quat& rotation, vec3f& scale)
+	void Decompose(const mat4f& model, vec3f& translation, quat& rotation, vec3f& scale)
 	{
 		translation = model[3];
 		for (int i = 0; i < 3; i++)
@@ -31,7 +31,7 @@ namespace Math
 		rotation = QuatCast(rotMtx);
 	}
 
-	Quat Conjugate(Quat& rotation)
+	quat Conjugate(quat& rotation)
 	{
 		return glm::conjugate(rotation);
 	}
@@ -46,7 +46,7 @@ namespace Math
 		return glm::scale(model, scaling);
 	}
 
-	mat4f Rotate(const mat4f& model, float radians, const vec3f& axis)
+	mat4f Rotate(const mat4f& model, f32 radians, const vec3f& axis)
 	{
 		return glm::rotate(model, radians, axis);
 	}
@@ -56,12 +56,12 @@ namespace Math
 		return glm::lookAt(eye, center, up);
 	}
 
-	Quat QuatCast(const mat3f& m)
+	quat QuatCast(const mat3f& m)
 	{
 		return glm::quat_cast(m);
 	}
 
-	vec3f EulerAngles(const Quat& q)
+	vec3f EulerAngles(const quat& q)
 	{
 		return glm::eulerAngles(q);
 	}

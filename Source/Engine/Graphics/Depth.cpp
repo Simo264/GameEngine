@@ -23,7 +23,7 @@ namespace Depth
 	{
 		glDepthMask(GL_FALSE);
 	}
-	void SetFunction(int func)
+	void SetFunction(i32 func)
 	{
 		glDepthFunc(func);
 	}

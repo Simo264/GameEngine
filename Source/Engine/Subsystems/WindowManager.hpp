@@ -40,26 +40,26 @@ public:
 
   void SwapWindowBuffers() const;
 
-  void SetWindowAspectRatio(int numer, int denom) const;
+  void SetWindowAspectRatio(i32 numer, i32 denom) const;
 
   vec2i32 GetWindowSize() const;
   
-  void SetWindowSize(int w, int h) const;
+  void SetWindowSize(i32 w, i32 h) const;
 
   vec2i32 GetFramebufferSize() const;
 
-  int GetKey(uint32_t key) const;
+  i32 GetKey(u32 key) const;
 
-  int GetMouseKey(uint32_t key) const; 
+  i32 GetMouseKey(u32 key) const; 
 
   vec2d GetCursorPosition() const;
 
   /**
    * @param value: GLFW_CURSOR_NORMAL or GLFW_CURSOR_HIDDEN or GLFW_CURSOR_DISABLED
    */
-  void SetCursorMode(int value) const;
+  void SetCursorMode(i32 value) const;
 
-  void SetWindowPosition(int x, int y) const;
+  void SetWindowPosition(i32 x, i32 y) const;
 
   void SetWindowVsync(bool b) const;
 

@@ -33,9 +33,9 @@ void ShaderManager::LoadShadersFromDir(const fs::path& dirpath)
   {
     if (!fs::is_directory(entry))
     {
-      string filename = entry.path().filename().string();
-      uint32_t pos = filename.find_last_of('.') + 1;
-      string ext = filename.substr(pos);
+      String filename = entry.path().filename().string();
+      u32 pos = filename.find_last_of('.') + 1;
+      String ext = filename.substr(pos);
       fs::path path = entry.path().lexically_normal();
       CONSOLE_TRACE("Loading shader {}", path.string().c_str());
 
@@ -62,12 +62,12 @@ void ShaderManager::LoadPrograms()
 
   for (auto const& it : conf.GetData())
   {
-    const string& section = it.first;
-    const string vertex = conf.GetValue(section.c_str(), "vertex");
-    const string tesc = conf.GetValue(section.c_str(), "tess_control");
-    const string tese = conf.GetValue(section.c_str(), "tess_eval");
-    const string geometry = conf.GetValue(section.c_str(), "geometry");
-    const string fragment = conf.GetValue(section.c_str(), "fragment");
+    const String& section = it.first;
+    const String vertex = conf.GetValue(section.c_str(), "vertex");
+    const String tesc = conf.GetValue(section.c_str(), "tess_control");
+    const String tese = conf.GetValue(section.c_str(), "tess_eval");
+    const String geometry = conf.GetValue(section.c_str(), "geometry");
+    const String fragment = conf.GetValue(section.c_str(), "fragment");
     Shader* vertShader = GetShader(vertex.c_str());
     Shader* tescShader = GetShader(tesc.c_str());
     Shader* teseShader = GetShader(tese.c_str());
@@ -102,9 +102,9 @@ void ShaderManager::SetUpProgramsUniforms()
   skyboxProg->SetUniform1i("u_skyboxTexture", 0);
 }
 
-Shader& ShaderManager::LoadShader(const fs::path& filepath, int shaderType)
+Shader& ShaderManager::LoadShader(const fs::path& filepath, i32 shaderType)
 {
-  string filepathstr = filepath.string();
+  String filepathstr = filepath.string();
   if (!fs::exists(filepath))
     CONSOLE_WARN("File {} does not exist", filepathstr);
 
@@ -113,8 +113,8 @@ Shader& ShaderManager::LoadShader(const fs::path& filepath, int shaderType)
   shader.Create(shaderType);
   shader.filename = filepath.filename().string();
 
-  string source;
-  ifStream file(filepath);
+  String source;
+  IStream file(filepath);
   if (file)
     source.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
   else

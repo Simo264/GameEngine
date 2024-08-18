@@ -34,7 +34,7 @@ public:
 	 * @param width:	specifies the width of the renderbuffer, in pixels.
 	 * @param height: specifies the height of the renderbuffer, in pixels.
 	 */
-	void CreateStorage(int internalFormat, int width, int height);
+	void CreateStorage(i32 internalFormat, i32 width, i32 height);
 
 	/**
 	 * Establish data storage, format, dimensions and sample count of the renderbuffer object's image
@@ -43,9 +43,9 @@ public:
 	 * @param width:		specifies the width of the renderbuffer, in pixels.
 	 * @param height:		specifies the height of the renderbuffer, in pixels.
 	 */
-	void CreateStorageMulstisampled(int internalFormat, int samples, int width, int height);
+	void CreateStorageMulstisampled(i32 internalFormat, i32 samples, i32 width, i32 height);
 
-	uint32_t id;
+	u32 id;
 
 	/**
 	 * Specifies the internal format to be used for the renderbuffer object's storage and must be a 
@@ -53,5 +53,5 @@ public:
 	 * 
 	 * https://www.khronos.org/opengl/wiki/Image_Format
 	 */
-	int internalFormat;
+	i32 internalFormat;
 };

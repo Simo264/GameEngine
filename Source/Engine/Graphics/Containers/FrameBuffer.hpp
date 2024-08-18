@@ -55,7 +55,7 @@ public:
 	 * @param target: specifies the framebuffer target of the binding operation, must be either 
 	 *								GL_DRAW_FRAMEBUFFER, GL_READ_FRAMEBUFFER or GL_FRAMEBUFFER
 	 */
-	void Bind(int target) const;
+	void Bind(i32 target) const;
 
 	/**
 	 * Bind the framebuffer to a framebuffer target
@@ -63,14 +63,14 @@ public:
 	 * @param target: specifies the framebuffer target of the binding operation, must be either 
 	 *								GL_DRAW_FRAMEBUFFER, GL_READ_FRAMEBUFFER or GL_FRAMEBUFFER
 	 */
-	void Unbind(int target) const;
+	void Unbind(i32 target) const;
 
 	/**
 	 * Check the completeness status of the framebuffer.
 	 * The return value is GL_FRAMEBUFFER_COMPLETE if the FBO can be used. 
 	 * If it is something else, then there is a problem.
 	 */
-	int CheckStatus() const;
+	i32 CheckStatus() const;
 
 	/**
 	 * Attach a level of a texture object as a logical buffer of the framebuffer object
@@ -90,7 +90,7 @@ public:
 	 * 
 	 * @param level:			specifies the mipmap level of the texture object to attach
 	 */ 
-	void AttachTexture(int attachment, uint32_t textureID, int level);
+	void AttachTexture(i32 attachment, u32 textureID, i32 level);
 
 	/**
 	 * Attach a renderbuffer as a logical buffer of the framebuffer object
@@ -103,7 +103,7 @@ public:
 	 * 
 	 * @param renderbuffer: specifies the name of an existing renderbuffer object of type renderbuffertarget to attach
 	 */
-	void AttachRenderBuffer(int attachment, uint32_t renderbufferID);
+	void AttachRenderBuffer(i32 attachment, u32 renderbufferID);
 
 	/**
 	 * Copy a block of pixels from one framebuffer object to another.
@@ -129,16 +129,16 @@ public:
 	 */
 	void Blit(
 		const FrameBuffer& dest, 
-		int srcLowerX,
-		int srcLowerY,
-		int srcUpperX,
-		int srcUpperY,
-		int destLowerX,
-		int destLowerY,
-		int destUpperX,
-		int destUpperY,
-		int mask,
-		int filter
+		i32 srcLowerX,
+		i32 srcLowerY,
+		i32 srcUpperX,
+		i32 srcUpperY,
+		i32 destLowerX,
+		i32 destLowerY,
+		i32 destUpperX,
+		i32 destUpperY,
+		i32 mask,
+		i32 filter
 	) const;
 
 	/**
@@ -149,15 +149,15 @@ public:
 	 */
 	void SetWritingColorComponents(bool r, bool g, bool b, bool a) const;
 
-	constexpr uint32_t GetTextureAttachment(int i) { return _textAttachmentIDs.at(i); }
-	constexpr uint32_t GetRenderBufferAttachment(int i) { return _rboAttachmentIDs.at(i); }
+	constexpr u32 GetTextureAttachment(i32 i) { return _textAttachmentIDs.at(i); }
+	constexpr u32 GetRenderBufferAttachment(i32 i) { return _rboAttachmentIDs.at(i); }
 
-	constexpr int GetNumTextureAttachments() const { return _textAttachmentIDs.size(); }
-	constexpr int GetNumRenderBufferAttachments() const { return _rboAttachmentIDs.size(); }
+	constexpr i32 GetNumTextureAttachments() const { return _textAttachmentIDs.size(); }
+	constexpr i32 GetNumRenderBufferAttachments() const { return _rboAttachmentIDs.size(); }
 
-	uint32_t id;
+	u32 id;
 
 private:
-	vector<uint32_t>	_textAttachmentIDs;
-	vector<uint32_t>	_rboAttachmentIDs;
+	Vector<u32>	_textAttachmentIDs;
+	Vector<u32>	_rboAttachmentIDs;
 };

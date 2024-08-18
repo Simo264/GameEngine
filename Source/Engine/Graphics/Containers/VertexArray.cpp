@@ -4,7 +4,7 @@
 #include "Core/Log/Logger.hpp"
 
 VertexArray::VertexArray()
-  : id{ static_cast<uint32_t>(-1) },
+  : id{ 0 },
     numIndices{ 0 },
     numVertices{ 0 },
     eboAttachmentID{ 0 },
@@ -26,8 +26,8 @@ void VertexArray::Delete()
     glDeleteBuffers(vboAttachmentIDs.size(), vboAttachmentIDs.data());
   }
   
-  /* Destroy vector */
-  vector<uint32_t>().swap(vboAttachmentIDs);
+  /* Destroy Vector */
+  Vector<u32>().swap(vboAttachmentIDs);
   eboAttachmentID = 0;
 
   glDeleteVertexArrays(1, &id);
@@ -44,39 +44,39 @@ void VertexArray::Unbind() const
   glBindVertexArray(0);
 }
 
-void VertexArray::EnableAttribute(int attribindex) const
+void VertexArray::EnableAttribute(i32 attribindex) const
 {
   glEnableVertexArrayAttrib(id, attribindex);
 }
 
-void VertexArray::DisableAttribute(int attribindex) const
+void VertexArray::DisableAttribute(i32 attribindex) const
 {
   glDisableVertexArrayAttrib(id, attribindex);
 }
 
-void VertexArray::AttachVertexBuffer(int bindingindex, uint32_t bufferID, int offset, int stride)
+void VertexArray::AttachVertexBuffer(i32 bindingindex, u32 bufferID, i32 offset, i32 stride)
 {
   vboAttachmentIDs.push_back(bufferID);
   glVertexArrayVertexBuffer(id, bindingindex, bufferID, offset, stride);
 }
 
-void VertexArray::AttachElementBuffer(uint32_t bufferID)
+void VertexArray::AttachElementBuffer(u32 bufferID)
 {
   eboAttachmentID = bufferID;
   glVertexArrayElementBuffer(id, bufferID);
 }
 
-void VertexArray::SetAttribFormat(int attribindex, int size, int type, bool normalize, int relativeoffset) const
+void VertexArray::SetAttribFormat(i32 attribindex, i32 size, i32 type, bool normalize, i32 relativeoffset) const
 {
   glVertexArrayAttribFormat(id, attribindex, size, type, normalize, relativeoffset);
 }
 
-void VertexArray::SetAttribBinding(int attribindex, int bindingindex) const
+void VertexArray::SetAttribBinding(i32 attribindex, i32 bindingindex) const
 {
   glVertexArrayAttribBinding(id, attribindex, bindingindex);
 }
 
-void VertexArray::SetBindingDivisor(int bindingindex, int divisor) const
+void VertexArray::SetBindingDivisor(i32 bindingindex, i32 divisor) const
 {
   glVertexArrayBindingDivisor(id, bindingindex, divisor);
 }

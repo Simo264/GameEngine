@@ -23,9 +23,9 @@ void TextureManager::LoadTexturesFromDir(const fs::path& dirpath)
       const fs::path path = entry.path().lexically_normal();
 
       bool gamma = false;
-      string filename = path.filename().string();
+      String filename = path.filename().string();
       
-      if (filename.find("diff") != string::npos || filename.find("diffuse") != string::npos)
+      if (filename.find("diff") != String::npos || filename.find("diffuse") != String::npos)
         gamma = true;
 
       auto& texture = LoadTexture(GL_TEXTURE_2D, path, gamma);
@@ -36,10 +36,10 @@ void TextureManager::LoadTexturesFromDir(const fs::path& dirpath)
 
 void TextureManager::CleanUp()
 {
-  uint64_t total = _textures.size() + _icons.size();
+  u64 total = _textures.size() + _icons.size();
   if (total > 0)
   {
-    vector<uint32_t> texIDs;
+    Vector<uint32_t> texIDs;
     texIDs.reserve(total);
 
     std::transform(_textures.begin(), _textures.end(), std::back_inserter(texIDs), [](const Texture2D& texture) {
@@ -52,11 +52,11 @@ void TextureManager::CleanUp()
     glDeleteTextures(total, texIDs.data());
   }
 
-  vector<Texture2D>().swap(_textures);
-  vector<Texture2D>().swap(_icons);
+  Vector<Texture2D>().swap(_textures);
+  Vector<Texture2D>().swap(_icons);
 }
 
-Texture2D& TextureManager::LoadTexture(int target, const fs::path& filePath, bool gammaCorrection)
+Texture2D& TextureManager::LoadTexture(i32 target, const fs::path& filePath, bool gammaCorrection)
 {
   if (!fs::exists(filePath))
     CONSOLE_WARN("Texture '{}' does not exists", filePath.string());
@@ -65,7 +65,7 @@ Texture2D& TextureManager::LoadTexture(int target, const fs::path& filePath, boo
   return texture;
 }
 
-Texture2D& TextureManager::LoadTextureIcon(int target, const fs::path& filePath)
+Texture2D& TextureManager::LoadTextureIcon(i32 target, const fs::path& filePath)
 {
   if (!fs::exists(filePath))
     CONSOLE_WARN("Texture '{}' does not exists", filePath.string());

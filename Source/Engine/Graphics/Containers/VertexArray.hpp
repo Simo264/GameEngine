@@ -16,24 +16,24 @@
 struct VertexSpecifications
 {
   /**
-   * The index of the vertex buffer binding point to which to bind the buffer
+   * The index of the vertex buffer binding poi32 to which to bind the buffer
    */
-  int bindingindex;
+  i32 bindingindex;
   
   /**
    * The index of the generic vertex attribute to be enabled or disabled.
    */
-  int attrindex;
+  i32 attrindex;
 
   /**
    * The number of components per vertex are allocated to the specified attribute and must be 1, 2, 3, 4, or GL_BGRA
    */
-  int components;
+  i32 components;
 
   /**
    * Indicates the type of the data.
    */
-  int type;
+  i32 type;
 
   /**
    * If true then integer data is normalized to the range [-1, 1] or [0, 1] if it is signed or unsigned, respectively.
@@ -44,7 +44,7 @@ struct VertexSpecifications
   /**
    * Is the offset of the first element relative to the start of the vertex buffer binding this attribute fetches from
    */
-  int relativeoffset;
+  i32 relativeoffset;
 };
 
 
@@ -87,32 +87,32 @@ public:
   void Unbind() const;
 
   /**
-   * Bind the vertex buffer to the binding point whose index is given by bindingindex
+   * Bind the vertex buffer to the binding poi32 whose index is given by bindingindex
    * 
-   * @param bindingindex: the index of the vertex buffer binding point to which to bind the buffer
+   * @param bindingindex: the index of the vertex buffer binding poi32 to which to bind the buffer
    * @param offset:       the offset of the first element of the buffer
    * @param stride:       the distance between elements within the buffer
    */
-  void AttachVertexBuffer(int bindingindex, uint32_t bufferID, int offset, int stride);
+  void AttachVertexBuffer(i32 bindingindex, u32 bufferID, i32 offset, i32 stride);
 
   /**
    * Configures element array buffer binding of a vertex array object
    */
-  void AttachElementBuffer(uint32_t bufferID);
+  void AttachElementBuffer(u32 bufferID);
 
   /**
    * Enable a generic vertex attribute array
    * 
    * @param attribindex: specifies the index of the generic vertex attribute to be enabled or disabled.
    */
-  void EnableAttribute(int attribindex) const;
+  void EnableAttribute(i32 attribindex) const;
 
   /**
    * Disable a generic vertex attribute array
    *
    * @param attribindex: specifies the index of the generic vertex attribute to be enabled or disabled.
    */
-  void DisableAttribute(int attribindex) const;
+  void DisableAttribute(i32 attribindex) const;
 
   /**
    * Specify the organization of vertex arrays
@@ -129,7 +129,7 @@ public:
    *                        indicate types GLubyte, GLushort, and GLuint, respectively; 
    *                        the values GL_INT_2_10_10_10_REV and GL_UNSIGNED_INT_2_10_10_10_REV indicating respectively 
    *                        four signed or unsigned elements packed into a single GLuint; 
-   *                        and the value GL_UNSIGNED_INT_10F_11F_11F_REV indicating three floating point values packed 
+   *                        and the value GL_UNSIGNED_INT_10F_11F_11F_REV indicating three floating poi32 values packed 
    *                        into a single GLuint.
    * 
    * @param normalized:     if normalized is GL_TRUE, then integer data is normalized to the range [-1, 1] or [0, 1] 
@@ -139,13 +139,13 @@ public:
    * @param relativeoffset: is the offset of the first element relative to the start of the vertex buffer binding 
    *                        this attribute fetches from.
    */
-  void SetAttribFormat(int attribindex, int size, int type, bool normalize, int relativeoffset) const;
+  void SetAttribFormat(i32 attribindex, i32 size, i32 type, bool normalize, i32 relativeoffset) const;
 
   /**
    * Establishes an association between the generic vertex attribute of a vertex array object 
    * whose index is given by attribindex, and a vertex buffer binding whose index is given by bindingindex
    */
-  void SetAttribBinding(int attribindex, int bindingindex) const;
+  void SetAttribBinding(i32 attribindex, i32 bindingindex) const;
 
   /**
    * Modify the rate at which generic vertex attributes advance
@@ -153,16 +153,16 @@ public:
    * @param bindingindex: the index of the binding whose divisor to modify
    * @param divisor: the new value for the instance step rate to apply
    */
-  void SetBindingDivisor(int bindingindex, int divisor) const;
+  void SetBindingDivisor(i32 bindingindex, i32 divisor) const;
 
   void SetVertexSpecifications(const VertexSpecifications& specs) const;
 
-  uint32_t id;
+  u32 id;
 
-  uint32_t numVertices;
-  uint32_t numIndices;
+  u32 numVertices;
+  u32 numIndices;
 
-  uint32_t eboAttachmentID;
-  vector<uint32_t> vboAttachmentIDs;
+  u32 eboAttachmentID;
+  Vector<u32> vboAttachmentIDs;
 };
 

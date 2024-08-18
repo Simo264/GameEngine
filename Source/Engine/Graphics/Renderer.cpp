@@ -8,7 +8,7 @@
 
 namespace Renderer
 {
-	void DrawArrays(uint32_t mode, VertexArray& vertexArray, int first)
+	void DrawArrays(u32 mode, VertexArray& vertexArray, i32 first)
 	{
 		if (vertexArray.numVertices == 0)
 			CONSOLE_WARN("Invalid vertices number!");
@@ -18,7 +18,7 @@ namespace Renderer
 		g_drawCalls++;
 		vertexArray.Unbind();
 	}
-	void DrawArraysInstanced(uint32_t mode, VertexArray& vertexArray, int nInstances, int first)
+	void DrawArraysInstanced(u32 mode, VertexArray& vertexArray, i32 nInstances, i32 first)
 	{
 		if (vertexArray.numVertices == 0)
 			CONSOLE_WARN("Invalid vertices number!");
@@ -28,7 +28,7 @@ namespace Renderer
 		g_drawCalls++;
 		vertexArray.Unbind();
 	}
-	void DrawElements(uint32_t mode, VertexArray& vertexArray, int offset)
+	void DrawElements(u32 mode, VertexArray& vertexArray, i32 offset)
 	{
 		if (vertexArray.numIndices == 0)
 			CONSOLE_WARN("Invalid indices number!");
@@ -38,7 +38,7 @@ namespace Renderer
 		g_drawCalls++;
 		vertexArray.Unbind();
 	}
-	void DrawElementsInstanced(uint32_t mode, VertexArray& vertexArray, int nInstances, int offset)
+	void DrawElementsInstanced(u32 mode, VertexArray& vertexArray, i32 nInstances, i32 offset)
 	{
 		if (vertexArray.numIndices == 0)
 			CONSOLE_WARN("Invalid indices number!");

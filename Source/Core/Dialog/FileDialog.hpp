@@ -13,9 +13,9 @@ public:
 
 	/* Return empty path if cancelled */
 	static fs::path OpenFileDialog(
-		int numFilters, const char* filter[], const char* filterDescription, bool multipleSelects);
+		i32 numFilters, const char* filter[], const char* filterDescription, bool multipleSelects);
 	
 	static fs::path SaveFileDialog(
-		int numFilters, const char* filter[], const char* filterDescription);
+		i32 numFilters, const char* filter[], const char* filterDescription);
 };
 

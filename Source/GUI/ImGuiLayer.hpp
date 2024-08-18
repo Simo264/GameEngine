@@ -14,7 +14,7 @@ namespace ImGuiLayer
 	void SetupContext();
 	void CleanUp();
 	
-	void SetFont(const fs::path& fontpath, int fontsize);
+	void SetFont(const fs::path& fontpath, i32 fontsize);
 	
 	void BeginFrame();
 	void EndFrame();
@@ -22,12 +22,12 @@ namespace ImGuiLayer
 	
 	void RenderDemo();
 	void RenderMenuBar(Scene& scene);
-	vec2i32 RenderViewportAndGuizmo(uint32_t tetxureID, GameObject& object, const mat4f& view, const mat4f& proj);
+	vec2i32 RenderViewportAndGuizmo(u32 tetxureID, GameObject& object, const mat4f& view, const mat4f& proj);
 	GameObject RenderOutlinerPanel(Scene& scene);
 	void RenderDetails(GameObject object);
 	void RenderWorld();
 	void RenderCameraProps(const char* label, Camera& camera);
-	void RenderDepthMap(uint32_t tetxureID);
+	void RenderDepthMap(u32 tetxureID);
 
 	void RenderDebug(Camera& camera);
 }

@@ -22,8 +22,8 @@
 
 #include <GLFW/glfw3.h>
 
-static constexpr int infinity = 1'000'000;
-static int guizmode = ImGuizmo::OPERATION::TRANSLATE;
+static constexpr i32 infinity = 1'000'000;
+static i32 guizmode = ImGuizmo::OPERATION::TRANSLATE;
 
 static const char* ATTENUATION_LABELS[]{
   "7m",
@@ -39,19 +39,19 @@ static const char* ATTENUATION_LABELS[]{
   "600m",
   "3250m"
 };
-static const array<tuple<float, float>, 12> ATTENUATION_VALUES = {
-  std::make_tuple<float,float>(0.7f, 1.8f),         // 7 meters
-  std::make_tuple<float,float>(0.35f, 0.44f),       // 13 meters
-  std::make_tuple<float,float>(0.22f, 0.20f),       // 20 meters
-  std::make_tuple<float,float>(0.14f, 0.07f),       // 32 meters
-  std::make_tuple<float,float>(0.09f, 0.032f),      // 50 meters
-  std::make_tuple<float,float>(0.07f, 0.017f),      // 65 meters
-  std::make_tuple<float,float>(0.045f, 0.0075f),    // 100 meters
-  std::make_tuple<float,float>(0.027f, 0.0028f),    // 160 meters
-  std::make_tuple<float,float>(0.022f, 0.0019f),    // 200 meters
-  std::make_tuple<float,float>(0.014f, 0.0007f),    // 325 meters
-  std::make_tuple<float,float>(0.007f, 0.0002f),    // 600 meters
-  std::make_tuple<float,float>(0.0014f, 0.000007f), // 3250 meters
+static const Array<Tuple<f32, f32>, 12> ATTENUATION_VALUES = {
+  std::make_tuple<f32,f32>(0.7f, 1.8f),         // 7 meters
+  std::make_tuple<f32,f32>(0.35f, 0.44f),       // 13 meters
+  std::make_tuple<f32,f32>(0.22f, 0.20f),       // 20 meters
+  std::make_tuple<f32,f32>(0.14f, 0.07f),       // 32 meters
+  std::make_tuple<f32,f32>(0.09f, 0.032f),      // 50 meters
+  std::make_tuple<f32,f32>(0.07f, 0.017f),      // 65 meters
+  std::make_tuple<f32,f32>(0.045f, 0.0075f),    // 100 meters
+  std::make_tuple<f32,f32>(0.027f, 0.0028f),    // 160 meters
+  std::make_tuple<f32,f32>(0.022f, 0.0019f),    // 200 meters
+  std::make_tuple<f32,f32>(0.014f, 0.0007f),    // 325 meters
+  std::make_tuple<f32,f32>(0.007f, 0.0002f),    // 600 meters
+  std::make_tuple<f32,f32>(0.0014f, 0.000007f), // 3250 meters
 };
 
 static void GuizmoWorldTranslation(Components::Transform& transform, const mat4f& view, const mat4f& proj)
@@ -68,7 +68,7 @@ static void GuizmoWorldTranslation(Components::Transform& transform, const mat4f
   {
     vec3f translation;
     vec3f scale;
-    Quat  rotation;
+    quat  rotation;
     Math::Decompose(model, translation, rotation, scale);
 
     transform.position = translation;
@@ -89,7 +89,7 @@ static void GuizmoWorldRotation(Components::Transform& transform, const mat4f& v
   {
     vec3f translation;
     vec3f scale;
-    Quat  rotation;
+    quat  rotation;
     Math::Decompose(model, translation, rotation, scale);
 
     vec3f rotationDegrees = Math::EulerAngles(rotation);  /* Get vector rotation in radians */
@@ -116,7 +116,7 @@ static void GuizmoWorldScaling(Components::Transform& transform, const mat4f& vi
   {
     vec3f translation;
     vec3f scale;
-    Quat  rotation;
+    quat  rotation;
     Math::Decompose(model, translation, rotation, scale);
 
     transform.scale = scale;
@@ -146,7 +146,7 @@ namespace ImGuiLayer
     ImGui::DestroyContext();
   }
 
-  void SetFont(const fs::path& fontpath, int fontsize)
+  void SetFont(const fs::path& fontpath, i32 fontsize)
   {
     ImGuiIO& io = ImGui::GetIO();
     io.Fonts->AddFontFromFileTTF(fontpath.string().c_str(), fontsize);
@@ -248,7 +248,7 @@ namespace ImGuiLayer
       ImGui::EndMainMenuBar();
     }
   }
-  vec2i32 RenderViewportAndGuizmo(uint32_t tetxureID, GameObject& object, const mat4f& view, const mat4f& proj)
+  vec2i32 RenderViewportAndGuizmo(u32 tetxureID, GameObject& object, const mat4f& view, const mat4f& proj)
   {
     ImGuiStyle& style = ImGui::GetStyle();
     const ImVec2 paddingTmp = style.WindowPadding;
@@ -269,8 +269,8 @@ namespace ImGuiLayer
         ImGuizmo::SetOrthographic(false);
         ImGuizmo::SetDrawlist();
 
-        float windowW = ImGui::GetWindowWidth();
-        float windowH = ImGui::GetWindowHeight();
+        f32 windowW = ImGui::GetWindowWidth();
+        f32 windowH = ImGui::GetWindowHeight();
         ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, windowW, windowH);
 
         switch (guizmode)
@@ -357,24 +357,24 @@ namespace ImGuiLayer
     {
       if (ImGui::CollapsingHeader("Directional light", ImGuiTreeNodeFlags_DefaultOpen))
       {
-        ImGui::ColorEdit3("Color", (float*)&light->color);
+        ImGui::ColorEdit3("Color", (f32*)&light->color);
         ImGui::SliderFloat("Diffuse intensity", &light->diffuseIntensity, 0.0f, 1.0f);
         ImGui::SliderFloat("Specular intensity", &light->specularIntensity, 0.0f, 1.0f);
-        ImGui::DragFloat3("Direction", (float*)&light->direction, 0.1f, -infinity, infinity);
+        ImGui::DragFloat3("Direction", (f32*)&light->direction, 0.1f, -infinity, infinity);
       }
     }
     if (auto light = object.GetComponent<Components::PointLight>())
     {
       if (ImGui::CollapsingHeader("Point light", ImGuiTreeNodeFlags_DefaultOpen))
       {
-        ImGui::ColorEdit3("Color", (float*)&light->color);
+        ImGui::ColorEdit3("Color", (f32*)&light->color);
         ImGui::SliderFloat("Diffuse intensity", &light->diffuseIntensity, 0.0f, 1.0f);
         ImGui::SliderFloat("Specular intensity", &light->specularIntensity, 0.0f, 1.0f);
-        ImGui::DragFloat3("Position", (float*)&light->position, 0.1f, -infinity, infinity);
+        ImGui::DragFloat3("Position", (f32*)&light->position, 0.1f, -infinity, infinity);
 
         ImGui::Text("Attenuation");
         ImGui::Separator();
-        static int index = 0;
+        static i32 index = 0;
         if (ImGui::Combo("Distance", &index, ATTENUATION_LABELS, IM_ARRAYSIZE(ATTENUATION_LABELS)))
         {
           const auto& selected = ATTENUATION_VALUES.at(index);
@@ -387,11 +387,11 @@ namespace ImGuiLayer
     {
       if (ImGui::CollapsingHeader("Spot light", ImGuiTreeNodeFlags_DefaultOpen))
       {
-        ImGui::ColorEdit3("Color", (float*)&light->color);
+        ImGui::ColorEdit3("Color", (f32*)&light->color);
         ImGui::SliderFloat("Diffuse intensity", &light->diffuseIntensity, 0.0f, 1.0f);
         ImGui::SliderFloat("Specular intensity", &light->specularIntensity, 0.0f, 1.0f);
-        ImGui::DragFloat3("Direction", (float*)&light->direction, 0.1f, -infinity, infinity);
-        ImGui::DragFloat3("Position", (float*)&light->position, 0.1f, -infinity, infinity);
+        ImGui::DragFloat3("Direction", (f32*)&light->direction, 0.1f, -infinity, infinity);
+        ImGui::DragFloat3("Position", (f32*)&light->position, 0.1f, -infinity, infinity);
         
         ImGui::Text("Radius");
         ImGui::Separator();
@@ -400,7 +400,7 @@ namespace ImGuiLayer
 
         ImGui::Text("Attenuation");
         ImGui::Separator();
-        static int index = 0;
+        static i32 index = 0;
         if (ImGui::Combo("Distance", &index, ATTENUATION_LABELS, IM_ARRAYSIZE(ATTENUATION_LABELS)))
         {
           const auto& selected = ATTENUATION_VALUES.at(index);
@@ -417,9 +417,9 @@ namespace ImGuiLayer
         ImGui::RadioButton("Rotate", &guizmode, ImGuizmo::OPERATION::ROTATE);
         ImGui::RadioButton("Scale", &guizmode, ImGuizmo::OPERATION::SCALE);
 
-        ImGui::DragFloat3("Position", (float*)&transform->position, 0.1f, -infinity, infinity);
-        ImGui::DragFloat3("Scale", (float*)&transform->scale, 0.1f, -infinity, infinity);
-        ImGui::DragFloat3("Rotation", (float*)&transform->rotation, 0.1f, -infinity, infinity);
+        ImGui::DragFloat3("Position", (f32*)&transform->position, 0.1f, -infinity, infinity);
+        ImGui::DragFloat3("Scale", (f32*)&transform->scale, 0.1f, -infinity, infinity);
+        ImGui::DragFloat3("Rotation", (f32*)&transform->rotation, 0.1f, -infinity, infinity);
         transform->UpdateTransformation();
       }
     }
@@ -433,14 +433,14 @@ namespace ImGuiLayer
 
     if (ImGui::CollapsingHeader("Ambient"))
     {
-      ImGui::ColorEdit3("Light color", (float*)&g_ambientColor);
+      ImGui::ColorEdit3("Light color", (f32*)&g_ambientColor);
       ImGui::SliderFloat("Light intensity", &g_ambientIntensity, 0.0f, 1.0f);
     }
     
     ImGui::End();
   }
 
-  void RenderDepthMap(uint32_t tetxureID)
+  void RenderDepthMap(u32 tetxureID)
   {
     ImGuiStyle& style = ImGui::GetStyle();
     const ImVec2 paddingTmp = style.WindowPadding;
@@ -471,7 +471,7 @@ namespace ImGuiLayer
     ImGui::DragFloat("Yaw", &camera.yaw, 0.1f, -360.0f, 360);
     ImGui::DragFloat("Pitch", &camera.pitch, 0.1f, -360, 360);
     ImGui::DragFloat("Roll", &camera.roll, 0.1f, -360, 360.0f);
-    ImGui::DragFloat3("Position", (float*)&camera.position, 0.1f, -infinity, infinity);
+    ImGui::DragFloat3("Position", (f32*)&camera.position, 0.1f, -infinity, infinity);
 
     ImGui::DragFloat("Fov", &camera.fov, 0.1f, 0.0f, 180.0f);
 
@@ -492,7 +492,7 @@ namespace ImGuiLayer
     ImGui::DragFloat("Yaw", &camera.yaw, 0.1f, -180.0f, 180.0f);
     ImGui::DragFloat("Pitch", &camera.pitch, 0.1f, -180.0f, 180.0f);
     ImGui::DragFloat("Roll", &camera.roll, 0.1f, -180.0f, 180.0f);
-    ImGui::DragFloat3("Position", (float*)&camera.position, 0.1f, -1000.0f, 1000.0f);
+    ImGui::DragFloat3("Position", (f32*)&camera.position, 0.1f, -1000.0f, 1000.0f);
 
     ImGui::End();
   }

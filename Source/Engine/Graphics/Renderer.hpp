@@ -16,7 +16,7 @@ namespace Renderer
 	* 
 	* @param first: specifies the starting index in the enabled arrays
 	*/
-	void DrawArrays(uint32_t mode, VertexArray& vertexArray, int first = 0);
+	void DrawArrays(uint32_t mode, VertexArray& vertexArray, i32 first = 0);
 
 	/**
 		* Draw multiple instances of a range of elements.
@@ -29,7 +29,7 @@ namespace Renderer
 		* @param nInstances: specifies the number of instances of the specified range of indices to be rendered.
 		* @param first: specifies the starting index in the enabled arrays
 		*/
-	void DrawArraysInstanced(uint32_t mode, VertexArray& vertexArray, int nInstances, int first = 0);
+	void DrawArraysInstanced(uint32_t mode, VertexArray& vertexArray, i32 nInstances, i32 first = 0);
 
 
 	/**
@@ -43,7 +43,7 @@ namespace Renderer
 		* @param indices: specifies a pointer to the location where the indices are stored
 		* @param offset: the offset in bytes from the start of the index buffer to the location of the first index to scan
 		*/
-	void DrawElements(uint32_t mode, VertexArray& vertexArray, int offset = 0);
+	void DrawElements(u32 mode, VertexArray& vertexArray, i32 offset = 0);
 
 	/**
 		* Draw multiple instances of a set of elements.
@@ -56,5 +56,5 @@ namespace Renderer
 		* @param nInstances: specifies the number of instances of the specified range of indices to be rendered
 		* @param offset: the offset in bytes from the start of the index buffer to the location of the first index to scan
 		*/
-	void DrawElementsInstanced(uint32_t mode, VertexArray& vertexArray, int nInstances, int offset = 0);
+	void DrawElementsInstanced(uint32_t mode, VertexArray& vertexArray, i32 nInstances, i32 offset = 0);
 }

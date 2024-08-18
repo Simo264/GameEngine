@@ -1,14 +1,15 @@
 #pragma once
 
+#include "Core/Core.hpp"
 #include "Core/Math/Math.hpp"
 
 struct Frustum {
-	float left{ -10.0f };
-	float right{ 10.0f };
-	float bottom{ -10.0f };
-	float top{ 10.0f };
-	float zNear{ 0.1f };
-	float zFar{ 20.0f };
+	f32 left{ -10.0f };
+	f32 right{ 10.0f };
+	f32 bottom{ -10.0f };
+	f32 top{ 10.0f };
+	f32 zNear{ 0.1f };
+	f32 zFar{ 20.0f };
 };
 
 /**
@@ -27,20 +28,20 @@ class Camera
 public:
 	Camera(
 		vec3f position,
-		float yaw = -90.0f,
-		float pitch = 0.0f,
-		float roll = 0.0f
+		f32 yaw = -90.0f,
+		f32 pitch = 0.0f,
+		f32 roll = 0.0f
 	);
 	~Camera() = default;
 
 	vec3f position;
 
 	/* Euler angles (in degrees) */
-	float yaw;
-	float pitch;
-	float roll;
+	f32 yaw;
+	f32 pitch;
+	f32 roll;
 
-	float fov;
+	f32 fov;
 
 	Frustum frustum;
 
@@ -63,15 +64,15 @@ public:
 	/**
 	 * Calculate the projection matrix
 	 */
-	mat4f CalculatePerspective(float aspect) const;
+	mat4f CalculatePerspective(f32 aspect) const;
 
 	/**
 	 * Calculate the projection matrix
 	 */
 	mat4f CalculateOrtho() const;
 
-	void ProcessKeyboard(float delta, float movementSpeed);
-	void ProcessMouse(float delta, float mouseSensitivity);
+	void ProcessKeyboard(f32 delta, f32 movementSpeed);
+	void ProcessMouse(f32 delta, f32 mouseSensitivity);
 
 private:
 	/* Orientation vectors */

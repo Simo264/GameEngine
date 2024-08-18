@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Core/Core.hpp"
+
 #include <glm/vec2.hpp>    // vec2, bvec2, dvec2, ivec2 and uvec2 
 #include <glm/vec3.hpp>    // vec3, bvec3, dvec3, ivec3 and uvec3 
 #include <glm/vec4.hpp>    // vec4, bvec4, dvec4, ivec4 and uvec4 
@@ -60,16 +62,16 @@ using mat4d = glm::dmat4x4;	// 4x4 matrix of double-precision numbers
 
 namespace Math
 {
-	float Degrees(float radians);
-	float Radians(float degrees);
+	f32 Degrees(f32 radians);
+	f32 Radians(f32 degrees);
 	
-	float Cos(float degree);
-	float Sin(float degree);
+	f32 Cos(f32 degree);
+	f32 Sin(f32 degree);
 
-	double Pow(double base, double exponent);
+	f64 Pow(f64 base, f64 exponent);
 
 	vec3f Cross(const vec3f& v1, const vec3f& v2);
 	vec3f Normalize(const vec3f& v);
 
-	float Length(const vec3f& v);
+	f32 Length(const vec3f& v);
 }

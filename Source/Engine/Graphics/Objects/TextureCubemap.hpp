@@ -19,7 +19,7 @@ public:
    * @param width: specifies the width of the texture, in texels.
    * @param height: specifies the height of the texture, in texels.
    */
-  void CreateStorage(int internalFormat, int width, int height) const;
+  void CreateStorage(i32 internalFormat, i32 width, i32 height) const;
 
   /**
    * Specify a three-dimensional texture subimage
@@ -37,15 +37,15 @@ public:
    * @param pixels: specifies a pointer to the image data in memory
    */
   void SubImage3D(
-    int level,
-    int xoffset,
-    int yoffset,
-    int zoffset,
-    int width,
-    int height,
-    int depth,
-    int format,
-    int type,
+    i32 level,
+    i32 xoffset,
+    i32 yoffset,
+    i32 zoffset,
+    i32 width,
+    i32 height,
+    i32 depth,
+    i32 format,
+    i32 type,
     const void* pixels) const;
 
   /**
@@ -68,19 +68,19 @@ public:
    *
    * @param unit: specifies the texture unit, to which the texture object should be bound to
    */
-  void BindTextureUnit(int unit) const;
+  void BindTextureUnit(i32 unit) const;
 
   /**
    * Set texture parameters
    */
-  void SetParameteri(int name, int value) const;
-  void SetParameteriv(int name, int* values) const;
-  void SetParameterf(int name, float value) const;
-  void SetParameterfv(int name, float* values) const;
+  void SetParameteri(i32 name, i32 value) const;
+  void SetParameteriv(i32 name, int* values) const;
+  void SetParameterf(i32 name, f32 value) const;
+  void SetParameterfv(i32 name, f32* values) const;
 
-  void LoadImages(const array<class Texture2D*, 6>& images) const;
+  void LoadImages(const Array<class Texture2D*, 6>& images) const;
 
-	uint32_t id;
+	u32 id;
 
-	const int target;
+	const i32 target;
 };

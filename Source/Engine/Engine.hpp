@@ -17,7 +17,7 @@ public:
 	void CleanUp();
 
 private:
-	void CreateFramebuffer(int samples, int width, int height);
+	void CreateFramebuffer(i32 samples, i32 width, i32 height);
 	void CreateScreenSquare();
 
 	FrameBuffer _fboMultisampled;

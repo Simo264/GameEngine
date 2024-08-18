@@ -14,17 +14,17 @@ namespace Stencil
 		glDisable(GL_STENCIL_TEST);
 	}
 
-	void SetFunction(int func, int ref, int mask)
+	void SetFunction(i32 func, i32 ref, i32 mask)
 	{
 		glStencilFunc(func, ref, mask);
 	}
 
-	void SetOperation(int sfail, int dpfail, int dppass)
+	void SetOperation(i32 sfail, i32 dpfail, i32 dppass)
 	{
 		glStencilOp(sfail, dpfail, dppass);
 	}
 
-	void SetMask(int mask)
+	void SetMask(i32 mask)
 	{
 		glStencilMask(mask);
 	}

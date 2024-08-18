@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Core/Core.hpp"
+
 /**
  * https://learnopengl.com/Advanced-OpenGL/Face-culling
  * 
@@ -41,12 +43,12 @@ namespace Culling
 	 * 
 	 * @param mode: symbolic constants GL_FRONT, GL_BACK, and GL_FRONT_AND_BACK are accepted
 	 */
-	void SetCullFace(int mode);
+	void SetCullFace(i32 mode);
 
 	/**
 	 * Specifies which of the clockwise and counterclockwise facets are front-facing and back-facing
 	 * 
 	 * @param mode: specifies the orientation of front-facing polygons. GL_CW and GL_CCW are accepted
 	 */
-	void SetFrontFace(int mode);
+	void SetFrontFace(i32 mode);
 }

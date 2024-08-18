@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Core/Core.hpp"
+
 /**
  * https://open.gl/depthstencils
  * https://learnopengl.com/Advanced-OpenGL/Depth-testing
@@ -54,6 +56,6 @@ namespace Depth
 		*
 		* @param func: GL_NEVER, GL_LESS, GL_EQUAL, GL_LEQUAL, GL_GREATER, GL_NOTEQUAL, GL_GEQUAL, and GL_ALWAYS
 		*/
-	void SetFunction(int func);
+	void SetFunction(i32 func);
 }
 

@@ -17,21 +17,21 @@ void TextureCubemap::Create()
 	glCreateTextures(target, 1, &id);
 }
 
-void TextureCubemap::CreateStorage(int internalFormat, int width, int height) const
+void TextureCubemap::CreateStorage(i32 internalFormat, i32 width, i32 height) const
 {
   glTextureStorage2D(id, 1, internalFormat, width, height);
 }
 
 void TextureCubemap::SubImage3D(
-  int level,
-  int xoffset,
-  int yoffset,
-  int zoffset,
-  int width,
-  int height,
-  int depth,
-  int format,
-  int type,
+  i32 level,
+  i32 xoffset,
+  i32 yoffset,
+  i32 zoffset,
+  i32 width,
+  i32 height,
+  i32 depth,
+  i32 format,
+  i32 type,
   const void* pixels) const
 {
   glTextureSubImage3D(id, level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels);
@@ -50,38 +50,38 @@ void TextureCubemap::Unbind() const
 {
   glBindTexture(target, 0);
 }
-void TextureCubemap::BindTextureUnit(int unit) const
+void TextureCubemap::BindTextureUnit(i32 unit) const
 {
   glBindTextureUnit(unit, id);
 }
 
-void TextureCubemap::SetParameteri(int name, int value) const
+void TextureCubemap::SetParameteri(i32 name, i32 value) const
 {
   glTextureParameteri(id, name, value);
 }
-void TextureCubemap::SetParameteriv(int name, int* values) const
+void TextureCubemap::SetParameteriv(i32 name, i32* values) const
 {
   glTextureParameteriv(id, name, values);
 }
-void TextureCubemap::SetParameterf(int name, float value) const
+void TextureCubemap::SetParameterf(i32 name, f32 value) const
 {
   glTextureParameterf(id, name, value);
 }
-void TextureCubemap::SetParameterfv(int name, float* values) const
+void TextureCubemap::SetParameterfv(i32 name, f32* values) const
 {
   glTextureParameterfv(id, name, values);
 }
 
-void TextureCubemap::LoadImages(const array<Texture2D*, 6>& images) const
+void TextureCubemap::LoadImages(const Array<Texture2D*, 6>& images) const
 {
-  int nrChannels = images.at(0)->nChannels;
-  int width = images.at(0)->width;
-  int height = images.at(0)->height;
-  int bufsize = width * height * nrChannels;
-  int format = images.at(0)->format;
-  vector<byte> pixels(bufsize);
+  i32 nrChannels = images.at(0)->nChannels;
+  i32 width = images.at(0)->width;
+  i32 height = images.at(0)->height;
+  i32 bufsize = width * height * nrChannels;
+  i32 format = images.at(0)->format;
+  Vector<Byte> pixels(bufsize);
 
-  for (int i = 0; i < 6; i++)
+  for (i32 i = 0; i < 6; i++)
   {
     auto* texture = images.at(i);
 

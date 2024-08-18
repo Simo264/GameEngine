@@ -11,27 +11,27 @@
 
 namespace Math
 {
-	float Degrees(float radians)
+	f32 Degrees(f32 radians)
 	{
 		return glm::degrees(radians);
 	}
 	
-	float Radians(float degrees)
+	f32 Radians(f32 degrees)
 	{
 		return glm::radians(degrees);
 	}
 
-	float Cos(float degree)
+	f32 Cos(f32 degree)
 	{
 		return glm::cos(degree);
 	}
 
-	float Sin(float degree)
+	f32 Sin(f32 degree)
 	{
 		return glm::sin(degree);
 	}
 
-	double Pow(double base, double exponent)
+	f64 Pow(f64 base, f64 exponent)
 	{
 		return glm::pow(base, exponent);
 	}
@@ -46,7 +46,7 @@ namespace Math
 		return glm::normalize(v);
 	}
 
-	float Length(const vec3f& v)
+	f32 Length(const vec3f& v)
 	{
 		return glm::length(v);
 	}

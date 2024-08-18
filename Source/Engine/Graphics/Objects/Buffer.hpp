@@ -13,7 +13,7 @@ class Buffer
 {
 public:
 	Buffer();
-	Buffer(int target, uint64_t size, const void* data, int usage);
+	Buffer(i32 target, u64 size, const void* data, i32 usage);
 	~Buffer() = default;
 
 	/**
@@ -35,7 +35,7 @@ public:
 	 *								GL_STREAM_DRAW, GL_STREAM_READ, GL_STREAM_COPY, GL_STATIC_DRAW,
 	 *								GL_STATIC_READ, GL_STATIC_COPY, GL_DYNAMIC_DRAW, GL_DYNAMIC_READ, or GL_DYNAMIC_COPY
 	 */
-	void CreateStorage(uint64_t size, const void* data, int usage) const;
+	void CreateStorage(u64 size, const void* data, i32 usage) const;
 
 	/**
 	 * Updates a subset of the buffer object's data store
@@ -43,7 +43,7 @@ public:
 	 * @param offset: specifies the offset (in bytes) into the buffer object's data store where data replacement will begin
 	 * @param size:   specifies the size in bytes of the data store region being replaced
 	 */
-	void UpdateStorage(int offset, uint32_t size, const void* data) const;
+	void UpdateStorage(i32 offset, u32 size, const void* data) const;
 
 	/**
 	 * Copy all or part of the data store of the buffer object to the data store of another buffer object
@@ -57,7 +57,7 @@ public:
 	 * @para writeOffset: specifies the offset within the data store of the destination buffer
 	 *                     at which data will be written.
 	 */
-	void CopyStorage(const Buffer& writeBuffer, int readOffset, int writeOffset, uint64_t size) const;
+	void CopyStorage(const Buffer& writeBuffer, i32 readOffset, i32 writeOffset, u64 size) const;
 
 	/**
 	 * Map all of the buffer object's data store into the client's address space
@@ -66,7 +66,7 @@ public:
 	 *								or both read from and write to the buffer object's mapped data store.
 	 *								The symbolic constant must be GL_READ_ONLY, GL_WRITE_ONLY, or GL_READ_WRITE
 	 */
-	void* MapStorage(int access) const;
+	void* MapStorage(i32 access) const;
 
 	/**
 	 * Release the mapping of the buffer object's data store into the client's address space
@@ -82,29 +82,29 @@ public:
 	 * Bind the buffer object to an indexed buffer target. With glBindBufferBase target must be one of 
 	 * GL_ATOMIC_COUNTER_BUFFER, GL_TRANSFORM_FEEDBACK_BUFFER, GL_UNIFORM_BUFFER or GL_SHADER_STORAGE_BUFFER.
 	 * 
-	 * @param bindingpoint: specify the index of the binding point within the array specified by target.
+	 * @param bindingpoint: specify the index of the binding poi32 within the array specified by target.
 	 */
-	void BindBase(int bindingpoint) const;
+	void BindBase(i32 bindingpoint) const;
 
 	/**
 	 * Bind a range within the buffer object to an indexed buffer target. With glBindBufferRange target must be one of 
 	 * GL_ATOMIC_COUNTER_BUFFER, GL_TRANSFORM_FEEDBACK_BUFFER, GL_UNIFORM_BUFFER, or GL_SHADER_STORAGE_BUFFER.
 	 * 
-	 * @param bindingpoint: specify the index of the binding point 
+	 * @param bindingpoint: specify the index of the binding poi32 
 	 * @param offset: the starting offset in bytes into the buffer object buffer
 	 * @param size: the amount of data in bytes that can be read from the buffer
 	 */
-	void BindRange(int bindingpoint, int offset, uint64_t size) const;
+	void BindRange(i32 bindingpoint, i32 offset, u64 size) const;
 
 	/**
 	 * Unbind the buffer object
 	 */
 	void Unbind() const;
 
-	uint32_t id;
+	u32 id;
 	
 	/**
 	 * https://registry.khronos.org/OpenGL-Refpages/gl4/html/glBindBuffer.xhtml
 	 */
-	int target;
+	i32 target;
 };

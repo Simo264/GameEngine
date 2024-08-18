@@ -32,7 +32,7 @@ public:
    *                    GL_COMPUTE_SHADER, GL_VERTEX_SHADER, GL_TESS_CONTROL_SHADER, GL_TESS_EVALUATION_SHADER, 
    *                    GL_GEOMETRY_SHADER, or GL_FRAGMENT_SHADER.
    */
-  void Create(int shaderType);
+  void Create(i32 shaderType);
 
   /**
    * Frees the memory and invalidates the name associated with the shader object
@@ -46,7 +46,7 @@ public:
    * @param string: specifies the source code to be loaded into the shader
    * @param length: specifies the string length
    */
-  void LoadSource(const string& source) const;
+  void LoadSource(const String& source) const;
 
   /**
    * Compiles the source code strings that have been stored in the shader object.
@@ -60,17 +60,17 @@ public:
    *              GL_SHADER_TYPE, GL_DELETE_STATUS, GL_COMPILE_STATUS, GL_INFO_LOG_LENGTH, 
    *              GL_SHADER_SOURCE_LENGTH.
    */
-  int GetParameteri(int name) const;
+  i32 GetParameteri(i32 name) const;
 
   /**
    * Returns the information log for the specified shader object. 
    * The information log for a shader object is modified when the shader is compiled.
    */
-  string GetShaderInfo() const;
+  String GetShaderInfo() const;
 
   uint32_t id;
 
-  string filename;
+  String filename;
 };
 
 /**
@@ -137,12 +137,12 @@ public:
    *              GL_TRANSFORM_FEEDBACK_VARYINGS, GL_TRANSFORM_FEEDBACK_VARYING_MAX_LENGTH, GL_GEOMETRY_VERTICES_OUT, 
    *              GL_GEOMETRY_INPUT_TYPE, and GL_GEOMETRY_OUTPUT_TYPE.
    */
-  int GetParameteri(int name) const;
+  i32 GetParameteri(i32 name) const;
 
   /**
    * Returns the information log for the program object
    */
-  string GetProgramInfo() const;
+  String GetProgramInfo() const;
 
   /**
    * Installs the program object specified as part of current rendering state. 
@@ -154,26 +154,26 @@ public:
   /**
    * Returns the location of a uniform variable
    */
-  int GetUniformLocation(const char* name) const;
+  i32 GetUniformLocation(const char* name) const;
 
   /**
    * Retrieve the index of a named uniform block
    */
-  int GetUniformBlockIndex(const char* name) const;
+  i32 GetUniformBlockIndex(const char* name) const;
 
   /**
-   * Assign a binding point to an active uniform block
+   * Assign a binding poi32 to an active uniform block
    */
-  void SetUniformBlockBinding(const char* blockname, int uniformBlockBinding) const;
+  void SetUniformBlockBinding(const char* blockname, i32 uniformBlockBinding) const;
 
   /**
    * Specify the value of a uniform variable for the program object
    */
-  void SetUniform1i(const char* uniformname, int value) const;
+  void SetUniform1i(const char* uniformname, i32 value) const;
   void SetUniform2i(const char* uniformname, const vec2i32& value) const;
   void SetUniform3i(const char* uniformname, const vec3i32& value) const;
   void SetUniform4i(const char* uniformname, const vec4i32& value) const;
-  void SetUniform1f(const char* uniformname, float value) const;
+  void SetUniform1f(const char* uniformname, f32 value) const;
   void SetUniform2f(const char* uniformname, const vec2f& value) const;
   void SetUniform3f(const char* uniformname, const vec3f& value) const;
   void SetUniform4f(const char* uniformname, const vec4f& value) const;
@@ -183,5 +183,5 @@ public:
 
   uint32_t id;
 
-  string name;
+  String name;
 };

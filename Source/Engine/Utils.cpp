@@ -7,7 +7,7 @@
 
 namespace Utils
 {
-	vec2i32 StringToVec2i32(string& str, const char* sep)
+	vec2i32 StringToVec2i32(String& str, const char* sep)
 	{
 		vec2i32 vec{};
 		char* token = nullptr;
@@ -19,7 +19,7 @@ namespace Utils
 		return vec;
 	}
 	
-	vec2f StringToVec2f(string& str, const char* sep)
+	vec2f StringToVec2f(String& str, const char* sep)
 	{
 		vec2f vec{};
 		char* token = nullptr;
@@ -31,7 +31,7 @@ namespace Utils
 		return vec;
 	}
 
-	vec3i32 StringToVec3i32(string& str, const char* sep)
+	vec3i32 StringToVec3i32(String& str, const char* sep)
 	{
 		vec3i32 vec{};
 		char* token = nullptr;
@@ -45,7 +45,7 @@ namespace Utils
 		return vec;
 	}
 
-	vec3f StringToVec3f(string& str, const char* sep)
+	vec3f StringToVec3f(String& str, const char* sep)
 	{
 		vec3f vec{};
 		char* token = nullptr;
@@ -59,18 +59,18 @@ namespace Utils
 		return vec;
 	}
 
-	bool StringToBool(const string& str)
+	bool StringToBool(const String& str)
 	{
 		return (str.compare("1") == 0 || str.compare("true") == 0);
 	}
 
-	byte* LoadImageData(const fs::path& path, int& width, int& height, int& nChannels)
+	Byte* LoadImageData(const fs::path& path, i32& width, i32& height, i32& nChannels)
 	{
-		byte* data = reinterpret_cast<byte*>(stbi_load(path.string().c_str(), &width, &height, &nChannels, 0));
+		Byte* data = reinterpret_cast<Byte*>(stbi_load(path.string().c_str(), &width, &height, &nChannels, 0));
 		return data;
 	}
 
-	void FreeImageData(byte* data)
+	void FreeImageData(Byte* data)
 	{
 		stbi_image_free(reinterpret_cast<void*>(data));
 	}

@@ -16,43 +16,43 @@ void FrameBuffer::Create()
 
 void FrameBuffer::Delete()
 {
-	uint64_t numTextures = _textAttachmentIDs.size();
+	u64 numTextures = _textAttachmentIDs.size();
 	if (numTextures > 0)
 		glDeleteTextures(numTextures, _textAttachmentIDs.data());
 	
-	uint64_t numRBOs = _rboAttachmentIDs.size();
+	u64 numRBOs = _rboAttachmentIDs.size();
 	if (numRBOs > 0)
 		glDeleteRenderbuffers(numRBOs, _rboAttachmentIDs.data());
 
-	vector<uint32_t>().swap(_textAttachmentIDs);
-	vector<uint32_t>().swap(_rboAttachmentIDs);
+	Vector<u32>().swap(_textAttachmentIDs);
+	Vector<u32>().swap(_rboAttachmentIDs);
 
 	glDeleteFramebuffers(1, &id);
 	id = 0;
 }
 
-void FrameBuffer::Bind(int target) const
+void FrameBuffer::Bind(i32 target) const
 {
 	glBindFramebuffer(target, id);
 }
 
-void FrameBuffer::Unbind(int target) const
+void FrameBuffer::Unbind(i32 target) const
 {
 	glBindFramebuffer(target, 0);
 }
 
-int FrameBuffer::CheckStatus() const
+i32 FrameBuffer::CheckStatus() const
 {
 	return glCheckNamedFramebufferStatus(id, GL_FRAMEBUFFER);
 }
 
-void FrameBuffer::AttachTexture(int attachment, uint32_t textureID, int level)
+void FrameBuffer::AttachTexture(i32 attachment, u32 textureID, i32 level)
 {
 	glNamedFramebufferTexture(id, attachment, textureID, level);
 	_textAttachmentIDs.push_back(textureID);
 }
 
-void FrameBuffer::AttachRenderBuffer(int attachment, uint32_t renderbufferID)
+void FrameBuffer::AttachRenderBuffer(i32 attachment, u32 renderbufferID)
 {
 	glNamedFramebufferRenderbuffer(id, attachment, GL_RENDERBUFFER, renderbufferID);
 	_rboAttachmentIDs.push_back(renderbufferID);
@@ -60,16 +60,16 @@ void FrameBuffer::AttachRenderBuffer(int attachment, uint32_t renderbufferID)
 
 void FrameBuffer::Blit(
 	const FrameBuffer& dest,
-	int srcLowerX,
-	int srcLowerY,
-	int srcUpperX,
-	int srcUpperY,
-	int destLowerX,
-	int destLowerY,
-	int destUpperX,
-	int destUpperY,
-	int mask,
-	int filter) const
+	i32 srcLowerX,
+	i32 srcLowerY,
+	i32 srcUpperX,
+	i32 srcUpperY,
+	i32 destLowerX,
+	i32 destLowerY,
+	i32 destUpperX,
+	i32 destUpperY,
+	i32 mask,
+	i32 filter) const
 {
 	glBlitNamedFramebuffer(
 		id, dest.id, 

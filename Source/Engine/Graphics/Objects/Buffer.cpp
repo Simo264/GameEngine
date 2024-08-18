@@ -8,7 +8,7 @@ Buffer::Buffer()
 		target{ 0 }
 {}
 
-Buffer::Buffer(int target, uint64_t size, const void* data, int usage)
+Buffer::Buffer(i32 target, u64 size, const void* data, i32 usage)
 	: target{ target }
 {
 	Create();
@@ -26,22 +26,22 @@ void Buffer::Delete()
 	id = 0;
 }
 
-void Buffer::CopyStorage(const Buffer& writeBuffer, int readOffset, int writeOffset, uint64_t size) const
+void Buffer::CopyStorage(const Buffer& writeBuffer, i32 readOffset, i32 writeOffset, u64 size) const
 {
 	glCopyNamedBufferSubData(id, writeBuffer.id, readOffset, writeOffset, size);
 }
 
-void Buffer::CreateStorage(uint64_t size, const void* data, int usage) const
+void Buffer::CreateStorage(u64 size, const void* data, i32 usage) const
 {
 	glNamedBufferData(id, size, data, usage);
 }
 
-void Buffer::UpdateStorage(int offset, uint32_t size, const void* data) const
+void Buffer::UpdateStorage(i32 offset, u32 size, const void* data) const
 {
 	glNamedBufferSubData(id, offset, size, data);
 }
 
-void* Buffer::MapStorage(int access) const
+void* Buffer::MapStorage(i32 access) const
 {
 	return glMapNamedBuffer(id, access);
 }
@@ -56,12 +56,12 @@ void Buffer::Bind() const
 	glBindBuffer(target, id);
 }
 
-void Buffer::BindBase(int bindingpoint) const
+void Buffer::BindBase(i32 bindingpoint) const
 {
 	glBindBufferBase(target, bindingpoint, id);
 }
 
-void Buffer::BindRange(int bindingpoint, int offset, uint64_t size) const
+void Buffer::BindRange(i32 bindingpoint, i32 offset, u64 size) const
 {
 	glBindBufferRange(target, bindingpoint, id, offset, size);
 }

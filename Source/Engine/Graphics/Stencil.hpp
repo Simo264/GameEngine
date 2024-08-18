@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Core/Core.hpp"
+
 /**
  * https://open.gl/depthstencils
  * 
@@ -46,7 +48,7 @@ namespace Stencil
 	 * @param mask:	a bitwise AND operation is performed on the stencil value and reference value with this mask value
 	 *							before comparing them
 	 *  */
-	void SetFunction(int func, int ref, int mask);
+	void SetFunction(i32 func, i32 ref, i32 mask);
 
 
 	/**
@@ -58,7 +60,7 @@ namespace Stencil
 	 * @param dpfail: action to take if the stencil test is successful, but the depth test failed
 	 * @param dppass: action to take if both the stencil test and depth tests pass
 	 */
-	void SetOperation(int sfail, int dpfail, int dppass);
+	void SetOperation(i32 sfail, i32 dpfail, i32 dppass);
 
 
 	/**
@@ -68,7 +70,7 @@ namespace Stencil
 	 *
 	 * @param mask: specifies a bit mask to enable and disable writing of individual bits in the stencil planes
 	 */
-	void SetMask(int mask);
+	void SetMask(i32 mask);
 
 
 	void EnableWritingBuffer();

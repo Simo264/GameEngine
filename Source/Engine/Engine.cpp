@@ -78,7 +78,7 @@ static void SetOpenGLStates()
   /* Antialising ON */
   glEnable(GL_MULTISAMPLE);
 
-  glClearColor(0.15, 0.15, 0.15, 1.0f);
+  glClearColor(0.15f, 0.15f, 0.15f, 1.0f);
   glClearDepth(1.0f);
   glClearStencil(0);
 }
@@ -90,7 +90,7 @@ static void RenderDirectionalLight(Program* program, const Components::Direction
   program->SetUniform1f("u_directionalLight.specularIntensity", light.specularIntensity);
   program->SetUniform3f("u_directionalLight.direction", light.direction);
 }
-static void RenderPointLight(Program* program, const Components::PointLight& light, int i)
+static void RenderPointLight(Program* program, const Components::PointLight& light, i32 i)
 {
   program->SetUniform3f(std::format("u_pointLight[{}].color", i).c_str(), light.color);
   program->SetUniform1f(std::format("u_pointLight[{}].diffuseIntensity", i).c_str(), light.diffuseIntensity);
@@ -117,7 +117,7 @@ static void RenderScene(Scene& scene, Program* program)
     RenderDirectionalLight(program, light);
   });
 
-  int i = 0;
+  i32 i = 0;
   scene.Reg().view<Components::PointLight>().each([&](auto& light) {
     RenderPointLight(program, light, i);
     i++;
@@ -134,7 +134,7 @@ static void RenderScene(Scene& scene, Program* program)
 }
 static void CreateSkybox(VertexArray& skybox, TextureCubemap& skyboxTexture)
 {
-  float vertices[] = {
+  f32 vertices[] = {
     /* positions */
     -1.0f,  1.0f, -1.0f,
     -1.0f, -1.0f, -1.0f,
@@ -181,14 +181,14 @@ static void CreateSkybox(VertexArray& skybox, TextureCubemap& skyboxTexture)
   Buffer vbo(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
   skybox.Create();
-  skybox.AttachVertexBuffer(0, vbo.id, 0, 3 * sizeof(float));
+  skybox.AttachVertexBuffer(0, vbo.id, 0, 3 * sizeof(f32));
   skybox.EnableAttribute(0);
   skybox.SetAttribBinding(0, 0);
   skybox.SetAttribFormat(0, 3, GL_FLOAT, true, 0);
   skybox.numIndices = 0;
   skybox.numVertices = 36;
 
-  const array<Texture2D*, 6> images = {
+  const Array<Texture2D*, 6> images = {
     g_textureManager.GetTextureByPath(TEXTURES_PATH / "skybox/right.jpg"),
     g_textureManager.GetTextureByPath(TEXTURES_PATH / "skybox/left.jpg"),
     g_textureManager.GetTextureByPath(TEXTURES_PATH / "skybox/top.jpg"),
@@ -196,9 +196,9 @@ static void CreateSkybox(VertexArray& skybox, TextureCubemap& skyboxTexture)
     g_textureManager.GetTextureByPath(TEXTURES_PATH / "skybox/front.jpg"),
     g_textureManager.GetTextureByPath(TEXTURES_PATH / "skybox/back.jpg"),
   };
-  int cubemapInternalFormat = images.at(0)->internalFormat;
-  int width = images.at(0)->width;
-  int height = images.at(0)->height;
+  i32 cubemapInternalFormat = images.at(0)->internalFormat;
+  i32 width = images.at(0)->width;
+  i32 height = images.at(0)->height;
 
   skyboxTexture.Create();
   skyboxTexture.CreateStorage(cubemapInternalFormat, width, height);
@@ -211,7 +211,7 @@ static void CreateSkybox(VertexArray& skybox, TextureCubemap& skyboxTexture)
   skyboxTexture.SetParameteri(GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 }
 
-static void CreateDepthMapFbo(FrameBuffer& fbo, int width, int height)
+static void CreateDepthMapFbo(FrameBuffer& fbo, i32 width, i32 height)
 {
   fbo.Create();
 
@@ -227,19 +227,19 @@ static void CreateDepthMapFbo(FrameBuffer& fbo, int width, int height)
   /* Resolve the problem of over sampling */
   depthMap.SetParameteri(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
   depthMap.SetParameteri(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-  depthMap.SetParameterfv(GL_TEXTURE_BORDER_COLOR, array<float, 4>{ 1.0, 1.0, 1.0, 1.0 }.data());
+  depthMap.SetParameterfv(GL_TEXTURE_BORDER_COLOR, Array<f32, 4>{ 1.0, 1.0, 1.0, 1.0 }.data());
 
   /* With the generated depth texture we can attach it as the framebuffer's depth buffer */
   fbo.AttachTexture(GL_DEPTH_ATTACHMENT, depthMap.id, 0);
 }
-static void CreateDepthCubeMapFbo(FrameBuffer& fbo, int width, int height)
+static void CreateDepthCubeMapFbo(FrameBuffer& fbo, i32 width, i32 height)
 {
   fbo.Create();
 
   TextureCubemap texture;
   texture.Create();
   texture.CreateStorage(GL_DEPTH_COMPONENT24, width, height);
-  for (int i = 0; i < 6; i++)
+  for (i32 i = 0; i < 6; i++)
     texture.SubImage3D(0, 0, 0, i, width, height, 1, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
 
   texture.SetParameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -251,7 +251,7 @@ static void CreateDepthCubeMapFbo(FrameBuffer& fbo, int width, int height)
   fbo.AttachTexture(GL_DEPTH_ATTACHMENT, texture.id, 0);
 }
 
-static void CreateDefaultTexture(Texture2D& texture, array<byte, 3> textureData)
+static void CreateDefaultTexture(Texture2D& texture, Array<Byte, 3> textureData)
 {
   texture.Create();
   texture.CreateStorage(GL_RGB8, 1, 1);
@@ -261,54 +261,54 @@ static void CreateDefaultTexture(Texture2D& texture, array<byte, 3> textureData)
   texture.SetParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   texture.SetParameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 }
-static void CreateTerrain(VertexArray& vao, int rez)
+static void CreateTerrain(VertexArray& vao, i32 rez)
 {
   vao.Create();
   vao.SetAttribFormat(0, 3, GL_FLOAT, false, 0);
   vao.SetAttribBinding(0, 0);
   vao.EnableAttribute(0);
 
-  vao.SetAttribFormat(1, 2, GL_FLOAT, false, 3 * sizeof(float));
+  vao.SetAttribFormat(1, 2, GL_FLOAT, false, 3 * sizeof(f32));
   vao.SetAttribBinding(1, 0);
   vao.EnableAttribute(1);
 
   Texture2D* heightMap = g_textureManager.GetTextureByPath(TEXTURES_PATH / "iceland_heightmap.png");
-  int width = heightMap->width;
-  int height = heightMap->height;
+  i32 width = heightMap->width;
+  i32 height = heightMap->height;
 
   // vertex generation
-  vector<float> vertices;
-  for (int i = 0; i <= rez - 1; i++)
+  Vector<f32> vertices;
+  for (i32 i = 0; i <= rez - 1; i++)
   {
-    for (int j = 0; j <= rez - 1; j++)
+    for (i32 j = 0; j <= rez - 1; j++)
     {
-      vertices.push_back(-width / 2.0f + width * i / (float)rez); // v.x
+      vertices.push_back(-width / 2.0f + width * i / (f32)rez); // v.x
       vertices.push_back(0.0f); // v.y
-      vertices.push_back(-height / 2.0f + height * j / (float)rez); // v.z
-      vertices.push_back(i / (float)rez); // u
-      vertices.push_back(j / (float)rez); // v
+      vertices.push_back(-height / 2.0f + height * j / (f32)rez); // v.z
+      vertices.push_back(i / (f32)rez); // u
+      vertices.push_back(j / (f32)rez); // v
 
-      vertices.push_back(-width / 2.0f + width * (i + 1) / (float)rez); // v.x
+      vertices.push_back(-width / 2.0f + width * (i + 1) / (f32)rez); // v.x
       vertices.push_back(0.0f); // v.y
-      vertices.push_back(-height / 2.0f + height * j / (float)rez); // v.z
-      vertices.push_back((i + 1) / (float)rez); // u
-      vertices.push_back(j / (float)rez); // v
+      vertices.push_back(-height / 2.0f + height * j / (f32)rez); // v.z
+      vertices.push_back((i + 1) / (f32)rez); // u
+      vertices.push_back(j / (f32)rez); // v
 
-      vertices.push_back(-width / 2.0f + width * i / (float)rez); // v.x
+      vertices.push_back(-width / 2.0f + width * i / (f32)rez); // v.x
       vertices.push_back(0.0f); // v.y
-      vertices.push_back(-height / 2.0f + height * (j + 1) / (float)rez); // v.z
-      vertices.push_back(i / (float)rez); // u
-      vertices.push_back((j + 1) / (float)rez); // v
+      vertices.push_back(-height / 2.0f + height * (j + 1) / (f32)rez); // v.z
+      vertices.push_back(i / (f32)rez); // u
+      vertices.push_back((j + 1) / (f32)rez); // v
 
-      vertices.push_back(-width / 2.0f + width * (i + 1) / (float)rez); // v.x
+      vertices.push_back(-width / 2.0f + width * (i + 1) / (f32)rez); // v.x
       vertices.push_back(0.0f); // v.y
-      vertices.push_back(-height / 2.0f + height * (j + 1) / (float)rez); // v.z
-      vertices.push_back((i + 1) / (float)rez); // u
-      vertices.push_back((j + 1) / (float)rez); // v
+      vertices.push_back(-height / 2.0f + height * (j + 1) / (f32)rez); // v.z
+      vertices.push_back((i + 1) / (f32)rez); // u
+      vertices.push_back((j + 1) / (f32)rez); // v
     }
   }
-  Buffer vbo(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
-  vao.AttachVertexBuffer(0, vbo.id, 0, 5 * sizeof(float));
+  Buffer vbo(GL_ARRAY_BUFFER, vertices.size() * sizeof(f32), vertices.data(), GL_STATIC_DRAW);
+  vao.AttachVertexBuffer(0, vbo.id, 0, 5 * sizeof(f32));
 
   vao.numVertices = 4 * pow(rez, 2);
   vao.numIndices = 0;
@@ -356,13 +356,13 @@ void Engine::Initialize()
   /* ------------- */
   /* !!The first 4 positions are reserved for the default textures */
   Texture2D defaultDiffuseTexture(GL_TEXTURE_2D);
-  CreateDefaultTexture(defaultDiffuseTexture, array<byte, 3>{ byte(128), byte(128), byte(255) });
+  CreateDefaultTexture(defaultDiffuseTexture, Array<Byte, 3>{ Byte(128), Byte(128), Byte(255) });
   Texture2D defaultSpecularTexture(GL_TEXTURE_2D);
-  CreateDefaultTexture(defaultSpecularTexture, array<byte, 3>{ byte(255), byte(255), byte(255) });
+  CreateDefaultTexture(defaultSpecularTexture, Array<Byte, 3>{ Byte(255), Byte(255), Byte(255) });
   Texture2D defaultNormalTexture(GL_TEXTURE_2D);
-  CreateDefaultTexture(defaultNormalTexture, array<byte, 3>{ byte(0), byte(0), byte(0) });
+  CreateDefaultTexture(defaultNormalTexture, Array<Byte, 3>{ Byte(0), Byte(0), Byte(0) });
   Texture2D defaultHeightTexture(GL_TEXTURE_2D);
-  CreateDefaultTexture(defaultHeightTexture, array<byte, 3>{ byte(0), byte(0), byte(0) });
+  CreateDefaultTexture(defaultHeightTexture, Array<Byte, 3>{ Byte(0), Byte(0), Byte(0) });
   g_textureManager.LoadTexture(defaultDiffuseTexture);
   g_textureManager.LoadTexture(defaultSpecularTexture);
   g_textureManager.LoadTexture(defaultNormalTexture);
@@ -415,7 +415,7 @@ void Engine::Run()
 
   /* Prepare vertices for terrain */
   VertexArray terrain;
-  int rez = 20;
+  i32 rez = 20;
   CreateTerrain(terrain, rez);
 
   /* ---------------------------------------------------------------------- */
@@ -428,9 +428,9 @@ void Engine::Run()
   Program* depthCubeMapProgram = g_shaderManager.GetProgram("DepthCubeMap");
   Program* skyboxProgram = g_shaderManager.GetProgram("Skybox");
   Program* terrainProgram = g_shaderManager.GetProgram("Terrain");
-  uint32_t fboTexture = _fboIntermediate.GetTextureAttachment(0);
-  uint32_t depthMapTexture = fboDepthMap.GetTextureAttachment(0);
-  uint32_t depthCubeMapTexture = fboDepthCubeMap.GetTextureAttachment(0);
+  u32 fboTexture = _fboIntermediate.GetTextureAttachment(0);
+  u32 depthMapTexture = fboDepthMap.GetTextureAttachment(0);
+  u32 depthCubeMapTexture = fboDepthCubeMap.GetTextureAttachment(0);
   
   Texture2D* heightMap = g_textureManager.GetTextureByPath(TEXTURES_PATH / "iceland_heightmap.png");
 
@@ -452,10 +452,10 @@ void Engine::Run()
     /* ---------------------------------------------------------------------------------- */
     /* -------------------------- Per-frame time logic section -------------------------- */
     /* ---------------------------------------------------------------------------------- */
-    float aspect = static_cast<float>(_viewportSize.x) / static_cast<float>(_viewportSize.y);
+    f32 aspect = static_cast<f32>(_viewportSize.x) / static_cast<f32>(_viewportSize.y);
     auto now = chrono::high_resolution_clock::now();
     chrono::duration<double> diff = now - lastUpdateTime;
-    double delta = diff.count();
+    f64 delta = diff.count();
     g_drawCalls = 0;
 
     /* ------------------------------------------------------------------- */
@@ -515,7 +515,7 @@ void Engine::Run()
       const vec3f& lightPos = pointLight->position;
       mat4f pointLightProj = Math::Perspective(Math::Radians(90.0f), 1.0f, 0.1f, 15.0f);
 
-      array<mat4f, 6> pointLightViews{};
+      Array<mat4f, 6> pointLightViews{};
       pointLightViews[0] = Math::LookAt(lightPos, lightPos + vec3f(1.0f, 0.0f, 0.0f), vec3f(0.0f, -1.0f, 0.0f));
       pointLightViews[1] = Math::LookAt(lightPos, lightPos + vec3f(-1.0f, 0.0f, 0.0f), vec3f(0.0f, -1.0f, 0.0f));
       pointLightViews[2] = Math::LookAt(lightPos, lightPos + vec3f(0.0f, 1.0f, 0.0f), vec3f(0.0f, 0.0f, 1.0f));
@@ -668,7 +668,7 @@ void Engine::CleanUp()
 */
 
 
-void Engine::CreateFramebuffer(int samples, int width, int height)
+void Engine::CreateFramebuffer(i32 samples, i32 width, i32 height)
 {
   _fboMultisampled.Create();
 
@@ -707,7 +707,7 @@ void Engine::CreateScreenSquare()
 {
   _screenSquare.Create();
 
-  float vertices[] = {
+  f32 vertices[] = {
     /* positions   texCoords */
     -1.0f,  1.0f,  0.0f, 1.0f,
     -1.0f, -1.0f,  0.0f, 0.0f,
@@ -717,13 +717,13 @@ void Engine::CreateScreenSquare()
      1.0f,  1.0f,  1.0f, 1.0f
   };
   Buffer vbo(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-  _screenSquare.AttachVertexBuffer(0, vbo.id, 0, 4 * sizeof(float));
+  _screenSquare.AttachVertexBuffer(0, vbo.id, 0, 4 * sizeof(f32));
 
   _screenSquare.SetAttribFormat(0, 2, GL_FLOAT, true, 0);
   _screenSquare.SetAttribBinding(0, 0);
   _screenSquare.EnableAttribute(0);
 
-  _screenSquare.SetAttribFormat(1, 2, GL_FLOAT, true, 2 * sizeof(float));
+  _screenSquare.SetAttribFormat(1, 2, GL_FLOAT, true, 2 * sizeof(f32));
   _screenSquare.SetAttribBinding(1, 0);
   _screenSquare.EnableAttribute(1);
   

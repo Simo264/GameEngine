@@ -31,7 +31,7 @@ public:
 	/**
 	 * Load the shader object in shaders array
 	 */
-	Shader& LoadShader(const fs::path& filepath, int shaderType);
+	Shader& LoadShader(const fs::path& filepath, i32 shaderType);
 	
 	/**
 	 * Retrieve the shader object from shaders array 
@@ -55,6 +55,6 @@ public:
 	 */
 	Program* GetProgram(const char* name);
 	
-	vector<Shader>	shaders;
-	vector<Program> programs;
+	Vector<Shader>	shaders;
+	Vector<Program> programs;
 };

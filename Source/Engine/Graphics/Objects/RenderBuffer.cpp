@@ -19,13 +19,13 @@ void RenderBuffer::Delete()
 	id = 0;
 }
 
-void RenderBuffer::CreateStorage(int internalFormat, int width, int height)
+void RenderBuffer::CreateStorage(i32 internalFormat, i32 width, i32 height)
 {
 	this->internalFormat = internalFormat;
 	glNamedRenderbufferStorage(id, internalFormat, width, height);
 }
 
-void RenderBuffer::CreateStorageMulstisampled(int internalFormat, int samples, int width, int height)
+void RenderBuffer::CreateStorageMulstisampled(i32 internalFormat, i32 samples, i32 width, i32 height)
 {
 	this->internalFormat = internalFormat;
 	glNamedRenderbufferStorageMultisample(id, samples, internalFormat, width, height);

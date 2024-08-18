@@ -14,12 +14,12 @@ namespace Culling
 		glDisable(GL_CULL_FACE);
 	}
 
-	void SetCullFace(int mode)
+	void SetCullFace(i32 mode)
 	{
 		glCullFace(mode);
 	}
 
-	void SetFrontFace(int mode)
+	void SetFrontFace(i32 mode)
 	{
 		glFrontFace(mode);
 	}

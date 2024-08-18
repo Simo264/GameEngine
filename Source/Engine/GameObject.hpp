@@ -62,7 +62,7 @@ public:
 
 	bool IsEqual(const GameObject& rhs) const
 	{
-		return static_cast<uint32_t>(_entity) == static_cast<uint32_t>(rhs.GetObjectID());
+		return static_cast<u32>(_entity) == static_cast<u32>(rhs.GetObjectID());
 	}
 
 private:

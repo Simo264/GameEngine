@@ -9,7 +9,7 @@
 
 void WindowManager::Initialize()
 {
-  int success = glfwInit();
+  i32 success = glfwInit();
   if (success != GLFW_TRUE)
   {
     CONSOLE_CRITICAL("Error on initializing GLFW");
@@ -39,12 +39,12 @@ void WindowManager::Initialize()
   glfwSetWindowAspectRatio(_context, _aspectRatio.x, _aspectRatio.y); 
   glfwSwapInterval(0);  /* No vsync */
 
-  glfwSetWindowSizeCallback(_context, [](GLFWwindow* window, int width, int height) {
+  glfwSetWindowSizeCallback(_context, [](GLFWwindow* window, i32 width, i32 height) {
     glfwSetWindowSize(window, width, height);
   });
 
   /* Load OpenGL functions, gladLoadGL returns the loaded version, 0 on error. */
-  int version = gladLoadGL(glfwGetProcAddress);
+  i32 version = gladLoadGL(glfwGetProcAddress);
   if (version == 0)
   {
     CONSOLE_CRITICAL("Error on loading OpenGL");
@@ -79,7 +79,7 @@ void WindowManager::SetWindowTitle(const char* title) const
   glfwSetWindowTitle(_context, title);
 }
 
-void WindowManager::SetWindowAspectRatio(int numer, int denom) const
+void WindowManager::SetWindowAspectRatio(i32 numer, i32 denom) const
 {
   glfwSetWindowAspectRatio(_context, numer, denom);
 }
@@ -96,7 +96,7 @@ vec2i32 WindowManager::GetWindowSize() const
   return res;
 }
 
-void WindowManager::SetWindowSize(int w, int h) const
+void WindowManager::SetWindowSize(i32 w, i32 h) const
 {
   glfwSetWindowSize(_context, w, h);
 }
@@ -108,12 +108,12 @@ vec2i32 WindowManager::GetFramebufferSize() const
   return res;
 }
 
-int WindowManager::GetKey(uint32_t key) const 
+i32 WindowManager::GetKey(u32 key) const 
 { 
   return glfwGetKey(_context, key); 
 }
 
-int WindowManager::GetMouseKey(uint32_t key) const 
+i32 WindowManager::GetMouseKey(u32 key) const 
 { 
   return glfwGetMouseButton(_context, key); 
 }
@@ -125,12 +125,12 @@ vec2d WindowManager::GetCursorPosition() const
   return res;
 }
 
-void WindowManager::SetCursorMode(int value) const 
+void WindowManager::SetCursorMode(i32 value) const 
 { 
   glfwSetInputMode(_context, GLFW_CURSOR, value); 
 }
 
-void WindowManager::SetWindowPosition(int x, int y) const
+void WindowManager::SetWindowPosition(i32 x, i32 y) const
 { 
   glfwSetWindowPos(_context, x, y); 
 }
