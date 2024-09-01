@@ -9,6 +9,9 @@
 class TextureManager
 {
 public:
+	TextureManager() = default;
+	~TextureManager() = default;
+
 	/**
 	 * Load all textures from directory <dirpath>
 	 */

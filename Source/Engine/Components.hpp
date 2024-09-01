@@ -103,7 +103,6 @@ namespace Components
 		void LoadVertices(aiMesh* aimesh, Buffer& vbo);
 		void LoadIndices(aiMesh* aimesh, Buffer& ebo);
 		Texture2D* GetTexture(aiMaterial* material, aiTextureType type);
-
 	};
 
 	/**

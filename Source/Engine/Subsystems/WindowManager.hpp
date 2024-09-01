@@ -11,6 +11,9 @@ class WindowManager
 public:
   using Context = struct GLFWwindow*;
 
+  WindowManager() = default;
+  ~WindowManager() = default;
+
   /**
    * Initialize GLFW and OpenGL libraries and create context
    */
@@ -54,9 +57,6 @@ public:
 
   vec2d GetCursorPosition() const;
 
-  /**
-   * @param value: GLFW_CURSOR_NORMAL or GLFW_CURSOR_HIDDEN or GLFW_CURSOR_DISABLED
-   */
   void SetCursorMode(i32 value) const;
 
   void SetWindowPosition(i32 x, i32 y) const;

@@ -9,6 +9,9 @@
 class ShaderManager
 {
 public:
+	ShaderManager() = default;
+	~ShaderManager() = default;
+
 	/**
 	 * Load all shaders from directory <dirpath>
 	 */
