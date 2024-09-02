@@ -188,13 +188,14 @@ static void CreateSkybox(VertexArray& skybox, TextureCubemap& skyboxTexture)
   skybox.numIndices = 0;
   skybox.numVertices = 36;
 
+  TextureManager& textureManager = TextureManager::Get();
   const Array<Texture2D*, 6> images = {
-    g_textureManager.GetTextureByPath(TEXTURES_PATH / "skybox/right.jpg"),
-    g_textureManager.GetTextureByPath(TEXTURES_PATH / "skybox/left.jpg"),
-    g_textureManager.GetTextureByPath(TEXTURES_PATH / "skybox/top.jpg"),
-    g_textureManager.GetTextureByPath(TEXTURES_PATH / "skybox/bottom.jpg"),
-    g_textureManager.GetTextureByPath(TEXTURES_PATH / "skybox/front.jpg"),
-    g_textureManager.GetTextureByPath(TEXTURES_PATH / "skybox/back.jpg"),
+    textureManager.GetTextureByPath(TEXTURES_PATH / "skybox/right.jpg"),
+    textureManager.GetTextureByPath(TEXTURES_PATH / "skybox/left.jpg"),
+    textureManager.GetTextureByPath(TEXTURES_PATH / "skybox/top.jpg"),
+    textureManager.GetTextureByPath(TEXTURES_PATH / "skybox/bottom.jpg"),
+    textureManager.GetTextureByPath(TEXTURES_PATH / "skybox/front.jpg"),
+    textureManager.GetTextureByPath(TEXTURES_PATH / "skybox/back.jpg"),
   };
   i32 cubemapInternalFormat = images.at(0)->internalFormat;
   i32 width = images.at(0)->width;
@@ -211,8 +212,9 @@ static void CreateSkybox(VertexArray& skybox, TextureCubemap& skyboxTexture)
   skyboxTexture.SetParameteri(GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 }
 
-static void CreateDepthMapFbo(FrameBuffer& fbo, i32 width, i32 height)
+static FrameBuffer CreateDepthMapFbo(i32 width, i32 height)
 {
+  FrameBuffer fbo;
   fbo.Create();
 
   /* Create a 2D texture that we'll use as the framebuffer's depth buffer */
@@ -231,9 +233,11 @@ static void CreateDepthMapFbo(FrameBuffer& fbo, i32 width, i32 height)
 
   /* With the generated depth texture we can attach it as the framebuffer's depth buffer */
   fbo.AttachTexture(GL_DEPTH_ATTACHMENT, depthMap.id, 0);
+  return fbo;
 }
-static void CreateDepthCubeMapFbo(FrameBuffer& fbo, i32 width, i32 height)
+static FrameBuffer CreateDepthCubeMapFbo(i32 width, i32 height)
 {
+  FrameBuffer fbo;
   fbo.Create();
 
   TextureCubemap texture;
@@ -249,10 +253,12 @@ static void CreateDepthCubeMapFbo(FrameBuffer& fbo, i32 width, i32 height)
   texture.SetParameteri(GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
   fbo.AttachTexture(GL_DEPTH_ATTACHMENT, texture.id, 0);
+  return fbo;
 }
 
-static void CreateDefaultTexture(Texture2D& texture, Array<Byte, 3> textureData)
+static Texture2D CreateDefaultTexture(Array<i16, 3> textureData)
 {
+  Texture2D texture(GL_TEXTURE_2D);
   texture.Create();
   texture.CreateStorage(GL_RGB8, 1, 1);
   texture.UpdateStorage(0, 0, 0, GL_UNSIGNED_BYTE, textureData.data());
@@ -260,9 +266,11 @@ static void CreateDefaultTexture(Texture2D& texture, Array<Byte, 3> textureData)
   texture.SetParameteri(GL_TEXTURE_WRAP_T, GL_REPEAT);
   texture.SetParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   texture.SetParameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  return texture;
 }
-static void CreateTerrain(VertexArray& vao, i32 rez)
+static VertexArray CreateTerrain(i32 rez)
 {
+  VertexArray vao;
   vao.Create();
   vao.SetAttribFormat(0, 3, GL_FLOAT, false, 0);
   vao.SetAttribBinding(0, 0);
@@ -272,7 +280,7 @@ static void CreateTerrain(VertexArray& vao, i32 rez)
   vao.SetAttribBinding(1, 0);
   vao.EnableAttribute(1);
 
-  Texture2D* heightMap = g_textureManager.GetTextureByPath(TEXTURES_PATH / "iceland_heightmap.png");
+  Texture2D* heightMap = TextureManager::Get().GetTextureByPath(TEXTURES_PATH / "iceland_heightmap.png");
   i32 width = heightMap->width;
   i32 height = heightMap->height;
 
@@ -312,6 +320,8 @@ static void CreateTerrain(VertexArray& vao, i32 rez)
 
   vao.numVertices = 4 * pow(rez, 2);
   vao.numIndices = 0;
+
+  return vao;
 }
 
 /* -----------------------------------------------------
@@ -324,21 +334,16 @@ void Engine::Initialize()
   Logger::Initialize();
   CONSOLE_INFO("Logger ready");
 
-  /* Initialize window */
-  /* ----------------- */
-  g_windowManager.Initialize();
+  /* Initialize window manager */
+  /* ------------------------- */
+  WindowManager& windowManager = WindowManager::Get();
+  windowManager.Initialize();
+  windowManager.SetWindowTitle("GameEngine");
+  windowManager.SetWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
+  windowManager.SetWindowPosition(50, 50);
+  windowManager.SetWindowAspectRatio(16, 9);
+  windowManager.SetWindowVsync(false);
   CONSOLE_INFO("WindowManager ready");
-  
-  g_windowManager.SetWindowTitle("ProjectGL");
-  g_windowManager.SetWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
-  g_windowManager.SetWindowPosition(50, 50);
-  g_windowManager.SetWindowAspectRatio(16, 9);
-  g_windowManager.SetWindowVsync(false);
-
-  /* initialize viewport */
-  /* ------------------- */
-  _viewportSize.x = WINDOW_WIDTH;
-  _viewportSize.y = WINDOW_HEIGHT;
 
   /* Setup ImGui context */
   /* ------------------- */
@@ -346,37 +351,45 @@ void Engine::Initialize()
   ImGuiLayer::SetFont((FONTS_PATH / "Karla-Regular.ttf"), 16);
   CONSOLE_INFO("ImGuiLayer ready");
   
-  /* Initialize shaders */
-  g_shaderManager.LoadShadersFromDir(SHADERS_PATH);
-  g_shaderManager.LoadPrograms();
-  g_shaderManager.SetUpProgramsUniforms();
+  /* Initialize shader manager */
+  /* ------------------------- */
+  ShaderManager& shaderManager = ShaderManager::Get();
+  shaderManager.LoadShadersFromDir(SHADERS_PATH);
+  shaderManager.LoadPrograms();
+  shaderManager.SetUpProgramsUniforms();
   CONSOLE_INFO("ShaderManager ready!");
 
-  /* Load textures */
-  /* ------------- */
+  /* Initialize texture manager */
+  /* -------------------------- */
   /* !!The first 4 positions are reserved for the default textures */
-  Texture2D defaultDiffuseTexture(GL_TEXTURE_2D);
-  CreateDefaultTexture(defaultDiffuseTexture, Array<Byte, 3>{ Byte(128), Byte(128), Byte(255) });
-  Texture2D defaultSpecularTexture(GL_TEXTURE_2D);
-  CreateDefaultTexture(defaultSpecularTexture, Array<Byte, 3>{ Byte(255), Byte(255), Byte(255) });
-  Texture2D defaultNormalTexture(GL_TEXTURE_2D);
-  CreateDefaultTexture(defaultNormalTexture, Array<Byte, 3>{ Byte(0), Byte(0), Byte(0) });
-  Texture2D defaultHeightTexture(GL_TEXTURE_2D);
-  CreateDefaultTexture(defaultHeightTexture, Array<Byte, 3>{ Byte(0), Byte(0), Byte(0) });
-  g_textureManager.LoadTexture(defaultDiffuseTexture);
-  g_textureManager.LoadTexture(defaultSpecularTexture);
-  g_textureManager.LoadTexture(defaultNormalTexture);
-  g_textureManager.LoadTexture(defaultHeightTexture);
-  g_textureManager.LoadTexturesFromDir(TEXTURES_PATH);
+  Texture2D defaultDiffuseTexture = CreateDefaultTexture(Array<i16, 3>{ 128, 128, 255 });
+  Texture2D defaultSpecularTexture = CreateDefaultTexture(Array<i16, 3>{ 255, 255, 255 });
+  Texture2D defaultNormalTexture = CreateDefaultTexture(Array<i16, 3>{ 0, 0, 0 });
+  Texture2D defaultHeightTexture = CreateDefaultTexture(Array<i16, 3>{ 0, 0, 0 });
+  
+  TextureManager& textureManager = TextureManager::Get();
+  textureManager.LoadTexture(defaultDiffuseTexture);
+  textureManager.LoadTexture(defaultSpecularTexture);
+  textureManager.LoadTexture(defaultNormalTexture);
+  textureManager.LoadTexture(defaultHeightTexture);
+  textureManager.LoadTexturesFromDir(TEXTURES_PATH);
   CONSOLE_INFO("TextureManager ready!");
 
   /* Create Framebuffer object */
-  CreateFramebuffer(4, _viewportSize.x, _viewportSize.y);
+  /* ------------------------- */
+  CreateFramebuffer(4, WINDOW_WIDTH, WINDOW_HEIGHT);
   CreateScreenSquare();
 
   /* Initialize uniform block objects */
+  /* -------------------------------- */
+  /* Reserve memory for both projection,view matrices */
   _uboCamera = Buffer(GL_UNIFORM_BUFFER, 2 * sizeof(mat4f), nullptr, GL_STATIC_DRAW);
   _uboCamera.BindBase(0); /* cameraBlock to bindingpoint 0 */
+
+  /* Set viewport */
+  /* ------------ */
+  _viewportSize.x = WINDOW_WIDTH;
+  _viewportSize.y = WINDOW_HEIGHT;
 
   SetOpenGLStates();
 }
@@ -388,8 +401,7 @@ void Engine::Run()
   CreateSkybox(skybox, skyboxTexture);
 
   /* Create scene object */
-  Scene scene;
-  scene.LoadScene((ROOT_PATH / "Scene.ini"));
+  Scene scene(ROOT_PATH / "Scene.ini");
 
   Components::DirectionalLight* directionalLight = nullptr;
   scene.Reg().view<Components::DirectionalLight>().each([&](auto& light) { directionalLight = &light; });
@@ -402,37 +414,37 @@ void Engine::Run()
   primaryCamera.frustum.zFar = 100'000.0f;
 
   /* Setting up the directional shadow mapping  */
-  FrameBuffer fboDepthMap;
-  CreateDepthMapFbo(fboDepthMap, 1024, 1024);
+  FrameBuffer fboDepthMap = CreateDepthMapFbo(1024, 1024);
 
   Camera directLightCamera(vec3f(0.0f, 10.0f, 10.0f));
   directLightCamera.frustum.zFar = 30.0f;
 
   /* Setting up the omnidirectional shadow mapping */
-  FrameBuffer fboDepthCubeMap;
-  CreateDepthCubeMapFbo(fboDepthCubeMap, 1024, 1024);
-
+  FrameBuffer fboDepthCubeMap = CreateDepthCubeMapFbo(1024, 1024);
 
   /* Prepare vertices for terrain */
-  VertexArray terrain;
   i32 rez = 20;
-  CreateTerrain(terrain, rez);
+  VertexArray terrain = CreateTerrain(rez);
 
   /* ---------------------------------------------------------------------- */
   /* -------------------------- Pre-loop section -------------------------- */
   /* ---------------------------------------------------------------------- */
-  Program* framebufferProgram = g_shaderManager.GetProgram("Framebuffer");
-  Program* sceneProgram = g_shaderManager.GetProgram("Scene");
-  Program* sceneShadowsProgram = g_shaderManager.GetProgram("SceneShadows");
-  Program* depthMapProgram = g_shaderManager.GetProgram("DepthMap");
-  Program* depthCubeMapProgram = g_shaderManager.GetProgram("DepthCubeMap");
-  Program* skyboxProgram = g_shaderManager.GetProgram("Skybox");
-  Program* terrainProgram = g_shaderManager.GetProgram("Terrain");
+  WindowManager& windowManager = WindowManager::Get();
+  ShaderManager& shaderManager = ShaderManager::Get();
+  TextureManager& textureManager = TextureManager::Get();
+
+  Program* framebufferProgram = shaderManager.GetProgram("Framebuffer");
+  Program* sceneProgram = shaderManager.GetProgram("Scene");
+  Program* sceneShadowsProgram = shaderManager.GetProgram("SceneShadows");
+  Program* depthMapProgram = shaderManager.GetProgram("DepthMap");
+  Program* depthCubeMapProgram = shaderManager.GetProgram("DepthCubeMap");
+  Program* skyboxProgram = shaderManager.GetProgram("Skybox");
+  Program* terrainProgram = shaderManager.GetProgram("Terrain");
   u32 fboTexture = _fboIntermediate.GetTextureAttachment(0);
   u32 depthMapTexture = fboDepthMap.GetTextureAttachment(0);
   u32 depthCubeMapTexture = fboDepthCubeMap.GetTextureAttachment(0);
   
-  Texture2D* heightMap = g_textureManager.GetTextureByPath(TEXTURES_PATH / "iceland_heightmap.png");
+  Texture2D* heightMap = textureManager.GetTextureByPath(TEXTURES_PATH / "iceland_heightmap.png");
 
   auto lastUpdateTime = chrono::high_resolution_clock::now();
   bool renderingShadowsMode = true;
@@ -444,7 +456,7 @@ void Engine::Run()
   /* ------------------------------------------------------------------ */
   /* -------------------------- loop section -------------------------- */
   /* ------------------------------------------------------------------ */
-  while (g_windowManager.IsOpen())
+  while (windowManager.IsOpen())
   {
     ImGuiLayer::BeginFrame();
     ImGuiLayer::Docking();
@@ -461,16 +473,16 @@ void Engine::Run()
     /* ------------------------------------------------------------------- */
     /* -------------------------- Input section -------------------------- */
     /* ------------------------------------------------------------------- */
-    g_windowManager.PoolEvents();
+    windowManager.PoolEvents();
     primaryCamera.ProcessKeyboard(delta, 5.0f);
     primaryCamera.ProcessMouse(delta, 15.0f);
 
-    if (g_windowManager.GetKey(GLFW_KEY_F1) == GLFW_PRESS) renderingShadowsMode = false;
-    else if (g_windowManager.GetKey(GLFW_KEY_F2) == GLFW_PRESS) renderingShadowsMode = true;
-    if (g_windowManager.GetKey(GLFW_KEY_F5) == GLFW_PRESS) useNormalMap = false;
-    else if (g_windowManager.GetKey(GLFW_KEY_F6) == GLFW_PRESS) useNormalMap = true;
-    if (g_windowManager.GetKey(GLFW_KEY_F9) == GLFW_PRESS) wireframeEnabled = false;
-    else if (g_windowManager.GetKey(GLFW_KEY_F10) == GLFW_PRESS) wireframeEnabled = true;
+    if (windowManager.GetKey(GLFW_KEY_F1) == GLFW_PRESS) renderingShadowsMode = false;
+    else if (windowManager.GetKey(GLFW_KEY_F2) == GLFW_PRESS) renderingShadowsMode = true;
+    if (windowManager.GetKey(GLFW_KEY_F5) == GLFW_PRESS) useNormalMap = false;
+    else if (windowManager.GetKey(GLFW_KEY_F6) == GLFW_PRESS) useNormalMap = true;
+    if (windowManager.GetKey(GLFW_KEY_F9) == GLFW_PRESS) wireframeEnabled = false;
+    else if (windowManager.GetKey(GLFW_KEY_F10) == GLFW_PRESS) wireframeEnabled = true;
 
     /* -------------------------------------------------------------------- */
     /* -------------------------- Update section -------------------------- */
@@ -543,7 +555,6 @@ void Engine::Run()
     }
     fboDepthCubeMap.Unbind(GL_FRAMEBUFFER);
 
-
     /* Fill the framebuffer color texture */
     _fboMultisampled.Bind(GL_FRAMEBUFFER);
     { 
@@ -610,11 +621,6 @@ void Engine::Run()
     _fboMultisampled.Unbind(GL_FRAMEBUFFER);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    
-    /* Render to GLFW framebuffer */
-    //framebufferProgram->Use();
-    //fboImageTexture.BindTextureUnit(0);
-    //Renderer::DrawArrays(GL_TRIANGLES, _screenSquare);
 
 
     //ImGuiLayer::RenderDemo();
@@ -638,7 +644,7 @@ void Engine::Run()
       CreateFramebuffer(4, viewport.x, viewport.y);
     }
 
-    g_windowManager.SwapWindowBuffers();
+    windowManager.SwapWindowBuffers();
     lastUpdateTime = now;
   }
 
@@ -657,16 +663,15 @@ void Engine::CleanUp()
 
   ImGuiLayer::CleanUp();
 
-  g_shaderManager.CleanUp();
-  g_textureManager.CleanUp();
-  g_windowManager.CleanUp();
+  ShaderManager::Get().CleanUp();
+  TextureManager::Get().CleanUp();
+  WindowManager::Get().CleanUp();
 }
 
 /* -----------------------------------------------------
  *          PRIVATE METHODS
  * -----------------------------------------------------
 */
-
 
 void Engine::CreateFramebuffer(i32 samples, i32 width, i32 height)
 {

@@ -14,6 +14,11 @@
  * -----------------------------------------------------
 */
 
+Scene::Scene(const fs::path& filepath)
+{
+	LoadScene(filepath);
+}
+
 GameObject Scene::CreateObject()
 {
 	GameObject object = GameObject(_registry.create(), &_registry);

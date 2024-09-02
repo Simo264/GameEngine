@@ -10,6 +10,7 @@ class Scene
 {
 public:
 	Scene() = default;
+	Scene(const fs::path& filepath);
 	~Scene() = default;
 
 	void LoadScene(const fs::path& filepath);

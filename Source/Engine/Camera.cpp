@@ -55,34 +55,36 @@ mat4f Camera::CalculateOrtho() const
 
 void Camera::ProcessKeyboard(f32 delta, f32 movementSpeed)
 {
+	WindowManager& windowManager = WindowManager::Get();
+
 	const f32 velocity = movementSpeed * delta;
 
 	/* W-S */
-	if (g_windowManager.GetKey(GLFW_KEY_W) == GLFW_PRESS)
+	if (windowManager.GetKey(GLFW_KEY_W) == GLFW_PRESS)
 	{
 		position += _front * velocity;
 	}
-	else if (g_windowManager.GetKey(GLFW_KEY_S) == GLFW_PRESS)
+	else if (windowManager.GetKey(GLFW_KEY_S) == GLFW_PRESS)
 	{
 		position -= _front * velocity;
 	}
 
 	/* A-D */
-	if (g_windowManager.GetKey(GLFW_KEY_A) == GLFW_PRESS)
+	if (windowManager.GetKey(GLFW_KEY_A) == GLFW_PRESS)
 	{
 		position -= _right * velocity;
 	}
-	else if (g_windowManager.GetKey(GLFW_KEY_D) == GLFW_PRESS)
+	else if (windowManager.GetKey(GLFW_KEY_D) == GLFW_PRESS)
 	{
 		position += _right * velocity;
 	}
 
 	/* SPACE-LCTRL */
-	if (g_windowManager.GetKey(GLFW_KEY_SPACE) == GLFW_PRESS)
+	if (windowManager.GetKey(GLFW_KEY_SPACE) == GLFW_PRESS)
 	{
 		position += _up * velocity;
 	}
-	else if (g_windowManager.GetKey(GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
+	else if (windowManager.GetKey(GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
 	{
 		position -= _up * velocity;
 	}
@@ -90,10 +92,12 @@ void Camera::ProcessKeyboard(f32 delta, f32 movementSpeed)
 
 void Camera::ProcessMouse(f32 delta, f32 mouseSensitivity)
 {
-	if (g_windowManager.GetMouseKey(GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
+	WindowManager& windowManager = WindowManager::Get();
+
+	if (windowManager.GetMouseKey(GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
 	{
-		vec2d mousePos = g_windowManager.GetCursorPosition();
-		vec2i32 windowSize = g_windowManager.GetWindowSize();
+		vec2d mousePos = windowManager.GetCursorPosition();
+		vec2i32 windowSize = windowManager.GetWindowSize();
 		static f32 lastX = (f32)windowSize.x / 2.0f;
 		static f32 lastY = (f32)windowSize.y / 2.0f;
 		static bool firstMouse = true;

@@ -126,7 +126,7 @@ static void GuizmoWorldScaling(Components::Transform& transform, const mat4f& vi
 
 namespace ImGuiLayer
 {
-  void SetupContext() 
+  void SetupContext()
   {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -136,7 +136,7 @@ namespace ImGuiLayer
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         /* Enable Docking */
     io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;       /* Enable Multi-Viewport / Platform Windows */
     
-    ImGui_ImplGlfw_InitForOpenGL(g_windowManager.GetCurrentContext(), true);
+    ImGui_ImplGlfw_InitForOpenGL(WindowManager::Get().GetCurrentContext(), true);
     ImGui_ImplOpenGL3_Init("#version 460");
   }
   void CleanUp()
@@ -166,10 +166,11 @@ namespace ImGuiLayer
     ImGuiIO& io = ImGui::GetIO();
     if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
     {
-      WindowManager::Context backCurrentContext = g_windowManager.GetCurrentContext();
+      WindowManager& windowManager = WindowManager::Get();
+      WindowManager::Context backCurrentContext = windowManager.GetCurrentContext();
       ImGui::UpdatePlatformWindows();
       ImGui::RenderPlatformWindowsDefault();
-      g_windowManager.MakeContextCurrent(backCurrentContext);
+      windowManager.MakeContextCurrent(backCurrentContext);
     }
   }
 
@@ -222,11 +223,13 @@ namespace ImGuiLayer
 
           if (!filePath.empty())
           {
+            ShaderManager& shaderManager = ShaderManager::Get();
+
             /* !IMPORTANT: before loading new scene it needed to relink all the programs to see changes */
-            for (const auto& program : g_shaderManager.programs)
+            for (const auto& program : shaderManager.GetProgramsVector())
               program.Link();
             
-            g_shaderManager.SetUpProgramsUniforms();
+            shaderManager.SetUpProgramsUniforms();
 
             scene.ClearScene();
             scene.LoadScene(filePath);

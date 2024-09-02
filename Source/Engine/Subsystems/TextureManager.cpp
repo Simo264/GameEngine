@@ -39,14 +39,14 @@ void TextureManager::CleanUp()
   u64 total = _textures.size() + _icons.size();
   if (total > 0)
   {
-    Vector<uint32_t> texIDs;
+    Vector<u32> texIDs;
     texIDs.reserve(total);
 
     std::transform(_textures.begin(), _textures.end(), std::back_inserter(texIDs), [](const Texture2D& texture) {
       return texture.id;
     });
-    std::transform(_icons.begin(), _icons.end(), std::back_inserter(texIDs), [](const Texture2D& texture) {
-      return texture.id;
+    std::transform(_icons.begin(), _icons.end(), std::back_inserter(texIDs), [](const Texture2D& icon) {
+      return icon.id;
     });
 
     glDeleteTextures(total, texIDs.data());

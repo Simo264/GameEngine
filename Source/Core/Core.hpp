@@ -16,6 +16,7 @@
 
 #include <iostream>
 #include <format>
+#include <cassert>
 
 
 /************** Namespaces **************/

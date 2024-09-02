@@ -1,4 +1,7 @@
-﻿# GameEngine
+﻿# Build project
+- cd ./GameEngine
+- mkdir Build
+- cmake -S . -B Build
 
 ### Current features following https://learnopengl.com/
 - Lighting

@@ -85,10 +85,11 @@ namespace Components
 		vao.SetAttribBinding(3, 0);
 		vao.SetAttribFormat(3, 3, GL_FLOAT, true, offsetof(Vertex, tangent));
 
-		material.diffuse = g_textureManager.GetTextureAt(0);
-		material.specular = g_textureManager.GetTextureAt(1);
-		material.normal = g_textureManager.GetTextureAt(2);
-		material.height = g_textureManager.GetTextureAt(3);
+		TextureManager& textureManager = TextureManager::Get();
+		material.diffuse = textureManager.GetTextureAt(0);
+		material.specular = textureManager.GetTextureAt(1);
+		material.normal = textureManager.GetTextureAt(2);
+		material.height = textureManager.GetTextureAt(3);
 	}
 
 
@@ -268,7 +269,7 @@ namespace Components
 	{
 		aiString fileName;
 		if (material->GetTexture(type, 0, &fileName) == aiReturn_SUCCESS)
-			return g_textureManager.GetTextureByPath(TEXTURES_PATH / fileName.C_Str());
+			return TextureManager::Get().GetTextureByPath(TEXTURES_PATH / fileName.C_Str());
 
 		return nullptr;
 	}

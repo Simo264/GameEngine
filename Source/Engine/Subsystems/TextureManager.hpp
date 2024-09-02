@@ -9,8 +9,17 @@
 class TextureManager
 {
 public:
-	TextureManager() = default;
-	~TextureManager() = default;
+	TextureManager(const TextureManager&) = delete;
+	void operator=(const TextureManager&) = delete;
+
+	/**
+	 * Return the instance of this TextureManager singleton class
+	 */
+	static TextureManager& Get()
+	{
+		static TextureManager textManager;
+		return textManager;
+	}
 
 	/**
 	 * Load all textures from directory <dirpath>
@@ -48,6 +57,9 @@ public:
 	Texture2D* GetIconAt(i32 i) { return &_icons.at(i); }
 
 private:
+	TextureManager() = default;
+	~TextureManager() = default;
+
 	Vector<Texture2D> _textures;
 	Vector<Texture2D> _icons;
 };

@@ -10,11 +10,7 @@
 void WindowManager::Initialize()
 {
   i32 success = glfwInit();
-  if (success != GLFW_TRUE)
-  {
-    CONSOLE_CRITICAL("Error on initializing GLFW");
-    exit(EXIT_FAILURE);
-  }
+  assert(success == GLFW_TRUE);
   CONSOLE_INFO("GLFW initialized");
 
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -25,11 +21,7 @@ void WindowManager::Initialize()
 
   /* Set default window values */
   _context = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "GameEngine", nullptr, nullptr);
-  if (!_context)
-  {
-    CONSOLE_CRITICAL("Error on creating window");
-    exit(EXIT_FAILURE);
-  }
+  assert(_context);
   CONSOLE_INFO("Window created");
 
   _aspectRatio = vec2i32(16, 9); /* 16:9 */
@@ -45,11 +37,7 @@ void WindowManager::Initialize()
 
   /* Load OpenGL functions, gladLoadGL returns the loaded version, 0 on error. */
   i32 version = gladLoadGL(glfwGetProcAddress);
-  if (version == 0)
-  {
-    CONSOLE_CRITICAL("Error on loading OpenGL");
-    exit(EXIT_FAILURE);
-  }
+  assert(version != 0);
   CONSOLE_INFO("OpenGL loaded");
 }
 

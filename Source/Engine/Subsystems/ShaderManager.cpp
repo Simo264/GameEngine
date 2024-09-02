@@ -9,15 +9,15 @@
 void ShaderManager::CleanUp()
 {
   /* Destoy all program objects */
-  for (auto& program : programs)
+  for (auto& program : _programs)
     program.Delete();
 
   /* Destoy all shaders objects */
-  for (auto& shader : shaders)
+  for (auto& shader : _shaders)
     shader.Delete();
 
-  shaders.clear();
-  programs.clear();
+  Vector<Shader>().swap(_shaders);
+  Vector<Program>().swap(_programs);
 }
 
 void ShaderManager::LoadShadersFromDir(const fs::path& dirpath)
@@ -107,9 +107,8 @@ Shader& ShaderManager::LoadShader(const fs::path& filepath, i32 shaderType)
   String filepathstr = filepath.string();
   if (!fs::exists(filepath))
     CONSOLE_WARN("File {} does not exist", filepathstr);
-
   
-  Shader& shader = shaders.emplace_back();
+  Shader& shader = _shaders.emplace_back();
   shader.Create(shaderType);
   shader.filename = filepath.filename().string();
 
@@ -132,7 +131,7 @@ Shader* ShaderManager::GetShader(const char* filename)
   if (!filename)
     return nullptr;
 
-  for (auto& shader : shaders)
+  for (auto& shader : _shaders)
     if (shader.filename.compare(filename) == 0)
       return &shader;
 
@@ -147,7 +146,7 @@ Program& ShaderManager::LoadProgram(const char* name,
   Shader* fragment
 )
 {
-  Program& program = programs.emplace_back();
+  Program& program = _programs.emplace_back();
   program.Create();
   program.name = name;
   if (vertex)    program.AttachShader(*vertex);
@@ -167,7 +166,7 @@ Program* ShaderManager::GetProgram(const char* name)
   if (!name)
     return nullptr;
 
-  for (auto& program : programs)
+  for (auto& program : _programs)
     if (program.name.compare(name) == 0)
       return &program;
 

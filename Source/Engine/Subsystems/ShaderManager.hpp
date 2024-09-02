@@ -9,8 +9,17 @@
 class ShaderManager
 {
 public:
-	ShaderManager() = default;
-	~ShaderManager() = default;
+	ShaderManager(const ShaderManager&) = delete;
+	void operator=(const ShaderManager&) = delete;
+
+	/**
+	 * Return the instance of this ShaderManager singleton class
+	 */
+	static ShaderManager& Get()
+	{
+		static ShaderManager shaderManager;
+		return shaderManager;
+	}
 
 	/**
 	 * Load all shaders from directory <dirpath>
@@ -22,7 +31,6 @@ public:
 	 * 
 	 */
 	void LoadPrograms();
-
 
 	void SetUpProgramsUniforms();
 
@@ -58,6 +66,13 @@ public:
 	 */
 	Program* GetProgram(const char* name);
 	
-	Vector<Shader>	shaders;
-	Vector<Program> programs;
+	const Vector<Shader>& GetShadersVector() { return _shaders; }
+	const Vector<Program>& GetProgramsVector() { return _programs; }
+
+private:
+	ShaderManager() = default;
+	~ShaderManager() = default;
+
+	Vector<Shader>	_shaders;
+	Vector<Program> _programs;
 };
