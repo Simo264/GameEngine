@@ -1,6 +1,6 @@
 #include "Components.hpp"
 
-#include "Core/OpenGL.hpp"
+#include "Core/GL.hpp"
 #include "Core/Log/Logger.hpp"
 #include "Core/Math/Extensions.hpp"
 
@@ -68,22 +68,22 @@ namespace Components
 		/* ------------------------ */
 		vao.Create();
 		
-		/* position */
+		/* Position */
 		vao.EnableAttribute(0);
 		vao.SetAttribBinding(0, 0);
-		vao.SetAttribFormat(0, 3, GL_FLOAT, true, offsetof(Vertex, position));
-		/* texture coordinates */
+		vao.SetAttribFormat(0, 3, GL_FLOAT, true, offsetof(Vertex_P_N_UV_T, position));
+		/* Normal */
 		vao.EnableAttribute(1);
 		vao.SetAttribBinding(1, 0);
-		vao.SetAttribFormat(1, 2, GL_FLOAT, true, offsetof(Vertex, texCoord));
-		/* normal */
+		vao.SetAttribFormat(1, 3, GL_FLOAT, true, offsetof(Vertex_P_N_UV_T, normal));
+		/* Uv coordinates */
 		vao.EnableAttribute(2);
 		vao.SetAttribBinding(2, 0);
-		vao.SetAttribFormat(2, 3, GL_FLOAT, true, offsetof(Vertex, normal));
-		/* tangent */
+		vao.SetAttribFormat(2, 2, GL_FLOAT, true, offsetof(Vertex_P_N_UV_T, uv));
+		/* Tangent */
 		vao.EnableAttribute(3);
 		vao.SetAttribBinding(3, 0);
-		vao.SetAttribFormat(3, 3, GL_FLOAT, true, offsetof(Vertex, tangent));
+		vao.SetAttribFormat(3, 3, GL_FLOAT, true, offsetof(Vertex_P_N_UV_T, tangent));
 
 		TextureManager& textureManager = TextureManager::Get();
 		material.diffuse = textureManager.GetTextureAt(0);
@@ -175,10 +175,10 @@ namespace Components
 
 			/* Load vertex buffer */
 			const i32 numVertices = aimesh->mNumVertices;
-			const u64 vSize = numVertices * sizeof(Vertex);
+			const u64 vSize = numVertices * sizeof(Vertex_P_N_UV_T);
 			Buffer vbo(GL_ARRAY_BUFFER, vSize, nullptr, GL_STATIC_DRAW);
 			LoadVertices(aimesh, vbo);
-			mesh.vao.AttachVertexBuffer(0, vbo.id, 0, sizeof(Vertex));
+			mesh.vao.AttachVertexBuffer(0, vbo.id, 0, sizeof(Vertex_P_N_UV_T));
 
 			/* Load index buffer */
 			const i32 numIndices = std::reduce(
@@ -228,20 +228,20 @@ namespace Components
 			return;
 		}
 
-		for (u32  i = 0; i < aimesh->mNumVertices; i++)
+		for (u32 i = 0; i < aimesh->mNumVertices; i++)
 		{
-			/* position */
+			/* Position */
 			*(vboPtr++) = static_cast<f32>(aimesh->mVertices[i].x);
 			*(vboPtr++) = static_cast<f32>(aimesh->mVertices[i].y);
 			*(vboPtr++) = static_cast<f32>(aimesh->mVertices[i].z);
-			/* texture coordinates */
-			*(vboPtr++) = static_cast<f32>(aimesh->mTextureCoords[0][i].x);
-			*(vboPtr++) = static_cast<f32>(aimesh->mTextureCoords[0][i].y);
-			/* normal */
+			/* Normal */
 			*(vboPtr++) = static_cast<f32>(aimesh->mNormals[i].x);
 			*(vboPtr++) = static_cast<f32>(aimesh->mNormals[i].y);
 			*(vboPtr++) = static_cast<f32>(aimesh->mNormals[i].z);
-			/* tangent */
+			/* Uv coordinates */
+			*(vboPtr++) = static_cast<f32>(aimesh->mTextureCoords[0][i].x);
+			*(vboPtr++) = static_cast<f32>(aimesh->mTextureCoords[0][i].y);
+			/* Tangent */
 			*(vboPtr++) = static_cast<f32>(aimesh->mTangents[i].x);
 			*(vboPtr++) = static_cast<f32>(aimesh->mTangents[i].y);
 			*(vboPtr++) = static_cast<f32>(aimesh->mTangents[i].z);

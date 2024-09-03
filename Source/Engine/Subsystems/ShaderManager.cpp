@@ -1,10 +1,12 @@
 #include "ShaderManager.hpp"
 
+#include "Core/GL.hpp"
 #include "Core/Log/Logger.hpp"
-#include "Core/OpenGL.hpp"
-#include "Core/FileParser/INIFileParser.hpp"
+#include "Engine/Filesystem/ConfigFile.hpp"
 
 #include "Engine/Globals.hpp"
+
+constexpr const char* SM_FILE_CONFIG = "Shader_Manager.ini";
 
 void ShaderManager::CleanUp()
 {
@@ -57,7 +59,7 @@ void ShaderManager::LoadShadersFromDir(const fs::path& dirpath)
 }
 void ShaderManager::LoadPrograms()
 {
-  INIFileParser conf(ROOT_PATH / "SM_ProgConfig.ini");
+  ConfigFile conf(ROOT_PATH / SM_FILE_CONFIG);
   conf.ReadData();
 
   for (auto const& it : conf.GetData())

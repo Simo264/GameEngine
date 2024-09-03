@@ -1,6 +1,6 @@
 #include "SceneSerializer.hpp"
 
-#include "Core/FileParser/INIFileParser.hpp"
+#include "Engine/Filesystem/ConfigFile.hpp"
 
 #include "Engine/Utils.hpp"
 #include "Engine/Scene.hpp"
@@ -17,7 +17,7 @@
 
 void SceneSerializer::SerializeScene(Scene& scene, const fs::path& filepath)
 {
-	INIFileParser conf(filepath);
+	ConfigFile conf(filepath);
 
 	for (auto [entity, label] : scene.Reg().view<Components::Label>().each())
 	{
@@ -97,9 +97,9 @@ void SceneSerializer::SerializeScene(Scene& scene, const fs::path& filepath)
 }
 void SceneSerializer::DeserializeScene(Scene& scene, const fs::path& filepath)
 { 
-	CONSOLE_INFO("Loading scene {}...", filepath.string().c_str());
+	CONSOLE_INFO("Loading scene {}...", filepath.string());
 
-	INIFileParser conf(filepath);
+	ConfigFile conf(filepath);
 	conf.ReadData();
 	
 	GameObject object{ entt::null, nullptr };

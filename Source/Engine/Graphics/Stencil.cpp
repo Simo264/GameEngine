@@ -1,6 +1,6 @@
 #include "Stencil.hpp"
 
-#include "Core/OpenGL.hpp"
+#include "Core/GL.hpp"
 
 namespace Stencil
 {

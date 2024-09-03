@@ -1,4 +1,3 @@
-#include "Core/OpenGL.hpp"
 #include "Core/Math/Math.hpp"
 
 u32 g_drawCalls = 0;

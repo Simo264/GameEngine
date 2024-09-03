@@ -1,6 +1,6 @@
 #include "VertexArray.hpp"
 
-#include "Core/OpenGL.hpp"
+#include "Core/GL.hpp"
 #include "Core/Log/Logger.hpp"
 
 VertexArray::VertexArray()

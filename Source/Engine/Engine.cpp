@@ -1,6 +1,6 @@
 #include "Engine.hpp"
 
-#include "Core/OpenGL.hpp"
+#include "Core/GL.hpp"
 #include "Core/Math/Math.hpp"
 #include "Core/Math/Extensions.hpp"
 #include "Core/Log/Logger.hpp"
@@ -10,6 +10,7 @@
 #include "Engine/GameObject.hpp"
 #include "Engine/Components.hpp"
 
+#include "Engine/Graphics/Vertex.hpp"
 #include "Engine/Graphics/Depth.hpp"
 #include "Engine/Graphics/Stencil.hpp"
 #include "Engine/Graphics/Culling.hpp"
@@ -135,7 +136,7 @@ static void RenderScene(Scene& scene, Program* program)
 static void CreateSkybox(VertexArray& skybox, TextureCubemap& skyboxTexture)
 {
   f32 vertices[] = {
-    /* positions */
+    /* Position */
     -1.0f,  1.0f, -1.0f,
     -1.0f, -1.0f, -1.0f,
      1.0f, -1.0f, -1.0f,
@@ -181,7 +182,7 @@ static void CreateSkybox(VertexArray& skybox, TextureCubemap& skyboxTexture)
   Buffer vbo(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
   skybox.Create();
-  skybox.AttachVertexBuffer(0, vbo.id, 0, 3 * sizeof(f32));
+  skybox.AttachVertexBuffer(0, vbo.id, 0, sizeof(Vertex_P));
   skybox.EnableAttribute(0);
   skybox.SetAttribBinding(0, 0);
   skybox.SetAttribFormat(0, 3, GL_FLOAT, true, 0);
@@ -256,7 +257,7 @@ static FrameBuffer CreateDepthCubeMapFbo(i32 width, i32 height)
   return fbo;
 }
 
-static Texture2D CreateDefaultTexture(Array<i16, 3> textureData)
+static Texture2D CreateDefaultTexture(Array<u8, 3> textureData)
 {
   Texture2D texture(GL_TEXTURE_2D);
   texture.Create();
@@ -272,11 +273,11 @@ static VertexArray CreateTerrain(i32 rez)
 {
   VertexArray vao;
   vao.Create();
-  vao.SetAttribFormat(0, 3, GL_FLOAT, false, 0);
+  vao.SetAttribFormat(0, 3, GL_FLOAT, false, offsetof(Vertex_P_UV, position));
   vao.SetAttribBinding(0, 0);
   vao.EnableAttribute(0);
 
-  vao.SetAttribFormat(1, 2, GL_FLOAT, false, 3 * sizeof(f32));
+  vao.SetAttribFormat(1, 2, GL_FLOAT, false, offsetof(Vertex_P_UV, uv));
   vao.SetAttribBinding(1, 0);
   vao.EnableAttribute(1);
 
@@ -316,7 +317,7 @@ static VertexArray CreateTerrain(i32 rez)
     }
   }
   Buffer vbo(GL_ARRAY_BUFFER, vertices.size() * sizeof(f32), vertices.data(), GL_STATIC_DRAW);
-  vao.AttachVertexBuffer(0, vbo.id, 0, 5 * sizeof(f32));
+  vao.AttachVertexBuffer(0, vbo.id, 0, sizeof(Vertex_P_UV));
 
   vao.numVertices = 4 * pow(rez, 2);
   vao.numIndices = 0;
@@ -331,6 +332,8 @@ static VertexArray CreateTerrain(i32 rez)
 
 void Engine::Initialize()
 {
+  /* Initialize logger */
+  /* ----------------- */
   Logger::Initialize();
   CONSOLE_INFO("Logger ready");
 
@@ -362,10 +365,10 @@ void Engine::Initialize()
   /* Initialize texture manager */
   /* -------------------------- */
   /* !!The first 4 positions are reserved for the default textures */
-  Texture2D defaultDiffuseTexture = CreateDefaultTexture(Array<i16, 3>{ 128, 128, 255 });
-  Texture2D defaultSpecularTexture = CreateDefaultTexture(Array<i16, 3>{ 255, 255, 255 });
-  Texture2D defaultNormalTexture = CreateDefaultTexture(Array<i16, 3>{ 0, 0, 0 });
-  Texture2D defaultHeightTexture = CreateDefaultTexture(Array<i16, 3>{ 0, 0, 0 });
+  Texture2D defaultDiffuseTexture = CreateDefaultTexture(Array<u8, 3>{ 128, 128, 255 });
+  Texture2D defaultSpecularTexture = CreateDefaultTexture(Array<u8, 3>{ 255, 255, 255 });
+  Texture2D defaultNormalTexture = CreateDefaultTexture(Array<u8, 3>{ 0, 0, 0 });
+  Texture2D defaultHeightTexture = CreateDefaultTexture(Array<u8, 3>{ 0, 0, 0 });
   
   TextureManager& textureManager = TextureManager::Get();
   textureManager.LoadTexture(defaultDiffuseTexture);
@@ -644,6 +647,9 @@ void Engine::Run()
       CreateFramebuffer(4, viewport.x, viewport.y);
     }
 
+    /* ------------------------------------------------------------------ */
+    /* -------------------------- Swap buffers -------------------------- */
+    /* ------------------------------------------------------------------ */
     windowManager.SwapWindowBuffers();
     lastUpdateTime = now;
   }
@@ -713,7 +719,7 @@ void Engine::CreateScreenSquare()
   _screenSquare.Create();
 
   f32 vertices[] = {
-    /* positions   texCoords */
+    /* position    uv */
     -1.0f,  1.0f,  0.0f, 1.0f,
     -1.0f, -1.0f,  0.0f, 0.0f,
      1.0f, -1.0f,  1.0f, 0.0f,

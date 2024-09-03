@@ -1,6 +1,6 @@
 #include "Culling.hpp"
 
-#include "Core/OpenGL.hpp"
+#include "Core/GL.hpp"
 
 namespace Culling
 {

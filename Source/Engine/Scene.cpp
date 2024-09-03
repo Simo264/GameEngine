@@ -1,6 +1,6 @@
 #include "Scene.hpp"
 
-#include "Core/OpenGL.hpp"
+#include "Core/GL.hpp"
 #include "Core/Log/Logger.hpp"
 
 #include "Engine/GameObject.hpp"

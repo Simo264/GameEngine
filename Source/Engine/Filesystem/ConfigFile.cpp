@@ -1,5 +1,4 @@
-#include "INIFileParser.hpp"
-#include "Core/Math/Math.hpp"
+#include "ConfigFile.hpp"
 #include "Core/Log/Logger.hpp"
 
 /* -----------------------------------------------------
@@ -7,7 +6,7 @@
  * -----------------------------------------------------
 */
 
-INIFileParser::INIFileParser(const fs::path& filepath)
+ConfigFile::ConfigFile(const fs::path& filepath)
 {
 	if (!fs::exists(filepath) || !fs::is_regular_file(filepath))
 	{

@@ -1,6 +1,6 @@
 #include "Depth.hpp"
 
-#include "Core/OpenGL.hpp"
+#include "Core/GL.hpp"
 
 namespace Depth
 {

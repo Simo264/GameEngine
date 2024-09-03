@@ -1,8 +1,8 @@
 #version 460
 
 layout (location = 0) in vec3 aPos;
-layout (location = 1) in vec2 aTexCoord;
-layout (location = 2) in vec3 aNormal;
+layout (location = 1) in vec3 aNormal;
+layout (location = 2) in vec2 aUv;
 layout (location = 3) in vec3 aTangent;
 
 out vec2 TexCoord;
@@ -36,11 +36,11 @@ void main()
   TBN = transpose(mat3(T,B,N));
 
   FragPos = vec3(u_model * vec4(aPos, 1.0));
-  TexCoord = aTexCoord;
-  ViewPos = u_viewPos;
+  TexCoord = aUv;
   Normal = N;
 	FragPosLightSpace = u_lightProjection * u_lightView * vec4(FragPos, 1.0);
 
+  ViewPos = u_viewPos;
   TangentViewPos = TBN * ViewPos;
   TangentFragPos = TBN * FragPos;
 

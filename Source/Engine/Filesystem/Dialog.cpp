@@ -1,8 +1,8 @@
-#include "FileDialog.hpp"
+#include "Dialog.hpp"
 #include <tinyfiledialogs/tinyfiledialogs.h>
 
-fs::path FileDialog::OpenFileDialog(
-	i32 numFilters, const char* filter[], const char* filterDescription, bool multipleSelects)
+
+fs::path OpenFileDialog(int numFilters, const char* filter[], const char* filterDescription, bool multipleSelects)
 {
 	const char* filename = tinyfd_openFileDialog(
 		"Tiny open file dialog",					/* title */
@@ -10,21 +10,21 @@ fs::path FileDialog::OpenFileDialog(
 		numFilters,												/* aNumOfFilterPatterns */
 		filter,														/* aFilterPatterns */
 		filterDescription,								/* aSingleFilterDescription */
-		(i32) multipleSelects							/* aAllowMultipleSelects */
+		(int)multipleSelects							/* aAllowMultipleSelects */
 	);
 
-	if(filename)
+	if (filename)
 		return fs::path(filename);
-	
+
 	return fs::path();
 }
 
-fs::path FileDialog::SaveFileDialog(i32 numFilters, const char* filter[], const char* filterDescription)
+fs::path SaveFileDialog(int numFilters, const char* filter[], const char* filterDescription)
 {
 	const char* filename = tinyfd_saveFileDialog(
 		"Tiny save file dialog",					/* title */
 		ROOT_PATH.string().c_str(),				/* aDefaultPathAndFile */
-		numFilters,												/* aNumOfFilterPatterns */	
+		numFilters,												/* aNumOfFilterPatterns */
 		filter,														/* aFilterPatterns */
 		filterDescription									/* aSingleFilterDescription */
 	);
@@ -34,4 +34,3 @@ fs::path FileDialog::SaveFileDialog(i32 numFilters, const char* filter[], const 
 
 	return fs::path();
 }
-

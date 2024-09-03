@@ -1,7 +1,6 @@
 #include "ImGuiLayer.hpp"
 
 #include "Core/Math/Extensions.hpp"
-#include "Core/Dialog/FileDialog.hpp"
 #include "Core/Log/Logger.hpp"
 
 #include "Engine/Globals.hpp"
@@ -13,6 +12,8 @@
 #include "Engine/Graphics/Objects/Texture2D.hpp"
 #include "Engine/Subsystems/WindowManager.hpp"
 #include "Engine/Subsystems/ShaderManager.hpp"
+
+#include "Engine/Filesystem/Dialog.hpp"
 
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_glfw.h>
@@ -219,7 +220,7 @@ namespace ImGuiLayer
         if (ImGui::MenuItem("Open"))
         {
           static const char* filters[1] = { "*.ini" };
-          fs::path filePath = FileDialog::OpenFileDialog(1, filters, "Open scene (.ini)", false);
+          fs::path filePath = OpenFileDialog(1, filters, "Open scene (.ini)", false);
 
           if (!filePath.empty())
           {
@@ -239,7 +240,7 @@ namespace ImGuiLayer
         if (ImGui::MenuItem("Save as..."))
         {
           static const char* filters[1] = { "*.ini" };
-          fs::path filepath = FileDialog::SaveFileDialog(1, filters, "Save scene");
+          fs::path filepath = SaveFileDialog(1, filters, "Save scene");
 
           scene.SaveScene(filepath);
           CONSOLE_TRACE("The scene has been saved");
