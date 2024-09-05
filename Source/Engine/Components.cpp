@@ -104,7 +104,7 @@ namespace Components
 	static chrono::steady_clock::time_point timeEnd;
 
 	Model::Model(const fs::path& path)
-		: modelPath{ path }
+		: path{ path }
 	{
 		CONSOLE_TRACE("Loading model {}...", path.string().c_str());
 		timeStart = chrono::high_resolution_clock::now();
@@ -150,7 +150,7 @@ namespace Components
 		/* Destroy Vector */
 		Vector<Mesh>().swap(meshes);
 
-		CONSOLE_TRACE("Model {} destroyed", modelPath.string());
+		CONSOLE_TRACE("Model {} destroyed", path.string());
 	}
 	void Model::DrawModel(i32 mode)
 	{

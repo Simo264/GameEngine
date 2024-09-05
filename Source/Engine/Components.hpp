@@ -93,7 +93,7 @@ namespace Components
 
 		Vector<Mesh> meshes;
 
-		fs::path modelPath;
+		fs::path path;
 
 		void DestroyModel();
 		void DrawModel(i32 mode);
@@ -120,8 +120,8 @@ namespace Components
 		~DirectionalLight() = default;
 
 		vec3f color{ 1.0f,1.0f,1.0f };
-		f32 diffuseIntensity{ 0.5f };		/* range [0-1] */
-		f32 specularIntensity{ 0.5f };	/* range [0-1] */
+		f32 diffuseIntensity{ 0.5f };		/* Range [0-1] */
+		f32 specularIntensity{ 0.5f };	/* Range [0-1] */
 	
 		vec3f direction{ 0.0f, -1.0f, 0.0f };
 	};
@@ -139,16 +139,16 @@ namespace Components
 		~PointLight() = default;
 
 		vec3f color{ 1.0f,1.0f,1.0f };
-		f32 diffuseIntensity{ 0.5f };		/* range [0-1] */
-		f32 specularIntensity{ 0.5f };	/* range [0-1] */
+		f32 diffuseIntensity{ 0.5f };		/* Range [0-1] */
+		f32 specularIntensity{ 0.5f };	/* Range [0-1] */
 
 		vec3f position{ 0.0f, 0.0f, 0.0f };
 
 		// https://wiki.ogre3d.org/tiki-index.php?page=-Point+Light+Attenuation
 		struct Attenuation 
 		{
-			f32 kl{ 0.09f };	/* linear attenuation factor */
-			f32 kq{ 0.032f }; /* quadratic attenuation factor */
+			f32 kl{ 0.09f };	/* Linear attenuation factor */
+			f32 kq{ 0.032f }; /* Quadratic attenuation factor */
 		} attenuation;
 	};
 
@@ -165,8 +165,8 @@ namespace Components
 		~SpotLight() = default;
 
 		vec3f color{ 1.0f,1.0f,1.0f };
-		f32 diffuseIntensity{ 0.5f };		/* range [0-1] */
-		f32 specularIntensity{ 0.5f };	/* range [0-1] */
+		f32 diffuseIntensity{ 0.5f };		/* Range [0-1] */
+		f32 specularIntensity{ 0.5f };	/* Range [0-1] */
 
 		vec3f direction{ 0.0f, -1.0f, 0.0f };
 		vec3f position{ 0.0f, 0.0f, 0.0f };
@@ -174,11 +174,11 @@ namespace Components
 		// https://wiki.ogre3d.org/tiki-index.php?page=-Point+Light+Attenuation 
 		struct Attenuation
 		{
-			f32 kl{ 0.09f };	/* linear attenuation factor */
-			f32 kq{ 0.032f }; /* quadratic attenuation factor */
+			f32 kl{ 0.09f };	/* Linear attenuation factor */
+			f32 kq{ 0.032f }; /* Quadratic attenuation factor */
 		} attenuation;
 
-		/* spotlight's radius */
+		/* Spotlight's radius */
 		f32 cutOff{ 12.5f };
 		f32 outerCutOff{ 17.5f };
 	};

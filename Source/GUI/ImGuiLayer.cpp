@@ -14,6 +14,7 @@
 #include "Engine/Graphics/Objects/Texture2D.hpp"
 #include "Engine/Subsystems/WindowManager.hpp"
 #include "Engine/Subsystems/ShaderManager.hpp"
+#include "Engine/Subsystems/TextureManager.hpp"
 
 #include "Engine/Filesystem/Dialog.hpp"
 
@@ -124,6 +125,25 @@ static void GuizmoWorldScaling(Components::Transform& transform, const mat4f& vi
 
     transform.scale = scale;
     transform.UpdateTransformation();
+  }
+}
+
+static void ComboTextures(Texture2D*& matTexture, const char* comboLabel)
+{
+  const char* comboPreview = "Select texture";
+  if (ImGui::BeginCombo(comboLabel, comboPreview))
+  {
+    TextureManager& texManager = TextureManager::Get();
+    const auto& textVector = texManager.GetTextureVector();
+
+    for (i32 i = 0; i < textVector.size(); i++)
+    {
+      Texture2D* texture = texManager.GetTextureAt(i);
+      String texPathStr = texture->path.string();
+      if (!texPathStr.empty() && ImGui::Selectable(texPathStr.c_str(), false))
+        matTexture = texture;
+    }
+    ImGui::EndCombo();
   }
 }
 
@@ -375,7 +395,7 @@ namespace ImGuiLayer
     ImGui::SetNextWindowBgAlpha(0.0f);
     ImGui::Begin("Details", &visible);
     
-    if (auto light = object.GetComponent<Components::DirectionalLight>())
+    if (auto* light = object.GetComponent<Components::DirectionalLight>())
     {
       if (ImGui::CollapsingHeader("Directional light", ImGuiTreeNodeFlags_DefaultOpen))
       {
@@ -385,7 +405,7 @@ namespace ImGuiLayer
         ImGui::DragFloat3("Direction", (f32*)&light->direction, 0.1f, -infinity, infinity);
       }
     }
-    if (auto light = object.GetComponent<Components::PointLight>())
+    if (auto* light = object.GetComponent<Components::PointLight>())
     {
       if (ImGui::CollapsingHeader("Point light", ImGuiTreeNodeFlags_DefaultOpen))
       {
@@ -405,7 +425,7 @@ namespace ImGuiLayer
         }
       }
     }
-    if (auto light = object.GetComponent<Components::SpotLight>())
+    if (auto* light = object.GetComponent<Components::SpotLight>())
     {
       if (ImGui::CollapsingHeader("Spot light", ImGuiTreeNodeFlags_DefaultOpen))
       {
@@ -431,7 +451,7 @@ namespace ImGuiLayer
         }
       }
     }
-    if (auto transform = object.GetComponent<Components::Transform>())
+    if (auto* transform = object.GetComponent<Components::Transform>())
     {
       if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
       {
@@ -445,7 +465,60 @@ namespace ImGuiLayer
         transform->UpdateTransformation();
       }
     }
-    
+    if (auto* model = object.GetComponent<Components::Model>())
+    {
+      if (ImGui::CollapsingHeader("Model", ImGuiTreeNodeFlags_DefaultOpen))
+      {
+        /* Display model path */
+        ImGui::TextWrapped("Path: %s", model->path.string().c_str());
+        ImGui::Separator();
+
+        /* Display the number of meshes */
+        const i64 numMeshes = model->meshes.size();
+        ImGui::TextWrapped("Meshes: %d", numMeshes);
+        
+        /* For each mesh */
+        for (i32 i = 0; i < numMeshes; i++)
+        {
+          auto& mesh = model->meshes.at(i);
+          Material& material = mesh.material;
+
+          /* Display mesh-i props */
+          char title[16]{};
+          std::format_to_n(title, sizeof(title), "Mesh {}", i);
+          ImGui::SeparatorText(title);
+          
+          const auto& diffPath = material.diffuse->path;
+          ImGui::TextWrapped("Diffuse: %s", (diffPath.empty() ? "None" : diffPath.string().c_str()));
+          ComboTextures(material.diffuse, "##diffuse");
+          if (!diffPath.empty() && ImGui::Button("Reset##diffuse"))
+            material.diffuse = TextureManager::Get().GetTextureAt(0);
+          ImGui::Separator();
+          
+          const auto& specularPath = material.specular->path;
+          ImGui::TextWrapped("Specular: %s", (specularPath.empty() ? "None" : specularPath.string().c_str()));
+          ComboTextures(material.specular, "##specular");
+          if (!specularPath.empty() && ImGui::Button("Reset##specular"))
+            material.specular = TextureManager::Get().GetTextureAt(1);
+          ImGui::Separator();
+          
+          const auto& normalPath = material.normal->path;
+          ImGui::TextWrapped("Normal: %s", (normalPath.empty() ? "None" : normalPath.string().c_str()));
+          ComboTextures(material.normal, "##normal");
+          if (!normalPath.empty() && ImGui::Button("Reset##normal"))
+            material.normal = TextureManager::Get().GetTextureAt(2);
+          ImGui::Separator();
+
+          const auto& heightPath = material.height->path;
+          ImGui::TextWrapped("Height: %s", (heightPath.empty() ? "None" : heightPath.string().c_str()));
+          ComboTextures(material.height, "##height");
+          if (!heightPath.empty() && ImGui::Button("Reset##height"))
+            material.height = TextureManager::Get().GetTextureAt(3);
+          ImGui::Separator();
+        }
+      }
+    }
+
     ImGui::End();
   }
   

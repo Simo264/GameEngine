@@ -415,6 +415,7 @@ void Engine::Run()
 
   /* Create primary camera object */
   Camera primaryCamera(vec3f(20.0f, 6.0f, 0.0f));
+  primaryCamera.yaw = 180.0f;
   primaryCamera.frustum.zFar = 100.0f;
 
   /* Setting up the directional shadow mapping  */

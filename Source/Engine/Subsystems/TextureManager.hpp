@@ -56,6 +56,9 @@ public:
 	Texture2D* GetIconByPath(const fs::path& filePath);
 	Texture2D* GetIconAt(i32 i) { return &_icons.at(i); }
 
+	constexpr Vector<Texture2D>& GetTextureVector() { return _textures; }
+	constexpr Vector<Texture2D>& GetIconVector() { return _icons; }
+
 private:
 	TextureManager() = default;
 	~TextureManager() = default;

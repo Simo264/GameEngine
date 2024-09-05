@@ -84,8 +84,6 @@ void Texture2D::ClearStorage(i32 level, i32 type, const void* data) const
 
 void Texture2D::LoadImageData(const fs::path& path, bool gammaCorrection)
 {
-  const String stringPath = path.string();
-  
   i32 width, height, nChannels, internalFormat{ GL_RGB8 };
   Byte* data = Utils::LoadImageData(path, width, height, nChannels);
   if (data)
@@ -133,7 +131,7 @@ void Texture2D::LoadImageData(const fs::path& path, bool gammaCorrection)
   }
   else
   {
-    CONSOLE_ERROR("Failed to load texture {}", stringPath);
+    CONSOLE_ERROR("Failed to load texture {}", path.string());
   }
 
   Utils::FreeImageData(data);

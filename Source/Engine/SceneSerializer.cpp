@@ -90,7 +90,7 @@ void SceneSerializer::SerializeScene(Scene& scene, const fs::path& filepath)
 		if (auto* model = object.GetComponent<Components::Model>())
 		{
 			String section = std::format("entity{}:Model", objectID);
-			conf.Update(section.c_str(), "path", model->modelPath.string().c_str());
+			conf.Update(section.c_str(), "path", model->path.string().c_str());
 		}
 	}
 	conf.Generate(true);

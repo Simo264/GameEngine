@@ -74,7 +74,7 @@ public:
    * Set texture parameters
    */
   void SetParameteri(i32 name, i32 value) const;
-  void SetParameteriv(i32 name, int* values) const;
+  void SetParameteriv(i32 name, i32* values) const;
   void SetParameterf(i32 name, f32 value) const;
   void SetParameterfv(i32 name, f32* values) const;
 
