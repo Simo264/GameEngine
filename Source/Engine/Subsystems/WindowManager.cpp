@@ -7,7 +7,7 @@
 
 #include <GLFW/glfw3.h>
 
-void WindowManager::Initialize()
+void WindowManager::Initialize(WindowProps props)
 {
   i32 success = glfwInit();
   assert(success == GLFW_TRUE);
@@ -19,17 +19,14 @@ void WindowManager::Initialize()
   glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
   glfwWindowHint(GLFW_SAMPLES, 4);  /* Enable 4x MSAA on GLFW frame buffer */
 
-  /* Set default window values */
-  _context = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "GameEngine", nullptr, nullptr);
+  _context = glfwCreateWindow(props.size.x, props.size.y, props.title.data(), nullptr, nullptr);
   assert(_context);
   CONSOLE_INFO("Window created");
 
-  _aspectRatio = vec2i32(16, 9); /* 16:9 */
-
   glfwMakeContextCurrent(_context);
-  glfwSetWindowPos(_context, 50, 50);   
-  glfwSetWindowAspectRatio(_context, _aspectRatio.x, _aspectRatio.y); 
-  glfwSwapInterval(0);  /* No vsync */
+  glfwSetWindowPos(_context, props.position.x, props.position.y);
+  glfwSetWindowAspectRatio(_context, props.aspectRatio.x, props.aspectRatio.y);
+  glfwSwapInterval(static_cast<int>(props.vsync));
 
   glfwSetWindowSizeCallback(_context, [](GLFWwindow* window, i32 width, i32 height) {
     glfwSetWindowSize(window, width, height);
@@ -43,8 +40,8 @@ void WindowManager::Initialize()
 
 void WindowManager::CleanUp() const
 {
-  glfwDestroyWindow(_context);
-  glfwTerminate();
+  //glfwDestroyWindow(_context);
+  //glfwTerminate();
 }
 
 void WindowManager::PoolEvents() const
@@ -132,4 +129,16 @@ void WindowManager::MakeContextCurrent(Context context)
 {
   glfwMakeContextCurrent(context);
   _context = context;
+}
+
+const char* WindowManager::GetVersion() const
+{
+  return glfwGetVersionString();
+}
+
+vec2i32 WindowManager::GetWindowPos() const
+{
+  vec2i32 res{};
+  glfwGetWindowPos(_context, &res.x, &res.y);
+  return res;
 }

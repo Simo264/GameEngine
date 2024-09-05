@@ -3,6 +3,25 @@
 #include "Core/Core.hpp"
 #include "Core/Math/Math.hpp"
 
+struct WindowProps 
+{
+  vec2i32 size;
+  vec2i32 position;
+  StringView title;
+
+  vec2i32 aspectRatio;
+
+  bool vsync;
+
+  WindowProps(vec2i32 size, vec2i32 position, const char* title, vec2i32 aspectRatio, bool vsync)
+    : size{ size },
+      position{ position },
+      title{ title }, 
+      aspectRatio{ aspectRatio },
+      vsync{ vsync }
+  {}
+};
+
 /**
  *  Window manager singleton class
  */
@@ -26,7 +45,7 @@ public:
   /**
    * Initialize GLFW and OpenGL libraries and create context
    */
-  void Initialize();
+  void Initialize(WindowProps props);
 
   /**
    * Destroy window context and free GLFW resources
@@ -58,6 +77,8 @@ public:
   
   void SetWindowSize(i32 w, i32 h) const;
 
+  vec2i32 GetWindowPos() const;
+
   vec2i32 GetFramebufferSize() const;
 
   i32 GetKey(u32 key) const;
@@ -74,14 +95,13 @@ public:
 
   void MakeContextCurrent(Context context);
 
-  constexpr Context GetCurrentContext() const { return _context; }
+  const char* GetVersion() const;
 
-  constexpr vec2i32 GetAspectRatio() const { return _aspectRatio; }
+  constexpr Context GetCurrentContext() const { return _context; }
 
 private:
   WindowManager() = default;
   ~WindowManager() = default;
 
   Context _context;
-  vec2i32 _aspectRatio;
 };

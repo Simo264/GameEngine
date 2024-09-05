@@ -8,6 +8,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include <string_view>
 #include <sstream>
 #include <tuple>
 #include <vector>
@@ -61,6 +62,7 @@ using f32 = std::float_t;
 using f64 = std::double_t;
 
 using String				= std::string;
+using StringView		= std::string_view;
 using StringStream	= std::stringstream;
 using IStringStream = std::istringstream;
 using OStringStream = std::ostringstream;

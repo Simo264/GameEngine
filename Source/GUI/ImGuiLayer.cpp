@@ -1,5 +1,7 @@
 #include "ImGuiLayer.hpp"
 
+#include "Core/GL.hpp"
+
 #include "Core/Math/Extensions.hpp"
 #include "Core/Log/Logger.hpp"
 
@@ -140,17 +142,12 @@ namespace ImGuiLayer
     ImGui_ImplGlfw_InitForOpenGL(WindowManager::Get().GetCurrentContext(), true);
     ImGui_ImplOpenGL3_Init("#version 460");
   }
+  
   void CleanUp()
   {
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
-  }
-
-  void SetFont(const fs::path& fontpath, i32 fontsize)
-  {
-    ImGuiIO& io = ImGui::GetIO();
-    io.Fonts->AddFontFromFileTTF(fontpath.string().c_str(), fontsize);
   }
 
   void BeginFrame()
@@ -160,6 +157,7 @@ namespace ImGuiLayer
     ImGui::Begin();
     ImGuizmo::BeginFrame();
   }
+  
   void EndFrame()
   {
     ImGui::RenderPanel();
@@ -175,6 +173,12 @@ namespace ImGuiLayer
     }
   }
 
+  void SetFont(const fs::path& fontpath, i32 fontsize)
+  {
+    ImGuiIO& io = ImGui::GetIO();
+    io.Fonts->AddFontFromFileTTF(fontpath.string().c_str(), fontsize);
+  }
+  
   void Docking()
   {
     ImGuiWindowFlags windowFlags = ImGuiWindowFlags_MenuBar |
@@ -202,7 +206,8 @@ namespace ImGuiLayer
     ImGui::DockSpace(dockspaceID, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_PassthruCentralNode);
     ImGui::End();
   }
-  void RenderDemo()
+  
+  void Demo()
   {
     static bool visible = true;
     if (!visible)
@@ -211,7 +216,8 @@ namespace ImGuiLayer
     ImGui::SetNextWindowBgAlpha(0.0f);
     ImGui::ShowDemoWindow(&visible);
   }
-  void RenderMenuBar(Scene& scene)
+  
+  void MenuBar(Scene& scene)
   {
     if(ImGui::BeginMainMenuBar())
     {
@@ -245,6 +251,13 @@ namespace ImGuiLayer
           scene.SaveScene(filepath);
           CONSOLE_TRACE("The scene has been saved");
         }
+        
+        ImGui::Separator();
+
+        if (ImGui::MenuItem("Exit"))
+        {
+          WindowManager::Get().Close();
+        }
 
         ImGui::EndMenu();
       }
@@ -252,7 +265,8 @@ namespace ImGuiLayer
       ImGui::EndMainMenuBar();
     }
   }
-  vec2i32 RenderViewportAndGuizmo(u32 tetxureID, GameObject& object, const mat4f& view, const mat4f& proj)
+  
+  vec2i32 ViewportGizmo(u32 tetxureID, GameObject& object, const mat4f& view, const mat4f& proj)
   {
     ImGuiStyle& style = ImGui::GetStyle();
     const ImVec2 paddingTmp = style.WindowPadding;
@@ -305,7 +319,7 @@ namespace ImGuiLayer
     return vec2i32(viewport.x, viewport.y);
   }
 
-  GameObject RenderOutlinerPanel(Scene& scene)
+  GameObject OutlinerPanel(Scene& scene)
   {
     static char nodeName[64]{};
     static GameObject objectSelected{};
@@ -347,9 +361,13 @@ namespace ImGuiLayer
 
     return objectSelected;
   }
-  void RenderDetails(GameObject object)
+  
+  void GameObjectDetails(GameObject& object)
   {
     static bool visible = true;
+
+    if (!object.IsValid())
+      return;
 
     if (!visible)
       return;
@@ -430,7 +448,8 @@ namespace ImGuiLayer
     
     ImGui::End();
   }
-  void RenderWorld()
+  
+  void WorldProps()
   {
     ImGui::SetNextWindowBgAlpha(0.0f);
     ImGui::Begin("World", nullptr);
@@ -443,8 +462,8 @@ namespace ImGuiLayer
     
     ImGui::End();
   }
-
-  void RenderDepthMap(u32 tetxureID)
+  
+  void DebugDepthMap(u32 tetxureID)
   {
     ImGuiStyle& style = ImGui::GetStyle();
     const ImVec2 paddingTmp = style.WindowPadding;
@@ -460,8 +479,8 @@ namespace ImGuiLayer
 
     style.WindowPadding = paddingTmp;
   }
-
-  void RenderCameraProps(const char* label, Camera& camera)
+  
+  void CameraProps(const char* label, Camera& camera)
   {
     ImGui::Begin(label, nullptr);
 
@@ -482,21 +501,35 @@ namespace ImGuiLayer
     ImGui::End();
   }
 
-  void RenderDebug(Camera& camera)
+  void ApplicationInfo(f64 delta, f64 avg, i32 frameRate)
   {
-    ImGui::Begin("Debug", nullptr);
+    ImGui::Begin("Application", nullptr);
 
-    ImGui::DragFloat("zNear", &camera.frustum.zNear, 0.1f, 0.1f, 200.0f);
-    ImGui::DragFloat("zFar", &camera.frustum.zFar, 0.1f, 0.1f, 100.0f);
-    ImGui::DragFloat("Left", &camera.frustum.left, 0.1f, -100.0f, 100.0f);
-    ImGui::DragFloat("Right", &camera.frustum.right, 0.1f, -100.0f, 100.0f);
-    ImGui::DragFloat("Top", &camera.frustum.top, 0.1f, -100.0f, 100.0f);
-    ImGui::DragFloat("Bottom", &camera.frustum.bottom, 0.1f, -100.0f, 100.0f);
+    auto& winManager = WindowManager::Get();
+    static const char* glRender = reinterpret_cast<const char*>(glGetString(GL_RENDERER));
+    static const char* glVersion = reinterpret_cast<const char*>(glGetString(GL_VERSION));
+    static const char* glVendor = reinterpret_cast<const char*>(glGetString(GL_VENDOR));
+    static const char* glsl = reinterpret_cast<const char*>(glGetString(GL_SHADING_LANGUAGE_VERSION));
+    ImGui::TextWrapped("GLFW: %s\nOpenGL renderer: %s\nOpenGL version: %s\nOpenGL vendor: %s\nOpenGL Shading Language Version: %s",
+      winManager.GetVersion(),
+      glRender,
+      glVersion,
+      glVendor,
+      glsl
+    );
 
-    ImGui::DragFloat("Yaw", &camera.yaw, 0.1f, -180.0f, 180.0f);
-    ImGui::DragFloat("Pitch", &camera.pitch, 0.1f, -180.0f, 180.0f);
-    ImGui::DragFloat("Roll", &camera.roll, 0.1f, -180.0f, 180.0f);
-    ImGui::DragFloat3("Position", (f32*)&camera.position, 0.1f, -1000.0f, 1000.0f);
+    ImGui::Separator();
+
+    ImGui::TextWrapped("Time (ms): %f", delta*1000);
+    ImGui::TextWrapped("Average (ms): %f", avg*1000);
+    ImGui::TextWrapped("Frame rate: %d", frameRate);
+
+    ImGui::End();
+  }
+
+  void Test()
+  {
+    ImGui::Begin("Test", nullptr);
 
     ImGui::End();
   }

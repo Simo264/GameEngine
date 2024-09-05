@@ -5,29 +5,77 @@
 
 class Scene;
 class GameObject;
-class TransformComponent;
-
 class Camera;
 
 namespace ImGuiLayer
 {
+	/**
+	 * Set up ImGui context
+	 */
 	void SetupContext();
+
+	/**
+	 * Destroy ImGui context
+	 */
 	void CleanUp();
+
+	void BeginFrame();
+	void EndFrame();
 	
 	void SetFont(const fs::path& fontpath, i32 fontsize);
 	
-	void BeginFrame();
-	void EndFrame();
+	/**
+	 * Set the dockspace (call every frame!)
+	 */
 	void Docking();
 	
-	void RenderDemo();
-	void RenderMenuBar(Scene& scene);
-	vec2i32 RenderViewportAndGuizmo(u32 tetxureID, GameObject& object, const mat4f& view, const mat4f& proj);
-	GameObject RenderOutlinerPanel(Scene& scene);
-	void RenderDetails(GameObject object);
-	void RenderWorld();
-	void RenderCameraProps(const char* label, Camera& camera);
-	void RenderDepthMap(u32 tetxureID);
+	/**
+	 * Render the menu bar
+	 */
+	void MenuBar(Scene& scene);
 
-	void RenderDebug(Camera& camera);
+	/**
+	 * Render the demo frame
+	 */
+	void Demo();
+	
+	/**
+	 * Render the viewport with gizmo frame
+	 */
+	vec2i32 ViewportGizmo(u32 tetxureID, GameObject& object, const mat4f& view, const mat4f& proj);
+	
+	/**
+	 * Render the outliner frame
+	 */
+	GameObject OutlinerPanel(Scene& scene);
+	
+	/**
+	 * Render the game object details frame
+	 */
+	void GameObjectDetails(GameObject& object);
+	
+	/**
+	 * Render the world props frame
+	 */
+	void WorldProps();
+	
+	/**
+	 * Render the camera props frame
+	 */
+	void CameraProps(const char* label, Camera& camera);
+	
+	/**
+	 * Render the depth map image into a frame
+	 */
+	void DebugDepthMap(u32 tetxureID);
+	
+	/**
+	 * Render the application info frame
+	 */
+	void ApplicationInfo(f64 delta, f64 avg, i32 frameRate);
+
+	/**
+	 * The test frame
+	 */
+	void Test();
 }

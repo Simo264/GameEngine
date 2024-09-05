@@ -340,12 +340,13 @@ void Engine::Initialize()
   /* Initialize window manager */
   /* ------------------------- */
   WindowManager& windowManager = WindowManager::Get();
-  windowManager.Initialize();
-  windowManager.SetWindowTitle("GameEngine");
-  windowManager.SetWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
-  windowManager.SetWindowPosition(50, 50);
-  windowManager.SetWindowAspectRatio(16, 9);
-  windowManager.SetWindowVsync(false);
+  windowManager.Initialize(WindowProps(
+    vec2i32{ WINDOW_WIDTH, WINDOW_HEIGHT }, 
+    vec2i32{ 50, 50 }, 
+    "GameEngine", 
+    vec2i32{ 16, 9 },
+    false
+  ));
   CONSOLE_INFO("WindowManager ready");
 
   /* Setup ImGui context */
@@ -413,8 +414,8 @@ void Engine::Run()
   scene.Reg().view<Components::PointLight>().each([&](auto& light) { pointLight = &light; });
 
   /* Create primary camera object */
-  Camera primaryCamera(vec3f(70.0f, 600.0f, 170.0f));
-  primaryCamera.frustum.zFar = 100'000.0f;
+  Camera primaryCamera(vec3f(20.0f, 6.0f, 0.0f));
+  primaryCamera.frustum.zFar = 100.0f;
 
   /* Setting up the directional shadow mapping  */
   FrameBuffer fboDepthMap = CreateDepthMapFbo(1024, 1024);
@@ -446,10 +447,19 @@ void Engine::Run()
   u32 fboTexture = _fboIntermediate.GetTextureAttachment(0);
   u32 depthMapTexture = fboDepthMap.GetTextureAttachment(0);
   u32 depthCubeMapTexture = fboDepthCubeMap.GetTextureAttachment(0);
-  
   Texture2D* heightMap = textureManager.GetTextureByPath(TEXTURES_PATH / "iceland_heightmap.png");
 
-  auto lastUpdateTime = chrono::high_resolution_clock::now();
+  chrono::steady_clock::time_point now{};
+  chrono::steady_clock::time_point lastFrameTime{};
+  f64 delta = 0.0f; /* Time elapsed between two frames */
+  
+  chrono::steady_clock::time_point timerT0 = chrono::steady_clock::now();
+  chrono::steady_clock::time_point timerT1{};
+  i32 frames = 0; 
+  i32 frameRate = 0; /* How many frames generated per seconds */
+  f64 totalDeltasPerSecond = 0.0f; 
+  f64 avgTime = 0.0f; /* The average rendering time per seconds */
+
   bool renderingShadowsMode = true;
   bool useNormalMap = true;
   bool wireframeEnabled = false;
@@ -467,10 +477,21 @@ void Engine::Run()
     /* ---------------------------------------------------------------------------------- */
     /* -------------------------- Per-frame time logic section -------------------------- */
     /* ---------------------------------------------------------------------------------- */
-    f32 aspect = static_cast<f32>(_viewportSize.x) / static_cast<f32>(_viewportSize.y);
-    auto now = chrono::high_resolution_clock::now();
-    chrono::duration<double> diff = now - lastUpdateTime;
-    f64 delta = diff.count();
+    now = chrono::steady_clock::now();
+    delta = chrono::duration_cast<chrono::duration<f64>>(now - lastFrameTime).count();
+    lastFrameTime = now;
+    totalDeltasPerSecond += delta;
+    timerT1 = chrono::steady_clock::now();
+    f64 timer_diff = chrono::duration_cast<chrono::duration<f64>>(timerT1 - timerT0).count();
+    if (timer_diff >= 1)
+    {
+      timerT0 = chrono::steady_clock::now();
+      avgTime = totalDeltasPerSecond / frames;
+      frameRate = frames;
+      frames = 0;
+      totalDeltasPerSecond = 0;
+    }
+
     g_drawCalls = 0;
 
     /* ------------------------------------------------------------------- */
@@ -492,7 +513,7 @@ void Engine::Run()
     /* -------------------------------------------------------------------- */
     primaryCamera.UpdateOrientation();
     mat4f cameraView = primaryCamera.CalculateView(primaryCamera.position + primaryCamera.GetFrontVector());
-    mat4f cameraProj = primaryCamera.CalculatePerspective(aspect);
+    mat4f cameraProj = primaryCamera.CalculatePerspective(static_cast<f32>(_viewportSize.x) / static_cast<f32>(_viewportSize.y));
     _uboCamera.UpdateStorage(0, sizeof(mat4f), &cameraView[0]);
     _uboCamera.UpdateStorage(sizeof(mat4f), sizeof(mat4f), &cameraProj[0]);
 
@@ -567,16 +588,16 @@ void Engine::Run()
       glPolygonMode(GL_FRONT, wireframeEnabled ? GL_LINE : GL_FILL);
       glPolygonMode(GL_BACK, wireframeEnabled ? GL_LINE : GL_FILL);
 
-      /* Render terrain */
-      {
-        terrainProgram->Use();
-        terrainProgram->SetUniformMat4f("u_model", mat4f(1.0f));
-        terrainProgram->SetUniformMat4f("u_view", cameraView);
-        terrainProgram->SetUniformMat4f("u_projection", cameraProj);
-        terrainProgram->SetUniform1i("u_heightMap", 0);
-        heightMap->BindTextureUnit(0);
-        Renderer::DrawArrays(GL_PATCHES, terrain);
-      }
+      ///* Render terrain */
+      //{
+      //  terrainProgram->Use();
+      //  terrainProgram->SetUniformMat4f("u_model", mat4f(1.0f));
+      //  terrainProgram->SetUniformMat4f("u_view", cameraView);
+      //  terrainProgram->SetUniformMat4f("u_projection", cameraProj);
+      //  terrainProgram->SetUniform1i("u_heightMap", 0);
+      //  heightMap->BindTextureUnit(0);
+      //  Renderer::DrawArrays(GL_PATCHES, terrain);
+      //}
 
       /* Render scene with shadows map */
       if (renderingShadowsMode)
@@ -625,17 +646,18 @@ void Engine::Run()
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    //ImGuiLayer::Demo();
+    ImGuiLayer::MenuBar(scene);
+    ImGuiLayer::ApplicationInfo(delta, avgTime, frameRate);
+    ImGuiLayer::CameraProps("Primary camera", primaryCamera);
+    ImGuiLayer::CameraProps("DirecLight camera", directLightCamera);
+    //ImGuiLayer::RenderWorld();
+    ImGuiLayer::DebugDepthMap(depthMapTexture);
 
-    //ImGuiLayer::RenderDemo();
-    ImGuiLayer::RenderMenuBar(scene);
-    ImGuiLayer::RenderDepthMap(depthMapTexture);
-    ImGuiLayer::RenderCameraProps("Primary camera", primaryCamera);
-    ImGuiLayer::RenderCameraProps("DirecLight camera", directLightCamera);
-    ImGuiLayer::RenderWorld();
-    GameObject objectSelected = ImGuiLayer::RenderOutlinerPanel(scene);
-    if (objectSelected.IsValid()) 
-      ImGuiLayer::RenderDetails(objectSelected);
-    vec2i32 viewport = ImGuiLayer::RenderViewportAndGuizmo(fboTexture, objectSelected, cameraView, cameraProj);
+    GameObject objectSelected = ImGuiLayer::OutlinerPanel(scene);
+    ImGuiLayer::GameObjectDetails(objectSelected);
+    vec2i32 viewport = ImGuiLayer::ViewportGizmo(fboTexture, objectSelected, cameraView, cameraProj);
+
     ImGuiLayer::EndFrame();
 
     /* Checking viewport size */
@@ -651,7 +673,8 @@ void Engine::Run()
     /* -------------------------- Swap buffers -------------------------- */
     /* ------------------------------------------------------------------ */
     windowManager.SwapWindowBuffers();
-    lastUpdateTime = now;
+
+    frames++;
   }
 
   fboDepthCubeMap.Delete();
@@ -671,7 +694,7 @@ void Engine::CleanUp()
 
   ShaderManager::Get().CleanUp();
   TextureManager::Get().CleanUp();
-  WindowManager::Get().CleanUp();
+  WindowManager::Get().CleanUp(); /* !!Raise exception here */
 }
 
 /* -----------------------------------------------------
