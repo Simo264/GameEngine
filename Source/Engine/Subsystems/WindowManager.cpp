@@ -10,7 +10,7 @@
 void WindowManager::Initialize(WindowProps props)
 {
   i32 success = glfwInit();
-  assert(success == GLFW_TRUE);
+  assert(success == GLFW_TRUE && "Failed to initialize GLFW library");
   CONSOLE_INFO("GLFW initialized");
 
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -20,7 +20,7 @@ void WindowManager::Initialize(WindowProps props)
   glfwWindowHint(GLFW_SAMPLES, 4);  /* Enable 4x MSAA on GLFW frame buffer */
 
   _context = glfwCreateWindow(props.size.x, props.size.y, props.title.data(), nullptr, nullptr);
-  assert(_context);
+  assert(_context && "Failed to create window");
   CONSOLE_INFO("Window created");
 
   glfwMakeContextCurrent(_context);
@@ -34,7 +34,7 @@ void WindowManager::Initialize(WindowProps props)
 
   /* Load OpenGL functions, gladLoadGL returns the loaded version, 0 on error. */
   i32 version = gladLoadGL(glfwGetProcAddress);
-  assert(version != 0);
+  assert(version != 0 && "Failed to load OpenGL APIs");
   CONSOLE_INFO("OpenGL loaded");
 }
 

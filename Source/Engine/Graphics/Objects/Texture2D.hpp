@@ -70,7 +70,7 @@ public:
    * Set texture parameters
    */
   void SetParameteri(i32 name, i32 value) const;
-  void SetParameteriv(i32 name, int* values) const;
+  void SetParameteriv(i32 name, i32* values) const;
   void SetParameterf(i32 name, f32 value) const;
   void SetParameterfv(i32 name, f32* values) const;
 
@@ -135,20 +135,18 @@ public:
    */
   void GetTextureImage(i32 level, i32 type, i32 bufSize, void* pixels) const;
 
+  /**
+   * Return the internal format of the texture
+   */
+  constexpr i32 GetInternal() const { return _internalFormat; }
+
   constexpr bool Compare(const Texture2D& other) const { return id == other.id; }
-  constexpr bool IsValid() const { return id != static_cast<u32>(-1); }
+  constexpr bool IsValid() const { return id != 0; }
   
   u32 id;
 
   const i32 target;
 
-  /**
-   * Specifies the sized internal format to be used to store texture image data.
-   * Must be one of the sized internal formats given in Table 1 below:
-   * https://registry.khronos.org/OpenGL-Refpages/gl4/html/glTexStorage2D.xhtml
-   */
-  i32 internalFormat;
-  
   /**
    * Specifies the format of the pixel data.
    * The following symbolic values are accepted:
@@ -163,4 +161,12 @@ public:
   i32 nChannels;
   
   fs::path path;
+
+private:
+  /**
+   * Specifies the sized internal format to be used to store texture image data.
+   * Must be one of the sized internal formats given in Table 1 below:
+   * https://registry.khronos.org/OpenGL-Refpages/gl4/html/glTexStorage2D.xhtml
+   */
+  i32 _internalFormat;
 };

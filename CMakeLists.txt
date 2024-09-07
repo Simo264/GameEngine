@@ -36,10 +36,10 @@ set(EXTERNAL_SOURCES
   ${EXTERNAL_GLAD_SOURCE}
   ${EXTERNAL_TINYFD_SOURCE}
 )
-# Group them in filters
+# Group externals in filters
 source_group("Externals\\imgui"           FILES ${EXTERNAL_IMGUI_SOURCES})  
 source_group("Externals\\glad"            FILES ${EXTERNAL_GLAD_SOURCE})  
-source_group("Externals\\tinyfiledialogs" FILES ${EXTERNAL_TINYFD_SOURCE})  
+source_group("Externals\\tinyfiledialogs" FILES ${EXTERNAL_TINYFD_SOURCE})
 
 # List all Engine files
 file(GLOB_RECURSE ENGINE_SOURCES 
@@ -60,12 +60,11 @@ add_executable (GameEngine
   ${EXTERNAL_SOURCES}
 )
 
-
-# Linking libraries
-set(EXT_LIBS_PATH "${CMAKE_CURRENT_SOURCE_DIR}/Externals/Libs")
-target_link_libraries(GameEngine ${EXT_LIBS_PATH}/glfw3.lib) 
-target_link_libraries(GameEngine ${EXT_LIBS_PATH}/spdlogd.lib)
-target_link_libraries(GameEngine ${EXT_LIBS_PATH}/assimp.lib)
+# Static linking
+target_link_libraries(GameEngine "${CMAKE_CURRENT_SOURCE_DIR}/Externals/Libs/glfw3.lib") 
+target_link_libraries(GameEngine "${CMAKE_CURRENT_SOURCE_DIR}/Externals/Libs/spdlogd.lib")
+target_link_libraries(GameEngine "${CMAKE_CURRENT_SOURCE_DIR}/Externals/Libs/assimp.lib")
+target_link_libraries(GameEngine "${CMAKE_CURRENT_SOURCE_DIR}/Externals/Libs/freetype.lib")
 
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)

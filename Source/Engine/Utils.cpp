@@ -64,13 +64,13 @@ namespace Utils
 		return (str.compare("1") == 0 || str.compare("true") == 0);
 	}
 
-	Byte* LoadImageData(const fs::path& path, i32& width, i32& height, i32& nChannels)
+	u8* LoadImageData(const fs::path& path, i32& width, i32& height, i32& nChannels)
 	{
-		Byte* data = reinterpret_cast<Byte*>(stbi_load(path.string().c_str(), &width, &height, &nChannels, 0));
+		u8* data = stbi_load(path.string().c_str(), &width, &height, &nChannels, 0);
 		return data;
 	}
 
-	void FreeImageData(Byte* data)
+	void FreeImageData(u8* data)
 	{
 		stbi_image_free(reinterpret_cast<void*>(data));
 	}

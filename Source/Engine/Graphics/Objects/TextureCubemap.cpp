@@ -79,7 +79,7 @@ void TextureCubemap::LoadImages(const Array<Texture2D*, 6>& images) const
   i32 height = images.at(0)->height;
   i32 bufsize = width * height * nrChannels;
   i32 format = images.at(0)->format;
-  Vector<Byte> pixels(bufsize);
+  Vector<u8> pixels(bufsize);
 
   for (i32 i = 0; i < 6; i++)
   {

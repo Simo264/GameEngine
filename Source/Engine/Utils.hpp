@@ -21,8 +21,8 @@ namespace Utils
 	bool StringToBool(const String& str);
 
 	/* Load image data with stbi_load function */
-	Byte* LoadImageData(const fs::path& path, i32& width, i32& height, i32& nChannels);
+	u8* LoadImageData(const fs::path& path, i32& width, i32& height, i32& nChannels);
 
 	/* Call stbi_image_free function */
-	void FreeImageData(Byte* data);
+	void FreeImageData(u8* data);
 };

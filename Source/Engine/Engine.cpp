@@ -5,6 +5,8 @@
 #include "Core/Math/Extensions.hpp"
 #include "Core/Log/Logger.hpp"
 
+#include "Engine/Globals.hpp"
+
 #include "Engine/Camera.hpp"
 #include "Engine/Scene.hpp"
 #include "Engine/GameObject.hpp"
@@ -24,20 +26,25 @@
 #include "Engine/Subsystems/ShaderManager.hpp"
 #include "Engine/Subsystems/TextureManager.hpp"
 
-#include "Engine/Globals.hpp"
-
 #include "GUI/ImGuiLayer.hpp"
 
 #include <GLFW/glfw3.h>
 
-static void GLAPIENTRY MessageCallback(
-  GLenum source,
-  GLenum type,
-  GLuint id,
-  GLenum severity,
-  GLsizei length,
-  const GLchar* message,
-  const void* userParam)
+#include <ft2build.h>
+#include FT_FREETYPE_H
+
+struct FTCharacter 
+{
+  u32 textureID;    // ID handle of the glyph texture
+  vec2i32 size;     // Size of glyph
+  vec2i32 bearing;  // Offset from baseline to left/top of glyph
+  u32 advance;      // Offset to advance to next glyph
+};
+
+Map<char, FTCharacter> ftCharactersMap;
+
+
+static void GLAPIENTRY MessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam)
 {
   /* Ignore non-significant error/warning codes */ 
   if (id == 131169 || id == 131185 || id == 131218 || id == 131204) 
@@ -45,38 +52,44 @@ static void GLAPIENTRY MessageCallback(
 
   CONSOLE_ERROR("GL callback: {} ", message);
 }
-
 static void SetOpenGLStates()
 {
   /* Enable debug output */ 
+  /* ------------------- */
   glEnable(GL_DEBUG_OUTPUT);
   glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
   glDebugMessageCallback(MessageCallback, 0);
   glDebugMessageControl(GL_DEBUG_SOURCE_API, GL_DEBUG_TYPE_ERROR, GL_DONT_CARE, 0, nullptr, GL_TRUE);
 
   /* Depth testing ON */
+  /* ---------------- */
   Depth::EnableTest();
   Depth::EnableWritingBuffer();
   Depth::SetFunction(GL_LESS);
 
   /* Stencil testing OFF */
+  /* ------------------- */
   Stencil::DisableTest();
   Stencil::SetFunction(GL_ALWAYS, 0, 0xFF);
   Stencil::SetOperation(GL_KEEP, GL_KEEP, GL_KEEP);
 
   /* Culling OFF */
+  /* ----------- */
   Culling::DisableFaceCulling();
   Culling::SetCullFace(GL_BACK);
   Culling::SetFrontFace(GL_CCW);
 
   /* Blending OFF */
+  /* ------------ */
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
   /* Gamma correction OFF */
+  /* -------------------- */
   glDisable(GL_FRAMEBUFFER_SRGB);
 
   /* Antialising ON */
+  /* -------------- */
   glEnable(GL_MULTISAMPLE);
 
   glClearColor(0.15f, 0.15f, 0.15f, 1.0f);
@@ -198,7 +211,7 @@ static void CreateSkybox(VertexArray& skybox, TextureCubemap& skyboxTexture)
     textureManager.GetTextureByPath(TEXTURES_PATH / "skybox/front.jpg"),
     textureManager.GetTextureByPath(TEXTURES_PATH / "skybox/back.jpg"),
   };
-  i32 cubemapInternalFormat = images.at(0)->internalFormat;
+  i32 cubemapInternalFormat = images.at(0)->GetInternal();
   i32 width = images.at(0)->width;
   i32 height = images.at(0)->height;
 
@@ -325,6 +338,51 @@ static VertexArray CreateTerrain(i32 rez)
   return vao;
 }
 
+static void RenderText(VertexArray& vaoText, StringView text, i32 x, i32 y, f32 scale = 1.0f, i32 witheSpacing = 8)
+{
+  for (const char& c : text)
+  {
+    if (c == ' ')
+    {
+      x += witheSpacing;
+      continue;
+    }
+
+    auto characterIt = ftCharactersMap.find(c);
+    if (characterIt == ftCharactersMap.end())
+    {
+      CONSOLE_WARN("Caracter '{}' does not exist in ftCharactersMap", c);
+      continue;
+    }
+
+    FTCharacter& character = characterIt->second;
+    glBindTextureUnit(0, character.textureID);
+    
+    f32 xpos = x + character.bearing.x * scale;
+    f32 ypos = y - (character.size.y - character.bearing.y) * scale;
+    f32 w = character.size.x * scale;
+    f32 h = character.size.y * scale;
+
+    i32 bufferTextPosId = vaoText.vboAttachmentIDs.at(0);
+
+    // update VBO for each character
+    f32 vertices[] = {
+      xpos,     ypos + h,   
+      xpos,     ypos,       
+      xpos + w, ypos,       
+      xpos,     ypos + h,   
+      xpos + w, ypos,       
+      xpos + w, ypos + h,
+    };
+
+    glNamedBufferSubData(bufferTextPosId, 0, sizeof(vertices), vertices);
+    Renderer::DrawArrays(GL_TRIANGLES, vaoText);
+
+    x += (character.advance >> 6) * scale; // bitshift by 6 to get value in pixels (2^6 = 64 (divide amount of 1/64th pixels by 64 to get amount of pixels))
+    std::cout << "character.advance=" << character.advance << "\n";
+  }
+}
+
 /* -----------------------------------------------------
  *          PUBLIC METHODS
  * -----------------------------------------------------
@@ -335,7 +393,7 @@ void Engine::Initialize()
   /* Initialize logger */
   /* ----------------- */
   Logger::Initialize();
-  CONSOLE_INFO("Logger ready");
+  CONSOLE_INFO("Logger initialized");
 
   /* Initialize window manager */
   /* ------------------------- */
@@ -347,13 +405,13 @@ void Engine::Initialize()
     vec2i32{ 16, 9 },
     false
   ));
-  CONSOLE_INFO("WindowManager ready");
+  CONSOLE_INFO("Window manager initialized");
 
   /* Setup ImGui context */
   /* ------------------- */
   ImGuiLayer::SetupContext();
   ImGuiLayer::SetFont((FONTS_PATH / "Karla-Regular.ttf"), 16);
-  CONSOLE_INFO("ImGuiLayer ready");
+  CONSOLE_INFO("ImGui layer initialized");
   
   /* Initialize shader manager */
   /* ------------------------- */
@@ -361,7 +419,7 @@ void Engine::Initialize()
   shaderManager.LoadShadersFromDir(SHADERS_PATH);
   shaderManager.LoadPrograms();
   shaderManager.SetUpProgramsUniforms();
-  CONSOLE_INFO("ShaderManager ready!");
+  CONSOLE_INFO("Shader manager initialized");
 
   /* Initialize texture manager */
   /* -------------------------- */
@@ -370,18 +428,22 @@ void Engine::Initialize()
   Texture2D defaultSpecularTexture = CreateDefaultTexture(Array<u8, 3>{ 255, 255, 255 });
   Texture2D defaultNormalTexture = CreateDefaultTexture(Array<u8, 3>{ 0, 0, 0 });
   Texture2D defaultHeightTexture = CreateDefaultTexture(Array<u8, 3>{ 0, 0, 0 });
-  
   TextureManager& textureManager = TextureManager::Get();
   textureManager.LoadTexture(defaultDiffuseTexture);
   textureManager.LoadTexture(defaultSpecularTexture);
   textureManager.LoadTexture(defaultNormalTexture);
   textureManager.LoadTexture(defaultHeightTexture);
   textureManager.LoadTexturesFromDir(TEXTURES_PATH);
-  CONSOLE_INFO("TextureManager ready!");
+  CONSOLE_INFO("Texture manager initialized");
+
+  /* Initialize FreeType lib */
+  /* ----------------------- */
+  // ...
 
   /* Create Framebuffer object */
   /* ------------------------- */
-  CreateFramebuffer(4, WINDOW_WIDTH, WINDOW_HEIGHT);
+  _viewportSize = { WINDOW_WIDTH, WINDOW_HEIGHT };
+  CreateFramebuffer(4, _viewportSize.x, _viewportSize.y);
   CreateScreenSquare();
 
   /* Initialize uniform block objects */
@@ -390,15 +452,113 @@ void Engine::Initialize()
   _uboCamera = Buffer(GL_UNIFORM_BUFFER, 2 * sizeof(mat4f), nullptr, GL_STATIC_DRAW);
   _uboCamera.BindBase(0); /* cameraBlock to bindingpoint 0 */
 
-  /* Set viewport */
-  /* ------------ */
-  _viewportSize.x = WINDOW_WIDTH;
-  _viewportSize.y = WINDOW_HEIGHT;
-
+  /* Set the initial OpenGL states */
+  /* ----------------------------- */
   SetOpenGLStates();
 }
 void Engine::Run()
 {
+  /* Init FreeType */
+  /* ------------- */
+  FT_Library ftLib;
+  i32 ftError = FT_Init_FreeType(&ftLib);
+  assert(ftError == 0 && "Failed to initialize FreeType");
+  CONSOLE_INFO("FreeType initialized");
+  FT_Face ftFace;
+  ftError = FT_New_Face(ftLib, (FONTS_PATH / "Karla-Regular.ttf").string().c_str(), 0, &ftFace);
+  assert(ftError == 0 && "Failed to load Karla-Regular.ttf font");
+  CONSOLE_INFO("Karla-Regular.ttf font loaded");
+  // set size to load glyphs as
+  FT_Set_Pixel_Sizes(ftFace, 0, 48);
+  // disable byte-alignment restriction
+  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+  // load first 128 characters of ASCII set
+  for (u8 c = 0; c < 128; c++)
+  {
+    i32 ftError = FT_Load_Char(ftFace, c, FT_LOAD_RENDER);
+    if (ftError != 0)
+    {
+      CONSOLE_WARN("Failed to load Glyph ASCII code {}", c);
+      continue;
+    }
+
+    /* Create texture */
+    i32 width = ftFace->glyph->bitmap.width;
+    i32 height = ftFace->glyph->bitmap.rows;
+    const u8* data = ftFace->glyph->bitmap.buffer;
+    if (width == 0 || height == 0)
+    {
+      CONSOLE_WARN("Character code {} has invalid size", c);
+      continue;
+    }
+
+    Texture2D texture(GL_TEXTURE_2D);
+    texture.format = GL_RED;
+    texture.Create();
+    texture.CreateStorage(GL_R8, width, height);
+    texture.UpdateStorage(0, 0, 0, GL_UNSIGNED_BYTE, data);
+    texture.SetParameteri(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    texture.SetParameteri(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    texture.SetParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    texture.SetParameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    FTCharacter character{};
+    character.textureID = texture.id;
+    character.size = vec2i32{ width, height };
+    character.bearing = vec2i32{ ftFace->glyph->bitmap_left, ftFace->glyph->bitmap_top };
+    character.advance = ftFace->glyph->advance.x;
+    
+    ftCharactersMap.insert(std::make_pair(c, character));
+  }
+  // restore byte-alignment to initial value
+  glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+
+  // destroy FreeType once we're finished
+  FT_Done_Face(ftFace);
+  FT_Done_FreeType(ftLib);
+
+  // configure VAO/VBO for texture quads
+  // -----------------------------------
+  VertexArray vaoText;
+  vaoText.Create();
+  vaoText.SetAttribFormat(0, 2, GL_FLOAT, false, 0); /* vec2 pos */
+  vaoText.SetAttribBinding(0, 0);
+  vaoText.EnableAttribute(0);
+    
+  vaoText.SetAttribFormat(1, 2, GL_FLOAT, false, 0); /* vec2 uv */
+  vaoText.SetAttribBinding(1, 1);
+  vaoText.EnableAttribute(1);
+
+  /* Quad: 6 vertices of 4 floats each (vec2 pos + vec2 uv) */
+  f32 textPosData[] = {
+    0.0f, 0.0f,
+    0.0f, 0.0f,
+    0.0f, 0.0f,
+    0.0f, 0.0f,
+    0.0f, 0.0f,
+    0.0f, 0.0f,
+  };
+  f32 textUvData[] = {
+    0.0f, 0.0f,
+    0.0f, 1.0f,
+    1.0f, 1.0f,
+    0.0f, 0.0f,
+    1.0f, 1.0f,
+    1.0f, 0.0f
+  };
+  
+  Buffer vboTextPos(GL_ARRAY_BUFFER, sizeof(textPosData), textPosData, GL_DYNAMIC_DRAW);
+  Buffer vboTextUv(GL_ARRAY_BUFFER, sizeof(textUvData), textUvData, GL_STATIC_DRAW);
+  vaoText.AttachVertexBuffer(0, vboTextPos.id, 0, 2 * sizeof(f32));
+  vaoText.AttachVertexBuffer(1, vboTextUv.id, 0, 2 * sizeof(f32));
+  vaoText.numVertices = 6;
+  vaoText.numIndices = 0;
+
+
+
+
+
+
   /* Create skybox object */
   TextureCubemap skyboxTexture;
   VertexArray skybox;
@@ -445,6 +605,7 @@ void Engine::Run()
   Program* depthCubeMapProgram = shaderManager.GetProgram("DepthCubeMap");
   Program* skyboxProgram = shaderManager.GetProgram("Skybox");
   Program* terrainProgram = shaderManager.GetProgram("Terrain");
+  Program* glyphProgram = shaderManager.GetProgram("Glyph");
   u32 fboTexture = _fboIntermediate.GetTextureAttachment(0);
   u32 depthMapTexture = fboDepthMap.GetTextureAttachment(0);
   u32 depthCubeMapTexture = fboDepthCubeMap.GetTextureAttachment(0);
@@ -600,40 +761,55 @@ void Engine::Run()
       //  Renderer::DrawArrays(GL_PATCHES, terrain);
       //}
 
-      /* Render scene with shadows map */
-      if (renderingShadowsMode)
-      {
-        sceneShadowsProgram->Use();
-        sceneShadowsProgram->SetUniform3f("u_viewPos", primaryCamera.position);
-        sceneShadowsProgram->SetUniform3f("u_ambientLightColor", g_ambientColor);
-        sceneShadowsProgram->SetUniform1f("u_ambientLightIntensity", g_ambientIntensity);
-        sceneShadowsProgram->SetUniformMat4f("u_lightView", directLightView);
-        sceneShadowsProgram->SetUniformMat4f("u_lightProjection", directLightProjection);
-        sceneShadowsProgram->SetUniform1i("u_useNormalMap", useNormalMap);
-        glBindTextureUnit(10, depthMapTexture);
-        glBindTextureUnit(11, depthCubeMapTexture);
-        RenderScene(scene, sceneShadowsProgram);
-      }
-      /* Render scene with no shadows */
-      else
-      {
-        sceneProgram->Use();
-        sceneProgram->SetUniform3f("u_viewPos", primaryCamera.position);
-        sceneProgram->SetUniform3f("u_ambientLightColor", g_ambientColor);
-        sceneProgram->SetUniform1f("u_ambientLightIntensity", g_ambientIntensity);
-        sceneProgram->SetUniform1i("u_useNormalMap", useNormalMap);
-        RenderScene(scene, sceneProgram);
-      }
+      ///* Render scene with shadows map */
+      //if (renderingShadowsMode)
+      //{
+      //  sceneShadowsProgram->Use();
+      //  sceneShadowsProgram->SetUniform3f("u_viewPos", primaryCamera.position);
+      //  sceneShadowsProgram->SetUniform3f("u_ambientLightColor", g_ambientColor);
+      //  sceneShadowsProgram->SetUniform1f("u_ambientLightIntensity", g_ambientIntensity);
+      //  sceneShadowsProgram->SetUniformMat4f("u_lightView", directLightView);
+      //  sceneShadowsProgram->SetUniformMat4f("u_lightProjection", directLightProjection);
+      //  sceneShadowsProgram->SetUniform1i("u_useNormalMap", useNormalMap);
+      //  glBindTextureUnit(10, depthMapTexture);
+      //  glBindTextureUnit(11, depthCubeMapTexture);
+      //  RenderScene(scene, sceneShadowsProgram);
+      //}
+      ///* Render scene with no shadows */
+      //else
+      //{
+      //  sceneProgram->Use();
+      //  sceneProgram->SetUniform3f("u_viewPos", primaryCamera.position);
+      //  sceneProgram->SetUniform3f("u_ambientLightColor", g_ambientColor);
+      //  sceneProgram->SetUniform1f("u_ambientLightIntensity", g_ambientIntensity);
+      //  sceneProgram->SetUniform1i("u_useNormalMap", useNormalMap);
+      //  RenderScene(scene, sceneProgram);
+      //}
 
-      /* Draw skybox as last */
+      ///* Draw skybox after the scene */
+      //{
+      //  skyboxProgram->Use();
+      //  skyboxProgram->SetUniformMat4f("u_projection", cameraProj);
+      //  skyboxProgram->SetUniformMat4f("u_view", mat4f(mat3f(cameraView)));
+      //  skyboxTexture.BindTextureUnit(0);
+      //  Depth::SetFunction(GL_LEQUAL); 
+      //  Renderer::DrawArrays(GL_TRIANGLES, skybox);
+      //  Depth::SetFunction(GL_LESS); 
+      //}
+
+      /* Render text as last */
       {
-        skyboxProgram->Use();
-        skyboxProgram->SetUniformMat4f("u_projection", cameraProj);
-        skyboxProgram->SetUniformMat4f("u_view", mat4f(mat3f(cameraView)));
-        skyboxTexture.BindTextureUnit(0);
-        Depth::SetFunction(GL_LEQUAL); 
-        Renderer::DrawArrays(GL_TRIANGLES, skybox);
-        Depth::SetFunction(GL_LESS); 
+        mat4f proj = Math::Ortho(0.0f, (float)_viewportSize.x, 0.0f, (float)_viewportSize.y, 0.0f, 1.0f);
+        glyphProgram->Use();
+        glyphProgram->SetUniformMat4f("u_projection", proj);
+        glyphProgram->SetUniform1i("u_text", 0);
+        glyphProgram->SetUniform3f("u_textColor", vec3f(1.0f));
+
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        RenderText(vaoText, "This is some text", 30, 10);
+        RenderText(vaoText, "This is some text upper", 30, 200);
+        glDisable(GL_BLEND);
       }
 
       /* Blit multisampled buffer to normal colorbuffer of intermediate FBO */

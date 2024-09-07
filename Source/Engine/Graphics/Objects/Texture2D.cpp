@@ -6,25 +6,25 @@
 #include "Engine/Utils.hpp"
 
 Texture2D::Texture2D(i32 target)
-  : id{ 0 },
-    target{ target },
-    path{},
-    internalFormat{ GL_RGB8 },
+  : target{ target },
+    id{ 0 },
+    _internalFormat{ GL_RGB8 },
     format{ GL_RGB },
     nChannels{ 3 },
     width{ 0 },
-    height{ 0 }
+    height{ 0 },
+    path{}
 {}
 
 Texture2D::Texture2D(i32 target, const fs::path& path, bool gammaCorrection)
-  : id{ 0 },
-    target{ target },
-    path{},
-    internalFormat{ GL_RGB8 },
+  : target{ target },
+    id{ 0 },
+    _internalFormat{ GL_RGB8 },
     format{ GL_RGB },
     nChannels{ 3 },
     width{ 0 },
-    height{ 0 }
+    height{ 0 },
+    path{}
 {
   Create();
   LoadImageData(path, gammaCorrection);
@@ -58,16 +58,16 @@ void Texture2D::GenerateMipmap() const
 
 void Texture2D::CreateStorage(i32 internalFormat, i32 width, i32 height)
 {
-  this->internalFormat = internalFormat;
   this->width = width;
   this->height = height;
+  _internalFormat = internalFormat;
   i32 mipmapLevels = 1 + std::floor(std::log2(std::max(width, height)));
 
   glTextureStorage2D(id, mipmapLevels, internalFormat, width, height);
 }
 void Texture2D::CreateStorageMultisampled(i32 internalFormat, i32 samples, i32 width, i32 height)
 {
-  this->internalFormat = internalFormat;
+  this->_internalFormat = internalFormat;
   this->width = width;
   this->height = height;
 
@@ -85,7 +85,7 @@ void Texture2D::ClearStorage(i32 level, i32 type, const void* data) const
 void Texture2D::LoadImageData(const fs::path& path, bool gammaCorrection)
 {
   i32 width, height, nChannels, internalFormat{ GL_RGB8 };
-  Byte* data = Utils::LoadImageData(path, width, height, nChannels);
+  u8* data = Utils::LoadImageData(path, width, height, nChannels);
   if (data)
   {
     /**
@@ -146,7 +146,7 @@ void Texture2D::SetParameteri(i32 name, i32 value) const
 {
   glTextureParameteri(id, name, value);
 }
-void Texture2D::SetParameteriv(i32 name, int* values) const
+void Texture2D::SetParameteriv(i32 name, i32* values) const
 {
   glTextureParameteriv(id, name, values);
 }

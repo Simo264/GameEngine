@@ -68,7 +68,6 @@ using IStringStream = std::istringstream;
 using OStringStream = std::ostringstream;
 using IStream				= std::ifstream;
 using OStream				= std::ofstream;
-using Byte					= std::byte;
 
 
 /************** Default paths **************/
