@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Core/Core.hpp"
+#include "Core/Log/Logger.hpp"
 
 #define MINI_CASE_SENSITIVE
 #include <mini/ini.h>
@@ -8,7 +9,17 @@
 class ConfigFile
 {
 public:
-	ConfigFile(const fs::path& filepath);
+	ConfigFile(const fs::path& filepath)
+	{
+		if (!fs::exists(filepath) || !fs::is_regular_file(filepath))
+		{
+			CONSOLE_WARN("<filepath> is not a valid path");
+			return;
+		}
+
+		/* Create a file instance */
+		_file = std::make_unique<mINI::INIFile>(filepath.string());
+	}
 	~ConfigFile() = default;
 
 	/* Return reference of ini data structure */
@@ -23,45 +34,49 @@ public:
 		_file->read(_iniData);
 	}
 
-	bool HasKey(const char* section, const char* key)
+	bool HasKey(StringView section, StringView key)
 	{
-		return _iniData.get(section).has(key);
+		return _iniData.get(section.data()).has(key.data());
 	}
 
-	/* Returns a copy of the data and doesn't create new items in the structure */
-	String GetValue(const char* section, const char* key)
+	/* Return a reference to real data and creates a new item automatically if one does not already exist */
+	const String& GetValue(StringView section, StringView key)
 	{
-		return _iniData.get(section).get(key);
+		static String empty{};
+		if (!HasKey(section, key))
+			return empty;
+
+		return const_cast<String&>(_iniData[section.data()][key.data()]);
 	}
 
 	/* To update a value */
-	void Update(const char* section, const char* key, const char* value)
+	void Update(StringView section, StringView key, StringView value)
 	{
-		_iniData[section][key] = value;
+		_iniData[section.data()][key.data()] = value.data();
 	}
 
 	/* Set multiple values at once */
-	void Set(const char* section, const Vector<std::pair<String, String>>& args)
+	void Set(StringView section, const Vector<std::pair<String, String>>& args)
 	{
-		_iniData[section].set(args);
+		_iniData[section.data()].set(args);
 	}
 
 	/* To remove a single key from a section */
-	bool RemoveKey(const char* section, const char* key)
+	bool RemoveKey(StringView section, StringView key)
 	{
-		return _iniData[section].remove(key);
+		return _iniData[section.data()].remove(key.data());
 	}
 
 	/* To remove a section */
-	bool RemoveSection(const char* section)
+	bool RemoveSection(StringView section)
 	{
-		_iniData.remove(section);
+		_iniData.remove(section.data());
 	}
 
 	/* To remove all keys from a section */
-	void ClearSection(const char* section)
+	void ClearSection(StringView section)
 	{
-		_iniData[section].clear();
+		_iniData[section.data()].clear();
 	}
 
 	/* To remove all data in structure */
@@ -71,9 +86,9 @@ public:
 	}
 
 	/* To check if a section is present */
-	bool HasSection(const char* section)
+	bool HasSection(StringView section)
 	{
-		return _iniData.has(section);
+		return _iniData.has(section.data());
 	}
 
 	/* To write back to a file while preserving comments and custom formatting */

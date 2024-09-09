@@ -7,61 +7,103 @@
 
 namespace Utils
 {
-	vec2i32 StringToVec2i32(String& str, const char* sep)
+	vec2i32 StringToVec2i32(StringView str, char delimiter)
 	{
 		vec2i32 vec{};
-		char* token = nullptr;
-		char* next_token = nullptr;
-		token = strtok_s(str.data(), sep, &next_token);
-		vec.x = std::stoi(token);
-		token = strtok_s(nullptr, sep, &next_token);
-		vec.y = std::stoi(token);
+
+		int offset;
+		int sepIdx;
+
+		offset = 0;
+		sepIdx = str.find_first_of(delimiter, offset);
+		StringView strX = str.substr(offset, (sepIdx - offset));
+		
+		offset = sepIdx + 1;
+		sepIdx = str.find_first_of(delimiter, offset);
+		StringView strY = str.substr(offset, (sepIdx - offset));
+		
+		vec.x = std::atoi(strX.data());
+		vec.y = std::atoi(strY.data());
+
 		return vec;
 	}
 	
-	vec2f StringToVec2f(String& str, const char* sep)
+	vec2f StringToVec2f(StringView str, char delimiter)
 	{
 		vec2f vec{};
-		char* token = nullptr;
-		char* next_token = nullptr;
-		token = strtok_s(str.data(), sep, &next_token);
-		vec.x = std::stof(token);
-		token = strtok_s(nullptr, sep, &next_token);
-		vec.y = std::stof(token);
+
+		int offset;
+		int sepIdx;
+
+		offset = 0;
+		sepIdx = str.find_first_of(delimiter, offset);
+		StringView strX = str.substr(offset, (sepIdx - offset));
+
+		offset = sepIdx + 1;
+		sepIdx = str.find_first_of(delimiter, offset);
+		StringView strY = str.substr(offset, (sepIdx - offset));
+
+		vec.x = std::atof(strX.data());
+		vec.y = std::atof(strY.data());
+
 		return vec;
 	}
 
-	vec3i32 StringToVec3i32(String& str, const char* sep)
+	vec3i32 StringToVec3i32(StringView str, char delimiter)
 	{
 		vec3i32 vec{};
-		char* token = nullptr;
-		char* next_token = nullptr;
-		token = strtok_s(str.data(), sep, &next_token);
-		vec.x = std::stoi(token);
-		token = strtok_s(nullptr, sep, &next_token);
-		vec.y = std::stoi(token);
-		token = strtok_s(nullptr, sep, &next_token);
-		vec.z = std::stoi(token);
+
+		int offset;
+		int sepIdx;
+
+		offset = 0;
+		sepIdx = str.find_first_of(delimiter, offset);
+		StringView strX = str.substr(offset, (sepIdx - offset));
+
+		offset = sepIdx + 1;
+		sepIdx = str.find_first_of(delimiter, offset);
+		StringView strY = str.substr(offset, (sepIdx - offset));
+
+		offset = sepIdx + 1;
+		sepIdx = str.find_first_of(delimiter, offset);
+		StringView strZ = str.substr(offset, (sepIdx - offset));
+
+		vec.x = std::atoi(strX.data());
+		vec.y = std::atoi(strY.data());
+		vec.z = std::atoi(strZ.data());
+
 		return vec;
 	}
 
-	vec3f StringToVec3f(String& str, const char* sep)
+	vec3f StringToVec3f(StringView str, char delimiter)
 	{
 		vec3f vec{};
-		char* token = nullptr;
-		char* next_token = nullptr;
-		token = strtok_s(str.data(), sep, &next_token);
-		vec.x = std::stof(token);
-		token = strtok_s(nullptr, sep, &next_token);
-		vec.y = std::stof(token);
-		token = strtok_s(nullptr, sep, &next_token);
-		vec.z = std::stof(token);
+
+		int offset;
+		int sepIdx;
+
+		offset = 0;
+		sepIdx = str.find_first_of(delimiter, offset);
+		StringView strX = str.substr(offset, (sepIdx - offset));
+
+		offset = sepIdx + 1;
+		sepIdx = str.find_first_of(delimiter, offset);
+		StringView strY = str.substr(offset, (sepIdx - offset));
+
+		offset = sepIdx + 1;
+		sepIdx = str.find_first_of(delimiter, offset);
+		StringView strZ = str.substr(offset, (sepIdx - offset));
+
+		vec.x = std::atof(strX.data());
+		vec.y = std::atof(strY.data());
+		vec.z = std::atof(strZ.data());
+
 		return vec;
 	}
 
-	bool StringToBool(const String& str)
+	bool StringToBool(StringView str)
 	{
-		return (str.compare("1") == 0 || str.compare("true") == 0);
+		return (str == "1" || str == "true");
 	}
 
 	u8* LoadImageData(const fs::path& path, i32& width, i32& height, i32& nChannels)

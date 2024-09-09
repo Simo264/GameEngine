@@ -1,21 +1,13 @@
 #include "ImGuiLayer.hpp"
 
 #include "Core/GL.hpp"
-
 #include "Core/Math/Extensions.hpp"
 #include "Core/Log/Logger.hpp"
 
 #include "Engine/Globals.hpp"
-
-#include "Engine/Scene.hpp"
-#include "Engine/Camera.hpp"
-#include "Engine/GameObject.hpp"
-#include "Engine/Components.hpp"
-#include "Engine/Graphics/Objects/Texture2D.hpp"
 #include "Engine/Subsystems/WindowManager.hpp"
 #include "Engine/Subsystems/ShaderManager.hpp"
 #include "Engine/Subsystems/TextureManager.hpp"
-
 #include "Engine/Filesystem/Dialog.hpp"
 
 #include <imgui/imgui.h>
@@ -26,10 +18,8 @@
 
 #include <GLFW/glfw3.h>
 
-static constexpr i32 infinity = 1'000'000;
-static i32 guizmode = ImGuizmo::OPERATION::TRANSLATE;
-
-static const char* ATTENUATION_LABELS[]{
+constexpr i32 infinity = 1'000'000;
+constexpr const char* ATTENUATION_LABELS[]{
   "7m",
   "13m",
   "20m",
@@ -43,7 +33,7 @@ static const char* ATTENUATION_LABELS[]{
   "600m",
   "3250m"
 };
-static const Array<Tuple<f32, f32>, 12> ATTENUATION_VALUES = {
+constexpr Array<Tuple<f32, f32>, 12> ATTENUATION_VALUES = {
   std::make_tuple<f32,f32>(0.7f, 1.8f),         // 7 meters
   std::make_tuple<f32,f32>(0.35f, 0.44f),       // 13 meters
   std::make_tuple<f32,f32>(0.22f, 0.20f),       // 20 meters
@@ -58,94 +48,11 @@ static const Array<Tuple<f32, f32>, 12> ATTENUATION_VALUES = {
   std::make_tuple<f32,f32>(0.0014f, 0.000007f), // 3250 meters
 };
 
-static void GuizmoWorldTranslation(Components::Transform& transform, const mat4f& view, const mat4f& proj)
-{
-  mat4f& model = transform.GetTransformation();
-  ImGuizmo::Manipulate(
-    &view[0][0],
-    &proj[0][0],
-    ImGuizmo::OPERATION::TRANSLATE,
-    ImGuizmo::WORLD,
-    &model[0][0]);
 
-  if (ImGuizmo::IsUsing())
-  {
-    vec3f translation;
-    vec3f scale;
-    quat  rotation;
-    Math::Decompose(model, translation, rotation, scale);
+/* -------------------------- */
+/*          PUBLIC            */
+/* -------------------------- */
 
-    transform.position = translation;
-    transform.UpdateTransformation();
-  }
-}
-static void GuizmoWorldRotation(Components::Transform& transform, const mat4f& view, const mat4f& proj)
-{
-  mat4f& model = transform.GetTransformation();
-  ImGuizmo::Manipulate(
-    &view[0][0],
-    &proj[0][0],
-    ImGuizmo::OPERATION::ROTATE,
-    ImGuizmo::WORLD,
-    &model[0][0]);
-
-  if (ImGuizmo::IsUsing())
-  {
-    vec3f translation;
-    vec3f scale;
-    quat  rotation;
-    Math::Decompose(model, translation, rotation, scale);
-
-    vec3f rotationDegrees = Math::EulerAngles(rotation);  /* Get vector rotation in radians */
-    rotationDegrees.x = Math::Degrees(rotationDegrees.x); /* Convert it in degrees */
-    rotationDegrees.y = Math::Degrees(rotationDegrees.y);
-    rotationDegrees.z = Math::Degrees(rotationDegrees.z);
-    const vec3f deltaRotation = rotationDegrees - transform.rotation;
-
-    transform.rotation += deltaRotation;
-    transform.UpdateTransformation();
-  }
-}
-static void GuizmoWorldScaling(Components::Transform& transform, const mat4f& view, const mat4f& proj)
-{
-  mat4f& model = transform.GetTransformation();
-  ImGuizmo::Manipulate(
-    &view[0][0],
-    &proj[0][0],
-    ImGuizmo::OPERATION::SCALE,
-    ImGuizmo::WORLD,
-    &model[0][0]);
-
-  if (ImGuizmo::IsUsing())
-  {
-    vec3f translation;
-    vec3f scale;
-    quat  rotation;
-    Math::Decompose(model, translation, rotation, scale);
-
-    transform.scale = scale;
-    transform.UpdateTransformation();
-  }
-}
-
-static void ComboTextures(Texture2D*& matTexture, const char* comboLabel)
-{
-  const char* comboPreview = "Select texture";
-  if (ImGui::BeginCombo(comboLabel, comboPreview))
-  {
-    TextureManager& texManager = TextureManager::Get();
-    const auto& textVector = texManager.GetTextureVector();
-
-    for (i32 i = 0; i < textVector.size(); i++)
-    {
-      Texture2D* texture = texManager.GetTextureAt(i);
-      String texPathStr = texture->path.string();
-      if (!texPathStr.empty() && ImGui::Selectable(texPathStr.c_str(), false))
-        matTexture = texture;
-    }
-    ImGui::EndCombo();
-  }
-}
 
 void ImGuiLayer::SetupContext()
 {
@@ -244,7 +151,7 @@ void ImGuiLayer::MenuBar(Scene& scene)
       if (ImGui::MenuItem("Open"))
       {
         static const char* filters[1] = { "*.ini" };
-        fs::path filePath = OpenFileDialog(1, filters, "Open scene (.ini)", false);
+        fs::path filePath = OpenFileDialog(1, filters, "Open scene", false);
 
         if (!filePath.empty())
         {
@@ -292,16 +199,18 @@ void ImGuiLayer::ViewportGizmo(u32 tetxureID, GameObject& object, const mat4f& v
   
   /* Begin main viewport */
   ImGui::Begin("Viewport", nullptr);
+  const ImVec2 viewportWinSize = ImGui::GetWindowSize();
+  const ImVec2 viewportWinPos = ImGui::GetWindowPos();
+  viewportSize = { viewportWinSize.x, viewportWinSize.y };
+  viewportPos = { viewportWinPos.x, viewportWinPos.y };
   viewportFocused = ImGui::IsWindowFocused();
-  const ImVec2 viewport = ImGui::GetWindowSize();
   
   /* Being child viewport */
   ImGui::BeginChild("Viewport_Child");
   viewportFocused = viewportFocused || ImGui::IsWindowFocused();
-  viewportSize = { viewport.x, viewport.y };
 
-  const ImVec2 viewportChild = ImGui::GetWindowSize();
-  ImGui::Image(reinterpret_cast<void*>(tetxureID), viewportChild, ImVec2(0, 1), ImVec2(1, 0));
+  const ImVec2 viewportChildWinSize = ImGui::GetWindowSize();
+  ImGui::Image(reinterpret_cast<void*>(tetxureID), viewportChildWinSize, ImVec2(0, 1), ImVec2(1, 0));
   if (object.IsValid())
   {
     auto* transform = object.GetComponent<Components::Transform>();
@@ -314,18 +223,18 @@ void ImGuiLayer::ViewportGizmo(u32 tetxureID, GameObject& object, const mat4f& v
       f32 windowH = ImGui::GetWindowHeight();
       ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, windowW, windowH);
 
-      switch (guizmode)
+      switch (_gizmode)
       {
       case ImGuizmo::OPERATION::TRANSLATE:
-        GuizmoWorldTranslation(*transform, view, proj);
+        GizmoWorldTranslation(*transform, view, proj);
         break;
 
       case ImGuizmo::OPERATION::ROTATE:
-        GuizmoWorldRotation(*transform, view, proj);
+        GizmoWorldRotation(*transform, view, proj);
         break;
 
       case ImGuizmo::OPERATION::SCALE:
-        GuizmoWorldScaling(*transform, view, proj);
+        GizmoWorldScaling(*transform, view, proj);
         break;
 
       default:
@@ -456,9 +365,9 @@ void ImGuiLayer::GameObjectDetails(GameObject& object)
   {
     if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
     {
-      ImGui::RadioButton("Translate", &guizmode, ImGuizmo::OPERATION::TRANSLATE);
-      ImGui::RadioButton("Rotate", &guizmode, ImGuizmo::OPERATION::ROTATE);
-      ImGui::RadioButton("Scale", &guizmode, ImGuizmo::OPERATION::SCALE);
+      ImGui::RadioButton("Translate", &_gizmode, ImGuizmo::OPERATION::TRANSLATE);
+      ImGui::RadioButton("Rotate", &_gizmode, ImGuizmo::OPERATION::ROTATE);
+      ImGui::RadioButton("Scale", &_gizmode, ImGuizmo::OPERATION::SCALE);
 
       ImGui::DragFloat3("Position", (f32*)&transform->position, 0.1f, -infinity, infinity);
       ImGui::DragFloat3("Scale", (f32*)&transform->scale, 0.1f, -infinity, infinity);
@@ -541,12 +450,34 @@ void ImGuiLayer::TextureList()
 {
   ImGui::Begin("Textures", nullptr);
     
-  TextureManager& texManager = TextureManager::Get();
   static fs::path currentDir = TEXTURES_PATH;
+  TextureManager& texManager = TextureManager::Get();
+
+  /* New texture button */
+  if (ImGui::Button("New"))
+  {
+    static const char* filter[2] = { "*.png", "*.jpg" };
+    String pathsString = OpenFileDialog(2, filter, "Select image", true);
+    std::cout << "paths=" << pathsString << "\n";
+    if (!pathsString.empty())
+    {
+      i32 nFileSelected = 1 + std::count_if(pathsString.begin(), pathsString.end(), [](char c) { return c == '|'; });
+      i32 offset = 0;
+      for (i32 i = 0; i < nFileSelected; i++)
+      {
+        i32 k = pathsString.find('|', offset);
+        std::cout << "'" << pathsString.substr(offset, (k - offset)) << "'" << "\n";
+        offset = k + 1;
+      }
+    }
+  }
+
+
+  /* Back button */
   if (currentDir != TEXTURES_PATH)
     if (ImGui::Button("Back")) 
       currentDir = currentDir.parent_path();
-    
+
   const f32 panelWidth = ImGui::GetContentRegionAvail().x;
   constexpr f32 cellSize = 128.0f;
   constexpr f32 cellPadding = 16.0f;
@@ -639,11 +570,13 @@ void ImGuiLayer::CameraProps(const char* label, Camera& camera)
 
 void ImGuiLayer::ApplicationInfo(f64 delta, f64 avg, i32 frameRate)
 {
-  ImGuiWindowFlags flags = ImGuiWindowFlags_::ImGuiWindowFlags_NoBackground | 
+  ImGuiWindowFlags flags = 
+    ImGuiWindowFlags_::ImGuiWindowFlags_NoBackground | 
     ImGuiWindowFlags_::ImGuiWindowFlags_NoResize | 
     ImGuiWindowFlags_::ImGuiWindowFlags_NoCollapse |
     ImGuiWindowFlags_::ImGuiWindowFlags_NoTitleBar;
 
+  ImGui::SetNextWindowPos(ImVec2(viewportPos.x, viewportPos.y + 20));
   ImGui::SetNextWindowBgAlpha(0.0f);
   ImGui::Begin("Application", nullptr, flags);
 
@@ -673,4 +606,103 @@ void ImGuiLayer::Test()
   ImGui::Begin("Test", nullptr);
 
   ImGui::End();
+}
+
+/* -------------------------- */
+/*          PRIVATE           */
+/* -------------------------- */
+
+ImGuiLayer::ImGuiLayer()
+  : viewportFocused{ false },
+    viewportSize{},
+    viewportPos{},
+    _gizmode{ ImGuizmo::OPERATION::TRANSLATE }
+{}
+
+void ImGuiLayer::GizmoWorldTranslation(Components::Transform& transform, const mat4f& view, const mat4f& proj)
+{
+  mat4f& model = transform.GetTransformation();
+  ImGuizmo::Manipulate(
+    &view[0][0],
+    &proj[0][0],
+    ImGuizmo::OPERATION::TRANSLATE,
+    ImGuizmo::WORLD,
+    &model[0][0]);
+
+  if (ImGuizmo::IsUsing())
+  {
+    vec3f translation;
+    vec3f scale;
+    quat  rotation;
+    Math::Decompose(model, translation, rotation, scale);
+
+    transform.position = translation;
+    transform.UpdateTransformation();
+  }
+}
+void ImGuiLayer::GizmoWorldRotation(Components::Transform& transform, const mat4f& view, const mat4f& proj)
+{
+  mat4f& model = transform.GetTransformation();
+  ImGuizmo::Manipulate(
+    &view[0][0],
+    &proj[0][0],
+    ImGuizmo::OPERATION::ROTATE,
+    ImGuizmo::WORLD,
+    &model[0][0]);
+
+  if (ImGuizmo::IsUsing())
+  {
+    vec3f translation;
+    vec3f scale;
+    quat  rotation;
+    Math::Decompose(model, translation, rotation, scale);
+
+    vec3f rotationDegrees = Math::EulerAngles(rotation);  /* Get vector rotation in radians */
+    rotationDegrees.x = Math::Degrees(rotationDegrees.x); /* Convert it in degrees */
+    rotationDegrees.y = Math::Degrees(rotationDegrees.y);
+    rotationDegrees.z = Math::Degrees(rotationDegrees.z);
+    const vec3f deltaRotation = rotationDegrees - transform.rotation;
+
+    transform.rotation += deltaRotation;
+    transform.UpdateTransformation();
+  }
+}
+void ImGuiLayer::GizmoWorldScaling(Components::Transform& transform, const mat4f& view, const mat4f& proj)
+{
+  mat4f& model = transform.GetTransformation();
+  ImGuizmo::Manipulate(
+    &view[0][0],
+    &proj[0][0],
+    ImGuizmo::OPERATION::SCALE,
+    ImGuizmo::WORLD,
+    &model[0][0]);
+
+  if (ImGuizmo::IsUsing())
+  {
+    vec3f translation;
+    vec3f scale;
+    quat  rotation;
+    Math::Decompose(model, translation, rotation, scale);
+
+    transform.scale = scale;
+    transform.UpdateTransformation();
+  }
+}
+void ImGuiLayer::ComboTextures(Texture2D*& matTexture, const char* comboLabel)
+{
+  const char* comboPreview = "Select texture";
+  if (ImGui::BeginCombo(comboLabel, comboPreview))
+  {
+    TextureManager& texManager = TextureManager::Get();
+    const auto& textVector = texManager.GetTextureVector();
+
+    for (i32 i = 0; i < textVector.size(); i++)
+    {
+      Texture2D* texture = texManager.GetTextureAt(i);
+      String texPathStr = texture->path.string();
+      if (!texPathStr.empty() && ImGui::Selectable(texPathStr.c_str(), false))
+        matTexture = texture;
+    }
+    ImGui::EndCombo();
+  }
 }

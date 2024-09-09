@@ -43,10 +43,10 @@ public:
    * Replaces the source code in a shader object.
    * If shader previously had source code loaded into it, the existing source code is completely replaced.
    * 
-   * @param string: specifies the source code to be loaded into the shader
-   * @param length: specifies the string length
+   * @param source: specifies the source code to be loaded into the shader
+   * @param size: specifies the string length
    */
-  void LoadSource(const String& source) const;
+  void LoadSource(StringView source) const;
 
   /**
    * Compiles the source code strings that have been stored in the shader object.
@@ -154,32 +154,32 @@ public:
   /**
    * Returns the location of a uniform variable
    */
-  i32 GetUniformLocation(const char* name) const;
+  i32 GetUniformLocation(StringView name) const;
 
   /**
    * Retrieve the index of a named uniform block
    */
-  i32 GetUniformBlockIndex(const char* name) const;
+  i32 GetUniformBlockIndex(StringView name) const;
 
   /**
    * Assign a binding poi32 to an active uniform block
    */
-  void SetUniformBlockBinding(const char* blockname, i32 uniformBlockBinding) const;
+  void SetUniformBlockBinding(StringView blockname, i32 uniformBlockBinding) const;
 
   /**
    * Specify the value of a uniform variable for the program object
    */
-  void SetUniform1i(const char* uniformname, i32 value) const;
-  void SetUniform2i(const char* uniformname, const vec2i32& value) const;
-  void SetUniform3i(const char* uniformname, const vec3i32& value) const;
-  void SetUniform4i(const char* uniformname, const vec4i32& value) const;
-  void SetUniform1f(const char* uniformname, f32 value) const;
-  void SetUniform2f(const char* uniformname, const vec2f& value) const;
-  void SetUniform3f(const char* uniformname, const vec3f& value) const;
-  void SetUniform4f(const char* uniformname, const vec4f& value) const;
-  void SetUniformMat2f(const char* uniformname, const mat2f& value, bool transpose = false) const;
-  void SetUniformMat3f(const char* uniformname, const mat3f& value, bool transpose = false) const;
-  void SetUniformMat4f(const char* uniformname, const mat4f& value, bool transpose = false) const;
+  void SetUniform1i(StringView uniformname, i32 value) const;
+  void SetUniform2i(StringView uniformname, const vec2i32& value) const;
+  void SetUniform3i(StringView uniformname, const vec3i32& value) const;
+  void SetUniform4i(StringView uniformname, const vec4i32& value) const;
+  void SetUniform1f(StringView uniformname, f32 value) const;
+  void SetUniform2f(StringView uniformname, const vec2f& value) const;
+  void SetUniform3f(StringView uniformname, const vec3f& value) const;
+  void SetUniform4f(StringView uniformname, const vec4f& value) const;
+  void SetUniformMat2f(StringView uniformname, const mat2f& value, bool transpose = false) const;
+  void SetUniformMat3f(StringView uniformname, const mat3f& value, bool transpose = false) const;
+  void SetUniformMat4f(StringView uniformname, const mat4f& value, bool transpose = false) const;
 
   uint32_t id;
 

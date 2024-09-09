@@ -382,10 +382,6 @@ void Engine::Initialize()
   textureManager.LoadTextureIconsFromDir(ICONS_PATH);
   CONSOLE_INFO("Texture manager initialized");
 
-  /* Initialize FreeType lib */
-  /* ----------------------- */
-  // ...
-
   /* Create Framebuffer object */
   /* ------------------------- */
   _viewportSize = { WINDOW_WIDTH, WINDOW_HEIGHT };

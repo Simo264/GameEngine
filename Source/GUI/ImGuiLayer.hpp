@@ -2,10 +2,11 @@
 
 #include "Core/Core.hpp"
 #include "Core/Math/Math.hpp"
-
-class Scene;
-class GameObject;
-class Camera;
+#include "Engine/Components.hpp"
+#include "Engine/Scene.hpp"
+#include "Engine/Camera.hpp"
+#include "Engine/GameObject.hpp"
+#include "Engine/Graphics/Objects/Texture2D.hpp"
 
 class ImGuiLayer
 {
@@ -36,6 +37,9 @@ public:
 
 	void EndFrame();
 
+	/**
+	 * Set ImGui font
+	 */
 	void SetFont(const fs::path& fontpath, i32 fontsize);
 
 	/**
@@ -98,10 +102,19 @@ public:
 	 */
 	void Test();
 
-	vec2i32 viewportSize{};
-	bool viewportFocused{ false };
+	vec2i32 viewportSize;
+	vec2i32 viewportPos;
+	bool viewportFocused;
 
 private:
-	ImGuiLayer() = default;
+	ImGuiLayer();
 	~ImGuiLayer() = default;
+
+	i32 _gizmode;
+
+	void GizmoWorldTranslation(Components::Transform& transform, const mat4f& view, const mat4f& proj);
+	void GizmoWorldRotation(Components::Transform& transform, const mat4f& view, const mat4f& proj);
+	void GizmoWorldScaling(Components::Transform& transform, const mat4f& view, const mat4f& proj);
+
+	void ComboTextures(Texture2D*& matTexture, const char* comboLabel);
 };

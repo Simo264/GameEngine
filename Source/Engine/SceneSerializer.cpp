@@ -10,12 +10,7 @@
 #include "Engine/Graphics/Objects/Texture2D.hpp"
 #include "Engine/Subsystems/TextureManager.hpp"
 
-/* -----------------------------------------------------
- *          PUBLIC METHODS
- * -----------------------------------------------------
-*/
-
-void SceneSerializer::SerializeScene(Scene& scene, const fs::path& filepath)
+void SerializeScene(Scene& scene, const fs::path& filepath)
 {
 	ConfigFile conf(filepath);
 
@@ -25,7 +20,7 @@ void SceneSerializer::SerializeScene(Scene& scene, const fs::path& filepath)
 		const u32 objectID = static_cast<u32>(object.GetObjectID());
 
 		String section = std::format("entity{}:Label", objectID);
-		conf.Update(section.c_str(), "label", label.value.c_str());
+		conf.Update(section, "label", label.value);
 		
 		if (auto* light = object.GetComponent<Components::DirectionalLight>())
 		{
@@ -35,10 +30,10 @@ void SceneSerializer::SerializeScene(Scene& scene, const fs::path& filepath)
 			String specularIntensity = std::to_string(light->specularIntensity);
 			String direction = std::format("{},{},{}", light->direction.x, light->direction.y, light->direction.z);
 
-			conf.Update(section.c_str(), "color", color.c_str());
-			conf.Update(section.c_str(), "diffuseIntensity", diffuseIntensity.c_str());
-			conf.Update(section.c_str(), "specularIntensity", specularIntensity.c_str());
-			conf.Update(section.c_str(), "direction", direction.c_str());
+			conf.Update(section, "color", color);
+			conf.Update(section, "diffuseIntensity", diffuseIntensity);
+			conf.Update(section, "specularIntensity", specularIntensity);
+			conf.Update(section, "direction", direction);
 		}
 		if (auto* light = object.GetComponent<Components::PointLight>())
 		{
@@ -50,12 +45,12 @@ void SceneSerializer::SerializeScene(Scene& scene, const fs::path& filepath)
 			String kl = std::to_string(light->attenuation.kl);
 			String kq = std::to_string(light->attenuation.kq);
 
-			conf.Update(section.c_str(), "color", color.c_str());
-			conf.Update(section.c_str(), "diffuseIntensity", diffuseIntensity.c_str());
-			conf.Update(section.c_str(), "specularIntensity", specularIntensity.c_str());
-			conf.Update(section.c_str(), "position", position.c_str());
-			conf.Update(section.c_str(), "attenuation.kl", kl.c_str());
-			conf.Update(section.c_str(), "attenuation.kq", kq.c_str());
+			conf.Update(section, "color", color);
+			conf.Update(section, "diffuseIntensity", diffuseIntensity);
+			conf.Update(section, "specularIntensity", specularIntensity);
+			conf.Update(section, "position", position);
+			conf.Update(section, "attenuation.kl", kl);
+			conf.Update(section, "attenuation.kq", kq);
 		}
 		if (auto* light = object.GetComponent<Components::SpotLight>())
 		{
@@ -70,32 +65,33 @@ void SceneSerializer::SerializeScene(Scene& scene, const fs::path& filepath)
 			String kl = std::to_string(light->attenuation.kl);
 			String kq = std::to_string(light->attenuation.kq);
 
-			conf.Update(section.c_str(), "color", color.c_str());
-			conf.Update(section.c_str(), "diffuseIntensity", diffuseIntensity.c_str());
-			conf.Update(section.c_str(), "specularIntensity", specularIntensity.c_str());
-			conf.Update(section.c_str(), "direction", direction.c_str());
-			conf.Update(section.c_str(), "position", position.c_str());
-			conf.Update(section.c_str(), "attenuation.kl", kl.c_str());
-			conf.Update(section.c_str(), "attenuation.kq", kq.c_str());
-			conf.Update(section.c_str(), "cutOff", cutOff.c_str());
-			conf.Update(section.c_str(), "outerCutOff", outerCutOff.c_str());
+			conf.Update(section, "color", color);
+			conf.Update(section, "diffuseIntensity", diffuseIntensity);
+			conf.Update(section, "specularIntensity", specularIntensity);
+			conf.Update(section, "direction", direction);
+			conf.Update(section, "position", position);
+			conf.Update(section, "attenuation.kl", kl);
+			conf.Update(section, "attenuation.kq", kq);
+			conf.Update(section, "cutOff", cutOff);
+			conf.Update(section, "outerCutOff", outerCutOff);
 		}
 		if (auto* transform = object.GetComponent<Components::Transform>())
 		{
 			String section = std::format("entity{}:Transform", objectID);
-			conf.Update(section.c_str(), "position", std::format("{},{},{}", transform->position.x, transform->position.y, transform->position.z).c_str());
-			conf.Update(section.c_str(), "scale", std::format("{},{},{}", transform->scale.x, transform->scale.y, transform->scale.z).c_str());
-			conf.Update(section.c_str(), "rotation", std::format("{},{},{}", transform->rotation.x, transform->rotation.y, transform->rotation.z).c_str());
+			conf.Update(section, "position", std::format("{},{},{}", transform->position.x, transform->position.y, transform->position.z));
+			conf.Update(section, "scale", std::format("{},{},{}", transform->scale.x, transform->scale.y, transform->scale.z));
+			conf.Update(section, "rotation", std::format("{},{},{}", transform->rotation.x, transform->rotation.y, transform->rotation.z));
 		}
 		if (auto* model = object.GetComponent<Components::Model>())
 		{
 			String section = std::format("entity{}:Model", objectID);
-			conf.Update(section.c_str(), "path", model->path.string().c_str());
+			conf.Update(section, "path", model->path.string());
 		}
 	}
 	conf.Generate(true);
 }
-void SceneSerializer::DeserializeScene(Scene& scene, const fs::path& filepath)
+
+void DeserializeScene(Scene& scene, const fs::path& filepath)
 { 
 	CONSOLE_INFO("Loading scene {}...", filepath.string());
 
@@ -103,7 +99,7 @@ void SceneSerializer::DeserializeScene(Scene& scene, const fs::path& filepath)
 	conf.ReadData();
 	
 	GameObject object{ entt::null, nullptr };
-	u32 currentObjectId = static_cast<u32>(-1);
+	u32 currentObjectId = static_cast<u32>(entt::null);
 
 	for (const auto& it : conf.GetData())
 	{
@@ -122,14 +118,14 @@ void SceneSerializer::DeserializeScene(Scene& scene, const fs::path& filepath)
 
 		if (std::strcmp(componentName, "Label") == 0)
 		{
-			String label = conf.GetValue(section.c_str(), "label");
+			const String& label = conf.GetValue(section, "label");
 			object.GetComponent<Components::Label>()->value = label;
 		}
 		else if (std::strcmp(componentName, "Transform") == 0)
 		{
-			String position = conf.GetValue(section.c_str(), "position");
-			String rotation = conf.GetValue(section.c_str(), "rotation");
-			String scale = conf.GetValue(section.c_str(), "scale");
+			const String& position = conf.GetValue(section, "position");
+			const String& rotation = conf.GetValue(section, "rotation");
+			const String& scale = conf.GetValue(section, "scale");
 			
 			auto& transform = object.AddComponent<Components::Transform>();
 			transform.position = Utils::StringToVec3f(position);
@@ -139,16 +135,16 @@ void SceneSerializer::DeserializeScene(Scene& scene, const fs::path& filepath)
 		}
 		else if (std::strcmp(componentName, "Model") == 0)
 		{
-			String path = conf.GetValue(section.c_str(), "path");
+			const String& path = conf.GetValue(section, "path");
 			fs::path modelPath = fs::path(path).lexically_normal();
 			auto& model = object.AddComponent<Components::Model>(modelPath);
 		}
 		else if (std::strcmp(componentName, "DirectionalLight") == 0)
 		{
-			String color = conf.GetValue(section.c_str(), "color");
-			String diffuseIntensity = conf.GetValue(section.c_str(), "diffuseIntensity");
-			String specularIntensity = conf.GetValue(section.c_str(), "specularIntensity");
-			String direction = conf.GetValue(section.c_str(), "direction");
+			const String& color = conf.GetValue(section, "color");
+			const String& diffuseIntensity = conf.GetValue(section, "diffuseIntensity");
+			const String& specularIntensity = conf.GetValue(section, "specularIntensity");
+			const String& direction = conf.GetValue(section, "direction");
 
 			auto& light = object.AddComponent<Components::DirectionalLight>();
 			light.color = Utils::StringToVec3f(color);
@@ -158,12 +154,12 @@ void SceneSerializer::DeserializeScene(Scene& scene, const fs::path& filepath)
 		}
 		else if (std::strcmp(componentName, "PointLight") == 0)
 		{
-			String color = conf.GetValue(section.c_str(), "color");
-			String diffuseIntensity = conf.GetValue(section.c_str(), "diffuseIntensity");
-			String specularIntensity = conf.GetValue(section.c_str(), "specularIntensity");
-			String position = conf.GetValue(section.c_str(), "position");
-			String kl = conf.GetValue(section.c_str(), "attenuation.kl");
-			String kq = conf.GetValue(section.c_str(), "attenuation.kq");
+			const String& color = conf.GetValue(section, "color");
+			const String& diffuseIntensity = conf.GetValue(section, "diffuseIntensity");
+			const String& specularIntensity = conf.GetValue(section, "specularIntensity");
+			const String& position = conf.GetValue(section, "position");
+			const String& kl = conf.GetValue(section, "attenuation.kl");
+			const String& kq = conf.GetValue(section, "attenuation.kq");
 
 			auto& light = object.AddComponent<Components::PointLight>();
 			light.color = Utils::StringToVec3f(color);
@@ -175,15 +171,15 @@ void SceneSerializer::DeserializeScene(Scene& scene, const fs::path& filepath)
 		}
 		else if (std::strcmp(componentName, "SpotLight") == 0)
 		{
-			String color = conf.GetValue(section.c_str(), "color");
-			String diffuseIntensity = conf.GetValue(section.c_str(), "diffuseIntensity");
-			String specularIntensity = conf.GetValue(section.c_str(), "specularIntensity");
-			String position = conf.GetValue(section.c_str(), "position");
-			String direction = conf.GetValue(section.c_str(), "direction");
-			String kl = conf.GetValue(section.c_str(), "attenuation.kl");
-			String kq = conf.GetValue(section.c_str(), "attenuation.kq");
-			String cutOff = conf.GetValue(section.c_str(), "cutOff");
-			String outerCutOff = conf.GetValue(section.c_str(), "outerCutOff");
+			const String& color = conf.GetValue(section, "color");
+			const String& diffuseIntensity = conf.GetValue(section, "diffuseIntensity");
+			const String& specularIntensity = conf.GetValue(section, "specularIntensity");
+			const String& position = conf.GetValue(section, "position");
+			const String& direction = conf.GetValue(section, "direction");
+			const String& kl = conf.GetValue(section, "attenuation.kl");
+			const String& kq = conf.GetValue(section, "attenuation.kq");
+			const String& cutOff = conf.GetValue(section, "cutOff");
+			const String& outerCutOff = conf.GetValue(section, "outerCutOff");
 
 			auto& light = object.AddComponent<Components::SpotLight>();
 			light.color = Utils::StringToVec3f(color);
@@ -199,7 +195,3 @@ void SceneSerializer::DeserializeScene(Scene& scene, const fs::path& filepath)
 	}
 }
 
-/* -----------------------------------------------------
- *          PRIVATE METHODS
- * -----------------------------------------------------
-*/

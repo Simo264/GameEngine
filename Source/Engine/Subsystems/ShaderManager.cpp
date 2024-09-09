@@ -6,7 +6,7 @@
 
 #include "Engine/Globals.hpp"
 
-constexpr const char* SM_FILE_CONFIG = "Shader_Manager.ini";
+constexpr StringView SM_FILE_CONFIG{ "Shader_Manager.ini" };
 
 void ShaderManager::CleanUp()
 {
@@ -65,11 +65,12 @@ void ShaderManager::LoadPrograms()
   for (auto const& it : conf.GetData())
   {
     const String& section = it.first;
-    const String vertex = conf.GetValue(section.c_str(), "vertex");
-    const String tesc = conf.GetValue(section.c_str(), "tess_control");
-    const String tese = conf.GetValue(section.c_str(), "tess_eval");
-    const String geometry = conf.GetValue(section.c_str(), "geometry");
-    const String fragment = conf.GetValue(section.c_str(), "fragment");
+    const String& vertex = conf.GetValue(section, "vertex");
+    const String& tesc = conf.GetValue(section, "tess_control");
+    const String& tese = conf.GetValue(section, "tess_eval");
+    const String& geometry = conf.GetValue(section, "geometry");
+    const String& fragment = conf.GetValue(section, "fragment");
+
     Shader* vertShader = GetShader(vertex.c_str());
     Shader* tescShader = GetShader(tesc.c_str());
     Shader* teseShader = GetShader(tese.c_str());
@@ -128,19 +129,19 @@ Shader& ShaderManager::LoadShader(const fs::path& filepath, i32 shaderType)
 
   return shader;
 }
-Shader* ShaderManager::GetShader(const char* filename)
+Shader* ShaderManager::GetShader(StringView filename)
 {
-  if (!filename)
+  if (filename.empty())
     return nullptr;
 
   for (auto& shader : _shaders)
-    if (shader.filename.compare(filename) == 0)
+    if (shader.filename == filename)
       return &shader;
 
   return nullptr;
 }
 
-Program& ShaderManager::LoadProgram(const char* name,
+Program& ShaderManager::LoadProgram(StringView name,
   Shader* vertex,
   Shader* tesc,
   Shader* tese,
@@ -150,7 +151,7 @@ Program& ShaderManager::LoadProgram(const char* name,
 {
   Program& program = _programs.emplace_back();
   program.Create();
-  program.name = name;
+  program.name = name.data();
   if (vertex)    program.AttachShader(*vertex);
   if (tesc)      program.AttachShader(*tesc);
   if (tese)      program.AttachShader(*tese);
@@ -163,13 +164,13 @@ Program& ShaderManager::LoadProgram(const char* name,
 
   return program;
 }
-Program* ShaderManager::GetProgram(const char* name)
+Program* ShaderManager::GetProgram(StringView name)
 {
-  if (!name)
+  if (name.empty())
     return nullptr;
 
   for (auto& program : _programs)
-    if (program.name.compare(name) == 0)
+    if (program.name == name)
       return &program;
 
   return nullptr;

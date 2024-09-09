@@ -47,13 +47,13 @@ public:
 	/**
 	 * Retrieve the shader object from shaders array 
 	 */
-	Shader* GetShader(const char* filename);
+	Shader* GetShader(StringView filename);
 
 	/**
 	 * Load the program object in program array
 	 * @param name: the program name
 	 */
-	Program& LoadProgram(const char* name,
+	Program& LoadProgram(StringView name,
 		Shader* vertex,
 		Shader* tesc,
 		Shader* tese,
@@ -64,7 +64,7 @@ public:
 	/**
 	 * Retrieve the program object from program array
 	 */
-	Program* GetProgram(const char* name);
+	Program* GetProgram(StringView name);
 	
 	const Vector<Shader>& GetShadersVector() { return _shaders; }
 	const Vector<Program>& GetProgramsVector() { return _programs; }

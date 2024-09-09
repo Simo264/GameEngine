@@ -52,12 +52,10 @@ void Scene::ClearScene()
 
 void Scene::LoadScene(const fs::path& filepath)
 {
-	SceneSerializer serializer;
-	serializer.DeserializeScene(*this, filepath);
+	DeserializeScene(*this, filepath);
 }
 
 void Scene::SaveScene(const fs::path& filepath)
 {
-	SceneSerializer serializer;
-	serializer.SerializeScene(*this, filepath);
+	SerializeScene(*this, filepath);
 }
