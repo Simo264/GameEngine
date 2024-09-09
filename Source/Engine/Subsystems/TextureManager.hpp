@@ -22,9 +22,14 @@ public:
 	}
 
 	/**
-	 * Load all textures from directory <dirpath>
+	 * Load all textures from directory recursively <dirpath>
 	 */
 	void LoadTexturesFromDir(const fs::path& dirpath);
+
+	/**
+	 * Load all texture icons from directory recursively <dirpath>
+	 */
+	void LoadTextureIconsFromDir(const fs::path& dirpath);
 
 	/**
 	 * Destroy all texture objects 

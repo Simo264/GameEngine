@@ -12,7 +12,7 @@ void TextureManager::LoadTexturesFromDir(const fs::path& dirpath)
 {
   if (!fs::exists(dirpath) || !fs::is_directory(dirpath))
   {
-    CONSOLE_WARN("<dirpath> is not a valid path", dirpath.string().c_str());
+    CONSOLE_WARN("<dirpath> is not a valid path", dirpath.string());
     return;
   }
 
@@ -20,16 +20,35 @@ void TextureManager::LoadTexturesFromDir(const fs::path& dirpath)
   {
     if (!fs::is_directory(entry))
     {
-      const fs::path path = entry.path().lexically_normal();
-
+      const auto& path = entry.path();
       bool gamma = false;
       String filename = path.filename().string();
-      
       if (filename.find("diff") != String::npos || filename.find("diffuse") != String::npos)
         gamma = true;
 
-      auto& texture = LoadTexture(GL_TEXTURE_2D, path, gamma);
+      LoadTexture(GL_TEXTURE_2D, path.lexically_normal(), gamma);
       CONSOLE_INFO("Texture loaded {}", path.string());
+    }
+  }
+}
+
+void TextureManager::LoadTextureIconsFromDir(const fs::path& dirpath)
+{
+  if (!fs::exists(dirpath) || !fs::is_directory(dirpath))
+  {
+    CONSOLE_WARN("<dirpath> is not a valid path", dirpath.string());
+    return;
+  }
+
+  for (auto& entry : fs::recursive_directory_iterator(dirpath))
+  {
+    if (!fs::is_directory(entry))
+    {
+      const auto& path = entry.path();
+      bool gamma = false;
+
+      LoadTextureIcon(GL_TEXTURE_2D, path.lexically_normal());
+      CONSOLE_INFO("Icon loaded {}", path.string());
     }
   }
 }

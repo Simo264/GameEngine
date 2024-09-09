@@ -33,17 +33,6 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
-struct FTCharacter 
-{
-  u32 textureID;    // ID handle of the glyph texture
-  vec2i32 size;     // Size of glyph
-  vec2i32 bearing;  // Offset from baseline to left/top of glyph
-  u32 advance;      // Offset to advance to next glyph
-};
-
-Map<char, FTCharacter> ftCharactersMap;
-
-
 static void GLAPIENTRY MessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam)
 {
   /* Ignore non-significant error/warning codes */ 
@@ -338,51 +327,6 @@ static VertexArray CreateTerrain(i32 rez)
   return vao;
 }
 
-static void RenderText(VertexArray& vaoText, StringView text, i32 x, i32 y, f32 scale = 1.0f, i32 witheSpacing = 8)
-{
-  for (const char& c : text)
-  {
-    if (c == ' ')
-    {
-      x += witheSpacing;
-      continue;
-    }
-
-    auto characterIt = ftCharactersMap.find(c);
-    if (characterIt == ftCharactersMap.end())
-    {
-      CONSOLE_WARN("Caracter '{}' does not exist in ftCharactersMap", c);
-      continue;
-    }
-
-    FTCharacter& character = characterIt->second;
-    glBindTextureUnit(0, character.textureID);
-    
-    f32 xpos = x + character.bearing.x * scale;
-    f32 ypos = y - (character.size.y - character.bearing.y) * scale;
-    f32 w = character.size.x * scale;
-    f32 h = character.size.y * scale;
-
-    i32 bufferTextPosId = vaoText.vboAttachmentIDs.at(0);
-
-    // update VBO for each character
-    f32 vertices[] = {
-      xpos,     ypos + h,   
-      xpos,     ypos,       
-      xpos + w, ypos,       
-      xpos,     ypos + h,   
-      xpos + w, ypos,       
-      xpos + w, ypos + h,
-    };
-
-    glNamedBufferSubData(bufferTextPosId, 0, sizeof(vertices), vertices);
-    Renderer::DrawArrays(GL_TRIANGLES, vaoText);
-
-    x += (character.advance >> 6) * scale; // bitshift by 6 to get value in pixels (2^6 = 64 (divide amount of 1/64th pixels by 64 to get amount of pixels))
-    std::cout << "character.advance=" << character.advance << "\n";
-  }
-}
-
 /* -----------------------------------------------------
  *          PUBLIC METHODS
  * -----------------------------------------------------
@@ -409,8 +353,9 @@ void Engine::Initialize()
 
   /* Setup ImGui context */
   /* ------------------- */
-  ImGuiLayer::SetupContext();
-  ImGuiLayer::SetFont((FONTS_PATH / "Karla-Regular.ttf"), 16);
+  ImGuiLayer& gui = ImGuiLayer::Get();
+  gui.SetupContext();
+  gui.SetFont((FONTS_PATH / "Karla-Regular.ttf"), 16);
   CONSOLE_INFO("ImGui layer initialized");
   
   /* Initialize shader manager */
@@ -434,6 +379,7 @@ void Engine::Initialize()
   textureManager.LoadTexture(defaultNormalTexture);
   textureManager.LoadTexture(defaultHeightTexture);
   textureManager.LoadTexturesFromDir(TEXTURES_PATH);
+  textureManager.LoadTextureIconsFromDir(ICONS_PATH);
   CONSOLE_INFO("Texture manager initialized");
 
   /* Initialize FreeType lib */
@@ -458,107 +404,6 @@ void Engine::Initialize()
 }
 void Engine::Run()
 {
-  /* Init FreeType */
-  /* ------------- */
-  FT_Library ftLib;
-  i32 ftError = FT_Init_FreeType(&ftLib);
-  assert(ftError == 0 && "Failed to initialize FreeType");
-  CONSOLE_INFO("FreeType initialized");
-  FT_Face ftFace;
-  ftError = FT_New_Face(ftLib, (FONTS_PATH / "Karla-Regular.ttf").string().c_str(), 0, &ftFace);
-  assert(ftError == 0 && "Failed to load Karla-Regular.ttf font");
-  CONSOLE_INFO("Karla-Regular.ttf font loaded");
-  // set size to load glyphs as
-  FT_Set_Pixel_Sizes(ftFace, 0, 48);
-  // disable byte-alignment restriction
-  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-  // load first 128 characters of ASCII set
-  for (u8 c = 0; c < 128; c++)
-  {
-    i32 ftError = FT_Load_Char(ftFace, c, FT_LOAD_RENDER);
-    if (ftError != 0)
-    {
-      CONSOLE_WARN("Failed to load Glyph ASCII code {}", c);
-      continue;
-    }
-
-    /* Create texture */
-    i32 width = ftFace->glyph->bitmap.width;
-    i32 height = ftFace->glyph->bitmap.rows;
-    const u8* data = ftFace->glyph->bitmap.buffer;
-    if (width == 0 || height == 0)
-    {
-      CONSOLE_WARN("Character code {} has invalid size", c);
-      continue;
-    }
-
-    Texture2D texture(GL_TEXTURE_2D);
-    texture.format = GL_RED;
-    texture.Create();
-    texture.CreateStorage(GL_R8, width, height);
-    texture.UpdateStorage(0, 0, 0, GL_UNSIGNED_BYTE, data);
-    texture.SetParameteri(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    texture.SetParameteri(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    texture.SetParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    texture.SetParameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    FTCharacter character{};
-    character.textureID = texture.id;
-    character.size = vec2i32{ width, height };
-    character.bearing = vec2i32{ ftFace->glyph->bitmap_left, ftFace->glyph->bitmap_top };
-    character.advance = ftFace->glyph->advance.x;
-    
-    ftCharactersMap.insert(std::make_pair(c, character));
-  }
-  // restore byte-alignment to initial value
-  glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-
-  // destroy FreeType once we're finished
-  FT_Done_Face(ftFace);
-  FT_Done_FreeType(ftLib);
-
-  // configure VAO/VBO for texture quads
-  // -----------------------------------
-  VertexArray vaoText;
-  vaoText.Create();
-  vaoText.SetAttribFormat(0, 2, GL_FLOAT, false, 0); /* vec2 pos */
-  vaoText.SetAttribBinding(0, 0);
-  vaoText.EnableAttribute(0);
-    
-  vaoText.SetAttribFormat(1, 2, GL_FLOAT, false, 0); /* vec2 uv */
-  vaoText.SetAttribBinding(1, 1);
-  vaoText.EnableAttribute(1);
-
-  /* Quad: 6 vertices of 4 floats each (vec2 pos + vec2 uv) */
-  f32 textPosData[] = {
-    0.0f, 0.0f,
-    0.0f, 0.0f,
-    0.0f, 0.0f,
-    0.0f, 0.0f,
-    0.0f, 0.0f,
-    0.0f, 0.0f,
-  };
-  f32 textUvData[] = {
-    0.0f, 0.0f,
-    0.0f, 1.0f,
-    1.0f, 1.0f,
-    0.0f, 0.0f,
-    1.0f, 1.0f,
-    1.0f, 0.0f
-  };
-  
-  Buffer vboTextPos(GL_ARRAY_BUFFER, sizeof(textPosData), textPosData, GL_DYNAMIC_DRAW);
-  Buffer vboTextUv(GL_ARRAY_BUFFER, sizeof(textUvData), textUvData, GL_STATIC_DRAW);
-  vaoText.AttachVertexBuffer(0, vboTextPos.id, 0, 2 * sizeof(f32));
-  vaoText.AttachVertexBuffer(1, vboTextUv.id, 0, 2 * sizeof(f32));
-  vaoText.numVertices = 6;
-  vaoText.numIndices = 0;
-
-
-
-
-
-
   /* Create skybox object */
   TextureCubemap skyboxTexture;
   VertexArray skybox;
@@ -597,6 +442,7 @@ void Engine::Run()
   WindowManager& windowManager = WindowManager::Get();
   ShaderManager& shaderManager = ShaderManager::Get();
   TextureManager& textureManager = TextureManager::Get();
+  ImGuiLayer& gui = ImGuiLayer::Get();
 
   Program* framebufferProgram = shaderManager.GetProgram("Framebuffer");
   Program* sceneProgram = shaderManager.GetProgram("Scene");
@@ -633,8 +479,8 @@ void Engine::Run()
   /* ------------------------------------------------------------------ */
   while (windowManager.IsOpen())
   {
-    ImGuiLayer::BeginFrame();
-    ImGuiLayer::Docking();
+    gui.BeginFrame();
+    gui.Docking();
 
     /* ---------------------------------------------------------------------------------- */
     /* -------------------------- Per-frame time logic section -------------------------- */
@@ -660,15 +506,18 @@ void Engine::Run()
     /* -------------------------- Input section -------------------------- */
     /* ------------------------------------------------------------------- */
     windowManager.PoolEvents();
-    primaryCamera.ProcessKeyboard(delta, 5.0f);
-    primaryCamera.ProcessMouse(delta, 15.0f);
+    if (gui.viewportFocused)
+    {
+      primaryCamera.ProcessKeyboard(delta, 5.0f);
+      primaryCamera.ProcessMouse(delta, 15.0f);
 
-    if (windowManager.GetKey(GLFW_KEY_F1) == GLFW_PRESS) renderingShadowsMode = false;
-    else if (windowManager.GetKey(GLFW_KEY_F2) == GLFW_PRESS) renderingShadowsMode = true;
-    if (windowManager.GetKey(GLFW_KEY_F5) == GLFW_PRESS) useNormalMap = false;
-    else if (windowManager.GetKey(GLFW_KEY_F6) == GLFW_PRESS) useNormalMap = true;
-    if (windowManager.GetKey(GLFW_KEY_F9) == GLFW_PRESS) wireframeEnabled = false;
-    else if (windowManager.GetKey(GLFW_KEY_F10) == GLFW_PRESS) wireframeEnabled = true;
+      if (windowManager.GetKey(GLFW_KEY_F1) == GLFW_PRESS) renderingShadowsMode = false;
+      else if (windowManager.GetKey(GLFW_KEY_F2) == GLFW_PRESS) renderingShadowsMode = true;
+      if (windowManager.GetKey(GLFW_KEY_F5) == GLFW_PRESS) useNormalMap = false;
+      else if (windowManager.GetKey(GLFW_KEY_F6) == GLFW_PRESS) useNormalMap = true;
+      if (windowManager.GetKey(GLFW_KEY_F9) == GLFW_PRESS) wireframeEnabled = false;
+      else if (windowManager.GetKey(GLFW_KEY_F10) == GLFW_PRESS) wireframeEnabled = true;
+    }
 
     /* -------------------------------------------------------------------- */
     /* -------------------------- Update section -------------------------- */
@@ -761,30 +610,30 @@ void Engine::Run()
       //  Renderer::DrawArrays(GL_PATCHES, terrain);
       //}
 
-      ///* Render scene with shadows map */
-      //if (renderingShadowsMode)
-      //{
-      //  sceneShadowsProgram->Use();
-      //  sceneShadowsProgram->SetUniform3f("u_viewPos", primaryCamera.position);
-      //  sceneShadowsProgram->SetUniform3f("u_ambientLightColor", g_ambientColor);
-      //  sceneShadowsProgram->SetUniform1f("u_ambientLightIntensity", g_ambientIntensity);
-      //  sceneShadowsProgram->SetUniformMat4f("u_lightView", directLightView);
-      //  sceneShadowsProgram->SetUniformMat4f("u_lightProjection", directLightProjection);
-      //  sceneShadowsProgram->SetUniform1i("u_useNormalMap", useNormalMap);
-      //  glBindTextureUnit(10, depthMapTexture);
-      //  glBindTextureUnit(11, depthCubeMapTexture);
-      //  RenderScene(scene, sceneShadowsProgram);
-      //}
-      ///* Render scene with no shadows */
-      //else
-      //{
-      //  sceneProgram->Use();
-      //  sceneProgram->SetUniform3f("u_viewPos", primaryCamera.position);
-      //  sceneProgram->SetUniform3f("u_ambientLightColor", g_ambientColor);
-      //  sceneProgram->SetUniform1f("u_ambientLightIntensity", g_ambientIntensity);
-      //  sceneProgram->SetUniform1i("u_useNormalMap", useNormalMap);
-      //  RenderScene(scene, sceneProgram);
-      //}
+      /* Render scene with shadows map */
+      if (renderingShadowsMode)
+      {
+        sceneShadowsProgram->Use();
+        sceneShadowsProgram->SetUniform3f("u_viewPos", primaryCamera.position);
+        sceneShadowsProgram->SetUniform3f("u_ambientLightColor", g_ambientColor);
+        sceneShadowsProgram->SetUniform1f("u_ambientLightIntensity", g_ambientIntensity);
+        sceneShadowsProgram->SetUniformMat4f("u_lightView", directLightView);
+        sceneShadowsProgram->SetUniformMat4f("u_lightProjection", directLightProjection);
+        sceneShadowsProgram->SetUniform1i("u_useNormalMap", useNormalMap);
+        glBindTextureUnit(10, depthMapTexture);
+        glBindTextureUnit(11, depthCubeMapTexture);
+        RenderScene(scene, sceneShadowsProgram);
+      }
+      /* Render scene with no shadows */
+      else
+      {
+        sceneProgram->Use();
+        sceneProgram->SetUniform3f("u_viewPos", primaryCamera.position);
+        sceneProgram->SetUniform3f("u_ambientLightColor", g_ambientColor);
+        sceneProgram->SetUniform1f("u_ambientLightIntensity", g_ambientIntensity);
+        sceneProgram->SetUniform1i("u_useNormalMap", useNormalMap);
+        RenderScene(scene, sceneProgram);
+      }
 
       ///* Draw skybox after the scene */
       //{
@@ -797,21 +646,6 @@ void Engine::Run()
       //  Depth::SetFunction(GL_LESS); 
       //}
 
-      /* Render text as last */
-      {
-        mat4f proj = Math::Ortho(0.0f, (float)_viewportSize.x, 0.0f, (float)_viewportSize.y, 0.0f, 1.0f);
-        glyphProgram->Use();
-        glyphProgram->SetUniformMat4f("u_projection", proj);
-        glyphProgram->SetUniform1i("u_text", 0);
-        glyphProgram->SetUniform3f("u_textColor", vec3f(1.0f));
-
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        RenderText(vaoText, "This is some text", 30, 10);
-        RenderText(vaoText, "This is some text upper", 30, 200);
-        glDisable(GL_BLEND);
-      }
-
       /* Blit multisampled buffer to normal colorbuffer of intermediate FBO */
       _fboMultisampled.Blit(_fboIntermediate,
         0, 0, _viewportSize.x, _viewportSize.y,
@@ -823,35 +657,34 @@ void Engine::Run()
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    //ImGuiLayer::Demo();
-    ImGuiLayer::MenuBar(scene);
-    ImGuiLayer::ApplicationInfo(delta, avgTime, frameRate);
-    ImGuiLayer::CameraProps("Primary camera", primaryCamera);
-    ImGuiLayer::CameraProps("DirecLight camera", directLightCamera);
-    //ImGuiLayer::RenderWorld();
-    ImGuiLayer::DebugDepthMap(depthMapTexture);
+    gui.MenuBar(scene);
+    gui.ApplicationInfo(delta, avgTime, frameRate);
+    gui.TextureList();
+    //gui.CameraProps("Primary camera", primaryCamera);
+    //gui.CameraProps("DirecLight camera", directLightCamera);
+    //gui.RenderWorld();
+    //gui.DebugDepthMap(depthMapTexture);
+    //gui.Demo();
 
-    GameObject objectSelected = ImGuiLayer::OutlinerPanel(scene);
-    ImGuiLayer::GameObjectDetails(objectSelected);
-    vec2i32 viewport = ImGuiLayer::ViewportGizmo(fboTexture, objectSelected, cameraView, cameraProj);
-
-    ImGuiLayer::EndFrame();
+    GameObject objectSelected = gui.OutlinerPanel(scene);
+    gui.GameObjectDetails(objectSelected);
+    gui.ViewportGizmo(fboTexture, objectSelected, cameraView, cameraProj);
 
     /* Checking viewport size */
-    if (viewport != _viewportSize)
+    if (_viewportSize != gui.viewportSize)
     {
-      _viewportSize = viewport;
+      _viewportSize = gui.viewportSize;
       _fboMultisampled.Delete();
       _fboIntermediate.Delete();
-      CreateFramebuffer(4, viewport.x, viewport.y);
+      CreateFramebuffer(4, _viewportSize.x, _viewportSize.y);
     }
 
     /* ------------------------------------------------------------------ */
     /* -------------------------- Swap buffers -------------------------- */
     /* ------------------------------------------------------------------ */
-    windowManager.SwapWindowBuffers();
-
+    gui.EndFrame();
     frames++;
+    windowManager.SwapWindowBuffers();
   }
 
   fboDepthCubeMap.Delete();
@@ -867,8 +700,7 @@ void Engine::CleanUp()
   _screenSquare.Delete();
   _uboCamera.Delete();
 
-  ImGuiLayer::CleanUp();
-
+  ImGuiLayer::Get().CleanUp();
   ShaderManager::Get().CleanUp();
   TextureManager::Get().CleanUp();
   WindowManager::Get().CleanUp(); /* !!Raise exception here */
