@@ -8,10 +8,6 @@
       Shader
 ------------------------------ */
 
-Shader::Shader()
-  : id { 0 }
-{}
-
 void Shader::Create(i32 shaderType)
 {
   id = glCreateShader(shaderType);
@@ -57,10 +53,6 @@ String Shader::GetShaderInfo() const
 /* ------------------------------
       Program
 ------------------------------ */
-
-Program::Program()
-  : id{ 0 }
-{}
 
 void Program::Create()
 {

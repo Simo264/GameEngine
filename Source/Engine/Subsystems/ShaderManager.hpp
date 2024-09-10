@@ -45,22 +45,31 @@ public:
 	 * Retrieve the program object by name
 	 */
 	Program* GetProgramByName(StringView name);
-	
-	constexpr Vector<Shader>& GetShadersVector() { return _shaders; }
-	constexpr Vector<Program>& GetProgramsVector() { return _programs; }
 
+	constexpr UnorderedMap<String, Shader>& GetShaders() { return _shaders; }
+	constexpr UnorderedMap<String, Program>& GetPrograms() { return _programs; }
+	
 private:
 	ShaderManager() = default;
 	~ShaderManager() = default;
 
-	Vector<Shader>	_shaders;
-	Vector<Program> _programs;
+	/**
+	 * First: the shader file name
+	 * Second: the shader object
+	 */
+	UnorderedMap<String, Shader> _shaders;
+	
+	/**
+	 * First: the program name identifier
+	 * Second: the program object
+	 */
+	UnorderedMap<String, Program> _programs;
 
 	void LoadShaderFiles();
 	void LoadProgramsFromConfig();
 
-	Shader& LoadShader(const fs::path& filepath, i32 shaderType);
-	Program& LoadProgram(StringView name,
+	void LoadShader(const fs::path& filepath, i32 shaderType);
+	void LoadProgram(StringView name,
 		Shader* vertex,
 		Shader* tesc,
 		Shader* tese,

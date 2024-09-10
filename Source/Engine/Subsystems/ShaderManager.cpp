@@ -19,22 +19,19 @@ void ShaderManager::Initialize()
 
   /* Load programs */
   LoadProgramsFromConfig();
-}
 
+  ResetProgramsUniforms();
+}
 void ShaderManager::CleanUp()
 {
   /* Destoy all program objects */
-  for (auto& program : _programs)
+  for (auto& [key, program] : _programs)
     program.Delete();
 
   /* Destoy all shaders objects */
-  for (auto& shader : _shaders)
+  for (auto& [key, shader]  : _shaders)
     shader.Delete();
-
-  Vector<Shader>().swap(_shaders);
-  Vector<Program>().swap(_programs);
 }
-
 void ShaderManager::ResetProgramsUniforms()
 {
   auto framebufferProg = GetProgramByName("Framebuffer");
@@ -60,29 +57,19 @@ void ShaderManager::ResetProgramsUniforms()
   auto skyboxProg = GetProgramByName("Skybox");
   skyboxProg->SetUniform1i("u_skyboxTexture", 0);
 }
-
 Shader* ShaderManager::GetShaderByName(StringView filename)
 {
-  if (filename.empty())
+  if (filename.empty() || !_shaders.contains(filename.data()))
     return nullptr;
 
-  for (auto& shader : _shaders)
-    if (shader.filename == filename)
-      return &shader;
-
-  return nullptr;
+  return &_shaders.at(filename.data());
 }
-
 Program* ShaderManager::GetProgramByName(StringView name)
 {
-  if (name.empty())
+  if (name.empty() || !_programs.contains(name.data()))
     return nullptr;
-
-  for (auto& program : _programs)
-    if (program.name == name)
-      return &program;
-
-  return nullptr;
+  
+  return &_programs.at(name.data());
 }
 
 /* -------------------------------------------- */
@@ -116,31 +103,30 @@ void ShaderManager::LoadShaderFiles()
       CONSOLE_WARN("Error on loading shader {}: unknown file extension", filenameString);
   }
 }
-Shader& ShaderManager::LoadShader(const fs::path& filepath, i32 shaderType)
+void ShaderManager::LoadShader(const fs::path& filepath, i32 shaderType)
 {
-  String filepathstr = filepath.string();
-  if (!fs::exists(filepath))
-    CONSOLE_WARN("File {} does not exist", filepathstr);
-
-  Shader& shader = _shaders.emplace_back();
+  Shader shader;
   shader.Create(shaderType);
   shader.filename = filepath.filename().string();
 
-  String source;
   IStream file(filepath);
-  if (file)
-    source.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
-  else
-    CONSOLE_WARN("Error on opening file {}", filepathstr);
+  if (!file.is_open())
+  {
+    CONSOLE_WARN("Error on opening file {}", filepath.string());
+    return;
+  }
 
+  String source;
+  source.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
   shader.LoadSource(source);
+  file.close();
+  
   bool compiled = shader.Compile();
   if (!compiled)
-    CONSOLE_WARN("Error on compiling shader {}: {}", filepathstr, shader.GetShaderInfo());
+    CONSOLE_WARN("Error on compiling shader {}: {}", filepath.string(), shader.GetShaderInfo());
 
-  return shader;
+  _shaders.insert({ shader.filename, shader });
 }
-
 void ShaderManager::LoadProgramsFromConfig()
 {
   ConfigFile conf(ROOT_PATH / SM_FILE_CONFIG);
@@ -163,7 +149,7 @@ void ShaderManager::LoadProgramsFromConfig()
     LoadProgram(section, vertShader, tescShader, teseShader, geomShader, fragShader);
   }
 }
-Program& ShaderManager::LoadProgram(StringView name,
+void ShaderManager::LoadProgram(StringView name,
   Shader* vertex,
   Shader* tesc,
   Shader* tese,
@@ -171,7 +157,7 @@ Program& ShaderManager::LoadProgram(StringView name,
   Shader* fragment
 )
 {
-  Program& program = _programs.emplace_back();
+  Program program;
   program.Create();
   program.name = name.data();
   if (vertex)    program.AttachShader(*vertex);
@@ -184,6 +170,6 @@ Program& ShaderManager::LoadProgram(StringView name,
   if (!link)
     CONSOLE_WARN("Error on linking program {}: {}", name, program.GetProgramInfo());
 
-  return program;
+  _programs.insert({ program.name, program });
 }
 

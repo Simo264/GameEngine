@@ -416,7 +416,6 @@ void Engine::Run()
   ShaderManager& shaderManager = ShaderManager::Get();
   TextureManager& textureManager = TextureManager::Get();
   ImGuiLayer& gui = ImGuiLayer::Get();
-
   Program* framebufferProgram = shaderManager.GetProgramByName("Framebuffer");
   Program* sceneProgram = shaderManager.GetProgramByName("Scene");
   Program* sceneShadowsProgram = shaderManager.GetProgramByName("SceneShadows");
@@ -446,7 +445,7 @@ void Engine::Run()
   bool wireframeEnabled = false;
 
   glPatchParameteri(GL_PATCH_VERTICES, 4);
-  
+
   /* ------------------------------------------------------------------ */
   /* -------------------------- loop section -------------------------- */
   /* ------------------------------------------------------------------ */

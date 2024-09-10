@@ -21,7 +21,7 @@
 class Shader
 {
 public:
-  Shader();
+  Shader() : id{ 0 } {};
   ~Shader() = default;
 
   /**
@@ -96,7 +96,7 @@ public:
 class Program
 {
 public:
-  Program();
+  Program() : id{ 0 } {};
   ~Program() = default;
 
   /**

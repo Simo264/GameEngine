@@ -158,7 +158,7 @@ void ImGuiLayer::MenuBar(Scene& scene)
           ShaderManager& shaderManager = ShaderManager::Get();
 
           /* !IMPORTANT: before loading new scene it needed to relink all the programs to see changes */
-          for (const auto& program : shaderManager.GetProgramsVector())
+          for (const auto& [key, program] : shaderManager.GetPrograms())
             program.Link();
             
           shaderManager.ResetProgramsUniforms();

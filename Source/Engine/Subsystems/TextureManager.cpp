@@ -3,7 +3,6 @@
 #include "Core/GL.hpp"
 #include "Core/Log/Logger.hpp"
 
-
 /* -----------------------------------------------------  */
 /*                    PUBLIC                              */
 /* -----------------------------------------------------  */
@@ -34,9 +33,6 @@ void TextureManager::CleanUp()
 
     glDeleteTextures(total, texIDs.data());
   }
-
-  Vector<Texture2D>().swap(_textures);
-  Vector<Texture2D>().swap(_icons);
 }
 
 Texture2D* TextureManager::GetTextureByPath(const fs::path& filePath)

@@ -6,6 +6,7 @@
 #include <array>
 #include <fstream>
 #include <map>
+#include <unordered_map>
 #include <set>
 #include <string>
 #include <string_view>
@@ -29,15 +30,17 @@ namespace fs = std::filesystem;
 /************** Containers **************/
 /****************************************/
 template<typename Type, size_t size>
-using Array		= std::array<Type, size>;
+using Array = std::array<Type, size>;
 template<typename Type>
-using Vector	= std::vector<Type>;
+using Vector = std::vector<Type>;
 template<typename TypeName, typename TypeVal>
-using Map			= std::map<TypeName, TypeVal>;
+using Map = std::map<TypeName, TypeVal>;
+template<typename TypeName, typename TypeVal>
+using UnorderedMap = std::unordered_map<TypeName, TypeVal>;
 template<typename Type>
-using Set			= std::set<Type>;
+using Set = std::set<Type>;
 template<typename... Types>
-using Tuple		= std::tuple<Types...>;
+using Tuple = std::tuple<Types...>;
 
 
 /************** Smart pointers **************/
