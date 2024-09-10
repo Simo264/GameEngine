@@ -39,15 +39,16 @@ public:
 	/**
 	 * Get the shader object by filename
 	 */
-	Shader* GetShaderByName(StringView filename);
+	Shader& GetShaderByName(StringView filename);
 
 	/**
 	 * Retrieve the program object by name
 	 */
-	Program* GetProgramByName(StringView name);
+	Program& GetProgramByName(StringView name);
 
-	constexpr UnorderedMap<String, Shader>& GetShaders() { return _shaders; }
-	constexpr UnorderedMap<String, Program>& GetPrograms() { return _programs; }
+	constexpr const UnorderedMap<String, Shader>& GetShaders() { return _shaders; }
+
+	constexpr const UnorderedMap<String, Program>& GetPrograms() { return _programs; }
 	
 private:
 	ShaderManager() = default;

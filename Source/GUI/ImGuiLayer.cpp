@@ -392,6 +392,7 @@ void ImGuiLayer::GameObjectDetails(GameObject& object)
       {
         auto& mesh = model->meshes.at(i);
         Material& material = mesh.material;
+        TextureManager& texManager = TextureManager::Get();
 
         /* Display mesh-i props */
         char title[16]{};
@@ -402,28 +403,28 @@ void ImGuiLayer::GameObjectDetails(GameObject& object)
         ImGui::TextWrapped("Diffuse: %s", (diffPath.empty() ? "None" : diffPath.string().c_str()));
         ComboTextures(material.diffuse, "##diffuse");
         if (!diffPath.empty() && ImGui::Button("Reset##diffuse"))
-          material.diffuse = TextureManager::Get().GetTextureAt(0);
+          material.diffuse = &texManager.GetTextureByPath("#default_diffuse");
         ImGui::Separator();
           
         const auto& specularPath = material.specular->path;
         ImGui::TextWrapped("Specular: %s", (specularPath.empty() ? "None" : specularPath.string().c_str()));
         ComboTextures(material.specular, "##specular");
         if (!specularPath.empty() && ImGui::Button("Reset##specular"))
-          material.specular = TextureManager::Get().GetTextureAt(1);
+          material.specular = &texManager.GetTextureByPath("#default_specular");
         ImGui::Separator();
           
         const auto& normalPath = material.normal->path;
         ImGui::TextWrapped("Normal: %s", (normalPath.empty() ? "None" : normalPath.string().c_str()));
         ComboTextures(material.normal, "##normal");
         if (!normalPath.empty() && ImGui::Button("Reset##normal"))
-          material.normal = TextureManager::Get().GetTextureAt(2);
+          material.normal = &texManager.GetTextureByPath("#default_normal");
         ImGui::Separator();
 
         const auto& heightPath = material.height->path;
         ImGui::TextWrapped("Height: %s", (heightPath.empty() ? "None" : heightPath.string().c_str()));
         ComboTextures(material.height, "##height");
         if (!heightPath.empty() && ImGui::Button("Reset##height"))
-          material.height = TextureManager::Get().GetTextureAt(3);
+          material.height = &texManager.GetTextureByPath("#default_height");
         ImGui::Separator();
       }
     }
@@ -454,11 +455,11 @@ void ImGuiLayer::ContentBrowser()
   TextureManager& texManager = TextureManager::Get();
 
   /* Back button */
-  static fs::path currentDir = RESOURCE_PATH;
-  if (currentDir != RESOURCE_PATH)
+  static fs::path currentDir = GetResourcePath();
+  if (currentDir != GetResourcePath())
   {
-    const auto* iconBack = texManager.GetIconByPath(ICONS_PATH / "back-arrow.png");
-    if (ImGui::ImageButton("Back", reinterpret_cast<void*>(iconBack->id), ImVec2(16.0f, 16.0f)))
+    const auto& iconBack = texManager.GetIconByPath(GetIconsPath() / "back-arrow.png");
+    if (ImGui::ImageButton("Back", reinterpret_cast<void*>(iconBack.id), ImVec2(16.0f, 16.0f)))
       currentDir = currentDir.parent_path();
   }
 
@@ -487,11 +488,10 @@ void ImGuiLayer::ContentBrowser()
         const fs::path entryFilename = entryPath.filename();
         const String entryFilenameString = entryFilename.string();
 
-        
         if (entry.is_directory())
         {
-          Texture2D* iconFolder = texManager.GetIconByPath(ICONS_PATH / "open-folder.png");
-          if (ImGui::ImageButton(entryFilenameString.c_str(), reinterpret_cast<void*>(iconFolder->id), ImVec2(cellSize, cellSize)))
+          Texture2D& iconFolder = texManager.GetIconByPath(GetIconsPath() / "open-folder.png");
+          if (ImGui::ImageButton(entryFilenameString.c_str(), reinterpret_cast<void*>(iconFolder.id), ImVec2(cellSize, cellSize)))
             currentDir /= entry;
         }
         else
@@ -502,18 +502,18 @@ void ImGuiLayer::ContentBrowser()
           if (entryFilenameExt == ".png" || entryFilenameExt == ".jpg")
           {
             Texture2D* texture = nullptr;
-            if(currentDir == ICONS_PATH)
-              texture = texManager.GetIconByPath(entryPath);
+            if(currentDir == GetIconsPath())
+              texture = &texManager.GetIconByPath(entryPath);
             else
-              texture = texManager.GetTextureByPath(entryPath);
+              texture = &texManager.GetTextureByPath(entryPath);
 
             ImGui::ImageButton(entryFilenameString.c_str(), reinterpret_cast<void*>(texture->id), ImVec2(cellSize, cellSize));
           }
           /* Render generic file icon */
           else
           {
-            const auto* iconFile = texManager.GetIconByPath(ICONS_PATH / "file.png");
-            ImGui::ImageButton(entryFilenameString.c_str(), reinterpret_cast<void*>(iconFile->id), ImVec2(cellSize, cellSize));
+            const auto& iconFile = texManager.GetIconByPath(GetIconsPath() / "file.png");
+            ImGui::ImageButton(entryFilenameString.c_str(), reinterpret_cast<void*>(iconFile.id), ImVec2(cellSize, cellSize));
           }
         }
 
@@ -694,15 +694,14 @@ void ImGuiLayer::ComboTextures(Texture2D*& matTexture, const char* comboLabel)
   if (ImGui::BeginCombo(comboLabel, comboPreview))
   {
     TextureManager& texManager = TextureManager::Get();
-    const auto& textVector = texManager.GetTextureVector();
-
-    for (i32 i = 0; i < textVector.size(); i++)
+    const auto& textures = texManager.GetTextures();
+    for (const auto& [key, texture] : textures)
     {
-      Texture2D* texture = texManager.GetTextureAt(i);
-      String texPathStr = texture->path.string();
-      if (!texPathStr.empty() && ImGui::Selectable(texPathStr.c_str(), false))
-        matTexture = texture;
+      String texPathStr = texture.path.string();
+      if (texPathStr.at(0) != '#' && ImGui::Selectable(texPathStr.c_str(), false))
+        matTexture = const_cast<Texture2D*>(&texture);
     }
+
     ImGui::EndCombo();
   }
 }

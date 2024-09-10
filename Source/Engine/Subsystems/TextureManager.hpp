@@ -31,23 +31,32 @@ public:
 	 */
 	void CleanUp();
 
-	Texture2D* GetTextureByPath(const fs::path& filePath);
-	Texture2D* GetTextureAt(i32 i) { return &_textures.at(i); }
+	Texture2D& GetTextureByPath(const fs::path& filePath);
 	
-	Texture2D* GetIconByPath(const fs::path& filePath);
-	Texture2D* GetIconAt(i32 i) { return &_icons.at(i); }
-
-	constexpr Vector<Texture2D>& GetTextureVector() { return _textures; }
-	constexpr Vector<Texture2D>& GetIconVector() { return _icons; }
+	Texture2D& GetIconByPath(const fs::path& filePath);
+	
+	const Texture2D& GetDefaultDiffuse() const	{ return _textures.at("#default_diffuse"); }
+	const Texture2D& GetDefaultSpecular() const { return _textures.at("#default_specular"); }
+	const Texture2D& GetDefaultNormal() const { return _textures.at("#default_normal"); }
+	const Texture2D& GetDefaultHeight() const { return _textures.at("#default_height"); }
+	constexpr const UnorderedMap<String, Texture2D>& GetTextures() { return _textures; }
 
 private:
 	TextureManager() = default;
 	~TextureManager() = default;
 
-	Vector<Texture2D> _textures;
-	Vector<Texture2D> _icons;
+	/**
+	 * First: the texture file path in string format
+	 * Second: the texture object
+	 */
+	UnorderedMap<String, Texture2D> _textures;
+
+	/**
+	 * First: the texture file path in string format
+	 * Second: the texture object
+	 */
+	UnorderedMap<String, Texture2D> _icons;
 
 	void LoadTextures();
 	void LoadIcons();
-	void CreateDefaultTexture(Texture2D& texture, Array<u8, 3> textureData, StringView defaultPath);
 };

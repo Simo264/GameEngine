@@ -86,35 +86,35 @@ static void SetOpenGLStates()
   glClearStencil(0);
 }
 
-static void RenderDirectionalLight(Program* program, const Components::DirectionalLight& light)
+static void RenderDirectionalLight(Program& program, const Components::DirectionalLight& light)
 {
-  program->SetUniform3f("u_directionalLight.color", light.color);
-  program->SetUniform1f("u_directionalLight.diffuseIntensity", light.diffuseIntensity);
-  program->SetUniform1f("u_directionalLight.specularIntensity", light.specularIntensity);
-  program->SetUniform3f("u_directionalLight.direction", light.direction);
+  program.SetUniform3f("u_directionalLight.color", light.color);
+  program.SetUniform1f("u_directionalLight.diffuseIntensity", light.diffuseIntensity);
+  program.SetUniform1f("u_directionalLight.specularIntensity", light.specularIntensity);
+  program.SetUniform3f("u_directionalLight.direction", light.direction);
 }
-static void RenderPointLight(Program* program, const Components::PointLight& light, i32 i)
+static void RenderPointLight(Program& program, const Components::PointLight& light, i32 i)
 {
-  program->SetUniform3f(std::format("u_pointLight[{}].color", i).c_str(), light.color);
-  program->SetUniform1f(std::format("u_pointLight[{}].diffuseIntensity", i).c_str(), light.diffuseIntensity);
-  program->SetUniform1f(std::format("u_pointLight[{}].specularIntensity", i).c_str(), light.specularIntensity);
-  program->SetUniform3f(std::format("u_pointLight[{}].position", i).c_str(), light.position);
-  program->SetUniform1f(std::format("u_pointLight[{}].attenuation.kl", i).c_str(), light.attenuation.kl);
-  program->SetUniform1f(std::format("u_pointLight[{}].attenuation.kq", i).c_str(), light.attenuation.kq);
+  program.SetUniform3f(std::format("u_pointLight[{}].color", i).c_str(), light.color);
+  program.SetUniform1f(std::format("u_pointLight[{}].diffuseIntensity", i).c_str(), light.diffuseIntensity);
+  program.SetUniform1f(std::format("u_pointLight[{}].specularIntensity", i).c_str(), light.specularIntensity);
+  program.SetUniform3f(std::format("u_pointLight[{}].position", i).c_str(), light.position);
+  program.SetUniform1f(std::format("u_pointLight[{}].attenuation.kl", i).c_str(), light.attenuation.kl);
+  program.SetUniform1f(std::format("u_pointLight[{}].attenuation.kq", i).c_str(), light.attenuation.kq);
 }
-static void RenderSpotLight(Program* program, const Components::SpotLight& light)
+static void RenderSpotLight(Program& program, const Components::SpotLight& light)
 {
-  program->SetUniform3f("u_spotLight.color", light.color);
-  program->SetUniform1f("u_spotLight.diffuseIntensity", light.diffuseIntensity);
-  program->SetUniform1f("u_spotLight.specularIntensity", light.specularIntensity);
-  program->SetUniform3f("u_spotLight.direction", light.direction);
-  program->SetUniform3f("u_spotLight.position", light.position);
-  program->SetUniform1f("u_spotLight.attenuation.kl", light.attenuation.kl);
-  program->SetUniform1f("u_spotLight.attenuation.kq", light.attenuation.kq);
-  program->SetUniform1f("u_spotLight.cutOff", light.cutOff);
-  program->SetUniform1f("u_spotLight.outerCutOff", light.outerCutOff);
+  program.SetUniform3f("u_spotLight.color", light.color);
+  program.SetUniform1f("u_spotLight.diffuseIntensity", light.diffuseIntensity);
+  program.SetUniform1f("u_spotLight.specularIntensity", light.specularIntensity);
+  program.SetUniform3f("u_spotLight.direction", light.direction);
+  program.SetUniform3f("u_spotLight.position", light.position);
+  program.SetUniform1f("u_spotLight.attenuation.kl", light.attenuation.kl);
+  program.SetUniform1f("u_spotLight.attenuation.kq", light.attenuation.kq);
+  program.SetUniform1f("u_spotLight.cutOff", light.cutOff);
+  program.SetUniform1f("u_spotLight.outerCutOff", light.outerCutOff);
 }
-static void RenderScene(Scene& scene, Program* program)
+static void RenderScene(Scene& scene, Program& program)
 {
   scene.Reg().view<Components::DirectionalLight>().each([&](auto& light) {
     RenderDirectionalLight(program, light);
@@ -131,7 +131,7 @@ static void RenderScene(Scene& scene, Program* program)
   });
 
   scene.Reg().view<Components::Model, Components::Transform>().each([&](auto& model, auto& transform) {
-    program->SetUniformMat4f("u_model", transform.GetTransformation());
+    program.SetUniformMat4f("u_model", transform.GetTransformation());
     model.DrawModel(GL_TRIANGLES);
   });
 }
@@ -193,12 +193,12 @@ static void CreateSkybox(VertexArray& skybox, TextureCubemap& skyboxTexture)
 
   TextureManager& textureManager = TextureManager::Get();
   const Array<Texture2D*, 6> images = {
-    textureManager.GetTextureByPath(TEXTURES_PATH / "skybox/right.jpg"),
-    textureManager.GetTextureByPath(TEXTURES_PATH / "skybox/left.jpg"),
-    textureManager.GetTextureByPath(TEXTURES_PATH / "skybox/top.jpg"),
-    textureManager.GetTextureByPath(TEXTURES_PATH / "skybox/bottom.jpg"),
-    textureManager.GetTextureByPath(TEXTURES_PATH / "skybox/front.jpg"),
-    textureManager.GetTextureByPath(TEXTURES_PATH / "skybox/back.jpg"),
+    &textureManager.GetTextureByPath(GetTexturesPath() / "skybox/right.jpg"),
+    &textureManager.GetTextureByPath(GetTexturesPath() / "skybox/left.jpg"),
+    &textureManager.GetTextureByPath(GetTexturesPath() / "skybox/top.jpg"),
+    &textureManager.GetTextureByPath(GetTexturesPath() / "skybox/bottom.jpg"),
+    &textureManager.GetTextureByPath(GetTexturesPath() / "skybox/front.jpg"),
+    &textureManager.GetTextureByPath(GetTexturesPath() / "skybox/back.jpg"),
   };
   i32 cubemapInternalFormat = images.at(0)->GetInternal();
   i32 width = images.at(0)->width;
@@ -272,9 +272,9 @@ static VertexArray CreateTerrain(i32 rez)
   vao.SetAttribBinding(1, 0);
   vao.EnableAttribute(1);
 
-  Texture2D* heightMap = TextureManager::Get().GetTextureByPath(TEXTURES_PATH / "iceland_heightmap.png");
-  i32 width = heightMap->width;
-  i32 height = heightMap->height;
+  Texture2D& heightMap = TextureManager::Get().GetTextureByPath(GetTexturesPath() / "iceland_heightmap.png");
+  i32 width = heightMap.width;
+  i32 height = heightMap.height;
 
   // vertex generation
   Vector<f32> vertices;
@@ -344,7 +344,7 @@ void Engine::Initialize()
   /* ------------------- */
   ImGuiLayer& gui = ImGuiLayer::Get();
   gui.SetupContext();
-  gui.SetFont((FONTS_PATH / "Karla-Regular.ttf"), 16);
+  gui.SetFont((GetFontsPath() / "Karla-Regular.ttf"), 16);
   CONSOLE_INFO("ImGui layer initialized");
   
   /* Initialize shader manager */
@@ -383,7 +383,7 @@ void Engine::Run()
   CreateSkybox(skybox, skyboxTexture);
 
   /* Create scene object */
-  Scene scene(ROOT_PATH / "Scene.ini");
+  Scene scene(GetRootPath() / "Scene.ini");
 
   Components::DirectionalLight* directionalLight = nullptr;
   scene.Reg().view<Components::DirectionalLight>().each([&](auto& light) { directionalLight = &light; });
@@ -416,18 +416,17 @@ void Engine::Run()
   ShaderManager& shaderManager = ShaderManager::Get();
   TextureManager& textureManager = TextureManager::Get();
   ImGuiLayer& gui = ImGuiLayer::Get();
-  Program* framebufferProgram = shaderManager.GetProgramByName("Framebuffer");
-  Program* sceneProgram = shaderManager.GetProgramByName("Scene");
-  Program* sceneShadowsProgram = shaderManager.GetProgramByName("SceneShadows");
-  Program* depthMapProgram = shaderManager.GetProgramByName("DepthMap");
-  Program* depthCubeMapProgram = shaderManager.GetProgramByName("DepthCubeMap");
-  Program* skyboxProgram = shaderManager.GetProgramByName("Skybox");
-  Program* terrainProgram = shaderManager.GetProgramByName("Terrain");
-  Program* glyphProgram = shaderManager.GetProgramByName("Glyph");
+  Program& framebufferProgram = shaderManager.GetProgramByName("Framebuffer");
+  Program& sceneProgram = shaderManager.GetProgramByName("Scene");
+  Program& sceneShadowsProgram = shaderManager.GetProgramByName("SceneShadows");
+  Program& depthMapProgram = shaderManager.GetProgramByName("DepthMap");
+  Program& depthCubeMapProgram = shaderManager.GetProgramByName("DepthCubeMap");
+  Program& skyboxProgram = shaderManager.GetProgramByName("Skybox");
+  Program& terrainProgram = shaderManager.GetProgramByName("Terrain");
   u32 fboTexture = _fboIntermediate.GetTextureAttachment(0);
   u32 depthMapTexture = fboDepthMap.GetTextureAttachment(0);
   u32 depthCubeMapTexture = fboDepthCubeMap.GetTextureAttachment(0);
-  Texture2D* heightMap = textureManager.GetTextureByPath(TEXTURES_PATH / "iceland_heightmap.png");
+  Texture2D& heightMap = textureManager.GetTextureByPath(GetTexturesPath() / "iceland_heightmap.png");
 
   chrono::steady_clock::time_point now{};
   chrono::steady_clock::time_point lastFrameTime{};
@@ -513,11 +512,11 @@ void Engine::Run()
     {
       glViewport(0, 0, 1024, 1024);
       glClear(GL_DEPTH_BUFFER_BIT);
-      depthMapProgram->Use();
-      depthMapProgram->SetUniformMat4f("u_lightView", directLightView);
-      depthMapProgram->SetUniformMat4f("u_lightProjection", directLightProjection);
+      depthMapProgram.Use();
+      depthMapProgram.SetUniformMat4f("u_lightView", directLightView);
+      depthMapProgram.SetUniformMat4f("u_lightProjection", directLightProjection);
       scene.Reg().view<Components::Model, Components::Transform>().each([&](auto& model, auto& transform) {
-        depthMapProgram->SetUniformMat4f("u_model", transform.GetTransformation());
+        depthMapProgram.SetUniformMat4f("u_model", transform.GetTransformation());
         std::for_each(model.meshes.begin(), model.meshes.end(), [&](auto& mesh) {
           mesh.DrawMesh(GL_TRIANGLES);
         });
@@ -542,19 +541,19 @@ void Engine::Run()
       pointLightViews[4] = Math::LookAt(lightPos, lightPos + vec3f(0.0f, 0.0f, 1.0f), vec3f(0.0f, -1.0f, 0.0f));
       pointLightViews[5] = Math::LookAt(lightPos, lightPos + vec3f(0.0f, 0.0f, -1.0f), vec3f(0.0f, -1.0f, 0.0f));
 
-      depthCubeMapProgram->Use();
-      depthCubeMapProgram->SetUniformMat4f("u_lightProjection", pointLightProj);
-      depthCubeMapProgram->SetUniformMat4f("u_lightViews[0]", pointLightViews.at(0));
-      depthCubeMapProgram->SetUniformMat4f("u_lightViews[1]", pointLightViews.at(1));
-      depthCubeMapProgram->SetUniformMat4f("u_lightViews[2]", pointLightViews.at(2));
-      depthCubeMapProgram->SetUniformMat4f("u_lightViews[3]", pointLightViews.at(3));
-      depthCubeMapProgram->SetUniformMat4f("u_lightViews[4]", pointLightViews.at(4));
-      depthCubeMapProgram->SetUniformMat4f("u_lightViews[5]", pointLightViews.at(5));
-      depthCubeMapProgram->SetUniform3f("u_lightPos", lightPos);
-      depthCubeMapProgram->SetUniform1f("u_zFar", 15.0f);
+      depthCubeMapProgram.Use();
+      depthCubeMapProgram.SetUniformMat4f("u_lightProjection", pointLightProj);
+      depthCubeMapProgram.SetUniformMat4f("u_lightViews[0]", pointLightViews.at(0));
+      depthCubeMapProgram.SetUniformMat4f("u_lightViews[1]", pointLightViews.at(1));
+      depthCubeMapProgram.SetUniformMat4f("u_lightViews[2]", pointLightViews.at(2));
+      depthCubeMapProgram.SetUniformMat4f("u_lightViews[3]", pointLightViews.at(3));
+      depthCubeMapProgram.SetUniformMat4f("u_lightViews[4]", pointLightViews.at(4));
+      depthCubeMapProgram.SetUniformMat4f("u_lightViews[5]", pointLightViews.at(5));
+      depthCubeMapProgram.SetUniform3f("u_lightPos", lightPos);
+      depthCubeMapProgram.SetUniform1f("u_zFar", 15.0f);
 
       scene.Reg().view<Components::Model, Components::Transform>().each([&](auto& model, auto& transform) {
-        depthCubeMapProgram->SetUniformMat4f("u_model", transform.GetTransformation());
+        depthCubeMapProgram.SetUniformMat4f("u_model", transform.GetTransformation());
         std::for_each(model.meshes.begin(), model.meshes.end(), [&](auto& mesh) {
           mesh.DrawMesh(GL_TRIANGLES);
           });
@@ -585,13 +584,13 @@ void Engine::Run()
       /* Render scene with shadows map */
       if (renderingShadowsMode)
       {
-        sceneShadowsProgram->Use();
-        sceneShadowsProgram->SetUniform3f("u_viewPos", primaryCamera.position);
-        sceneShadowsProgram->SetUniform3f("u_ambientLightColor", g_ambientColor);
-        sceneShadowsProgram->SetUniform1f("u_ambientLightIntensity", g_ambientIntensity);
-        sceneShadowsProgram->SetUniformMat4f("u_lightView", directLightView);
-        sceneShadowsProgram->SetUniformMat4f("u_lightProjection", directLightProjection);
-        sceneShadowsProgram->SetUniform1i("u_useNormalMap", useNormalMap);
+        sceneShadowsProgram.Use();
+        sceneShadowsProgram.SetUniform3f("u_viewPos", primaryCamera.position);
+        sceneShadowsProgram.SetUniform3f("u_ambientLightColor", g_ambientColor);
+        sceneShadowsProgram.SetUniform1f("u_ambientLightIntensity", g_ambientIntensity);
+        sceneShadowsProgram.SetUniformMat4f("u_lightView", directLightView);
+        sceneShadowsProgram.SetUniformMat4f("u_lightProjection", directLightProjection);
+        sceneShadowsProgram.SetUniform1i("u_useNormalMap", useNormalMap);
         glBindTextureUnit(10, depthMapTexture);
         glBindTextureUnit(11, depthCubeMapTexture);
         RenderScene(scene, sceneShadowsProgram);
@@ -599,11 +598,11 @@ void Engine::Run()
       /* Render scene with no shadows */
       else
       {
-        sceneProgram->Use();
-        sceneProgram->SetUniform3f("u_viewPos", primaryCamera.position);
-        sceneProgram->SetUniform3f("u_ambientLightColor", g_ambientColor);
-        sceneProgram->SetUniform1f("u_ambientLightIntensity", g_ambientIntensity);
-        sceneProgram->SetUniform1i("u_useNormalMap", useNormalMap);
+        sceneProgram.Use();
+        sceneProgram.SetUniform3f("u_viewPos", primaryCamera.position);
+        sceneProgram.SetUniform3f("u_ambientLightColor", g_ambientColor);
+        sceneProgram.SetUniform1f("u_ambientLightIntensity", g_ambientIntensity);
+        sceneProgram.SetUniform1i("u_useNormalMap", useNormalMap);
         RenderScene(scene, sceneProgram);
       }
 

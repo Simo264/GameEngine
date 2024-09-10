@@ -1,10 +1,20 @@
 ﻿#include "Engine/Engine.hpp"
+#include "Core/Log/Logger.hpp"
 
 int main()
 {
   Engine engine = Engine();
   engine.Initialize();
-  engine.Run();
+  try
+  {
+    engine.Run();
+  }
+  catch (const std::exception& err)
+  {
+    CONSOLE_CRITICAL(err.what());
+    return EXIT_FAILURE;
+  }
   engine.CleanUp();
-  return 0;
+  
+  return EXIT_SUCCESS;
 }

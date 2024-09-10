@@ -7,6 +7,7 @@ SharedPtr<spdlog::logger> Logger::_logger;
 
 void Logger::Initialize()
 {
+	/* https://github.com/gabime/spdlog/wiki/3.-Custom-formatting */
 	spdlog::set_pattern("[%s::%#] [%^%l%$]: %v");
 
 	_logger = spdlog::stdout_color_st("Logger");
