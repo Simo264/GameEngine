@@ -37,6 +37,9 @@ public:
   Texture2D(i32 target, const fs::path& path, bool gammaCorrection);
   ~Texture2D() = default;
 
+  /**
+   * Load data from an image file
+   */
   void LoadImageData(const fs::path& path, bool gammaCorrection);
 
   /**

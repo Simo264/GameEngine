@@ -150,7 +150,7 @@ void ImGuiLayer::MenuBar(Scene& scene)
     {
       if (ImGui::MenuItem("Open"))
       {
-        static const char* filters[1] = { "*.ini" };
+        const char* filters[1] = { "*.ini" };
         fs::path filePath = OpenFileDialog(1, filters, "Open scene", false);
 
         if (!filePath.empty())
@@ -161,20 +161,20 @@ void ImGuiLayer::MenuBar(Scene& scene)
           for (const auto& program : shaderManager.GetProgramsVector())
             program.Link();
             
-          shaderManager.SetUpProgramsUniforms();
+          shaderManager.ResetProgramsUniforms();
 
           scene.ClearScene();
           scene.LoadScene(filePath);
-          CONSOLE_INFO("New scene has been loaded");
+          CONSOLE_INFO("The scene has been successfully loaded");
         }
       }
       if (ImGui::MenuItem("Save as..."))
       {
-        static const char* filters[1] = { "*.ini" };
+        const char* filters[1] = { "*.ini" };
         fs::path filepath = SaveFileDialog(1, filters, "Save scene");
 
         scene.SaveScene(filepath);
-        CONSOLE_TRACE("The scene has been saved");
+        CONSOLE_TRACE("The scene has been successfully saved");
       }
         
       ImGui::Separator();
@@ -445,52 +445,35 @@ void ImGuiLayer::WorldProps()
     
   ImGui::End();
 }
-  
-void ImGuiLayer::TextureList()
+ 
+void ImGuiLayer::ContentBrowser()
 {
-  ImGui::Begin("Textures", nullptr);
-    
-  static fs::path currentDir = TEXTURES_PATH;
+  ImGui::Begin("Content browser", nullptr);
+  ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+  
   TextureManager& texManager = TextureManager::Get();
 
-  /* New texture button */
-  if (ImGui::Button("New"))
+  /* Back button */
+  static fs::path currentDir = RESOURCE_PATH;
+  if (currentDir != RESOURCE_PATH)
   {
-    static const char* filter[2] = { "*.png", "*.jpg" };
-    String pathsString = OpenFileDialog(2, filter, "Select image", true);
-    std::cout << "paths=" << pathsString << "\n";
-    if (!pathsString.empty())
-    {
-      i32 nFileSelected = 1 + std::count_if(pathsString.begin(), pathsString.end(), [](char c) { return c == '|'; });
-      i32 offset = 0;
-      for (i32 i = 0; i < nFileSelected; i++)
-      {
-        i32 k = pathsString.find('|', offset);
-        std::cout << "'" << pathsString.substr(offset, (k - offset)) << "'" << "\n";
-        offset = k + 1;
-      }
-    }
+    const auto* iconBack = texManager.GetIconByPath(ICONS_PATH / "back-arrow.png");
+    if (ImGui::ImageButton("Back", reinterpret_cast<void*>(iconBack->id), ImVec2(16.0f, 16.0f)))
+      currentDir = currentDir.parent_path();
   }
 
-
-  /* Back button */
-  if (currentDir != TEXTURES_PATH)
-    if (ImGui::Button("Back")) 
-      currentDir = currentDir.parent_path();
-
-  const f32 panelWidth = ImGui::GetContentRegionAvail().x;
-  constexpr f32 cellSize = 128.0f;
+  /* Configure table */
+  constexpr f32 cellSize = 64.0f;
   constexpr f32 cellPadding = 16.0f;
-  i32 nColumns = static_cast<i32>(panelWidth / (cellSize + cellPadding));
-  if (nColumns < 1)
-    nColumns = 1;
-    
-  fs::directory_iterator entryIt = fs::directory_iterator(currentDir);
-  const i32 nItemsInCurrentDir = std::distance(fs::begin(entryIt), fs::end(entryIt));
-  const i32 nRows = 1 + (nItemsInCurrentDir / nColumns);
-  if (ImGui::BeginTable("Thumbnails", nColumns, ImGuiTableFlags_SizingStretchSame | ImGuiTableFlags_BordersH))
+  const f32 panelWidth = ImGui::GetContentRegionAvail().x;
+  const i32 nColumns = std::max(1, static_cast<i32>(panelWidth / (cellSize + cellPadding))) ;
+  if (ImGui::BeginTable("Thumbnails", nColumns, ImGuiTableFlags_SizingStretchSame))
   {
+    fs::directory_iterator entryIt = fs::directory_iterator(currentDir);
+    const i32 nItemsInCurrentDir = std::distance(fs::begin(entryIt), fs::end(entryIt));
+    const i32 nRows = 1 + (nItemsInCurrentDir / nColumns);
     entryIt = fs::directory_iterator(currentDir);
+
     for (i32 i = 0; i < nRows; i++)
     {
       ImGui::TableNextRow();
@@ -501,35 +484,52 @@ void ImGuiLayer::TextureList()
         const fs::directory_entry& entry = *entryIt;
         const fs::path& entryPath = entry.path();
         const String entryPathString = entryPath.string();
-        const String entryFilenameString = entryPath.filename().string();
+        const fs::path entryFilename = entryPath.filename();
+        const String entryFilenameString = entryFilename.string();
 
-        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+        
         if (entry.is_directory())
         {
           Texture2D* iconFolder = texManager.GetIconByPath(ICONS_PATH / "open-folder.png");
           if (ImGui::ImageButton(entryFilenameString.c_str(), reinterpret_cast<void*>(iconFolder->id), ImVec2(cellSize, cellSize)))
             currentDir /= entry;
-
-          if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-            ImGui::SetTooltip("%s", entryPathString.c_str());
-          ImGui::TextWrapped("%s", entryFilenameString.c_str());
         }
         else
         {
-          const auto* texture = texManager.GetTextureByPath(entryPath);
-          ImGui::ImageButton(entryFilenameString.c_str(), reinterpret_cast<void*>(texture->id), ImVec2(cellSize, cellSize));
-          if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-            ImGui::SetTooltip("%s", entryPathString.c_str());
-          ImGui::TextWrapped("%s", entryFilenameString.c_str());
+          const fs::path entryFilenameExt = entryFilename.extension().string();
+
+          /* Render image texture */
+          if (entryFilenameExt == ".png" || entryFilenameExt == ".jpg")
+          {
+            Texture2D* texture = nullptr;
+            if(currentDir == ICONS_PATH)
+              texture = texManager.GetIconByPath(entryPath);
+            else
+              texture = texManager.GetTextureByPath(entryPath);
+
+            ImGui::ImageButton(entryFilenameString.c_str(), reinterpret_cast<void*>(texture->id), ImVec2(cellSize, cellSize));
+          }
+          /* Render generic file icon */
+          else
+          {
+            const auto* iconFile = texManager.GetIconByPath(ICONS_PATH / "file.png");
+            ImGui::ImageButton(entryFilenameString.c_str(), reinterpret_cast<void*>(iconFile->id), ImVec2(cellSize, cellSize));
+          }
         }
-        ImGui::PopStyleColor();
+
+        if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+          ImGui::SetTooltip("%s", entryPathString.c_str());
+        ImGui::TextWrapped("%s", entryFilenameString.c_str());
       }
     }
     ImGui::EndTable();
   }
+
+  ImGui::PopStyleColor();
   ImGui::End();
 }
-    
+
+
 void ImGuiLayer::DebugDepthMap(u32 tetxureID)
 {
   ImGuiStyle& style = ImGui::GetStyle();

@@ -8,6 +8,19 @@
 
 constexpr StringView SM_FILE_CONFIG{ "Shader_Manager.ini" };
 
+/* -------------------------------------------- */
+/*                  PUBLIC                      */
+/* -------------------------------------------- */
+
+void ShaderManager::Initialize()
+{
+  /* Load shader files */
+  LoadShaderFiles();
+
+  /* Load programs */
+  LoadProgramsFromConfig();
+}
+
 void ShaderManager::CleanUp()
 {
   /* Destoy all program objects */
@@ -22,77 +35,20 @@ void ShaderManager::CleanUp()
   Vector<Program>().swap(_programs);
 }
 
-void ShaderManager::LoadShadersFromDir(const fs::path& dirpath)
+void ShaderManager::ResetProgramsUniforms()
 {
-  if (!fs::exists(dirpath) || !fs::is_directory(dirpath))
-  {
-    CONSOLE_WARN("<dirpath> is not a valid path", dirpath.string().c_str());
-    return;
-  }
-
-  /* Load all shader files in "Shaders/" directory */
-  for (auto& entry : fs::directory_iterator(dirpath))
-  {
-    if (!fs::is_directory(entry))
-    {
-      String filename = entry.path().filename().string();
-      u32 pos = filename.find_last_of('.') + 1;
-      String ext = filename.substr(pos);
-      fs::path path = entry.path().lexically_normal();
-      CONSOLE_TRACE("Loading shader {}", path.string().c_str());
-
-      if (ext.compare("vert") == 0)
-        LoadShader(path, GL_VERTEX_SHADER);
-
-      else if (ext.compare("tesc") == 0)
-        LoadShader(path, GL_TESS_CONTROL_SHADER);
-      else if (ext.compare("tese") == 0)
-        LoadShader(path, GL_TESS_EVALUATION_SHADER);
-      else if (ext.compare("geom") == 0)
-        LoadShader(path, GL_GEOMETRY_SHADER);
-      else if (ext.compare("frag") == 0)
-        LoadShader(path, GL_FRAGMENT_SHADER);
-      else
-        CONSOLE_WARN("Error on loading shader {}: unknown .{} file extension", filename.c_str(), ext.c_str());
-    }
-  }
-}
-void ShaderManager::LoadPrograms()
-{
-  ConfigFile conf(ROOT_PATH / SM_FILE_CONFIG);
-  conf.ReadData();
-
-  for (auto const& it : conf.GetData())
-  {
-    const String& section = it.first;
-    const String& vertex = conf.GetValue(section, "vertex");
-    const String& tesc = conf.GetValue(section, "tess_control");
-    const String& tese = conf.GetValue(section, "tess_eval");
-    const String& geometry = conf.GetValue(section, "geometry");
-    const String& fragment = conf.GetValue(section, "fragment");
-
-    Shader* vertShader = GetShader(vertex.c_str());
-    Shader* tescShader = GetShader(tesc.c_str());
-    Shader* teseShader = GetShader(tese.c_str());
-    Shader* geomShader = GetShader(geometry.c_str());
-    Shader* fragShader = GetShader(fragment.c_str());
-    LoadProgram(section.c_str(), vertShader, tescShader, teseShader, geomShader, fragShader);
-  }
-}
-void ShaderManager::SetUpProgramsUniforms()
-{
-  auto framebufferProg = GetProgram("Framebuffer");
+  auto framebufferProg = GetProgramByName("Framebuffer");
   framebufferProg->SetUniform1i("u_fboImageTexture", 0);
   framebufferProg->SetUniform1i("u_postProcessingType", 0);
 
-  auto sceneProg = GetProgram("Scene");
+  auto sceneProg = GetProgramByName("Scene");
   sceneProg->SetUniform1i("u_material.diffuseTexture", 0);
   sceneProg->SetUniform1i("u_material.specularTexture", 1);
   sceneProg->SetUniform1i("u_material.normalTexture", 2);
   sceneProg->SetUniform1i("u_material.heightTexture", 3);
   sceneProg->SetUniform1i("u_useNormalMap", 0);
 
-  auto sceneShadowsProg = GetProgram("SceneShadows");
+  auto sceneShadowsProg = GetProgramByName("SceneShadows");
   sceneShadowsProg->SetUniform1i("u_material.diffuseTexture", 0);
   sceneShadowsProg->SetUniform1i("u_material.specularTexture", 1);
   sceneShadowsProg->SetUniform1i("u_material.normalTexture", 2);
@@ -101,16 +57,71 @@ void ShaderManager::SetUpProgramsUniforms()
   sceneShadowsProg->SetUniform1i("u_depthCubeMapTexture", 11);
   sceneShadowsProg->SetUniform1i("u_useNormalMap", 0);
 
-  auto skyboxProg = GetProgram("Skybox");
+  auto skyboxProg = GetProgramByName("Skybox");
   skyboxProg->SetUniform1i("u_skyboxTexture", 0);
 }
 
+Shader* ShaderManager::GetShaderByName(StringView filename)
+{
+  if (filename.empty())
+    return nullptr;
+
+  for (auto& shader : _shaders)
+    if (shader.filename == filename)
+      return &shader;
+
+  return nullptr;
+}
+
+Program* ShaderManager::GetProgramByName(StringView name)
+{
+  if (name.empty())
+    return nullptr;
+
+  for (auto& program : _programs)
+    if (program.name == name)
+      return &program;
+
+  return nullptr;
+}
+
+/* -------------------------------------------- */
+/*                  PRIVATE                     */
+/* -------------------------------------------- */
+
+void ShaderManager::LoadShaderFiles()
+{
+  for (auto& entry : fs::directory_iterator(SHADERS_PATH))
+  {
+    if (fs::is_directory(entry))
+      continue;
+
+    const fs::path& entryPath = entry.path();
+    const fs::path entryPathFilename = entryPath.filename();
+    const fs::path entryPathFilenameExt = entryPathFilename.extension();
+    const String filenameString = entryPathFilename.string();
+    CONSOLE_TRACE("Loading shader {}", filenameString.c_str());
+
+    if (entryPathFilenameExt == ".vert")
+      LoadShader(entryPath, GL_VERTEX_SHADER);
+    else if (entryPathFilenameExt == ".tesc")
+      LoadShader(entryPath, GL_TESS_CONTROL_SHADER);
+    else if (entryPathFilenameExt == ".tese")
+      LoadShader(entryPath, GL_TESS_EVALUATION_SHADER);
+    else if (entryPathFilenameExt == ".geom")
+      LoadShader(entryPath, GL_GEOMETRY_SHADER);
+    else if (entryPathFilenameExt == ".frag")
+      LoadShader(entryPath, GL_FRAGMENT_SHADER);
+    else
+      CONSOLE_WARN("Error on loading shader {}: unknown file extension", filenameString);
+  }
+}
 Shader& ShaderManager::LoadShader(const fs::path& filepath, i32 shaderType)
 {
   String filepathstr = filepath.string();
   if (!fs::exists(filepath))
     CONSOLE_WARN("File {} does not exist", filepathstr);
-  
+
   Shader& shader = _shaders.emplace_back();
   shader.Create(shaderType);
   shader.filename = filepath.filename().string();
@@ -129,18 +140,29 @@ Shader& ShaderManager::LoadShader(const fs::path& filepath, i32 shaderType)
 
   return shader;
 }
-Shader* ShaderManager::GetShader(StringView filename)
+
+void ShaderManager::LoadProgramsFromConfig()
 {
-  if (filename.empty())
-    return nullptr;
+  ConfigFile conf(ROOT_PATH / SM_FILE_CONFIG);
+  conf.ReadData();
 
-  for (auto& shader : _shaders)
-    if (shader.filename == filename)
-      return &shader;
+  for (auto const& it : conf.GetData())
+  {
+    const String& section = it.first;
+    const String& vertex = conf.GetValue(section, "vertex");
+    const String& tesc = conf.GetValue(section, "tess_control");
+    const String& tese = conf.GetValue(section, "tess_eval");
+    const String& geometry = conf.GetValue(section, "geometry");
+    const String& fragment = conf.GetValue(section, "fragment");
 
-  return nullptr;
+    Shader* vertShader = GetShaderByName(vertex);
+    Shader* tescShader = GetShaderByName(tesc);
+    Shader* teseShader = GetShaderByName(tese);
+    Shader* geomShader = GetShaderByName(geometry);
+    Shader* fragShader = GetShaderByName(fragment);
+    LoadProgram(section, vertShader, tescShader, teseShader, geomShader, fragShader);
+  }
 }
-
 Program& ShaderManager::LoadProgram(StringView name,
   Shader* vertex,
   Shader* tesc,
@@ -164,14 +186,4 @@ Program& ShaderManager::LoadProgram(StringView name,
 
   return program;
 }
-Program* ShaderManager::GetProgram(StringView name)
-{
-  if (name.empty())
-    return nullptr;
 
-  for (auto& program : _programs)
-    if (program.name == name)
-      return &program;
-
-  return nullptr;
-}

@@ -72,9 +72,10 @@ using OStream				= std::ofstream;
 
 /************** Default paths **************/
 /*******************************************/
-const fs::path ROOT_PATH			= fs::current_path().parent_path();
-const fs::path SHADERS_PATH		= ROOT_PATH / (fs::path("Resources/Shaders/").lexically_normal());
-const fs::path TEXTURES_PATH	= ROOT_PATH / (fs::path("Resources/Textures/").lexically_normal());
-const fs::path ICONS_PATH			= ROOT_PATH / (fs::path("Resources/Icons/").lexically_normal());
-const fs::path FONTS_PATH			= ROOT_PATH / (fs::path("Resources/Fonts/").lexically_normal());
-const fs::path ASSETS_PATH		= ROOT_PATH / (fs::path("Resources/Assets/").lexically_normal());
+const fs::path ROOT_PATH			= fs::current_path().parent_path().lexically_normal();
+const fs::path RESOURCE_PATH	= (ROOT_PATH			/ "Resources").lexically_normal();
+const fs::path SHADERS_PATH		= (RESOURCE_PATH	/ "Shaders").lexically_normal();
+const fs::path TEXTURES_PATH	= (RESOURCE_PATH	/ "Textures").lexically_normal();
+const fs::path ICONS_PATH			= (RESOURCE_PATH	/ "Icons").lexically_normal();
+const fs::path FONTS_PATH			= (RESOURCE_PATH	/ "Fonts").lexically_normal();
+const fs::path ASSETS_PATH		= (RESOURCE_PATH	/ "Assets").lexically_normal();

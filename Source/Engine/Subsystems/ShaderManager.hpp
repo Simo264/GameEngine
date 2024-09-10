@@ -22,17 +22,9 @@ public:
 	}
 
 	/**
-	 * Load all shaders from directory <dirpath>
+	 * Load all shaders and programs
 	 */
-	void LoadShadersFromDir(const fs::path& dirpath);
-
-	/**
-	 * Load all programs from configuration file SM_ProgConfig.ini
-	 * 
-	 */
-	void LoadPrograms();
-
-	void SetUpProgramsUniforms();
+	void Initialize();
 
 	/**
 	 * Destroy all shader objects and program objects
@@ -40,19 +32,34 @@ public:
 	void CleanUp();
 
 	/**
-	 * Load the shader object in shaders array
+	 * Reset uniform values of all programs
 	 */
-	Shader& LoadShader(const fs::path& filepath, i32 shaderType);
-	
-	/**
-	 * Retrieve the shader object from shaders array 
-	 */
-	Shader* GetShader(StringView filename);
+	void ResetProgramsUniforms();
 
 	/**
-	 * Load the program object in program array
-	 * @param name: the program name
+	 * Get the shader object by filename
 	 */
+	Shader* GetShaderByName(StringView filename);
+
+	/**
+	 * Retrieve the program object by name
+	 */
+	Program* GetProgramByName(StringView name);
+	
+	constexpr Vector<Shader>& GetShadersVector() { return _shaders; }
+	constexpr Vector<Program>& GetProgramsVector() { return _programs; }
+
+private:
+	ShaderManager() = default;
+	~ShaderManager() = default;
+
+	Vector<Shader>	_shaders;
+	Vector<Program> _programs;
+
+	void LoadShaderFiles();
+	void LoadProgramsFromConfig();
+
+	Shader& LoadShader(const fs::path& filepath, i32 shaderType);
 	Program& LoadProgram(StringView name,
 		Shader* vertex,
 		Shader* tesc,
@@ -61,18 +68,4 @@ public:
 		Shader* fragment
 	);
 
-	/**
-	 * Retrieve the program object from program array
-	 */
-	Program* GetProgram(StringView name);
-	
-	const Vector<Shader>& GetShadersVector() { return _shaders; }
-	const Vector<Program>& GetProgramsVector() { return _programs; }
-
-private:
-	ShaderManager() = default;
-	~ShaderManager() = default;
-
-	Vector<Shader>	_shaders;
-	Vector<Program> _programs;
 };

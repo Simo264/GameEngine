@@ -78,9 +78,9 @@ public:
 	void WorldProps();
 
 	/**
-	 * Render the texture list frame
+	 * Render the content browser frame
 	 */
-	void TextureList();
+	void ContentBrowser();
 
 	/**
 	 * Render the camera props frame

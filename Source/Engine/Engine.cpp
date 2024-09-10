@@ -259,18 +259,7 @@ static FrameBuffer CreateDepthCubeMapFbo(i32 width, i32 height)
   return fbo;
 }
 
-static Texture2D CreateDefaultTexture(Array<u8, 3> textureData)
-{
-  Texture2D texture(GL_TEXTURE_2D);
-  texture.Create();
-  texture.CreateStorage(GL_RGB8, 1, 1);
-  texture.UpdateStorage(0, 0, 0, GL_UNSIGNED_BYTE, textureData.data());
-  texture.SetParameteri(GL_TEXTURE_WRAP_S, GL_REPEAT);
-  texture.SetParameteri(GL_TEXTURE_WRAP_T, GL_REPEAT);
-  texture.SetParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  texture.SetParameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  return texture;
-}
+
 static VertexArray CreateTerrain(i32 rez)
 {
   VertexArray vao;
@@ -361,25 +350,13 @@ void Engine::Initialize()
   /* Initialize shader manager */
   /* ------------------------- */
   ShaderManager& shaderManager = ShaderManager::Get();
-  shaderManager.LoadShadersFromDir(SHADERS_PATH);
-  shaderManager.LoadPrograms();
-  shaderManager.SetUpProgramsUniforms();
+  shaderManager.Initialize();
   CONSOLE_INFO("Shader manager initialized");
 
   /* Initialize texture manager */
   /* -------------------------- */
-  /* !!The first 4 positions are reserved for the default textures */
-  Texture2D defaultDiffuseTexture = CreateDefaultTexture(Array<u8, 3>{ 128, 128, 255 });
-  Texture2D defaultSpecularTexture = CreateDefaultTexture(Array<u8, 3>{ 255, 255, 255 });
-  Texture2D defaultNormalTexture = CreateDefaultTexture(Array<u8, 3>{ 0, 0, 0 });
-  Texture2D defaultHeightTexture = CreateDefaultTexture(Array<u8, 3>{ 0, 0, 0 });
   TextureManager& textureManager = TextureManager::Get();
-  textureManager.LoadTexture(defaultDiffuseTexture);
-  textureManager.LoadTexture(defaultSpecularTexture);
-  textureManager.LoadTexture(defaultNormalTexture);
-  textureManager.LoadTexture(defaultHeightTexture);
-  textureManager.LoadTexturesFromDir(TEXTURES_PATH);
-  textureManager.LoadTextureIconsFromDir(ICONS_PATH);
+  textureManager.Initialize();
   CONSOLE_INFO("Texture manager initialized");
 
   /* Create Framebuffer object */
@@ -440,14 +417,14 @@ void Engine::Run()
   TextureManager& textureManager = TextureManager::Get();
   ImGuiLayer& gui = ImGuiLayer::Get();
 
-  Program* framebufferProgram = shaderManager.GetProgram("Framebuffer");
-  Program* sceneProgram = shaderManager.GetProgram("Scene");
-  Program* sceneShadowsProgram = shaderManager.GetProgram("SceneShadows");
-  Program* depthMapProgram = shaderManager.GetProgram("DepthMap");
-  Program* depthCubeMapProgram = shaderManager.GetProgram("DepthCubeMap");
-  Program* skyboxProgram = shaderManager.GetProgram("Skybox");
-  Program* terrainProgram = shaderManager.GetProgram("Terrain");
-  Program* glyphProgram = shaderManager.GetProgram("Glyph");
+  Program* framebufferProgram = shaderManager.GetProgramByName("Framebuffer");
+  Program* sceneProgram = shaderManager.GetProgramByName("Scene");
+  Program* sceneShadowsProgram = shaderManager.GetProgramByName("SceneShadows");
+  Program* depthMapProgram = shaderManager.GetProgramByName("DepthMap");
+  Program* depthCubeMapProgram = shaderManager.GetProgramByName("DepthCubeMap");
+  Program* skyboxProgram = shaderManager.GetProgramByName("Skybox");
+  Program* terrainProgram = shaderManager.GetProgramByName("Terrain");
+  Program* glyphProgram = shaderManager.GetProgramByName("Glyph");
   u32 fboTexture = _fboIntermediate.GetTextureAttachment(0);
   u32 depthMapTexture = fboDepthMap.GetTextureAttachment(0);
   u32 depthCubeMapTexture = fboDepthCubeMap.GetTextureAttachment(0);
@@ -655,7 +632,7 @@ void Engine::Run()
 
     gui.MenuBar(scene);
     gui.ApplicationInfo(delta, avgTime, frameRate);
-    gui.TextureList();
+    gui.ContentBrowser();
     //gui.CameraProps("Primary camera", primaryCamera);
     //gui.CameraProps("DirecLight camera", directLightCamera);
     //gui.RenderWorld();
