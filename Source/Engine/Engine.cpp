@@ -316,6 +316,7 @@ static VertexArray CreateTerrain(i32 rez)
   return vao;
 }
 
+
 /* -----------------------------------------------------
  *          PUBLIC METHODS
  * -----------------------------------------------------
@@ -377,6 +378,39 @@ void Engine::Initialize()
 }
 void Engine::Run()
 {
+  /* Create grid plane */
+  VertexArray gridVao;
+  Buffer gridVbo;
+  {
+    f32 vertices[] = {
+       1.f,  1.f, 0.f,
+      -1.f, -1.f, 0.f,
+      -1.f,  1.f, 0.f,
+      -1.f, -1.f, 0.f,
+       1.f,  1.f, 0.f,
+       1.f, -1.f, 0.f
+    };
+
+    gridVao.Create();
+    gridVao.SetAttribFormat(0, 3, GL_FLOAT, true, 0);
+    gridVao.SetAttribBinding(0, 0);
+    gridVao.EnableAttribute(0);
+
+    gridVbo.target = GL_ARRAY_BUFFER;
+    gridVbo.Create();
+    gridVbo.CreateStorage(sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    gridVao.AttachVertexBuffer(0, gridVbo.id, 0, 3 * sizeof(f32));
+    gridVao.numVertices = 6;
+    gridVao.numIndices = 0;
+  }
+  
+
+
+  
+  
+
+
   /* Create skybox object */
   TextureCubemap skyboxTexture;
   VertexArray skybox;
@@ -393,8 +427,10 @@ void Engine::Run()
 
   /* Create primary camera object */
   Camera primaryCamera(vec3f(20.0f, 6.0f, 0.0f));
-  primaryCamera.yaw = 180.0f;
-  primaryCamera.frustum.zFar = 100.0f;
+  primaryCamera.position = vec3f(0.f);
+  primaryCamera.frustum.zFar = 100.f;
+  //primaryCamera.yaw = 180.0f;
+  //primaryCamera.frustum.zFar = 100.0f;
 
   /* Setting up the directional shadow mapping  */
   FrameBuffer fboDepthMap = CreateDepthMapFbo(1024, 1024);
@@ -423,6 +459,7 @@ void Engine::Run()
   Program& depthCubeMapProgram = shaderManager.GetProgramByName("DepthCubeMap");
   Program& skyboxProgram = shaderManager.GetProgramByName("Skybox");
   Program& terrainProgram = shaderManager.GetProgramByName("Terrain");
+  Program& gridPlaneProgram = shaderManager.GetProgramByName("GridPlane");
   u32 fboTexture = _fboIntermediate.GetTextureAttachment(0);
   u32 depthMapTexture = fboDepthMap.GetTextureAttachment(0);
   u32 depthCubeMapTexture = fboDepthCubeMap.GetTextureAttachment(0);
@@ -451,7 +488,6 @@ void Engine::Run()
   while (windowManager.IsOpen())
   {
     gui.BeginFrame();
-    gui.Docking();
 
     /* ---------------------------------------------------------------------------------- */
     /* -------------------------- Per-frame time logic section -------------------------- */
@@ -496,70 +532,70 @@ void Engine::Run()
     primaryCamera.UpdateOrientation();
     mat4f cameraView = primaryCamera.CalculateView(primaryCamera.position + primaryCamera.GetFrontVector());
     mat4f cameraProj = primaryCamera.CalculatePerspective(static_cast<f32>(_viewportSize.x) / static_cast<f32>(_viewportSize.y));
-    _uboCamera.UpdateStorage(0, sizeof(mat4f), &cameraView[0]);
-    _uboCamera.UpdateStorage(sizeof(mat4f), sizeof(mat4f), &cameraProj[0]);
+    _uboCamera.UpdateStorage(0, sizeof(cameraView), &cameraView[0]);
+    _uboCamera.UpdateStorage(sizeof(cameraView), sizeof(cameraProj), &cameraProj[0]);
 
-    directLightCamera.UpdateOrientation();
-    mat4f directLightProjection = directLightCamera.CalculateOrtho();
-    mat4f directLightView = directLightCamera.CalculateView(directionalLight->direction);
+    //directLightCamera.UpdateOrientation();
+    //mat4f directLightProjection = directLightCamera.CalculateOrtho();
+    //mat4f directLightView = directLightCamera.CalculateView(directionalLight->direction);
 
     /* ----------------------------------------------------------------------- */
     /* -------------------------- Rendering section -------------------------- */
     /* ----------------------------------------------------------------------- */
 
-    /* Fill the depth map from directional light's perspective */
-    fboDepthMap.Bind(GL_FRAMEBUFFER);
-    {
-      glViewport(0, 0, 1024, 1024);
-      glClear(GL_DEPTH_BUFFER_BIT);
-      depthMapProgram.Use();
-      depthMapProgram.SetUniformMat4f("u_lightView", directLightView);
-      depthMapProgram.SetUniformMat4f("u_lightProjection", directLightProjection);
-      scene.Reg().view<Components::Model, Components::Transform>().each([&](auto& model, auto& transform) {
-        depthMapProgram.SetUniformMat4f("u_model", transform.GetTransformation());
-        std::for_each(model.meshes.begin(), model.meshes.end(), [&](auto& mesh) {
-          mesh.DrawMesh(GL_TRIANGLES);
-        });
-      });
-    }
-    fboDepthMap.Unbind(GL_FRAMEBUFFER);
+    ///* Fill the depth map from directional light's perspective */
+    //fboDepthMap.Bind(GL_FRAMEBUFFER);
+    //{
+    //  glViewport(0, 0, 1024, 1024);
+    //  glClear(GL_DEPTH_BUFFER_BIT);
+    //  depthMapProgram.Use();
+    //  depthMapProgram.SetUniformMat4f("u_lightView", directLightView);
+    //  depthMapProgram.SetUniformMat4f("u_lightProjection", directLightProjection);
+    //  scene.Reg().view<Components::Model, Components::Transform>().each([&](auto& model, auto& transform) {
+    //    depthMapProgram.SetUniformMat4f("u_model", transform.GetTransformation());
+    //    std::for_each(model.meshes.begin(), model.meshes.end(), [&](auto& mesh) {
+    //      mesh.DrawMesh(GL_TRIANGLES);
+    //    });
+    //  });
+    //}
+    //fboDepthMap.Unbind(GL_FRAMEBUFFER);
 
-    /* Fill the depth map from point light's perspective */
-    fboDepthCubeMap.Bind(GL_FRAMEBUFFER);
-    {
-      glViewport(0, 0, 1024, 1024);
-      glClear(GL_DEPTH_BUFFER_BIT);
+    ///* Fill the depth map from point light's perspective */
+    //fboDepthCubeMap.Bind(GL_FRAMEBUFFER);
+    //{
+    //  glViewport(0, 0, 1024, 1024);
+    //  glClear(GL_DEPTH_BUFFER_BIT);
 
-      const vec3f& lightPos = pointLight->position;
-      mat4f pointLightProj = Math::Perspective(Math::Radians(90.0f), 1.0f, 0.1f, 15.0f);
+    //  const vec3f& lightPos = pointLight->position;
+    //  mat4f pointLightProj = Math::Perspective(Math::Radians(90.0f), 1.0f, 0.1f, 15.0f);
 
-      Array<mat4f, 6> pointLightViews{};
-      pointLightViews[0] = Math::LookAt(lightPos, lightPos + vec3f(1.0f, 0.0f, 0.0f), vec3f(0.0f, -1.0f, 0.0f));
-      pointLightViews[1] = Math::LookAt(lightPos, lightPos + vec3f(-1.0f, 0.0f, 0.0f), vec3f(0.0f, -1.0f, 0.0f));
-      pointLightViews[2] = Math::LookAt(lightPos, lightPos + vec3f(0.0f, 1.0f, 0.0f), vec3f(0.0f, 0.0f, 1.0f));
-      pointLightViews[3] = Math::LookAt(lightPos, lightPos + vec3f(0.0f, -1.0f, 0.0f), vec3f(0.0f, 0.0f, -1.0f));
-      pointLightViews[4] = Math::LookAt(lightPos, lightPos + vec3f(0.0f, 0.0f, 1.0f), vec3f(0.0f, -1.0f, 0.0f));
-      pointLightViews[5] = Math::LookAt(lightPos, lightPos + vec3f(0.0f, 0.0f, -1.0f), vec3f(0.0f, -1.0f, 0.0f));
+    //  Array<mat4f, 6> pointLightViews{};
+    //  pointLightViews[0] = Math::LookAt(lightPos, lightPos + vec3f(1.0f, 0.0f, 0.0f), vec3f(0.0f, -1.0f, 0.0f));
+    //  pointLightViews[1] = Math::LookAt(lightPos, lightPos + vec3f(-1.0f, 0.0f, 0.0f), vec3f(0.0f, -1.0f, 0.0f));
+    //  pointLightViews[2] = Math::LookAt(lightPos, lightPos + vec3f(0.0f, 1.0f, 0.0f), vec3f(0.0f, 0.0f, 1.0f));
+    //  pointLightViews[3] = Math::LookAt(lightPos, lightPos + vec3f(0.0f, -1.0f, 0.0f), vec3f(0.0f, 0.0f, -1.0f));
+    //  pointLightViews[4] = Math::LookAt(lightPos, lightPos + vec3f(0.0f, 0.0f, 1.0f), vec3f(0.0f, -1.0f, 0.0f));
+    //  pointLightViews[5] = Math::LookAt(lightPos, lightPos + vec3f(0.0f, 0.0f, -1.0f), vec3f(0.0f, -1.0f, 0.0f));
 
-      depthCubeMapProgram.Use();
-      depthCubeMapProgram.SetUniformMat4f("u_lightProjection", pointLightProj);
-      depthCubeMapProgram.SetUniformMat4f("u_lightViews[0]", pointLightViews.at(0));
-      depthCubeMapProgram.SetUniformMat4f("u_lightViews[1]", pointLightViews.at(1));
-      depthCubeMapProgram.SetUniformMat4f("u_lightViews[2]", pointLightViews.at(2));
-      depthCubeMapProgram.SetUniformMat4f("u_lightViews[3]", pointLightViews.at(3));
-      depthCubeMapProgram.SetUniformMat4f("u_lightViews[4]", pointLightViews.at(4));
-      depthCubeMapProgram.SetUniformMat4f("u_lightViews[5]", pointLightViews.at(5));
-      depthCubeMapProgram.SetUniform3f("u_lightPos", lightPos);
-      depthCubeMapProgram.SetUniform1f("u_zFar", 15.0f);
+    //  depthCubeMapProgram.Use();
+    //  depthCubeMapProgram.SetUniformMat4f("u_lightProjection", pointLightProj);
+    //  depthCubeMapProgram.SetUniformMat4f("u_lightViews[0]", pointLightViews.at(0));
+    //  depthCubeMapProgram.SetUniformMat4f("u_lightViews[1]", pointLightViews.at(1));
+    //  depthCubeMapProgram.SetUniformMat4f("u_lightViews[2]", pointLightViews.at(2));
+    //  depthCubeMapProgram.SetUniformMat4f("u_lightViews[3]", pointLightViews.at(3));
+    //  depthCubeMapProgram.SetUniformMat4f("u_lightViews[4]", pointLightViews.at(4));
+    //  depthCubeMapProgram.SetUniformMat4f("u_lightViews[5]", pointLightViews.at(5));
+    //  depthCubeMapProgram.SetUniform3f("u_lightPos", lightPos);
+    //  depthCubeMapProgram.SetUniform1f("u_zFar", 15.0f);
 
-      scene.Reg().view<Components::Model, Components::Transform>().each([&](auto& model, auto& transform) {
-        depthCubeMapProgram.SetUniformMat4f("u_model", transform.GetTransformation());
-        std::for_each(model.meshes.begin(), model.meshes.end(), [&](auto& mesh) {
-          mesh.DrawMesh(GL_TRIANGLES);
-          });
-        });
-    }
-    fboDepthCubeMap.Unbind(GL_FRAMEBUFFER);
+    //  scene.Reg().view<Components::Model, Components::Transform>().each([&](auto& model, auto& transform) {
+    //    depthCubeMapProgram.SetUniformMat4f("u_model", transform.GetTransformation());
+    //    std::for_each(model.meshes.begin(), model.meshes.end(), [&](auto& mesh) {
+    //      mesh.DrawMesh(GL_TRIANGLES);
+    //      });
+    //    });
+    //}
+    //fboDepthCubeMap.Unbind(GL_FRAMEBUFFER);
 
     /* Fill the framebuffer color texture */
     _fboMultisampled.Bind(GL_FRAMEBUFFER);
@@ -569,6 +605,9 @@ void Engine::Run()
 
       glPolygonMode(GL_FRONT, wireframeMode ? GL_LINE : GL_FILL);
       glPolygonMode(GL_BACK, wireframeMode ? GL_LINE : GL_FILL);
+
+
+
 
       ///* Render terrain */
       //{
@@ -581,30 +620,30 @@ void Engine::Run()
       //  Renderer::DrawArrays(GL_PATCHES, terrain);
       //}
 
-      /* Render scene with shadows map */
-      if (shadowMode)
-      {
-        sceneShadowsProgram.Use();
-        sceneShadowsProgram.SetUniform3f("u_viewPos", primaryCamera.position);
-        sceneShadowsProgram.SetUniform3f("u_ambientLightColor", g_ambientColor);
-        sceneShadowsProgram.SetUniform1f("u_ambientLightIntensity", g_ambientIntensity);
-        sceneShadowsProgram.SetUniformMat4f("u_lightView", directLightView);
-        sceneShadowsProgram.SetUniformMat4f("u_lightProjection", directLightProjection);
-        sceneShadowsProgram.SetUniform1i("u_useNormalMap", normalMapMode);
-        glBindTextureUnit(10, depthMapTexture);
-        glBindTextureUnit(11, depthCubeMapTexture);
-        RenderScene(scene, sceneShadowsProgram);
-      }
-      /* Render scene with no shadows */
-      else
-      {
+      ///* Render scene with shadows map */
+      //if (shadowMode)
+      //{
+      //  sceneShadowsProgram.Use();
+      //  sceneShadowsProgram.SetUniform3f("u_viewPos", primaryCamera.position);
+      //  sceneShadowsProgram.SetUniform3f("u_ambientLightColor", g_ambientColor);
+      //  sceneShadowsProgram.SetUniform1f("u_ambientLightIntensity", g_ambientIntensity);
+      //  sceneShadowsProgram.SetUniformMat4f("u_lightView", directLightView);
+      //  sceneShadowsProgram.SetUniformMat4f("u_lightProjection", directLightProjection);
+      //  sceneShadowsProgram.SetUniform1i("u_useNormalMap", normalMapMode);
+      //  glBindTextureUnit(10, depthMapTexture);
+      //  glBindTextureUnit(11, depthCubeMapTexture);
+      //  RenderScene(scene, sceneShadowsProgram);
+      //}
+      ///* Render scene with no shadows */
+      //else
+      //{
         sceneProgram.Use();
         sceneProgram.SetUniform3f("u_viewPos", primaryCamera.position);
         sceneProgram.SetUniform3f("u_ambientLightColor", g_ambientColor);
         sceneProgram.SetUniform1f("u_ambientLightIntensity", g_ambientIntensity);
         sceneProgram.SetUniform1i("u_useNormalMap", normalMapMode);
         RenderScene(scene, sceneProgram);
-      }
+      //}
 
       ///* Draw skybox after the scene */
       //{
@@ -616,6 +655,13 @@ void Engine::Run()
       //  Renderer::DrawArrays(GL_TRIANGLES, skybox);
       //  Depth::SetFunction(GL_LESS); 
       //}
+
+      /* Render grid */
+      gridPlaneProgram.Use();
+      gridPlaneProgram.SetUniform1f("zNear", 1.0f);
+      gridPlaneProgram.SetUniform1f("zFar", primaryCamera.frustum.zFar);
+      Renderer::DrawArrays(GL_TRIANGLES, gridVao);
+
 
       /* Blit multisampled buffer to normal colorbuffer of intermediate FBO */
       _fboMultisampled.Blit(_fboIntermediate,
@@ -631,15 +677,13 @@ void Engine::Run()
     gui.MenuBar(scene);
     gui.DebugInfo(delta, avgTime, frameRate, shadowMode, normalMapMode, wireframeMode);
     gui.ContentBrowser();
-    //gui.CameraProps("Primary camera", primaryCamera);
-    //gui.CameraProps("DirecLight camera", directLightCamera);
-    //gui.RenderWorld();
-    //gui.DebugDepthMap(depthMapTexture);
+    gui.OutlinerPanel(scene);
     //gui.Demo();
 
-    GameObject objectSelected = gui.OutlinerPanel(scene);
+    GameObject& objectSelected = gui.objectSelected;
     gui.GameObjectDetails(objectSelected);
     gui.ViewportGizmo(fboTexture, objectSelected, cameraView, cameraProj);
+    gui.EndFrame();
 
     /* Checking viewport size */
     if (_viewportSize != gui.viewportSize)
@@ -653,14 +697,13 @@ void Engine::Run()
     /* ------------------------------------------------------------------ */
     /* -------------------------- Swap buffers -------------------------- */
     /* ------------------------------------------------------------------ */
-    gui.EndFrame();
     frames++;
     windowManager.SwapWindowBuffers();
   }
-
+  
   fboDepthCubeMap.Delete();
   fboDepthMap.Delete();
-
+  
   skybox.Delete();
   skyboxTexture.Delete();
 }

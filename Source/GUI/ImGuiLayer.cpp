@@ -78,6 +78,8 @@ void ImGuiLayer::BeginFrame()
   ImGui_ImplGlfw_NewFrame();
   ImGui::Begin();
   ImGuizmo::BeginFrame();
+
+  Docking();
 }
 void ImGuiLayer::EndFrame()
 {
@@ -98,33 +100,7 @@ void ImGuiLayer::SetFont(const fs::path& fontpath, i32 fontsize)
   ImGuiIO& io = ImGui::GetIO();
   io.Fonts->AddFontFromFileTTF(fontpath.string().c_str(), fontsize);
 }
-void ImGuiLayer::Docking()
-{
-  ImGuiWindowFlags windowFlags = ImGuiWindowFlags_MenuBar |
-    ImGuiWindowFlags_NoDocking |
-    ImGuiWindowFlags_NoBackground |
-    ImGuiWindowFlags_NoTitleBar |
-    ImGuiWindowFlags_NoCollapse |
-    ImGuiWindowFlags_NoResize |
-    ImGuiWindowFlags_NoBringToFrontOnFocus |
-    ImGuiWindowFlags_NoNavFocus |
-    ImGuiWindowFlags_NoMove;
 
-  const ImGuiViewport* viewport = ImGui::GetMainViewport();
-  ImGui::SetNextWindowPos(viewport->WorkPos);
-  ImGui::SetNextWindowSize(viewport->WorkSize);
-  ImGui::SetNextWindowViewport(viewport->ID);
-  ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-  ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-  ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-
-  ImGui::Begin("Dockspace", nullptr, windowFlags);
-
-  ImGui::PopStyleVar(3);
-  ImGuiID dockspaceID = ImGui::GetID("Dockspace");
-  ImGui::DockSpace(dockspaceID, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_PassthruCentralNode);
-  ImGui::End();
-}
 void ImGuiLayer::Demo()
 {
   static bool visible = true;
@@ -194,10 +170,10 @@ void ImGuiLayer::ViewportGizmo(u32 tetxureID, GameObject& object, const mat4f& v
   viewportSize = { viewportWinSize.x, viewportWinSize.y };
   viewportPos = { viewportWinPos.x, viewportWinPos.y };
   viewportFocused = ImGui::IsWindowFocused();
-  
+
   /* Being child viewport */
   ImGui::BeginChild("Viewport_Child");
-  viewportFocused = viewportFocused || ImGui::IsWindowFocused();
+  viewportFocused |= ImGui::IsWindowFocused();
 
   const ImVec2 viewportChildWinSize = ImGui::GetWindowSize();
   ImGui::Image(reinterpret_cast<void*>(tetxureID), viewportChildWinSize, ImVec2(0, 1), ImVec2(1, 0));
@@ -238,10 +214,10 @@ void ImGuiLayer::ViewportGizmo(u32 tetxureID, GameObject& object, const mat4f& v
 
   style.WindowPadding = paddingTmp;
 }
-GameObject ImGuiLayer::OutlinerPanel(Scene& scene)
+void ImGuiLayer::OutlinerPanel(Scene& scene)
 {
   static char nodeName[64]{};
-  static GameObject objectSelected{};
+
     
   static bool visible = true;
   if (visible)
@@ -276,17 +252,14 @@ GameObject ImGuiLayer::OutlinerPanel(Scene& scene)
     }
     ImGui::End();
   }
-
-  return objectSelected;
 }
 void ImGuiLayer::GameObjectDetails(GameObject& object)
 {
   static bool visible = true;
-
-  if (!object.IsValid())
+  if (!visible)
     return;
 
-  if (!visible)
+  if (!object.IsValid())
     return;
 
   ImGui::Begin("Details", &visible);
@@ -605,9 +578,37 @@ ImGuiLayer::ImGuiLayer()
   : viewportFocused{ false },
     viewportSize{},
     viewportPos{},
+    objectSelected{},
     _gizmode{ ImGuizmo::OPERATION::TRANSLATE }
 {}
 
+void ImGuiLayer::Docking()
+{
+  ImGuiWindowFlags windowFlags = ImGuiWindowFlags_MenuBar |
+    ImGuiWindowFlags_NoDocking |
+    ImGuiWindowFlags_NoBackground |
+    ImGuiWindowFlags_NoTitleBar |
+    ImGuiWindowFlags_NoCollapse |
+    ImGuiWindowFlags_NoResize |
+    ImGuiWindowFlags_NoBringToFrontOnFocus |
+    ImGuiWindowFlags_NoNavFocus |
+    ImGuiWindowFlags_NoMove;
+
+  const ImGuiViewport* viewport = ImGui::GetMainViewport();
+  ImGui::SetNextWindowPos(viewport->WorkPos);
+  ImGui::SetNextWindowSize(viewport->WorkSize);
+  ImGui::SetNextWindowViewport(viewport->ID);
+  ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+  ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+  ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+
+  ImGui::Begin("Dockspace", nullptr, windowFlags);
+
+  ImGui::PopStyleVar(3);
+  ImGuiID dockspaceID = ImGui::GetID("Dockspace");
+  ImGui::DockSpace(dockspaceID, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_PassthruCentralNode);
+  ImGui::End();
+}
 void ImGuiLayer::GizmoWorldTranslation(Components::Transform& transform, const mat4f& view, const mat4f& proj)
 {
   mat4f& model = transform.GetTransformation();

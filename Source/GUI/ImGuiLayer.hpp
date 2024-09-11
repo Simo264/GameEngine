@@ -43,11 +43,6 @@ public:
 	void SetFont(const fs::path& fontpath, i32 fontsize);
 
 	/**
-	 * Set the dockspace (call every frame!)
-	 */
-	void Docking();
-
-	/**
 	 * Render the menu bar
 	 */
 	void MenuBar(Scene& scene);
@@ -65,7 +60,7 @@ public:
 	/**
 	 * Render the outliner frame
 	 */
-	GameObject OutlinerPanel(Scene& scene);
+	void OutlinerPanel(Scene& scene);
 
 	/**
 	 * Render the game object details frame
@@ -110,12 +105,18 @@ public:
 	vec2i32 viewportSize;
 	vec2i32 viewportPos;
 	bool viewportFocused;
+	GameObject objectSelected;
 
 private:
 	ImGuiLayer();
 	~ImGuiLayer() = default;
 
 	i32 _gizmode;
+
+	/**
+	 * Set the dockspace
+	 */
+	void Docking();
 
 	void GizmoWorldTranslation(Components::Transform& transform, const mat4f& view, const mat4f& proj);
 	void GizmoWorldRotation(Components::Transform& transform, const mat4f& view, const mat4f& proj);
