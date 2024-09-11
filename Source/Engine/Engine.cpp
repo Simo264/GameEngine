@@ -272,7 +272,8 @@ static VertexArray CreateTerrain(i32 rez)
   vao.SetAttribBinding(1, 0);
   vao.EnableAttribute(1);
 
-  Texture2D& heightMap = TextureManager::Get().GetTextureByPath(GetTexturesPath() / "iceland_heightmap.png");
+  auto& texManager = TextureManager::Get();
+  Texture2D& heightMap = texManager.GetTextureByPath(GetTexturesPath() / "iceland_heightmap.png");
   i32 width = heightMap.width;
   i32 height = heightMap.height;
 

@@ -69,7 +69,7 @@ private:
 	void LoadShaderFiles();
 	void LoadProgramsFromConfig();
 
-	void LoadShader(const fs::path& filepath, i32 shaderType);
+	void LoadShader(StringView pathString, StringView filename, i32 shaderType);
 	void LoadProgram(StringView name,
 		Shader* vertex,
 		Shader* tesc,

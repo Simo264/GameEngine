@@ -34,25 +34,24 @@ constexpr const char* ATTENUATION_LABELS[]{
   "3250m"
 };
 constexpr Array<Tuple<f32, f32>, 12> ATTENUATION_VALUES = {
-  std::make_tuple<f32,f32>(0.7f, 1.8f),         // 7 meters
-  std::make_tuple<f32,f32>(0.35f, 0.44f),       // 13 meters
-  std::make_tuple<f32,f32>(0.22f, 0.20f),       // 20 meters
-  std::make_tuple<f32,f32>(0.14f, 0.07f),       // 32 meters
-  std::make_tuple<f32,f32>(0.09f, 0.032f),      // 50 meters
-  std::make_tuple<f32,f32>(0.07f, 0.017f),      // 65 meters
-  std::make_tuple<f32,f32>(0.045f, 0.0075f),    // 100 meters
-  std::make_tuple<f32,f32>(0.027f, 0.0028f),    // 160 meters
-  std::make_tuple<f32,f32>(0.022f, 0.0019f),    // 200 meters
-  std::make_tuple<f32,f32>(0.014f, 0.0007f),    // 325 meters
-  std::make_tuple<f32,f32>(0.007f, 0.0002f),    // 600 meters
-  std::make_tuple<f32,f32>(0.0014f, 0.000007f), // 3250 meters
+  std::make_tuple<f32,f32>(0.7f, 1.8f),         /* 7 meters */ 
+  std::make_tuple<f32,f32>(0.35f, 0.44f),       /* 13 meters */
+  std::make_tuple<f32,f32>(0.22f, 0.20f),       /* 20 meters */
+  std::make_tuple<f32,f32>(0.14f, 0.07f),       /* 32 meters */
+  std::make_tuple<f32,f32>(0.09f, 0.032f),      /* 50 meters */
+  std::make_tuple<f32,f32>(0.07f, 0.017f),      /* 65 meters */
+  std::make_tuple<f32,f32>(0.045f, 0.0075f),    /* 100 meters */
+  std::make_tuple<f32,f32>(0.027f, 0.0028f),    /* 160 meters */
+  std::make_tuple<f32,f32>(0.022f, 0.0019f),    /* 200 meters */
+  std::make_tuple<f32,f32>(0.014f, 0.0007f),    /* 325 meters */
+  std::make_tuple<f32,f32>(0.007f, 0.0002f),    /* 600 meters */
+  std::make_tuple<f32,f32>(0.0014f, 0.000007f), /* 3250 meters */
 };
 
 
 /* -------------------------- */
 /*          PUBLIC            */
 /* -------------------------- */
-
 
 void ImGuiLayer::SetupContext()
 {
@@ -67,14 +66,12 @@ void ImGuiLayer::SetupContext()
   ImGui_ImplGlfw_InitForOpenGL(WindowManager::Get().GetCurrentContext(), true);
   ImGui_ImplOpenGL3_Init("#version 460");
 }
-  
 void ImGuiLayer::CleanUp()
 {
   ImGui_ImplOpenGL3_Shutdown();
   ImGui_ImplGlfw_Shutdown();
   ImGui::DestroyContext();
 }
-
 void ImGuiLayer::BeginFrame()
 {
   ImGui_ImplOpenGL3_NewFrame();
@@ -82,7 +79,6 @@ void ImGuiLayer::BeginFrame()
   ImGui::Begin();
   ImGuizmo::BeginFrame();
 }
-  
 void ImGuiLayer::EndFrame()
 {
   ImGui::RenderPanel();
@@ -97,13 +93,11 @@ void ImGuiLayer::EndFrame()
     windowManager.MakeContextCurrent(backCurrentContext);
   }
 }
-
 void ImGuiLayer::SetFont(const fs::path& fontpath, i32 fontsize)
 {
   ImGuiIO& io = ImGui::GetIO();
   io.Fonts->AddFontFromFileTTF(fontpath.string().c_str(), fontsize);
 }
-  
 void ImGuiLayer::Docking()
 {
   ImGuiWindowFlags windowFlags = ImGuiWindowFlags_MenuBar |
@@ -131,7 +125,6 @@ void ImGuiLayer::Docking()
   ImGui::DockSpace(dockspaceID, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_PassthruCentralNode);
   ImGui::End();
 }
-  
 void ImGuiLayer::Demo()
 {
   static bool visible = true;
@@ -141,7 +134,6 @@ void ImGuiLayer::Demo()
   ImGui::SetNextWindowBgAlpha(0.0f);
   ImGui::ShowDemoWindow(&visible);
 }
-  
 void ImGuiLayer::MenuBar(Scene& scene)
 {
   if(ImGui::BeginMainMenuBar())
@@ -190,7 +182,6 @@ void ImGuiLayer::MenuBar(Scene& scene)
     ImGui::EndMainMenuBar();
   }
 }
-  
 void ImGuiLayer::ViewportGizmo(u32 tetxureID, GameObject& object, const mat4f& view, const mat4f& proj)
 {
   ImGuiStyle& style = ImGui::GetStyle();
@@ -248,7 +239,6 @@ void ImGuiLayer::ViewportGizmo(u32 tetxureID, GameObject& object, const mat4f& v
 
   style.WindowPadding = paddingTmp;
 }
-
 GameObject ImGuiLayer::OutlinerPanel(Scene& scene)
 {
   static char nodeName[64]{};
@@ -291,7 +281,6 @@ GameObject ImGuiLayer::OutlinerPanel(Scene& scene)
 
   return objectSelected;
 }
-  
 void ImGuiLayer::GameObjectDetails(GameObject& object)
 {
   static bool visible = true;
@@ -399,31 +388,35 @@ void ImGuiLayer::GameObjectDetails(GameObject& object)
         std::format_to_n(title, sizeof(title), "Mesh {}", i);
         ImGui::SeparatorText(title);
           
-        const auto& diffPath = material.diffuse->path;
-        ImGui::TextWrapped("Diffuse: %s", (diffPath.empty() ? "None" : diffPath.string().c_str()));
+        const String& diffPath = material.diffuse->strPath;
+        bool isTextureEmpty = (diffPath.at(0) == '#');
+        ImGui::TextWrapped("Diffuse: %s", isTextureEmpty ? "None" : diffPath.c_str());
         ComboTextures(material.diffuse, "##diffuse");
-        if (!diffPath.empty() && ImGui::Button("Reset##diffuse"))
+        if (!isTextureEmpty && ImGui::Button("Reset##diffuse"))
           material.diffuse = &texManager.GetTextureByPath("#default_diffuse");
         ImGui::Separator();
           
-        const auto& specularPath = material.specular->path;
-        ImGui::TextWrapped("Specular: %s", (specularPath.empty() ? "None" : specularPath.string().c_str()));
+        const String& specularPath = material.specular->strPath;
+        isTextureEmpty = (specularPath.at(0) == '#');
+        ImGui::TextWrapped("Specular: %s", isTextureEmpty ? "None" : specularPath.c_str());
         ComboTextures(material.specular, "##specular");
-        if (!specularPath.empty() && ImGui::Button("Reset##specular"))
+        if (!isTextureEmpty && ImGui::Button("Reset##specular"))
           material.specular = &texManager.GetTextureByPath("#default_specular");
         ImGui::Separator();
           
-        const auto& normalPath = material.normal->path;
-        ImGui::TextWrapped("Normal: %s", (normalPath.empty() ? "None" : normalPath.string().c_str()));
+        const String& normalPath = material.normal->strPath;
+        isTextureEmpty = (normalPath.at(0) == '#');
+        ImGui::TextWrapped("Normal: %s", isTextureEmpty ? "None" : normalPath.c_str());
         ComboTextures(material.normal, "##normal");
-        if (!normalPath.empty() && ImGui::Button("Reset##normal"))
+        if (!isTextureEmpty && ImGui::Button("Reset##normal"))
           material.normal = &texManager.GetTextureByPath("#default_normal");
         ImGui::Separator();
 
-        const auto& heightPath = material.height->path;
-        ImGui::TextWrapped("Height: %s", (heightPath.empty() ? "None" : heightPath.string().c_str()));
+        const String& heightPath = material.height->strPath;
+        isTextureEmpty = (heightPath.at(0) == '#');
+        ImGui::TextWrapped("Height: %s", isTextureEmpty ? "None" : heightPath.c_str());
         ComboTextures(material.height, "##height");
-        if (!heightPath.empty() && ImGui::Button("Reset##height"))
+        if (!isTextureEmpty && ImGui::Button("Reset##height"))
           material.height = &texManager.GetTextureByPath("#default_height");
         ImGui::Separator();
       }
@@ -432,7 +425,6 @@ void ImGuiLayer::GameObjectDetails(GameObject& object)
 
   ImGui::End();
 }
-  
 void ImGuiLayer::WorldProps()
 {
   ImGui::SetNextWindowBgAlpha(0.0f);
@@ -446,7 +438,6 @@ void ImGuiLayer::WorldProps()
     
   ImGui::End();
 }
- 
 void ImGuiLayer::ContentBrowser()
 {
   ImGui::Begin("Content browser", nullptr);
@@ -485,41 +476,41 @@ void ImGuiLayer::ContentBrowser()
         const fs::directory_entry& entry = *entryIt;
         const fs::path& entryPath = entry.path();
         const String entryPathString = entryPath.string();
-        const fs::path entryFilename = entryPath.filename();
-        const String entryFilenameString = entryFilename.string();
+        const fs::path filename = entryPath.filename();
+        const String filenameString = filename.string();
 
         if (entry.is_directory())
         {
           Texture2D& iconFolder = texManager.GetIconByPath(GetIconsPath() / "open-folder.png");
-          if (ImGui::ImageButton(entryFilenameString.c_str(), reinterpret_cast<void*>(iconFolder.id), ImVec2(cellSize, cellSize)))
+          if (ImGui::ImageButton(filenameString.c_str(), reinterpret_cast<void*>(iconFolder.id), ImVec2(cellSize, cellSize)))
             currentDir /= entry;
         }
         else
         {
-          const fs::path entryFilenameExt = entryFilename.extension().string();
+          const fs::path entryFilenameExt = filename.extension();
 
           /* Render image texture */
           if (entryFilenameExt == ".png" || entryFilenameExt == ".jpg")
           {
             Texture2D* texture = nullptr;
             if(currentDir == GetIconsPath())
-              texture = &texManager.GetIconByPath(entryPath);
+              texture = &texManager.GetIconByPath(entryPathString);
             else
-              texture = &texManager.GetTextureByPath(entryPath);
+              texture = &texManager.GetTextureByPath(entryPathString);
 
-            ImGui::ImageButton(entryFilenameString.c_str(), reinterpret_cast<void*>(texture->id), ImVec2(cellSize, cellSize));
+            ImGui::ImageButton(filenameString.c_str(), reinterpret_cast<void*>(texture->id), ImVec2(cellSize, cellSize));
           }
           /* Render generic file icon */
           else
           {
             const auto& iconFile = texManager.GetIconByPath(GetIconsPath() / "file.png");
-            ImGui::ImageButton(entryFilenameString.c_str(), reinterpret_cast<void*>(iconFile.id), ImVec2(cellSize, cellSize));
+            ImGui::ImageButton(filenameString.c_str(), reinterpret_cast<void*>(iconFile.id), ImVec2(cellSize, cellSize));
           }
         }
 
         if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
           ImGui::SetTooltip("%s", entryPathString.c_str());
-        ImGui::TextWrapped("%s", entryFilenameString.c_str());
+        ImGui::TextWrapped("%s", filenameString.c_str());
       }
     }
     ImGui::EndTable();
@@ -528,8 +519,6 @@ void ImGuiLayer::ContentBrowser()
   ImGui::PopStyleColor();
   ImGui::End();
 }
-
-
 void ImGuiLayer::DebugDepthMap(u32 tetxureID)
 {
   ImGuiStyle& style = ImGui::GetStyle();
@@ -546,7 +535,6 @@ void ImGuiLayer::DebugDepthMap(u32 tetxureID)
 
   style.WindowPadding = paddingTmp;
 }
-  
 void ImGuiLayer::CameraProps(const char* label, Camera& camera)
 {
   ImGui::Begin(label, nullptr);
@@ -567,7 +555,6 @@ void ImGuiLayer::CameraProps(const char* label, Camera& camera)
 
   ImGui::End();
 }
-
 void ImGuiLayer::ApplicationInfo(f64 delta, f64 avg, i32 frameRate)
 {
   ImGuiWindowFlags flags = 
@@ -600,7 +587,6 @@ void ImGuiLayer::ApplicationInfo(f64 delta, f64 avg, i32 frameRate)
   ImGui::TextWrapped("Frame rate: %d", frameRate);
   ImGui::End();
 }
-
 void ImGuiLayer::Test()
 {
   ImGui::Begin("Test", nullptr);
@@ -697,7 +683,7 @@ void ImGuiLayer::ComboTextures(Texture2D*& matTexture, const char* comboLabel)
     const auto& textures = texManager.GetTextures();
     for (const auto& [key, texture] : textures)
     {
-      String texPathStr = texture.path.string();
+      const String& texPathStr = texture.strPath;
       if (texPathStr.at(0) != '#' && ImGui::Selectable(texPathStr.c_str(), false))
         matTexture = const_cast<Texture2D*>(&texture);
     }

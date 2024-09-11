@@ -12,7 +12,7 @@ static void CreateDefaultTexture(Texture2D& texture, Array<u8, 3> textureData, S
   texture.SetParameteri(GL_TEXTURE_WRAP_T, GL_REPEAT);
   texture.SetParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   texture.SetParameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  texture.path = fs::path(defaultPath.data());
+  texture.strPath = defaultPath.data();
 }
 
 /* -----------------------------------------------------  */
@@ -30,10 +30,10 @@ void TextureManager::Initialize()
   CreateDefaultTexture(defSpecular, { 255, 255, 255 }, "#default_specular");
   CreateDefaultTexture(defNormal, { 0, 0, 0 }, "#default_normal");
   CreateDefaultTexture(defHeight, { 0, 0, 0 }, "#default_height");
-  _textures.insert({ "#default_diffuse", defDiffuse });
-  _textures.insert({ "#default_specular", defSpecular });
-  _textures.insert({ "#default_normal", defNormal });
-  _textures.insert({ "#default_height", defHeight });
+  _textures.emplace("#default_diffuse", defDiffuse);
+  _textures.emplace("#default_specular", defSpecular);
+  _textures.emplace("#default_normal", defNormal);
+  _textures.emplace("#default_height", defHeight);
 
   /* 2. Load all textures from default Textures directory */
   CONSOLE_INFO("Loading textures...");
@@ -59,21 +59,23 @@ void TextureManager::CleanUp()
   glDeleteTextures(total, texIDs.data());
 }
 
-Texture2D& TextureManager::GetTextureByPath(const fs::path& filePath)
+Texture2D& TextureManager::GetTextureByPath(const fs::path& path)
 {
-  const String normalPath = filePath.lexically_normal().string();
-  const auto& it = _textures.find(normalPath);
+  const String lexNormal = path.lexically_normal().string();
+
+  const auto& it = _textures.find(lexNormal);
   if (it == _textures.end())
-    throw std::runtime_error(std::format("Texture '{}' does not exist", normalPath));
+    throw std::runtime_error(std::format("Texture '{}' does not exist", lexNormal));
   
   return it->second;
 }
-Texture2D& TextureManager::GetIconByPath(const fs::path& filePath)
+Texture2D& TextureManager::GetIconByPath(const fs::path& path)
 {
-  const String normalPath = filePath.lexically_normal().string();
-  const auto& it = _icons.find(normalPath);
+  const String lexNormal = path.lexically_normal().string();
+
+  const auto& it = _icons.find(lexNormal);
   if (it == _icons.end())
-    throw std::runtime_error(std::format("Icon '{}' does not exist", normalPath));
+    throw std::runtime_error(std::format("Icon '{}' does not exist", lexNormal));
 
   return it->second;
 }
@@ -90,13 +92,13 @@ void TextureManager::LoadTextures()
       continue;
 
     const fs::path& entryPath = entry.path();
-    const String filename = entryPath.filename().string();
     bool gamma = false;
+    const String filename = entryPath.filename().string();
     if (filename.find("diff") != String::npos || filename.find("diffuse") != String::npos)
       gamma = true;
 
     const String entryPathString = entryPath.string();
-    auto res = _textures.insert({ entryPathString, Texture2D(GL_TEXTURE_2D, entryPath, gamma) });
+    auto res = _textures.emplace(entryPathString, Texture2D(GL_TEXTURE_2D, entryPathString, gamma));
     if (res.second)
       CONSOLE_TRACE("<{}> has been loaded successfully", entryPathString);
     else
@@ -112,7 +114,7 @@ void TextureManager::LoadIcons()
 
     const auto& entryPath = entry.path();
     const String entryPathString = entryPath.string();
-    auto res = _icons.insert({ entryPathString, Texture2D(GL_TEXTURE_2D, entryPath, false)});
+    auto res = _icons.emplace(entryPathString, Texture2D(GL_TEXTURE_2D, entryPathString, false));
     if (res.second)
       CONSOLE_TRACE("<{}> has been loaded successfully", entryPathString);
     else

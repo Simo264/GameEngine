@@ -31,9 +31,9 @@ public:
 	 */
 	void CleanUp();
 
-	Texture2D& GetTextureByPath(const fs::path& filePath);
+	Texture2D& GetTextureByPath(const fs::path& path);
 	
-	Texture2D& GetIconByPath(const fs::path& filePath);
+	Texture2D& GetIconByPath(const fs::path& path);
 	
 	const Texture2D& GetDefaultDiffuse() const	{ return _textures.at("#default_diffuse"); }
 	const Texture2D& GetDefaultSpecular() const { return _textures.at("#default_specular"); }

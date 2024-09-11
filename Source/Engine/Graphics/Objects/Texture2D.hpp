@@ -34,13 +34,13 @@ public:
    * @param target: must be GL_TEXTURE_2D or GL_TEXTURE_2D_MULTISAMPLE
    */
   Texture2D(i32 target);
-  Texture2D(i32 target, const fs::path& path, bool gammaCorrection);
+  Texture2D(i32 target, StringView strPath, bool gammaCorrection);
   ~Texture2D() = default;
 
   /**
    * Load data from an image file
    */
-  void LoadImageData(const fs::path& path, bool gammaCorrection);
+  void LoadImageData(StringView strPath, bool gammaCorrection);
 
   /**
    * Create texture object
@@ -163,7 +163,7 @@ public:
 
   i32 nChannels;
   
-  fs::path path;
+  String strPath;
 
 private:
   /**

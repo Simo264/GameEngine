@@ -63,7 +63,7 @@ Shader& ShaderManager::GetShaderByName(StringView filename)
 {
   const auto& it = _shaders.find(filename.data());
   if (it == _shaders.end())
-    throw std::runtime_error(std::format("Shader '{}' does not exist", filename.data()));
+    throw std::runtime_error(std::format("Shader '{}' does not exist", filename));
   
   return it->second;
 }
@@ -71,7 +71,7 @@ Program& ShaderManager::GetProgramByName(StringView name)
 {
   const auto& it = _programs.find(name.data());
   if (it == _programs.end())
-    throw std::runtime_error(std::format("Program '{}' does not exist", name.data()));
+    throw std::runtime_error(std::format("Program '{}' does not exist", name));
 
   return it->second;
 }
@@ -88,34 +88,33 @@ void ShaderManager::LoadShaderFiles()
       continue;
 
     const fs::path& entryPath = entry.path();
-    const fs::path entryPathFilenameExt = entryPath.filename().extension();
+    const fs::path filename = entryPath.filename();
+    const String filenameExt = filename.extension().string();
 
-    if (entryPathFilenameExt == ".vert")
-      LoadShader(entryPath, GL_VERTEX_SHADER);
-    else if (entryPathFilenameExt == ".tesc")
-      LoadShader(entryPath, GL_TESS_CONTROL_SHADER);
-    else if (entryPathFilenameExt == ".tese")
-      LoadShader(entryPath, GL_TESS_EVALUATION_SHADER);
-    else if (entryPathFilenameExt == ".geom")
-      LoadShader(entryPath, GL_GEOMETRY_SHADER);
-    else if (entryPathFilenameExt == ".frag")
-      LoadShader(entryPath, GL_FRAGMENT_SHADER);
+    if (filenameExt == ".vert")
+      LoadShader(entryPath.string(), filename.string(), GL_VERTEX_SHADER);
+    else if (filenameExt == ".tesc")
+      LoadShader(entryPath.string(), filename.string(), GL_TESS_CONTROL_SHADER);
+    else if (filenameExt == ".tese")
+      LoadShader(entryPath.string(), filename.string(), GL_TESS_EVALUATION_SHADER);
+    else if (filenameExt == ".geom")
+      LoadShader(entryPath.string(), filename.string(), GL_GEOMETRY_SHADER);
+    else if (filenameExt == ".frag")
+      LoadShader(entryPath.string(), filename.string(), GL_FRAGMENT_SHADER);
     else
-      CONSOLE_WARN("Unknown file extension {}", entryPathFilenameExt.string());
+      CONSOLE_WARN("Unknown file extension {}", filenameExt);
   }
 }
-void ShaderManager::LoadShader(const fs::path& filepath, i32 shaderType)
+void ShaderManager::LoadShader(StringView pathString, StringView filename, i32 shaderType)
 {
-  const String filenameString = filepath.filename().string();
-
   Shader shader;
   shader.Create(shaderType);
-  shader.filename = filenameString;
+  shader.filename = filename.data();
 
-  IStream file(filepath);
+  IStream file(pathString.data());
   if (!file.is_open())
   {
-    CONSOLE_CRITICAL("Error on opening file <{}>", filenameString);
+    CONSOLE_CRITICAL("Error on opening file <{}>", pathString);
     throw std::runtime_error("Error on opening file");
   }
 
@@ -127,15 +126,15 @@ void ShaderManager::LoadShader(const fs::path& filepath, i32 shaderType)
   bool compiled = shader.Compile();
   if (!compiled)
   {
-    CONSOLE_CRITICAL("Error on compiling shader <{}>", filenameString);
+    CONSOLE_CRITICAL("Error on compiling shader <{}>", filename);
     throw std::runtime_error("Error on compiling shader");
   }
 
-  auto res = _shaders.insert({ shader.filename, shader });
+  auto res = _shaders.emplace(shader.filename, shader);
   if (res.second)
-    CONSOLE_TRACE("<{}> has been loaded successfully", filenameString);
+    CONSOLE_TRACE("<{}> has been loaded successfully", filename);
   else
-    CONSOLE_WARN("Error on loading shader <{}>", filenameString);
+    CONSOLE_WARN("Error on loading shader <{}>", filename);
 }
 void ShaderManager::LoadProgramsFromConfig()
 {
@@ -183,7 +182,7 @@ void ShaderManager::LoadProgram(StringView name,
     throw std::runtime_error("Error on linking program");
   }
 
-  auto res = _programs.insert({ program.name, program });
+  auto res = _programs.emplace(program.name, program);
   if (res.second)
     CONSOLE_TRACE("<{}> has been loaded successfully", name);
   else

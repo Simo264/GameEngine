@@ -13,10 +13,10 @@ Texture2D::Texture2D(i32 target)
     nChannels{ 3 },
     width{ 0 },
     height{ 0 },
-    path{}
+    strPath{}
 {}
 
-Texture2D::Texture2D(i32 target, const fs::path& path, bool gammaCorrection)
+Texture2D::Texture2D(i32 target, StringView strPath, bool gammaCorrection)
   : target{ target },
     id{ 0 },
     _internalFormat{ GL_RGB8 },
@@ -24,10 +24,10 @@ Texture2D::Texture2D(i32 target, const fs::path& path, bool gammaCorrection)
     nChannels{ 3 },
     width{ 0 },
     height{ 0 },
-    path{}
+    strPath{}
 {
   Create();
-  LoadImageData(path, gammaCorrection);
+  LoadImageData(strPath, gammaCorrection);
 }
 
 void Texture2D::Create()
@@ -82,10 +82,10 @@ void Texture2D::ClearStorage(i32 level, i32 type, const void* data) const
   glClearTexImage(id, level, format, type, data);
 }
 
-void Texture2D::LoadImageData(const fs::path& path, bool gammaCorrection)
+void Texture2D::LoadImageData(StringView strPath, bool gammaCorrection)
 {
   i32 width, height, nChannels, internalFormat{ GL_RGB8 };
-  u8* data = Utils::LoadImageData(path, width, height, nChannels);
+  u8* data = Utils::LoadImageData(strPath, width, height, nChannels);
   if (data)
   {
     /**
@@ -118,7 +118,7 @@ void Texture2D::LoadImageData(const fs::path& path, bool gammaCorrection)
     }
 
     this->nChannels = nChannels;
-    this->path = path;
+    this->strPath = strPath.data();
 
     SetParameteri(GL_TEXTURE_WRAP_S, GL_REPEAT);
     SetParameteri(GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -131,7 +131,7 @@ void Texture2D::LoadImageData(const fs::path& path, bool gammaCorrection)
   }
   else
   {
-    CONSOLE_ERROR("Failed to load texture {}", path.string());
+    CONSOLE_ERROR("Failed to load texture {}", strPath);
   }
 
   Utils::FreeImageData(data);
