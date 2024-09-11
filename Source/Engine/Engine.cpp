@@ -259,7 +259,6 @@ static FrameBuffer CreateDepthCubeMapFbo(i32 width, i32 height)
   return fbo;
 }
 
-
 static VertexArray CreateTerrain(i32 rez)
 {
   VertexArray vao;
@@ -440,9 +439,9 @@ void Engine::Run()
   f64 totalDeltasPerSecond = 0.0f; 
   f64 avgTime = 0.0f; /* The average rendering time per seconds */
 
-  bool renderingShadowsMode = true;
-  bool useNormalMap = true;
-  bool wireframeEnabled = false;
+  bool shadowMode = true;
+  bool normalMapMode = true;
+  bool wireframeMode = false;
 
   glPatchParameteri(GL_PATCH_VERTICES, 4);
 
@@ -483,12 +482,12 @@ void Engine::Run()
       primaryCamera.ProcessKeyboard(delta, 5.0f);
       primaryCamera.ProcessMouse(delta, 15.0f);
 
-      if (windowManager.GetKey(GLFW_KEY_F1) == GLFW_PRESS) renderingShadowsMode = false;
-      else if (windowManager.GetKey(GLFW_KEY_F2) == GLFW_PRESS) renderingShadowsMode = true;
-      if (windowManager.GetKey(GLFW_KEY_F5) == GLFW_PRESS) useNormalMap = false;
-      else if (windowManager.GetKey(GLFW_KEY_F6) == GLFW_PRESS) useNormalMap = true;
-      if (windowManager.GetKey(GLFW_KEY_F9) == GLFW_PRESS) wireframeEnabled = false;
-      else if (windowManager.GetKey(GLFW_KEY_F10) == GLFW_PRESS) wireframeEnabled = true;
+      if (windowManager.GetKey(GLFW_KEY_F1) == GLFW_PRESS) shadowMode = true;
+      else if (windowManager.GetKey(GLFW_KEY_F2) == GLFW_PRESS) shadowMode = false;
+      if (windowManager.GetKey(GLFW_KEY_F5) == GLFW_PRESS) normalMapMode = true;
+      else if (windowManager.GetKey(GLFW_KEY_F6) == GLFW_PRESS) normalMapMode = false;
+      if (windowManager.GetKey(GLFW_KEY_F9) == GLFW_PRESS) wireframeMode = true;
+      else if (windowManager.GetKey(GLFW_KEY_F10) == GLFW_PRESS) wireframeMode = false;
     }
 
     /* -------------------------------------------------------------------- */
@@ -568,8 +567,8 @@ void Engine::Run()
       glViewport(0, 0, _viewportSize.x, _viewportSize.y);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-      glPolygonMode(GL_FRONT, wireframeEnabled ? GL_LINE : GL_FILL);
-      glPolygonMode(GL_BACK, wireframeEnabled ? GL_LINE : GL_FILL);
+      glPolygonMode(GL_FRONT, wireframeMode ? GL_LINE : GL_FILL);
+      glPolygonMode(GL_BACK, wireframeMode ? GL_LINE : GL_FILL);
 
       ///* Render terrain */
       //{
@@ -583,7 +582,7 @@ void Engine::Run()
       //}
 
       /* Render scene with shadows map */
-      if (renderingShadowsMode)
+      if (shadowMode)
       {
         sceneShadowsProgram.Use();
         sceneShadowsProgram.SetUniform3f("u_viewPos", primaryCamera.position);
@@ -591,7 +590,7 @@ void Engine::Run()
         sceneShadowsProgram.SetUniform1f("u_ambientLightIntensity", g_ambientIntensity);
         sceneShadowsProgram.SetUniformMat4f("u_lightView", directLightView);
         sceneShadowsProgram.SetUniformMat4f("u_lightProjection", directLightProjection);
-        sceneShadowsProgram.SetUniform1i("u_useNormalMap", useNormalMap);
+        sceneShadowsProgram.SetUniform1i("u_useNormalMap", normalMapMode);
         glBindTextureUnit(10, depthMapTexture);
         glBindTextureUnit(11, depthCubeMapTexture);
         RenderScene(scene, sceneShadowsProgram);
@@ -603,7 +602,7 @@ void Engine::Run()
         sceneProgram.SetUniform3f("u_viewPos", primaryCamera.position);
         sceneProgram.SetUniform3f("u_ambientLightColor", g_ambientColor);
         sceneProgram.SetUniform1f("u_ambientLightIntensity", g_ambientIntensity);
-        sceneProgram.SetUniform1i("u_useNormalMap", useNormalMap);
+        sceneProgram.SetUniform1i("u_useNormalMap", normalMapMode);
         RenderScene(scene, sceneProgram);
       }
 
@@ -630,7 +629,7 @@ void Engine::Run()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     gui.MenuBar(scene);
-    gui.ApplicationInfo(delta, avgTime, frameRate);
+    gui.DebugInfo(delta, avgTime, frameRate, shadowMode, normalMapMode, wireframeMode);
     gui.ContentBrowser();
     //gui.CameraProps("Primary camera", primaryCamera);
     //gui.CameraProps("DirecLight camera", directLightCamera);

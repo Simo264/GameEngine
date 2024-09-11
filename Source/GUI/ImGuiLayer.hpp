@@ -93,9 +93,14 @@ public:
 	void DebugDepthMap(u32 tetxureID);
 
 	/**
-	 * Render the application info frame
+	 * Render the debug frame
 	 */
-	void ApplicationInfo(f64 delta, f64 avg, i32 frameRate);
+	void DebugInfo(f64 delta, 
+		f64 avg, 
+		i32 frameRate, 
+		bool shadowMode, 
+		bool normalMode, 
+		bool wireframeMode);
 
 	/**
 	 * The test frame

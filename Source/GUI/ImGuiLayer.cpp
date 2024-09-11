@@ -131,7 +131,6 @@ void ImGuiLayer::Demo()
   if (!visible)
     return;
 
-  ImGui::SetNextWindowBgAlpha(0.0f);
   ImGui::ShowDemoWindow(&visible);
 }
 void ImGuiLayer::MenuBar(Scene& scene)
@@ -247,7 +246,6 @@ GameObject ImGuiLayer::OutlinerPanel(Scene& scene)
   static bool visible = true;
   if (visible)
   {
-    ImGui::SetNextWindowBgAlpha(0.0f);
     ImGui::Begin("Outliner", &visible);
     ImGui::SetNextItemOpen(true, ImGuiCond_Once);
     if (ImGui::TreeNode("Scene"))
@@ -291,7 +289,6 @@ void ImGuiLayer::GameObjectDetails(GameObject& object)
   if (!visible)
     return;
 
-  ImGui::SetNextWindowBgAlpha(0.0f);
   ImGui::Begin("Details", &visible);
     
   if (auto* light = object.GetComponent<Components::DirectionalLight>())
@@ -427,7 +424,6 @@ void ImGuiLayer::GameObjectDetails(GameObject& object)
 }
 void ImGuiLayer::WorldProps()
 {
-  ImGui::SetNextWindowBgAlpha(0.0f);
   ImGui::Begin("World", nullptr);
 
   if (ImGui::CollapsingHeader("Ambient"))
@@ -555,7 +551,7 @@ void ImGuiLayer::CameraProps(const char* label, Camera& camera)
 
   ImGui::End();
 }
-void ImGuiLayer::ApplicationInfo(f64 delta, f64 avg, i32 frameRate)
+void ImGuiLayer::DebugInfo(f64 delta, f64 avg, i32 frameRate, bool shadowMode, bool normalMode, bool wireframeMode)
 {
   ImGuiWindowFlags flags = 
     ImGuiWindowFlags_::ImGuiWindowFlags_NoBackground | 
@@ -564,7 +560,7 @@ void ImGuiLayer::ApplicationInfo(f64 delta, f64 avg, i32 frameRate)
     ImGuiWindowFlags_::ImGuiWindowFlags_NoTitleBar;
 
   ImGui::SetNextWindowPos(ImVec2(viewportPos.x, viewportPos.y + 20));
-  ImGui::SetNextWindowBgAlpha(0.0f);
+  ImGui::SetNextWindowSize(ImVec2(viewportSize.x/2, viewportSize.y - 20));
   ImGui::Begin("Application", nullptr, flags);
 
   auto& winManager = WindowManager::Get();
@@ -585,6 +581,13 @@ void ImGuiLayer::ApplicationInfo(f64 delta, f64 avg, i32 frameRate)
   ImGui::TextWrapped("Time (ms): %f", delta*1000);
   ImGui::TextWrapped("Average (ms): %f", avg*1000);
   ImGui::TextWrapped("Frame rate: %d", frameRate);
+
+  ImGui::Separator();
+
+  ImGui::TextWrapped("Shadow mode (F1 on/F2 off): %d", shadowMode);
+  ImGui::TextWrapped("Normal mapping (F5 on/F6 off): %d", normalMode);
+  ImGui::TextWrapped("Wireframe mode (F9 on/F10 off): %d", wireframeMode);
+
   ImGui::End();
 }
 void ImGuiLayer::Test()
