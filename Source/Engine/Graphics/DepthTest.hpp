@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Core/Core.hpp"
+#include "Core/GL.hpp"
 
 /**
  * https://open.gl/depthstencils
@@ -29,33 +30,58 @@
  * 
  */
 
-namespace Depth 
+enum class DepthFun : i32
+{
+	ALWAYS = GL_ALWAYS,
+	NEVER = GL_NEVER,
+	LESS = GL_LESS,
+	LEQUAL = GL_LEQUAL,
+	GREATER = GL_GREATER,
+	GEQUAL = GL_GEQUAL,
+	EQUAL = GL_EQUAL,
+	NOTEQUAL = GL_NOTEQUAL
+};
+
+namespace DepthTest 
 {
 	/**
- * Do depth comparisons and update the depth buffer
- */
-	void EnableTest();
+	 * Do depth comparisons and update the depth buffer
+	 */
+	void EnableTest()
+	{
+		glEnable(GL_DEPTH_TEST);
+	}
 
 	/**
 	 * Disable depth comparisons
 	 */
-	void DisableTest();
+	void DisableTest()
+	{
+		glDisable(GL_DEPTH_TEST);
+	}
 
 	/**
 	 * Enable writing into the depth buffer
 	 */
-	void EnableWritingBuffer();
+	void EnableWritingBuffer()
+	{
+		glDepthMask(GL_TRUE);
+	}
 
 	/**
 	 * Disable writing into the depth buffer
 	 */
-	void DisableWritingBuffer();
+	void DisableWritingBuffer()
+	{
+		glDepthMask(GL_FALSE);
+	}
 
 	/**
 		* Specify the value used for depth buffer comparisons
-		*
-		* @param func: GL_NEVER, GL_LESS, GL_EQUAL, GL_LEQUAL, GL_GREATER, GL_NOTEQUAL, GL_GEQUAL, and GL_ALWAYS
 		*/
-	void SetFunction(i32 func);
+	void SetDepthFun(DepthFun fun)
+	{
+		glDepthFunc(static_cast<i32>(fun));
+	}
 }
 

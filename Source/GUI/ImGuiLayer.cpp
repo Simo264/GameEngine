@@ -508,8 +508,8 @@ void ImGuiLayer::CameraProps(const char* label, Camera& camera)
 {
   ImGui::Begin(label, nullptr);
 
-  ImGui::DragFloat("zNear", &camera.frustum.zNear, 0.1f, 0.1f, 200.0f);
-  ImGui::DragFloat("zFar", &camera.frustum.zFar, 0.1f, 0.1f, 200.0f);
+  ImGui::DragFloat("zNear", &camera.frustum.zNear, 0.1f, 0.0f, 1'000.0f);
+  ImGui::DragFloat("zFar", &camera.frustum.zFar, 0.1f, 0.0f, 1'000.0f);
   ImGui::DragFloat("Left", &camera.frustum.left, 0.1f, -100.0f, 0.0f);
   ImGui::DragFloat("Right", &camera.frustum.right, 0.1f, 0.0f, 100.0f);
   ImGui::DragFloat("Top", &camera.frustum.top, 0.1f, 0.0f, 100.0f);

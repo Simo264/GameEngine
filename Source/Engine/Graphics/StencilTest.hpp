@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Core/Core.hpp"
+#include "Core/GL.hpp"
 
 /**
  * https://open.gl/depthstencils
@@ -25,43 +26,72 @@
  * 
  */
 
-namespace Stencil
+enum class StencilFun : i32
+{
+	ALWAYS = GL_ALWAYS,
+	NEVER = GL_NEVER,
+	LESS = GL_LESS,
+	LEQUAL = GL_LEQUAL,
+	GREATER = GL_GREATER,
+	GEQUAL = GL_GEQUAL,
+	EQUAL = GL_EQUAL,
+	NOTEQUAL = GL_NOTEQUAL
+};
+
+enum class StencilOp : i32 
+{
+	KEEP = GL_KEEP,
+	INVERT = GL_INVERT,
+	ZERO = GL_ZERO,
+	REPLACE = GL_REPLACE,
+	INCR = GL_INCR,
+	INCR_WRAP = GL_INCR_WRAP,
+	DECR = GL_DECR,
+	DECR_WRAP = GL_DECR_WRAP
+};
+
+namespace StencilTest
 {
 	/**
 	 * Enable stencil testing and update the stencil buffer
 	 */
-	void EnableTest();
+	void EnableTest()
+	{
+		glEnable(GL_STENCIL_TEST);
+	}
 
 	/**
 	 * Disable stencil testing
 	 */
-	void DisableTest();
+	void DisableTest()
+	{
+		glDisable(GL_STENCIL_TEST);
+	}
 
 	/**
 	 * Specifies the conditions under which a fragment passes the stencil test.
 	 *
-	 * @param func: the test function; can be
-	 *							GL_NEVER, GL_LESS, GL_LEQUAL, GL_GREATER, GL_GEQUAL, GL_EQUAL, GL_NOTEQUAL, and GL_ALWAYS
-	 *
-	 * @param ref:	a value to compare the stencil value to using the test function
+	 * @param ref:	a value to compare the stencil value to using the test function. The initial value is 0
 	 *
 	 * @param mask:	a bitwise AND operation is performed on the stencil value and reference value with this mask value
-	 *							before comparing them
+	 *							before comparing them. The initial value is all 1's.
 	 *  */
-	void SetFunction(i32 func, i32 ref, i32 mask);
-
+	void SetStencilFun(StencilFun fun, i32 ref, i32 mask)
+	{
+		glStencilFunc(static_cast<i32>(fun), ref, mask);
+	}
 
 	/**
 	 * Specifies what should happen to stencil values depending on the outcome of the stencil and depth tests.
-	 * Eight symbolic constants are accepted: GL_KEEP, GL_ZERO, GL_REPLACE, GL_INCR, GL_INCR_WRAP, GL_DECR,
-	 *																				GL_DECR_WRAP, and GL_INVERT
-	 *
-	 * @param sfail:	action to take if the stencil test fails
-	 * @param dpfail: action to take if the stencil test is successful, but the depth test failed
-	 * @param dppass: action to take if both the stencil test and depth tests pass
+	 * 
+	 * @param sfail:	action to take if the stencil test fails. The initial value is KEEP
+	 * @param dpfail: action to take if the stencil test is successful, but the depth test failed. The initial value is KEEP
+	 * @param dppass: action to take if both the stencil test and depth tests pass. The initial value is KEEP
 	 */
-	void SetOperation(i32 sfail, i32 dpfail, i32 dppass);
-
+	void SetStencilOp(StencilOp sfail, StencilOp dpfail, StencilOp dppass)
+	{
+		glStencilOp(static_cast<i32>(sfail), static_cast<i32>(dpfail), static_cast<i32>(dppass));
+	}
 
 	/**
 	 * Specifies a bit mask to enable and disable writing of individual bits in the stencil planes.
@@ -70,11 +100,19 @@ namespace Stencil
 	 *
 	 * @param mask: specifies a bit mask to enable and disable writing of individual bits in the stencil planes
 	 */
-	void SetMask(i32 mask);
+	void SetStencilMask(i32 mask)
+	{
+		glStencilMask(mask);
+	}
 
+	void EnableWritingBuffer()
+	{
+		SetStencilMask(0xFF);
+	}
 
-	void EnableWritingBuffer();
-
-	void DisableWritingBuffer();
+	void DisableWritingBuffer()
+	{
+		SetStencilMask(0x00);
+	}
 }
 

@@ -7,8 +7,8 @@ in mat4 Projection;
 
 out vec4 FragColor;
 
-uniform float zNear;
-uniform float zFar;
+const float zNear = 0.1f;
+const float zFar  = 100.0f;
 
 vec4 grid(vec3 fragPos3D, float scale, bool drawAxis) 
 {

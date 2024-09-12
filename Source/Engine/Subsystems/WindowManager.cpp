@@ -18,6 +18,7 @@ void WindowManager::Initialize(WindowProps props)
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
   glfwWindowHint(GLFW_SAMPLES, 4);  /* Enable 4x MSAA on GLFW frame buffer */
+  glfwWindowHint(GLFW_DEPTH_BITS, 24);
 
   _context = glfwCreateWindow(props.size.x, props.size.y, props.title.data(), nullptr, nullptr);
   assert(_context && "Failed to create window");

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Core/Core.hpp"
+#include "Core/GL.hpp"
 
 /**
  * https://learnopengl.com/Advanced-OpenGL/Face-culling
@@ -26,29 +27,50 @@
  * 
  */
 
-namespace Culling
+enum class CullFace : i32
+{
+	FRONT = GL_FRONT,
+	BACK = GL_BACK,
+	FRONT_BACK = GL_FRONT_AND_BACK
+};
+
+enum class FrontFace : i32
+{
+	CLOCKWISE = GL_CW,
+	COUNTER_CLOCKWISE = GL_CCW
+};
+
+namespace FaceCulling
 {
 	/**
 	 * Cull polygons based on their winding in window coordinates
 	 */
-	void EnableFaceCulling();
+	void EnableFaceCulling()
+	{
+		glEnable(GL_CULL_FACE);
+	}
 
 	/**
 	 * Disable face culling
 	 */
-	void DisableFaceCulling();
+	void DisableFaceCulling()
+	{
+		glDisable(GL_CULL_FACE);
+	}
 
 	/**
 	 * Specify whether front- or back-facing facets can be culled.
-	 * 
-	 * @param mode: symbolic constants GL_FRONT, GL_BACK, and GL_FRONT_AND_BACK are accepted
 	 */
-	void SetCullFace(i32 mode);
+	void SetCullFace(CullFace mode)
+	{
+		glCullFace(static_cast<i32>(mode));
+	}
 
 	/**
 	 * Specifies which of the clockwise and counterclockwise facets are front-facing and back-facing
-	 * 
-	 * @param mode: specifies the orientation of front-facing polygons. GL_CW and GL_CCW are accepted
 	 */
-	void SetFrontFace(i32 mode);
+	void SetFrontFacing(FrontFace mode)
+	{
+		glFrontFace(static_cast<i32>(mode));
+	}
 }
