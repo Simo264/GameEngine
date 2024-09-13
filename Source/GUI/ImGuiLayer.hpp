@@ -33,14 +33,25 @@ public:
 	 */
 	void CleanUp();
 
+	/**
+	 * Start the ImGui frame. To call at the start of render loop
+	 */
 	void BeginFrame();
 
+	/**
+	 * GUI rendering. To call at the end of render loop
+	 */
 	void EndFrame();
 
 	/**
 	 * Set ImGui font
 	 */
 	void SetFont(const fs::path& fontpath, i32 fontsize);
+
+	/**
+	 * Set ImGui style
+	 */
+	void SetStyle();
 
 	/**
 	 * Render the menu bar

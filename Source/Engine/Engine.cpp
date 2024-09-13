@@ -368,7 +368,8 @@ void Engine::Initialize()
   /* ------------------- */
   ImGuiLayer& gui = ImGuiLayer::Get();
   gui.SetupContext();
-  gui.SetFont((GetFontsPath() / "Karla-Regular.ttf"), 16);
+  gui.SetFont((GetFontsPath() / "OpenSans-Regular.ttf"), 16);
+  gui.SetStyle();
   CONSOLE_INFO("ImGui layer initialized");
   
   /* Initialize shader manager */
