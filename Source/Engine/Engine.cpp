@@ -396,14 +396,6 @@ void Engine::Initialize()
   ));
   CONSOLE_INFO("Window manager initialized");
 
-  /* Setup ImGui context */
-  /* ------------------- */
-  ImGuiLayer& gui = ImGuiLayer::Get();
-  gui.SetupContext();
-  //gui.SetFont((GetFontsPath() / "OpenSans/OpenSans-Regular.ttf"), 16);
-  gui.SetStyle();
-  CONSOLE_INFO("ImGui layer initialized");
-
   /* Initialize font manager */
   /* -------------------------- */
   FontManager& fontManager = FontManager::Get();
@@ -422,6 +414,11 @@ void Engine::Initialize()
   textureManager.Initialize();
   CONSOLE_INFO("Texture manager initialized");
 
+  /* Setup ImGui context */
+  /* ------------------- */
+  ImGuiLayer& gui = ImGuiLayer::Get();
+  gui.Initialize();
+  CONSOLE_INFO("ImGui layer initialized");
 
 
   /* Create Framebuffer object */
@@ -509,6 +506,13 @@ void Engine::Run()
   /* ------------------------------------------------------------------ */
   while (windowManager.IsOpen())
   {
+    /* Set new font before ImGui::NewFrame() */
+    if (auto* font = gui.selectedFontPath)
+    {
+      gui.SetFont(font->string(), 16);
+      gui.selectedFontPath = nullptr;
+    }
+
     gui.BeginFrame();
 
     /* ---------------------------------------------------------------------------------- */

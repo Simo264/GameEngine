@@ -24,9 +24,9 @@ public:
 	}
 
 	/**
-	 * Set up ImGui context
+	 * Initialize ImGui
 	 */
-	void SetupContext();
+	void Initialize();
 
 	/**
 	 * Destroy ImGui context
@@ -46,12 +46,7 @@ public:
 	/**
 	 * Set ImGui font
 	 */
-	void SetFont(const fs::path& fontpath, i32 fontsize);
-
-	/**
-	 * Set ImGui style
-	 */
-	void SetStyle();
+	void SetFont(StringView fontPath, i32 fontsize);
 
 	/**
 	 * Render the menu bar
@@ -118,20 +113,18 @@ public:
 	bool viewportFocused;
 	GameObject objectSelected;
 
+	fs::path* selectedFontPath;
 private:
 	ImGuiLayer();
 	~ImGuiLayer() = default;
 
 	i32 _gizmode;
 
-	/**
-	 * Set the dockspace
-	 */
+	void SetupContext();
+	void Styling();
 	void Docking();
-
 	void GizmoWorldTranslation(Components::Transform& transform, const mat4f& view, const mat4f& proj);
 	void GizmoWorldRotation(Components::Transform& transform, const mat4f& view, const mat4f& proj);
 	void GizmoWorldScaling(Components::Transform& transform, const mat4f& view, const mat4f& proj);
-
 	void ComboTextures(Texture2D*& matTexture, StringView comboLabel);
 };
