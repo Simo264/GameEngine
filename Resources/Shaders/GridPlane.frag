@@ -10,7 +10,7 @@ out vec4 FragColor;
 const float zNear = 0.1f;
 const float zFar  = 100.0f;
 
-vec4 grid(vec3 fragPos3D, float scale, bool drawAxis) 
+vec4 Grid(vec3 fragPos3D, float scale, bool drawAxis) 
 {
   vec2 coord = fragPos3D.xz * scale;
   vec2 derivative = fwidth(coord);
@@ -18,30 +18,29 @@ vec4 grid(vec3 fragPos3D, float scale, bool drawAxis)
   float line = min(grid.x, grid.y);
   float minimumz = min(derivative.y, 1);
   float minimumx = min(derivative.x, 1);
-  vec4 color = vec4(0.2, 0.2, 0.2, 1.0 - min(line, 1.0));
-  // z axis
-  if(fragPos3D.x > -0.1 * minimumx && fragPos3D.x < 0.1 * minimumx)
-      color.z = 1.0;
-  // x axis
-  if(fragPos3D.z > -0.1 * minimumz && fragPos3D.z < 0.1 * minimumz)
-      color.x = 1.0;
+  vec4 color = vec4(0.2f, 0.2f, 0.2f, 1.0f - min(line, 1.0f));
+  /* z-axis */
+  if(fragPos3D.x > -0.1f * minimumx && fragPos3D.x < 0.1f * minimumx)
+      color.z = 1.0f;
+  /* x-axis */
+  if(fragPos3D.z > -0.1f * minimumz && fragPos3D.z < 0.1f * minimumz)
+      color.x = 1.0f;
   return color;
 }
 
-float computeDepth(vec3 pos) 
+float ComputeDepth(vec3 pos) 
 {
-  vec4 clip_space_pos = Projection * View * vec4(pos.xyz, 1.0);
-  return (clip_space_pos.z / clip_space_pos.w);
+  vec4 clipSpacePos = Projection * View * vec4(pos, 1.0f);
+  return (clipSpacePos.z / clipSpacePos.w) * 0.5f + 0.5f;
 }
 
-float computeLinearDepth(vec3 pos) 
+float ComputeLinearDepth(vec3 pos) 
 {
-  vec4 clip_space_pos = Projection * View * vec4(pos.xyz, 1.0);
-  float clip_space_depth = (clip_space_pos.z / clip_space_pos.w) * 2.0 - 1.0; // put back between -1 and 1
-  float linearDepth = (2.0 * zNear * zFar) / (zFar + zNear - clip_space_depth * (zFar - zNear)); // get linear value between 0.01 and 100
-  return linearDepth / zFar; // normalize
+  vec4 clipSpacePos = Projection * View * vec4(pos.xyz, 1.0f);
+  float clipSpaceDepth = (clipSpacePos.z / clipSpacePos.w) * 2.0f - 1.0f; /* put back between -1 and 1 */ 
+  float linearDepth = (2.0f * zNear * zFar) / (zFar + zNear - clipSpaceDepth * (zFar - zNear));
+  return linearDepth / zFar; /* normalize */
 }
-
 
 
 void main() 
@@ -49,11 +48,11 @@ void main()
   float t = -NearPoint.y / (FarPoint.y - NearPoint.y);
   vec3 fragPos3D = NearPoint + t * (FarPoint - NearPoint);
 
-  gl_FragDepth = computeDepth(fragPos3D);
+  gl_FragDepth = ComputeDepth(fragPos3D);
 
-  float linearDepth = computeLinearDepth(fragPos3D);
-  float fading = max(0, (0.5 - linearDepth));
+  float linearDepth = ComputeLinearDepth(fragPos3D);
+  float fading = max(0, (0.5f - linearDepth));
 
-  FragColor = (grid(fragPos3D, 10, true) + grid(fragPos3D, 1, true))* float(t > 0); // adding multiple resolution for the grid
+  FragColor = (Grid(fragPos3D, 10, true) + Grid(fragPos3D, 1, true))* float(t > 0); // adding multiple resolution for the grid
   FragColor.a *= fading;
 }

@@ -441,9 +441,10 @@ void Engine::Run()
   /* -------------------------- Pre-loop section -------------------------- */
   /* ---------------------------------------------------------------------- */
   WindowManager& windowManager = WindowManager::Get();
-  ShaderManager& shaderManager = ShaderManager::Get();
-  TextureManager& textureManager = TextureManager::Get();
   ImGuiLayer& gui = ImGuiLayer::Get();
+  TextureManager& textureManager = TextureManager::Get();
+  Texture2D& heightMap = textureManager.GetTextureByPath(GetTexturesPath() / "iceland_heightmap.png");
+  ShaderManager& shaderManager = ShaderManager::Get();
   Program& framebufferProgram = shaderManager.GetProgramByName("Framebuffer");
   Program& sceneProgram = shaderManager.GetProgramByName("Scene");
   Program& sceneShadowsProgram = shaderManager.GetProgramByName("SceneShadows");
@@ -455,8 +456,7 @@ void Engine::Run()
   u32 fboTexture = _fboIntermediate.GetTextureAttachment(0);
   u32 depthMapTexture = fboDepthMap.GetTextureAttachment(0);
   u32 depthCubeMapTexture = fboDepthCubeMap.GetTextureAttachment(0);
-  Texture2D& heightMap = textureManager.GetTextureByPath(GetTexturesPath() / "iceland_heightmap.png");
-
+  
   chrono::steady_clock::time_point now{};
   chrono::steady_clock::time_point lastFrameTime{};
   f64 delta = 0.0f; /* Time elapsed between two frames */
@@ -527,15 +527,14 @@ void Engine::Run()
     _uboCamera.UpdateStorage(0, sizeof(cameraView), &cameraView[0]);
     _uboCamera.UpdateStorage(sizeof(cameraView), sizeof(cameraProj), &cameraProj[0]);
 
-    //directLightCamera.UpdateOrientation();
-    //mat4f directLightProjection = directLightCamera.CalculateOrtho();
-    //mat4f directLightView = directLightCamera.CalculateView(directionalLight->direction);
+    directLightCamera.UpdateOrientation();
+    mat4f directLightProjection = directLightCamera.CalculateOrtho();
+    mat4f directLightView = directLightCamera.CalculateView(directionalLight->direction);
 
     /* ----------------------------------------------------------------------- */
     /* -------------------------- Rendering section -------------------------- */
     /* ----------------------------------------------------------------------- */
 
-#if 0
     /* Fill the depth map from directional light's perspective */
     fboDepthMap.Bind(GL_FRAMEBUFFER);
     {
@@ -589,7 +588,6 @@ void Engine::Run()
         });
     }
     fboDepthCubeMap.Unbind(GL_FRAMEBUFFER);
-#endif
 
     /* Fill the framebuffer color texture */
     _fboMultisampled.Bind(GL_FRAMEBUFFER);
@@ -600,17 +598,16 @@ void Engine::Run()
       glPolygonMode(GL_FRONT, wireframeMode ? GL_LINE : GL_FILL);
       glPolygonMode(GL_BACK, wireframeMode ? GL_LINE : GL_FILL);
 
-#if 0
-      /* Render terrain */
-      {
-        terrainProgram->Use();
-        terrainProgram->SetUniformMat4f("u_model", mat4f(1.0f));
-        terrainProgram->SetUniformMat4f("u_view", cameraView);
-        terrainProgram->SetUniformMat4f("u_projection", cameraProj);
-        terrainProgram->SetUniform1i("u_heightMap", 0);
-        heightMap->BindTextureUnit(0);
-        Renderer::DrawArrays(GL_PATCHES, terrain);
-      }
+      ///* Render terrain */
+      //{
+      //  terrainProgram.Use();
+      //  terrainProgram.SetUniformMat4f("u_model", mat4f(1.0f));
+      //  terrainProgram.SetUniformMat4f("u_view", cameraView);
+      //  terrainProgram.SetUniformMat4f("u_projection", cameraProj);
+      //  terrainProgram.SetUniform1i("u_heightMap", 0);
+      //  heightMap.BindTextureUnit(0);
+      //  Renderer::DrawArrays(GL_PATCHES, terrain);
+      //}
 
       /* Render scene with shadows map */
       if (shadowMode)
@@ -637,28 +634,22 @@ void Engine::Run()
         RenderScene(scene, sceneProgram);
       }
 
+      /* Render the infinite grid */
+      {
+        gridPlaneProgram.Use();
+        Renderer::DrawArrays(GL_TRIANGLES, gridVao);
+      }
+
       /* Draw skybox after the scene */
       {
-        skyboxProgram->Use();
-        skyboxProgram->SetUniformMat4f("u_projection", cameraProj);
-        skyboxProgram->SetUniformMat4f("u_view", mat4f(mat3f(cameraView)));
+        skyboxProgram.Use();
+        skyboxProgram.SetUniformMat4f("u_projection", cameraProj);
+        skyboxProgram.SetUniformMat4f("u_view", mat4f(mat3f(cameraView)));
         skyboxTexture.BindTextureUnit(0);
-        Depth::SetFunction(GL_LEQUAL); 
+        DepthTest::SetDepthFun(DepthFun::LEQUAL);
         Renderer::DrawArrays(GL_TRIANGLES, skybox);
-        Depth::SetFunction(GL_LESS); 
+        DepthTest::SetDepthFun(DepthFun::LESS);
       }
-#endif
-
-      sceneProgram.Use();
-      sceneProgram.SetUniform3f("u_viewPos", primaryCamera.position);
-      sceneProgram.SetUniform3f("u_ambientLightColor", g_ambientColor);
-      sceneProgram.SetUniform1f("u_ambientLightIntensity", g_ambientIntensity);
-      sceneProgram.SetUniform1i("u_useNormalMap", normalMapMode);
-      RenderScene(scene, sceneProgram);
-
-      /* Render grid */
-      gridPlaneProgram.Use();
-      Renderer::DrawArrays(GL_TRIANGLES, gridVao);
 
       /* Blit multisampled buffer to normal colorbuffer of intermediate FBO */
       _fboMultisampled.Blit(_fboIntermediate,
