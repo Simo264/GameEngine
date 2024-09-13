@@ -40,4 +40,7 @@ public:
 private:
 	/* We can create a entt::registry to store our entities */
 	entt::registry _registry;
+
+	void SerializeScene(const fs::path& filepath);
+	void DeserializeScene(const fs::path& filepath);
 };

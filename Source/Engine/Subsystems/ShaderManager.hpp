@@ -46,9 +46,9 @@ public:
 	 */
 	Program& GetProgramByName(StringView name);
 
-	constexpr const UnorderedMap<String, Shader>& GetShaders() { return _shaders; }
+	constexpr const UnorderedMap<String, Shader>& GetShaders() const { return _shaders; }
 
-	constexpr const UnorderedMap<String, Program>& GetPrograms() { return _programs; }
+	constexpr const UnorderedMap<String, Program>& GetPrograms() const { return _programs; }
 	
 private:
 	ShaderManager() = default;

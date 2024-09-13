@@ -91,7 +91,7 @@ public:
 	/**
 	 * Render the camera props frame
 	 */
-	void CameraProps(const char* label, Camera& camera);
+	void CameraProps(StringView label, Camera& camera);
 
 	/**
 	 * Render the depth map image into a frame
@@ -133,5 +133,5 @@ private:
 	void GizmoWorldRotation(Components::Transform& transform, const mat4f& view, const mat4f& proj);
 	void GizmoWorldScaling(Components::Transform& transform, const mat4f& view, const mat4f& proj);
 
-	void ComboTextures(Texture2D*& matTexture, const char* comboLabel);
+	void ComboTextures(Texture2D*& matTexture, StringView comboLabel);
 };

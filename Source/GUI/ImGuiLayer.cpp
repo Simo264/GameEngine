@@ -8,6 +8,7 @@
 #include "Engine/Subsystems/WindowManager.hpp"
 #include "Engine/Subsystems/ShaderManager.hpp"
 #include "Engine/Subsystems/TextureManager.hpp"
+#include "Engine/Subsystems/FontManager.hpp"
 #include "Engine/Filesystem/Dialog.hpp"
 
 #include <imgui/imgui.h>
@@ -33,19 +34,19 @@ constexpr const char* ATTENUATION_LABELS[]{
   "600m",
   "3250m"
 };
-constexpr Array<Tuple<f32, f32>, 12> ATTENUATION_VALUES = {
-  std::make_tuple<f32,f32>(0.7f, 1.8f),         /* 7 meters */ 
-  std::make_tuple<f32,f32>(0.35f, 0.44f),       /* 13 meters */
-  std::make_tuple<f32,f32>(0.22f, 0.20f),       /* 20 meters */
-  std::make_tuple<f32,f32>(0.14f, 0.07f),       /* 32 meters */
-  std::make_tuple<f32,f32>(0.09f, 0.032f),      /* 50 meters */
-  std::make_tuple<f32,f32>(0.07f, 0.017f),      /* 65 meters */
-  std::make_tuple<f32,f32>(0.045f, 0.0075f),    /* 100 meters */
-  std::make_tuple<f32,f32>(0.027f, 0.0028f),    /* 160 meters */
-  std::make_tuple<f32,f32>(0.022f, 0.0019f),    /* 200 meters */
-  std::make_tuple<f32,f32>(0.014f, 0.0007f),    /* 325 meters */
-  std::make_tuple<f32,f32>(0.007f, 0.0002f),    /* 600 meters */
-  std::make_tuple<f32,f32>(0.0014f, 0.000007f), /* 3250 meters */
+constexpr const Array<Tuple<f32, f32>, 12> ATTENUATION_VALUES = {
+  Tuple(0.7f, 1.8f),         /* 7 meters */
+  Tuple(0.35f, 0.44f),       /* 13 meters */
+  Tuple(0.22f, 0.20f),       /* 20 meters */
+  Tuple(0.14f, 0.07f),       /* 32 meters */
+  Tuple(0.09f, 0.032f),      /* 50 meters */
+  Tuple(0.07f, 0.017f),      /* 65 meters */
+  Tuple(0.045f, 0.0075f),    /* 100 meters */
+  Tuple(0.027f, 0.0028f),    /* 160 meters */
+  Tuple(0.022f, 0.0019f),    /* 200 meters */
+  Tuple(0.014f, 0.0007f),    /* 325 meters */
+  Tuple(0.007f, 0.0002f),    /* 600 meters */
+  Tuple(0.0014f, 0.000007f), /* 3250 meters */
 };
 
 
@@ -188,15 +189,16 @@ void ImGuiLayer::Demo()
 }
 void ImGuiLayer::MenuBar(Scene& scene)
 {
+  static bool viewPrefWindow = false;
   if(ImGui::BeginMainMenuBar())
   {
     if(ImGui::BeginMenu("File"))
     {
       if (ImGui::MenuItem("Open"))
       {
-        const char* filters[1] = { "*.ini" };
-        fs::path filePath = OpenFileDialog(1, filters, "Open scene", false);
+        static const char* filter[] = { "*.ini" };
 
+        fs::path filePath = OpenFileDialog(1, filter, "Open scene", false);
         if (!filePath.empty())
         {
           ShaderManager& shaderManager = ShaderManager::Get();
@@ -209,7 +211,7 @@ void ImGuiLayer::MenuBar(Scene& scene)
 
           scene.ClearScene();
           scene.LoadScene(filePath);
-          CONSOLE_INFO("The scene has been successfully loaded");
+          CONSOLE_INFO("The scene has been loaded successfully");
         }
       }
       if (ImGui::MenuItem("Save as..."))
@@ -220,9 +222,9 @@ void ImGuiLayer::MenuBar(Scene& scene)
         scene.SaveScene(filepath);
         CONSOLE_TRACE("The scene has been successfully saved");
       }
-        
+      
       ImGui::Separator();
-
+      
       if (ImGui::MenuItem("Exit"))
       {
         WindowManager::Get().Close();
@@ -230,8 +232,77 @@ void ImGuiLayer::MenuBar(Scene& scene)
 
       ImGui::EndMenu();
     }
+    if (ImGui::BeginMenu("?"))
+    {
+      if (ImGui::MenuItem("Preferences"))
+        viewPrefWindow = true;
+
+      ImGui::EndMenu();
+    }
 
     ImGui::EndMainMenuBar();
+  }
+
+
+  /* Render preferences window */
+  if (viewPrefWindow)
+  {
+    ImGui::Begin("Preferences", &viewPrefWindow);
+    static constexpr const char* itemList[] = {
+      "Font",
+      "item_2",
+      "item_3",
+    };
+    static i32 selected = 0;
+      
+    /* Left panel */ 
+    {
+      ImGui::BeginChild("Left", ImVec2(200.0f, 0.0f), ImGuiChildFlags_Border | ImGuiChildFlags_ResizeX);
+      for (i32 i = 0; i < std::size(itemList); i++)
+      {
+        if (ImGui::Selectable(itemList[i], selected == i))
+          selected = i;
+      }
+      ImGui::EndChild();
+    }
+    /* End panel */
+
+    ImGui::SameLine();
+
+    /* Right panel */ 
+    {
+      ImGui::BeginGroup();
+      ImGui::BeginChild("Item_View", ImVec2(0, -ImGui::GetFrameHeightWithSpacing())); // Leave room for 1 line below us
+      ImGui::SeparatorText(itemList[selected]);
+      
+      if (ImGui::BeginCombo("Combo_Fonts", "Select fonts"))
+      {
+        auto& io = ImGui::GetIO();
+        
+        
+        FontManager& fontManager = FontManager::Get();
+        const auto& fonts = fontManager.GetFonts();
+        for (const auto& [key, font] : fonts)
+        {
+          if (ImGui::Selectable(key.c_str(), false))
+          {
+            CONSOLE_DEBUG("Font selected: {}", key.c_str());
+            io.Fonts->AddFontFromFileTTF(font.string().c_str(), 16);
+          }
+        }
+        ImGui::EndCombo();
+      }
+      ImGui::EndChild();
+      
+      
+      //if (ImGui::Button("Revert")){}
+      //ImGui::SameLine();
+      //if (ImGui::Button("Save")){}
+      ImGui::EndGroup();
+    }
+    /* End panel */
+
+    ImGui::End();
   }
 }
 void ImGuiLayer::ViewportGizmo(u32 tetxureID, GameObject& object, const mat4f& view, const mat4f& proj)
@@ -299,7 +370,7 @@ void ImGuiLayer::OutlinerPanel(Scene& scene)
   {
     ImGui::Begin("Outliner", &visible);
     ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-    if (ImGui::TreeNode("Scene"))
+    //if (ImGui::TreeNode("Scene"))
     {
       for (auto [entity, label] : scene.Reg().view<Components::Label>().each())
       {
@@ -315,15 +386,15 @@ void ImGuiLayer::OutlinerPanel(Scene& scene)
         if (objectSelected.IsValid() && objectSelected.IsEqual(object))
           flags |= ImGuiTreeNodeFlags_Selected;
 
-        std::format_to(nodeName, "{}", label.value.c_str());
+        std::format_to_n(nodeName, sizeof(nodeName), "{}", label.value.c_str());
         ImGui::TreeNodeEx(reinterpret_cast<void*>(entity), flags, nodeName);
 
         if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
           objectSelected = object;
 
-        std::fill_n(nodeName, 64, 0);
+        std::fill_n(nodeName, sizeof(nodeName), 0);
       }
-      ImGui::TreePop();
+      //ImGui::TreePop();
     }
     ImGui::End();
   }
@@ -579,9 +650,9 @@ void ImGuiLayer::DebugDepthMap(u32 tetxureID)
 
   style.WindowPadding = paddingTmp;
 }
-void ImGuiLayer::CameraProps(const char* label, Camera& camera)
+void ImGuiLayer::CameraProps(StringView label, Camera& camera)
 {
-  ImGui::Begin(label, nullptr);
+  ImGui::Begin(label.data(), nullptr);
 
   ImGui::DragFloat("zNear", &camera.frustum.zNear, 0.1f, 0.0f, 1'000.0f);
   ImGui::DragFloat("zFar", &camera.frustum.zFar, 0.1f, 0.0f, 1'000.0f);
@@ -601,15 +672,17 @@ void ImGuiLayer::CameraProps(const char* label, Camera& camera)
 }
 void ImGuiLayer::DebugInfo(f64 delta, f64 avg, i32 frameRate, bool shadowMode, bool normalMode, bool wireframeMode)
 {
-  ImGuiWindowFlags flags = 
+  ImGuiWindowFlags flags =
+    ImGuiWindowFlags_::ImGuiWindowFlags_NoDocking |
     ImGuiWindowFlags_::ImGuiWindowFlags_NoBackground | 
     ImGuiWindowFlags_::ImGuiWindowFlags_NoResize | 
     ImGuiWindowFlags_::ImGuiWindowFlags_NoCollapse |
     ImGuiWindowFlags_::ImGuiWindowFlags_NoTitleBar;
 
   ImGui::SetNextWindowPos(ImVec2(viewportPos.x, viewportPos.y + 20));
-  ImGui::SetNextWindowSize(ImVec2(viewportSize.x/2, viewportSize.y - 20));
-  ImGui::Begin("Application", nullptr, flags);
+  ImGui::SetNextWindowSize(ImVec2(300.0f, 250.0f));
+  ImGui::SetNextWindowBgAlpha(0.0f);
+  ImGui::Begin("Info", nullptr, flags);
 
   auto& winManager = WindowManager::Get();
   static const char* glRender = reinterpret_cast<const char*>(glGetString(GL_RENDERER));
@@ -626,12 +699,11 @@ void ImGuiLayer::DebugInfo(f64 delta, f64 avg, i32 frameRate, bool shadowMode, b
 
   ImGui::Separator();
 
-  ImGui::TextWrapped("Time (ms): %f", delta*1000);
-  ImGui::TextWrapped("Average (ms): %f", avg*1000);
+  ImGui::TextWrapped("Time (ms): %f", delta * 1000.0f);
+  ImGui::TextWrapped("Average (ms): %f", avg * 1000.0f);
   ImGui::TextWrapped("Frame rate: %d", frameRate);
 
   ImGui::Separator();
-
   ImGui::TextWrapped("Shadow mode (F1 on/F2 off): %d", shadowMode);
   ImGui::TextWrapped("Normal mapping (F5 on/F6 off): %d", normalMode);
   ImGui::TextWrapped("Wireframe mode (F9 on/F10 off): %d", wireframeMode);
@@ -753,10 +825,10 @@ void ImGuiLayer::GizmoWorldScaling(Components::Transform& transform, const mat4f
     transform.UpdateTransformation();
   }
 }
-void ImGuiLayer::ComboTextures(Texture2D*& matTexture, const char* comboLabel)
+void ImGuiLayer::ComboTextures(Texture2D*& matTexture, StringView comboLabel)
 {
-  const char* comboPreview = "Select texture";
-  if (ImGui::BeginCombo(comboLabel, comboPreview))
+  static constexpr const char comboPreview[] = "Select texture";
+  if (ImGui::BeginCombo(comboLabel.data(), comboPreview))
   {
     TextureManager& texManager = TextureManager::Get();
     const auto& textures = texManager.GetTextures();

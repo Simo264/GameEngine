@@ -25,6 +25,7 @@
 #include "Engine/Subsystems/WindowManager.hpp"
 #include "Engine/Subsystems/ShaderManager.hpp"
 #include "Engine/Subsystems/TextureManager.hpp"
+#include "Engine/Subsystems/FontManager.hpp"
 
 #include "GUI/ImGuiLayer.hpp"
 
@@ -32,6 +33,17 @@
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
+
+static chrono::steady_clock::time_point now{};
+static chrono::steady_clock::time_point lastFrameTime{};
+static f64 delta = 0.0f; /* Time elapsed between two frames */
+
+static chrono::steady_clock::time_point timerT0 = chrono::steady_clock::now();
+static chrono::steady_clock::time_point timerT1{};
+static i32 frames = 0;
+static i32 frameRate = 0; /* How many frames generated per seconds */
+static f64 totalDeltasPerSecond = 0.0f;
+static f64 avgTime = 0.0f; /* The average rendering time per seconds */
 
 static void GLAPIENTRY MessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam)
 {
@@ -84,6 +96,26 @@ static void SetOpenGLStates()
   glClearColor(0.15f, 0.15f, 0.15f, 1.0f);
   glClearDepth(1.0f);
   glClearStencil(0);
+}
+
+static void CalculatePerFrameTime()
+{
+  frames++;
+
+  now = chrono::steady_clock::now();
+  delta = chrono::duration_cast<chrono::duration<f64>>(now - lastFrameTime).count();
+  lastFrameTime = now;
+  totalDeltasPerSecond += delta;
+  timerT1 = chrono::steady_clock::now();
+  f64 timer_diff = chrono::duration_cast<chrono::duration<f64>>(timerT1 - timerT0).count();
+  if (timer_diff >= 1)
+  {
+    timerT0 = chrono::steady_clock::now();
+    avgTime = totalDeltasPerSecond / frames;
+    frameRate = frames;
+    frames = 0;
+    totalDeltasPerSecond = 0;
+  }
 }
 
 static void RenderDirectionalLight(Program& program, const Components::DirectionalLight& light)
@@ -368,9 +400,15 @@ void Engine::Initialize()
   /* ------------------- */
   ImGuiLayer& gui = ImGuiLayer::Get();
   gui.SetupContext();
-  gui.SetFont((GetFontsPath() / "OpenSans-Regular.ttf"), 16);
+  //gui.SetFont((GetFontsPath() / "OpenSans/OpenSans-Regular.ttf"), 16);
   gui.SetStyle();
   CONSOLE_INFO("ImGui layer initialized");
+
+  /* Initialize font manager */
+  /* -------------------------- */
+  FontManager& fontManager = FontManager::Get();
+  fontManager.Initialize();
+  CONSOLE_INFO("Font manager initialized");
   
   /* Initialize shader manager */
   /* ------------------------- */
@@ -383,6 +421,8 @@ void Engine::Initialize()
   TextureManager& textureManager = TextureManager::Get();
   textureManager.Initialize();
   CONSOLE_INFO("Texture manager initialized");
+
+
 
   /* Create Framebuffer object */
   /* ------------------------- */
@@ -458,17 +498,6 @@ void Engine::Run()
   u32 depthMapTexture = fboDepthMap.GetTextureAttachment(0);
   u32 depthCubeMapTexture = fboDepthCubeMap.GetTextureAttachment(0);
   
-  chrono::steady_clock::time_point now{};
-  chrono::steady_clock::time_point lastFrameTime{};
-  f64 delta = 0.0f; /* Time elapsed between two frames */
-  
-  chrono::steady_clock::time_point timerT0 = chrono::steady_clock::now();
-  chrono::steady_clock::time_point timerT1{};
-  i32 frames = 0; 
-  i32 frameRate = 0; /* How many frames generated per seconds */
-  f64 totalDeltasPerSecond = 0.0f; 
-  f64 avgTime = 0.0f; /* The average rendering time per seconds */
-
   bool shadowMode = true;
   bool normalMapMode = true;
   bool wireframeMode = false;
@@ -485,21 +514,7 @@ void Engine::Run()
     /* ---------------------------------------------------------------------------------- */
     /* -------------------------- Per-frame time logic section -------------------------- */
     /* ---------------------------------------------------------------------------------- */
-    now = chrono::steady_clock::now();
-    delta = chrono::duration_cast<chrono::duration<f64>>(now - lastFrameTime).count();
-    lastFrameTime = now;
-    totalDeltasPerSecond += delta;
-    timerT1 = chrono::steady_clock::now();
-    f64 timer_diff = chrono::duration_cast<chrono::duration<f64>>(timerT1 - timerT0).count();
-    if (timer_diff >= 1)
-    {
-      timerT0 = chrono::steady_clock::now();
-      avgTime = totalDeltasPerSecond / frames;
-      frameRate = frames;
-      frames = 0;
-      totalDeltasPerSecond = 0;
-    }
-
+    CalculatePerFrameTime();
     g_drawCalls = 0;
 
     /* ------------------------------------------------------------------- */
@@ -668,7 +683,7 @@ void Engine::Run()
     gui.ContentBrowser();
     gui.OutlinerPanel(scene);
     gui.CameraProps("Primary camera", primaryCamera);
-    //gui.Demo();
+    gui.Demo();
 
     GameObject& objectSelected = gui.objectSelected;
     gui.GameObjectDetails(objectSelected);
@@ -687,7 +702,6 @@ void Engine::Run()
     /* ------------------------------------------------------------------ */
     /* -------------------------- Swap buffers -------------------------- */
     /* ------------------------------------------------------------------ */
-    frames++;
     windowManager.SwapWindowBuffers();
   }
   
