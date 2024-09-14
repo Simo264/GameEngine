@@ -12,13 +12,13 @@ void FontManager::Initialize()
 	LoadFonts();
 }
 
-const fs::path& FontManager::GetFontByName(StringView fontName)
+Map<String, fs::path>::iterator FontManager::GetRecordByName(StringView fontName)
 {
 	const auto& it = _fonts.find(fontName.data());
 	if (it == _fonts.end())
 		throw std::runtime_error(std::format("Fonts '{}' does not exist", fontName.data()));
 
-	return it->second;
+	return it;
 }
 
 /* -----------------------------------------------------  */

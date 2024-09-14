@@ -13,8 +13,9 @@ public:
 	{
 		if (!fs::exists(filepath) || !fs::is_regular_file(filepath))
 		{
-			CONSOLE_WARN("<filepath> is not a valid path");
-			return;
+			char msg[128]{};
+			std::format_to_n(msg, sizeof(msg), "{} is not a valid path", filepath.string());
+			throw std::runtime_error(msg);
 		}
 
 		/* Create a file instance */
@@ -46,7 +47,7 @@ public:
 		if (!HasKey(section, key))
 			return empty;
 
-		return const_cast<String&>(_iniData[section.data()][key.data()]);
+		return _iniData[section.data()][key.data()];
 	}
 
 	/* To update a value */

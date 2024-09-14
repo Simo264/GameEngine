@@ -46,7 +46,7 @@ public:
 	/**
 	 * Set ImGui font
 	 */
-	void SetFont(StringView fontPath, i32 fontsize);
+	void SetFont(StringView fontPath);
 
 	/**
 	 * Render the menu bar
@@ -113,7 +113,14 @@ public:
 	bool viewportFocused;
 	GameObject objectSelected;
 
-	fs::path* selectedFontPath;
+	/**
+	 * First: pointer to the FontManager key
+	 * Second: pointer to the FontManager value 
+	 */
+	std::pair<String*, fs::path*> selectedFont;
+
+	bool changeFontFamily;
+
 private:
 	ImGuiLayer();
 	~ImGuiLayer() = default;
@@ -126,5 +133,7 @@ private:
 	void GizmoWorldTranslation(Components::Transform& transform, const mat4f& view, const mat4f& proj);
 	void GizmoWorldRotation(Components::Transform& transform, const mat4f& view, const mat4f& proj);
 	void GizmoWorldScaling(Components::Transform& transform, const mat4f& view, const mat4f& proj);
-	void ComboTextures(Texture2D*& matTexture, StringView comboLabel);
+	void ComboTextures(Texture2D*& matTexture, StringView comboId, const Texture2D& defaultTex);
+
+	void Preferences(bool& view);
 };

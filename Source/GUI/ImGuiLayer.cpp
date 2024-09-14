@@ -4,12 +4,14 @@
 #include "Core/Math/Extensions.hpp"
 #include "Core/Log/Logger.hpp"
 
+
 #include "Engine/Globals.hpp"
 #include "Engine/Subsystems/WindowManager.hpp"
 #include "Engine/Subsystems/ShaderManager.hpp"
 #include "Engine/Subsystems/TextureManager.hpp"
 #include "Engine/Subsystems/FontManager.hpp"
 #include "Engine/Filesystem/Dialog.hpp"
+#include "Engine/Filesystem/ConfigFile.hpp"
 
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_glfw.h>
@@ -49,6 +51,7 @@ constexpr const Array<Tuple<f32, f32>, 12> ATTENUATION_VALUES = {
   Tuple(0.0014f, 0.000007f), /* 3250 meters */
 };
 
+static i32 fontSize;
 
 /* -------------------------- */
 /*          PUBLIC            */
@@ -63,7 +66,13 @@ void ImGuiLayer::Initialize()
   Styling();
 
   /* Load default font */
-  SetFont((GetFontsPath() / "OpenSans/OpenSans-Regular.ttf").string(), 16);
+  ConfigFile config(GetRootPath() / "Configuration.ini");
+  config.ReadData();
+  const String& fontFamily = config.GetValue("GUI", "font-family");
+  fontSize = std::atoi(config.GetValue("GUI", "font-size").c_str());
+  auto record = FontManager::Get().GetRecordByName(fontFamily.c_str());
+  selectedFont = std::make_pair(const_cast<String*>(&record->first), const_cast<fs::path*>(&record->second));
+  SetFont(selectedFont.second->string());
 }
 void ImGuiLayer::CleanUp()
 {
@@ -94,11 +103,11 @@ void ImGuiLayer::EndFrame()
     windowManager.MakeContextCurrent(backCurrentContext);
   }
 }
-void ImGuiLayer::SetFont(StringView fontPath, i32 fontsize)
+void ImGuiLayer::SetFont(StringView fontPath)
 {
   ImGuiIO& io = ImGui::GetIO();
   io.Fonts->Clear();
-  io.Fonts->AddFontFromFileTTF(fontPath.data(), fontsize);
+  io.Fonts->AddFontFromFileTTF(fontPath.data(), fontSize);
   io.Fonts->Build();
   
   ImGui_ImplOpenGL3_DestroyDeviceObjects();
@@ -115,6 +124,7 @@ void ImGuiLayer::Demo()
 void ImGuiLayer::MenuBar(Scene& scene)
 {
   static bool viewPrefWindow = false;
+  /* Render menu bar */
   if(ImGui::BeginMainMenuBar())
   {
     if(ImGui::BeginMenu("File"))
@@ -141,7 +151,7 @@ void ImGuiLayer::MenuBar(Scene& scene)
       }
       if (ImGui::MenuItem("Save as..."))
       {
-        const char* filters[1] = { "*.ini" };
+        const char* filters[] = { "*.ini" };
         fs::path filepath = SaveFileDialog(1, filters, "Save scene");
 
         scene.SaveScene(filepath);
@@ -170,61 +180,8 @@ void ImGuiLayer::MenuBar(Scene& scene)
 
 
   /* Render preferences window */
-  if (viewPrefWindow)
-  {
-    ImGui::Begin("Preferences", &viewPrefWindow);
-    static constexpr const char* itemList[] = {
-      "Font",
-      "...",
-    };
-    static i32 selected = 0;
-      
-    /* Left panel */
-    {
-      ImGui::BeginChild("Left", ImVec2(200.0f, 0.0f), ImGuiChildFlags_Border | ImGuiChildFlags_ResizeX);
-      for (i32 i = 0; i < std::size(itemList); i++)
-      {
-        if (ImGui::Selectable(itemList[i], selected == i))
-          selected = i;
-      }
-      ImGui::EndChild();
-    }
-    /* End panel */
-
-    ImGui::SameLine();
-
-    /* Right panel */ 
-    {
-      ImGui::BeginGroup();
-      ImGui::BeginChild("Item_View", ImVec2(0, -ImGui::GetFrameHeightWithSpacing())); // Leave room for 1 line below us
-      ImGui::SeparatorText(itemList[selected]);
-      
-      if (ImGui::BeginCombo("Combo_Fonts", "Select fonts"))
-      {
-        auto& io = ImGui::GetIO();
-        FontManager& fontManager = FontManager::Get();
-        const auto& fonts = fontManager.GetFonts();
-        for (const auto& [key, font] : fonts)
-        {
-          if (ImGui::Selectable(key.c_str(), false))
-          {
-            selectedFontPath = const_cast<fs::path*>(&font);
-          }
-        }
-        ImGui::EndCombo();
-      }
-      ImGui::EndChild();
-      
-      
-      //if (ImGui::Button("Revert")){}
-      //ImGui::SameLine();
-      //if (ImGui::Button("Save")){}
-      ImGui::EndGroup();
-    }
-    /* End panel */
-
-    ImGui::End();
-  }
+  if(viewPrefWindow)
+    Preferences(viewPrefWindow);
 }
 void ImGuiLayer::ViewportGizmo(u32 tetxureID, GameObject& object, const mat4f& view, const mat4f& proj)
 {
@@ -406,7 +363,7 @@ void ImGuiLayer::GameObjectDetails(GameObject& object)
     if (ImGui::CollapsingHeader("Model", ImGuiTreeNodeFlags_DefaultOpen))
     {
       /* Display model path */
-      ImGui::TextWrapped("Path: %s", model->path.string().c_str());
+      ImGui::TextWrapped("Model: %s", model->path.string().c_str());
       ImGui::Separator();
 
       /* Display the number of meshes */
@@ -424,38 +381,22 @@ void ImGuiLayer::GameObjectDetails(GameObject& object)
         char title[16]{};
         std::format_to_n(title, sizeof(title), "Mesh {}", i);
         ImGui::SeparatorText(title);
-          
-        const String& diffPath = material.diffuse->strPath;
-        bool isTextureEmpty = (diffPath.at(0) == '#');
-        ImGui::TextWrapped("Diffuse: %s", isTextureEmpty ? "None" : diffPath.c_str());
-        ComboTextures(material.diffuse, "##diffuse");
-        if (!isTextureEmpty && ImGui::Button("Reset##diffuse"))
-          material.diffuse = &texManager.GetTextureByPath("#default_diffuse");
-        ImGui::Separator();
-          
-        const String& specularPath = material.specular->strPath;
-        isTextureEmpty = (specularPath.at(0) == '#');
-        ImGui::TextWrapped("Specular: %s", isTextureEmpty ? "None" : specularPath.c_str());
-        ComboTextures(material.specular, "##specular");
-        if (!isTextureEmpty && ImGui::Button("Reset##specular"))
-          material.specular = &texManager.GetTextureByPath("#default_specular");
-        ImGui::Separator();
-          
-        const String& normalPath = material.normal->strPath;
-        isTextureEmpty = (normalPath.at(0) == '#');
-        ImGui::TextWrapped("Normal: %s", isTextureEmpty ? "None" : normalPath.c_str());
-        ComboTextures(material.normal, "##normal");
-        if (!isTextureEmpty && ImGui::Button("Reset##normal"))
-          material.normal = &texManager.GetTextureByPath("#default_normal");
-        ImGui::Separator();
+        
+        ImGui::Text("Diffuse");
+        ComboTextures(material.diffuse, "##Diffuse", texManager.GetDefaultDiffuse());
+        ImGui::InvisibleButton("##margin_bottom_1", ImVec2(1.f, 5.0f));
 
-        const String& heightPath = material.height->strPath;
-        isTextureEmpty = (heightPath.at(0) == '#');
-        ImGui::TextWrapped("Height: %s", isTextureEmpty ? "None" : heightPath.c_str());
-        ComboTextures(material.height, "##height");
-        if (!isTextureEmpty && ImGui::Button("Reset##height"))
-          material.height = &texManager.GetTextureByPath("#default_height");
-        ImGui::Separator();
+        ImGui::Text("Specular");
+        ComboTextures(material.specular, "##Specular", texManager.GetDefaultSpecular());
+        ImGui::InvisibleButton("##margin_bottom_2", ImVec2(1.f, 5.0f));
+
+        ImGui::Text("Normal");
+        ComboTextures(material.normal, "##Normal", texManager.GetDefaultNormal());
+        ImGui::InvisibleButton("##margin_bottom_3", ImVec2(1.f, 5.0f));
+
+        ImGui::Text("Height");
+        ComboTextures(material.height, "##Height", texManager.GetDefaultHeight());
+        
       }
     }
   }
@@ -647,7 +588,8 @@ ImGuiLayer::ImGuiLayer()
     viewportSize{},
     viewportPos{},
     objectSelected{},
-    selectedFontPath{ nullptr },
+    selectedFont{},
+    changeFontFamily{ false },
     _gizmode{ ImGuizmo::OPERATION::TRANSLATE }
 {}
 void ImGuiLayer::SetupContext()
@@ -836,20 +778,93 @@ void ImGuiLayer::GizmoWorldScaling(Components::Transform& transform, const mat4f
     transform.UpdateTransformation();
   }
 }
-void ImGuiLayer::ComboTextures(Texture2D*& matTexture, StringView comboLabel)
+void ImGuiLayer::ComboTextures(Texture2D*& matTexture, StringView comboId, const Texture2D& defaultTex)
 {
-  static constexpr const char comboPreview[] = "Select texture";
-  if (ImGui::BeginCombo(comboLabel.data(), comboPreview))
+  const bool isEmpty = (matTexture->strPath.at(0) == '#');
+  auto& textManager = TextureManager::Get();
+  
+  f32 panelWidth = ImGui::GetContentRegionAvail().x;
+  ImGui::SetNextItemWidth(panelWidth - 32);
+  if (ImGui::BeginCombo(comboId.data(), (isEmpty ? "Select texture" : matTexture->strPath.c_str())))
   {
-    TextureManager& texManager = TextureManager::Get();
-    const auto& textures = texManager.GetTextures();
-    for (const auto& [key, texture] : textures)
+    for (const auto& [key, texture] : textManager.GetTextures())
     {
       const String& texPathStr = texture.strPath;
-      if (texPathStr.at(0) != '#' && ImGui::Selectable(texPathStr.c_str(), false))
+      if (key.at(0) != '#' && ImGui::Selectable(texPathStr.c_str(), key == matTexture->strPath))
         matTexture = const_cast<Texture2D*>(&texture);
     }
-
     ImGui::EndCombo();
   }
+
+  if (!isEmpty)
+  {
+    const auto& resetIcon = textManager.GetIconByPath(GetIconsPath() / "reset-arrow.png");
+
+    char buttonID[32]{};
+    std::format_to_n(buttonID, sizeof(buttonID), "Reset{}", comboId.data());
+
+    ImGui::SameLine();
+    
+    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.f,0.f,0.f,0.f });
+    if (ImGui::ImageButton(reinterpret_cast<void*>(resetIcon.id), { 16,16 }))
+      matTexture = const_cast<Texture2D*>(&defaultTex);
+    ImGui::PopStyleColor();
+  }
+}
+void ImGuiLayer::Preferences(bool& view)
+{
+  ImGui::Begin("Preferences", &view);
+  static constexpr const char* itemList[] = {
+    "Font",
+    "...",
+  };
+  static i32 selected = 0;
+
+  /* Left panel */
+  {
+    ImGui::BeginChild("Left", ImVec2(200.0f, 0.0f), ImGuiChildFlags_Border | ImGuiChildFlags_ResizeX);
+    for (i32 i = 0; i < std::size(itemList); i++)
+    {
+      if (ImGui::Selectable(itemList[i], selected == i))
+        selected = i;
+    }
+    ImGui::EndChild();
+  }
+  /* End panel */
+
+  ImGui::SameLine();
+
+  /* Right panel */
+  {
+    ImGui::BeginGroup();
+    ImGui::BeginChild("Item_View", ImVec2(0, -ImGui::GetFrameHeightWithSpacing())); // Leave room for 1 line below us
+    switch (selected)
+    {
+    case 0: /* Font properties */
+      ImGui::SeparatorText(itemList[selected]);
+      ImGui::TextWrapped("Font size: %dpx", fontSize);
+      if (ImGui::BeginCombo("Font family", selectedFont.first->c_str()))
+      {
+        for (const auto& [key, font] : FontManager::Get().GetFonts())
+        {
+          if (ImGui::Selectable(key.c_str(), selectedFont.first == &key) && selectedFont.first != &key)
+          {
+            selectedFont = std::make_pair(const_cast<String*>(&key), const_cast<fs::path*>(&font));
+            changeFontFamily = true;
+          }
+        }
+        ImGui::EndCombo();
+      }
+      break;
+
+    default:
+      ImGui::SeparatorText("Todo");
+      break;
+    }
+    ImGui::EndChild();
+    ImGui::EndGroup();
+  }
+  /* End panel */
+
+  ImGui::End();
 }

@@ -20,14 +20,14 @@ public:
 		return fontManager;
 	}
 
-	const fs::path& GetFontByName(StringView fontName);
+	Map<String, fs::path>::iterator GetRecordByName(StringView fontName);
 
 	/**
 	 * Load all fonts from default directory
 	 */
 	void Initialize();
 
-	constexpr const UnorderedMap<String, fs::path>& GetFonts() const { return _fonts; }
+	constexpr const Map<String, fs::path>& GetFonts() const { return _fonts; }
 
 private:
 	FontManager() = default;
@@ -36,8 +36,8 @@ private:
 	void LoadFonts();
 	
 	/**
-	 * First: the filename of the font
-	 * Second: the path of the font
+	 * First: the font name
+	 * Second: the path of the font file
 	 */
-	UnorderedMap<String, fs::path> _fonts;
+	Map<String, fs::path> _fonts;
 };

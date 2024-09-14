@@ -506,11 +506,11 @@ void Engine::Run()
   /* ------------------------------------------------------------------ */
   while (windowManager.IsOpen())
   {
-    /* Set new font before ImGui::NewFrame() */
-    if (auto* font = gui.selectedFontPath)
+    /* Set new font before BeginFrame */
+    if (gui.changeFontFamily)
     {
-      gui.SetFont(font->string(), 16);
-      gui.selectedFontPath = nullptr;
+      gui.SetFont(gui.selectedFont.second->string());
+      gui.changeFontFamily = false;
     }
 
     gui.BeginFrame();
