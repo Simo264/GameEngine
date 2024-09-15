@@ -15,6 +15,8 @@
 #include <vector>
 
 #include <cstdint>
+#include <limits>
+#include <numeric>
 
 #include <iostream>
 #include <format>

@@ -9,9 +9,8 @@
 
 #include "Engine/Camera.hpp"
 #include "Engine/Scene.hpp"
-#include "Engine/GameObject.hpp"
-#include "Engine/Components.hpp"
 
+#include "Engine/ECS/ECS.hpp"
 #include "Engine/Graphics/Vertex.hpp"
 #include "Engine/Graphics/DepthTest.hpp"
 #include "Engine/Graphics/StencilTest.hpp"
@@ -118,14 +117,14 @@ static void CalculatePerFrameTime()
   }
 }
 
-static void RenderDirectionalLight(Program& program, const Components::DirectionalLight& light)
+static void RenderDirectionalLight(Program& program, const DirectionalLight& light)
 {
   program.SetUniform3f("u_directionalLight.color", light.color);
   program.SetUniform1f("u_directionalLight.diffuseIntensity", light.diffuseIntensity);
   program.SetUniform1f("u_directionalLight.specularIntensity", light.specularIntensity);
   program.SetUniform3f("u_directionalLight.direction", light.direction);
 }
-static void RenderPointLight(Program& program, const Components::PointLight& light, i32 i)
+static void RenderPointLight(Program& program, const PointLight& light, i32 i)
 {
   program.SetUniform3f(std::format("u_pointLight[{}].color", i).c_str(), light.color);
   program.SetUniform1f(std::format("u_pointLight[{}].diffuseIntensity", i).c_str(), light.diffuseIntensity);
@@ -134,7 +133,7 @@ static void RenderPointLight(Program& program, const Components::PointLight& lig
   program.SetUniform1f(std::format("u_pointLight[{}].attenuation.kl", i).c_str(), light.attenuation.kl);
   program.SetUniform1f(std::format("u_pointLight[{}].attenuation.kq", i).c_str(), light.attenuation.kq);
 }
-static void RenderSpotLight(Program& program, const Components::SpotLight& light)
+static void RenderSpotLight(Program& program, const SpotLight& light)
 {
   program.SetUniform3f("u_spotLight.color", light.color);
   program.SetUniform1f("u_spotLight.diffuseIntensity", light.diffuseIntensity);
@@ -148,21 +147,21 @@ static void RenderSpotLight(Program& program, const Components::SpotLight& light
 }
 static void RenderScene(Scene& scene, Program& program)
 {
-  scene.Reg().view<Components::DirectionalLight>().each([&](auto& light) {
+  scene.Reg().view<DirectionalLight>().each([&](auto& light) {
     RenderDirectionalLight(program, light);
   });
 
   i32 i = 0;
-  scene.Reg().view<Components::PointLight>().each([&](auto& light) {
+  scene.Reg().view<PointLight>().each([&](auto& light) {
     RenderPointLight(program, light, i);
     i++;
   });
 
-  scene.Reg().view<Components::SpotLight>().each([&](auto& light) {
+  scene.Reg().view<SpotLight>().each([&](auto& light) {
     RenderSpotLight(program, light);
   });
 
-  scene.Reg().view<Components::Model, Components::Transform>().each([&](auto& model, auto& transform) {
+  scene.Reg().view<Model, Transform>().each([&](auto& model, auto& transform) {
     program.SetUniformMat4f("u_model", transform.GetTransformation());
     model.DrawModel(GL_TRIANGLES);
   });
@@ -448,13 +447,13 @@ void Engine::Run()
   CreateSkybox(skybox, skyboxTexture);
 
   /* Create scene object */
-  Scene scene(GetRootPath() / "Scene.ini");
+  Scene scene((GetRootPath() / "Scene.ini").string());
 
-  Components::DirectionalLight* directionalLight = nullptr;
-  scene.Reg().view<Components::DirectionalLight>().each([&](auto& light) { directionalLight = &light; });
+  DirectionalLight* directionalLight = nullptr;
+  scene.Reg().view<DirectionalLight>().each([&](auto& light) { directionalLight = &light; });
 
-  Components::PointLight* pointLight = nullptr;
-  scene.Reg().view<Components::PointLight>().each([&](auto& light) { pointLight = &light; });
+  PointLight* pointLight = nullptr;
+  scene.Reg().view<PointLight>().each([&](auto& light) { pointLight = &light; });
 
   /* Create primary camera object */
   Camera primaryCamera(vec3f(7.f, 4.f, 6));
@@ -563,11 +562,10 @@ void Engine::Run()
       depthMapProgram.Use();
       depthMapProgram.SetUniformMat4f("u_lightView", directLightView);
       depthMapProgram.SetUniformMat4f("u_lightProjection", directLightProjection);
-      scene.Reg().view<Components::Model, Components::Transform>().each([&](auto& model, auto& transform) {
+      scene.Reg().view<Model, Transform>().each([&](auto& model, auto& transform) {
         depthMapProgram.SetUniformMat4f("u_model", transform.GetTransformation());
-        std::for_each(model.meshes.begin(), model.meshes.end(), [&](auto& mesh) {
+        for (auto& mesh : model.meshes)
           mesh.DrawMesh(GL_TRIANGLES);
-        });
       });
     }
     fboDepthMap.Unbind(GL_FRAMEBUFFER);
@@ -600,12 +598,11 @@ void Engine::Run()
       depthCubeMapProgram.SetUniform3f("u_lightPos", lightPos);
       depthCubeMapProgram.SetUniform1f("u_zFar", 15.0f);
 
-      scene.Reg().view<Components::Model, Components::Transform>().each([&](auto& model, auto& transform) {
+      scene.Reg().view<Model, Transform>().each([&](auto& model, auto& transform) {
         depthCubeMapProgram.SetUniformMat4f("u_model", transform.GetTransformation());
-        std::for_each(model.meshes.begin(), model.meshes.end(), [&](auto& mesh) {
+        for(auto& mesh : model.meshes)
           mesh.DrawMesh(GL_TRIANGLES);
-          });
-        });
+      });
     }
     fboDepthCubeMap.Unbind(GL_FRAMEBUFFER);
 
@@ -683,15 +680,13 @@ void Engine::Run()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     gui.MenuBar(scene);
-    gui.DebugInfo(delta, avgTime, frameRate, shadowMode, normalMapMode, wireframeMode);
+    GameObject& objSelected = gui.OutlinerPanel(scene);
+    gui.GameObjectDetails(objSelected);
+    gui.Viewport(fboTexture, objSelected, cameraView, cameraProj);
     gui.ContentBrowser();
-    gui.OutlinerPanel(scene);
-    gui.CameraProps("Primary camera", primaryCamera);
+    gui.DebugInfo(delta, avgTime, frameRate, shadowMode, normalMapMode, wireframeMode);
+    gui.CameraProps(primaryCamera);
     gui.Demo();
-
-    GameObject& objectSelected = gui.objectSelected;
-    gui.GameObjectDetails(objectSelected);
-    gui.ViewportGizmo(fboTexture, objectSelected, cameraView, cameraProj);
     gui.EndFrame();
 
     /* Checking viewport size */

@@ -138,7 +138,7 @@ void ShaderManager::LoadShader(StringView pathString, StringView filename, i32 s
 }
 void ShaderManager::LoadProgramsFromConfig()
 {
-  ConfigFile conf(GetRootPath() / SM_FILE_CONFIG);
+  ConfigFile conf((GetRootPath() / SM_FILE_CONFIG).string());
   conf.ReadData();
 
   for (auto const& it : conf.GetData())

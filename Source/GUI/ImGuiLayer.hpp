@@ -2,10 +2,9 @@
 
 #include "Core/Core.hpp"
 #include "Core/Math/Math.hpp"
-#include "Engine/Components.hpp"
 #include "Engine/Scene.hpp"
 #include "Engine/Camera.hpp"
-#include "Engine/GameObject.hpp"
+#include "Engine/ECS/ECS.hpp"
 #include "Engine/Graphics/Objects/Texture2D.hpp"
 
 class ImGuiLayer
@@ -61,12 +60,12 @@ public:
 	/**
 	 * Render the viewport with gizmo frame
 	 */
-	void ViewportGizmo(u32 tetxureID, GameObject& object, const mat4f& view, const mat4f& proj);
+	void Viewport(u32 tetxureID, GameObject& objSelected, const mat4f& view, const mat4f& proj);
 
 	/**
 	 * Render the outliner frame
 	 */
-	void OutlinerPanel(Scene& scene);
+	GameObject& OutlinerPanel(Scene& scene);
 
 	/**
 	 * Render the game object details frame
@@ -86,7 +85,7 @@ public:
 	/**
 	 * Render the camera props frame
 	 */
-	void CameraProps(StringView label, Camera& camera);
+	void CameraProps(Camera& camera);
 
 	/**
 	 * Render the depth map image into a frame
@@ -111,7 +110,6 @@ public:
 	vec2i32 viewportSize;
 	vec2i32 viewportPos;
 	bool viewportFocused;
-	GameObject objectSelected;
 
 	/**
 	 * First: pointer to the FontManager key
@@ -125,15 +123,7 @@ private:
 	ImGuiLayer();
 	~ImGuiLayer() = default;
 
-	i32 _gizmode;
-
 	void SetupContext();
 	void Styling();
 	void Docking();
-	void GizmoWorldTranslation(Components::Transform& transform, const mat4f& view, const mat4f& proj);
-	void GizmoWorldRotation(Components::Transform& transform, const mat4f& view, const mat4f& proj);
-	void GizmoWorldScaling(Components::Transform& transform, const mat4f& view, const mat4f& proj);
-	void ComboTextures(Texture2D*& matTexture, StringView comboId, const Texture2D& defaultTex);
-
-	void Preferences(bool& view);
 };

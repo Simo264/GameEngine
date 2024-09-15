@@ -4,9 +4,7 @@
 #include "Core/Log/Logger.hpp"
 
 #include "Engine/Utils.hpp"
-#include "Engine/GameObject.hpp"
-#include "Engine/Components.hpp"
-
+#include "Engine/ECS/ECS.hpp"
 #include "Engine/Filesystem/ConfigFile.hpp"
 #include "Engine/Graphics/Shader.hpp"
 
@@ -14,33 +12,30 @@
 /*								PUBLIC							 */
 /* ------------------------------------*/
 
-Scene::Scene(const fs::path& filepath)
+Scene::Scene(StringView filePath)
 {
-	LoadScene(filepath);
+	LoadScene(filePath);
 }
-
 GameObject Scene::CreateObject()
 {
 	GameObject object = GameObject(_registry.create(), &_registry);
-	object.AddComponent<Components::Label>("Object");
+	object.AddComponent<Label>("Object");
 	return object;
 }
-
 void Scene::DestroyObject(GameObject& object)
 {
 	_registry.destroy(object.GetObjectID());
 }
-
 void Scene::ClearScene()
 {
-	for (auto [entity, lComp] : _registry.view<Components::Label>().each())
+	for (auto [entity, lComp] : _registry.view<Label>().each())
 	{
 		GameObject object{ entity, &_registry };
 		
 		/* Free GPU memory */
-		if(auto* model = object.GetComponent<Components::Model>())
+		if(auto* model = object.GetComponent<Model>())
 			model->DestroyModel();
-		if (auto* mesh = object.GetComponent<Components::Mesh>())
+		if (auto* mesh = object.GetComponent<Mesh>())
 			mesh->DestroyMesh();
 
 		object.Invalidate();
@@ -49,28 +44,25 @@ void Scene::ClearScene()
 	/* Clear scene */
 	_registry.clear();
 }
-
-void Scene::LoadScene(const fs::path& filepath)
+void Scene::LoadScene(StringView filePath)
 {
-	CONSOLE_INFO("Loading scene {}...", filepath.string());
-	DeserializeScene(filepath);
+	CONSOLE_INFO("Loading scene {}...", filePath);
+	DeserializeScene(filePath);
 }
-
-void Scene::SaveScene(const fs::path& filepath)
+void Scene::SaveScene(StringView filePath)
 {
-	CONSOLE_INFO("Saving scene {}...", filepath.string());
-	SerializeScene(filepath);
+	CONSOLE_INFO("Saving scene {}...", filePath);
+	SerializeScene(filePath);
 }
-
 
 /* ----------------------------------- */
 /*								PRIVATE							 */
 /* ------------------------------------*/
 
-void Scene::SerializeScene(const fs::path& filepath)
+void Scene::SerializeScene(StringView filePath)
 {
-	ConfigFile conf(filepath);
-	for (auto [entity, label] : Reg().view<Components::Label>().each())
+	ConfigFile conf(filePath);
+	for (auto [entity, label] : Reg().view<Label>().each())
 	{
 		GameObject object{ entity, &Reg() };
 		const u32 objectID = static_cast<u32>(object.GetObjectID());
@@ -78,7 +70,7 @@ void Scene::SerializeScene(const fs::path& filepath)
 		String section = std::format("entity{}:Label", objectID);
 		conf.Update(section, "label", label.value);
 
-		if (auto* light = object.GetComponent<Components::DirectionalLight>())
+		if (auto* light = object.GetComponent<DirectionalLight>())
 		{
 			String section = std::format("entity{}:DirectionalLight", objectID);
 			String color = std::format("{},{},{}", light->color.x, light->color.y, light->color.z);
@@ -91,7 +83,7 @@ void Scene::SerializeScene(const fs::path& filepath)
 			conf.Update(section, "specularIntensity", specularIntensity);
 			conf.Update(section, "direction", direction);
 		}
-		if (auto* light = object.GetComponent<Components::PointLight>())
+		if (auto* light = object.GetComponent<PointLight>())
 		{
 			String section = std::format("entity{}:PointLight", objectID);
 			String color = std::format("{},{},{}", light->color.x, light->color.y, light->color.z);
@@ -108,7 +100,7 @@ void Scene::SerializeScene(const fs::path& filepath)
 			conf.Update(section, "attenuation.kl", kl);
 			conf.Update(section, "attenuation.kq", kq);
 		}
-		if (auto* light = object.GetComponent<Components::SpotLight>())
+		if (auto* light = object.GetComponent<SpotLight>())
 		{
 			String section = std::format("entity{}:SpotLight", objectID);
 			String color = std::format("{},{},{}", light->color.x, light->color.y, light->color.z);
@@ -131,37 +123,35 @@ void Scene::SerializeScene(const fs::path& filepath)
 			conf.Update(section, "cutOff", cutOff);
 			conf.Update(section, "outerCutOff", outerCutOff);
 		}
-		if (auto* transform = object.GetComponent<Components::Transform>())
+		if (auto* transform = object.GetComponent<Transform>())
 		{
 			String section = std::format("entity{}:Transform", objectID);
 			conf.Update(section, "position", std::format("{},{},{}", transform->position.x, transform->position.y, transform->position.z));
 			conf.Update(section, "scale", std::format("{},{},{}", transform->scale.x, transform->scale.y, transform->scale.z));
 			conf.Update(section, "rotation", std::format("{},{},{}", transform->rotation.x, transform->rotation.y, transform->rotation.z));
 		}
-		if (auto* model = object.GetComponent<Components::Model>())
+		if (auto* model = object.GetComponent<Model>())
 		{
 			String section = std::format("entity{}:Model", objectID);
-			conf.Update(section, "path", model->path.string());
+			conf.Update(section, "path", model->strPath);
 		}
 	}
 	conf.Generate(true);
 }
-
-void Scene::DeserializeScene(const fs::path& filepath)
+void Scene::DeserializeScene(StringView filePath)
 {
-	ConfigFile conf(filepath);
+	ConfigFile conf(filePath);
 	conf.ReadData();
 
-	GameObject object{ entt::null, nullptr };
+	GameObject object;
 	u32 currentObjectId = static_cast<u32>(entt::null);
 	for (const auto& it : conf.GetData())
 	{
 		const String& section = it.first;
-		const char* dots = strchr(section.c_str(), ':');
-		const i32 dotsPosition = static_cast<i32>(dots - section.c_str());
-		const char* componentName = dots + 1;
-		constexpr i32 entityWordLen = 6;
-		u32 objectId = std::stoul(section.substr(entityWordLen, dotsPosition - entityWordLen));
+		StringView view{ section };
+		i32 dots = view.find_first_of(':');
+		u32 objectId = std::strtoul(view.substr(6, (dots - 6)).data(), nullptr, 10);
+		StringView component = view.substr(dots + 1);
 
 		if (currentObjectId != objectId)
 		{
@@ -169,43 +159,42 @@ void Scene::DeserializeScene(const fs::path& filepath)
 			object = CreateObject();
 		}
 
-		if (std::strcmp(componentName, "Label") == 0)
+		if (component == "Label")
 		{
 			const String& label = conf.GetValue(section, "label");
-			object.GetComponent<Components::Label>()->value = label;
+			object.GetComponent<Label>()->value = label;
 		}
-		else if (std::strcmp(componentName, "Transform") == 0)
+		else if (component == "Transform")
 		{
 			const String& position = conf.GetValue(section, "position");
 			const String& rotation = conf.GetValue(section, "rotation");
 			const String& scale = conf.GetValue(section, "scale");
 
-			auto& transform = object.AddComponent<Components::Transform>();
+			auto& transform = object.AddComponent<Transform>();
 			transform.position = Utils::StringToVec3f(position);
 			transform.rotation = Utils::StringToVec3f(rotation);
 			transform.scale = Utils::StringToVec3f(scale);
 			transform.UpdateTransformation();
 		}
-		else if (std::strcmp(componentName, "Model") == 0)
+		else if (component == "Model")
 		{
-			const String& path = conf.GetValue(section, "path");
-			fs::path modelPath = fs::path(path).lexically_normal();
-			auto& model = object.AddComponent<Components::Model>(modelPath);
+			const String& strPath = conf.GetValue(section, "path");
+			object.AddComponent<Model>(strPath);
 		}
-		else if (std::strcmp(componentName, "DirectionalLight") == 0)
+		else if (component == "DirectionalLight")
 		{
 			const String& color = conf.GetValue(section, "color");
 			const String& diffuseIntensity = conf.GetValue(section, "diffuseIntensity");
 			const String& specularIntensity = conf.GetValue(section, "specularIntensity");
 			const String& direction = conf.GetValue(section, "direction");
 
-			auto& light = object.AddComponent<Components::DirectionalLight>();
+			auto& light = object.AddComponent<DirectionalLight>();
 			light.color = Utils::StringToVec3f(color);
 			light.diffuseIntensity = std::stof(diffuseIntensity);
 			light.specularIntensity = std::stof(specularIntensity);
 			light.direction = Utils::StringToVec3f(direction);
 		}
-		else if (std::strcmp(componentName, "PointLight") == 0)
+		else if (component == "PointLight")
 		{
 			const String& color = conf.GetValue(section, "color");
 			const String& diffuseIntensity = conf.GetValue(section, "diffuseIntensity");
@@ -214,7 +203,7 @@ void Scene::DeserializeScene(const fs::path& filepath)
 			const String& kl = conf.GetValue(section, "attenuation.kl");
 			const String& kq = conf.GetValue(section, "attenuation.kq");
 
-			auto& light = object.AddComponent<Components::PointLight>();
+			auto& light = object.AddComponent<PointLight>();
 			light.color = Utils::StringToVec3f(color);
 			light.diffuseIntensity = std::stof(diffuseIntensity);
 			light.specularIntensity = std::stof(specularIntensity);
@@ -222,7 +211,7 @@ void Scene::DeserializeScene(const fs::path& filepath)
 			light.attenuation.kl = std::stof(kl);
 			light.attenuation.kq = std::stof(kq);
 		}
-		else if (std::strcmp(componentName, "SpotLight") == 0)
+		else if (component == "SpotLight")
 		{
 			const String& color = conf.GetValue(section, "color");
 			const String& diffuseIntensity = conf.GetValue(section, "diffuseIntensity");
@@ -234,7 +223,7 @@ void Scene::DeserializeScene(const fs::path& filepath)
 			const String& cutOff = conf.GetValue(section, "cutOff");
 			const String& outerCutOff = conf.GetValue(section, "outerCutOff");
 
-			auto& light = object.AddComponent<Components::SpotLight>();
+			auto& light = object.AddComponent<SpotLight>();
 			light.color = Utils::StringToVec3f(color);
 			light.diffuseIntensity = std::stof(diffuseIntensity);
 			light.specularIntensity = std::stof(specularIntensity);

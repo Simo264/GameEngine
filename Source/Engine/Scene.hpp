@@ -10,12 +10,12 @@ class Scene
 {
 public:
 	Scene() = default;
-	Scene(const fs::path& filepath);
+	Scene(StringView filePath);
 	~Scene() = default;
 
-	void LoadScene(const fs::path& filepath);
+	void LoadScene(StringView filePath);
 
-	void SaveScene(const fs::path& filepath);
+	void SaveScene(StringView filePath);
 
 	/**
 	 * Remove all objects from scene
@@ -41,6 +41,6 @@ private:
 	/* We can create a entt::registry to store our entities */
 	entt::registry _registry;
 
-	void SerializeScene(const fs::path& filepath);
-	void DeserializeScene(const fs::path& filepath);
+	void SerializeScene(StringView filePath);
+	void DeserializeScene(StringView filePath);
 };

@@ -1,16 +1,9 @@
 #include "ImGuiLayer.hpp"
 
 #include "Core/GL.hpp"
-#include "Core/Math/Extensions.hpp"
-#include "Core/Log/Logger.hpp"
 
-
-#include "Engine/Globals.hpp"
 #include "Engine/Subsystems/WindowManager.hpp"
-#include "Engine/Subsystems/ShaderManager.hpp"
-#include "Engine/Subsystems/TextureManager.hpp"
 #include "Engine/Subsystems/FontManager.hpp"
-#include "Engine/Filesystem/Dialog.hpp"
 #include "Engine/Filesystem/ConfigFile.hpp"
 
 #include <imgui/imgui.h>
@@ -19,39 +12,17 @@
 #include <imgui/imgui_internal.h>
 #include <imgui/ImGuizmo.h>
 
-#include <GLFW/glfw3.h>
-
-constexpr i32 infinity = 1'000'000;
-constexpr const char* ATTENUATION_LABELS[]{
-  "7m",
-  "13m",
-  "20m",
-  "32m",
-  "50m",
-  "65m",
-  "100m",
-  "160m",
-  "200m",
-  "325m",
-  "600m",
-  "3250m"
-};
-constexpr const Array<Tuple<f32, f32>, 12> ATTENUATION_VALUES = {
-  Tuple(0.7f, 1.8f),         /* 7 meters */
-  Tuple(0.35f, 0.44f),       /* 13 meters */
-  Tuple(0.22f, 0.20f),       /* 20 meters */
-  Tuple(0.14f, 0.07f),       /* 32 meters */
-  Tuple(0.09f, 0.032f),      /* 50 meters */
-  Tuple(0.07f, 0.017f),      /* 65 meters */
-  Tuple(0.045f, 0.0075f),    /* 100 meters */
-  Tuple(0.027f, 0.0028f),    /* 160 meters */
-  Tuple(0.022f, 0.0019f),    /* 200 meters */
-  Tuple(0.014f, 0.0007f),    /* 325 meters */
-  Tuple(0.007f, 0.0002f),    /* 600 meters */
-  Tuple(0.0014f, 0.000007f), /* 3250 meters */
-};
+extern void GUI_RenderMenuBar(Scene& scene, bool& openPreferences);
+extern void GUI_RenderPreferencesFrame(bool& open, i32 fontSize);
+extern void GUI_RenderOutliner(bool& open, Scene& scene, GameObject& objSelected);
+extern void GUI_RenderViewport(bool& open, u32 texID, GameObject& objSelected, i32 gizmode, const mat4f& view, const mat4f& proj);
+extern void GUI_RenderObjectDetails(bool& open, GameObject& object, i32& gizmode);
+extern void GUI_RenderContentBrowser(bool& open);
+extern void GUI_RenderWorldProperties(bool& open);
+extern void GUI_RenderCameraProperties(bool& open, Camera& camera);
 
 static i32 fontSize;
+static i32 gizmode = ImGuizmo::OPERATION::TRANSLATE;
 
 /* -------------------------- */
 /*          PUBLIC            */
@@ -66,7 +37,7 @@ void ImGuiLayer::Initialize()
   Styling();
 
   /* Load default font */
-  ConfigFile config(GetRootPath() / "Configuration.ini");
+  ConfigFile config((GetRootPath() / "Configuration.ini").string());
   config.ReadData();
   const String& fontFamily = config.GetValue("GUI", "font-family");
   fontSize = std::atoi(config.GetValue("GUI", "font-size").c_str());
@@ -115,429 +86,65 @@ void ImGuiLayer::SetFont(StringView fontPath)
 }
 void ImGuiLayer::Demo()
 {
-  static bool visible = true;
-  if (!visible)
-    return;
-
-  ImGui::ShowDemoWindow(&visible);
+  static bool open = true;
+  if(open)
+    ImGui::ShowDemoWindow(&open);
 }
 void ImGuiLayer::MenuBar(Scene& scene)
 {
   static bool viewPrefWindow = false;
-  /* Render menu bar */
-  if(ImGui::BeginMainMenuBar())
-  {
-    if(ImGui::BeginMenu("File"))
-    {
-      if (ImGui::MenuItem("Open"))
-      {
-        static const char* filter[] = { "*.ini" };
-
-        fs::path filePath = OpenFileDialog(1, filter, "Open scene", false);
-        if (!filePath.empty())
-        {
-          ShaderManager& shaderManager = ShaderManager::Get();
-
-          /* !IMPORTANT: before loading new scene it needed to relink all the programs to see changes */
-          for (const auto& [key, program] : shaderManager.GetPrograms())
-            program.Link();
-            
-          shaderManager.ResetProgramsUniforms();
-
-          scene.ClearScene();
-          scene.LoadScene(filePath);
-          CONSOLE_INFO("The scene has been loaded successfully");
-        }
-      }
-      if (ImGui::MenuItem("Save as..."))
-      {
-        const char* filters[] = { "*.ini" };
-        fs::path filepath = SaveFileDialog(1, filters, "Save scene");
-
-        scene.SaveScene(filepath);
-        CONSOLE_TRACE("The scene has been successfully saved");
-      }
-      
-      ImGui::Separator();
-      
-      if (ImGui::MenuItem("Exit"))
-      {
-        WindowManager::Get().Close();
-      }
-
-      ImGui::EndMenu();
-    }
-    if (ImGui::BeginMenu("?"))
-    {
-      if (ImGui::MenuItem("Preferences"))
-        viewPrefWindow = true;
-
-      ImGui::EndMenu();
-    }
-
-    ImGui::EndMainMenuBar();
-  }
-
+  GUI_RenderMenuBar(scene, viewPrefWindow);
 
   /* Render preferences window */
-  if(viewPrefWindow)
-    Preferences(viewPrefWindow);
+  if (viewPrefWindow)
+    GUI_RenderPreferencesFrame(viewPrefWindow, fontSize);
 }
-void ImGuiLayer::ViewportGizmo(u32 tetxureID, GameObject& object, const mat4f& view, const mat4f& proj)
+void ImGuiLayer::Viewport(u32 textureID, GameObject& objSelected, const mat4f& view, const mat4f& proj)
 {
-  ImGuiStyle& style = ImGui::GetStyle();
-  const ImVec2 paddingTmp = style.WindowPadding;
-  style.WindowPadding= { 0.0f, 0.0f };
+  static bool open = true;
+  if (open)
+    GUI_RenderViewport(open, textureID, objSelected, gizmode, view, proj);
+}
+GameObject& ImGuiLayer::OutlinerPanel(Scene& scene)
+{
+  static bool open = true;
+  static GameObject object;
   
-  /* Begin main viewport */
-  ImGui::Begin("Viewport", nullptr);
-  const ImVec2 viewportWinSize = ImGui::GetWindowSize();
-  const ImVec2 viewportWinPos = ImGui::GetWindowPos();
-  viewportSize = { viewportWinSize.x, viewportWinSize.y };
-  viewportPos = { viewportWinPos.x, viewportWinPos.y };
-  viewportFocused = ImGui::IsWindowFocused();
-
-  /* Being child viewport */
-  ImGui::BeginChild("Viewport_Child");
-  viewportFocused |= ImGui::IsWindowFocused();
-
-  const ImVec2 viewportChildWinSize = ImGui::GetWindowSize();
-  ImGui::Image(reinterpret_cast<void*>(tetxureID), viewportChildWinSize, ImVec2(0, 1), ImVec2(1, 0));
-  if (object.IsValid())
-  {
-    auto* transform = object.GetComponent<Components::Transform>();
-    if (transform)
-    {
-      ImGuizmo::SetOrthographic(false);
-      ImGuizmo::SetDrawlist();
-
-      f32 windowW = ImGui::GetWindowWidth();
-      f32 windowH = ImGui::GetWindowHeight();
-      ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, windowW, windowH);
-
-      switch (_gizmode)
-      {
-      case ImGuizmo::OPERATION::TRANSLATE:
-        GizmoWorldTranslation(*transform, view, proj);
-        break;
-
-      case ImGuizmo::OPERATION::ROTATE:
-        GizmoWorldRotation(*transform, view, proj);
-        break;
-
-      case ImGuizmo::OPERATION::SCALE:
-        GizmoWorldScaling(*transform, view, proj);
-        break;
-
-      default:
-        break;
-      }
-    }
-  }
-    
-  ImGui::EndChild();
-  ImGui::End();
-
-  style.WindowPadding = paddingTmp;
-}
-void ImGuiLayer::OutlinerPanel(Scene& scene)
-{
-  static char nodeName[64]{};
-  static bool visible = true;
-  if (visible)
-  {
-    ImGui::Begin("Outliner", &visible);
-    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-    //if (ImGui::TreeNode("Scene"))
-    {
-      for (auto [entity, label] : scene.Reg().view<Components::Label>().each())
-      {
-        GameObject object{ entity, &scene.Reg() };
-
-        ImGuiTreeNodeFlags flags =
-          ImGuiTreeNodeFlags_OpenOnArrow |
-          ImGuiTreeNodeFlags_OpenOnDoubleClick |
-          ImGuiTreeNodeFlags_SpanAvailWidth |
-          ImGuiTreeNodeFlags_Leaf |
-          ImGuiTreeNodeFlags_NoTreePushOnOpen;
-
-        if (objectSelected.IsValid() && objectSelected.IsEqual(object))
-          flags |= ImGuiTreeNodeFlags_Selected;
-
-        std::format_to_n(nodeName, sizeof(nodeName), "{}", label.value.c_str());
-        ImGui::TreeNodeEx(reinterpret_cast<void*>(entity), flags, nodeName);
-
-        if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
-          objectSelected = object;
-
-        std::fill_n(nodeName, sizeof(nodeName), 0);
-      }
-      //ImGui::TreePop();
-    }
-    ImGui::End();
-  }
+  if(open)
+    GUI_RenderOutliner(open, scene, object);
+  
+  return object;
 }
 void ImGuiLayer::GameObjectDetails(GameObject& object)
 {
-  static bool visible = true;
-  if (!visible)
-    return;
-
-  if (!object.IsValid())
-    return;
-
-  ImGui::Begin("Details", &visible);
-    
-  if (auto* light = object.GetComponent<Components::DirectionalLight>())
-  {
-    if (ImGui::CollapsingHeader("Directional light", ImGuiTreeNodeFlags_DefaultOpen))
-    {
-      ImGui::ColorEdit3("Color", (f32*)&light->color);
-      ImGui::SliderFloat("Diffuse intensity", &light->diffuseIntensity, 0.0f, 1.0f);
-      ImGui::SliderFloat("Specular intensity", &light->specularIntensity, 0.0f, 1.0f);
-      ImGui::DragFloat3("Direction", (f32*)&light->direction, 0.1f, -infinity, infinity);
-    }
-  }
-  if (auto* light = object.GetComponent<Components::PointLight>())
-  {
-    if (ImGui::CollapsingHeader("Point light", ImGuiTreeNodeFlags_DefaultOpen))
-    {
-      ImGui::ColorEdit3("Color", (f32*)&light->color);
-      ImGui::SliderFloat("Diffuse intensity", &light->diffuseIntensity, 0.0f, 1.0f);
-      ImGui::SliderFloat("Specular intensity", &light->specularIntensity, 0.0f, 1.0f);
-      ImGui::DragFloat3("Position", (f32*)&light->position, 0.1f, -infinity, infinity);
-
-      ImGui::Text("Attenuation");
-      ImGui::Separator();
-      static i32 index = 0;
-      if (ImGui::Combo("Distance", &index, ATTENUATION_LABELS, IM_ARRAYSIZE(ATTENUATION_LABELS)))
-      {
-        const auto& selected = ATTENUATION_VALUES.at(index);
-        light->attenuation.kl = std::get<0>(selected);
-        light->attenuation.kq = std::get<1>(selected);
-      }
-    }
-  }
-  if (auto* light = object.GetComponent<Components::SpotLight>())
-  {
-    if (ImGui::CollapsingHeader("Spot light", ImGuiTreeNodeFlags_DefaultOpen))
-    {
-      ImGui::ColorEdit3("Color", (f32*)&light->color);
-      ImGui::SliderFloat("Diffuse intensity", &light->diffuseIntensity, 0.0f, 1.0f);
-      ImGui::SliderFloat("Specular intensity", &light->specularIntensity, 0.0f, 1.0f);
-      ImGui::DragFloat3("Direction", (f32*)&light->direction, 0.1f, -infinity, infinity);
-      ImGui::DragFloat3("Position", (f32*)&light->position, 0.1f, -infinity, infinity);
-        
-      ImGui::Text("Radius");
-      ImGui::Separator();
-      ImGui::SliderFloat("Inner cutoff", &light->cutOff, 1.0f, light->outerCutOff);
-      ImGui::SliderFloat("Outer cutoff", &light->outerCutOff, light->cutOff, 45.0f);
-
-      ImGui::Text("Attenuation");
-      ImGui::Separator();
-      static i32 index = 0;
-      if (ImGui::Combo("Distance", &index, ATTENUATION_LABELS, IM_ARRAYSIZE(ATTENUATION_LABELS)))
-      {
-        const auto& selected = ATTENUATION_VALUES.at(index);
-        light->attenuation.kl = std::get<0>(selected);
-        light->attenuation.kq = std::get<1>(selected);
-      }
-    }
-  }
-  if (auto* transform = object.GetComponent<Components::Transform>())
-  {
-    if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
-    {
-      ImGui::RadioButton("Translate", &_gizmode, ImGuizmo::OPERATION::TRANSLATE);
-      ImGui::RadioButton("Rotate", &_gizmode, ImGuizmo::OPERATION::ROTATE);
-      ImGui::RadioButton("Scale", &_gizmode, ImGuizmo::OPERATION::SCALE);
-
-      ImGui::DragFloat3("Position", (f32*)&transform->position, 0.1f, -infinity, infinity);
-      ImGui::DragFloat3("Scale", (f32*)&transform->scale, 0.1f, -infinity, infinity);
-      ImGui::DragFloat3("Rotation", (f32*)&transform->rotation, 0.1f, -infinity, infinity);
-      transform->UpdateTransformation();
-    }
-  }
-  if (auto* model = object.GetComponent<Components::Model>())
-  {
-    if (ImGui::CollapsingHeader("Model", ImGuiTreeNodeFlags_DefaultOpen))
-    {
-      /* Display model path */
-      ImGui::TextWrapped("Model: %s", model->path.string().c_str());
-      ImGui::Separator();
-
-      /* Display the number of meshes */
-      const i64 numMeshes = model->meshes.size();
-      ImGui::TextWrapped("Meshes: %d", numMeshes);
-        
-      /* For each mesh */
-      for (i32 i = 0; i < numMeshes; i++)
-      {
-        auto& mesh = model->meshes.at(i);
-        Material& material = mesh.material;
-        TextureManager& texManager = TextureManager::Get();
-
-        /* Display mesh-i props */
-        char title[16]{};
-        std::format_to_n(title, sizeof(title), "Mesh {}", i);
-        ImGui::SeparatorText(title);
-        
-        ImGui::Text("Diffuse");
-        ComboTextures(material.diffuse, "##Diffuse", texManager.GetDefaultDiffuse());
-        ImGui::InvisibleButton("##margin_bottom_1", ImVec2(1.f, 5.0f));
-
-        ImGui::Text("Specular");
-        ComboTextures(material.specular, "##Specular", texManager.GetDefaultSpecular());
-        ImGui::InvisibleButton("##margin_bottom_2", ImVec2(1.f, 5.0f));
-
-        ImGui::Text("Normal");
-        ComboTextures(material.normal, "##Normal", texManager.GetDefaultNormal());
-        ImGui::InvisibleButton("##margin_bottom_3", ImVec2(1.f, 5.0f));
-
-        ImGui::Text("Height");
-        ComboTextures(material.height, "##Height", texManager.GetDefaultHeight());
-        
-      }
-    }
-  }
-
-  ImGui::End();
-}
-void ImGuiLayer::WorldProps()
-{
-  ImGui::Begin("World", nullptr);
-
-  if (ImGui::CollapsingHeader("Ambient"))
-  {
-    ImGui::ColorEdit3("Light color", (f32*)&g_ambientColor);
-    ImGui::SliderFloat("Light intensity", &g_ambientIntensity, 0.0f, 1.0f);
-  }
-    
-  ImGui::End();
+  static bool open = true;
+  if (open)
+    GUI_RenderObjectDetails(open, object, gizmode);
 }
 void ImGuiLayer::ContentBrowser()
 {
-  ImGui::Begin("Content browser", nullptr);
-  ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
-  
-  TextureManager& texManager = TextureManager::Get();
-
-  /* Back button */
-  static fs::path currentDir = GetResourcePath();
-  if (currentDir != GetResourcePath())
-  {
-    const auto& iconBack = texManager.GetIconByPath(GetIconsPath() / "back-arrow.png");
-    if (ImGui::ImageButton("Back", reinterpret_cast<void*>(iconBack.id), ImVec2(16.0f, 16.0f)))
-      currentDir = currentDir.parent_path();
-  }
-
-  /* Configure table */
-  constexpr f32 cellSize = 64.0f;
-  constexpr f32 cellPadding = 16.0f;
-  const f32 panelWidth = ImGui::GetContentRegionAvail().x;
-  const i32 nColumns = std::max(1, static_cast<i32>(panelWidth / (cellSize + cellPadding))) ;
-  if (ImGui::BeginTable("Thumbnails", nColumns, ImGuiTableFlags_SizingStretchSame))
-  {
-    fs::directory_iterator entryIt = fs::directory_iterator(currentDir);
-    const i32 nItemsInCurrentDir = std::distance(fs::begin(entryIt), fs::end(entryIt));
-    const i32 nRows = 1 + (nItemsInCurrentDir / nColumns);
-    entryIt = fs::directory_iterator(currentDir);
-
-    for (i32 i = 0; i < nRows; i++)
-    {
-      ImGui::TableNextRow();
-      for (i32 j = 0; j < nColumns && entryIt != fs::end(entryIt); j++, entryIt++)
-      {
-        ImGui::TableSetColumnIndex(j);
-
-        const fs::directory_entry& entry = *entryIt;
-        const fs::path& entryPath = entry.path();
-        const String entryPathString = entryPath.string();
-        const fs::path filename = entryPath.filename();
-        const String filenameString = filename.string();
-
-        if (entry.is_directory())
-        {
-          Texture2D& iconFolder = texManager.GetIconByPath(GetIconsPath() / "open-folder.png");
-          if (ImGui::ImageButton(filenameString.c_str(), reinterpret_cast<void*>(iconFolder.id), ImVec2(cellSize, cellSize)))
-            currentDir /= entry;
-        }
-        else
-        {
-          const fs::path entryFilenameExt = filename.extension();
-
-          /* Render image texture */
-          if (entryFilenameExt == ".png" || entryFilenameExt == ".jpg")
-          {
-            Texture2D* texture = nullptr;
-            if(currentDir == GetIconsPath())
-              texture = &texManager.GetIconByPath(entryPathString);
-            else
-              texture = &texManager.GetTextureByPath(entryPathString);
-
-            ImGui::ImageButton(filenameString.c_str(), reinterpret_cast<void*>(texture->id), ImVec2(cellSize, cellSize));
-          }
-          /* Render generic file icon */
-          else
-          {
-            const auto& iconFile = texManager.GetIconByPath(GetIconsPath() / "file.png");
-            ImGui::ImageButton(filenameString.c_str(), reinterpret_cast<void*>(iconFile.id), ImVec2(cellSize, cellSize));
-          }
-        }
-
-        if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-          ImGui::SetTooltip("%s", entryPathString.c_str());
-        ImGui::TextWrapped("%s", filenameString.c_str());
-      }
-    }
-    ImGui::EndTable();
-  }
-
-  ImGui::PopStyleColor();
-  ImGui::End();
+  static bool open = true;
+  if (open)
+    GUI_RenderContentBrowser(open);
 }
-void ImGuiLayer::DebugDepthMap(u32 tetxureID)
+void ImGuiLayer::WorldProps()
 {
-  ImGuiStyle& style = ImGui::GetStyle();
-  const ImVec2 paddingTmp = style.WindowPadding;
-  style.WindowPadding = { 0.0f, 0.0f };
-
-  ImGui::Begin("Depth map", nullptr);
-  ImGui::BeginChild("Map");
-
-  ImGui::Image(reinterpret_cast<void*>(tetxureID), { 1024,1024 }, ImVec2(0, 1), ImVec2(1, 0));
-
-  ImGui::EndChild();
-  ImGui::End();
-
-  style.WindowPadding = paddingTmp;
+  static bool open = true;
+  if (open)
+    GUI_RenderWorldProperties(open);
 }
-void ImGuiLayer::CameraProps(StringView label, Camera& camera)
+void ImGuiLayer::CameraProps(Camera& camera)
 {
-  ImGui::Begin(label.data(), nullptr);
-
-  ImGui::DragFloat("zNear", &camera.frustum.zNear, 0.1f, 0.0f, 1'000.0f);
-  ImGui::DragFloat("zFar", &camera.frustum.zFar, 0.1f, 0.0f, 1'000.0f);
-  ImGui::DragFloat("Left", &camera.frustum.left, 0.1f, -100.0f, 0.0f);
-  ImGui::DragFloat("Right", &camera.frustum.right, 0.1f, 0.0f, 100.0f);
-  ImGui::DragFloat("Top", &camera.frustum.top, 0.1f, 0.0f, 100.0f);
-  ImGui::DragFloat("Bottom", &camera.frustum.bottom, 0.1f, -100.0f, 0.0);
-
-  ImGui::DragFloat("Yaw", &camera.yaw, 0.1f, -360.0f, 360);
-  ImGui::DragFloat("Pitch", &camera.pitch, 0.1f, -360, 360);
-  ImGui::DragFloat("Roll", &camera.roll, 0.1f, -360, 360.0f);
-  ImGui::DragFloat3("Position", (f32*)&camera.position, 0.1f, -infinity, infinity);
-
-  ImGui::DragFloat("Fov", &camera.fov, 0.1f, 0.0f, 180.0f);
-
-  ImGui::End();
+  static bool open = true;
+  if (open)
+    GUI_RenderCameraProperties(open, camera);
 }
 void ImGuiLayer::DebugInfo(f64 delta, f64 avg, i32 frameRate, bool shadowMode, bool normalMode, bool wireframeMode)
 {
-  ImGuiWindowFlags flags =
+  static constexpr const ImGuiWindowFlags flags =
     ImGuiWindowFlags_::ImGuiWindowFlags_NoDocking |
-    ImGuiWindowFlags_::ImGuiWindowFlags_NoBackground | 
-    ImGuiWindowFlags_::ImGuiWindowFlags_NoResize | 
+    ImGuiWindowFlags_::ImGuiWindowFlags_NoBackground |
+    ImGuiWindowFlags_::ImGuiWindowFlags_NoResize |
     ImGuiWindowFlags_::ImGuiWindowFlags_NoCollapse |
     ImGuiWindowFlags_::ImGuiWindowFlags_NoTitleBar;
 
@@ -572,6 +179,23 @@ void ImGuiLayer::DebugInfo(f64 delta, f64 avg, i32 frameRate, bool shadowMode, b
 
   ImGui::End();
 }
+
+void ImGuiLayer::DebugDepthMap(u32 tetxureID)
+{
+  ImGuiStyle& style = ImGui::GetStyle();
+  const ImVec2 paddingTmp = style.WindowPadding;
+  style.WindowPadding = { 0.0f, 0.0f };
+
+  ImGui::Begin("Depth map", nullptr);
+  ImGui::BeginChild("Map");
+
+  ImGui::Image(reinterpret_cast<void*>(tetxureID), { 1024,1024 }, ImVec2(0, 1), ImVec2(1, 0));
+
+  ImGui::EndChild();
+  ImGui::End();
+
+  style.WindowPadding = paddingTmp;
+}
 void ImGuiLayer::Test()
 {
   ImGui::Begin("Test", nullptr);
@@ -587,10 +211,8 @@ ImGuiLayer::ImGuiLayer()
   : viewportFocused{ false },
     viewportSize{},
     viewportPos{},
-    objectSelected{},
     selectedFont{},
-    changeFontFamily{ false },
-    _gizmode{ ImGuizmo::OPERATION::TRANSLATE }
+    changeFontFamily{ false }
 {}
 void ImGuiLayer::SetupContext()
 {
@@ -707,164 +329,5 @@ void ImGuiLayer::Docking()
   ImGui::PopStyleVar(3);
   ImGuiID dockspaceID = ImGui::GetID("Dockspace");
   ImGui::DockSpace(dockspaceID, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_PassthruCentralNode);
-  ImGui::End();
-}
-void ImGuiLayer::GizmoWorldTranslation(Components::Transform& transform, const mat4f& view, const mat4f& proj)
-{
-  mat4f& model = transform.GetTransformation();
-  ImGuizmo::Manipulate(
-    &view[0][0],
-    &proj[0][0],
-    ImGuizmo::OPERATION::TRANSLATE,
-    ImGuizmo::WORLD,
-    &model[0][0]);
-
-  if (ImGuizmo::IsUsing())
-  {
-    vec3f translation;
-    vec3f scale;
-    quat  rotation;
-    Math::Decompose(model, translation, rotation, scale);
-
-    transform.position = translation;
-    transform.UpdateTransformation();
-  }
-}
-void ImGuiLayer::GizmoWorldRotation(Components::Transform& transform, const mat4f& view, const mat4f& proj)
-{
-  mat4f& model = transform.GetTransformation();
-  ImGuizmo::Manipulate(
-    &view[0][0],
-    &proj[0][0],
-    ImGuizmo::OPERATION::ROTATE,
-    ImGuizmo::WORLD,
-    &model[0][0]);
-
-  if (ImGuizmo::IsUsing())
-  {
-    vec3f translation;
-    vec3f scale;
-    quat  rotation;
-    Math::Decompose(model, translation, rotation, scale);
-
-    vec3f rotationDegrees = Math::EulerAngles(rotation);  /* Get vector rotation in radians */
-    rotationDegrees.x = Math::Degrees(rotationDegrees.x); /* Convert it in degrees */
-    rotationDegrees.y = Math::Degrees(rotationDegrees.y);
-    rotationDegrees.z = Math::Degrees(rotationDegrees.z);
-    const vec3f deltaRotation = rotationDegrees - transform.rotation;
-
-    transform.rotation += deltaRotation;
-    transform.UpdateTransformation();
-  }
-}
-void ImGuiLayer::GizmoWorldScaling(Components::Transform& transform, const mat4f& view, const mat4f& proj)
-{
-  mat4f& model = transform.GetTransformation();
-  ImGuizmo::Manipulate(
-    &view[0][0],
-    &proj[0][0],
-    ImGuizmo::OPERATION::SCALE,
-    ImGuizmo::WORLD,
-    &model[0][0]);
-
-  if (ImGuizmo::IsUsing())
-  {
-    vec3f translation;
-    vec3f scale;
-    quat  rotation;
-    Math::Decompose(model, translation, rotation, scale);
-
-    transform.scale = scale;
-    transform.UpdateTransformation();
-  }
-}
-void ImGuiLayer::ComboTextures(Texture2D*& matTexture, StringView comboId, const Texture2D& defaultTex)
-{
-  const bool isEmpty = (matTexture->strPath.at(0) == '#');
-  auto& textManager = TextureManager::Get();
-  
-  f32 panelWidth = ImGui::GetContentRegionAvail().x;
-  ImGui::SetNextItemWidth(panelWidth - 32);
-  if (ImGui::BeginCombo(comboId.data(), (isEmpty ? "Select texture" : matTexture->strPath.c_str())))
-  {
-    for (const auto& [key, texture] : textManager.GetTextures())
-    {
-      const String& texPathStr = texture.strPath;
-      if (key.at(0) != '#' && ImGui::Selectable(texPathStr.c_str(), key == matTexture->strPath))
-        matTexture = const_cast<Texture2D*>(&texture);
-    }
-    ImGui::EndCombo();
-  }
-
-  if (!isEmpty)
-  {
-    const auto& resetIcon = textManager.GetIconByPath(GetIconsPath() / "reset-arrow.png");
-
-    char buttonID[32]{};
-    std::format_to_n(buttonID, sizeof(buttonID), "Reset{}", comboId.data());
-
-    ImGui::SameLine();
-    
-    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.f,0.f,0.f,0.f });
-    if (ImGui::ImageButton(reinterpret_cast<void*>(resetIcon.id), { 16,16 }))
-      matTexture = const_cast<Texture2D*>(&defaultTex);
-    ImGui::PopStyleColor();
-  }
-}
-void ImGuiLayer::Preferences(bool& view)
-{
-  ImGui::Begin("Preferences", &view);
-  static constexpr const char* itemList[] = {
-    "Font",
-    "...",
-  };
-  static i32 selected = 0;
-
-  /* Left panel */
-  {
-    ImGui::BeginChild("Left", ImVec2(200.0f, 0.0f), ImGuiChildFlags_Border | ImGuiChildFlags_ResizeX);
-    for (i32 i = 0; i < std::size(itemList); i++)
-    {
-      if (ImGui::Selectable(itemList[i], selected == i))
-        selected = i;
-    }
-    ImGui::EndChild();
-  }
-  /* End panel */
-
-  ImGui::SameLine();
-
-  /* Right panel */
-  {
-    ImGui::BeginGroup();
-    ImGui::BeginChild("Item_View", ImVec2(0, -ImGui::GetFrameHeightWithSpacing())); // Leave room for 1 line below us
-    switch (selected)
-    {
-    case 0: /* Font properties */
-      ImGui::SeparatorText(itemList[selected]);
-      ImGui::TextWrapped("Font size: %dpx", fontSize);
-      if (ImGui::BeginCombo("Font family", selectedFont.first->c_str()))
-      {
-        for (const auto& [key, font] : FontManager::Get().GetFonts())
-        {
-          if (ImGui::Selectable(key.c_str(), selectedFont.first == &key) && selectedFont.first != &key)
-          {
-            selectedFont = std::make_pair(const_cast<String*>(&key), const_cast<fs::path*>(&font));
-            changeFontFamily = true;
-          }
-        }
-        ImGui::EndCombo();
-      }
-      break;
-
-    default:
-      ImGui::SeparatorText("Todo");
-      break;
-    }
-    ImGui::EndChild();
-    ImGui::EndGroup();
-  }
-  /* End panel */
-
   ImGui::End();
 }
