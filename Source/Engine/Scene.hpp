@@ -25,7 +25,7 @@ public:
 	/**
 	 * Create object in scene
 	 */
-	class GameObject CreateObject();
+	class GameObject CreateObject(StringView label = "Object");
 
 	/**
 	 * Destroy an entity and releases its identifier

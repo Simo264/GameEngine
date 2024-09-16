@@ -16,10 +16,10 @@ Scene::Scene(StringView filePath)
 {
 	LoadScene(filePath);
 }
-GameObject Scene::CreateObject()
+GameObject Scene::CreateObject(StringView label)
 {
 	GameObject object = GameObject(_registry.create(), &_registry);
-	object.AddComponent<Label>("Object");
+	object.AddComponent<Label>(label.data());
 	return object;
 }
 void Scene::DestroyObject(GameObject& object)
@@ -161,8 +161,9 @@ void Scene::DeserializeScene(StringView filePath)
 
 		if (component == "Label")
 		{
-			const String& label = conf.GetValue(section, "label");
-			object.GetComponent<Label>()->value = label;
+			const String& labelVal = conf.GetValue(section, "label");
+			auto* label = object.GetComponent<Label>();
+			label->UpdateValue(labelVal);
 		}
 		else if (component == "Transform")
 		{

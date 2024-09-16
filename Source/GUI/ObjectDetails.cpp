@@ -11,7 +11,7 @@
 /* ------------------------------------------ */
 
 
-constexpr const char* ATTENUATION_LABELS[]{
+static constexpr const char* ATTENUATION_LABELS[]{
   "7m",
   "13m",
   "20m",
@@ -25,7 +25,7 @@ constexpr const char* ATTENUATION_LABELS[]{
   "600m",
   "3250m"
 };
-constexpr const Array<Tuple<f32, f32>, 12> ATTENUATION_VALUES = {
+static constexpr Array<Tuple<f32, f32>, 12> ATTENUATION_VALUES = {
   Tuple(0.7f, 1.8f),         /* 7 meters */
   Tuple(0.35f, 0.44f),       /* 13 meters */
   Tuple(0.22f, 0.20f),       /* 20 meters */
@@ -82,6 +82,16 @@ void GUI_RenderObjectDetails(bool& open, GameObject& object, i32& gizmode)
   ImGui::Begin("Details", &open);
   if (object.IsValid())
   {
+    ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(1.f, 0.85f, 0.f, 1.f));
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0f);
+    if (ImGui::Button("+Add component"))
+    {
+      CONSOLE_DEBUG("TODO");
+    }
+    ImGui::PopStyleVar();
+    ImGui::PopStyleColor();
+
+
     if (auto* light = object.GetComponent<DirectionalLight>())
     {
       if (ImGui::CollapsingHeader("Directional light", ImGuiTreeNodeFlags_DefaultOpen))
@@ -90,6 +100,13 @@ void GUI_RenderObjectDetails(bool& open, GameObject& object, i32& gizmode)
         ImGui::SliderFloat("Diffuse intensity", &light->diffuseIntensity, 0.0f, 1.0f);
         ImGui::SliderFloat("Specular intensity", &light->specularIntensity, 0.0f, 1.0f);
         ImGui::DragFloat3("Direction", (f32*)&light->direction, 0.1f, -FLT_MAX, FLT_MAX);
+
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.55f, 0.f, 0.f, 0.5f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.45f, 0.f, 0.f, 0.5f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.45f, 0.f, 0.f, 0.5f));
+        if (ImGui::Button("Remove component##dir_light"))
+          object.RemoveComponent<DirectionalLight>();
+        ImGui::PopStyleColor(3);
       }
     }
     if (auto* light = object.GetComponent<PointLight>())
@@ -110,6 +127,13 @@ void GUI_RenderObjectDetails(bool& open, GameObject& object, i32& gizmode)
           light->attenuation.kl = std::get<0>(selected);
           light->attenuation.kq = std::get<1>(selected);
         }
+
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.55f, 0.f, 0.f, 0.5f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.45f, 0.f, 0.f, 0.5f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.45f, 0.f, 0.f, 0.5f));
+        if (ImGui::Button("Remove component##point_light"))
+          object.RemoveComponent<PointLight>();
+        ImGui::PopStyleColor(3);
       }
     }
     if (auto* light = object.GetComponent<SpotLight>())
@@ -136,6 +160,13 @@ void GUI_RenderObjectDetails(bool& open, GameObject& object, i32& gizmode)
           light->attenuation.kl = std::get<0>(selected);
           light->attenuation.kq = std::get<1>(selected);
         }
+
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.55f, 0.f, 0.f, 0.5f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.45f, 0.f, 0.f, 0.5f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.45f, 0.f, 0.f, 0.5f));
+        if (ImGui::Button("Remove component##spot_light"))
+          object.RemoveComponent<SpotLight>();
+        ImGui::PopStyleColor(3);
       }
     }
     if (auto* transform = object.GetComponent<Transform>())
@@ -150,6 +181,13 @@ void GUI_RenderObjectDetails(bool& open, GameObject& object, i32& gizmode)
         ImGui::DragFloat3("Scale", (f32*)&transform->scale, 0.1f, -FLT_MAX, FLT_MAX);
         ImGui::DragFloat3("Rotation", (f32*)&transform->rotation, 0.1f, -FLT_MAX, FLT_MAX);
         transform->UpdateTransformation();
+
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.55f, 0.f, 0.f, 0.5f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.45f, 0.f, 0.f, 0.5f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.45f, 0.f, 0.f, 0.5f));
+        if (ImGui::Button("Remove component##transform"))
+          object.RemoveComponent<Transform>();
+        ImGui::PopStyleColor(3);
       }
     }
     if (auto* model = object.GetComponent<Model>())
@@ -190,8 +228,14 @@ void GUI_RenderObjectDetails(bool& open, GameObject& object, i32& gizmode)
 
           ImGui::Text("Height");
           ComboTextures(material.height, "##Height", texManager.GetDefaultHeight());
-
         }
+
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.55f, 0.f, 0.f, 0.5f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.45f, 0.f, 0.f, 0.5f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.45f, 0.f, 0.f, 0.5f));
+        if (ImGui::Button("Remove component##model"))
+          object.RemoveComponent<Model>();
+        ImGui::PopStyleColor(3);
       }
     }
   }

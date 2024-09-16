@@ -7,7 +7,7 @@
 void GUI_RenderPreferencesFrame(bool& open, i32 fontSize)
 {
   ImGui::Begin("Preferences", &open);
-  static constexpr const char* itemList[] = {
+  static constexpr const char* leftItemList[] = {
     "Font",
     "...",
   };
@@ -16,9 +16,9 @@ void GUI_RenderPreferencesFrame(bool& open, i32 fontSize)
   /* Left panel */
   {
     ImGui::BeginChild("Left", ImVec2(200.0f, 0.0f), ImGuiChildFlags_Border | ImGuiChildFlags_ResizeX);
-    for (i32 i = 0; i < std::size(itemList); i++)
+    for (i32 i = 0; i < std::size(leftItemList); i++)
     {
-      if (ImGui::Selectable(itemList[i], selected == i))
+      if (ImGui::Selectable(leftItemList[i], selected == i))
         selected = i;
     }
     ImGui::EndChild();
@@ -36,7 +36,7 @@ void GUI_RenderPreferencesFrame(bool& open, i32 fontSize)
     switch (selected)
     {
     case 0: /* Font properties */
-      ImGui::SeparatorText(itemList[selected]);
+      ImGui::SeparatorText("Font properties");
       ImGui::TextWrapped("Font size: %dpx", fontSize);
       if (ImGui::BeginCombo("Font family", guiLayer.selectedFont.first->c_str()))
       {
