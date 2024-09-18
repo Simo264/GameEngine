@@ -25,12 +25,12 @@ public:
 	/**
 	 * Create object in scene
 	 */
-	class GameObject CreateObject(StringView label = "Object");
+	class Entity CreateObject(StringView label = "Object");
 
 	/**
 	 * Destroy an entity and releases its identifier
 	 */
-	void DestroyObject(class GameObject& object);
+	void DestroyObject(class Entity& object);
 
 	/**
 	 * Return the reference of registry

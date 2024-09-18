@@ -14,9 +14,9 @@
 
 extern void GUI_RenderMenuBar(Scene& scene, bool& openPreferences);
 extern void GUI_RenderPreferencesFrame(bool& open, i32 fontSize);
-extern void GUI_RenderOutliner(bool& open, Scene& scene, GameObject& objSelected);
-extern void GUI_RenderViewport(bool& open, u32 texID, GameObject& objSelected, i32 gizmode, const mat4f& view, const mat4f& proj);
-extern void GUI_RenderObjectDetails(bool& open, GameObject& object, i32& gizmode);
+extern void GUI_RenderOutliner(bool& open, Scene& scene, Entity& objSelected);
+extern void GUI_RenderViewport(bool& open, u32 texID, Entity& objSelected, i32 gizmode, const mat4f& view, const mat4f& proj);
+extern void GUI_RenderObjectDetails(bool& open, Entity& object, i32& gizmode);
 extern void GUI_RenderContentBrowser(bool& open);
 extern void GUI_RenderWorldProperties(bool& open);
 extern void GUI_RenderCameraProperties(bool& open, Camera& camera);
@@ -99,23 +99,23 @@ void ImGuiLayer::MenuBar(Scene& scene)
   if (viewPrefWindow)
     GUI_RenderPreferencesFrame(viewPrefWindow, fontSize);
 }
-void ImGuiLayer::Viewport(u32 textureID, GameObject& objSelected, const mat4f& view, const mat4f& proj)
+void ImGuiLayer::Viewport(u32 textureID, Entity& objSelected, const mat4f& view, const mat4f& proj)
 {
   static bool open = true;
   if (open)
     GUI_RenderViewport(open, textureID, objSelected, gizmode, view, proj);
 }
-GameObject& ImGuiLayer::OutlinerPanel(Scene& scene)
+Entity& ImGuiLayer::OutlinerPanel(Scene& scene)
 {
   static bool open = true;
-  static GameObject object;
+  static Entity object;
   
   if(open)
     GUI_RenderOutliner(open, scene, object);
   
   return object;
 }
-void ImGuiLayer::GameObjectDetails(GameObject& object)
+void ImGuiLayer::GameObjectDetails(Entity& object)
 {
   static bool open = true;
   if (open)

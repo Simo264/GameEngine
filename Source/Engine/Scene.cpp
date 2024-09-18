@@ -16,13 +16,13 @@ Scene::Scene(StringView filePath)
 {
 	LoadScene(filePath);
 }
-GameObject Scene::CreateObject(StringView label)
+Entity Scene::CreateObject(StringView label)
 {
-	GameObject object = GameObject(_registry.create(), &_registry);
+	Entity object = Entity(_registry.create(), &_registry);
 	object.AddComponent<Label>(label.data());
 	return object;
 }
-void Scene::DestroyObject(GameObject& object)
+void Scene::DestroyObject(Entity& object)
 {
 	_registry.destroy(object.GetObjectID());
 }
@@ -30,7 +30,7 @@ void Scene::ClearScene()
 {
 	for (auto [entity, lComp] : _registry.view<Label>().each())
 	{
-		GameObject object{ entity, &_registry };
+		Entity object{ entity, &_registry };
 		
 		/* Free GPU memory */
 		if(auto* model = object.GetComponent<Model>())
@@ -64,76 +64,89 @@ void Scene::SerializeScene(StringView filePath)
 	ConfigFile conf(filePath);
 	for (auto [entity, label] : Reg().view<Label>().each())
 	{
-		GameObject object{ entity, &Reg() };
+		Entity object{ entity, &Reg() };
 		const u32 objectID = static_cast<u32>(object.GetObjectID());
 
-		String section = std::format("entity{}:Label", objectID);
-		conf.Update(section, "label", label.value);
+		String section = std::format("Entity{}:Label", objectID);
+		conf.Update(section, "value", label.value);
 
-		if (auto* light = object.GetComponent<DirectionalLight>())
-		{
-			String section = std::format("entity{}:DirectionalLight", objectID);
-			String color = std::format("{},{},{}", light->color.x, light->color.y, light->color.z);
-			String diffuseIntensity = std::to_string(light->diffuseIntensity);
-			String specularIntensity = std::to_string(light->specularIntensity);
-			String direction = std::format("{},{},{}", light->direction.x, light->direction.y, light->direction.z);
-
-			conf.Update(section, "color", color);
-			conf.Update(section, "diffuseIntensity", diffuseIntensity);
-			conf.Update(section, "specularIntensity", specularIntensity);
-			conf.Update(section, "direction", direction);
-		}
-		if (auto* light = object.GetComponent<PointLight>())
-		{
-			String section = std::format("entity{}:PointLight", objectID);
-			String color = std::format("{},{},{}", light->color.x, light->color.y, light->color.z);
-			String diffuseIntensity = std::to_string(light->diffuseIntensity);
-			String specularIntensity = std::to_string(light->specularIntensity);
-			String position = std::format("{},{},{}", light->position.x, light->position.y, light->position.z);
-			String kl = std::to_string(light->attenuation.kl);
-			String kq = std::to_string(light->attenuation.kq);
-
-			conf.Update(section, "color", color);
-			conf.Update(section, "diffuseIntensity", diffuseIntensity);
-			conf.Update(section, "specularIntensity", specularIntensity);
-			conf.Update(section, "position", position);
-			conf.Update(section, "attenuation.kl", kl);
-			conf.Update(section, "attenuation.kq", kq);
-		}
-		if (auto* light = object.GetComponent<SpotLight>())
-		{
-			String section = std::format("entity{}:SpotLight", objectID);
-			String color = std::format("{},{},{}", light->color.x, light->color.y, light->color.z);
-			String diffuseIntensity = std::to_string(light->diffuseIntensity);
-			String specularIntensity = std::to_string(light->specularIntensity);
-			String direction = std::format("{},{},{}", light->direction.x, light->direction.y, light->direction.z);
-			String position = std::format("{},{},{}", light->position.x, light->position.y, light->position.z);
-			String cutOff = std::to_string(light->cutOff);
-			String outerCutOff = std::to_string(light->outerCutOff);
-			String kl = std::to_string(light->attenuation.kl);
-			String kq = std::to_string(light->attenuation.kq);
-
-			conf.Update(section, "color", color);
-			conf.Update(section, "diffuseIntensity", diffuseIntensity);
-			conf.Update(section, "specularIntensity", specularIntensity);
-			conf.Update(section, "direction", direction);
-			conf.Update(section, "position", position);
-			conf.Update(section, "attenuation.kl", kl);
-			conf.Update(section, "attenuation.kq", kq);
-			conf.Update(section, "cutOff", cutOff);
-			conf.Update(section, "outerCutOff", outerCutOff);
-		}
 		if (auto* transform = object.GetComponent<Transform>())
 		{
-			String section = std::format("entity{}:Transform", objectID);
+			String section = std::format("Entity{}:Transform", objectID);
 			conf.Update(section, "position", std::format("{},{},{}", transform->position.x, transform->position.y, transform->position.z));
 			conf.Update(section, "scale", std::format("{},{},{}", transform->scale.x, transform->scale.y, transform->scale.z));
 			conf.Update(section, "rotation", std::format("{},{},{}", transform->rotation.x, transform->rotation.y, transform->rotation.z));
 		}
 		if (auto* model = object.GetComponent<Model>())
 		{
-			String section = std::format("entity{}:Model", objectID);
+			String section = std::format("Entity{}:Model", objectID);
 			conf.Update(section, "path", model->strPath);
+		}
+		if (auto* light = object.GetComponent<Light>())
+		{
+			String section = std::format("Entity{}:Light", objectID);
+			String type = std::to_string(static_cast<i32>(light->type));
+			conf.Update(section, "type", type);
+			switch (light->type)
+			{
+			case LightType::DIRECTIONAL:
+			{
+				auto* dirLight = object.GetComponent<DirectionalLight>();
+				String color = std::format("{},{},{}", dirLight->color.x, dirLight->color.y, dirLight->color.z);
+				String diffuseIntensity = std::to_string(dirLight->diffuseIntensity);
+				String specularIntensity = std::to_string(dirLight->specularIntensity);
+				String direction = std::format("{},{},{}", dirLight->direction.x, dirLight->direction.y, dirLight->direction.z);
+				conf.Update(section, "color", color);
+				conf.Update(section, "diffuseIntensity", diffuseIntensity);
+				conf.Update(section, "specularIntensity", specularIntensity);
+				conf.Update(section, "direction", direction);
+				break;
+			}
+			case LightType::POINT:
+			{
+				auto* pointLight = object.GetComponent<PointLight>();
+				String color = std::format("{},{},{}", pointLight->color.x, pointLight->color.y, pointLight->color.z);
+				String diffuseIntensity = std::to_string(pointLight->diffuseIntensity);
+				String specularIntensity = std::to_string(pointLight->specularIntensity);
+				String position = std::format("{},{},{}", pointLight->position.x, pointLight->position.y, pointLight->position.z);
+				String range = std::to_string(pointLight->attenuation.range);
+				String kl = std::to_string(pointLight->attenuation.kl);
+				String kq = std::to_string(pointLight->attenuation.kq);
+				conf.Update(section, "color", color);
+				conf.Update(section, "diffuseIntensity", diffuseIntensity);
+				conf.Update(section, "specularIntensity", specularIntensity);
+				conf.Update(section, "position", position);
+				conf.Update(section, "attenuation.range", range);
+				conf.Update(section, "attenuation.kl", kl);
+				conf.Update(section, "attenuation.kq", kq);
+				break;
+			}
+			case LightType::SPOT:
+			{
+				auto* spotLight = object.GetComponent<SpotLight>();
+				String color = std::format("{},{},{}", spotLight->color.x, spotLight->color.y, spotLight->color.z);
+				String diffuseIntensity = std::to_string(spotLight->diffuseIntensity);
+				String specularIntensity = std::to_string(spotLight->specularIntensity);
+				String direction = std::format("{},{},{}", spotLight->direction.x, spotLight->direction.y, spotLight->direction.z);
+				String position = std::format("{},{},{}", spotLight->position.x, spotLight->position.y, spotLight->position.z);
+				String cutOff = std::to_string(spotLight->cutOff);
+				String outerCutOff = std::to_string(spotLight->outerCutOff);
+				String range = std::to_string(spotLight->attenuation.range);
+				String kl = std::to_string(spotLight->attenuation.kl);
+				String kq = std::to_string(spotLight->attenuation.kq);
+				conf.Update(section, "color", color);
+				conf.Update(section, "diffuseIntensity", diffuseIntensity);
+				conf.Update(section, "specularIntensity", specularIntensity);
+				conf.Update(section, "direction", direction);
+				conf.Update(section, "position", position);
+				conf.Update(section, "attenuation.range", range);
+				conf.Update(section, "attenuation.kl", kl);
+				conf.Update(section, "attenuation.kq", kq);
+				conf.Update(section, "cutOff", cutOff);
+				conf.Update(section, "outerCutOff", outerCutOff);
+				break;
+			}
+			}
 		}
 	}
 	conf.Generate(true);
@@ -143,7 +156,7 @@ void Scene::DeserializeScene(StringView filePath)
 	ConfigFile conf(filePath);
 	conf.ReadData();
 
-	GameObject object;
+	Entity object;
 	u32 currentObjectId = static_cast<u32>(entt::null);
 	for (const auto& it : conf.GetData())
 	{
@@ -161,9 +174,8 @@ void Scene::DeserializeScene(StringView filePath)
 
 		if (component == "Label")
 		{
-			const String& labelVal = conf.GetValue(section, "label");
-			auto* label = object.GetComponent<Label>();
-			label->UpdateValue(labelVal);
+			const String& value = conf.GetValue(section, "value");
+			object.GetComponent<Label>()->UpdateValue(value);
 		}
 		else if (component == "Transform")
 		{
@@ -182,58 +194,74 @@ void Scene::DeserializeScene(StringView filePath)
 			const String& strPath = conf.GetValue(section, "path");
 			object.AddComponent<Model>(strPath);
 		}
-		else if (component == "DirectionalLight")
+		else if (component == "Light")
 		{
-			const String& color = conf.GetValue(section, "color");
-			const String& diffuseIntensity = conf.GetValue(section, "diffuseIntensity");
-			const String& specularIntensity = conf.GetValue(section, "specularIntensity");
-			const String& direction = conf.GetValue(section, "direction");
+			i32 type = Utils::StringToI32(conf.GetValue(section, "type"));
+			object.AddComponent<Light>(static_cast<LightType>(type));
 
-			auto& light = object.AddComponent<DirectionalLight>();
-			light.color = Utils::StringToVec3f(color);
-			light.diffuseIntensity = std::stof(diffuseIntensity);
-			light.specularIntensity = std::stof(specularIntensity);
-			light.direction = Utils::StringToVec3f(direction);
-		}
-		else if (component == "PointLight")
-		{
-			const String& color = conf.GetValue(section, "color");
-			const String& diffuseIntensity = conf.GetValue(section, "diffuseIntensity");
-			const String& specularIntensity = conf.GetValue(section, "specularIntensity");
-			const String& position = conf.GetValue(section, "position");
-			const String& kl = conf.GetValue(section, "attenuation.kl");
-			const String& kq = conf.GetValue(section, "attenuation.kq");
+			switch (static_cast<LightType>(type))
+			{
+			case LightType::DIRECTIONAL:
+			{
+				const String& color = conf.GetValue(section, "color");
+				const String& diffuseIntensity = conf.GetValue(section, "diffuseIntensity");
+				const String& specularIntensity = conf.GetValue(section, "specularIntensity");
+				const String& direction = conf.GetValue(section, "direction");
+				auto& light = object.AddComponent<DirectionalLight>();
+				light.color = Utils::StringToVec3f(color);
+				light.diffuseIntensity = Utils::StringToF32(diffuseIntensity);
+				light.specularIntensity = Utils::StringToF32(specularIntensity);
+				light.direction = Utils::StringToVec3f(direction);
+				break;
+			}
+			case LightType::POINT:
+			{
+				const String& color = conf.GetValue(section, "color");
+				const String& diffuseIntensity = conf.GetValue(section, "diffuseIntensity");
+				const String& specularIntensity = conf.GetValue(section, "specularIntensity");
+				const String& position = conf.GetValue(section, "position");
+				const String& range = conf.GetValue(section, "attenuation.range");
+				const String& kl = conf.GetValue(section, "attenuation.kl");
+				const String& kq = conf.GetValue(section, "attenuation.kq");
+				auto& light = object.AddComponent<PointLight>();
+				light.color = Utils::StringToVec3f(color);
+				light.diffuseIntensity = Utils::StringToF32(diffuseIntensity);
+				light.specularIntensity = Utils::StringToF32(specularIntensity);
+				light.position = Utils::StringToVec3f(position);
+				light.attenuation.range = Utils::StringToI32(range);
+				light.attenuation.kl = Utils::StringToF32(kl);
+				light.attenuation.kq = Utils::StringToF32(kq);
+				break;
+			}
+			case LightType::SPOT:
+			{
+				const String& color = conf.GetValue(section, "color");
+				const String& diffuseIntensity = conf.GetValue(section, "diffuseIntensity");
+				const String& specularIntensity = conf.GetValue(section, "specularIntensity");
+				const String& position = conf.GetValue(section, "position");
+				const String& direction = conf.GetValue(section, "direction");
+				const String& range = conf.GetValue(section, "attenuation.range");
+				const String& kl = conf.GetValue(section, "attenuation.kl");
+				const String& kq = conf.GetValue(section, "attenuation.kq");
+				const String& cutOff = conf.GetValue(section, "cutOff");
+				const String& outerCutOff = conf.GetValue(section, "outerCutOff");
+				auto& light = object.AddComponent<SpotLight>();
+				light.color = Utils::StringToVec3f(color);
+				light.diffuseIntensity = Utils::StringToF32(diffuseIntensity);
+				light.specularIntensity = Utils::StringToF32(specularIntensity);
+				light.position = Utils::StringToVec3f(position);
+				light.direction = Utils::StringToVec3f(direction);
+				light.attenuation.range = Utils::StringToI32(range);
+				light.attenuation.kl = Utils::StringToF32(kl);
+				light.attenuation.kq = Utils::StringToF32(kq);
+				light.cutOff = Utils::StringToF32(cutOff);
+				light.outerCutOff = Utils::StringToF32(outerCutOff);
+				break;
+			}
 
-			auto& light = object.AddComponent<PointLight>();
-			light.color = Utils::StringToVec3f(color);
-			light.diffuseIntensity = std::stof(diffuseIntensity);
-			light.specularIntensity = std::stof(specularIntensity);
-			light.position = Utils::StringToVec3f(position);
-			light.attenuation.kl = std::stof(kl);
-			light.attenuation.kq = std::stof(kq);
-		}
-		else if (component == "SpotLight")
-		{
-			const String& color = conf.GetValue(section, "color");
-			const String& diffuseIntensity = conf.GetValue(section, "diffuseIntensity");
-			const String& specularIntensity = conf.GetValue(section, "specularIntensity");
-			const String& position = conf.GetValue(section, "position");
-			const String& direction = conf.GetValue(section, "direction");
-			const String& kl = conf.GetValue(section, "attenuation.kl");
-			const String& kq = conf.GetValue(section, "attenuation.kq");
-			const String& cutOff = conf.GetValue(section, "cutOff");
-			const String& outerCutOff = conf.GetValue(section, "outerCutOff");
-
-			auto& light = object.AddComponent<SpotLight>();
-			light.color = Utils::StringToVec3f(color);
-			light.diffuseIntensity = std::stof(diffuseIntensity);
-			light.specularIntensity = std::stof(specularIntensity);
-			light.position = Utils::StringToVec3f(position);
-			light.direction = Utils::StringToVec3f(direction);
-			light.attenuation.kl = std::stof(kl);
-			light.attenuation.kq = std::stof(kq);
-			light.cutOff = std::stof(cutOff);
-			light.outerCutOff = std::stof(outerCutOff);
+			default:
+				throw std::runtime_error("Invalid LightType!");
+			}
 		}
 	}
 }

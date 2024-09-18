@@ -11,13 +11,6 @@ class ConfigFile
 public:
 	ConfigFile(StringView filePath)
 	{
-		if (!fs::exists(filePath.data()) || !fs::is_regular_file(filePath.data()))
-		{
-			char msg[128]{};
-			std::format_to_n(msg, sizeof(msg), "{} is not a valid path", filePath.data());
-			throw std::runtime_error(msg);
-		}
-
 		/* Create a file instance */
 		_file = std::make_unique<mINI::INIFile>(filePath.data());
 	}

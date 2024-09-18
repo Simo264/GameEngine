@@ -60,17 +60,17 @@ public:
 	/**
 	 * Render the viewport with gizmo frame
 	 */
-	void Viewport(u32 tetxureID, GameObject& objSelected, const mat4f& view, const mat4f& proj);
+	void Viewport(u32 tetxureID, Entity& objSelected, const mat4f& view, const mat4f& proj);
 
 	/**
 	 * Render the outliner frame
 	 */
-	GameObject& OutlinerPanel(Scene& scene);
+	Entity& OutlinerPanel(Scene& scene);
 
 	/**
 	 * Render the game object details frame
 	 */
-	void GameObjectDetails(GameObject& object);
+	void GameObjectDetails(Entity& object);
 
 	/**
 	 * Render the world props frame

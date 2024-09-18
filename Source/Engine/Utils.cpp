@@ -7,6 +7,16 @@
 
 namespace Utils
 {
+	i32 StringToI32(StringView str)
+	{
+		return std::stoi(str.data());
+	}
+
+	f32 StringToF32(StringView str)
+	{
+		return std::stof(str.data());
+	}
+
 	vec2i32 StringToVec2i32(StringView str, char delimiter)
 	{
 		vec2i32 vec{};

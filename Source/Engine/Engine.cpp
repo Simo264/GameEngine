@@ -419,7 +419,6 @@ void Engine::Initialize()
   gui.Initialize();
   CONSOLE_INFO("ImGui layer initialized");
 
-
   /* Create Framebuffer object */
   /* ------------------------- */
   _viewportSize = { WINDOW_WIDTH, WINDOW_HEIGHT };
@@ -680,7 +679,7 @@ void Engine::Run()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     gui.MenuBar(scene);
-    GameObject& objSelected = gui.OutlinerPanel(scene);
+    Entity& objSelected = gui.OutlinerPanel(scene);
     gui.GameObjectDetails(objSelected);
     gui.Viewport(fboTexture, objSelected, cameraView, cameraProj);
     gui.ContentBrowser();

@@ -1,7 +1,7 @@
 #pragma once
 
-/* Include the entity system */
-#include "GameObject.hpp"
+/* Include the entity*/
+#include "Entity.hpp"
 
 /* Include all components */
 #include "Label.hpp"

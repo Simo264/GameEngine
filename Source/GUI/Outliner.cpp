@@ -12,9 +12,21 @@
 /*          PRIVATE           */
 /* -------------------------- */
 
-static void Left_ComponentList(const char* const compList[], i32 n, i32& compIdx, bool compToInclude[])
+static constexpr const char* compList[] = {
+  "Label",
+  "Transform",
+  "Model",
+  "Light",
+};
+static constexpr const char* typeOfLights[] = {
+  "Directional",
+  "Point",
+  "Spot"
+};
+
+static void Left_ComponentList(i32& compIdx, bool compToInclude[])
 {
-  for (i32 i = 0; i < n; i++)
+  for (i32 i = 0; i < std::size(compList); i++)
   {
     if (compToInclude[i])
     {
@@ -32,10 +44,11 @@ static void Left_ComponentList(const char* const compList[], i32 n, i32& compIdx
     ImGui::Spacing();
   }
 }
-static void Right_LabelView(Label& label, bool check = true)
+static void Right_LabelView(Label& label)
 {
   ImGui::SeparatorText("Label component");
   ImGui::BeginDisabled(true);
+  bool check = true;
   ImGui::Checkbox("Add component", &check);
   ImGui::EndDisabled();
   ImGui::InputText("Value", label.value, sizeof(label.value));
@@ -71,8 +84,6 @@ static void Right_ModelView(bool& check, String& strModelPath)
   }
 }
 static void Right_LightView(bool& check, 
-  const char* const typeOfLights[], 
-  i32 n, 
   i32& lightIdx,
   DirectionalLight& dirLight,
   PointLight& pointLight,
@@ -85,7 +96,7 @@ static void Right_LightView(bool& check,
   {
     if (ImGui::BeginCombo("Type", typeOfLights[lightIdx]))
     {
-      for (i32 i = 0; i < n; i++)
+      for (i32 i = 0; i < std::size(typeOfLights); i++)
         if (ImGui::Selectable(typeOfLights[i], lightIdx == i))
           lightIdx = i;
 
@@ -166,25 +177,14 @@ static void ShowErrorDialog(StringView name, StringView message, bool& open)
 }
 static void ShowObjectConfigWindow(bool& open, Scene& scene)
 {
-  static constexpr const char* compList[] = {
-    "Label",
-    "Transform",
-    "Model",
-    "Light",
-  };
-  static bool compToInclude[] = {
+  static bool compToInclude[] = 
+  {
     true, /* Label component is always included */
     false,
     false,
     false,
   };
   static i32 compIdx = 0;
-
-  static constexpr const char* typeOfLights[] = {
-    "Directional light",
-    "Point light",
-    "Spot light"
-  };
   static i32 lightIdx = 0;
 
   ImVec2 pos = ImGui::GetMainViewport()->GetCenter();
@@ -197,7 +197,7 @@ static void ShowObjectConfigWindow(bool& open, Scene& scene)
   /* ------------ Left panel ---------*/
   /* -------------------------------- */
   ImGui::BeginChild("Left_ComponentList", ImVec2(200.0f, 0.0f), ImGuiChildFlags_Border | ImGuiChildFlags_ResizeX);
-  Left_ComponentList(compList, std::size(compList), compIdx, compToInclude);
+  Left_ComponentList(compIdx, compToInclude);
   ImGui::EndChild();
   /* -------------------------------- */
 
@@ -229,25 +229,16 @@ static void ShowObjectConfigWindow(bool& open, Scene& scene)
     break;
 
   case 3: /* Light component */
-    Right_LightView(compToInclude[3],
-      typeOfLights,
-      std::size(typeOfLights),
-      lightIdx,
-      tmp_dirLight,
-      tmp_pointLight,
-      tmp_spotLight
-    );
+    Right_LightView(compToInclude[3], lightIdx, tmp_dirLight, tmp_pointLight, tmp_spotLight);
     break;
   }
   ImGui::EndChild();
 
   /* Confirm/Cancel buttons */
   static bool openDialog = false;
-  static char dialogMsg[128]{};
+  char dialogMsg[128]{};
   if (ImGui::Button("Done"))
   {
-    std::fill_n(dialogMsg, sizeof(dialogMsg), 0);
-      
     /* Check for errors */
     if (!Right_CheckValues(tmp_label.value, compToInclude, tmp_modelPath, dialogMsg, sizeof(dialogMsg)))
     {
@@ -257,7 +248,7 @@ static void ShowObjectConfigWindow(bool& open, Scene& scene)
     /* Everything is ok. Insert new object and reset temp values */
     else
     {
-      GameObject newObject = scene.CreateObject(tmp_label.value);
+      Entity newObject = scene.CreateObject(tmp_label.value);
       if (compToInclude[1]) /* +Add transform component */
       {
         auto& trans = newObject.AddComponent<Transform>();
@@ -317,7 +308,7 @@ static void ShowObjectConfigWindow(bool& open, Scene& scene)
 /*          PUBLIC            */
 /* -------------------------- */
 
-void GUI_RenderOutliner(bool& open, Scene& scene, GameObject& objSelected)
+void GUI_RenderOutliner(bool& open, Scene& scene, Entity& objSelected)
 {
   static bool openObjectConfigWindow = false;
 
@@ -332,17 +323,13 @@ void GUI_RenderOutliner(bool& open, Scene& scene, GameObject& objSelected)
 
   ImGui::Separator();
 
-  static char selectableName[64]{};
+  char selectableName[64]{};
   for (auto [entity, label] : scene.Reg().view<Label>().each())
   {
     std::fill_n(selectableName, sizeof(selectableName), 0);
-    std::format_to_n(selectableName, sizeof(selectableName), "{}_{}##{}",
-      label.value,
-      static_cast<u32>(entity), 
-      static_cast<u32>(entity)
-    );
+    std::format_to_n(selectableName, sizeof(selectableName), "{}##{}", label.value, static_cast<u32>(entity));
 
-    GameObject o{ entity, &scene.Reg() };
+    Entity o{ entity, &scene.Reg() };
     bool selected = ImGui::Selectable(selectableName, objSelected.IsEqual(o));
     if (selected && !objSelected.IsEqual(o))
         objSelected = o;
@@ -360,7 +347,7 @@ void GUI_RenderOutliner(bool& open, Scene& scene, GameObject& objSelected)
   if (openObjectConfigWindow)
     ShowObjectConfigWindow(openObjectConfigWindow, scene);
 
-  /* Menu on right click object */
+  /* Display menu on right click object */
   if (ImGui::BeginPopup("ObjectMenu"))
   {
     if (ImGui::MenuItem("+Add component"))
@@ -380,6 +367,6 @@ void GUI_RenderOutliner(bool& open, Scene& scene, GameObject& objSelected)
     }
     ImGui::EndPopup();
   }
-
+  
   ImGui::End();
 }

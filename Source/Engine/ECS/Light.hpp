@@ -3,11 +3,24 @@
 #include "Core/Core.hpp"
 #include "Core/Math/Math.hpp"
 
+enum class LightType : i32
+{
+	DIRECTIONAL = 0,
+	POINT = 1,
+	SPOT = 2,
+};
+
 /* https://wiki.ogre3d.org/tiki-index.php?page=-Point+Light+Attenuation */
 struct Attenuation
 {
+	i32 range{ 50 };	/* If an objects distance is greater than the range, the light has no effect on the object */
 	f32 kl{ 0.09f };	/* Linear attenuation factor */
 	f32 kq{ 0.032f }; /* Quadratic attenuation factor */
+};
+
+struct Light
+{
+	LightType type;
 };
 
 /**
@@ -18,12 +31,8 @@ struct Attenuation
  * The sun is not infinitely far away from us, but it is so far away that we can
  * perceive it as being infinitely far away in the lighting calculations
  */
-class DirectionalLight
+struct DirectionalLight
 {
-public:
-	DirectionalLight() = default;
-	~DirectionalLight() = default;
-
 	vec3f color{ 1.0f,1.0f,1.0f };
 	f32 diffuseIntensity{ 0.5f };
 	f32 specularIntensity{ 0.5f };
@@ -37,12 +46,8 @@ public:
  * that illuminates in all directions, where the light rays fade out over distance.
  * Think of light bulbs and torches as light casters that act as a point light.
  */
-class PointLight
+struct PointLight
 {
-public:
-	PointLight() = default;
-	~PointLight() = default;
-
 	vec3f color{ 1.0f,1.0f,1.0f };
 	f32 diffuseIntensity{ 0.5f };
 	f32 specularIntensity{ 0.5f };
@@ -58,12 +63,8 @@ public:
  * a specific direction.
  * A good example of a spotlight would be a street lamp or a flashlight.
  */
-class SpotLight
+struct SpotLight
 {
-public:
-	SpotLight() = default;
-	~SpotLight() = default;
-
 	vec3f color{ 1.0f,1.0f,1.0f };
 	f32 diffuseIntensity{ 0.5f };
 	f32 specularIntensity{ 0.5f };

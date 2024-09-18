@@ -5,6 +5,10 @@
 
 namespace Utils
 {
+	i32 StringToI32(StringView str);
+
+	f32 StringToF32(StringView str);
+
 	/* From string "50,50" -> to Vec2i(50,50) */
 	vec2i32 StringToVec2i32(StringView str, char delimiter = ',');
 
