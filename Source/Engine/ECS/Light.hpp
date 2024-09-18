@@ -18,6 +18,21 @@ struct Attenuation
 	f32 kq{ 0.032f }; /* Quadratic attenuation factor */
 };
 
+static constexpr const Attenuation ATTENUATION_RANGES[] = {
+	Attenuation{ 7, 0.7f, 1.8f },
+	Attenuation{ 13, 0.35f, 0.44f },
+	Attenuation{ 20, 0.22f, 0.20f },
+	Attenuation{ 32, 0.14f, 0.07f },
+	Attenuation{ 50, 0.09f, 0.032f },
+	Attenuation{ 65, 0.07f, 0.017f },
+	Attenuation{ 100, 0.045f, 0.0075f },
+	Attenuation{ 160, 0.027f, 0.0028f },
+	Attenuation{ 200, 0.022f, 0.0019f },
+	Attenuation{ 325, 0.014f, 0.0007f },
+	Attenuation{ 600, 0.007f, 0.0002f },
+	Attenuation{ 3250, 0.0014f, 0.000007f },
+};
+
 struct Light
 {
 	LightType type;

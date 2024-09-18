@@ -3,6 +3,8 @@
 #include "Engine/Scene.hpp"
 #include "Engine/ECS/ECS.hpp"
 #include "Engine/Subsystems/TextureManager.hpp"
+#include "Engine/Subsystems/ShaderManager.hpp"
+#include "Engine/Filesystem/Dialog.hpp"
 
 #include <imgui/imgui.h>
 #include <imgui/ImGuizmo.h>
@@ -10,21 +12,6 @@
 /* ------------------------------------------ */
 /*                  PRIVATE                   */
 /* ------------------------------------------ */
-
-static constexpr const Attenuation ATTENUATION_ARRAY[] = {
-  Attenuation{ 7, 0.7f, 1.8f },
-  Attenuation{ 13, 0.35f, 0.44f },
-  Attenuation{ 20, 0.22f, 0.20f },
-  Attenuation{ 32, 0.14f, 0.07f },
-  Attenuation{ 50, 0.09f, 0.032f },
-  Attenuation{ 65, 0.07f, 0.017f },
-  Attenuation{ 100, 0.045f, 0.0075f },
-  Attenuation{ 160, 0.027f, 0.0028f },
-  Attenuation{ 200, 0.022f, 0.0019f },
-  Attenuation{ 325, 0.014f, 0.0007f },
-  Attenuation{ 600, 0.007f, 0.0002f },
-  Attenuation{ 3250, 0.0014f, 0.000007f },
-};
 
 static void DetailsModel_ComboTextures(Texture2D*& matTexture, StringView comboId, const Texture2D& defaultTex)
 {
@@ -57,19 +44,27 @@ static void DetailsModel_ComboTextures(Texture2D*& matTexture, StringView comboI
     ImGui::PopStyleColor();
   }
 }
+static void DetailsLight_ComboLightType(StringView preview, bool dir, bool point, bool spot)
+{
+  if (ImGui::BeginCombo("Type", preview.data(), ImGuiComboFlags_NoArrowButton))
+  {
+    ImGui::Selectable("Directional", dir, !dir ? ImGuiSelectableFlags_Disabled : 0);
+    ImGui::Selectable("Point", point, !point ? ImGuiSelectableFlags_Disabled : 0);
+    ImGui::Selectable("Spot", spot, !spot ? ImGuiSelectableFlags_Disabled : 0);
+    ImGui::EndCombo();
+  }
+}
 
 static void Details_DirectLight(Entity& object, DirectionalLight& light)
 {
-  ImGui::BeginDisabled();
-  if (ImGui::BeginCombo("Type", "Directional"))
-    ImGui::EndCombo();
-  ImGui::EndDisabled();
+  DetailsLight_ComboLightType("Directional", true, false, false);
 
   ImGui::ColorEdit3("Color", (f32*)&light.color);
   ImGui::SliderFloat("Diffuse intensity", &light.diffuseIntensity, 0.0f, 1.0f);
   ImGui::SliderFloat("Specular intensity", &light.specularIntensity, 0.0f, 1.0f);
   ImGui::DragFloat3("Direction", (f32*)&light.direction, 0.1f, -FLT_MAX, FLT_MAX);
 
+  ImGui::SeparatorText("Advanced");
   ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.55f, 0.f, 0.f, 0.5f));
   ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.45f, 0.f, 0.f, 0.5f));
   ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.45f, 0.f, 0.f, 0.5f));
@@ -77,29 +72,33 @@ static void Details_DirectLight(Entity& object, DirectionalLight& light)
   {
     object.RemoveComponent<Light>();
     object.RemoveComponent<DirectionalLight>();
+
+    auto& shaderManager = ShaderManager::Get();
+    shaderManager.GetProgramByName("Scene").Link();
+    shaderManager.GetProgramByName("SceneShadows").Link();
+    shaderManager.ResetProgramsUniforms();
   }
   ImGui::PopStyleColor(3);
 }
 static void Details_PointLight(Entity& object, PointLight& light)
 {
-  ImGui::BeginDisabled();
-  if (ImGui::BeginCombo("Type", "Point"))
-    ImGui::EndCombo();
-  ImGui::EndDisabled();
+  DetailsLight_ComboLightType("Point", false, true, false);
 
   ImGui::ColorEdit3("Color", (f32*)&light.color);
   ImGui::SliderFloat("Diffuse intensity", &light.diffuseIntensity, 0.0f, 1.0f);
   ImGui::SliderFloat("Specular intensity", &light.specularIntensity, 0.0f, 1.0f);
   ImGui::DragFloat3("Position", (f32*)&light.position, 0.1f, -FLT_MAX, FLT_MAX);
 
+  ImGui::SeparatorText("Attenuation");
+  
   char currentAttRange[16]{};
   std::format_to_n(currentAttRange, sizeof(currentAttRange), "{}m", light.attenuation.range);
-  if (ImGui::BeginCombo("Attenuation", currentAttRange))
+  if (ImGui::BeginCombo("Range", currentAttRange))
   {
     char label[16]{};
-    for (i32 i = 0; i < std::size(ATTENUATION_ARRAY); i++)
+    for (i32 i = 0; i < std::size(ATTENUATION_RANGES); i++)
     {
-      const auto& attenuation = ATTENUATION_ARRAY[i];
+      const auto& attenuation = ATTENUATION_RANGES[i];
       std::fill_n(label, sizeof(label), 0);
       std::format_to_n(label, sizeof(label), "{}m", attenuation.range);
       if (ImGui::Selectable(label, light.attenuation.range == attenuation.range))
@@ -108,6 +107,7 @@ static void Details_PointLight(Entity& object, PointLight& light)
     ImGui::EndCombo();
   }
 
+  ImGui::SeparatorText("Advanced");
   ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.55f, 0.f, 0.f, 0.5f));
   ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.45f, 0.f, 0.f, 0.5f));
   ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.45f, 0.f, 0.f, 0.5f));
@@ -115,15 +115,17 @@ static void Details_PointLight(Entity& object, PointLight& light)
   {
     object.RemoveComponent<Light>();
     object.RemoveComponent<PointLight>();
+
+    auto& shaderManager = ShaderManager::Get();
+    shaderManager.GetProgramByName("Scene").Link();
+    shaderManager.GetProgramByName("SceneShadows").Link();
+    shaderManager.ResetProgramsUniforms();
   }
   ImGui::PopStyleColor(3);
 }
 static void Details_SpotLight(Entity& object, SpotLight& light)
 {
-  ImGui::BeginDisabled();
-  if (ImGui::BeginCombo("Type", "Spot"))
-    ImGui::EndCombo();
-  ImGui::EndDisabled();
+  DetailsLight_ComboLightType("Spot", false, false, true);
 
   ImGui::ColorEdit3("Color", (f32*)&light.color);
   ImGui::SliderFloat("Diffuse intensity", &light.diffuseIntensity, 0.0f, 1.0f);
@@ -131,19 +133,21 @@ static void Details_SpotLight(Entity& object, SpotLight& light)
   ImGui::DragFloat3("Direction", (f32*)&light.direction, 0.1f, -FLT_MAX, FLT_MAX);
   ImGui::DragFloat3("Position", (f32*)&light.position, 0.1f, -FLT_MAX, FLT_MAX);
 
-  ImGui::Text("Radius");
-  ImGui::Separator();
+  ImGui::SeparatorText("Radius");
+  
   ImGui::SliderFloat("Inner cutoff", &light.cutOff, 1.0f, light.outerCutOff);
   ImGui::SliderFloat("Outer cutoff", &light.outerCutOff, light.cutOff, 45.0f);
 
+  ImGui::SeparatorText("Attenuation");
+  
   char currentAttRange[16]{};
   std::format_to_n(currentAttRange, sizeof(currentAttRange), "{}m", light.attenuation.range);
-  if (ImGui::BeginCombo("Attenuation", currentAttRange))
+  if (ImGui::BeginCombo("Range", currentAttRange))
   {
     char label[16]{};
-    for (i32 i = 0; i < std::size(ATTENUATION_ARRAY); i++)
+    for (i32 i = 0; i < std::size(ATTENUATION_RANGES); i++)
     {
-      const auto& attenuation = ATTENUATION_ARRAY[i];
+      const auto& attenuation = ATTENUATION_RANGES[i];
       std::fill_n(label, sizeof(label), 0);
       std::format_to_n(label, sizeof(label), "{}m", attenuation.range);
       if (ImGui::Selectable(label, light.attenuation.range == attenuation.range))
@@ -152,7 +156,7 @@ static void Details_SpotLight(Entity& object, SpotLight& light)
     ImGui::EndCombo();
   }
 
-
+  ImGui::SeparatorText("Advanced");
   ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.55f, 0.f, 0.f, 0.5f));
   ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.45f, 0.f, 0.f, 0.5f));
   ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.45f, 0.f, 0.f, 0.5f));
@@ -160,6 +164,11 @@ static void Details_SpotLight(Entity& object, SpotLight& light)
   {
     object.RemoveComponent<Light>();
     object.RemoveComponent<SpotLight>();
+
+    auto& shaderManager = ShaderManager::Get();
+    shaderManager.GetProgramByName("Scene").Link();
+    shaderManager.GetProgramByName("SceneShadows").Link();
+    shaderManager.ResetProgramsUniforms();
   }
   ImGui::PopStyleColor(3);
 }
@@ -174,6 +183,7 @@ static void Details_Transform(Entity& object, Transform& transform, i32& gizmode
   ImGui::DragFloat3("Rotation", (f32*)&transform.rotation, 0.1f, -FLT_MAX, FLT_MAX);
   transform.UpdateTransformation();
 
+  ImGui::SeparatorText("Advanced");
   ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.55f, 0.f, 0.f, 0.5f));
   ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.45f, 0.f, 0.f, 0.5f));
   ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.45f, 0.f, 0.f, 0.5f));
@@ -219,6 +229,7 @@ static void Details_Model(Entity& object, Model& model)
     DetailsModel_ComboTextures(material.height, "##Height", texManager.GetDefaultHeight());
   }
 
+  ImGui::SeparatorText("Advanced");
   ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.55f, 0.f, 0.f, 0.5f));
   ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.45f, 0.f, 0.f, 0.5f));
   ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.45f, 0.f, 0.f, 0.5f));
@@ -226,6 +237,105 @@ static void Details_Model(Entity& object, Model& model)
     object.RemoveComponent<Model>();
   ImGui::PopStyleColor(3);
 }
+
+static void Details_NewComponentButton()
+{
+  ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(1.f, 0.85f, 0.f, 1.f));
+  ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0f);
+  
+  if (ImGui::Button("+Add component"))
+    ImGui::OpenPopup("EntityPopup");
+  
+  ImGui::PopStyleVar();
+  ImGui::PopStyleColor();
+}
+static void Details_ListAllComponents(Entity& object, i32& gizmode)
+{
+  if (auto* transform = object.GetComponent<Transform>())
+  {
+    if (ImGui::CollapsingHeader("Transform"))
+      Details_Transform(object, *transform, gizmode);
+  }
+  if (auto* model = object.GetComponent<Model>())
+  {
+    if (ImGui::CollapsingHeader("Model"))
+      Details_Model(object, *model);
+  }
+  if (auto* light = object.GetComponent<Light>())
+  {
+    if (ImGui::CollapsingHeader("Light"))
+    {
+      switch (light->type)
+      {
+      case LightType::DIRECTIONAL:
+      {
+        auto* dirLight = object.GetComponent<DirectionalLight>();
+        Details_DirectLight(object, *dirLight);
+        break;
+      }
+      case LightType::POINT:
+      {
+        auto* pointLight = object.GetComponent<PointLight>();
+        Details_PointLight(object, *pointLight);
+        break;
+      }
+      case LightType::SPOT:
+      {
+        auto* spotLight = object.GetComponent<SpotLight>();
+        Details_SpotLight(object, *spotLight);
+        break;
+      }
+      }
+    }
+  }
+}
+
+static bool openTransformWindow = false;
+static bool openModelWindow = false;
+static bool openLightWindow = false;
+static void NewComponentPopup_Selectable(StringView label)
+{
+  ImGui::BeginDisabled();
+  ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.f, 0.f, 0.f, 0.f));
+  ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(0.f, 0.f, 0.f, 0.f));
+  ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(0.f, 0.f, 0.f, 0.f));
+  ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.f, 0.f));
+  bool checked = true;
+  ImGui::Checkbox("##", &checked);
+  ImGui::PopStyleVar();
+  ImGui::PopStyleColor(3);
+  ImGui::SameLine();
+  ImGui::Selectable(label.data());
+  ImGui::EndDisabled();
+}
+static void Details_NewComponentPopup(Entity& object)
+{
+  if (ImGui::BeginPopup("EntityPopup"))
+  {
+    /* List of all components */
+    if (object.HasComponent<Transform>()) /* Component already present, disabled */
+      NewComponentPopup_Selectable("Transform");
+    else if (ImGui::Selectable("Transform"))
+      openTransformWindow = true;
+
+    ImGui::Spacing();
+
+    if (object.HasComponent<Model>()) /* Component already present, disabled */
+      NewComponentPopup_Selectable("Model");
+    else if (ImGui::Selectable("Model"))
+      openModelWindow = true;
+
+    ImGui::Spacing();
+
+    if (object.HasComponent<Light>()) /* Component already present, disabled */
+      NewComponentPopup_Selectable("Light");
+    else if (ImGui::Selectable("Light"))
+      openLightWindow = true;
+
+    ImGui::EndPopup();
+  }
+}
+
 
 /* ------------------------------------------ */
 /*                    PUBLIC                  */
@@ -236,52 +346,216 @@ void GUI_RenderObjectDetails(bool& open, Entity& object, i32& gizmode)
   ImGui::Begin("Details", &open);
   if (object.IsValid())
   {
-    ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(1.f, 0.85f, 0.f, 1.f));
-    ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0f);
-    if (ImGui::Button("+Add component"))
-    {
-      CONSOLE_DEBUG("TODO");
-    }
-    ImGui::PopStyleVar();
-    ImGui::PopStyleColor();
+    /* "+New component" button */
+    Details_NewComponentButton();
 
-    if (auto* transform = object.GetComponent<Transform>())
-    {
-      if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
-        Details_Transform(object, *transform, gizmode);
-    }
-    if (auto* model = object.GetComponent<Model>())
-    {
-      if (ImGui::CollapsingHeader("Model", ImGuiTreeNodeFlags_DefaultOpen))
-        Details_Model(object, *model);
-    }
-    if (auto* light = object.GetComponent<Light>())
-    {
-      if (ImGui::CollapsingHeader("Light", ImGuiTreeNodeFlags_DefaultOpen))
-      {
-        switch (light->type)
-        {
-        case LightType::DIRECTIONAL:
-        {
-          auto* dirLight = object.GetComponent<DirectionalLight>();
-          Details_DirectLight(object, *dirLight);
-          break;
-        }
-        case LightType::POINT:
-        {
-          auto* pointLight = object.GetComponent<PointLight>();
-          Details_PointLight(object, *pointLight);
-          break;
-        }
-        case LightType::SPOT:
-        {
-          auto* spotLight = object.GetComponent<SpotLight>();
-          Details_SpotLight(object, *spotLight);
-          break;
-        }
-        }
-      }
-    }
+    /* List all components */
+    Details_ListAllComponents(object, gizmode);
   }
+
+  /* Open popup on click "+New component" button */
+  Details_NewComponentPopup(object);
+  
+  if (openTransformWindow)
+  {
+    static Transform tmp_transform{};
+    ImVec2 pos = ImGui::GetMainViewport()->GetCenter();
+    pos.x -= 250.f;
+    pos.y -= 150.f;
+    ImGui::SetNextWindowPos(pos, ImGuiCond_Appearing);
+    ImGui::SetNextWindowSize(ImVec2(500.f, 300.f), ImGuiCond_Appearing);
+    ImGui::Begin("Transform component", &openTransformWindow, ImGuiWindowFlags_NoDocking);
+    
+    ImGui::InputFloat3("Position", reinterpret_cast<f32*>(&tmp_transform.position));
+    ImGui::InputFloat3("Scale", reinterpret_cast<f32*>(&tmp_transform.scale));
+    ImGui::InputFloat3("Rotation", reinterpret_cast<f32*>(&tmp_transform.rotation));
+    if (ImGui::Button("Done"))
+    {
+      auto& transform = object.AddComponent<Transform>();
+      transform = tmp_transform;
+      openTransformWindow = false;
+      tmp_transform = Transform{};
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Cancel"))
+    {
+      openTransformWindow = false;
+      tmp_transform = Transform{};
+    }
+    ImGui::End();
+  }
+  else if (openModelWindow)
+  {
+    static String tmp_modelPath{};
+    ImVec2 pos = ImGui::GetMainViewport()->GetCenter();
+    pos.x -= 250.f;
+    pos.y -= 150.f;
+    ImGui::SetNextWindowPos(pos, ImGuiCond_Appearing);
+    ImGui::SetNextWindowSize(ImVec2(500.f, 300.f), ImGuiCond_Appearing);
+    ImGui::Begin("Model component", &openModelWindow, ImGuiWindowFlags_NoDocking);
+    if (ImGui::Button("Select model file"))
+    {
+      const char* filter[] = { "*.obj" };
+      String path = OpenFileDialog(1, filter, "Select .obj file", false);
+      if (!path.empty())
+        tmp_modelPath = path;
+    }
+    ImGui::SameLine();
+    ImGui::InputText("##model_path", tmp_modelPath.data(), tmp_modelPath.size(), ImGuiInputTextFlags_ReadOnly);
+
+    if (tmp_modelPath.empty())
+    {
+      ImGui::BeginDisabled();
+      ImGui::Button("Done");
+      ImGui::EndDisabled();
+    }
+    else if(ImGui::Button("Done"))
+    {
+      object.AddComponent<Model>(tmp_modelPath);
+      openModelWindow = false;
+      tmp_modelPath = String{};
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Cancel"))
+    {
+      openModelWindow = false;
+      tmp_modelPath = String{};
+    }
+
+    ImGui::End();
+  }
+  else if (openLightWindow)
+  {
+    static constexpr const char* typeOfLights[] = {
+      "Directional",
+      "Point",
+      "Spot"
+    };
+    static i32 tmp_lightIdx = 0;
+    static DirectionalLight tmp_dirLight{};
+    static PointLight tmp_pointLight{};
+    static SpotLight tmp_spotLight{};
+
+    ImVec2 pos = ImGui::GetMainViewport()->GetCenter();
+    pos.x -= 250.f;
+    pos.y -= 150.f;
+    ImGui::SetNextWindowPos(pos, ImGuiCond_Appearing);
+    ImGui::SetNextWindowSize(ImVec2(500.f, 300.f), ImGuiCond_Appearing);
+    ImGui::Begin("Light component", &openLightWindow, ImGuiWindowFlags_NoDocking);
+
+    if (ImGui::BeginCombo("Type", typeOfLights[tmp_lightIdx]))
+    {
+      for (i32 i = 0; i < std::size(typeOfLights); i++)
+        if (ImGui::Selectable(typeOfLights[i], tmp_lightIdx == i))
+          tmp_lightIdx = i;
+
+      ImGui::EndCombo();
+    }
+    switch (tmp_lightIdx)
+    {
+    case 0: /* Directional light */
+    {
+      ImGui::InputFloat3("Color", reinterpret_cast<f32*>(&tmp_dirLight.color));
+      ImGui::InputFloat("Diffuse intensity", reinterpret_cast<f32*>(&tmp_dirLight.diffuseIntensity));
+      ImGui::InputFloat("Specular intensity", reinterpret_cast<f32*>(&tmp_dirLight.specularIntensity));
+      ImGui::InputFloat3("Direction", reinterpret_cast<f32*>(&tmp_dirLight.direction));
+      break;
+    }
+    case 1: /* Point light */
+    {
+      ImGui::InputFloat3("Color", reinterpret_cast<f32*>(&tmp_pointLight.color));
+      ImGui::InputFloat("Diffuse intensity", reinterpret_cast<f32*>(&tmp_pointLight.diffuseIntensity));
+      ImGui::InputFloat("Specular intensity", reinterpret_cast<f32*>(&tmp_pointLight.specularIntensity));
+      ImGui::InputFloat3("Position", reinterpret_cast<f32*>(&tmp_pointLight.position));
+      char currentAttRange[16]{};
+      std::format_to_n(currentAttRange, sizeof(currentAttRange), "{}m", tmp_pointLight.attenuation.range);
+      if (ImGui::BeginCombo("Attenuation range", currentAttRange))
+      {
+        char label[16]{};
+        for (i32 i = 0; i < std::size(ATTENUATION_RANGES); i++)
+        {
+          const auto& attenuation = ATTENUATION_RANGES[i];
+          std::fill_n(label, sizeof(label), 0);
+          std::format_to_n(label, sizeof(label), "{}m", attenuation.range);
+          if (ImGui::Selectable(label, tmp_pointLight.attenuation.range == attenuation.range))
+            tmp_pointLight.attenuation = attenuation;
+        }
+        ImGui::EndCombo();
+      }
+      break;
+    }
+    case 2: /* Spot light */
+    {
+      ImGui::InputFloat3("Color", reinterpret_cast<f32*>(&tmp_spotLight.color));
+      ImGui::InputFloat("Diffuse intensity", reinterpret_cast<f32*>(&tmp_spotLight.diffuseIntensity));
+      ImGui::InputFloat("Specular intensity", reinterpret_cast<f32*>(&tmp_spotLight.specularIntensity));
+      ImGui::InputFloat3("Direction", reinterpret_cast<f32*>(&tmp_spotLight.direction));
+      ImGui::InputFloat3("Position", reinterpret_cast<f32*>(&tmp_spotLight.position));
+      char currentAttRange[16]{};
+      std::format_to_n(currentAttRange, sizeof(currentAttRange), "{}m", tmp_spotLight.attenuation.range);
+      if (ImGui::BeginCombo("Attenuation range", currentAttRange))
+      {
+        char label[16]{};
+        for (i32 i = 0; i < std::size(ATTENUATION_RANGES); i++)
+        {
+          const auto& attenuation = ATTENUATION_RANGES[i];
+          std::fill_n(label, sizeof(label), 0);
+          std::format_to_n(label, sizeof(label), "{}m", attenuation.range);
+          if (ImGui::Selectable(label, tmp_spotLight.attenuation.range == attenuation.range))
+            tmp_spotLight.attenuation = attenuation;
+        }
+        ImGui::EndCombo();
+      }
+      ImGui::InputFloat("Cutoff", reinterpret_cast<f32*>(&tmp_spotLight.cutOff));
+      ImGui::InputFloat("Outer cutoff", reinterpret_cast<f32*>(&tmp_spotLight.outerCutOff));
+      break;
+    }
+    }
+
+    if (ImGui::Button("Done"))
+    {
+      switch (tmp_lightIdx)
+      {
+      case 0: /* Directional light */
+      {
+        object.AddComponent<Light>(LightType::DIRECTIONAL);
+        auto& light = object.AddComponent<DirectionalLight>();
+        light = tmp_dirLight;
+        break;
+      }
+      case 1: /* Point light */
+      {
+        object.AddComponent<Light>(LightType::POINT);
+        auto& light = object.AddComponent<PointLight>();
+        light = tmp_pointLight;
+        break;
+      }
+      case 2: /* Spot light */
+      {
+        object.AddComponent<Light>(LightType::SPOT);
+        auto& light = object.AddComponent<SpotLight>();
+        light = tmp_spotLight;
+        break;
+      }
+      }
+
+      openLightWindow = false;
+      tmp_lightIdx = 0;
+      tmp_dirLight = DirectionalLight{};
+      tmp_pointLight = PointLight{};
+      tmp_spotLight = SpotLight{};
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Cancel"))
+    {
+      openLightWindow = false;
+      tmp_lightIdx = 0;
+      tmp_dirLight = DirectionalLight{};
+      tmp_pointLight = PointLight{};
+      tmp_spotLight = SpotLight{};
+    }
+    ImGui::End();
+  }
+
   ImGui::End();
 }

@@ -48,6 +48,12 @@ public:
 		_reg->remove<T>(_entity);
 	}
 
+	template<typename T>
+	bool HasComponent()
+	{
+		return _reg->any_of<T>(_entity);
+	}
+
 	constexpr entt::entity GetObjectID() const 
 	{ 
 		return _entity; 
