@@ -13,13 +13,12 @@
 #include <imgui/ImGuizmo.h>
 
 extern void GUI_RenderMenuBar(Scene& scene, bool& openPreferences);
-extern void GUI_RenderPreferencesFrame(bool& open, i32 fontSize);
-extern void GUI_RenderOutliner(bool& open, Scene& scene, Entity& objSelected);
-extern void GUI_RenderViewport(bool& open, u32 texID, Entity& objSelected, i32 gizmode, const mat4f& view, const mat4f& proj);
-extern void GUI_RenderObjectDetails(bool& open, Entity& object, i32& gizmode);
+extern void GUI_RenderPreferencesWindow(bool& open, i32 fontSize);
+extern void GUI_RenderHierarchy(bool& open, Scene& scene, GameObject& objSelected);
+extern void GUI_RenderViewport(bool& open, u32 texID, GameObject& objSelected, i32 gizmode, const mat4f& view, const mat4f& proj);
+extern void GUI_RenderInspector(bool& open, GameObject& object, i32& gizmode);
 extern void GUI_RenderContentBrowser(bool& open);
-extern void GUI_RenderWorldProperties(bool& open);
-extern void GUI_RenderCameraProperties(bool& open, Camera& camera);
+//extern void GUI_RenderCameraProperties(bool& open, Camera& camera);
 
 static i32 fontSize;
 static i32 gizmode = ImGuizmo::OPERATION::TRANSLATE;
@@ -97,29 +96,29 @@ void ImGuiLayer::MenuBar(Scene& scene)
 
   /* Render preferences window */
   if (viewPrefWindow)
-    GUI_RenderPreferencesFrame(viewPrefWindow, fontSize);
+    GUI_RenderPreferencesWindow(viewPrefWindow, fontSize);
 }
-void ImGuiLayer::Viewport(u32 textureID, Entity& objSelected, const mat4f& view, const mat4f& proj)
+void ImGuiLayer::Viewport(u32 textureID, GameObject& objSelected, const mat4f& view, const mat4f& proj)
 {
   static bool open = true;
   if (open)
     GUI_RenderViewport(open, textureID, objSelected, gizmode, view, proj);
 }
-Entity& ImGuiLayer::OutlinerPanel(Scene& scene)
+GameObject& ImGuiLayer::Hierarchy(Scene& scene)
 {
   static bool open = true;
-  static Entity object;
+  static GameObject object;
   
   if(open)
-    GUI_RenderOutliner(open, scene, object);
+    GUI_RenderHierarchy(open, scene, object);
   
   return object;
 }
-void ImGuiLayer::GameObjectDetails(Entity& object)
+void ImGuiLayer::Inspector(GameObject& object)
 {
   static bool open = true;
   if (open)
-    GUI_RenderObjectDetails(open, object, gizmode);
+    GUI_RenderInspector(open, object, gizmode);
 }
 void ImGuiLayer::ContentBrowser()
 {
@@ -127,17 +126,12 @@ void ImGuiLayer::ContentBrowser()
   if (open)
     GUI_RenderContentBrowser(open);
 }
-void ImGuiLayer::WorldProps()
-{
-  static bool open = true;
-  if (open)
-    GUI_RenderWorldProperties(open);
-}
+
 void ImGuiLayer::CameraProps(Camera& camera)
 {
-  static bool open = true;
-  if (open)
-    GUI_RenderCameraProperties(open, camera);
+  //static bool open = true;
+  //if (open)
+  //  GUI_RenderCameraProperties(open, camera);
 }
 void ImGuiLayer::DebugInfo(f64 delta, f64 avg, i32 frameRate, bool shadowMode, bool normalMode, bool wireframeMode)
 {

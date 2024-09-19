@@ -53,47 +53,42 @@ public:
 	void MenuBar(Scene& scene);
 
 	/**
-	 * Render the demo frame
+	 * Render the demo
 	 */
 	void Demo();
 
 	/**
-	 * Render the viewport with gizmo frame
+	 * Render the viewport panel
 	 */
-	void Viewport(u32 tetxureID, Entity& objSelected, const mat4f& view, const mat4f& proj);
+	void Viewport(u32 tetxureID, GameObject& objSelected, const mat4f& view, const mat4f& proj);
 
 	/**
-	 * Render the outliner frame
+	 * Render the outliner panel
 	 */
-	Entity& OutlinerPanel(Scene& scene);
+	GameObject& Hierarchy(Scene& scene);
 
 	/**
-	 * Render the game object details frame
+	 * Render the inspector panel
 	 */
-	void GameObjectDetails(Entity& object);
+	void Inspector(GameObject& object);
 
 	/**
-	 * Render the world props frame
-	 */
-	void WorldProps();
-
-	/**
-	 * Render the content browser frame
+	 * Render the content browser panel
 	 */
 	void ContentBrowser();
 
 	/**
-	 * Render the camera props frame
+	 * Render the camera props panel
 	 */
 	void CameraProps(Camera& camera);
 
 	/**
-	 * Render the depth map image into a frame
+	 * Render the depth map image into a window
 	 */
 	void DebugDepthMap(u32 tetxureID);
 
 	/**
-	 * Render the debug frame
+	 * Render the debug window
 	 */
 	void DebugInfo(f64 delta, 
 		f64 avg, 

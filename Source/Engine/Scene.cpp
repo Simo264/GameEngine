@@ -16,21 +16,26 @@ Scene::Scene(StringView filePath)
 {
 	LoadScene(filePath);
 }
-Entity Scene::CreateObject(StringView label)
+GameObject Scene::CreateObject()
 {
-	Entity object = Entity(_registry.create(), &_registry);
-	object.AddComponent<Label>(label.data());
+	auto id = _registry.create();
+	
+	char defaultTag[64]{};
+	std::format_to_n(defaultTag, sizeof(defaultTag), "Object_{}", static_cast<u32>(id));
+
+	GameObject object = GameObject{ id, &_registry };
+	object.AddComponent<Tag>(defaultTag);
 	return object;
 }
-void Scene::DestroyObject(Entity& object)
+void Scene::DestroyObject(GameObject& object)
 {
-	_registry.destroy(object.GetObjectID());
+	_registry.destroy(object.ID());
 }
 void Scene::ClearScene()
 {
-	for (auto [entity, lComp] : _registry.view<Label>().each())
+	for (auto [entity, lComp] : _registry.view<Tag>().each())
 	{
-		Entity object{ entity, &_registry };
+		GameObject object{ entity, &_registry };
 		
 		/* Free GPU memory */
 		if(auto* model = object.GetComponent<Model>())
@@ -62,13 +67,13 @@ void Scene::SaveScene(StringView filePath)
 void Scene::SerializeScene(StringView filePath)
 {
 	ConfigFile conf(filePath);
-	for (auto [entity, label] : Reg().view<Label>().each())
+	for (auto [entity, tag] : Reg().view<Tag>().each())
 	{
-		Entity object{ entity, &Reg() };
-		const u32 objectID = static_cast<u32>(object.GetObjectID());
+		GameObject object{ entity, &Reg() };
+		const u32 objectID = static_cast<u32>(object.ID());
 
-		String section = std::format("Entity{}:Label", objectID);
-		conf.Update(section, "value", label.value);
+		String section = std::format("Entity{}:Tag", objectID);
+		conf.Update(section, "value", tag.value);
 
 		if (auto* transform = object.GetComponent<Transform>())
 		{
@@ -156,7 +161,7 @@ void Scene::DeserializeScene(StringView filePath)
 	ConfigFile conf(filePath);
 	conf.ReadData();
 
-	Entity object;
+	GameObject object;
 	u32 currentObjectId = static_cast<u32>(entt::null);
 	for (const auto& it : conf.GetData())
 	{
@@ -172,10 +177,10 @@ void Scene::DeserializeScene(StringView filePath)
 			object = CreateObject();
 		}
 
-		if (component == "Label")
+		if (component == "Tag")
 		{
 			const String& value = conf.GetValue(section, "value");
-			object.GetComponent<Label>()->UpdateValue(value);
+			object.GetComponent<Tag>()->UpdateValue(value);
 		}
 		else if (component == "Transform")
 		{

@@ -50,11 +50,35 @@ void GUI_RenderMenuBar(Scene& scene, bool& openPreferences)
 
       ImGui::EndMenu();
     }
-    if (ImGui::BeginMenu("?"))
+    if (ImGui::BeginMenu("Edit"))
+    {
+      ImGui::EndMenu();
+    }
+    if (ImGui::BeginMenu("Window"))
     {
       if (ImGui::MenuItem("Preferences"))
         openPreferences = true;
 
+      ImGui::EndMenu();
+    }
+    if (ImGui::BeginMenu("Tools"))
+    {
+      ImGui::EndMenu();
+    }
+    if (ImGui::BeginMenu("Build"))
+    {
+      ImGui::EndMenu();
+    }
+    if (ImGui::BeginMenu("Select"))
+    {
+      ImGui::EndMenu();
+    }
+    if (ImGui::BeginMenu("Actor"))
+    {
+      ImGui::EndMenu();
+    }
+    if (ImGui::BeginMenu("Help"))
+    {
       ImGui::EndMenu();
     }
 

@@ -4,7 +4,9 @@
 #include <entt/entt.hpp> /* Entity component system */
 
 /**
- * Contains all objects that are placed in world.
+ * Scenes are where you work with content. They are assets that contain all or part of a game or application. 
+ * For example, you might build a simple game in a single scene, while for a more complex game, 
+ * you might use one scene per level, each with its own environments, characters, obstacles, decorations, and UI.
  */
 class Scene
 {
@@ -25,12 +27,12 @@ public:
 	/**
 	 * Create object in scene
 	 */
-	class Entity CreateObject(StringView label = "Object");
+	class GameObject CreateObject();
 
 	/**
 	 * Destroy an entity and releases its identifier
 	 */
-	void DestroyObject(class Entity& object);
+	void DestroyObject(class GameObject& object);
 
 	/**
 	 * Return the reference of registry

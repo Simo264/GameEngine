@@ -679,12 +679,12 @@ void Engine::Run()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     gui.MenuBar(scene);
-    Entity& objSelected = gui.OutlinerPanel(scene);
-    gui.GameObjectDetails(objSelected);
+    GameObject& objSelected = gui.Hierarchy(scene);
+    gui.Inspector(objSelected);
     gui.Viewport(fboTexture, objSelected, cameraView, cameraProj);
     gui.ContentBrowser();
     gui.DebugInfo(delta, avgTime, frameRate, shadowMode, normalMapMode, wireframeMode);
-    gui.CameraProps(primaryCamera);
+    //gui.CameraProps(primaryCamera);
     gui.Demo();
     gui.EndFrame();
 

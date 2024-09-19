@@ -4,7 +4,7 @@
 
 #include <imgui/imgui.h>
 
-void GUI_RenderPreferencesFrame(bool& open, i32 fontSize)
+void GUI_RenderPreferencesWindow(bool& open, i32 fontSize)
 {
   ImGui::Begin("Preferences", &open);
   static constexpr const char* leftItemList[] = {

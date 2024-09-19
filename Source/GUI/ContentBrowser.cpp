@@ -1,11 +1,79 @@
 #include "Core/Core.hpp"
-
 #include "Engine/Subsystems/TextureManager.hpp"
 
 #include <imgui/imgui.h>
 
+
+/* ------------------------------------------ */
+/*                  PRIVATE                   */
+/* ------------------------------------------ */
+
+static void ContentBrowser_LeftPanel(f32 height)
+{
+  TextureManager& texManager = TextureManager::Get();
+
+  const auto& iconClosedFolder16 = texManager.GetIconByPath(GetIconsPath() / "closed-folder-16px.png");
+
+  ImGui::BeginChild("Left_Panel", ImVec2(250.f, height), ImGuiChildFlags_AutoResizeY);
+  if (ImGui::TreeNode("Root Folder"))
+  {
+    ImGui::Image(reinterpret_cast<void*>(iconClosedFolder16.id), ImVec2(16.f, 16.f));
+    ImGui::SameLine();
+    if (ImGui::TreeNode("Folder 1"))
+    {
+      ImGui::Text("File 1.txt");
+      ImGui::Text("File 2.png");
+      ImGui::TreePop();
+    }
+    ImGui::Image(reinterpret_cast<void*>(iconClosedFolder16.id), ImVec2(16.f, 16.f));
+    ImGui::SameLine();
+    if (ImGui::TreeNode("Folder 2"))
+    {
+      ImGui::Text("File 3.cpp");
+      ImGui::Text("File 4.h");
+      ImGui::TreePop();
+    }
+    ImGui::TreePop();
+  }
+  ImGui::EndChild();
+}
+static void ContentBrowser_RightPanel(f32 height)
+{
+  ImGui::BeginChild("RightPanel", ImVec2(0, height), ImGuiChildFlags_AutoResizeX);
+  {
+    ImGui::Text("Right panel");
+  }
+  ImGui::EndChild();
+}
+
+static void ContentBrowser_VerticalLine(f32 height)
+{
+  ImDrawList* drawList = ImGui::GetWindowDrawList();
+  ImVec2 lineStart = ImGui::GetCursorScreenPos();
+  ImVec2 lineEnd = ImVec2(lineStart.x, lineStart.y + height);
+  drawList->AddLine(lineStart, lineEnd, IM_COL32(150, 150, 150, 255), 1.5f); // Linea grigia con spessore
+}
+
+/* ------------------------------------------ */
+/*                    PUBLIC                  */
+/* ------------------------------------------ */
+
 void GUI_RenderContentBrowser(bool& open)
 {
+  ImGui::Begin("Content browser", &open);
+  
+  f32 height = ImGui::GetContentRegionAvail().y;
+
+  ContentBrowser_LeftPanel(height);
+  
+  ImGui::SameLine();
+  ContentBrowser_VerticalLine(height);
+
+  ContentBrowser_RightPanel(height);
+
+  ImGui::End();
+
+#if 0
   ImGui::Begin("Content browser", &open);
   ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
 
@@ -84,4 +152,5 @@ void GUI_RenderContentBrowser(bool& open)
 
   ImGui::PopStyleColor();
   ImGui::End();
+#endif
 }
