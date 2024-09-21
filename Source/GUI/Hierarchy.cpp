@@ -13,15 +13,16 @@
 /*          PRIVATE           */
 /* -------------------------- */
 
-
-static bool Hierarchy_NewObjectButton()
+static bool ButtonCentered(const char* label, ImVec2 size)
 {
-  ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0f);
-  f32 width = ImGui::GetContentRegionAvail().x;
-  bool clicked = ImGui::Button("+New object", ImVec2(width, 30.f));
-  ImGui::PopStyleVar();
-  return clicked;
+  f32 avail = ImGui::GetContentRegionAvail().x;
+  f32 off = (avail - size.x) * 0.5f;
+  if (off > 0.0f)
+    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + off);
+
+  return ImGui::Button(label, size);
 }
+
 static void Hierarchy_ListObjects(Scene& scene, GameObject& objSelected)
 {
   char selectableName[64]{};
@@ -35,7 +36,7 @@ static void Hierarchy_ListObjects(Scene& scene, GameObject& objSelected)
     ImGui::BeginGroup();
     ImGui::SetCursorPosY(ImGui::GetCursorPosY() + (ImGui::GetTextLineHeight() - 16.f) / 2);
     
-    const auto& icon = TextureManager::Get().GetIconByPath(GetIconsPath() / "game-object-16px.png");
+    const auto& icon = TextureManager::Get().GetIconByPath(GetIconsPath() / "game-object-16.png");
     ImGui::Image(reinterpret_cast<void*>(icon.id), ImVec2(16.f, 16.f));
     ImGui::SameLine();
     
@@ -91,7 +92,8 @@ void GUI_RenderHierarchy(bool& open, Scene& scene, GameObject& objSelected)
   ImGui::Begin("Outliner", &open);
 
   /* "+New object" button */
-  if(Hierarchy_NewObjectButton())
+  f32 btnWidth = ImGui::GetContentRegionAvail().x - 32.f;
+  if(ButtonCentered("+New object", ImVec2(btnWidth, 26.f)))
     scene.CreateObject();
   
   ImGui::Spacing();

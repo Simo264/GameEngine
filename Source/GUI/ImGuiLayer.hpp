@@ -78,6 +78,11 @@ public:
 	void ContentBrowser();
 
 	/**
+	 * Render the gizmo tool bar
+	 */
+	void GizmoToolBar(GameObject& objSelected);
+
+	/**
 	 * Render the camera props panel
 	 */
 	void CameraProps(Camera& camera);

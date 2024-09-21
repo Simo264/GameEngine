@@ -6,38 +6,38 @@ const fs::path& GetRootPath()
 	return ROOT_PATH;
 }
 
-const fs::path& GetResourcePath()
+const fs::path& GetAssetsPath()
 {
-	static const fs::path RESOURCE_PATH = (GetRootPath() / "Resources").lexically_normal();
-	return RESOURCE_PATH;
+	static const fs::path ASSETS_PATH = (GetRootPath() / "Assets").lexically_normal();
+	return ASSETS_PATH;
 }
 
 const fs::path& GetShadersPath()
 {
-	static const fs::path SHADERS_PATH = (GetResourcePath() / "Shaders").lexically_normal();
+	static const fs::path SHADERS_PATH = (GetRootPath() / "Shaders").lexically_normal();
 	return SHADERS_PATH;
 }
 
 const fs::path& GetTexturesPath()
 {
-	static const fs::path TEXTURES_PATH = (GetResourcePath() / "Textures").lexically_normal();
+	static const fs::path TEXTURES_PATH = (GetAssetsPath() / "Textures").lexically_normal();
 	return TEXTURES_PATH;
 }
 
 const fs::path& GetIconsPath()
 {
-	static const fs::path ICONS_PATH = (GetResourcePath() / "Icons").lexically_normal();
+	static const fs::path ICONS_PATH = (GetAssetsPath() / "Icons").lexically_normal();
 	return ICONS_PATH;
 }
 
 const fs::path& GetFontsPath()
 {
-	static const fs::path FONTS_PATH = (GetResourcePath() / "Fonts").lexically_normal();
+	static const fs::path FONTS_PATH = (GetAssetsPath() / "Fonts").lexically_normal();
 	return FONTS_PATH;
 }
 
-const fs::path& GetAssetsPath()
+const fs::path& GetModelsPath()
 {
-	static const fs::path ASSETS_PATH = (GetResourcePath() / "Assets").lexically_normal();
-	return ASSETS_PATH;
+	static const fs::path MODELS_PATH = (GetAssetsPath() / "Assets").lexically_normal();
+	return MODELS_PATH;
 }

@@ -14,6 +14,15 @@
 /*                  PRIVATE                   */
 /* ------------------------------------------ */
 
+static bool ButtonCentered(const char* label, ImVec2 size)
+{
+  f32 avail = ImGui::GetContentRegionAvail().x;
+  f32 off = (avail - size.x) * 0.5f;
+  if (off > 0.0f)
+    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + off);
+
+  return ImGui::Button(label, size);
+}
 
 static void Insp_Light_ComboLightType(StringView preview, bool dir, bool point, bool spot)
 {
@@ -185,7 +194,7 @@ static void Insp_Model_ComboTextures(Texture2D*& matTexture, StringView comboId,
     char buttonID[32]{};
     std::format_to_n(buttonID, sizeof(buttonID), "Reset{}", comboId.data());
 
-    static const auto& resetIcon = textManager.GetIconByPath(GetIconsPath() / "reset-arrow-16px.png");
+    static const auto& resetIcon = textManager.GetIconByPath(GetIconsPath() / "reset-arrow-16.png");
     ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.f,0.f,0.f,0.f });
     if (ImGui::ImageButton(buttonID, reinterpret_cast<void*>(resetIcon.id), ImVec2(16.f, 16.f)))
       matTexture = const_cast<Texture2D*>(&defaultTex);
@@ -239,16 +248,6 @@ static void Insp_Model(GameObject& object, Model& model)
   ImGui::PopStyleColor(3);
 }
 
-static void Insp_NewComponentButton()
-{
-  ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0f);
-
-  f32 width = ImGui::GetContentRegionAvail().x;
-  if (ImGui::Button("+Add component", ImVec2(width, 30.f)))
-    ImGui::OpenPopup("NewComponent_Popup");
-  
-  ImGui::PopStyleVar();
-}
 static void Insp_ListAllComponents(GameObject& object, i32& gizmode)
 {
   if (ImGui::CollapsingHeader("Tag"))
@@ -295,7 +294,6 @@ static void Insp_ListAllComponents(GameObject& object, i32& gizmode)
     }
   }
 }
-
 static void Insp_NewComponentPopup(GameObject& object)
 {
   if (ImGui::BeginPopup("NewComponent_Popup"))
@@ -368,6 +366,7 @@ static void Insp_NewComponentPopup(GameObject& object)
 }
 
 
+
 /* ------------------------------------------ */
 /*                    PUBLIC                  */
 /* ------------------------------------------ */
@@ -379,7 +378,9 @@ void GUI_RenderInspector(bool& open, GameObject& object, i32& gizmode)
   if (object.IsValid())
   {
     /* "+New component" button */
-    Insp_NewComponentButton();
+    f32 btnWidth = ImGui::GetContentRegionAvail().x - 32.f;
+    if (ButtonCentered("+Add component", ImVec2(btnWidth, 26.f)))
+      ImGui::OpenPopup("NewComponent_Popup");
 
     ImGui::Spacing();
     ImGui::Separator();

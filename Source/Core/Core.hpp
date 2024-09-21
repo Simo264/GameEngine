@@ -77,10 +77,10 @@ using OStream				= std::ofstream;
 
 /************** Default paths **************/
 /*******************************************/
-const fs::path& GetRootPath();
-const fs::path& GetResourcePath();
-const fs::path& GetShadersPath();
-const fs::path& GetTexturesPath();
-const fs::path& GetIconsPath();
-const fs::path& GetFontsPath();
-const fs::path& GetAssetsPath();
+extern const fs::path& GetRootPath();
+extern const fs::path& GetAssetsPath();
+extern const fs::path& GetShadersPath();
+extern const fs::path& GetTexturesPath();
+extern const fs::path& GetIconsPath();
+extern const fs::path& GetFontsPath();
+extern const fs::path& GetModelsPath();

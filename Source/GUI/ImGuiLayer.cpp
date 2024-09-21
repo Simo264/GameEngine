@@ -4,6 +4,7 @@
 
 #include "Engine/Subsystems/WindowManager.hpp"
 #include "Engine/Subsystems/FontManager.hpp"
+#include "Engine/Subsystems/TextureManager.hpp"
 #include "Engine/Filesystem/ConfigFile.hpp"
 
 #include <imgui/imgui.h>
@@ -135,12 +136,11 @@ void ImGuiLayer::CameraProps(Camera& camera)
 }
 void ImGuiLayer::DebugInfo(f64 delta, f64 avg, i32 frameRate, bool shadowMode, bool normalMode, bool wireframeMode)
 {
-  static constexpr const ImGuiWindowFlags flags =
-    ImGuiWindowFlags_::ImGuiWindowFlags_NoDocking |
-    ImGuiWindowFlags_::ImGuiWindowFlags_NoBackground |
-    ImGuiWindowFlags_::ImGuiWindowFlags_NoResize |
-    ImGuiWindowFlags_::ImGuiWindowFlags_NoCollapse |
-    ImGuiWindowFlags_::ImGuiWindowFlags_NoTitleBar;
+  static constexpr const ImGuiWindowFlags flags = ImGuiWindowFlags_NoDocking;
+    //ImGuiWindowFlags_NoBackground |
+    //ImGuiWindowFlags_NoResize |
+    //ImGuiWindowFlags_NoCollapse |
+    //ImGuiWindowFlags_NoTitleBar;
 
   ImGui::SetNextWindowPos(ImVec2(viewportPos.x, viewportPos.y + 20));
   ImGui::SetNextWindowSize(ImVec2(300.0f, 250.0f));
@@ -170,6 +170,38 @@ void ImGuiLayer::DebugInfo(f64 delta, f64 avg, i32 frameRate, bool shadowMode, b
   ImGui::TextWrapped("Shadow mode (F1 on/F2 off): %d", shadowMode);
   ImGui::TextWrapped("Normal mapping (F5 on/F6 off): %d", normalMode);
   ImGui::TextWrapped("Wireframe mode (F9 on/F10 off): %d", wireframeMode);
+
+  ImGui::End();
+}
+
+void ImGuiLayer::GizmoToolBar(GameObject& objSelected)
+{
+  ImGuiStyle& style = ImGui::GetStyle();
+  i32 fontSize = 16;
+  f32 titlebarHeight = style.FramePadding.y * 2 + style.ItemSpacing.y + fontSize;
+
+  ImGui::SetNextWindowPos(ImVec2(viewportPos.x, viewportPos.y + titlebarHeight));
+  ImGui::SetNextWindowSize(ImVec2(50.f, 150.f));
+  i32 flags = ImGuiWindowFlags_NoDocking |
+    ImGuiWindowFlags_NoDecoration |
+    ImGuiWindowFlags_NoMove |
+    ImGuiWindowFlags_AlwaysAutoResize;
+
+  ImGui::Begin("Gizmo Toolbar", nullptr, flags);
+
+  auto& texManager = TextureManager::Get();
+  static const auto& expandIcon = texManager.GetIconByPath(GetIconsPath() / "expand-arrows-32.png");
+  static const auto& rotateIcon = texManager.GetIconByPath(GetIconsPath() / "rotate-32.png");
+  static const auto& scaleIcon = texManager.GetIconByPath(GetIconsPath() / "scale-32.png");
+  if (ImGui::ImageButton(reinterpret_cast<void*>(expandIcon.id), ImVec2(32.f, 32.f)))
+  {
+  }
+  if (ImGui::ImageButton(reinterpret_cast<void*>(rotateIcon.id), ImVec2(32.f, 32.f)))
+  {
+  }
+  if (ImGui::ImageButton(reinterpret_cast<void*>(scaleIcon.id), ImVec2(32.f, 32.f)))
+  {
+  }
 
   ImGui::End();
 }
