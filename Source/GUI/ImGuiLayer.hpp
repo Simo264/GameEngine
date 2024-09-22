@@ -45,12 +45,12 @@ public:
 	/**
 	 * Set ImGui font
 	 */
-	void SetFont(StringView fontPath);
+	void SetFont(StringView fontPath) const;
 
 	/**
 	 * Render the menu bar
 	 */
-	void MenuBar(Scene& scene);
+	void MenuBar(Scene& scene) const;
 
 	/**
 	 * Render the demo
@@ -60,7 +60,7 @@ public:
 	/**
 	 * Render the viewport panel
 	 */
-	void Viewport(u32 tetxureID, GameObject& objSelected, const mat4f& view, const mat4f& proj);
+	void Viewport(u32 tetxureID, GameObject& objSelected, const mat4f& view, const mat4f& proj) const;
 
 	/**
 	 * Render the outliner panel
@@ -110,6 +110,9 @@ public:
 	vec2i32 viewportSize;
 	vec2i32 viewportPos;
 	bool viewportFocused;
+
+	i32 fontSize;
+	i32 gizmode;
 
 	/**
 	 * First: pointer to the FontManager key

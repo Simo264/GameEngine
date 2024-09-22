@@ -151,12 +151,8 @@ static void Insp_SpotLight(GameObject& object, SpotLight& light)
   }
   ImGui::PopStyleColor(3);
 }
-static void Insp_Transform(GameObject& object, Transform& transform, i32& gizmode)
+static void Insp_Transform(GameObject& object, Transform& transform)
 {
-  ImGui::RadioButton("Translate", &gizmode, ImGuizmo::OPERATION::TRANSLATE);
-  ImGui::RadioButton("Rotate", &gizmode, ImGuizmo::OPERATION::ROTATE);
-  ImGui::RadioButton("Scale", &gizmode, ImGuizmo::OPERATION::SCALE);
-
   ImGui::DragFloat3("Position", (f32*)&transform.position, 0.1f, -FLT_MAX, FLT_MAX);
   ImGui::DragFloat3("Scale", (f32*)&transform.scale, 0.1f, -FLT_MAX, FLT_MAX);
   ImGui::DragFloat3("Rotation", (f32*)&transform.rotation, 0.1f, -FLT_MAX, FLT_MAX);
@@ -248,7 +244,7 @@ static void Insp_Model(GameObject& object, Model& model)
   ImGui::PopStyleColor(3);
 }
 
-static void Insp_ListAllComponents(GameObject& object, i32& gizmode)
+static void Insp_ListAllComponents(GameObject& object)
 {
   if (ImGui::CollapsingHeader("Tag"))
   {
@@ -259,7 +255,7 @@ static void Insp_ListAllComponents(GameObject& object, i32& gizmode)
   if (auto* transform = object.GetComponent<Transform>())
   {
     if (ImGui::CollapsingHeader("Transform"))
-      Insp_Transform(object, *transform, gizmode);
+      Insp_Transform(object, *transform);
   }
   if (auto* model = object.GetComponent<Model>())
   {
@@ -372,7 +368,7 @@ static void Insp_NewComponentPopup(GameObject& object)
 /* ------------------------------------------ */
 
 
-void GUI_RenderInspector(bool& open, GameObject& object, i32& gizmode)
+void GUI_RenderInspector(bool& open, GameObject& object)
 {
   ImGui::Begin("Details", &open);
   if (object.IsValid())
@@ -387,7 +383,7 @@ void GUI_RenderInspector(bool& open, GameObject& object, i32& gizmode)
     ImGui::Spacing();
 
     /* List all components */
-    Insp_ListAllComponents(object, gizmode);
+    Insp_ListAllComponents(object);
   }
 
   /* Open popup on click to "+New component" button */

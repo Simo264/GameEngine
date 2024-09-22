@@ -4,7 +4,6 @@
 
 #include "Engine/Subsystems/WindowManager.hpp"
 #include "Engine/Subsystems/FontManager.hpp"
-#include "Engine/Subsystems/TextureManager.hpp"
 #include "Engine/Filesystem/ConfigFile.hpp"
 
 #include <imgui/imgui.h>
@@ -17,12 +16,10 @@ extern void GUI_RenderMenuBar(Scene& scene, bool& openPreferences);
 extern void GUI_RenderPreferencesWindow(bool& open, i32 fontSize);
 extern void GUI_RenderHierarchy(bool& open, Scene& scene, GameObject& objSelected);
 extern void GUI_RenderViewport(bool& open, u32 texID, GameObject& objSelected, i32 gizmode, const mat4f& view, const mat4f& proj);
-extern void GUI_RenderInspector(bool& open, GameObject& object, i32& gizmode);
+extern void GUI_RenderInspector(bool& open, GameObject& object);
 extern void GUI_RenderContentBrowser(bool& open);
+extern void GUI_RenderTransformToolBar(vec2i32 viewportPos, i32& gizmode);
 //extern void GUI_RenderCameraProperties(bool& open, Camera& camera);
-
-static i32 fontSize;
-static i32 gizmode = ImGuizmo::OPERATION::TRANSLATE;
 
 /* -------------------------- */
 /*          PUBLIC            */
@@ -74,7 +71,7 @@ void ImGuiLayer::EndFrame()
     windowManager.MakeContextCurrent(backCurrentContext);
   }
 }
-void ImGuiLayer::SetFont(StringView fontPath)
+void ImGuiLayer::SetFont(StringView fontPath) const
 {
   ImGuiIO& io = ImGui::GetIO();
   io.Fonts->Clear();
@@ -90,7 +87,7 @@ void ImGuiLayer::Demo()
   if(open)
     ImGui::ShowDemoWindow(&open);
 }
-void ImGuiLayer::MenuBar(Scene& scene)
+void ImGuiLayer::MenuBar(Scene& scene) const
 {
   static bool viewPrefWindow = false;
   GUI_RenderMenuBar(scene, viewPrefWindow);
@@ -99,7 +96,7 @@ void ImGuiLayer::MenuBar(Scene& scene)
   if (viewPrefWindow)
     GUI_RenderPreferencesWindow(viewPrefWindow, fontSize);
 }
-void ImGuiLayer::Viewport(u32 textureID, GameObject& objSelected, const mat4f& view, const mat4f& proj)
+void ImGuiLayer::Viewport(u32 textureID, GameObject& objSelected, const mat4f& view, const mat4f& proj) const
 {
   static bool open = true;
   if (open)
@@ -119,13 +116,17 @@ void ImGuiLayer::Inspector(GameObject& object)
 {
   static bool open = true;
   if (open)
-    GUI_RenderInspector(open, object, gizmode);
+    GUI_RenderInspector(open, object);
 }
 void ImGuiLayer::ContentBrowser()
 {
   static bool open = true;
   if (open)
     GUI_RenderContentBrowser(open);
+}
+void ImGuiLayer::GizmoToolBar(GameObject& objSelected)
+{
+  GUI_RenderTransformToolBar(viewportPos, gizmode);
 }
 
 void ImGuiLayer::CameraProps(Camera& camera)
@@ -174,37 +175,7 @@ void ImGuiLayer::DebugInfo(f64 delta, f64 avg, i32 frameRate, bool shadowMode, b
   ImGui::End();
 }
 
-void ImGuiLayer::GizmoToolBar(GameObject& objSelected)
-{
-  ImGuiStyle& style = ImGui::GetStyle();
-  i32 fontSize = 16;
-  f32 titlebarHeight = style.FramePadding.y * 2 + style.ItemSpacing.y + fontSize;
 
-  ImGui::SetNextWindowPos(ImVec2(viewportPos.x, viewportPos.y + titlebarHeight));
-  ImGui::SetNextWindowSize(ImVec2(50.f, 150.f));
-  i32 flags = ImGuiWindowFlags_NoDocking |
-    ImGuiWindowFlags_NoDecoration |
-    ImGuiWindowFlags_NoMove |
-    ImGuiWindowFlags_AlwaysAutoResize;
-
-  ImGui::Begin("Gizmo Toolbar", nullptr, flags);
-
-  auto& texManager = TextureManager::Get();
-  static const auto& expandIcon = texManager.GetIconByPath(GetIconsPath() / "expand-arrows-32.png");
-  static const auto& rotateIcon = texManager.GetIconByPath(GetIconsPath() / "rotate-32.png");
-  static const auto& scaleIcon = texManager.GetIconByPath(GetIconsPath() / "scale-32.png");
-  if (ImGui::ImageButton(reinterpret_cast<void*>(expandIcon.id), ImVec2(32.f, 32.f)))
-  {
-  }
-  if (ImGui::ImageButton(reinterpret_cast<void*>(rotateIcon.id), ImVec2(32.f, 32.f)))
-  {
-  }
-  if (ImGui::ImageButton(reinterpret_cast<void*>(scaleIcon.id), ImVec2(32.f, 32.f)))
-  {
-  }
-
-  ImGui::End();
-}
 
 void ImGuiLayer::DebugDepthMap(u32 tetxureID)
 {
@@ -238,7 +209,9 @@ ImGuiLayer::ImGuiLayer()
     viewportSize{},
     viewportPos{},
     selectedFont{},
-    changeFontFamily{ false }
+    changeFontFamily{ false },
+    gizmode{ -1 },
+    fontSize{ 0 }
 {}
 void ImGuiLayer::SetupContext()
 {
