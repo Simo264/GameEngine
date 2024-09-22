@@ -2,15 +2,10 @@
 
 #include "Core/Math/Math.hpp"
 
-constexpr int	WINDOW_WIDTH = 1600;
-constexpr int	WINDOW_HEIGHT = 900;
+constexpr i32	WINDOW_WIDTH = 1600;
+constexpr i32	WINDOW_HEIGHT = 900;
 
-extern int g_drawMode;
-extern uint32_t g_drawCalls;
+extern u32 g_drawCalls;
 
-extern float g_ambientIntensity;
+extern f32 g_ambientIntensity;
 extern vec3f g_ambientColor;
-
-extern class WindowManager g_windowManager;
-extern class ShaderManager g_shaderManager;
-extern class TextureManager g_textureManager;

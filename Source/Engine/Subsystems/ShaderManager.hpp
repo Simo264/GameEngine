@@ -9,19 +9,22 @@
 class ShaderManager
 {
 public:
-	/**
-	 * Load all shaders from directory <dirpath>
-	 */
-	void LoadShadersFromDir(const fs::path& dirpath);
+	ShaderManager(const ShaderManager&) = delete;
+	void operator=(const ShaderManager&) = delete;
 
 	/**
-	 * Load all programs from configuration file SM_ProgConfig.ini
-	 * 
+	 * Return the instance of this ShaderManager singleton class
 	 */
-	void LoadPrograms();
+	static ShaderManager& Get()
+	{
+		static ShaderManager shaderManager;
+		return shaderManager;
+	}
 
-
-	void SetUpProgramsUniforms();
+	/**
+	 * Load all shaders and programs
+	 */
+	void Initialize();
 
 	/**
 	 * Destroy all shader objects and program objects
@@ -29,26 +32,50 @@ public:
 	void CleanUp();
 
 	/**
-	 * Load the shader object in shaders array
+	 * Reset uniform values of all programs
 	 */
-	Shader& LoadShader(const fs::path& filepath, int shaderType);
-	
-	/**
-	 * Retrieve the shader object from shaders array 
-	 */
-	Shader* GetShader(const char* filename);
+	void ResetProgramsUniforms();
 
 	/**
-	 * Load the program object in program array
-	 * @param name: the program name
+	 * Get the shader object by filename
 	 */
-	Program& LoadProgram(const char* name, Shader* vertex, Shader* geometry, Shader* fragment);
+	Shader& GetShaderByName(StringView filename);
 
 	/**
-	 * Retrieve the program object from program array
+	 * Retrieve the program object by name
 	 */
-	Program* GetProgram(const char* name);
+	Program& GetProgramByName(StringView name);
+
+	constexpr const UnorderedMap<String, Shader>& GetShaders() const { return _shaders; }
+
+	constexpr const UnorderedMap<String, Program>& GetPrograms() const { return _programs; }
 	
-	vector<Shader>	shaders;
-	vector<Program> programs;
+private:
+	ShaderManager() = default;
+	~ShaderManager() = default;
+
+	/**
+	 * First: the shader file name
+	 * Second: the shader object
+	 */
+	UnorderedMap<String, Shader> _shaders;
+	
+	/**
+	 * First: the program name identifier
+	 * Second: the program object
+	 */
+	UnorderedMap<String, Program> _programs;
+
+	void LoadShaderFiles();
+	void LoadProgramsFromConfig();
+
+	void LoadShader(StringView pathString, StringView filename, i32 shaderType);
+	void LoadProgram(StringView name,
+		Shader* vertex,
+		Shader* tesc,
+		Shader* tese,
+		Shader* geometry,
+		Shader* fragment
+	);
+
 };

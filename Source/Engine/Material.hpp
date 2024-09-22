@@ -1,9 +1,11 @@
 #pragma once
 
+class Texture2D;
+
 struct Material
 {
-	class Texture2D* diffuse = nullptr;
-	class Texture2D* specular = nullptr;
-	class Texture2D* normal = nullptr;
-	class Texture2D* height = nullptr;
+	Texture2D* diffuse;
+	Texture2D* specular;
+	Texture2D* normal;
+	Texture2D* height;
 };

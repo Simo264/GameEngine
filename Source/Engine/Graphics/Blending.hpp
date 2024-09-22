@@ -1,11 +1,5 @@
 #pragma once
 
-/**
- * 
- * 
- * 
- */
-
 namespace Blending
 {
 

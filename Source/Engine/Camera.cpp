@@ -1,5 +1,7 @@
 #include "Engine/Camera.hpp"
+
 #include "Core/Math/Extensions.hpp"
+
 #include "Engine/Globals.hpp"
 #include "Engine/Subsystems/WindowManager.hpp"
 
@@ -10,7 +12,7 @@
  * -----------------------------------------------------
 */
 
-Camera::Camera(vec3f position, float yaw, float pitch, float roll)
+Camera::Camera(vec3f position, f32 yaw, f32 pitch, f32 roll)
 	: position{ position },
 		yaw{ yaw },
 		pitch{ pitch },
@@ -41,7 +43,7 @@ mat4f Camera::CalculateView(vec3f center) const
 	return Math::LookAt(position, center, _up);
 }
 
-mat4f Camera::CalculatePerspective(float aspect) const
+mat4f Camera::CalculatePerspective(f32 aspect) const
 {
 	return Math::Perspective(Math::Radians(fov), aspect, frustum.zNear, frustum.zFar);
 }
@@ -51,52 +53,53 @@ mat4f Camera::CalculateOrtho() const
 	return Math::Ortho(frustum.left, frustum.right, frustum.bottom, frustum.top, frustum.zNear, frustum.zFar);
 }
 
-void Camera::ProcessKeyboard(float delta)
+void Camera::ProcessKeyboard(f32 delta, f32 movementSpeed)
 {
-	constexpr static float movementSpeed = 7.5f;
-	const float velocity = movementSpeed * delta;
+	WindowManager& windowManager = WindowManager::Get();
+
+	const f32 velocity = movementSpeed * delta;
 
 	/* W-S */
-	if (g_windowManager.GetKey(GLFW_KEY_W) == GLFW_PRESS)
+	if (windowManager.GetKey(GLFW_KEY_W) == GLFW_PRESS)
 	{
 		position += _front * velocity;
 	}
-	else if (g_windowManager.GetKey(GLFW_KEY_S) == GLFW_PRESS)
+	else if (windowManager.GetKey(GLFW_KEY_S) == GLFW_PRESS)
 	{
 		position -= _front * velocity;
 	}
 
 	/* A-D */
-	if (g_windowManager.GetKey(GLFW_KEY_A) == GLFW_PRESS)
+	if (windowManager.GetKey(GLFW_KEY_A) == GLFW_PRESS)
 	{
 		position -= _right * velocity;
 	}
-	else if (g_windowManager.GetKey(GLFW_KEY_D) == GLFW_PRESS)
+	else if (windowManager.GetKey(GLFW_KEY_D) == GLFW_PRESS)
 	{
 		position += _right * velocity;
 	}
 
 	/* SPACE-LCTRL */
-	if (g_windowManager.GetKey(GLFW_KEY_SPACE) == GLFW_PRESS)
+	if (windowManager.GetKey(GLFW_KEY_SPACE) == GLFW_PRESS)
 	{
 		position += _up * velocity;
 	}
-	else if (g_windowManager.GetKey(GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
+	else if (windowManager.GetKey(GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
 	{
 		position -= _up * velocity;
 	}
 }
 
-void Camera::ProcessMouse(float delta)
+void Camera::ProcessMouse(f32 delta, f32 mouseSensitivity)
 {
-	constexpr static float mouseSensitivity = 25.0f;
+	WindowManager& windowManager = WindowManager::Get();
 
-	if (g_windowManager.GetMouseKey(GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
+	if (windowManager.GetMouseKey(GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
 	{
-		vec2d mousePos = g_windowManager.GetCursorPosition();
-		vec2i32 windowSize = g_windowManager.GetWindowSize();
-		static float lastX = (float)windowSize.x / 2.0f;
-		static float lastY = (float)windowSize.y / 2.0f;
+		vec2d mousePos = windowManager.GetCursorPosition();
+		vec2i32 windowSize = windowManager.GetWindowSize();
+		static f32 lastX = (f32)windowSize.x / 2.0f;
+		static f32 lastY = (f32)windowSize.y / 2.0f;
 		static bool firstMouse = true;
 		if (firstMouse)
 		{
@@ -105,15 +108,15 @@ void Camera::ProcessMouse(float delta)
 			firstMouse = false;
 		}
 
-		const float velocity = mouseSensitivity * delta * 10;
+		const f32 velocity = mouseSensitivity * delta * 10;
 
-		const float xoffset = lastX - mousePos.x;
+		const f32 xoffset = lastX - mousePos.x;
 		if (xoffset < 0) /* Right */
 			yaw += velocity;
 		else if (xoffset > 0) /* Left */
 			yaw -= velocity;
 
-		const float yoffset = lastY - mousePos.y;
+		const f32 yoffset = lastY - mousePos.y;
 		if (yoffset > 0) /* Up */
 			pitch += velocity;
 		else if (yoffset < 0) /* Down */

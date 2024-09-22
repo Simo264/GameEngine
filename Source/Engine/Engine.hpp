@@ -2,9 +2,9 @@
 
 #include "Core/Core.hpp"
 
-#include "Engine/Graphics/Buffer.hpp"
-#include "Engine/Graphics/VertexArray.hpp"
-#include "Engine/Graphics/FrameBuffer.hpp"
+#include "Engine/Graphics/Objects/Buffer.hpp"
+#include "Engine/Graphics/Containers/VertexArray.hpp"
+#include "Engine/Graphics/Containers/FrameBuffer.hpp"
 
 class Engine
 {
@@ -17,7 +17,7 @@ public:
 	void CleanUp();
 
 private:
-	void CreateFramebuffer(int samples, int width, int height);
+	void CreateFramebuffer(i32 samples, i32 width, i32 height);
 	void CreateScreenSquare();
 
 	FrameBuffer _fboMultisampled;

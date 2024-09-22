@@ -1,20 +1,16 @@
 #include "WindowManager.hpp"
 
-#include "Core/OpenGL.hpp"
+#include "Core/GL.hpp"
 #include "Core/Log/Logger.hpp"
 
 #include "Engine/Globals.hpp"
 
 #include <GLFW/glfw3.h>
 
-void WindowManager::Initialize()
+void WindowManager::Initialize(WindowProps props)
 {
-  int success = glfwInit();
-  if (success != GLFW_TRUE)
-  {
-    CONSOLE_CRITICAL("Error on initializing GLFW");
-    exit(EXIT_FAILURE);
-  }
+  i32 success = glfwInit();
+  assert(success == GLFW_TRUE && "Failed to initialize GLFW library");
   CONSOLE_INFO("GLFW initialized");
 
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -22,41 +18,31 @@ void WindowManager::Initialize()
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
   glfwWindowHint(GLFW_SAMPLES, 4);  /* Enable 4x MSAA on GLFW frame buffer */
+  glfwWindowHint(GLFW_DEPTH_BITS, 24);
 
-  /* Set default window values */
-  _context = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "GameEngine", nullptr, nullptr);
-  if (!_context)
-  {
-    CONSOLE_CRITICAL("Error on creating window");
-    exit(EXIT_FAILURE);
-  }
+  _context = glfwCreateWindow(props.size.x, props.size.y, props.title.data(), nullptr, nullptr);
+  assert(_context && "Failed to create window");
   CONSOLE_INFO("Window created");
 
-  _aspectRatio = vec2i32(16, 9); /* 16:9 */
-
   glfwMakeContextCurrent(_context);
-  glfwSetWindowPos(_context, 50, 50);   
-  glfwSetWindowAspectRatio(_context, _aspectRatio.x, _aspectRatio.y); 
-  glfwSwapInterval(0);  /* No vsync */
+  glfwSetWindowPos(_context, props.position.x, props.position.y);
+  glfwSetWindowAspectRatio(_context, props.aspectRatio.x, props.aspectRatio.y);
+  glfwSwapInterval(static_cast<int>(props.vsync));
 
-  glfwSetWindowSizeCallback(_context, [](GLFWwindow* window, int width, int height) {
+  glfwSetWindowSizeCallback(_context, [](GLFWwindow* window, i32 width, i32 height) {
     glfwSetWindowSize(window, width, height);
   });
 
   /* Load OpenGL functions, gladLoadGL returns the loaded version, 0 on error. */
-  int version = gladLoadGL(glfwGetProcAddress);
-  if (version == 0)
-  {
-    CONSOLE_CRITICAL("Error on loading OpenGL");
-    exit(EXIT_FAILURE);
-  }
+  i32 version = gladLoadGL(glfwGetProcAddress);
+  assert(version != 0 && "Failed to load OpenGL APIs");
   CONSOLE_INFO("OpenGL loaded");
 }
 
 void WindowManager::CleanUp() const
 {
-  glfwDestroyWindow(_context);
-  glfwTerminate();
+  //glfwDestroyWindow(_context);
+  //glfwTerminate();
 }
 
 void WindowManager::PoolEvents() const
@@ -79,7 +65,7 @@ void WindowManager::SetWindowTitle(const char* title) const
   glfwSetWindowTitle(_context, title);
 }
 
-void WindowManager::SetWindowAspectRatio(int numer, int denom) const
+void WindowManager::SetWindowAspectRatio(i32 numer, i32 denom) const
 {
   glfwSetWindowAspectRatio(_context, numer, denom);
 }
@@ -96,7 +82,7 @@ vec2i32 WindowManager::GetWindowSize() const
   return res;
 }
 
-void WindowManager::SetWindowSize(int w, int h) const
+void WindowManager::SetWindowSize(i32 w, i32 h) const
 {
   glfwSetWindowSize(_context, w, h);
 }
@@ -108,12 +94,12 @@ vec2i32 WindowManager::GetFramebufferSize() const
   return res;
 }
 
-int WindowManager::GetKey(uint32_t key) const 
+i32 WindowManager::GetKey(u32 key) const 
 { 
   return glfwGetKey(_context, key); 
 }
 
-int WindowManager::GetMouseKey(uint32_t key) const 
+i32 WindowManager::GetMouseKey(u32 key) const 
 { 
   return glfwGetMouseButton(_context, key); 
 }
@@ -125,12 +111,12 @@ vec2d WindowManager::GetCursorPosition() const
   return res;
 }
 
-void WindowManager::SetCursorMode(int value) const 
+void WindowManager::SetCursorMode(i32 value) const 
 { 
   glfwSetInputMode(_context, GLFW_CURSOR, value); 
 }
 
-void WindowManager::SetWindowPosition(int x, int y) const
+void WindowManager::SetWindowPosition(i32 x, i32 y) const
 { 
   glfwSetWindowPos(_context, x, y); 
 }
@@ -144,4 +130,16 @@ void WindowManager::MakeContextCurrent(Context context)
 {
   glfwMakeContextCurrent(context);
   _context = context;
+}
+
+const char* WindowManager::GetVersion() const
+{
+  return glfwGetVersionString();
+}
+
+vec2i32 WindowManager::GetWindowPos() const
+{
+  vec2i32 res{};
+  glfwGetWindowPos(_context, &res.x, &res.y);
+  return res;
 }

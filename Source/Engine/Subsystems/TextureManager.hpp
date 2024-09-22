@@ -1,50 +1,62 @@
 #pragma once
 
 #include "Core/Core.hpp"
-#include "Engine/Graphics/Texture2D.hpp"
+#include "Engine/Graphics/Objects/Texture2D.hpp"
 
 /**
- * Load and retrieve texture objects from the array
+ * Load and retrieve texture objects
  */
 class TextureManager
 {
 public:
+	TextureManager(const TextureManager&) = delete;
+	void operator=(const TextureManager&) = delete;
+
 	/**
-	 * Load all textures from directory <dirpath>
+	 * Return the instance of this TextureManager singleton class
 	 */
-	void LoadTexturesFromDir(const fs::path& dirpath);
+	static TextureManager& Get()
+	{
+		static TextureManager textManager;
+		return textManager;
+	}
+
+	/**
+	 * Load all textures and icons from default directories
+	 */
+	void Initialize();
 
 	/**
 	 * Destroy all texture objects 
 	 */
 	void CleanUp();
 
-	/**
-	 * Load texture object in texture array
-	 */
-	Texture2D& LoadTexture(int target, const fs::path& filePath, bool gammaCorrection);
-	void LoadTexture(const Texture2D& texture) { _textures.push_back(texture); }
-
-		
-	/**
-	 * Load texture object in icon array
-	 */
-	Texture2D& LoadTextureIcon(int target, const fs::path& filePath);
-	void LoadTextureIcon(const Texture2D& texture) { _icons.push_back(texture); }
-
-	/**
-	 * Retrieve texture object from texture array
-	 */
-	Texture2D* GetTextureByPath(const fs::path& filePath);
-	Texture2D* GetTextureAt(int i) { return &_textures.at(i); }
+	Texture2D& GetTextureByPath(const fs::path& path);
 	
-	/**
-	 * Retrieve texture object from icon array
-	 */
-	Texture2D* GetIconByPath(const fs::path& filePath);
-	Texture2D* GetIconAt(int i) { return &_icons.at(i); }
+	Texture2D& GetIconByPath(const fs::path& path);
+	
+	const Texture2D& GetDefaultDiffuse() const	{ return _textures.at("#default_diffuse"); }
+	const Texture2D& GetDefaultSpecular() const { return _textures.at("#default_specular"); }
+	const Texture2D& GetDefaultNormal() const { return _textures.at("#default_normal"); }
+	const Texture2D& GetDefaultHeight() const { return _textures.at("#default_height"); }
+	constexpr const UnorderedMap<String, Texture2D>& GetTextures() { return _textures; }
 
 private:
-	vector<Texture2D> _textures;
-	vector<Texture2D> _icons;
+	TextureManager() = default;
+	~TextureManager() = default;
+
+	/**
+	 * First: the texture file path in string format
+	 * Second: the texture object
+	 */
+	UnorderedMap<String, Texture2D> _textures;
+
+	/**
+	 * First: the texture file path in string format
+	 * Second: the texture object
+	 */
+	UnorderedMap<String, Texture2D> _icons;
+
+	void LoadTextures();
+	void LoadIcons();
 };

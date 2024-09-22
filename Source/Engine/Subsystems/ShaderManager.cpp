@@ -1,159 +1,191 @@
 #include "ShaderManager.hpp"
 
+#include "Core/GL.hpp"
 #include "Core/Log/Logger.hpp"
-#include "Core/OpenGL.hpp"
-#include "Core/FileParser/INIFileParser.hpp"
+#include "Engine/Filesystem/ConfigFile.hpp"
 
 #include "Engine/Globals.hpp"
 
+constexpr StringView SM_FILE_CONFIG{ "Shader_Manager.ini" };
+
+/* -------------------------------------------- */
+/*                  PUBLIC                      */
+/* -------------------------------------------- */
+
+void ShaderManager::Initialize()
+{
+  /* Load shader files */
+  CONSOLE_INFO("Loading shaders...");
+  LoadShaderFiles();
+
+  /* Load programs */
+  CONSOLE_INFO("Loading programs...");
+  LoadProgramsFromConfig();
+
+  ResetProgramsUniforms();
+}
 void ShaderManager::CleanUp()
 {
   /* Destoy all program objects */
-  for (auto& program : programs)
+  for (auto& [key, program] : _programs)
     program.Delete();
 
   /* Destoy all shaders objects */
-  for (auto& shader : shaders)
+  for (auto& [key, shader]  : _shaders)
     shader.Delete();
+}
+void ShaderManager::ResetProgramsUniforms()
+{
+  auto& framebufferProg = GetProgramByName("Framebuffer");
+  framebufferProg.SetUniform1i("u_fboImageTexture", 0);
+  framebufferProg.SetUniform1i("u_postProcessingType", 0);
 
-  shaders.clear();
-  programs.clear();
+  auto& sceneProg = GetProgramByName("Scene");
+  sceneProg.SetUniform1i("u_material.diffuseTexture", 0);
+  sceneProg.SetUniform1i("u_material.specularTexture", 1);
+  sceneProg.SetUniform1i("u_material.normalTexture", 2);
+  sceneProg.SetUniform1i("u_material.heightTexture", 3);
+  sceneProg.SetUniform1i("u_useNormalMap", 0);
+
+  auto& sceneShadowsProg = GetProgramByName("SceneShadows");
+  sceneShadowsProg.SetUniform1i("u_material.diffuseTexture", 0);
+  sceneShadowsProg.SetUniform1i("u_material.specularTexture", 1);
+  sceneShadowsProg.SetUniform1i("u_material.normalTexture", 2);
+  sceneShadowsProg.SetUniform1i("u_material.heightTexture", 3);
+  sceneShadowsProg.SetUniform1i("u_depthMapTexture", 10);
+  sceneShadowsProg.SetUniform1i("u_depthCubeMapTexture", 11);
+  sceneShadowsProg.SetUniform1i("u_useNormalMap", 0);
+
+  auto& skyboxProg = GetProgramByName("Skybox");
+  skyboxProg.SetUniform1i("u_skyboxTexture", 0);
+}
+Shader& ShaderManager::GetShaderByName(StringView filename)
+{
+  const auto& it = _shaders.find(filename.data());
+  if (it == _shaders.end())
+    throw std::runtime_error(std::format("Shader '{}' does not exist", filename));
+  
+  return it->second;
+}
+Program& ShaderManager::GetProgramByName(StringView name)
+{
+  const auto& it = _programs.find(name.data());
+  if (it == _programs.end())
+    throw std::runtime_error(std::format("Program '{}' does not exist", name));
+
+  return it->second;
 }
 
-void ShaderManager::LoadShadersFromDir(const fs::path& dirpath)
+/* -------------------------------------------- */
+/*                  PRIVATE                     */
+/* -------------------------------------------- */
+
+void ShaderManager::LoadShaderFiles()
 {
-  if (!fs::exists(dirpath) || !fs::is_directory(dirpath))
+  for (auto& entry : fs::directory_iterator(GetShadersPath()))
   {
-    CONSOLE_WARN("<dirpath> is not a valid path", dirpath.string().c_str());
-    return;
-  }
+    if (fs::is_directory(entry))
+      continue;
 
-  /* Load all shader files in "Shaders/" directory */
-  for (auto& entry : fs::directory_iterator(dirpath))
-  {
-    if (!fs::is_directory(entry))
-    {
-      string filename = entry.path().filename().string();
-      uint32_t pos = filename.find_last_of('.') + 1;
-      string ext = filename.substr(pos);
-      fs::path path = entry.path().lexically_normal();
-      CONSOLE_TRACE("Loading shader {}", path.string().c_str());
+    const fs::path& entryPath = entry.path();
+    const fs::path filename = entryPath.filename();
+    const String filenameExt = filename.extension().string();
 
-      if (ext.compare("vert") == 0)
-        LoadShader(path, GL_VERTEX_SHADER);
-      else if (ext.compare("frag") == 0)
-        LoadShader(path, GL_FRAGMENT_SHADER);
-      else if (ext.compare("geom") == 0)
-        LoadShader(path, GL_GEOMETRY_SHADER);
-      else
-        CONSOLE_WARN("Error on loading shader {}: unknown .{} file extension", filename.c_str(), ext.c_str());
-    }
+    if (filenameExt == ".vert")
+      LoadShader(entryPath.string(), filename.string(), GL_VERTEX_SHADER);
+    else if (filenameExt == ".tesc")
+      LoadShader(entryPath.string(), filename.string(), GL_TESS_CONTROL_SHADER);
+    else if (filenameExt == ".tese")
+      LoadShader(entryPath.string(), filename.string(), GL_TESS_EVALUATION_SHADER);
+    else if (filenameExt == ".geom")
+      LoadShader(entryPath.string(), filename.string(), GL_GEOMETRY_SHADER);
+    else if (filenameExt == ".frag")
+      LoadShader(entryPath.string(), filename.string(), GL_FRAGMENT_SHADER);
+    else
+      CONSOLE_WARN("Unknown file extension {}", filenameExt);
   }
 }
-void ShaderManager::LoadPrograms()
+void ShaderManager::LoadShader(StringView pathString, StringView filename, i32 shaderType)
 {
-  INIFileParser conf(ROOT_PATH / "SM_ProgConfig.ini");
+  Shader shader;
+  shader.Create(shaderType);
+  shader.filename = filename.data();
+
+  IStream file(pathString.data());
+  if (!file.is_open())
+  {
+    CONSOLE_CRITICAL("Error on opening file <{}>", pathString);
+    throw std::runtime_error("Error on opening file");
+  }
+
+  String source;
+  source.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
+  shader.LoadSource(source);
+  file.close();
+  
+  bool compiled = shader.Compile();
+  if (!compiled)
+  {
+    CONSOLE_CRITICAL("Error on compiling shader <{}>", filename);
+    throw std::runtime_error("Error on compiling shader");
+  }
+
+  auto res = _shaders.emplace(shader.filename, shader);
+  if (res.second)
+    CONSOLE_TRACE("<{}> has been loaded successfully", filename);
+  else
+    CONSOLE_WARN("Error on loading shader <{}>", filename);
+}
+void ShaderManager::LoadProgramsFromConfig()
+{
+  ConfigFile conf((GetRootPath() / SM_FILE_CONFIG).string());
   conf.ReadData();
 
   for (auto const& it : conf.GetData())
   {
-    const string& section = it.first;
-    const string vertex   = conf.GetValue(section.c_str(), "vertex");
-    const string geometry = conf.GetValue(section.c_str(), "geometry");
-    const string fragment = conf.GetValue(section.c_str(), "fragment");
-    Shader* vs = GetShader(vertex.c_str());
-    Shader* gs = GetShader(geometry.c_str());
-    Shader* fs = GetShader(fragment.c_str());
-    LoadProgram(section.c_str(), vs, gs, fs);
+    const String& section = it.first;
+    const String& vertex = conf.GetValue(section, "vertex");
+    const String& tesc = conf.GetValue(section, "tess_control");
+    const String& tese = conf.GetValue(section, "tess_eval");
+    const String& geometry = conf.GetValue(section, "geometry");
+    const String& fragment = conf.GetValue(section, "fragment");
+
+    Shader* vertShader = vertex.empty()   ? nullptr : &GetShaderByName(vertex);
+    Shader* tescShader = tesc.empty()     ? nullptr : &GetShaderByName(tesc);
+    Shader* teseShader = tese.empty()     ? nullptr : &GetShaderByName(tese);
+    Shader* geomShader = geometry.empty() ? nullptr : &GetShaderByName(geometry);
+    Shader* fragShader = fragment.empty() ? nullptr : &GetShaderByName(fragment);
+    LoadProgram(section, vertShader, tescShader, teseShader, geomShader, fragShader);
   }
 }
-void ShaderManager::SetUpProgramsUniforms()
+void ShaderManager::LoadProgram(StringView name,
+  Shader* vertex,
+  Shader* tesc,
+  Shader* tese,
+  Shader* geometry,
+  Shader* fragment
+)
 {
-  auto framebufferProg = GetProgram("Framebuffer");
-  framebufferProg->SetUniform1i("u_fboImageTexture", 0);
-  framebufferProg->SetUniform1i("u_postProcessingType", 0);
-
-  auto sceneProg = GetProgram("Scene");
-  sceneProg->SetUniform1i("u_material.diffuseTexture", 0);
-  sceneProg->SetUniform1i("u_material.specularTexture", 1);
-  sceneProg->SetUniform1i("u_material.normalTexture", 2);
-  sceneProg->SetUniform1i("u_material.heightTexture", 3);
-  sceneProg->SetUniform1i("u_useNormalMap", 0);
-  sceneProg->SetUniform1i("u_useParallaxMap", 0);
-  sceneProg->SetUniform1f("u_parallaxHeight", 0.0f);
-
-  auto sceneShadowsProg = GetProgram("SceneShadows");
-  sceneShadowsProg->SetUniform1i("u_material.diffuseTexture", 0);
-  sceneShadowsProg->SetUniform1i("u_material.specularTexture", 1);
-  sceneShadowsProg->SetUniform1i("u_material.normalTexture", 2);
-  sceneShadowsProg->SetUniform1i("u_material.heightTexture", 3);
-  sceneShadowsProg->SetUniform1i("u_depthMapTexture", 10);
-  sceneShadowsProg->SetUniform1i("u_depthCubeMapTexture", 11);
-  sceneShadowsProg->SetUniform1i("u_useNormalMap", 0);
-  sceneShadowsProg->SetUniform1i("u_useParallaxMap", 0);
-  sceneShadowsProg->SetUniform1f("u_parallaxHeight", 0.0f);
-
-  auto skyboxProg = GetProgram("Skybox");
-  skyboxProg->SetUniform1i("u_skyboxTexture", 0);
-}
-
-Shader& ShaderManager::LoadShader(const fs::path& filepath, int shaderType)
-{
-  if (!fs::exists(filepath))
-    CONSOLE_WARN("File {} does not exist", filepath.string().c_str());
-
-  string filepathstr = filepath.string();
-  string filename = filepath.filename().string();
-
-  Shader& shader = shaders.emplace_back();
-  shader.Create(shaderType);
-  shader.filename = filename;
-
-  string filecontent;
-  ifStream file(filepath);
-  if (file)
-    filecontent.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
-  else
-    CONSOLE_WARN("Error on opening file {}", filepath.string().c_str());
-
-  shader.LoadSource(filecontent.c_str(), filecontent.size());
-  bool compiled = shader.Compile();
-  if (!compiled)
-    CONSOLE_WARN("Error on compiling shader {}: {}", filepathstr.c_str(), shader.GetShaderInfo());
-
-  return shader;
-}
-Shader* ShaderManager::GetShader(const char* filename)
-{
-  if (!filename)
-    return nullptr;
-
-  for (auto& shader : shaders)
-    if (shader.filename.compare(filename) == 0)
-      return &shader;
-  return nullptr;
-}
-
-Program& ShaderManager::LoadProgram(const char* name, Shader* vertex, Shader* geometry, Shader* fragment)
-{
-  Program& program = programs.emplace_back();
+  Program program;
   program.Create();
-  program.name = name;
-  if(vertex) program.AttachShader(*vertex);
-  if(geometry) program.AttachShader(*geometry);
-  if(fragment) program.AttachShader(*fragment);
+  program.name = name.data();
+  if (vertex)    program.AttachShader(*vertex);
+  if (tesc)      program.AttachShader(*tesc);
+  if (tese)      program.AttachShader(*tese);
+  if (geometry)  program.AttachShader(*geometry);
+  if (fragment)  program.AttachShader(*fragment);
 
   bool link = program.Link();
   if (!link)
-    CONSOLE_WARN("Error on linking program {}: {}", name, program.GetProgramInfo());
+  {
+    CONSOLE_CRITICAL("Error on linking program <{}>: {}", name, program.GetProgramInfo());
+    throw std::runtime_error("Error on linking program");
+  }
 
-  return program;
+  auto res = _programs.emplace(program.name, program);
+  if (res.second)
+    CONSOLE_TRACE("<{}> has been loaded successfully", name);
+  else
+    CONSOLE_WARN("Error on loading program <{}>", name);
 }
-Program* ShaderManager::GetProgram(const char* name)
-{
-  for (auto& program : programs)
-    if (program.name.compare(name) == 0)
-      return &program;
 
-  return nullptr;
-}

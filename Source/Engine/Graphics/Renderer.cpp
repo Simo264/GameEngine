@@ -1,62 +1,50 @@
 #include "Renderer.hpp"
 
-#include "Core/OpenGL.hpp"
+#include "Core/GL.hpp"
 #include "Core/Log/Logger.hpp"
 
-#include "Engine/Graphics/VertexArray.hpp"
+#include "Engine/Graphics/Containers/VertexArray.hpp"
 #include "Engine/Globals.hpp"
 
 namespace Renderer
 {
-	void DrawArrays(uint32_t mode, VertexArray& vertexArray)
+	void DrawArrays(u32 mode, VertexArray& vertexArray, i32 first)
 	{
 		if (vertexArray.numVertices == 0)
-		{
 			CONSOLE_WARN("Invalid vertices number!");
-			return;
-		}
 
 		vertexArray.Bind();
-		glDrawArrays(mode, 0, vertexArray.numVertices);
+		glDrawArrays(mode, first, vertexArray.numVertices);
 		g_drawCalls++;
 		vertexArray.Unbind();
 	}
-	void DrawArraysInstanced(uint32_t mode, VertexArray& vertexArray, int nInstances)
+	void DrawArraysInstanced(u32 mode, VertexArray& vertexArray, i32 nInstances, i32 first)
 	{
 		if (vertexArray.numVertices == 0)
-		{
 			CONSOLE_WARN("Invalid vertices number!");
-			return;
-		}
 
 		vertexArray.Bind();
-		glDrawArraysInstanced(mode, 0, vertexArray.numVertices, nInstances);
+		glDrawArraysInstanced(mode, first, vertexArray.numVertices, nInstances);
 		g_drawCalls++;
 		vertexArray.Unbind();
 	}
-	void DrawElements(uint32_t mode, VertexArray& vertexArray)
+	void DrawElements(u32 mode, VertexArray& vertexArray, i32 offset)
 	{
 		if (vertexArray.numIndices == 0)
-		{
 			CONSOLE_WARN("Invalid indices number!");
-			return;
-		}
 
 		vertexArray.Bind();
-		glDrawElements(mode, vertexArray.numIndices, GL_UNSIGNED_INT, 0);
+		glDrawElements(mode, vertexArray.numIndices, GL_UNSIGNED_INT, (void*)offset);
 		g_drawCalls++;
 		vertexArray.Unbind();
 	}
-	void DrawElementsInstanced(uint32_t mode, VertexArray& vertexArray, int nInstances)
+	void DrawElementsInstanced(u32 mode, VertexArray& vertexArray, i32 nInstances, i32 offset)
 	{
 		if (vertexArray.numIndices == 0)
-		{
 			CONSOLE_WARN("Invalid indices number!");
-			return;
-		}
 
 		vertexArray.Bind();
-		glDrawElementsInstanced(mode, vertexArray.numIndices, GL_UNSIGNED_INT, 0, nInstances);
+		glDrawElementsInstanced(mode, vertexArray.numIndices, GL_UNSIGNED_INT, (void*)offset, nInstances);
 		g_drawCalls++;
 		vertexArray.Unbind();
 	}
