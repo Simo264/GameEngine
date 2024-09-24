@@ -12,7 +12,32 @@
 
 Mesh::Mesh()
 {
-	Init();
+	/* Set up vertex attributes */
+	/* ------------------------ */
+	vao.Create();
+
+	/* Position */
+	vao.EnableAttribute(0);
+	vao.SetAttribBinding(0, 0);
+	vao.SetAttribFormat(0, 3, GL_FLOAT, true, offsetof(Vertex_P_N_UV_T, position));
+	/* Normal */
+	vao.EnableAttribute(1);
+	vao.SetAttribBinding(1, 0);
+	vao.SetAttribFormat(1, 3, GL_FLOAT, true, offsetof(Vertex_P_N_UV_T, normal));
+	/* Uv coordinates */
+	vao.EnableAttribute(2);
+	vao.SetAttribBinding(2, 0);
+	vao.SetAttribFormat(2, 2, GL_FLOAT, true, offsetof(Vertex_P_N_UV_T, uv));
+	/* Tangent */
+	vao.EnableAttribute(3);
+	vao.SetAttribBinding(3, 0);
+	vao.SetAttribFormat(3, 3, GL_FLOAT, true, offsetof(Vertex_P_N_UV_T, tangent));
+
+	TextureManager& textureManager = TextureManager::Get();
+	material.diffuse = &textureManager.GetDefaultDiffuse();
+	material.specular = &textureManager.GetDefaultSpecular();
+	material.normal = &textureManager.GetDefaultNormal();
+	material.height = &textureManager.GetDefaultHeight();
 }
 
 void Mesh::DestroyMesh()
@@ -37,33 +62,3 @@ void Mesh::DrawMesh(i32 mode)
 /* -------------------------- */
 /*          PRIVATE           */
 /* -------------------------- */
-
-void Mesh::Init()
-{
-	/* Set up vertex attributes */
-	/* ------------------------ */
-	vao.Create();
-
-	/* Position */
-	vao.EnableAttribute(0);
-	vao.SetAttribBinding(0, 0);
-	vao.SetAttribFormat(0, 3, GL_FLOAT, true, offsetof(Vertex_P_N_UV_T, position));
-	/* Normal */
-	vao.EnableAttribute(1);
-	vao.SetAttribBinding(1, 0);
-	vao.SetAttribFormat(1, 3, GL_FLOAT, true, offsetof(Vertex_P_N_UV_T, normal));
-	/* Uv coordinates */
-	vao.EnableAttribute(2);
-	vao.SetAttribBinding(2, 0);
-	vao.SetAttribFormat(2, 2, GL_FLOAT, true, offsetof(Vertex_P_N_UV_T, uv));
-	/* Tangent */
-	vao.EnableAttribute(3);
-	vao.SetAttribBinding(3, 0);
-	vao.SetAttribFormat(3, 3, GL_FLOAT, true, offsetof(Vertex_P_N_UV_T, tangent));
-
-	TextureManager& textureManager = TextureManager::Get();
-	material.diffuse = const_cast<Texture2D*>(&textureManager.GetDefaultDiffuse());
-	material.specular = const_cast<Texture2D*>(&textureManager.GetDefaultSpecular());
-	material.normal = const_cast<Texture2D*>(&textureManager.GetDefaultNormal());
-	material.height = const_cast<Texture2D*>(&textureManager.GetDefaultHeight());
-}

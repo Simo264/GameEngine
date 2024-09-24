@@ -151,79 +151,89 @@ static void Insp_SpotLight(GameObject& object, SpotLight& light)
   }
   ImGui::PopStyleColor(3);
 }
-static void Insp_Transform_DrawVec3Control(const char* label, vec3f& values, f32 resetValue = 0.0f, f32 columnWidth = 100.0f)
+static void Insp_Transform_TableRow(StringView label, vec3f& values, f32 resetValue)
 {
-  ImGui::PushID(label);
+  ImGui::PushID(label.data());
 
-  /* Craete a table with two columns: one for the labels and one for inputs */
-  constexpr i32 flags = ImGuiTableFlags_NoSavedSettings |
-    ImGuiTableFlags_SizingFixedFit |
-    ImGuiTableFlags_BordersInner;
+  /* First column: label */
+  ImGui::TableNextColumn();
+  ImGui::Text(label.data());
 
-  if (ImGui::BeginTable(label, 2, flags))
-  {
-    ImGui::TableSetupColumn("Label", ImGuiTableColumnFlags_WidthFixed, columnWidth);
-    ImGui::TableSetupColumn("Controls", ImGuiTableColumnFlags_WidthStretch);
+  /* First column: inputs */
+  ImGui::TableNextColumn();
+  ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ 0, 0 });
 
-    /* First column: label */
-    ImGui::TableNextColumn();
-    ImGui::Text(label);
+  f32 lineHeight = ImGui::GetFontSize() + ImGui::GetStyle().FramePadding.y * 2.0f;
+  ImVec2 buttonSize{ lineHeight + 3.0f, lineHeight };
+  f32 itemWidth = ImGui::CalcItemWidth() / 3.0f;
 
-    /* Second column: input X, Y, Z */
-    ImGui::TableNextColumn();
-    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ 0, 0 });
+  /* X */
+  ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.8f, 0.1f, 0.15f, 1.0f });
+  ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.9f, 0.2f, 0.2f, 1.0f });
+  ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.7f, 0.05f, 0.1f, 1.0f });
+  if (ImGui::Button("X", buttonSize))
+    values.x = resetValue;
+  ImGui::PopStyleColor(3);
+  ImGui::SameLine();
+  ImGui::SetNextItemWidth(itemWidth);
+  
+  ImGui::DragFloat("##X", &values.x, 0.1f);
+  ImGui::SameLine();
 
-    float lineHeight = ImGui::GetFontSize() + ImGui::GetStyle().FramePadding.y * 2.0f;
-    ImVec2 buttonSize = { lineHeight + 3.0f, lineHeight };
-    float itemWidth = ImGui::CalcItemWidth() / 3.0f; // Calcola la larghezza per ciascun elemento
+  /* Y */
+  ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.2f, 0.7f, 0.2f, 1.0f });
+  ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.3f, 0.8f, 0.3f, 1.0f });
+  ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.1f, 0.6f, 0.1f, 1.0f });
+  if (ImGui::Button("Y", buttonSize))
+    values.y = resetValue;
+  ImGui::PopStyleColor(3);
+  ImGui::SameLine();
+  ImGui::SetNextItemWidth(itemWidth);
+  ImGui::DragFloat("##Y", &values.y, 0.1f);
+  ImGui::SameLine();
 
-    /* X */
-    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.8f, 0.1f, 0.15f, 1.0f });
-    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.9f, 0.2f, 0.2f, 1.0f });
-    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.7f, 0.05f, 0.1f, 1.0f });
-    if (ImGui::Button("X", buttonSize))
-      values.x = resetValue;
-    ImGui::PopStyleColor(3);
-    ImGui::SameLine();
-    ImGui::SetNextItemWidth(itemWidth);
-    ImGui::DragFloat("##X", &values.x, 0.1f);
-    ImGui::SameLine();
-
-    /* Y */
-    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.2f, 0.7f, 0.2f, 1.0f });
-    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.3f, 0.8f, 0.3f, 1.0f });
-    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.1f, 0.6f, 0.1f, 1.0f });
-    if (ImGui::Button("Y", buttonSize))
-      values.y = resetValue;
-    ImGui::PopStyleColor(3);
-    ImGui::SameLine();
-    ImGui::SetNextItemWidth(itemWidth);
-    ImGui::DragFloat("##Y", &values.y, 0.1f);
-    ImGui::SameLine();
-
-    /* Z */
-    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.1f, 0.25f, 0.8f, 1.0f });
-    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.2f, 0.35f, 0.9f, 1.0f });
-    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.05f, 0.2f, 0.7f, 1.0f });
-    if (ImGui::Button("Z", buttonSize))
-      values.z = resetValue;
-    ImGui::PopStyleColor(3);
-    ImGui::SameLine();
-    ImGui::SetNextItemWidth(itemWidth);
-    ImGui::DragFloat("##Z", &values.z, 0.1f);
-
-    ImGui::PopStyleVar();
-    ImGui::EndTable();
-  }
+  /* Z */
+  ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.1f, 0.25f, 0.8f, 1.0f });
+  ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.2f, 0.35f, 0.9f, 1.0f });
+  ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.05f, 0.2f, 0.7f, 1.0f });
+  if (ImGui::Button("Z", buttonSize))
+    values.z = resetValue;
+  ImGui::PopStyleColor(3);
+  ImGui::SameLine();
+  ImGui::SetNextItemWidth(itemWidth);
+  ImGui::DragFloat("##Z", &values.z, 0.1f);
+  ImGui::PopStyleVar();
 
   ImGui::PopID();
 }
 static void Insp_Transform(GameObject& object, Transform& transform)
 {
-  Insp_Transform_DrawVec3Control("Translation", transform.position);
-  Insp_Transform_DrawVec3Control("Rotation", transform.rotation);
-  Insp_Transform_DrawVec3Control("Scale", transform.scale, 1.0f);
-  transform.UpdateTransformation();
+  /* Create a table with two columns: one for the labels and one for inputs */
+  constexpr i32 flags = ImGuiTableFlags_NoSavedSettings |
+    ImGuiTableFlags_SizingFixedFit |
+    ImGuiTableFlags_BordersInnerV;
+
+  if (ImGui::BeginTable("Transform_Table", 2, flags))
+  {
+    ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthFixed, 100.f);
+    ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthStretch);
+
+    /* First row: position */
+    ImGui::TableNextRow();
+    Insp_Transform_TableRow("Position", transform.position, 0.f);
+
+    /* First row: Rotation */
+    ImGui::TableNextRow();
+    Insp_Transform_TableRow("Rotation", transform.rotation, 0.f);
+
+    /* First row: Scale */
+    ImGui::TableNextRow();
+    Insp_Transform_TableRow("Scale", transform.scale, 1.f);
+
+    transform.UpdateTransformation();
+
+    ImGui::EndTable();
+  }
 
   ImGui::SeparatorText("Advanced");
   ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.55f, 0.f, 0.f, 0.5f));
@@ -232,12 +242,8 @@ static void Insp_Transform(GameObject& object, Transform& transform)
   if (ImGui::Button("Remove component##transform"))
     object.RemoveComponent<Transform>();
   ImGui::PopStyleColor(3);
-
-
 }
-
-
-static void Insp_Model_MeshMaterialRow(StringView label, Texture2D*& matTexture, const Texture2D& defaultTex)
+static void Insp_Model_MeshMaterialRow(StringView label, Texture2D*& matTexture, Texture2D& defaultTex)
 {
   auto& texManager = TextureManager::Get();
   
@@ -256,9 +262,9 @@ static void Insp_Model_MeshMaterialRow(StringView label, Texture2D*& matTexture,
 
   if (ImGui::BeginCombo(comboId, (noTexture ? "Select texture" : matTexture->strPath.c_str())))
   {
-    for (const auto& [key, texture] : texManager.GetTextures())
+    for (auto& [key, texture] : texManager.GetTextures())
       if (key.at(0) != '#' && ImGui::Selectable(key.c_str(), texture.Compare(*matTexture)))
-        matTexture = const_cast<Texture2D*>(&texture);
+        matTexture = &texture;
 
     ImGui::EndCombo();
   }
@@ -273,7 +279,7 @@ static void Insp_Model_MeshMaterialRow(StringView label, Texture2D*& matTexture,
     static const auto& resetIcon = texManager.GetIconByPath(GetIconsPath() / "reset-arrow-16.png");
     ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.f,0.f,0.f,0.f });
     if (ImGui::ImageButton(buttonID, reinterpret_cast<void*>(resetIcon.id), ImVec2(16.f, 16.f)))
-      matTexture = const_cast<Texture2D*>(&defaultTex);
+      matTexture = &defaultTex;
     ImGui::PopStyleColor();
   }
 }

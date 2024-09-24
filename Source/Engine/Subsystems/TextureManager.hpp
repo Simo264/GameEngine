@@ -35,11 +35,11 @@ public:
 	
 	Texture2D& GetIconByPath(const fs::path& path);
 	
-	const Texture2D& GetDefaultDiffuse() const	{ return _textures.at("#default_diffuse"); }
-	const Texture2D& GetDefaultSpecular() const { return _textures.at("#default_specular"); }
-	const Texture2D& GetDefaultNormal() const { return _textures.at("#default_normal"); }
-	const Texture2D& GetDefaultHeight() const { return _textures.at("#default_height"); }
-	constexpr const UnorderedMap<String, Texture2D>& GetTextures() { return _textures; }
+	Texture2D& GetDefaultDiffuse() { return _textures.at("#default_diffuse"); }
+	Texture2D& GetDefaultSpecular() { return _textures.at("#default_specular"); }
+	Texture2D& GetDefaultNormal() { return _textures.at("#default_normal"); }
+	Texture2D& GetDefaultHeight() { return _textures.at("#default_height"); }
+	UnorderedMap<String, Texture2D>& GetTextures() { return _textures; }
 
 private:
 	TextureManager() = default;

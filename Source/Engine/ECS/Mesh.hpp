@@ -26,7 +26,4 @@ public:
 
 	void DestroyMesh();
 	void DrawMesh(i32 mode);
-
-private:
-	void Init();
 };
