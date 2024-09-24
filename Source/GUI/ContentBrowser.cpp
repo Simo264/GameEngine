@@ -9,8 +9,8 @@
 /*                  PRIVATE                   */
 /* ------------------------------------------ */
 
-static fs::path contentBrowser_left_nodeSelected{};
-static fs::path contentBrowser_right_navCurrentDir{};
+static fs::path contentBrowser_left_nodeSelected = GetAssetsPath();
+static fs::path contentBrowser_right_navCurrentDir = contentBrowser_left_nodeSelected;
 
 static void ContentBrowser_LeftCol_ListTree(const fs::path& currentDir)
 {
@@ -50,25 +50,22 @@ static void ContentBrowser_RightCol_Navbar(f32 navbarHeight)
   TextureManager& texManager = TextureManager::Get();
 
   ImGui::BeginChild("RightCol_Child_NavBar", ImVec2(ImGui::GetColumnWidth(), navbarHeight));
-  if (!contentBrowser_right_navCurrentDir.empty())
+  ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+  const auto& iconBack = texManager.GetIconByPath(GetIconsPath() / "back-arrow.png");
+
+  /* Back button */
+  if (contentBrowser_right_navCurrentDir == GetAssetsPath())
   {
-    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
-    const auto& iconBack = texManager.GetIconByPath(GetIconsPath() / "back-arrow.png");
-
-    /* Back button */
-    if (contentBrowser_right_navCurrentDir == GetAssetsPath())
-    {
-      ImGui::BeginDisabled();
-      ImGui::ImageButton("Back", reinterpret_cast<void*>(iconBack.id), ImVec2(16.0f, 16.0f));
-      ImGui::EndDisabled();
-    }
-    else if (ImGui::ImageButton("Back", reinterpret_cast<void*>(iconBack.id), ImVec2(16.0f, 16.0f)))
-      contentBrowser_right_navCurrentDir = contentBrowser_right_navCurrentDir.parent_path();
-
-    ImGui::SameLine();
-    ImGui::TextWrapped(contentBrowser_right_navCurrentDir.string().c_str());
-    ImGui::PopStyleColor();
+    ImGui::BeginDisabled();
+    ImGui::ImageButton("Back", reinterpret_cast<void*>(iconBack.id), ImVec2(16.0f, 16.0f));
+    ImGui::EndDisabled();
   }
+  else if (ImGui::ImageButton("Back", reinterpret_cast<void*>(iconBack.id), ImVec2(16.0f, 16.0f)))
+    contentBrowser_right_navCurrentDir = contentBrowser_right_navCurrentDir.parent_path();
+
+  ImGui::SameLine();
+  ImGui::TextWrapped(contentBrowser_right_navCurrentDir.string().c_str());
+  ImGui::PopStyleColor();
   ImGui::EndChild();
   
   /* Draw the border-bottom */
@@ -83,8 +80,8 @@ static void ContentBrowser_RightCol_Thumbnails(f32 contentHeight)
   ImGui::BeginChild("RightCol_Child_Thumbnails", ImVec2(ImGui::GetColumnWidth(), contentHeight));
   if (!contentBrowser_right_navCurrentDir.empty())
   {
-    constexpr f32 cellSize = 64.0f;
-    constexpr f32 cellPadding = 16.0f;
+    constexpr i32 cellSize = 64.0f;
+    constexpr i32 cellPadding = 16.0f;
     const f32 panelWidth = ImGui::GetContentRegionAvail().x;
     const i32 nColumns = std::max(1, static_cast<i32>(panelWidth / (cellSize + cellPadding)));
     if (ImGui::BeginTable("Thumbnails", nColumns, ImGuiTableFlags_SizingStretchSame))
@@ -128,13 +125,20 @@ static void ContentBrowser_RightCol_Thumbnails(f32 contentHeight)
               else
                 texture = &texManager.GetTextureByPath(entryPathString);
 
-              ImGui::ImageButton(filenameString.c_str(), reinterpret_cast<void*>(texture->id), ImVec2(cellSize, cellSize));
+              ImGui::ImageButton(filenameString.c_str(), 
+                reinterpret_cast<void*>(texture->id), 
+                ImVec2(cellSize, cellSize)
+              );
             }
             /* Render generic file icon */
             else
             {
               const auto& iconFile = texManager.GetIconByPath(GetIconsPath() / "file.png");
-              ImGui::ImageButton(filenameString.c_str(), reinterpret_cast<void*>(iconFile.id), ImVec2(cellSize, cellSize));
+              
+              ImGui::ImageButton(filenameString.c_str(), 
+                reinterpret_cast<void*>(iconFile.id), 
+                ImVec2(cellSize, cellSize)
+              );
             }
           }
 
@@ -169,18 +173,17 @@ void GUI_RenderContentBrowser(bool& open)
     ImGui::BeginChild("LeftCol_Child", ImVec2(ImGui::GetColumnWidth(), tableHeight));
     {
       const auto& assetsDir = GetAssetsPath();
-      i32 flags = ImGuiTreeNodeFlags_OpenOnArrow;
-      if (!contentBrowser_left_nodeSelected.empty() && contentBrowser_left_nodeSelected == assetsDir)
+      i32 flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_DefaultOpen;
+      if (contentBrowser_left_nodeSelected == assetsDir)
         flags |= ImGuiTreeNodeFlags_Selected;
 
-      bool nodeOpen = ImGui::TreeNodeEx(assetsDir.filename().string().c_str(), flags);
-      if (ImGui::IsItemClicked(ImGuiMouseButton_Left) && contentBrowser_left_nodeSelected != assetsDir)
+      if (ImGui::TreeNodeEx(assetsDir.filename().string().c_str(), flags))
       {
-        contentBrowser_left_nodeSelected = assetsDir;
-        contentBrowser_right_navCurrentDir = assetsDir;
-      }
-      if (nodeOpen)
-      {
+        if (ImGui::IsItemClicked(ImGuiMouseButton_Left) && contentBrowser_left_nodeSelected != assetsDir)
+        {
+          contentBrowser_left_nodeSelected = assetsDir;
+          contentBrowser_right_navCurrentDir = assetsDir;
+        }
         ContentBrowser_LeftCol_ListTree(assetsDir);
         ImGui::TreePop();
       }
