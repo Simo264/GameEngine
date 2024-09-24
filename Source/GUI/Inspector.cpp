@@ -341,13 +341,41 @@ static void Insp_Model(GameObject& object, Model& model)
     object.RemoveComponent<Model>();
   ImGui::PopStyleColor(3);
 }
+static void Insp_Tag(Tag& tag)
+{
+  /* Create a table with two columns: one for the labels and one for input */
+  if (ImGui::BeginTable("Tag_Table", 2, ImGuiTableFlags_NoSavedSettings | ImGuiTableFlags_SizingFixedFit))
+  {
+    ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthFixed, 40.f);
+    ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthStretch);
+
+    ImGui::TableNextRow();
+
+    /* First column: label */
+    ImGui::TableNextColumn();
+    ImGui::Text("Tag");
+
+    /* First column: input */
+    ImGui::TableNextColumn();
+    char buffer[64]{};
+    std::format_to_n(buffer, sizeof(buffer), "{}", tag.value);
+
+    if (ImGui::InputText("##Value", buffer, sizeof(buffer), ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_EnterReturnsTrue))
+    {
+      if (std::strlen(buffer) > 0)
+        tag.UpdateValue(buffer);
+    }
+
+    ImGui::EndTable();
+  }
+}
 
 static void Insp_ListAllComponents(GameObject& object)
 {
   if (ImGui::CollapsingHeader("Tag"))
   {
     auto* tag = object.GetComponent<Tag>();
-    ImGui::InputText("Value", tag->value, sizeof(tag->value), ImGuiInputTextFlags_CharsNoBlank);
+    Insp_Tag(*tag);
   }
 
   if (auto* transform = object.GetComponent<Transform>())
@@ -458,7 +486,6 @@ static void Insp_NewComponentPopup(GameObject& object)
     ImGui::EndPopup();
   }
 }
-
 
 
 /* ------------------------------------------ */

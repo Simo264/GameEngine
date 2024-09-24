@@ -16,18 +16,17 @@ public:
 	
 	void UpdateValue(StringView newValue)
 	{
+		std::fill_n(value, sizeof(value), 0);
+
 		if (newValue.empty())
-		{
-			std::fill_n(value, sizeof(value), 0);
 			return;
-		}
+		
 		if (newValue.size() >= 64)
 		{
 			CONSOLE_WARN("Label.size() >= 64");
 			return;
 		}
 
-		std::fill_n(value, sizeof(value), 0);
 		std::copy_n(newValue.data(), newValue.size(), value);
 	}
 
