@@ -93,19 +93,19 @@ public:
 	void DebugDepthMap(u32 tetxureID);
 
 	/**
-	 * Render the debug window
+	 * Render the graphics informations window
 	 */
-	void DebugInfo(f64 delta, 
-		f64 avg, 
-		i32 frameRate, 
-		bool shadowMode, 
-		bool normalMode, 
-		bool wireframeMode);
+	void GraphicsInfo();
 
 	/**
-	 * The test frame
+	 * Render the time info window
 	 */
-	void Test();
+	void TimeInfo(f64 delta, f64 avg, i32 frameRate);
+
+	/**
+	 * Render the debug frame
+	 */
+	void Debug(bool shadowMode, bool normalMode, bool wireframeMode);
 
 	vec2i32 viewportSize;
 	vec2i32 viewportPos;

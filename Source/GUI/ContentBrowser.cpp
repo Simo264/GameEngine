@@ -163,7 +163,8 @@ void GUI_RenderContentBrowser(bool& open)
   ImGui::Begin("Content browser", &open);
 
   f32 tableHeight = ImGui::GetContentRegionAvail().y - 10.f;
-  if (ImGui::BeginTable("SplitTable", 2, ImGuiTableFlags_Resizable | ImGuiTableFlags_BordersInner))
+  constexpr i32 flags = ImGuiTableFlags_NoSavedSettings | ImGuiTableFlags_Resizable | ImGuiTableFlags_BordersInner;
+  if (ImGui::BeginTable("SplitTable", 2, flags))
   {
     ImGui::TableSetupColumn("LeftCol", ImGuiTableColumnFlags_WidthFixed, 250.0f);
     ImGui::TableSetupColumn("RightCol", ImGuiTableColumnFlags_WidthStretch);

@@ -683,10 +683,13 @@ void Engine::Run()
     gui.Inspector(objSelected);
     gui.Viewport(fboTexture, objSelected, cameraView, cameraProj);
     gui.ContentBrowser();
-    //gui.DebugInfo(delta, avgTime, frameRate, shadowMode, normalMapMode, wireframeMode);
     gui.GizmoToolBar(objSelected);
     //gui.CameraProps(primaryCamera);
-    //gui.Demo();
+    
+    gui.TimeInfo(delta, avgTime, frameRate);
+    gui.GraphicsInfo();
+    gui.Debug(shadowMode, normalMapMode, wireframeMode);
+    gui.Demo();
     gui.EndFrame();
 
     /* Checking viewport size */

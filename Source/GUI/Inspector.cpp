@@ -24,24 +24,72 @@ static bool ButtonCentered(const char* label, ImVec2 size)
   return ImGui::Button(label, size);
 }
 
-static void Insp_Light_ComboLightType(StringView preview, bool dir, bool point, bool spot)
+static void Insp_Light_ComboAttenuation(Attenuation& destAtt)
 {
-  if (ImGui::BeginCombo("Type", preview.data(), ImGuiComboFlags_NoArrowButton))
+  char currentAttRange[16]{};
+  std::format_to_n(currentAttRange, sizeof(currentAttRange), "{}m", destAtt.range);
+  if (ImGui::BeginCombo("##Range", currentAttRange))
   {
-    ImGui::Selectable("Directional", dir, !dir ? ImGuiSelectableFlags_Disabled : 0);
-    ImGui::Selectable("Point", point, !point ? ImGuiSelectableFlags_Disabled : 0);
-    ImGui::Selectable("Spot", spot, !spot ? ImGuiSelectableFlags_Disabled : 0);
+    char label[16]{};
+    for (i32 i = 0; i < std::size(ATTENUATION_RANGES); i++)
+    {
+      const auto& attenuation = ATTENUATION_RANGES[i];
+      std::fill_n(label, sizeof(label), 0);
+      std::format_to_n(label, sizeof(label), "{}m", attenuation.range);
+      if (ImGui::Selectable(label, destAtt.range == attenuation.range))
+        destAtt = attenuation;
+    }
     ImGui::EndCombo();
   }
 }
 static void Insp_DirectLight(GameObject& object, DirectionalLight& light)
 {
-  Insp_Light_ComboLightType("Directional", true, false, false);
+  /* Create a table with two columns: one for the labels and one for input */
+  if (ImGui::BeginTable("Light_Table", 2, ImGuiTableFlags_SizingFixedFit))
+  {
+    ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthFixed, 80.f);
+    ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthStretch);
 
-  ImGui::ColorEdit3("Color", (f32*)&light.color);
-  ImGui::SliderFloat("Diffuse intensity", &light.diffuseIntensity, 0.0f, 1.0f);
-  ImGui::SliderFloat("Specular intensity", &light.specularIntensity, 0.0f, 1.0f);
-  ImGui::DragFloat3("Direction", (f32*)&light.direction, 0.1f, -FLT_MAX, FLT_MAX);
+    /* 1° Row: view light type */
+    ImGui::TableNextRow();
+    ImGui::TableNextColumn(); /* First column: label */
+    ImGui::Text("Type");
+    ImGui::TableNextColumn(); /* Second column: combo */
+    ImGui::BeginDisabled();
+    if (ImGui::BeginCombo("##Type", "Directional"))
+      ImGui::EndCombo();
+    ImGui::EndDisabled();
+
+    /* 2° Row: color input */
+    ImGui::TableNextRow();
+    ImGui::TableNextColumn(); /* First column: label */
+    ImGui::Text("Color");
+    ImGui::TableNextColumn(); /* Second column: input */
+    ImGui::ColorEdit3("##Color", reinterpret_cast<f32*>(&light.color));
+    
+    /* 3° Row: diffuse input */
+    ImGui::TableNextRow();
+    ImGui::TableNextColumn(); /* First column: label */
+    ImGui::Text("Diffuse");
+    ImGui::TableNextColumn(); /* Second column: input */
+    ImGui::SliderFloat("##Diffuse", &light.diffuseIntensity, 0.0f, 1.0f);
+
+    /* 4° Row: specular input */
+    ImGui::TableNextRow();
+    ImGui::TableNextColumn(); /* First column: label */
+    ImGui::Text("Specular");
+    ImGui::TableNextColumn(); /* Second column: input */
+    ImGui::SliderFloat("##Specular", &light.specularIntensity, 0.0f, 1.0f);
+
+    /* 5° Row: direction input */
+    ImGui::TableNextRow();
+    ImGui::TableNextColumn(); /* First column: label */
+    ImGui::Text("Direction");
+    ImGui::TableNextColumn(); /* Second column: input */
+    ImGui::DragFloat3("##Direction", reinterpret_cast<f32*>(&light.direction), 0.1f, -FLT_MAX, FLT_MAX);
+
+    ImGui::EndTable();
+  }
 
   ImGui::SeparatorText("Advanced");
   ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.55f, 0.f, 0.f, 0.5f));
@@ -51,7 +99,6 @@ static void Insp_DirectLight(GameObject& object, DirectionalLight& light)
   {
     object.RemoveComponent<Light>();
     object.RemoveComponent<DirectionalLight>();
-
     auto& shaderManager = ShaderManager::Get();
     shaderManager.GetProgramByName("Scene").Link();
     shaderManager.GetProgramByName("SceneShadows").Link();
@@ -61,29 +108,57 @@ static void Insp_DirectLight(GameObject& object, DirectionalLight& light)
 }
 static void Insp_PointLight(GameObject& object, PointLight& light)
 {
-  Insp_Light_ComboLightType("Point", false, true, false);
-
-  ImGui::ColorEdit3("Color", (f32*)&light.color);
-  ImGui::SliderFloat("Diffuse intensity", &light.diffuseIntensity, 0.0f, 1.0f);
-  ImGui::SliderFloat("Specular intensity", &light.specularIntensity, 0.0f, 1.0f);
-  ImGui::DragFloat3("Position", (f32*)&light.position, 0.1f, -FLT_MAX, FLT_MAX);
-
-  ImGui::SeparatorText("Attenuation");
-  
-  char currentAttRange[16]{};
-  std::format_to_n(currentAttRange, sizeof(currentAttRange), "{}m", light.attenuation.range);
-  if (ImGui::BeginCombo("Range", currentAttRange))
+  /* Create a table with two columns: one for the labels and one for input */
+  if (ImGui::BeginTable("Light_Table", 2, ImGuiTableFlags_SizingFixedFit))
   {
-    char label[16]{};
-    for (i32 i = 0; i < std::size(ATTENUATION_RANGES); i++)
-    {
-      const auto& attenuation = ATTENUATION_RANGES[i];
-      std::fill_n(label, sizeof(label), 0);
-      std::format_to_n(label, sizeof(label), "{}m", attenuation.range);
-      if (ImGui::Selectable(label, light.attenuation.range == attenuation.range))
-        light.attenuation = attenuation;
-    }
-    ImGui::EndCombo();
+    ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthFixed, 80.f);
+    ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthStretch);
+
+    /* 1° Row: view light type */
+    ImGui::TableNextRow();
+    ImGui::TableNextColumn(); /* First column: label */
+    ImGui::Text("Type");
+    ImGui::TableNextColumn(); /* Second column: combo */
+    ImGui::BeginDisabled();
+    if (ImGui::BeginCombo("##Type", "Point"))
+      ImGui::EndCombo();
+    ImGui::EndDisabled();
+    
+    /* 2° Row: color input */
+    ImGui::TableNextRow();
+    ImGui::TableNextColumn(); /* First column: label */
+    ImGui::Text("Color");
+    ImGui::TableNextColumn(); /* Second column: input */
+    ImGui::ColorEdit3("##Color", reinterpret_cast<f32*>(&light.color));
+
+    /* 3° Row: diffuse input */
+    ImGui::TableNextRow();
+    ImGui::TableNextColumn(); /* First column: label */
+    ImGui::Text("Diffuse");
+    ImGui::TableNextColumn(); /* Second column: input */
+    ImGui::SliderFloat("##Diffuse", &light.diffuseIntensity, 0.0f, 1.0f);
+
+    /* 4° Row: specular input */
+    ImGui::TableNextRow();
+    ImGui::TableNextColumn(); /* First column: label */
+    ImGui::Text("Specular");
+    ImGui::TableNextColumn(); /* Second column: input */
+    ImGui::SliderFloat("##Specular", &light.specularIntensity, 0.0f, 1.0f);
+
+    /* 5° Row: position input */
+    ImGui::TableNextRow();
+    ImGui::TableNextColumn(); /* First column: label */
+    ImGui::Text("Position");
+    ImGui::TableNextColumn(); /* Second column: input */
+    ImGui::DragFloat3("##Position", reinterpret_cast<f32*>(&light.position), 0.1f, -FLT_MAX, FLT_MAX);
+
+    /* 6° Row: attenuation combo */
+    ImGui::TableNextRow();
+    ImGui::TableNextColumn(); /* First column: label */
+    ImGui::TextWrapped("Attenuation range");
+    ImGui::TableNextColumn(); /* Second column: input */
+    Insp_Light_ComboAttenuation(light.attenuation);
+    ImGui::EndTable();
   }
 
   ImGui::SeparatorText("Advanced");
@@ -104,35 +179,79 @@ static void Insp_PointLight(GameObject& object, PointLight& light)
 }
 static void Insp_SpotLight(GameObject& object, SpotLight& light)
 {
-  Insp_Light_ComboLightType("Spot", false, false, true);
-
-  ImGui::ColorEdit3("Color", (f32*)&light.color);
-  ImGui::SliderFloat("Diffuse intensity", &light.diffuseIntensity, 0.0f, 1.0f);
-  ImGui::SliderFloat("Specular intensity", &light.specularIntensity, 0.0f, 1.0f);
-  ImGui::DragFloat3("Direction", (f32*)&light.direction, 0.1f, -FLT_MAX, FLT_MAX);
-  ImGui::DragFloat3("Position", (f32*)&light.position, 0.1f, -FLT_MAX, FLT_MAX);
-
-  ImGui::SeparatorText("Radius");
-  
-  ImGui::SliderFloat("Inner cutoff", &light.cutOff, 1.0f, light.outerCutOff);
-  ImGui::SliderFloat("Outer cutoff", &light.outerCutOff, light.cutOff, 45.0f);
-
-  ImGui::SeparatorText("Attenuation");
-  
-  char currentAttRange[16]{};
-  std::format_to_n(currentAttRange, sizeof(currentAttRange), "{}m", light.attenuation.range);
-  if (ImGui::BeginCombo("Range", currentAttRange))
+  /* Create a table with two columns: one for the labels and one for input */
+  if (ImGui::BeginTable("Light_Table", 2, ImGuiTableFlags_SizingFixedFit))
   {
-    char label[16]{};
-    for (i32 i = 0; i < std::size(ATTENUATION_RANGES); i++)
-    {
-      const auto& attenuation = ATTENUATION_RANGES[i];
-      std::fill_n(label, sizeof(label), 0);
-      std::format_to_n(label, sizeof(label), "{}m", attenuation.range);
-      if (ImGui::Selectable(label, light.attenuation.range == attenuation.range))
-        light.attenuation = attenuation;
-    }
-    ImGui::EndCombo();
+    ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthFixed, 80.f);
+    ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthStretch);
+
+    /* 1° Row: view light type */
+    ImGui::TableNextRow();
+    ImGui::TableNextColumn(); /* First column: label */
+    ImGui::Text("Type");
+    ImGui::TableNextColumn(); /* Second column: combo */
+    ImGui::BeginDisabled();
+    if (ImGui::BeginCombo("##Type", "Spot"))
+      ImGui::EndCombo();
+    ImGui::EndDisabled();
+
+    /* 2° Row: color input */
+    ImGui::TableNextRow();
+    ImGui::TableNextColumn(); /* First column: label */
+    ImGui::Text("Color");
+    ImGui::TableNextColumn(); /* Second column: input */
+    ImGui::ColorEdit3("##Color", reinterpret_cast<f32*>(&light.color));
+
+    /* 3° Row: diffuse input */
+    ImGui::TableNextRow();
+    ImGui::TableNextColumn(); /* First column: label */
+    ImGui::Text("Diffuse");
+    ImGui::TableNextColumn(); /* Second column: input */
+    ImGui::SliderFloat("##Diffuse", &light.diffuseIntensity, 0.0f, 1.0f);
+
+    /* 4° Row: specular input */
+    ImGui::TableNextRow();
+    ImGui::TableNextColumn(); /* First column: label */
+    ImGui::Text("Specular");
+    ImGui::TableNextColumn(); /* Second column: input */
+    ImGui::SliderFloat("##Specular", &light.specularIntensity, 0.0f, 1.0f);
+
+    /* 5° Row: direction input */
+    ImGui::TableNextRow();
+    ImGui::TableNextColumn(); /* First column: label */
+    ImGui::Text("Direction");
+    ImGui::TableNextColumn(); /* Second column: input */
+    ImGui::DragFloat3("##Direction", reinterpret_cast<f32*>(&light.direction), 0.1f, -FLT_MAX, FLT_MAX);
+
+    /* 6° Row: position input */
+    ImGui::TableNextRow();
+    ImGui::TableNextColumn(); /* First column: label */
+    ImGui::Text("Position");
+    ImGui::TableNextColumn(); /* Second column: input */
+    ImGui::DragFloat3("##Position", reinterpret_cast<f32*>(&light.position), 0.1f, -FLT_MAX, FLT_MAX);
+
+    /* 7° Row: attenuation combo */
+    ImGui::TableNextRow();
+    ImGui::TableNextColumn(); /* First column: label */
+    ImGui::TextWrapped("Attenuation range");
+    ImGui::TableNextColumn(); /* Second column: input */
+    Insp_Light_ComboAttenuation(light.attenuation);
+
+    /* 8° Row: inner cutoff input */
+    ImGui::TableNextRow();
+    ImGui::TableNextColumn(); /* First column: label */
+    ImGui::Text("Inner cutoff");
+    ImGui::TableNextColumn(); /* Second column: input */
+    ImGui::SliderFloat("##Inner_Cutoff", &light.cutOff, 1.0f, light.outerCutOff);
+
+    /* 9° Row: outer cutoff input */
+    ImGui::TableNextRow();
+    ImGui::TableNextColumn(); /* First column: label */
+    ImGui::Text("Outer cutoff");
+    ImGui::TableNextColumn(); /* Second column: input */
+    ImGui::SliderFloat("##Outer_Cutoff", &light.outerCutOff, light.cutOff, 45.0f);
+
+    ImGui::EndTable();
   }
 
   ImGui::SeparatorText("Advanced");
@@ -209,13 +328,9 @@ static void Insp_Transform_TableRow(StringView label, vec3f& values, f32 resetVa
 static void Insp_Transform(GameObject& object, Transform& transform)
 {
   /* Create a table with two columns: one for the labels and one for inputs */
-  constexpr i32 flags = ImGuiTableFlags_NoSavedSettings |
-    ImGuiTableFlags_SizingFixedFit |
-    ImGuiTableFlags_BordersInnerV;
-
-  if (ImGui::BeginTable("Transform_Table", 2, flags))
+  if (ImGui::BeginTable("Transform_Table", 2, ImGuiTableFlags_SizingFixedFit))
   {
-    ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthFixed, 100.f);
+    ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthFixed, 80.f);
     ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthStretch);
 
     /* First row: position */
@@ -344,9 +459,9 @@ static void Insp_Model(GameObject& object, Model& model)
 static void Insp_Tag(Tag& tag)
 {
   /* Create a table with two columns: one for the labels and one for input */
-  if (ImGui::BeginTable("Tag_Table", 2, ImGuiTableFlags_NoSavedSettings | ImGuiTableFlags_SizingFixedFit))
+  if (ImGui::BeginTable("Tag_Table", 2, ImGuiTableFlags_SizingFixedFit))
   {
-    ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthFixed, 40.f);
+    ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthFixed, 25.f);
     ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthStretch);
 
     ImGui::TableNextRow();

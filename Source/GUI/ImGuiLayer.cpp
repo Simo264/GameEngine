@@ -128,25 +128,10 @@ void ImGuiLayer::GizmoToolBar(GameObject& objSelected)
 {
   GUI_RenderTransformToolBar(viewportPos, gizmode);
 }
-
-void ImGuiLayer::CameraProps(Camera& camera)
+void ImGuiLayer::GraphicsInfo()
 {
-  //static bool open = true;
-  //if (open)
-  //  GUI_RenderCameraProperties(open, camera);
-}
-void ImGuiLayer::DebugInfo(f64 delta, f64 avg, i32 frameRate, bool shadowMode, bool normalMode, bool wireframeMode)
-{
-  static constexpr const ImGuiWindowFlags flags = ImGuiWindowFlags_NoDocking;
-    //ImGuiWindowFlags_NoBackground |
-    //ImGuiWindowFlags_NoResize |
-    //ImGuiWindowFlags_NoCollapse |
-    //ImGuiWindowFlags_NoTitleBar;
-
-  ImGui::SetNextWindowPos(ImVec2(viewportPos.x, viewportPos.y + 20));
-  ImGui::SetNextWindowSize(ImVec2(300.0f, 250.0f));
-  ImGui::SetNextWindowBgAlpha(0.0f);
-  ImGui::Begin("Info", nullptr, flags);
+  static bool open = true;
+  ImGui::Begin("Graphics info", &open);
 
   auto& winManager = WindowManager::Get();
   static const char* glRender = reinterpret_cast<const char*>(glGetString(GL_RENDERER));
@@ -161,21 +146,44 @@ void ImGuiLayer::DebugInfo(f64 delta, f64 avg, i32 frameRate, bool shadowMode, b
     glsl
   );
 
-  ImGui::Separator();
+  ImGui::End();
+}
+void ImGuiLayer::TimeInfo(f64 delta, f64 avg, i32 frameRate)
+{
+  constexpr i32 flags = ImGuiWindowFlags_NoDocking |
+    ImGuiWindowFlags_NoTitleBar |
+    ImGuiWindowFlags_NoResize |
+    ImGuiWindowFlags_NoCollapse |
+    ImGuiWindowFlags_NoBackground;
+
+  constexpr ImVec2 windowSize{ 160.f, 100.f };
+  ImVec2 windowPos = ImVec2((viewportPos.x + viewportSize.x) - windowSize.x, viewportPos.y + 25);
+  ImGui::SetNextWindowPos(windowPos);
+  ImGui::SetNextWindowSize(windowSize);
+  ImGui::SetNextWindowBgAlpha(0.0f);
+  ImGui::Begin("Info", nullptr, flags);
 
   ImGui::TextWrapped("Time (ms): %f", delta * 1000.0f);
   ImGui::TextWrapped("Average (ms): %f", avg * 1000.0f);
   ImGui::TextWrapped("Frame rate: %d", frameRate);
 
-  ImGui::Separator();
+  ImGui::End();
+}
+void ImGuiLayer::Debug(bool shadowMode, bool normalMode, bool wireframeMode)
+{
+  ImGui::Begin("Debug", nullptr);
   ImGui::TextWrapped("Shadow mode (F1 on/F2 off): %d", shadowMode);
   ImGui::TextWrapped("Normal mapping (F5 on/F6 off): %d", normalMode);
   ImGui::TextWrapped("Wireframe mode (F9 on/F10 off): %d", wireframeMode);
-
   ImGui::End();
 }
 
-
+void ImGuiLayer::CameraProps(Camera& camera)
+{
+  //static bool open = true;
+  //if (open)
+  //  GUI_RenderCameraProperties(open, camera);
+}
 
 void ImGuiLayer::DebugDepthMap(u32 tetxureID)
 {
@@ -193,12 +201,8 @@ void ImGuiLayer::DebugDepthMap(u32 tetxureID)
 
   style.WindowPadding = paddingTmp;
 }
-void ImGuiLayer::Test()
-{
-  ImGui::Begin("Test", nullptr);
 
-  ImGui::End();
-}
+
 
 /* -------------------------- */
 /*          PRIVATE           */
