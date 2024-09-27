@@ -98,12 +98,10 @@ void Scene::SerializeScene(StringView filePath)
 			{
 				auto* dirLight = object.GetComponent<DirectionalLight>();
 				String color = std::format("{},{},{}", dirLight->color.x, dirLight->color.y, dirLight->color.z);
-				String diffuseIntensity = std::to_string(dirLight->diffuseIntensity);
-				String specularIntensity = std::to_string(dirLight->specularIntensity);
+				String intensity = std::to_string(dirLight->intensity);
 				String direction = std::format("{},{},{}", dirLight->direction.x, dirLight->direction.y, dirLight->direction.z);
 				conf.Update(section, "color", color);
-				conf.Update(section, "diffuseIntensity", diffuseIntensity);
-				conf.Update(section, "specularIntensity", specularIntensity);
+				conf.Update(section, "intensity", intensity);
 				conf.Update(section, "direction", direction);
 				break;
 			}
@@ -111,15 +109,13 @@ void Scene::SerializeScene(StringView filePath)
 			{
 				auto* pointLight = object.GetComponent<PointLight>();
 				String color = std::format("{},{},{}", pointLight->color.x, pointLight->color.y, pointLight->color.z);
-				String diffuseIntensity = std::to_string(pointLight->diffuseIntensity);
-				String specularIntensity = std::to_string(pointLight->specularIntensity);
+				String intensity = std::to_string(pointLight->intensity);
 				String position = std::format("{},{},{}", pointLight->position.x, pointLight->position.y, pointLight->position.z);
 				String range = std::to_string(pointLight->attenuation.range);
 				String kl = std::to_string(pointLight->attenuation.kl);
 				String kq = std::to_string(pointLight->attenuation.kq);
 				conf.Update(section, "color", color);
-				conf.Update(section, "diffuseIntensity", diffuseIntensity);
-				conf.Update(section, "specularIntensity", specularIntensity);
+				conf.Update(section, "intensity", intensity);
 				conf.Update(section, "position", position);
 				conf.Update(section, "attenuation.range", range);
 				conf.Update(section, "attenuation.kl", kl);
@@ -130,8 +126,7 @@ void Scene::SerializeScene(StringView filePath)
 			{
 				auto* spotLight = object.GetComponent<SpotLight>();
 				String color = std::format("{},{},{}", spotLight->color.x, spotLight->color.y, spotLight->color.z);
-				String diffuseIntensity = std::to_string(spotLight->diffuseIntensity);
-				String specularIntensity = std::to_string(spotLight->specularIntensity);
+				String intensity = std::to_string(spotLight->intensity);
 				String direction = std::format("{},{},{}", spotLight->direction.x, spotLight->direction.y, spotLight->direction.z);
 				String position = std::format("{},{},{}", spotLight->position.x, spotLight->position.y, spotLight->position.z);
 				String cutOff = std::to_string(spotLight->cutOff);
@@ -140,8 +135,7 @@ void Scene::SerializeScene(StringView filePath)
 				String kl = std::to_string(spotLight->attenuation.kl);
 				String kq = std::to_string(spotLight->attenuation.kq);
 				conf.Update(section, "color", color);
-				conf.Update(section, "diffuseIntensity", diffuseIntensity);
-				conf.Update(section, "specularIntensity", specularIntensity);
+				conf.Update(section, "intensity", intensity);
 				conf.Update(section, "direction", direction);
 				conf.Update(section, "position", position);
 				conf.Update(section, "attenuation.range", range);
@@ -209,29 +203,25 @@ void Scene::DeserializeScene(StringView filePath)
 			case LightType::DIRECTIONAL:
 			{
 				const String& color = conf.GetValue(section, "color");
-				const String& diffuseIntensity = conf.GetValue(section, "diffuseIntensity");
-				const String& specularIntensity = conf.GetValue(section, "specularIntensity");
+				const String& intensity = conf.GetValue(section, "intensity");
 				const String& direction = conf.GetValue(section, "direction");
 				auto& light = object.AddComponent<DirectionalLight>();
 				light.color = Utils::StringToVec3f(color);
-				light.diffuseIntensity = Utils::StringToF32(diffuseIntensity);
-				light.specularIntensity = Utils::StringToF32(specularIntensity);
+				light.intensity = Utils::StringToF32(intensity);
 				light.direction = Utils::StringToVec3f(direction);
 				break;
 			}
 			case LightType::POINT:
 			{
 				const String& color = conf.GetValue(section, "color");
-				const String& diffuseIntensity = conf.GetValue(section, "diffuseIntensity");
-				const String& specularIntensity = conf.GetValue(section, "specularIntensity");
+				const String& intensity = conf.GetValue(section, "intensity");
 				const String& position = conf.GetValue(section, "position");
 				const String& range = conf.GetValue(section, "attenuation.range");
 				const String& kl = conf.GetValue(section, "attenuation.kl");
 				const String& kq = conf.GetValue(section, "attenuation.kq");
 				auto& light = object.AddComponent<PointLight>();
 				light.color = Utils::StringToVec3f(color);
-				light.diffuseIntensity = Utils::StringToF32(diffuseIntensity);
-				light.specularIntensity = Utils::StringToF32(specularIntensity);
+				light.intensity = Utils::StringToF32(intensity);
 				light.position = Utils::StringToVec3f(position);
 				light.attenuation.range = Utils::StringToI32(range);
 				light.attenuation.kl = Utils::StringToF32(kl);
@@ -241,8 +231,7 @@ void Scene::DeserializeScene(StringView filePath)
 			case LightType::SPOT:
 			{
 				const String& color = conf.GetValue(section, "color");
-				const String& diffuseIntensity = conf.GetValue(section, "diffuseIntensity");
-				const String& specularIntensity = conf.GetValue(section, "specularIntensity");
+				const String& intensity = conf.GetValue(section, "intensity");
 				const String& position = conf.GetValue(section, "position");
 				const String& direction = conf.GetValue(section, "direction");
 				const String& range = conf.GetValue(section, "attenuation.range");
@@ -252,8 +241,7 @@ void Scene::DeserializeScene(StringView filePath)
 				const String& outerCutOff = conf.GetValue(section, "outerCutOff");
 				auto& light = object.AddComponent<SpotLight>();
 				light.color = Utils::StringToVec3f(color);
-				light.diffuseIntensity = Utils::StringToF32(diffuseIntensity);
-				light.specularIntensity = Utils::StringToF32(specularIntensity);
+				light.intensity = Utils::StringToF32(intensity);
 				light.position = Utils::StringToVec3f(position);
 				light.direction = Utils::StringToVec3f(direction);
 				light.attenuation.range = Utils::StringToI32(range);

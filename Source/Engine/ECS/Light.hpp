@@ -49,9 +49,7 @@ struct Light
 struct DirectionalLight
 {
 	vec3f color{ 1.0f,1.0f,1.0f };
-	f32 diffuseIntensity{ 0.5f };
-	f32 specularIntensity{ 0.5f };
-
+	f32 intensity{ 0.5f };
 	vec3f direction{ 0.0f, -1.0f, 0.0f };
 };
 
@@ -64,11 +62,8 @@ struct DirectionalLight
 struct PointLight
 {
 	vec3f color{ 1.0f,1.0f,1.0f };
-	f32 diffuseIntensity{ 0.5f };
-	f32 specularIntensity{ 0.5f };
-
+	f32 intensity{ 0.5f };
 	vec3f position{ 0.0f, 0.0f, 0.0f };
-
 	Attenuation attenuation;
 };
 
@@ -81,14 +76,10 @@ struct PointLight
 struct SpotLight
 {
 	vec3f color{ 1.0f,1.0f,1.0f };
-	f32 diffuseIntensity{ 0.5f };
-	f32 specularIntensity{ 0.5f };
-
+	f32 intensity{ 0.5f };
 	vec3f direction{ 0.0f, -1.0f, 0.0f };
 	vec3f position{ 0.0f, 0.0f, 0.0f };
-
 	Attenuation attenuation;
-
 	/* Spotlight's radius */
 	f32 cutOff{ 12.5f };
 	f32 outerCutOff{ 17.5f };

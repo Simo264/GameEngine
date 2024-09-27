@@ -29,22 +29,19 @@ struct Material {
 };
 struct DirectionalLight {
   vec3  color;
-  float diffuseIntensity;
-  float specularIntensity;
+  float intensity;
   vec3  direction;
 };
 struct PointLight {
   vec3  color;
-  float diffuseIntensity;
-  float specularIntensity;
+  float intensity;
   vec3  position;
   
   Attenuation attenuation;
 };
 struct SpotLight {
   vec3  color;
-  float diffuseIntensity;
-  float specularIntensity;
+  float intensity;
   vec3  position;
   vec3  direction;
   float cutOff;
@@ -177,12 +174,12 @@ vec3 CalculateDirectionalLight(DirectionalLight light, vec3 normal, vec3 viewDir
     
   /* Diffuse shading */ 
   const float diffFactor = max(dot(lightDir, normal), 0.0);
-  const vec3 diffuse = (light.color * light.diffuseIntensity) * diffFactor * g_diffuseColor.rgb;
+  const vec3 diffuse = (light.color * light.intensity) * diffFactor * g_diffuseColor.rgb;
 
   /* Specular shading */ 
   const vec3 halfwayDir = normalize(lightDir + viewDir);
   const float specFactor = pow(max(dot(normal, halfwayDir), 0.0), g_shininess);
-  const vec3 specular = (light.color * light.specularIntensity) * specFactor * g_specularColor.rgb;
+  const vec3 specular = (light.color * light.intensity) * specFactor * g_specularColor.rgb;
 
   return diffuse + specular;
 }
@@ -199,12 +196,12 @@ vec3 CalculateBlinnPhongLight(PointLight light, vec3 normal, vec3 viewDir)
    
   /* Diffuse shading */
   const float diffFactor = max(dot(normal, lightDir), 0.0);
-  vec3 diffuse = (light.color * light.diffuseIntensity) * diffFactor * g_diffuseColor.rgb;
+  vec3 diffuse = (light.color * light.intensity) * diffFactor * g_diffuseColor.rgb;
    
   /* Specular shading */
   const vec3 halfwayDir = normalize(lightDir + viewDir);  
   const float specFactor = pow(max(dot(normal, halfwayDir), 0.0), g_shininess);
-  vec3 specular = (light.color * light.specularIntensity) * specFactor * g_specularColor.rgb;
+  vec3 specular = (light.color * light.intensity) * specFactor * g_specularColor.rgb;
 
   /* Attenuation */
   const float lightDist = length(light.position - FragPos);
@@ -227,12 +224,12 @@ vec3 CalculateSpotLight(SpotLight light, vec3 normal, vec3 viewDir)
 
   /* Diffuse */
   const float diffFactor = max(dot(normal, lightDir), 0.0f);
-  vec3 diffuse = (light.color * light.diffuseIntensity) * diffFactor * g_diffuseColor.rgb;
+  vec3 diffuse = (light.color * light.intensity) * diffFactor * g_diffuseColor.rgb;
 
   /* Specular */
   const vec3 halfwayDir = normalize(lightDir + viewDir);
   const float specFactor = pow(max(dot(normal, halfwayDir), 0.0f), g_shininess);
-  vec3 specular = (light.color * light.specularIntensity) * specFactor * g_specularColor.rgb;
+  vec3 specular = (light.color * light.intensity) * specFactor * g_specularColor.rgb;
 
   /* Soft edges + intensity */
   const float cutoff = cos(radians(light.cutOff));

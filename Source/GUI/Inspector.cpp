@@ -67,21 +67,14 @@ static void Insp_DirectLight(GameObject& object, DirectionalLight& light)
     ImGui::TableNextColumn(); /* Second column: input */
     ImGui::ColorEdit3("##Color", reinterpret_cast<f32*>(&light.color));
     
-    /* 3° Row: diffuse input */
+    /* 3° Row: intensity input */
     ImGui::TableNextRow();
     ImGui::TableNextColumn(); /* First column: label */
-    ImGui::Text("Diffuse");
+    ImGui::Text("Intensity");
     ImGui::TableNextColumn(); /* Second column: input */
-    ImGui::SliderFloat("##Diffuse", &light.diffuseIntensity, 0.0f, 1.0f);
+    ImGui::SliderFloat("##Intensity", &light.intensity, 0.0f, 1.0f);
 
-    /* 4° Row: specular input */
-    ImGui::TableNextRow();
-    ImGui::TableNextColumn(); /* First column: label */
-    ImGui::Text("Specular");
-    ImGui::TableNextColumn(); /* Second column: input */
-    ImGui::SliderFloat("##Specular", &light.specularIntensity, 0.0f, 1.0f);
-
-    /* 5° Row: direction input */
+    /* 4° Row: direction input */
     ImGui::TableNextRow();
     ImGui::TableNextColumn(); /* First column: label */
     ImGui::Text("Direction");
@@ -134,25 +127,18 @@ static void Insp_PointLight(GameObject& object, PointLight& light)
     /* 3° Row: diffuse input */
     ImGui::TableNextRow();
     ImGui::TableNextColumn(); /* First column: label */
-    ImGui::Text("Diffuse");
+    ImGui::Text("Intensity");
     ImGui::TableNextColumn(); /* Second column: input */
-    ImGui::SliderFloat("##Diffuse", &light.diffuseIntensity, 0.0f, 1.0f);
+    ImGui::SliderFloat("##Intensity", &light.intensity, 0.0f, 1.0f);
 
-    /* 4° Row: specular input */
-    ImGui::TableNextRow();
-    ImGui::TableNextColumn(); /* First column: label */
-    ImGui::Text("Specular");
-    ImGui::TableNextColumn(); /* Second column: input */
-    ImGui::SliderFloat("##Specular", &light.specularIntensity, 0.0f, 1.0f);
-
-    /* 5° Row: position input */
+    /* 4° Row: position input */
     ImGui::TableNextRow();
     ImGui::TableNextColumn(); /* First column: label */
     ImGui::Text("Position");
     ImGui::TableNextColumn(); /* Second column: input */
     ImGui::DragFloat3("##Position", reinterpret_cast<f32*>(&light.position), 0.1f, -FLT_MAX, FLT_MAX);
 
-    /* 6° Row: attenuation combo */
+    /* 5° Row: attenuation combo */
     ImGui::TableNextRow();
     ImGui::TableNextColumn(); /* First column: label */
     ImGui::TextWrapped("Attenuation range");
@@ -205,46 +191,39 @@ static void Insp_SpotLight(GameObject& object, SpotLight& light)
     /* 3° Row: diffuse input */
     ImGui::TableNextRow();
     ImGui::TableNextColumn(); /* First column: label */
-    ImGui::Text("Diffuse");
+    ImGui::Text("Intensity");
     ImGui::TableNextColumn(); /* Second column: input */
-    ImGui::SliderFloat("##Diffuse", &light.diffuseIntensity, 0.0f, 1.0f);
+    ImGui::SliderFloat("##Intensity", &light.intensity, 0.0f, 1.0f);
 
-    /* 4° Row: specular input */
-    ImGui::TableNextRow();
-    ImGui::TableNextColumn(); /* First column: label */
-    ImGui::Text("Specular");
-    ImGui::TableNextColumn(); /* Second column: input */
-    ImGui::SliderFloat("##Specular", &light.specularIntensity, 0.0f, 1.0f);
-
-    /* 5° Row: direction input */
+    /* 4° Row: direction input */
     ImGui::TableNextRow();
     ImGui::TableNextColumn(); /* First column: label */
     ImGui::Text("Direction");
     ImGui::TableNextColumn(); /* Second column: input */
     ImGui::DragFloat3("##Direction", reinterpret_cast<f32*>(&light.direction), 0.1f, -FLT_MAX, FLT_MAX);
 
-    /* 6° Row: position input */
+    /* 5° Row: position input */
     ImGui::TableNextRow();
     ImGui::TableNextColumn(); /* First column: label */
     ImGui::Text("Position");
     ImGui::TableNextColumn(); /* Second column: input */
     ImGui::DragFloat3("##Position", reinterpret_cast<f32*>(&light.position), 0.1f, -FLT_MAX, FLT_MAX);
 
-    /* 7° Row: attenuation combo */
+    /* 6° Row: attenuation combo */
     ImGui::TableNextRow();
     ImGui::TableNextColumn(); /* First column: label */
     ImGui::TextWrapped("Attenuation range");
     ImGui::TableNextColumn(); /* Second column: input */
     Insp_Light_ComboAttenuation(light.attenuation);
 
-    /* 8° Row: inner cutoff input */
+    /* 7° Row: inner cutoff input */
     ImGui::TableNextRow();
     ImGui::TableNextColumn(); /* First column: label */
     ImGui::Text("Inner cutoff");
     ImGui::TableNextColumn(); /* Second column: input */
     ImGui::SliderFloat("##Inner_Cutoff", &light.cutOff, 1.0f, light.outerCutOff);
 
-    /* 9° Row: outer cutoff input */
+    /* 8° Row: outer cutoff input */
     ImGui::TableNextRow();
     ImGui::TableNextColumn(); /* First column: label */
     ImGui::Text("Outer cutoff");

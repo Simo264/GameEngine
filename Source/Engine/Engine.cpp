@@ -120,15 +120,13 @@ static void CalculatePerFrameTime()
 static void RenderDirectionalLight(Program& program, const DirectionalLight& light)
 {
   program.SetUniform3f("u_directionalLight.color", light.color);
-  program.SetUniform1f("u_directionalLight.diffuseIntensity", light.diffuseIntensity);
-  program.SetUniform1f("u_directionalLight.specularIntensity", light.specularIntensity);
+  program.SetUniform1f("u_directionalLight.intensity", light.intensity);
   program.SetUniform3f("u_directionalLight.direction", light.direction);
 }
 static void RenderPointLight(Program& program, const PointLight& light, i32 i)
 {
   program.SetUniform3f(std::format("u_pointLight[{}].color", i).c_str(), light.color);
-  program.SetUniform1f(std::format("u_pointLight[{}].diffuseIntensity", i).c_str(), light.diffuseIntensity);
-  program.SetUniform1f(std::format("u_pointLight[{}].specularIntensity", i).c_str(), light.specularIntensity);
+  program.SetUniform1f(std::format("u_pointLight[{}].intensity", i).c_str(), light.intensity);
   program.SetUniform3f(std::format("u_pointLight[{}].position", i).c_str(), light.position);
   program.SetUniform1f(std::format("u_pointLight[{}].attenuation.kl", i).c_str(), light.attenuation.kl);
   program.SetUniform1f(std::format("u_pointLight[{}].attenuation.kq", i).c_str(), light.attenuation.kq);
@@ -136,8 +134,7 @@ static void RenderPointLight(Program& program, const PointLight& light, i32 i)
 static void RenderSpotLight(Program& program, const SpotLight& light)
 {
   program.SetUniform3f("u_spotLight.color", light.color);
-  program.SetUniform1f("u_spotLight.diffuseIntensity", light.diffuseIntensity);
-  program.SetUniform1f("u_spotLight.specularIntensity", light.specularIntensity);
+  program.SetUniform1f("u_spotLight.intensity", light.intensity);
   program.SetUniform3f("u_spotLight.direction", light.direction);
   program.SetUniform3f("u_spotLight.position", light.position);
   program.SetUniform1f("u_spotLight.attenuation.kl", light.attenuation.kl);
