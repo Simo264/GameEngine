@@ -123,13 +123,21 @@ static void RenderDirectionalLight(Program& program, const DirectionalLight& lig
   program.SetUniform1f("u_directionalLight.intensity", light.intensity);
   program.SetUniform3f("u_directionalLight.direction", light.direction);
 }
-static void RenderPointLight(Program& program, const PointLight& light, i32 i)
+static void RenderPointLight(Program& program, const PointLight& light)
 {
+  program.SetUniform3f("u_pointLight.color", light.color);
+  program.SetUniform1f("u_pointLight.intensity", light.intensity);
+  program.SetUniform3f("u_pointLight.position", light.position);
+  program.SetUniform1f("u_pointLight.attenuation.kl", light.attenuation.kl);
+  program.SetUniform1f("u_pointLight.attenuation.kq", light.attenuation.kq);
+
+#if 0
   program.SetUniform3f(std::format("u_pointLight[{}].color", i).c_str(), light.color);
   program.SetUniform1f(std::format("u_pointLight[{}].intensity", i).c_str(), light.intensity);
   program.SetUniform3f(std::format("u_pointLight[{}].position", i).c_str(), light.position);
   program.SetUniform1f(std::format("u_pointLight[{}].attenuation.kl", i).c_str(), light.attenuation.kl);
   program.SetUniform1f(std::format("u_pointLight[{}].attenuation.kq", i).c_str(), light.attenuation.kq);
+#endif
 }
 static void RenderSpotLight(Program& program, const SpotLight& light)
 {
@@ -148,10 +156,10 @@ static void RenderScene(Scene& scene, Program& program)
     RenderDirectionalLight(program, light);
   });
 
-  i32 i = 0;
+  //i32 i = 0;
   scene.Reg().view<PointLight>().each([&](auto& light) {
-    RenderPointLight(program, light, i);
-    i++;
+    RenderPointLight(program, light);
+    //i++;
   });
 
   scene.Reg().view<SpotLight>().each([&](auto& light) {

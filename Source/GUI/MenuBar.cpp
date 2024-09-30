@@ -21,13 +21,16 @@ void GUI_RenderMenuBar(Scene& scene, bool& openPreferences)
         String filePath = OpenFileDialog(1, filter, "Open scene", false);
         if (!filePath.empty())
         {
+          /* Unset all lights */
           ShaderManager& shaderManager = ShaderManager::Get();
-
-          /* !IMPORTANT: before loading new scene it needed to relink all the programs to see changes */
-          for (const auto& [key, program] : shaderManager.GetPrograms())
-            program.Link();
-
-          shaderManager.ResetProgramsUniforms();
+          auto& shaderScene = shaderManager.GetProgramByName("Scene");
+          auto& shaderSceneShadows = shaderManager.GetProgramByName("SceneShadows");
+          shaderScene.SetUniform1f("u_directionalLight.intensity", 0.f);
+          shaderScene.SetUniform1f("u_pointLight.intensity", 0.f);
+          shaderScene.SetUniform1f("u_spotLight.intensity", 0.f);
+          shaderSceneShadows.SetUniform1f("u_directionalLight.intensity", 0.f);
+          shaderSceneShadows.SetUniform1f("u_pointLight.intensity", 0.f);
+          shaderSceneShadows.SetUniform1f("u_spotLight.intensity", 0.f);
 
           scene.ClearScene();
           scene.LoadScene(filePath);

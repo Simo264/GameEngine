@@ -70,12 +70,32 @@ static void Hierarchy_ObjectMenuPopup(Scene& scene, GameObject& objSelected)
   {
     if (ImGui::MenuItem("Delete object"))
     {
+      /* Unset light component */
+      if (objSelected.HasComponent<Light>())
+      {
+        ShaderManager& shaderManager = ShaderManager::Get();
+        auto& shaderScene = shaderManager.GetProgramByName("Scene");
+        auto& shaderSceneShadows = shaderManager.GetProgramByName("SceneShadows");
+
+        if (objSelected.HasComponent<DirectionalLight>())
+        {
+          shaderScene.SetUniform1f("u_directionalLight.intensity", 0.f);
+          shaderSceneShadows.SetUniform1f("u_directionalLight.intensity", 0.f);
+        }
+        else if (objSelected.HasComponent<PointLight>())
+        {
+          shaderScene.SetUniform1f("u_pointLight.intensity", 0.f);
+          shaderSceneShadows.SetUniform1f("u_pointLight.intensity", 0.f);
+        }
+        else if (objSelected.HasComponent<SpotLight>())
+        {
+          shaderScene.SetUniform1f("u_spotLight.intensity", 0.f);
+          shaderSceneShadows.SetUniform1f("u_spotLight.intensity", 0.f);
+        }
+      }
+
       scene.DestroyObject(objSelected);
       objSelected.Invalidate();
-
-      ShaderManager::Get().GetProgramByName("Scene").Link();
-      ShaderManager::Get().GetProgramByName("SceneShadows").Link();
-      ShaderManager::Get().ResetProgramsUniforms();
     }
     ImGui::EndPopup();
   }

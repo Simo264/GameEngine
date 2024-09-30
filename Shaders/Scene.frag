@@ -55,7 +55,7 @@ struct SpotLight {
 /* ------------------------------ */
 uniform Material          u_material;
 uniform DirectionalLight  u_directionalLight;
-uniform PointLight        u_pointLight[4];
+uniform PointLight        u_pointLight;
 uniform SpotLight         u_spotLight;
 
 uniform vec3  u_ambientLightColor;
@@ -112,7 +112,7 @@ void main()
   /* ===================== */
   //for(int i = 0; i < 4; i++)
   //  result += CalculateBlinnPhongLight(u_pointLight[i], normal, viewDir);
-  result += CalculateBlinnPhongLight(u_pointLight[0], normal, viewDir);
+  result += CalculateBlinnPhongLight(u_pointLight, normal, viewDir);
 
 
   /* ==================== */
@@ -170,6 +170,9 @@ float CalculateAttenuation(float d, float kl, float kq)
 
 vec3 CalculateDirectionalLight(DirectionalLight light, vec3 normal, vec3 viewDir)
 {
+  if(light.intensity == 0.f)
+    return vec3(0.f);
+
   const vec3 lightDir = normalize(-light.direction);
     
   /* Diffuse shading */ 
@@ -185,6 +188,9 @@ vec3 CalculateDirectionalLight(DirectionalLight light, vec3 normal, vec3 viewDir
 }
 vec3 CalculateBlinnPhongLight(PointLight light, vec3 normal, vec3 viewDir) 
 {
+  if(light.intensity == 0.f)
+    return vec3(0.f);
+
   const vec3 tangentLightPosition = TBN * light.position;
   
   /* Light direction */
@@ -213,6 +219,9 @@ vec3 CalculateBlinnPhongLight(PointLight light, vec3 normal, vec3 viewDir)
 }
 vec3 CalculateSpotLight(SpotLight light, vec3 normal, vec3 viewDir)
 {
+  if(light.intensity == 0.f)
+    return vec3(0.f);
+
   const vec3 tangentLightPosition = TBN * light.position;
 
   /* Light direction */

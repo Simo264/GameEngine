@@ -6,7 +6,7 @@
 
 #include "Engine/Globals.hpp"
 
-constexpr StringView SM_FILE_CONFIG{ "Shader_Manager.ini" };
+constexpr char SM_FILE_CONFIG[] = { "Shader_Manager.ini" };
 
 /* -------------------------------------------- */
 /*                  PUBLIC                      */
@@ -16,13 +16,13 @@ void ShaderManager::Initialize()
 {
   /* Load shader files */
   CONSOLE_INFO("Loading shaders...");
-  LoadShaderFiles();
+  LoadShaders();
 
   /* Load programs */
   CONSOLE_INFO("Loading programs...");
-  LoadProgramsFromConfig();
+  LoadPrograms();
 
-  ResetProgramsUniforms();
+  SetProgramsUniforms();
 }
 void ShaderManager::CleanUp()
 {
@@ -34,31 +34,7 @@ void ShaderManager::CleanUp()
   for (auto& [key, shader]  : _shaders)
     shader.Delete();
 }
-void ShaderManager::ResetProgramsUniforms()
-{
-  auto& framebufferProg = GetProgramByName("Framebuffer");
-  framebufferProg.SetUniform1i("u_fboImageTexture", 0);
-  framebufferProg.SetUniform1i("u_postProcessingType", 0);
 
-  auto& sceneProg = GetProgramByName("Scene");
-  sceneProg.SetUniform1i("u_material.diffuseTexture", 0);
-  sceneProg.SetUniform1i("u_material.specularTexture", 1);
-  sceneProg.SetUniform1i("u_material.normalTexture", 2);
-  sceneProg.SetUniform1i("u_material.heightTexture", 3);
-  sceneProg.SetUniform1i("u_useNormalMap", 0);
-
-  auto& sceneShadowsProg = GetProgramByName("SceneShadows");
-  sceneShadowsProg.SetUniform1i("u_material.diffuseTexture", 0);
-  sceneShadowsProg.SetUniform1i("u_material.specularTexture", 1);
-  sceneShadowsProg.SetUniform1i("u_material.normalTexture", 2);
-  sceneShadowsProg.SetUniform1i("u_material.heightTexture", 3);
-  sceneShadowsProg.SetUniform1i("u_depthMapTexture", 10);
-  sceneShadowsProg.SetUniform1i("u_depthCubeMapTexture", 11);
-  sceneShadowsProg.SetUniform1i("u_useNormalMap", 0);
-
-  auto& skyboxProg = GetProgramByName("Skybox");
-  skyboxProg.SetUniform1i("u_skyboxTexture", 0);
-}
 Shader& ShaderManager::GetShaderByName(StringView filename)
 {
   const auto& it = _shaders.find(filename.data());
@@ -80,7 +56,7 @@ Program& ShaderManager::GetProgramByName(StringView name)
 /*                  PRIVATE                     */
 /* -------------------------------------------- */
 
-void ShaderManager::LoadShaderFiles()
+void ShaderManager::LoadShaders()
 {
   for (auto& entry : fs::directory_iterator(GetShadersPath()))
   {
@@ -92,20 +68,20 @@ void ShaderManager::LoadShaderFiles()
     const String filenameExt = filename.extension().string();
 
     if (filenameExt == ".vert")
-      LoadShader(entryPath.string(), filename.string(), GL_VERTEX_SHADER);
+      CompileAndLoadShader(entryPath.string(), filename.string(), GL_VERTEX_SHADER);
     else if (filenameExt == ".tesc")
-      LoadShader(entryPath.string(), filename.string(), GL_TESS_CONTROL_SHADER);
+      CompileAndLoadShader(entryPath.string(), filename.string(), GL_TESS_CONTROL_SHADER);
     else if (filenameExt == ".tese")
-      LoadShader(entryPath.string(), filename.string(), GL_TESS_EVALUATION_SHADER);
+      CompileAndLoadShader(entryPath.string(), filename.string(), GL_TESS_EVALUATION_SHADER);
     else if (filenameExt == ".geom")
-      LoadShader(entryPath.string(), filename.string(), GL_GEOMETRY_SHADER);
+      CompileAndLoadShader(entryPath.string(), filename.string(), GL_GEOMETRY_SHADER);
     else if (filenameExt == ".frag")
-      LoadShader(entryPath.string(), filename.string(), GL_FRAGMENT_SHADER);
+      CompileAndLoadShader(entryPath.string(), filename.string(), GL_FRAGMENT_SHADER);
     else
       CONSOLE_WARN("Unknown file extension {}", filenameExt);
   }
 }
-void ShaderManager::LoadShader(StringView pathString, StringView filename, i32 shaderType)
+void ShaderManager::CompileAndLoadShader(StringView pathString, StringView filename, i32 shaderType)
 {
   Shader shader;
   shader.Create(shaderType);
@@ -136,7 +112,7 @@ void ShaderManager::LoadShader(StringView pathString, StringView filename, i32 s
   else
     CONSOLE_WARN("Error on loading shader <{}>", filename);
 }
-void ShaderManager::LoadProgramsFromConfig()
+void ShaderManager::LoadPrograms()
 {
   ConfigFile conf((GetRootPath() / SM_FILE_CONFIG).string());
   conf.ReadData();
@@ -155,10 +131,10 @@ void ShaderManager::LoadProgramsFromConfig()
     Shader* teseShader = tese.empty()     ? nullptr : &GetShaderByName(tese);
     Shader* geomShader = geometry.empty() ? nullptr : &GetShaderByName(geometry);
     Shader* fragShader = fragment.empty() ? nullptr : &GetShaderByName(fragment);
-    LoadProgram(section, vertShader, tescShader, teseShader, geomShader, fragShader);
+    LinkAndLoadProgram(section, vertShader, tescShader, teseShader, geomShader, fragShader);
   }
 }
-void ShaderManager::LoadProgram(StringView name,
+void ShaderManager::LinkAndLoadProgram(StringView name,
   Shader* vertex,
   Shader* tesc,
   Shader* tese,
@@ -189,3 +165,28 @@ void ShaderManager::LoadProgram(StringView name,
     CONSOLE_WARN("Error on loading program <{}>", name);
 }
 
+void ShaderManager::SetProgramsUniforms()
+{
+  auto& framebufferProg = GetProgramByName("Framebuffer");
+  framebufferProg.SetUniform1i("u_fboImageTexture", 0);
+  framebufferProg.SetUniform1i("u_postProcessingType", 0);
+
+  auto& sceneProg = GetProgramByName("Scene");
+  sceneProg.SetUniform1i("u_material.diffuseTexture", 0);
+  sceneProg.SetUniform1i("u_material.specularTexture", 1);
+  sceneProg.SetUniform1i("u_material.normalTexture", 2);
+  sceneProg.SetUniform1i("u_material.heightTexture", 3);
+  sceneProg.SetUniform1i("u_useNormalMap", 0);
+
+  auto& sceneShadowsProg = GetProgramByName("SceneShadows");
+  sceneShadowsProg.SetUniform1i("u_material.diffuseTexture", 0);
+  sceneShadowsProg.SetUniform1i("u_material.specularTexture", 1);
+  sceneShadowsProg.SetUniform1i("u_material.normalTexture", 2);
+  sceneShadowsProg.SetUniform1i("u_material.heightTexture", 3);
+  sceneShadowsProg.SetUniform1i("u_depthMapTexture", 10);
+  sceneShadowsProg.SetUniform1i("u_depthCubeMapTexture", 11);
+  sceneShadowsProg.SetUniform1i("u_useNormalMap", 0);
+
+  auto& skyboxProg = GetProgramByName("Skybox");
+  skyboxProg.SetUniform1i("u_skyboxTexture", 0);
+}

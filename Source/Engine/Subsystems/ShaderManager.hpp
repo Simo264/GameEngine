@@ -32,11 +32,6 @@ public:
 	void CleanUp();
 
 	/**
-	 * Reset uniform values of all programs
-	 */
-	void ResetProgramsUniforms();
-
-	/**
 	 * Get the shader object by filename
 	 */
 	Shader& GetShaderByName(StringView filename);
@@ -66,11 +61,11 @@ private:
 	 */
 	UnorderedMap<String, Program> _programs;
 
-	void LoadShaderFiles();
-	void LoadProgramsFromConfig();
-
-	void LoadShader(StringView pathString, StringView filename, i32 shaderType);
-	void LoadProgram(StringView name,
+	void LoadShaders();
+	void CompileAndLoadShader(StringView pathString, StringView filename, i32 shaderType);
+	
+	void LoadPrograms();
+	void LinkAndLoadProgram(StringView name,
 		Shader* vertex,
 		Shader* tesc,
 		Shader* tese,
@@ -78,4 +73,5 @@ private:
 		Shader* fragment
 	);
 
+	void SetProgramsUniforms();
 };

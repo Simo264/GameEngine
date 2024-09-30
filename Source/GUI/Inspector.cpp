@@ -92,10 +92,12 @@ static void Insp_DirectLight(GameObject& object, DirectionalLight& light)
   {
     object.RemoveComponent<Light>();
     object.RemoveComponent<DirectionalLight>();
-    auto& shaderManager = ShaderManager::Get();
-    shaderManager.GetProgramByName("Scene").Link();
-    shaderManager.GetProgramByName("SceneShadows").Link();
-    shaderManager.ResetProgramsUniforms();
+
+    ShaderManager& shaderManager = ShaderManager::Get();
+    auto& shaderScene = shaderManager.GetProgramByName("Scene");
+    auto& shaderSceneShadows = shaderManager.GetProgramByName("SceneShadows");
+    shaderScene.SetUniform1f("u_directionalLight.intensity", 0.f);
+    shaderSceneShadows.SetUniform1f("u_directionalLight.intensity", 0.f);
   }
   ImGui::PopStyleColor(3);
 }
@@ -156,10 +158,11 @@ static void Insp_PointLight(GameObject& object, PointLight& light)
     object.RemoveComponent<Light>();
     object.RemoveComponent<PointLight>();
 
-    auto& shaderManager = ShaderManager::Get();
-    shaderManager.GetProgramByName("Scene").Link();
-    shaderManager.GetProgramByName("SceneShadows").Link();
-    shaderManager.ResetProgramsUniforms();
+    ShaderManager& shaderManager = ShaderManager::Get();
+    auto& shaderScene = shaderManager.GetProgramByName("Scene");
+    auto& shaderSceneShadows = shaderManager.GetProgramByName("SceneShadows");
+    shaderScene.SetUniform1f("u_pointLight.intensity", 0.f);
+    shaderSceneShadows.SetUniform1f("u_pointLight.intensity", 0.f);
   }
   ImGui::PopStyleColor(3);
 }
@@ -242,10 +245,11 @@ static void Insp_SpotLight(GameObject& object, SpotLight& light)
     object.RemoveComponent<Light>();
     object.RemoveComponent<SpotLight>();
 
-    auto& shaderManager = ShaderManager::Get();
-    shaderManager.GetProgramByName("Scene").Link();
-    shaderManager.GetProgramByName("SceneShadows").Link();
-    shaderManager.ResetProgramsUniforms();
+    ShaderManager& shaderManager = ShaderManager::Get();
+    auto& shaderScene = shaderManager.GetProgramByName("Scene");
+    auto& shaderSceneShadows = shaderManager.GetProgramByName("SceneShadows");
+    shaderScene.SetUniform1f("u_spotLight.intensity", 0.f);
+    shaderSceneShadows.SetUniform1f("u_spotLight.intensity", 0.f);
   }
   ImGui::PopStyleColor(3);
 }
