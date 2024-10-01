@@ -16,12 +16,22 @@
  * To use a shader, shader source code is first loaded into a shader object and then
  * compiled. A shader object corresponds to a stage in the rendering pipeline referred
  * to as its shader stage or shader type.
- * 
  */
 class Shader
 {
 public:
-  Shader() : id{ 0 } {};
+  Shader(StringView shaderName)
+  {
+    id = 0;
+    std::fill_n(name, sizeof(name), 0);
+    std::copy(shaderName.begin(), shaderName.end(), name);
+  }
+  Shader(const Shader& other)
+  {
+    id = other.id;
+    std::fill_n(name, sizeof(name), 0);
+    std::copy(std::begin(other.name), std::end(other.name), name);
+  }
   ~Shader() = default;
 
   /**
@@ -66,11 +76,11 @@ public:
    * Returns the information log for the specified shader object. 
    * The information log for a shader object is modified when the shader is compiled.
    */
-  String GetShaderInfo() const;
+  const char* GetShaderInfo() const;
 
-  uint32_t id;
+  u32 id;
 
-  String filename;
+  char name[64];
 };
 
 /**
@@ -96,7 +106,18 @@ public:
 class Program
 {
 public:
-  Program() : id{ 0 } {};
+  Program(StringView programName) 
+  {
+    id = 0;
+    std::fill_n(name, sizeof(name), 0);
+    std::copy(programName.begin(), programName.end(), name);
+  }
+  Program(const Program& other)
+  {
+    id = other.id;
+    std::fill_n(name, sizeof(name), 0);
+    std::copy(std::begin(other.name), std::end(other.name), name);
+  }
   ~Program() = default;
 
   /**
@@ -142,7 +163,7 @@ public:
   /**
    * Returns the information log for the program object
    */
-  String GetProgramInfo() const;
+  const char* GetProgramInfo() const;
 
   /**
    * Installs the program object specified as part of current rendering state. 
@@ -181,7 +202,7 @@ public:
   void SetUniformMat3f(StringView uniformname, const mat3f& value, bool transpose = false) const;
   void SetUniformMat4f(StringView uniformname, const mat4f& value, bool transpose = false) const;
 
-  uint32_t id;
+  u32 id;
 
-  String name;
+  char name[64];
 };

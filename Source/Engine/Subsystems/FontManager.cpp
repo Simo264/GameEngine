@@ -35,9 +35,7 @@ void FontManager::LoadFonts()
 		const fs::path& entryPath = entry.path();
 		const String filename = entryPath.filename().string();
 		auto res = _fonts.emplace(filename.c_str(), entryPath);
-		if (res.second)
-			CONSOLE_TRACE("<{}> has been loaded successfully", filename);
-		else
-			CONSOLE_WARN("Error on loading font {}", filename);
+		if (!res.second)
+			CONSOLE_WARN("Error on loading font <{}>", filename);
 	}
 }

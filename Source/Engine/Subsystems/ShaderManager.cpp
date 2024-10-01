@@ -15,13 +15,16 @@ constexpr char SM_FILE_CONFIG[] = { "Shader_Manager.ini" };
 void ShaderManager::Initialize()
 {
   /* Load shader files */
-  CONSOLE_INFO("Loading shaders...");
+  CONSOLE_INFO("Loading shader...");
   LoadShaders();
+  CONSOLE_INFO("Compiling shader...");
+  CompileShaders();
 
-  /* Load programs */
+  /* Load and link programs and set uniforms */
   CONSOLE_INFO("Loading programs...");
   LoadPrograms();
-
+  CONSOLE_INFO("Linking programs...");
+  LinkPrograms();
   SetProgramsUniforms();
 }
 void ShaderManager::CleanUp()
@@ -64,54 +67,60 @@ void ShaderManager::LoadShaders()
       continue;
 
     const fs::path& entryPath = entry.path();
-    const fs::path filename = entryPath.filename();
-    const String filenameExt = filename.extension().string();
+    String entryStr = entryPath.string();
+    fs::path filenamePath = entryPath.filename();
+    String filename = filenamePath.string();
+    String ext = filenamePath.extension().string();
 
-    if (filenameExt == ".vert")
-      CompileAndLoadShader(entryPath.string(), filename.string(), GL_VERTEX_SHADER);
-    else if (filenameExt == ".tesc")
-      CompileAndLoadShader(entryPath.string(), filename.string(), GL_TESS_CONTROL_SHADER);
-    else if (filenameExt == ".tese")
-      CompileAndLoadShader(entryPath.string(), filename.string(), GL_TESS_EVALUATION_SHADER);
-    else if (filenameExt == ".geom")
-      CompileAndLoadShader(entryPath.string(), filename.string(), GL_GEOMETRY_SHADER);
-    else if (filenameExt == ".frag")
-      CompileAndLoadShader(entryPath.string(), filename.string(), GL_FRAGMENT_SHADER);
+    /**
+     * GL_VERTEX_SHADER
+     * GL_TESS_CONTROL_SHADER
+     * GL_TESS_EVALUATION_SHADER
+     * GL_GEOMETRY_SHADER 
+     * GL_FRAGMENT_SHADER
+     */
+    i32 shaderType = 0;
+    if (ext == ".vert")
+      shaderType = GL_VERTEX_SHADER;
+    else if (ext == ".tesc")
+      shaderType = GL_TESS_CONTROL_SHADER;
+    else if (ext == ".tese")
+      shaderType = GL_TESS_EVALUATION_SHADER;
+    else if (ext == ".geom")
+      shaderType = GL_GEOMETRY_SHADER;
+    else if (ext == ".frag")
+      shaderType = GL_FRAGMENT_SHADER;
     else
-      CONSOLE_WARN("Unknown file extension {}", filenameExt);
+      CONSOLE_WARN("Unknown file extension {}", ext);
+
+    IStream file(entryStr);
+    if (!file)
+      throw std::runtime_error(std::format("Error on opening file <{}>", entryStr));
+
+    String source;
+    source.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
+
+    Shader shader(filename);
+    shader.Create(shaderType);
+    shader.LoadSource(source);
+
+    auto res = _shaders.emplace(filename, shader);
+    if (!res.second)
+      throw std::runtime_error(std::format("Error on loading shader <{}>", filename));
   }
 }
-void ShaderManager::CompileAndLoadShader(StringView pathString, StringView filename, i32 shaderType)
+void ShaderManager::CompileShaders()
 {
-  Shader shader;
-  shader.Create(shaderType);
-  shader.filename = filename.data();
-
-  IStream file(pathString.data());
-  if (!file.is_open())
+  for (const auto& [key, shader] : _shaders)
   {
-    CONSOLE_CRITICAL("Error on opening file <{}>", pathString);
-    throw std::runtime_error("Error on opening file");
-  }
+    CONSOLE_TRACE("Compiling {}", key);
 
-  String source;
-  source.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
-  shader.LoadSource(source);
-  file.close();
-  
-  bool compiled = shader.Compile();
-  if (!compiled)
-  {
-    CONSOLE_CRITICAL("Error on compiling shader <{}>", filename);
-    throw std::runtime_error("Error on compiling shader");
+    bool result = shader.Compile();
+    if (!result)
+      throw std::runtime_error(std::format("Error on compiling shader: {}", shader.GetShaderInfo()));
   }
-
-  auto res = _shaders.emplace(shader.filename, shader);
-  if (res.second)
-    CONSOLE_TRACE("<{}> has been loaded successfully", filename);
-  else
-    CONSOLE_WARN("Error on loading shader <{}>", filename);
 }
+
 void ShaderManager::LoadPrograms()
 {
   ConfigFile conf((GetRootPath() / SM_FILE_CONFIG).string());
@@ -119,7 +128,7 @@ void ShaderManager::LoadPrograms()
 
   for (auto const& it : conf.GetData())
   {
-    const String& section = it.first;
+    const String& section = it.first; /* <- The program name */
     const String& vertex = conf.GetValue(section, "vertex");
     const String& tesc = conf.GetValue(section, "tess_control");
     const String& tese = conf.GetValue(section, "tess_eval");
@@ -131,38 +140,30 @@ void ShaderManager::LoadPrograms()
     Shader* teseShader = tese.empty()     ? nullptr : &GetShaderByName(tese);
     Shader* geomShader = geometry.empty() ? nullptr : &GetShaderByName(geometry);
     Shader* fragShader = fragment.empty() ? nullptr : &GetShaderByName(fragment);
-    LinkAndLoadProgram(section, vertShader, tescShader, teseShader, geomShader, fragShader);
+    
+    Program program(section);
+    program.Create();
+    if (vertShader)  program.AttachShader(*vertShader);
+    if (tescShader)  program.AttachShader(*tescShader);
+    if (teseShader)  program.AttachShader(*teseShader);
+    if (geomShader)  program.AttachShader(*geomShader);
+    if (fragShader)  program.AttachShader(*fragShader);
+    
+    auto res = _programs.emplace(section, program);
+    if (!res.second)
+      throw std::runtime_error(std::format("Error on loading program <{}>", section));
   }
 }
-void ShaderManager::LinkAndLoadProgram(StringView name,
-  Shader* vertex,
-  Shader* tesc,
-  Shader* tese,
-  Shader* geometry,
-  Shader* fragment
-)
+void ShaderManager::LinkPrograms()
 {
-  Program program;
-  program.Create();
-  program.name = name.data();
-  if (vertex)    program.AttachShader(*vertex);
-  if (tesc)      program.AttachShader(*tesc);
-  if (tese)      program.AttachShader(*tese);
-  if (geometry)  program.AttachShader(*geometry);
-  if (fragment)  program.AttachShader(*fragment);
-
-  bool link = program.Link();
-  if (!link)
+  for (const auto& [key, program] : _programs)
   {
-    CONSOLE_CRITICAL("Error on linking program <{}>: {}", name, program.GetProgramInfo());
-    throw std::runtime_error("Error on linking program");
-  }
+    CONSOLE_TRACE("Linking program <{}>", key);
 
-  auto res = _programs.emplace(program.name, program);
-  if (res.second)
-    CONSOLE_TRACE("<{}> has been loaded successfully", name);
-  else
-    CONSOLE_WARN("Error on loading program <{}>", name);
+    bool result = program.Link();
+    if (!result)
+      throw std::runtime_error(std::format("Error on linking: {}", program.GetProgramInfo()));
+  }
 }
 
 void ShaderManager::SetProgramsUniforms()

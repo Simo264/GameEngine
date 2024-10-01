@@ -17,6 +17,7 @@ void Shader::Delete()
 {
   glDeleteShader(id);
   id = 0;
+  std::fill_n(name, sizeof(name), 0);
 }
 
 void Shader::LoadSource(StringView source) const
@@ -36,18 +37,17 @@ bool Shader::Compile() const
 
 i32 Shader::GetParameteri(i32 name) const
 {
-
   i32 param;
   glGetShaderiv(id, name, &param);
   return param;
 }
 
-String Shader::GetShaderInfo() const
+const char* Shader::GetShaderInfo() const
 {
-  char log[1024];
+  static char log[1024];
+  std::fill_n(log, sizeof(log), 0);
   glGetShaderInfoLog(id, sizeof(log), nullptr, log);
-
-  return String(log);
+  return log;
 }
 
 /* ------------------------------
@@ -63,6 +63,7 @@ void Program::Delete()
 {
   glDeleteProgram(id);
   id = 0;
+  std::fill_n(name, sizeof(name), 0);
 }
 
 void Program::AttachShader(const Shader& shader) const
@@ -95,11 +96,12 @@ i32 Program::GetParameteri(i32 name) const
   return param;
 }
 
-String Program::GetProgramInfo() const
+const char* Program::GetProgramInfo() const
 {
-  char log[1024];
+  static char log[1024];
+  std::fill_n(log, sizeof(log), 0);
   glGetProgramInfoLog(id, sizeof(log), nullptr, log);
-  return String(log);
+  return log;
 }
 
 i32 Program::GetUniformLocation(StringView name) const 

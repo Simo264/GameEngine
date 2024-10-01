@@ -62,16 +62,10 @@ private:
 	UnorderedMap<String, Program> _programs;
 
 	void LoadShaders();
-	void CompileAndLoadShader(StringView pathString, StringView filename, i32 shaderType);
+	void CompileShaders();
 	
 	void LoadPrograms();
-	void LinkAndLoadProgram(StringView name,
-		Shader* vertex,
-		Shader* tesc,
-		Shader* tese,
-		Shader* geometry,
-		Shader* fragment
-	);
+	void LinkPrograms();
 
 	void SetProgramsUniforms();
 };

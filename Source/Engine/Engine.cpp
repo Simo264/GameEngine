@@ -386,7 +386,6 @@ void Engine::Initialize()
   /* Initialize logger */
   /* ----------------- */
   Logger::Initialize();
-  CONSOLE_INFO("Logger initialized");
 
   /* Initialize window manager */
   /* ------------------------- */
@@ -398,30 +397,22 @@ void Engine::Initialize()
     vec2i32{ 16, 9 },
     false
   ));
-  CONSOLE_INFO("Window manager initialized");
 
   /* Initialize font manager */
   /* -------------------------- */
-  FontManager& fontManager = FontManager::Get();
-  fontManager.Initialize();
-  CONSOLE_INFO("Font manager initialized");
+  FontManager::Get().Initialize();
   
   /* Initialize shader manager */
   /* ------------------------- */
-  ShaderManager& shaderManager = ShaderManager::Get();
-  shaderManager.Initialize();
-  CONSOLE_INFO("Shader manager initialized");
+  ShaderManager::Get().Initialize();
 
   /* Initialize texture manager */
   /* -------------------------- */
-  TextureManager& textureManager = TextureManager::Get();
-  textureManager.Initialize();
-  CONSOLE_INFO("Texture manager initialized");
+  TextureManager::Get().Initialize();
 
   /* Setup ImGui context */
   /* ------------------- */
-  ImGuiLayer& gui = ImGuiLayer::Get();
-  gui.Initialize();
+  ImGuiLayer::Get().Initialize();
   CONSOLE_INFO("ImGui layer initialized");
 
   /* Create Framebuffer object */
