@@ -37,10 +37,7 @@ Model::Model(StringView modelPath)
 	);
 
 	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
-	{
-		CONSOLE_ERROR("ERROR::ASSIMP::{}", importer.GetErrorString());
-		return;
-	}
+		throw std::runtime_error(std::format("ERROR::ASSIMP::{}", importer.GetErrorString()));
 
 	totalVertices = 0;
 	totalIndices = 0;
@@ -67,7 +64,7 @@ void Model::DestroyModel()
 	/* Destroy Vector */
 	Vector<Mesh>().swap(meshes);
 
-	CONSOLE_TRACE("Model {} destroyed", strPath.c_str());
+	CONSOLE_TRACE("Model destroyed");
 }
 void Model::DrawModel(i32 mode)
 {

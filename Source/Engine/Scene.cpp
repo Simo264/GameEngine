@@ -253,7 +253,7 @@ void Scene::DeserializeScene(StringView filePath)
 			}
 
 			default:
-				throw std::runtime_error("Invalid LightType!");
+				CONSOLE_ERROR("Invalid LightType!");
 			}
 		}
 	}

@@ -41,17 +41,13 @@ void ShaderManager::CleanUp()
 Shader& ShaderManager::GetShaderByName(StringView filename)
 {
   const auto& it = _shaders.find(filename.data());
-  if (it == _shaders.end())
-    throw std::runtime_error(std::format("Shader '{}' does not exist", filename));
-  
+  assert(it != _shaders.end() && "Shader does not exist");
   return it->second;
 }
 Program& ShaderManager::GetProgramByName(StringView name)
 {
   const auto& it = _programs.find(name.data());
-  if (it == _programs.end())
-    throw std::runtime_error(std::format("Program '{}' does not exist", name));
-
+  assert(it != _programs.end() && "Program does not exist");
   return it->second;
 }
 
@@ -71,6 +67,7 @@ void ShaderManager::LoadShaders()
     fs::path filenamePath = entryPath.filename();
     String filename = filenamePath.string();
     String ext = filenamePath.extension().string();
+    CONSOLE_TRACE("{}", filename);
 
     /**
      * GL_VERTEX_SHADER
@@ -94,9 +91,6 @@ void ShaderManager::LoadShaders()
       CONSOLE_WARN("Unknown file extension {}", ext);
 
     IStream file(entryStr);
-    if (!file)
-      throw std::runtime_error(std::format("Error on opening file <{}>", entryStr));
-
     String source;
     source.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
 
@@ -106,18 +100,18 @@ void ShaderManager::LoadShaders()
 
     auto res = _shaders.emplace(filename, shader);
     if (!res.second)
-      throw std::runtime_error(std::format("Error on loading shader <{}>", filename));
+      CONSOLE_ERROR("Error on loading shader object");
   }
 }
 void ShaderManager::CompileShaders()
 {
   for (const auto& [key, shader] : _shaders)
   {
-    CONSOLE_TRACE("Compiling {}", key);
+    CONSOLE_TRACE("{}", key);
 
     bool result = shader.Compile();
-    if (!result)
-      throw std::runtime_error(std::format("Error on compiling shader: {}", shader.GetShaderInfo()));
+    if(!result)
+      CONSOLE_ERROR("Error on compiling shader");
   }
 }
 
@@ -134,6 +128,7 @@ void ShaderManager::LoadPrograms()
     const String& tese = conf.GetValue(section, "tess_eval");
     const String& geometry = conf.GetValue(section, "geometry");
     const String& fragment = conf.GetValue(section, "fragment");
+    CONSOLE_TRACE("{}", section);
 
     Shader* vertShader = vertex.empty()   ? nullptr : &GetShaderByName(vertex);
     Shader* tescShader = tesc.empty()     ? nullptr : &GetShaderByName(tesc);
@@ -151,18 +146,18 @@ void ShaderManager::LoadPrograms()
     
     auto res = _programs.emplace(section, program);
     if (!res.second)
-      throw std::runtime_error(std::format("Error on loading program <{}>", section));
+      CONSOLE_ERROR("Error on loading program");
   }
 }
 void ShaderManager::LinkPrograms()
 {
   for (const auto& [key, program] : _programs)
   {
-    CONSOLE_TRACE("Linking program <{}>", key);
+    CONSOLE_TRACE("{}", key);
 
     bool result = program.Link();
-    if (!result)
-      throw std::runtime_error(std::format("Error on linking: {}", program.GetProgramInfo()));
+    if(!result)
+      CONSOLE_ERROR("Error on linking program");
   }
 }
 

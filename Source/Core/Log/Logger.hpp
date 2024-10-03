@@ -14,9 +14,8 @@ public:
 	Logger()	= delete;
 	~Logger() = delete;
 
-	static const SharedPtr<spdlog::logger>& GetLogger() { return _logger; }
-
 	static void Initialize();
+	static const SharedPtr<spdlog::logger>& GetLogger() { return _logger; }
 
 private:
 	static SharedPtr<spdlog::logger> _logger;

@@ -35,8 +35,11 @@ public:
 	template<typename T>
 	void RemoveComponent()
 	{
-		if (!GetComponent<T>())
+		if (!HasComponent<T>())
+		{
 			CONSOLE_WARN("Object does not have component!");
+			return;
+		}
 
 		_reg->remove<T>(_entity);
 	}
@@ -47,7 +50,7 @@ public:
 		return _reg->any_of<T>(_entity);
 	}
 
-	constexpr entt::entity ID() const 
+	entt::entity ID() const 
 	{ 
 		return _entity; 
 	}
@@ -58,7 +61,7 @@ public:
 		_reg = nullptr;
 	}
 
-	constexpr bool IsValid() const
+	bool IsValid() const
 	{
 		return (_reg && _reg->valid(_entity));
 	}

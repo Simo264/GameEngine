@@ -3,18 +3,9 @@
 
 int main()
 {
-  Engine engine = Engine();
+  Engine engine;
   engine.Initialize();
-  try
-  {
-    engine.Run();
-  }
-  catch (const std::exception& err)
-  {
-    CONSOLE_CRITICAL(err.what());
-    return EXIT_FAILURE;
-  }
+  engine.Run();
   engine.CleanUp();
-  
-  return EXIT_SUCCESS;
+  return 0;
 }

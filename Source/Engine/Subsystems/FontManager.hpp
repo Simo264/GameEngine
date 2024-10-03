@@ -33,8 +33,6 @@ private:
 	FontManager() = default;
 	~FontManager() = default;
 
-	void LoadFonts();
-	
 	/**
 	 * First: the font name
 	 * Second: the path of the font file

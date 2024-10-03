@@ -35,12 +35,9 @@ void TextureManager::Initialize()
   _textures.emplace("#default_normal", defNormal);
   _textures.emplace("#default_height", defHeight);
 
-  /* 2. Load all textures from default Textures directory */
+  /* 2. Load all textures */
   CONSOLE_INFO("Loading textures...");
   LoadTextures();
-
-  /* 3. Load all textures from default Icons directory */
-  CONSOLE_INFO("Loading icons...");
   LoadIcons();
 }
 void TextureManager::CleanUp()
@@ -62,21 +59,15 @@ void TextureManager::CleanUp()
 Texture2D& TextureManager::GetTextureByPath(const fs::path& path)
 {
   const String lexNormal = path.lexically_normal().string();
-
   const auto& it = _textures.find(lexNormal);
-  if (it == _textures.end())
-    throw std::runtime_error(std::format("Texture '{}' does not exist", lexNormal));
-  
+  assert(it != _textures.end() && "Texture does not exist");
   return it->second;
 }
 Texture2D& TextureManager::GetIconByPath(const fs::path& path)
 {
   const String lexNormal = path.lexically_normal().string();
-
   const auto& it = _icons.find(lexNormal);
-  if (it == _icons.end())
-    throw std::runtime_error(std::format("Icon '{}' does not exist", lexNormal));
-
+  assert(it != _icons.end() && "Icon does not exist");
   return it->second;
 }
 
@@ -92,17 +83,16 @@ void TextureManager::LoadTextures()
       continue;
 
     const fs::path& entryPath = entry.path();
+    const String entryPathString = entryPath.string();
     bool gamma = false;
     const String filename = entryPath.filename().string();
     if (filename.find("diff") != String::npos || filename.find("diffuse") != String::npos)
       gamma = true;
-
-    const String entryPathString = entryPath.string();
+    
+    CONSOLE_TRACE("{}", entryPathString);
     auto res = _textures.emplace(entryPathString, Texture2D(GL_TEXTURE_2D, entryPathString, gamma));
-    if (res.second)
-      CONSOLE_TRACE("<{}> has been loaded successfully", entryPathString);
-    else
-      CONSOLE_WARN("Error on loading texture {}", entryPathString);
+    if (!res.second)
+      CONSOLE_ERROR("Error on loading texture");
   }
 }
 void TextureManager::LoadIcons()
@@ -114,11 +104,11 @@ void TextureManager::LoadIcons()
 
     const auto& entryPath = entry.path();
     const String entryPathString = entryPath.string();
+    CONSOLE_TRACE("{}", entryPathString);
+
     auto res = _icons.emplace(entryPathString, Texture2D(GL_TEXTURE_2D, entryPathString, false));
-    if (res.second)
-      CONSOLE_TRACE("<{}> has been loaded successfully", entryPathString);
-    else
-      CONSOLE_WARN("Error on loading icon <{}>", entryPathString);
+    if (!res.second)
+      CONSOLE_ERROR("Error on loading texture");
   }
 }
 

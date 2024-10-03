@@ -23,7 +23,7 @@ public:
 		
 		if (newValue.size() >= 64)
 		{
-			CONSOLE_WARN("Label.size() >= 64");
+			CONSOLE_WARN("newValue.size() >= 64");
 			return;
 		}
 

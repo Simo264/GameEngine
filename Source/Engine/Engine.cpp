@@ -389,9 +389,8 @@ void Engine::Initialize()
 
   /* Initialize window manager */
   /* ------------------------- */
-  WindowManager& windowManager = WindowManager::Get();
-  windowManager.Initialize(WindowProps(
-    vec2i32{ WINDOW_WIDTH, WINDOW_HEIGHT }, 
+  WindowManager::Get().Initialize(WindowProps(
+    vec2i32{ WINDOW_WIDTH, WINDOW_HEIGHT },
     vec2i32{ 50, 50 }, 
     "GameEngine", 
     vec2i32{ 16, 9 },
