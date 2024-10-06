@@ -31,8 +31,16 @@ public:
 	 */
 	void CleanUp();
 
+	/**
+	 * Returns a reference to the mapped value of the element with specified key.
+	 * If no such element exists, an exception of type std::out_of_range is thrown.
+	 */
 	Texture2D& GetTextureByPath(const fs::path& path);
 	
+	/**
+	 * Returns a reference to the mapped value of the element with specified key.
+	 * If no such element exists, an exception of type std::out_of_range is thrown.
+	 */
 	Texture2D& GetIconByPath(const fs::path& path);
 	
 	Texture2D& GetDefaultDiffuse() { return _textures.at("#default_diffuse"); }

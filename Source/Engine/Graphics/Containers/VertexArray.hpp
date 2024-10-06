@@ -63,7 +63,13 @@ struct VertexSpecifications
 class VertexArray
 {
 public:
-  VertexArray();
+  VertexArray() : 
+    id{ 0 },
+    numIndices{ 0 },
+    numVertices{ 0 },
+    eboAttachmentID{ 0 },
+    vboAttachmentIDs{}
+  {}
   ~VertexArray() = default;
 
   /**
@@ -121,7 +127,6 @@ public:
    * 
    * @param size:           determines the number of components per vertex are allocated to the specified attribute 
    *                        and must be 1, 2, 3, 4, or GL_BGRA
-   * 
    * @param type:           indicates the type of the data. If type is one of
    *                        GL_BYTE, GL_SHORT, GL_INT, GL_FIXED, GL_FLOAT, GL_HALF_FLOAT, and GL_DOUBLE 
    *                        indicate types GLbyte, GLshort, GLint, GLfixed, GLfloat, GLhalf, and GLdouble, 
@@ -131,11 +136,9 @@ public:
    *                        four signed or unsigned elements packed into a single GLuint; 
    *                        and the value GL_UNSIGNED_INT_10F_11F_11F_REV indicating three floating poi32 values packed 
    *                        into a single GLuint.
-   * 
    * @param normalized:     if normalized is GL_TRUE, then integer data is normalized to the range [-1, 1] or [0, 1] 
    *                        if it is signed or unsigned, respectively. 
    *                        If normalized is GL_FALSE then integer data is directly converted to floating point. 
-   * 
    * @param relativeoffset: is the offset of the first element relative to the start of the vertex buffer binding 
    *                        this attribute fetches from.
    */

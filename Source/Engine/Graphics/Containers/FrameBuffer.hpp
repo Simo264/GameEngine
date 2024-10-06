@@ -36,7 +36,11 @@
 class FrameBuffer
 {
 public:
-	FrameBuffer();
+	FrameBuffer() : 
+		id{ 0 },
+		textAttachmentIDs{},
+		rboAttachmentIDs{}
+	{}
 	~FrameBuffer() = default;
 
 	/**
@@ -79,7 +83,6 @@ public:
 	 *										GL_COLOR_ATTACHMENTi, GL_DEPTH_ATTACHMENT, GL_STENCIL_ATTACHMENT or GL_DEPTH_STENCIL_ATTACHMENT.
 	 *										Attaching a level of a texture to GL_DEPTH_STENCIL_ATTACHMENT is equivalent to attaching that level 
 	 *										to both the GL_DEPTH_ATTACHMENT and the GL_STENCIL_ATTACHMENT attachment points simultaneously
-	 * 
 	 * @param texture:		specifies the name of an existing texture object to attach.
 	 *										if texture is the name of a three-dimensional, cube map array, cube map, one- or two-dimensional array, 
 	 *										or two-dimensional multisample array texture, the specified texture level is an array of images, 
@@ -87,7 +90,6 @@ public:
 	 *										cube map array, cube map, one- or two-dimensional array, or two-dimensional multisample array texture, 
 	 *										the specified texture level is an array of images, and the framebuffer attachment is considered 
 	 *										to be layered
-	 * 
 	 * @param level:			specifies the mipmap level of the texture object to attach
 	 */ 
 	void AttachTexture(i32 attachment, u32 textureID, i32 level);
@@ -114,15 +116,12 @@ public:
 	 *				srcLowerY, 
 	 *				destLowerX, 
 	 *				destLowerY: specify the bounds of the source rectangle within the read buffer of the read framebuffer.
-	 * 
 	 * @param srcUpperX,
 	 * 				srcUpperY,
 	 *				destUpperX,
 	 * 				destUpperY: specify the bounds of the destination rectangle within the write buffer of the write framebuffer.
-	 * 
 	 * @param mask:				the bitwise OR of the flags indicating which buffers are to be copied. 
 	 *										The allowed flags are GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT and GL_STENCIL_BUFFER_BIT.
-	 * 
 	 * @param filter:			specifies the interpolation to be applied if the image is stretched. 
 	 *										Must be GL_NEAREST or GL_LINEAR.
 	 * 
@@ -149,15 +148,8 @@ public:
 	 */
 	void SetWritingColorComponents(bool r, bool g, bool b, bool a) const;
 
-	constexpr u32 GetTextureAttachment(i32 i) { return _textAttachmentIDs.at(i); }
-	constexpr u32 GetRenderBufferAttachment(i32 i) { return _rboAttachmentIDs.at(i); }
-
-	constexpr i32 GetNumTextureAttachments() const { return _textAttachmentIDs.size(); }
-	constexpr i32 GetNumRenderBufferAttachments() const { return _rboAttachmentIDs.size(); }
-
 	u32 id;
 
-private:
-	Vector<u32>	_textAttachmentIDs;
-	Vector<u32>	_rboAttachmentIDs;
+	Vector<u32>	textAttachmentIDs;
+	Vector<u32>	rboAttachmentIDs;
 };

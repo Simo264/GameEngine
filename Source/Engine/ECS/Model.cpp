@@ -22,13 +22,12 @@ static chrono::steady_clock::time_point timeEnd;
 /* -------------------------- */
 
 Model::Model(StringView modelPath)
-	: strPath{ String(modelPath.data()) }
 {
-	CONSOLE_TRACE("Loading model {}...", strPath);
+	CONSOLE_TRACE("Loading model {}...", modelPath);
 	timeStart = chrono::high_resolution_clock::now();
 
 	Assimp::Importer importer;
-	const aiScene* scene = importer.ReadFile(strPath.c_str(),
+	const aiScene* scene = importer.ReadFile(modelPath.data(),
 		aiProcess_Triangulate |
 		aiProcess_JoinIdenticalVertices |
 		aiProcess_FlipUVs |
@@ -37,7 +36,10 @@ Model::Model(StringView modelPath)
 	);
 
 	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
-		throw std::runtime_error(std::format("ERROR::ASSIMP::{}", importer.GetErrorString()));
+	{
+		CONSOLE_ERROR("Assimp importer error: {}", importer.GetErrorString());
+		return;
+	}
 
 	totalVertices = 0;
 	totalIndices = 0;

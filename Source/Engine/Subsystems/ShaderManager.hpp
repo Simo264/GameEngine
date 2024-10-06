@@ -32,31 +32,33 @@ public:
 	void CleanUp();
 
 	/**
-	 * Get the shader object by filename
+	 * Returns a reference to the mapped value of the element with specified key. 
+	 * If no such element exists, an exception of type std::out_of_range is thrown.
 	 */
 	Shader& GetShaderByName(StringView filename);
 
 	/**
-	 * Retrieve the program object by name
+	 * Returns a reference to the mapped value of the element with specified key. 
+	 * If no such element exists, an exception of type std::out_of_range is thrown.
 	 */
 	Program& GetProgramByName(StringView name);
 
-	constexpr const UnorderedMap<String, Shader>& GetShaders() const { return _shaders; }
-
-	constexpr const UnorderedMap<String, Program>& GetPrograms() const { return _programs; }
+	const UnorderedMap<String, Shader>& GetShaders() const { return _shaders; }
+	
+	const UnorderedMap<String, Program>& GetPrograms() const { return _programs; }
 	
 private:
 	ShaderManager() = default;
 	~ShaderManager() = default;
 
 	/**
-	 * First: the shader file name
+	 * First: the name of the shader file 
 	 * Second: the shader object
 	 */
 	UnorderedMap<String, Shader> _shaders;
 	
 	/**
-	 * First: the program name identifier
+	 * First: the name of the program  
 	 * Second: the program object
 	 */
 	UnorderedMap<String, Program> _programs;

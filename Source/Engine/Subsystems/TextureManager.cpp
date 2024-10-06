@@ -3,16 +3,17 @@
 #include "Core/GL.hpp"
 #include "Core/Log/Logger.hpp"
 
-static void CreateDefaultTexture(Texture2D& texture, Array<u8, 3> textureData, StringView defaultPath)
+static void CreateDefaultTexture(Texture2D& texture, u8 r, u8 g, u8 b, StringView strPath)
 {
-  texture.Create();
+  texture.format = GL_RGB;
+  texture.Create(GL_TEXTURE_2D);
   texture.CreateStorage(GL_RGB8, 1, 1);
-  texture.UpdateStorage(0, 0, 0, GL_UNSIGNED_BYTE, textureData.data());
+  texture.UpdateStorage(0, 0, 0, GL_UNSIGNED_BYTE, Array<u8, 3>{ r,g,b }.data());
   texture.SetParameteri(GL_TEXTURE_WRAP_S, GL_REPEAT);
   texture.SetParameteri(GL_TEXTURE_WRAP_T, GL_REPEAT);
   texture.SetParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   texture.SetParameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  texture.strPath = defaultPath.data();
+  texture.strPath = String(strPath.data());
 }
 
 /* -----------------------------------------------------  */
@@ -22,14 +23,15 @@ static void CreateDefaultTexture(Texture2D& texture, Array<u8, 3> textureData, S
 void TextureManager::Initialize()
 {
   /* 1. Create and load defaults */
-  Texture2D defDiffuse(GL_TEXTURE_2D);
-  Texture2D defSpecular(GL_TEXTURE_2D);
-  Texture2D defNormal(GL_TEXTURE_2D);
-  Texture2D defHeight(GL_TEXTURE_2D);
-  CreateDefaultTexture(defDiffuse, { 128, 128, 255 }, "#default_diffuse");
-  CreateDefaultTexture(defSpecular, { 255, 255, 255 }, "#default_specular");
-  CreateDefaultTexture(defNormal, { 0, 0, 0 }, "#default_normal");
-  CreateDefaultTexture(defHeight, { 0, 0, 0 }, "#default_height");
+  Texture2D defDiffuse;
+  Texture2D defSpecular;
+  Texture2D defNormal;
+  Texture2D defHeight;
+  CreateDefaultTexture(defDiffuse, 128, 128, 255, "#default_diffuse");
+  CreateDefaultTexture(defSpecular, 255, 255, 255, "#default_specular");
+  CreateDefaultTexture(defNormal, 0, 0, 0, "#default_normal");
+  CreateDefaultTexture(defHeight,0, 0, 0, "#default_height");
+
   _textures.emplace("#default_diffuse", defDiffuse);
   _textures.emplace("#default_specular", defSpecular);
   _textures.emplace("#default_normal", defNormal);
@@ -58,18 +60,15 @@ void TextureManager::CleanUp()
 
 Texture2D& TextureManager::GetTextureByPath(const fs::path& path)
 {
-  const String lexNormal = path.lexically_normal().string();
-  const auto& it = _textures.find(lexNormal);
-  assert(it != _textures.end() && "Texture does not exist");
-  return it->second;
+  String lexNormal = path.lexically_normal().string();
+  return _textures.at(lexNormal);
 }
 Texture2D& TextureManager::GetIconByPath(const fs::path& path)
 {
-  const String lexNormal = path.lexically_normal().string();
-  const auto& it = _icons.find(lexNormal);
-  assert(it != _icons.end() && "Icon does not exist");
-  return it->second;
+  String lexNormal = path.lexically_normal().string();
+  return _icons.at(lexNormal);
 }
+
 
 /* -----------------------------------------------------  */
 /*                    PRIVATE                             */
@@ -82,17 +81,25 @@ void TextureManager::LoadTextures()
     if (fs::is_directory(entry))
       continue;
 
-    const fs::path& entryPath = entry.path();
-    const String entryPathString = entryPath.string();
+    const auto& entryPath = entry.path();
+    String entryPathString = entryPath.string();
+    String filename = entryPath.filename().string();
     bool gamma = false;
-    const String filename = entryPath.filename().string();
-    if (filename.find("diff") != String::npos || filename.find("diffuse") != String::npos)
+    if (filename.find("diff") != String::npos)
       gamma = true;
     
     CONSOLE_TRACE("{}", entryPathString);
-    auto res = _textures.emplace(entryPathString, Texture2D(GL_TEXTURE_2D, entryPathString, gamma));
-    if (!res.second)
-      CONSOLE_ERROR("Error on loading texture");
+    auto emplaceResult = _textures.emplace(entryPathString, Texture2D());
+    bool success = emplaceResult.second;
+    if (success)
+    {
+      auto& it = emplaceResult.first;
+      Texture2D& texture = it->second;
+      texture.Create(GL_TEXTURE_2D);
+      texture.LoadImageData(entryPathString, gamma);
+    }
+    else
+      CONSOLE_ERROR("Error on loading texture object");
   }
 }
 void TextureManager::LoadIcons()
@@ -103,12 +110,20 @@ void TextureManager::LoadIcons()
       continue;
 
     const auto& entryPath = entry.path();
-    const String entryPathString = entryPath.string();
+    String entryPathString = entryPath.string();
+    
     CONSOLE_TRACE("{}", entryPathString);
-
-    auto res = _icons.emplace(entryPathString, Texture2D(GL_TEXTURE_2D, entryPathString, false));
-    if (!res.second)
-      CONSOLE_ERROR("Error on loading texture");
+    auto emplaceResult = _icons.emplace(entryPathString, Texture2D());
+    bool success = emplaceResult.second;
+    if (success)
+    {
+      auto& it = emplaceResult.first;
+      Texture2D& texture = it->second;
+      texture.Create(GL_TEXTURE_2D);
+      texture.LoadImageData(entryPathString, false);
+    }
+    else
+      CONSOLE_ERROR("Error on loading texture object");
   }
 }
 

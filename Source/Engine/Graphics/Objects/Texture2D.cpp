@@ -5,33 +5,25 @@
 
 #include "Engine/Utils.hpp"
 
-Texture2D::Texture2D(i32 target)
-  : target{ target },
-    id{ 0 },
-    _internalFormat{ GL_RGB8 },
-    format{ GL_RGB },
-    nChannels{ 3 },
-    width{ 0 },
-    height{ 0 },
-    strPath{}
-{}
-
 Texture2D::Texture2D(i32 target, StringView strPath, bool gammaCorrection)
-  : target{ target },
-    id{ 0 },
-    _internalFormat{ GL_RGB8 },
-    format{ GL_RGB },
-    nChannels{ 3 },
+  : id{ 0 },
+    internalFormat{ 0 },
+    format{ 0 },
+    nChannels{ 0 },
     width{ 0 },
     height{ 0 },
     strPath{}
 {
-  Create();
+  Create(target);
   LoadImageData(strPath, gammaCorrection);
 }
 
-void Texture2D::Create()
+void Texture2D::Create(i32 target)
 {
+  if (target != GL_TEXTURE_2D && target != GL_TEXTURE_2D_MULTISAMPLE)
+    CONSOLE_WARN("Invalid Texture2D target");
+
+  this->target = target;
   glCreateTextures(target, 1, &id);
 }
 void Texture2D::Delete() 
@@ -60,14 +52,14 @@ void Texture2D::CreateStorage(i32 internalFormat, i32 width, i32 height)
 {
   this->width = width;
   this->height = height;
-  _internalFormat = internalFormat;
+  this->internalFormat = internalFormat;
   i32 mipmapLevels = 1 + std::floor(std::log2(std::max(width, height)));
 
   glTextureStorage2D(id, mipmapLevels, internalFormat, width, height);
 }
 void Texture2D::CreateStorageMultisampled(i32 internalFormat, i32 samples, i32 width, i32 height)
 {
-  this->_internalFormat = internalFormat;
+  this->internalFormat = internalFormat;
   this->width = width;
   this->height = height;
 
@@ -130,9 +122,7 @@ void Texture2D::LoadImageData(StringView strPath, bool gammaCorrection)
     GenerateMipmap();
   }
   else
-  {
-    CONSOLE_ERROR("Failed to load texture {}", strPath);
-  }
+    CONSOLE_ERROR("Failed to load image data {}", strPath);
 
   Utils::FreeImageData(data);
 }

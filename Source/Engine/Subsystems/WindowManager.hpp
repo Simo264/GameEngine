@@ -97,7 +97,7 @@ public:
 
   const char* GetVersion() const;
 
-  constexpr Context GetCurrentContext() const { return _context; }
+  Context GetCurrentContext() const { return _context; }
 
 private:
   WindowManager() = default;

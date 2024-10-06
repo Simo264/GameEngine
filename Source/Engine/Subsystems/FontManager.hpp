@@ -27,7 +27,7 @@ public:
 	 */
 	void Initialize();
 
-	constexpr const Map<String, fs::path>& GetFonts() const { return _fonts; }
+	const Map<String, fs::path>& GetFonts() const { return _fonts; }
 
 private:
 	FontManager() = default;

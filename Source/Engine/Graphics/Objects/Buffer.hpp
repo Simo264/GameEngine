@@ -12,7 +12,15 @@
 class Buffer
 {
 public:
-	Buffer();
+	Buffer() : 
+		id{ 0 },
+		target{ 0 }
+	{}
+
+	/**
+	 * @param target: specifies the target to which the buffer object is bound. 
+	 *								See https://registry.khronos.org/OpenGL-Refpages/gl4/html/glBindBuffer.xhtml
+	 */
 	Buffer(i32 target, u64 size, const void* data, i32 usage);
 	~Buffer() = default;
 
@@ -31,9 +39,8 @@ public:
 	 * While creating the new storage, any pre-existing data store is deleted.
 	 * The new data store is created with the specified size in bytes and usage
 	 *
-	 * @param usage:	the symbolic constant must be 
-	 *								GL_STREAM_DRAW, GL_STREAM_READ, GL_STREAM_COPY, GL_STATIC_DRAW,
-	 *								GL_STATIC_READ, GL_STATIC_COPY, GL_DYNAMIC_DRAW, GL_DYNAMIC_READ, or GL_DYNAMIC_COPY
+	 * @param usage: the symbolic constant must be GL_STREAM_DRAW, GL_STREAM_READ, GL_STREAM_COPY, GL_STATIC_DRAW,
+	 *							 GL_STATIC_READ, GL_STATIC_COPY, GL_DYNAMIC_DRAW, GL_DYNAMIC_READ, or GL_DYNAMIC_COPY
 	 */
 	void CreateStorage(u64 size, const void* data, i32 usage) const;
 
@@ -41,21 +48,19 @@ public:
 	 * Updates a subset of the buffer object's data store
 	 *
 	 * @param offset: specifies the offset (in bytes) into the buffer object's data store where data replacement will begin
-	 * @param size:   specifies the size in bytes of the data store region being replaced
+	 * @param size:		specifies the size in bytes of the data store region being replaced
 	 */
 	void UpdateStorage(i32 offset, u32 size, const void* data) const;
 
 	/**
 	 * Copy all or part of the data store of the buffer object to the data store of another buffer object
 	 *
-	 * @param size:       specifies the size of the data to be copied from the source buffer object
-	 *                    to the destination buffer object.
-	 * 
+	 * @param size:				specifies the size of the data to be copied from the source buffer object
+	 *										to the destination buffer object.
 	 * @param readOffset: specifies the offset within the data store of the source buffer at which
 	 *                    data will be read
-	 * 
 	 * @para writeOffset: specifies the offset within the data store of the destination buffer
-	 *                     at which data will be written.
+	 *                    at which data will be written.
 	 */
 	void CopyStorage(const Buffer& writeBuffer, i32 readOffset, i32 writeOffset, u64 size) const;
 
@@ -91,8 +96,8 @@ public:
 	 * GL_ATOMIC_COUNTER_BUFFER, GL_TRANSFORM_FEEDBACK_BUFFER, GL_UNIFORM_BUFFER, or GL_SHADER_STORAGE_BUFFER.
 	 * 
 	 * @param bindingpoint: specify the index of the binding poi32 
-	 * @param offset: the starting offset in bytes into the buffer object buffer
-	 * @param size: the amount of data in bytes that can be read from the buffer
+	 * @param offset:				the starting offset in bytes into the buffer object buffer
+	 * @param size:					the amount of data in bytes that can be read from the buffer
 	 */
 	void BindRange(i32 bindingpoint, i32 offset, u64 size) const;
 
@@ -103,8 +108,5 @@ public:
 
 	u32 id;
 	
-	/**
-	 * https://registry.khronos.org/OpenGL-Refpages/gl4/html/glBindBuffer.xhtml
-	 */
 	i32 target;
 };

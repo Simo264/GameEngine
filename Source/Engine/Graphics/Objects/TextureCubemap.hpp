@@ -16,7 +16,7 @@ public:
   /**
    * Allocate the entire cubemap with a single call glTextureStorage2D
    *
-   * @param width: specifies the width of the texture, in texels.
+   * @param width:  specifies the width of the texture, in texels.
    * @param height: specifies the height of the texture, in texels.
    */
   void CreateStorage(i32 internalFormat, i32 width, i32 height) const;
@@ -24,17 +24,18 @@ public:
   /**
    * Specify a three-dimensional texture subimage
    *
-   * @param level: specifies the level-of-detail number; 0 is the base image level. Level n is the nth mipmap reduction image
-   * @param xoffset: specifies a texel offset in the x direction within the texture array
-   * @param yoffset: specifies a texel offset in the y direction within the texture array.
-   * @param zoffset: specifies a texel offset in the z direction within the texture array.
-   * @param width:  specifies the width of the texture subimage
-   * @param height: specifies the height of the texture subimage
-   * @param depth:  specifies the depth of the texture subimage
-   * @param format: specifies the format of the pixel data. The following symbolic values are accepted:
-   *                GL_RED, GL_RG, GL_RGB, GL_BGR, GL_RGBA, GL_DEPTH_COMPONENT, and GL_STENCIL_INDEX.
-   * @param type: specifies the data type of the pixel data
-   * @param pixels: specifies a pointer to the image data in memory
+   * @param level:    specifies the level-of-detail number; 0 is the base image level. 
+   *                  Level n is the nth mipmap reduction image
+   * @param xoffset:  specifies a texel offset in the x direction within the texture array
+   * @param yoffset:  specifies a texel offset in the y direction within the texture array.
+   * @param zoffset:  specifies a texel offset in the z direction within the texture array.
+   * @param width:    specifies the width of the texture subimage
+   * @param height:   specifies the height of the texture subimage
+   * @param depth:    specifies the depth of the texture subimage
+   * @param format:   specifies the format of the pixel data. The following symbolic values are accepted:
+   *                  GL_RED, GL_RG, GL_RGB, GL_BGR, GL_RGBA, GL_DEPTH_COMPONENT, and GL_STENCIL_INDEX.
+   * @param type:     specifies the data type of the pixel data
+   * @param pixels:   specifies a pointer to the image data in memory
    */
   void SubImage3D(
     i32 level,
@@ -82,5 +83,5 @@ public:
 
 	u32 id;
 
-	const i32 target;
+	i32 target;
 };

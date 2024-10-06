@@ -17,7 +17,6 @@ void Shader::Delete()
 {
   glDeleteShader(id);
   id = 0;
-  std::fill_n(name, sizeof(name), 0);
 }
 
 void Shader::LoadSource(StringView source) const
@@ -53,6 +52,13 @@ const char* Shader::GetShaderInfo() const
 /* ------------------------------
       Program
 ------------------------------ */
+
+Program::Program(StringView programName)
+{
+  id = 0;
+  std::fill_n(name, sizeof(name), 0);
+  std::copy(programName.begin(), programName.end(), name);
+}
 
 void Program::Create()
 {

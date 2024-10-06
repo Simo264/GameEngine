@@ -16,8 +16,6 @@ public:
 
 	Vector<Mesh> meshes;
 
-	String strPath;
-
 	void DestroyModel();
 	void DrawModel(i32 mode);
 

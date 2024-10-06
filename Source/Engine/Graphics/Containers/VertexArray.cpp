@@ -3,14 +3,6 @@
 #include "Core/GL.hpp"
 #include "Core/Log/Logger.hpp"
 
-VertexArray::VertexArray()
-  : id{ 0 },
-    numIndices{ 0 },
-    numVertices{ 0 },
-    eboAttachmentID{ 0 },
-    vboAttachmentIDs{}
-{}
-
 void VertexArray::Create()
 {
   glCreateVertexArrays(1, &id);

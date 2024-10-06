@@ -20,18 +20,9 @@
 class Shader
 {
 public:
-  Shader(StringView shaderName)
-  {
-    id = 0;
-    std::fill_n(name, sizeof(name), 0);
-    std::copy(shaderName.begin(), shaderName.end(), name);
-  }
-  Shader(const Shader& other)
-  {
-    id = other.id;
-    std::fill_n(name, sizeof(name), 0);
-    std::copy(std::begin(other.name), std::end(other.name), name);
-  }
+  Shader() : 
+    id{ 0 } 
+  {}
   ~Shader() = default;
 
   /**
@@ -79,8 +70,6 @@ public:
   const char* GetShaderInfo() const;
 
   u32 id;
-
-  char name[64];
 };
 
 /**
@@ -106,18 +95,7 @@ public:
 class Program
 {
 public:
-  Program(StringView programName) 
-  {
-    id = 0;
-    std::fill_n(name, sizeof(name), 0);
-    std::copy(programName.begin(), programName.end(), name);
-  }
-  Program(const Program& other)
-  {
-    id = other.id;
-    std::fill_n(name, sizeof(name), 0);
-    std::copy(std::begin(other.name), std::end(other.name), name);
-  }
+  Program(StringView programName);
   ~Program() = default;
 
   /**
@@ -204,5 +182,5 @@ public:
 
   u32 id;
 
-  char name[64];
+  char name[64]; /* <- only for debugging use */
 };

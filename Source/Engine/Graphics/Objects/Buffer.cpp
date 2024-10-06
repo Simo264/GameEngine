@@ -3,11 +3,6 @@
 #include "Core/GL.hpp"
 #include "Core/Log/Logger.hpp"
 
-Buffer::Buffer()
-	: id{ 0 },
-		target{ 0 }
-{}
-
 Buffer::Buffer(i32 target, u64 size, const void* data, i32 usage)
 	: target{ target }
 {

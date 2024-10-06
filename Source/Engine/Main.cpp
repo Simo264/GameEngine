@@ -4,8 +4,22 @@
 int main()
 {
   Engine engine;
-  engine.Initialize();
-  engine.Run();
-  engine.CleanUp();
+  try
+  {
+    engine.Initialize();
+    engine.Run();
+    engine.CleanUp();
+  }
+  catch(std::runtime_error& e)
+  {
+    CONSOLE_CRITICAL("runtime_error exception: {}", e.what());
+    return 1;
+  }
+  catch (std::out_of_range& e)
+  {
+    CONSOLE_CRITICAL("out_of_range exception: {}", e.what());
+    return 1;
+  }
+  
   return 0;
 }

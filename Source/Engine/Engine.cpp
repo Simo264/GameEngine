@@ -237,7 +237,7 @@ static void CreateSkybox(VertexArray& skybox, TextureCubemap& skyboxTexture)
     &textureManager.GetTextureByPath(GetTexturesPath() / "skybox/front.jpg"),
     &textureManager.GetTextureByPath(GetTexturesPath() / "skybox/back.jpg"),
   };
-  i32 cubemapInternalFormat = images.at(0)->GetInternal();
+  i32 cubemapInternalFormat = images.at(0)->internalFormat;
   i32 width = images.at(0)->width;
   i32 height = images.at(0)->height;
 
@@ -257,8 +257,8 @@ static FrameBuffer CreateDepthMapFbo(i32 width, i32 height)
   fbo.Create();
 
   /* Create a 2D texture that we'll use as the framebuffer's depth buffer */
-  Texture2D depthMap(GL_TEXTURE_2D);
-  depthMap.Create();
+  Texture2D depthMap;
+  depthMap.Create(GL_TEXTURE_2D);
   depthMap.CreateStorage(GL_DEPTH_COMPONENT24, width, height);
   depthMap.SetParameteri(GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
   depthMap.SetParameteri(GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
@@ -484,9 +484,9 @@ void Engine::Run()
   Program& skyboxProgram = shaderManager.GetProgramByName("Skybox");
   Program& terrainProgram = shaderManager.GetProgramByName("Terrain");
   Program& gridPlaneProgram = shaderManager.GetProgramByName("GridPlane");
-  u32 fboTexture = _fboIntermediate.GetTextureAttachment(0);
-  u32 depthMapTexture = fboDepthMap.GetTextureAttachment(0);
-  u32 depthCubeMapTexture = fboDepthCubeMap.GetTextureAttachment(0);
+  u32 fboTexture = _fboIntermediate.textAttachmentIDs.at(0);
+  u32 depthMapTexture = fboDepthMap.textAttachmentIDs.at(0);
+  u32 depthCubeMapTexture = fboDepthCubeMap.textAttachmentIDs.at(0);
   
   bool shadowMode = true;
   bool normalMapMode = true;
@@ -731,8 +731,8 @@ void Engine::CreateFramebuffer(i32 samples, i32 width, i32 height)
   _fboMultisampled.Create();
 
   /* Create a multisampled color attachment texture */
-  Texture2D textColMultAtt(GL_TEXTURE_2D_MULTISAMPLE);
-  textColMultAtt.Create();
+  Texture2D textColMultAtt;
+  textColMultAtt.Create(GL_TEXTURE_2D_MULTISAMPLE);
   textColMultAtt.CreateStorageMultisampled(GL_RGB8, samples, width, height);
 
   /* Create a multisampled renderbuffer object for depth and stencil attachments */
@@ -750,8 +750,8 @@ void Engine::CreateFramebuffer(i32 samples, i32 width, i32 height)
   _fboIntermediate.Create();
 
   /* Create normal color attachment texture */
-  Texture2D textColAtt(GL_TEXTURE_2D);
-  textColAtt.Create();
+  Texture2D textColAtt;
+  textColAtt.Create(GL_TEXTURE_2D);
   textColAtt.CreateStorage(GL_RGB8, width, height);
   textColAtt.SetParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   textColAtt.SetParameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR);

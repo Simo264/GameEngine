@@ -40,15 +40,11 @@ void ShaderManager::CleanUp()
 
 Shader& ShaderManager::GetShaderByName(StringView filename)
 {
-  const auto& it = _shaders.find(filename.data());
-  assert(it != _shaders.end() && "Shader does not exist");
-  return it->second;
+  return _shaders.at(filename.data());
 }
 Program& ShaderManager::GetProgramByName(StringView name)
 {
-  const auto& it = _programs.find(name.data());
-  assert(it != _programs.end() && "Program does not exist");
-  return it->second;
+  return _programs.at(name.data());
 }
 
 /* -------------------------------------------- */
@@ -65,7 +61,7 @@ void ShaderManager::LoadShaders()
     const fs::path& entryPath = entry.path();
     String entryStr = entryPath.string();
     fs::path filenamePath = entryPath.filename();
-    String filename = filenamePath.string();
+    String filename = filenamePath.string(); /* <- the name of the shader */
     String ext = filenamePath.extension().string();
     CONSOLE_TRACE("{}", filename);
 
@@ -94,12 +90,16 @@ void ShaderManager::LoadShaders()
     String source;
     source.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
 
-    Shader shader(filename);
-    shader.Create(shaderType);
-    shader.LoadSource(source);
-
-    auto res = _shaders.emplace(filename, shader);
-    if (!res.second)
+    auto emplaceResult = _shaders.emplace(filename, Shader());
+    bool success = emplaceResult.second;
+    if (success)
+    {
+      auto& it = emplaceResult.first;
+      Shader& shader = it->second;
+      shader.Create(shaderType);
+      shader.LoadSource(source);
+    }
+    else
       CONSOLE_ERROR("Error on loading shader object");
   }
 }

@@ -383,9 +383,6 @@ static void Insp_Model_MeshMaterialRow(StringView label, Texture2D*& matTexture,
 }
 static void Insp_Model(GameObject& object, Model& model)
 {
-  /* View the model path */
-  ImGui::TextWrapped("Model: %s", model.strPath.c_str());
-
   /* View model meshes with a tree */
   if (ImGui::TreeNode("Material"))
   {
