@@ -3,51 +3,6 @@
 #include "Core/Core.hpp"
 #include "Engine/Graphics/Objects/Buffer.hpp"
 
-/**  
- *  https://www.khronos.org/opengl/wiki/Vertex_Specification 
- * 
- *  Vertex Specification is the process of setting up the necessary objects for 
- *  rendering with a particular shader program, as well as the process of using 
- *  those objects to render. 
- *  
- *  Submitting vertex data for rendering requires creating a stream of vertices, 
- *  and then telling OpenGL how to interpret that stream
- */
-struct VertexSpecifications
-{
-  /**
-   * The index of the vertex buffer binding poi32 to which to bind the buffer
-   */
-  i32 bindingindex;
-  
-  /**
-   * The index of the generic vertex attribute to be enabled or disabled.
-   */
-  i32 attrindex;
-
-  /**
-   * The number of components per vertex are allocated to the specified attribute and must be 1, 2, 3, 4, or GL_BGRA
-   */
-  i32 components;
-
-  /**
-   * Indicates the type of the data.
-   */
-  i32 type;
-
-  /**
-   * If true then integer data is normalized to the range [-1, 1] or [0, 1] if it is signed or unsigned, respectively.
-   * Otherwise if normalized is false then integer data is directly converted to floating point
-   */
-  bool normalized;
-
-  /**
-   * Is the offset of the first element relative to the start of the vertex buffer binding this attribute fetches from
-   */
-  i32 relativeoffset;
-};
-
-
 /**
  *  https://www.khronos.org/opengl/wiki/Vertex_Specification#Vertex_Array_Object
  * 
@@ -68,6 +23,7 @@ public:
     numIndices{ 0 },
     numVertices{ 0 },
     eboAttachmentID{ 0 },
+    numVBOAttached{ 0 },
     vboAttachmentIDs{}
   {}
   ~VertexArray() = default;
@@ -158,14 +114,19 @@ public:
    */
   void SetBindingDivisor(i32 bindingindex, i32 divisor) const;
 
-  void SetVertexSpecifications(const VertexSpecifications& specs) const;
-
   u32 id;
 
   u32 numVertices;
   u32 numIndices;
 
+  /* A VAO can only have one index buffer associated with it at any given time */
   u32 eboAttachmentID;
-  Vector<u32> vboAttachmentIDs;
-};
 
+  /**
+   * A VAO can have several vertex buffers associated with it at the same time (MAX 16). 
+   * This is handled via the mechanism of attribute binding points.
+   */
+  inline static constexpr i32 MAX_NUM_VBO_ATTACHMENTS = 16;
+  i32 numVBOAttached;
+  u32 vboAttachmentIDs[MAX_NUM_VBO_ATTACHMENTS];
+};

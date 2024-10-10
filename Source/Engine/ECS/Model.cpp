@@ -22,8 +22,9 @@ static chrono::steady_clock::time_point timeEnd;
 /* -------------------------- */
 
 Model::Model(StringView modelPath)
+	: strPath{ modelPath.data() }
 {
-	CONSOLE_TRACE("Loading model {}...", modelPath);
+	CONSOLE_TRACE("Loading model {}...", strPath);
 	timeStart = chrono::high_resolution_clock::now();
 
 	Assimp::Importer importer;
@@ -45,12 +46,10 @@ Model::Model(StringView modelPath)
 	totalIndices = 0;
 	totalSize = 0;
 	meshes.reserve(scene->mNumMeshes);
-
 	ProcessNode(scene->mRootNode, scene);
 
 	timeEnd = chrono::high_resolution_clock::now();
 	chrono::duration<f64> diff = timeEnd - timeStart;
-
 	CONSOLE_TRACE(".numMeshes={}", scene->mNumMeshes);
 	CONSOLE_TRACE(".totalVertices={} ", totalVertices);
 	CONSOLE_TRACE(".totalIndices={}", totalIndices);
@@ -61,11 +60,10 @@ void Model::DestroyModel()
 {
 	/* Destroy all meshes */
 	for (auto& mesh : meshes)
-		mesh.DestroyMesh();
+		mesh.Destroy();
 
 	/* Destroy Vector */
 	Vector<Mesh>().swap(meshes);
-
 	CONSOLE_TRACE("Model destroyed");
 }
 void Model::DrawModel(i32 mode)
@@ -77,7 +75,7 @@ void Model::DrawModel(i32 mode)
 		material.specular->BindTextureUnit(1);
 		material.normal->BindTextureUnit(2);
 		material.height->BindTextureUnit(3);
-		mesh.DrawMesh(mode);
+		mesh.Draw(mode);
 	}
 }
 
@@ -91,29 +89,34 @@ void Model::ProcessNode(aiNode* node, const aiScene* scene)
 	for (i32 i = 0; i < node->mNumMeshes; i++)
 	{
 		Mesh& mesh = meshes.emplace_back();
+		mesh.SetupAttribute(0, 0, VertexFormat(3, GL_FLOAT, false, offsetof(Vertex_P_N_UV_T, position)));
+		mesh.SetupAttribute(1, 0, VertexFormat(3, GL_FLOAT, false, offsetof(Vertex_P_N_UV_T, normal)));
+		mesh.SetupAttribute(2, 0, VertexFormat(2, GL_FLOAT, false, offsetof(Vertex_P_N_UV_T, uv))); 
+		mesh.SetupAttribute(3, 0, VertexFormat(3, GL_FLOAT, false, offsetof(Vertex_P_N_UV_T, tangent)));
+
 		aiMesh* aimesh = scene->mMeshes[node->mMeshes[i]];
 
 		/* Load vertex buffer */
 		const i32 numVertices = aimesh->mNumVertices;
 		const u64 vSize = numVertices * sizeof(Vertex_P_N_UV_T);
-		Buffer vbo(GL_ARRAY_BUFFER, vSize, nullptr, GL_STATIC_DRAW);
+		Buffer vbo(vSize, nullptr, GL_STATIC_DRAW);
 		LoadVertices(aimesh, vbo);
 		mesh.vao.AttachVertexBuffer(0, vbo.id, 0, sizeof(Vertex_P_N_UV_T));
 
 		/* Load index buffer */
+		static const auto pred = [](i32 n, aiFace& face) { return n + face.mNumIndices; };
 		const i32 numIndices = std::reduce(
-			aimesh->mFaces,
-			aimesh->mFaces + aimesh->mNumFaces,
-			0,
-			[](i32 n, aiFace& face) { return n + face.mNumIndices; });
+			aimesh-> mFaces, 
+			aimesh->mFaces + aimesh->mNumFaces, 
+			0, 
+			pred
+		);
 		const u64 iSize = numIndices * sizeof(u32);
-		Buffer ebo(GL_ELEMENT_ARRAY_BUFFER, iSize, nullptr, GL_STATIC_DRAW);
+		Buffer ebo(iSize, nullptr, GL_STATIC_DRAW);
 		LoadIndices(aimesh, ebo);
 		mesh.vao.AttachElementBuffer(ebo.id);
-
 		mesh.vao.numVertices = numVertices;
 		mesh.vao.numIndices = numIndices;
-
 		totalVertices += numVertices;
 		totalIndices += numIndices;
 		totalSize += vSize + iSize;
@@ -141,7 +144,7 @@ void Model::LoadVertices(aiMesh* aimesh, Buffer& vbo)
 	f32* vboPtr = static_cast<f32*>(vbo.MapStorage(GL_WRITE_ONLY));
 	if (!vboPtr)
 	{
-		CONSOLE_WARN("Error on mapping vertex buffer storage");
+		CONSOLE_ERROR("Error on mapping vertex buffer storage");
 		return;
 	}
 
@@ -170,7 +173,7 @@ void Model::LoadIndices(aiMesh* aimesh, Buffer& ebo)
 	u32* eboPtr = static_cast<u32*>(ebo.MapStorage(GL_WRITE_ONLY));
 	if (!eboPtr)
 	{
-		CONSOLE_WARN("Error on mapping element buffer storage");
+		CONSOLE_ERROR("Error on mapping element buffer storage");
 		return;
 	}
 

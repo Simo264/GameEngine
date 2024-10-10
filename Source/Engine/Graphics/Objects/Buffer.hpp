@@ -12,16 +12,13 @@
 class Buffer
 {
 public:
-	Buffer() : 
-		id{ 0 },
-		target{ 0 }
-	{}
+	Buffer() : id{ 0 } {}
 
 	/**
 	 * @param target: specifies the target to which the buffer object is bound. 
 	 *								See https://registry.khronos.org/OpenGL-Refpages/gl4/html/glBindBuffer.xhtml
 	 */
-	Buffer(i32 target, u64 size, const void* data, i32 usage);
+	Buffer(u64 size, const void* data, i32 usage);
 	~Buffer() = default;
 
 	/**
@@ -79,34 +76,26 @@ public:
 	bool UnmapStorage() const;
 
 	/**
-	 * Bind the buffer object
-	 */
-	void Bind() const;
-
-	/**
 	 * Bind the buffer object to an indexed buffer target. With glBindBufferBase target must be one of 
 	 * GL_ATOMIC_COUNTER_BUFFER, GL_TRANSFORM_FEEDBACK_BUFFER, GL_UNIFORM_BUFFER or GL_SHADER_STORAGE_BUFFER.
 	 * 
+	 * @param target:				must be one of GL_ATOMIC_COUNTER_BUFFER, GL_TRANSFORM_FEEDBACK_BUFFER, GL_UNIFORM_BUFFER 
+	 *											or GL_SHADER_STORAGE_BUFFER.
 	 * @param bindingpoint: specify the index of the binding poi32 within the array specified by target.
 	 */
-	void BindBase(i32 bindingpoint) const;
+	void BindBase(i32 target, i32 bindingpoint) const;
 
 	/**
 	 * Bind a range within the buffer object to an indexed buffer target. With glBindBufferRange target must be one of 
 	 * GL_ATOMIC_COUNTER_BUFFER, GL_TRANSFORM_FEEDBACK_BUFFER, GL_UNIFORM_BUFFER, or GL_SHADER_STORAGE_BUFFER.
 	 * 
+	 * @param target:				must be one of GL_ATOMIC_COUNTER_BUFFER, GL_TRANSFORM_FEEDBACK_BUFFER, GL_UNIFORM_BUFFER, 
+	 *											or GL_SHADER_STORAGE_BUFFER
 	 * @param bindingpoint: specify the index of the binding poi32 
 	 * @param offset:				the starting offset in bytes into the buffer object buffer
 	 * @param size:					the amount of data in bytes that can be read from the buffer
 	 */
-	void BindRange(i32 bindingpoint, i32 offset, u64 size) const;
-
-	/**
-	 * Unbind the buffer object
-	 */
-	void Unbind() const;
+	void BindRange(i32 target, i32 bindingpoint, i32 offset, u64 size) const;
 
 	u32 id;
-	
-	i32 target;
 };

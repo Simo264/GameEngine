@@ -5,7 +5,7 @@
 class TextureCubemap
 {
 public:
-	TextureCubemap();
+	TextureCubemap() : id{ 0 } {}
 	~TextureCubemap() = default;
 
 	/**
@@ -53,16 +53,6 @@ public:
    * Delete texture object and invalidates the name associated with the texture object
    */
   void Delete();
-
-  /**
-   * Bind texture object
-   */
-  void Bind() const;
-
-  /**
-   * Unbind texture object
-   */
-  void Unbind() const;
 
   /**
    * Bind the texture object to the specified texture unit

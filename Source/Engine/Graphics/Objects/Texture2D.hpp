@@ -31,7 +31,6 @@ class Texture2D
 {
 public:
   Texture2D() : 
-    target{ 0 },
     id{ 0 },
     internalFormat{ 0 },
     format{ 0 },
@@ -63,16 +62,6 @@ public:
    * Delete texture object and invalidates the name associated with the texture object 
    */
   void Delete();
-
-  /**
-   * Bind texture object
-   */
-  void Bind() const;
-
-  /**
-   * Unbind texture object
-   */
-  void Unbind() const;
 
   /**
    * Bind the texture object to the specified texture unit
@@ -153,13 +142,6 @@ public:
   
   u32 id;
 
-  i32 target;
-
-  /**
-   * Specifies the format of the pixel data.
-   * The following symbolic values are accepted:
-   * GL_RED, GL_RG, GL_RGB, GL_BGR, GL_RGBA, GL_BGRA, GL_DEPTH_COMPONENT, and GL_STENCIL_INDEX.
-   */
   i32 format;
   i32 internalFormat;
 

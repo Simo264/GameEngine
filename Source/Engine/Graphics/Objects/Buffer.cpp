@@ -3,8 +3,7 @@
 #include "Core/GL.hpp"
 #include "Core/Log/Logger.hpp"
 
-Buffer::Buffer(i32 target, u64 size, const void* data, i32 usage)
-	: target{ target }
+Buffer::Buffer(u64 size, const void* data, i32 usage)
 {
 	Create();
 	CreateStorage(size, data, usage);
@@ -46,22 +45,12 @@ bool Buffer::UnmapStorage() const
 	return glUnmapNamedBuffer(id);
 }
 
-void Buffer::Bind() const
-{
-	glBindBuffer(target, id);
-}
-
-void Buffer::BindBase(i32 bindingpoint) const
+void Buffer::BindBase(i32 target, i32 bindingpoint) const
 {
 	glBindBufferBase(target, bindingpoint, id);
 }
 
-void Buffer::BindRange(i32 bindingpoint, i32 offset, u64 size) const
+void Buffer::BindRange(i32 target, i32 bindingpoint, i32 offset, u64 size) const
 {
 	glBindBufferRange(target, bindingpoint, id, offset, size);
-}
-
-void Buffer::Unbind() const
-{
-	glBindBuffer(target, 0);
 }

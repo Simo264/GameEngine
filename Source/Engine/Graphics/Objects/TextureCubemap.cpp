@@ -7,14 +7,9 @@
 #include "Engine/Graphics/Objects/Texture2D.hpp"
 #include "Engine/Subsystems/TextureManager.hpp"
 
-TextureCubemap::TextureCubemap()
-	: id{ 0 },
-    target{ GL_TEXTURE_CUBE_MAP }
-{}
-
 void TextureCubemap::Create()
 {
-	glCreateTextures(target, 1, &id);
+	glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &id);
 }
 
 void TextureCubemap::CreateStorage(i32 internalFormat, i32 width, i32 height) const
@@ -42,14 +37,7 @@ void TextureCubemap::Delete()
   glDeleteTextures(1, &id);
   id = 0;
 }
-void TextureCubemap::Bind() const
-{
-  glBindTexture(target, id);
-}
-void TextureCubemap::Unbind() const
-{
-  glBindTexture(target, 0);
-}
+
 void TextureCubemap::BindTextureUnit(i32 unit) const
 {
   glBindTextureUnit(unit, id);

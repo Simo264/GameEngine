@@ -10,20 +10,27 @@ void VertexArray::Create()
 
 void VertexArray::Delete()
 {
-  if (vboAttachmentIDs.size() > 0 || eboAttachmentID != 0)
+  if (numVBOAttached > 0)
   {
-    if (eboAttachmentID != 0)
-      vboAttachmentIDs.push_back(eboAttachmentID);
+    u32 bufferIDs[MAX_NUM_VBO_ATTACHMENTS + 1]{};
+    i32 size = 0;
     
-    glDeleteBuffers(vboAttachmentIDs.size(), vboAttachmentIDs.data());
-  }
-  
-  /* Destroy Vector */
-  Vector<u32>().swap(vboAttachmentIDs);
-  eboAttachmentID = 0;
+    for (i32 i = 0; i < numVBOAttached; i++, size++)
+      bufferIDs[i] = vboAttachmentIDs[i];
 
+    if (eboAttachmentID != 0)
+      bufferIDs[size++] = eboAttachmentID;
+    
+    glDeleteBuffers(size, bufferIDs);
+  }
   glDeleteVertexArrays(1, &id);
+
   id = 0;
+  numVertices = 0;
+  numIndices = 0;
+  eboAttachmentID = 0;
+  numVBOAttached = 0;
+  std::fill_n(vboAttachmentIDs, MAX_NUM_VBO_ATTACHMENTS, 0);
 }
 
 void VertexArray::Bind() const
@@ -48,7 +55,7 @@ void VertexArray::DisableAttribute(i32 attribindex) const
 
 void VertexArray::AttachVertexBuffer(i32 bindingindex, u32 bufferID, i32 offset, i32 stride)
 {
-  vboAttachmentIDs.push_back(bufferID);
+  vboAttachmentIDs[numVBOAttached++] = bufferID;
   glVertexArrayVertexBuffer(id, bindingindex, bufferID, offset, stride);
 }
 
@@ -71,11 +78,4 @@ void VertexArray::SetAttribBinding(i32 attribindex, i32 bindingindex) const
 void VertexArray::SetBindingDivisor(i32 bindingindex, i32 divisor) const
 {
   glVertexArrayBindingDivisor(id, bindingindex, divisor);
-}
-
-void VertexArray::SetVertexSpecifications(const VertexSpecifications& specs) const
-{
-  SetAttribFormat(specs.attrindex, specs.components, specs.type, specs.normalized, specs.relativeoffset);
-  SetAttribBinding(specs.attrindex, specs.bindingindex);
-  EnableAttribute(specs.attrindex);
 }

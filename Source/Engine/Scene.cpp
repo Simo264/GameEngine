@@ -41,7 +41,7 @@ void Scene::ClearScene()
 		if(auto* model = object.GetComponent<Model>())
 			model->DestroyModel();
 		if (auto* mesh = object.GetComponent<Mesh>())
-			mesh->DestroyMesh();
+			mesh->Destroy();
 
 		object.Invalidate();
 	}

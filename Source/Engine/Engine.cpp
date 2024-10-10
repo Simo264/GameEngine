@@ -172,7 +172,7 @@ static void RenderScene(Scene& scene, Program& program)
   });
 }
 
-static void CreateSkybox(VertexArray& skybox, TextureCubemap& skyboxTexture)
+static Mesh CreateSkybox(TextureCubemap& skyboxTexture)
 {
   constexpr f32 vertices[] = {
     /* Position */
@@ -218,18 +218,15 @@ static void CreateSkybox(VertexArray& skybox, TextureCubemap& skyboxTexture)
     -1.0f, -1.0f,  1.0f,
      1.0f, -1.0f,  1.0f
   };
-  Buffer vbo(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+  Buffer vbo(sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-  skybox.Create();
-  skybox.AttachVertexBuffer(0, vbo.id, 0, sizeof(Vertex_P));
-  skybox.EnableAttribute(0);
-  skybox.SetAttribBinding(0, 0);
-  skybox.SetAttribFormat(0, 3, GL_FLOAT, false, 0);
-  skybox.numIndices = 0;
-  skybox.numVertices = 36;
+  Mesh skybox;
+  skybox.SetupAttribute(0, 0, VertexFormat(3, GL_FLOAT, false, 0));
+  skybox.vao.AttachVertexBuffer(0, vbo.id, 0, sizeof(Vertex_P));
+  skybox.vao.numVertices = 36;
 
   TextureManager& textureManager = TextureManager::Get();
-  const Array<Texture2D*, 6> images = {
+  Array<Texture2D*, 6> images = {
     &textureManager.GetTextureByPath(GetTexturesPath() / "skybox/right.jpg"),
     &textureManager.GetTextureByPath(GetTexturesPath() / "skybox/left.jpg"),
     &textureManager.GetTextureByPath(GetTexturesPath() / "skybox/top.jpg"),
@@ -244,12 +241,13 @@ static void CreateSkybox(VertexArray& skybox, TextureCubemap& skyboxTexture)
   skyboxTexture.Create();
   skyboxTexture.CreateStorage(cubemapInternalFormat, width, height);
   skyboxTexture.LoadImages(images);
-
   skyboxTexture.SetParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   skyboxTexture.SetParameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   skyboxTexture.SetParameteri(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   skyboxTexture.SetParameteri(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   skyboxTexture.SetParameteri(GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+  return skybox;
 }
 static FrameBuffer CreateDepthMapFbo(i32 width, i32 height)
 {
@@ -294,18 +292,8 @@ static FrameBuffer CreateDepthCubeMapFbo(i32 width, i32 height)
   fbo.AttachTexture(GL_DEPTH_ATTACHMENT, texture.id, 0);
   return fbo;
 }
-static VertexArray CreateTerrain(i32 rez)
+static Mesh CreateTerrain(i32 rez)
 {
-  VertexArray vao;
-  vao.Create();
-  vao.SetAttribFormat(0, 3, GL_FLOAT, false, offsetof(Vertex_P_UV, position));
-  vao.SetAttribBinding(0, 0);
-  vao.EnableAttribute(0);
-
-  vao.SetAttribFormat(1, 2, GL_FLOAT, false, offsetof(Vertex_P_UV, uv));
-  vao.SetAttribBinding(1, 0);
-  vao.EnableAttribute(1);
-
   auto& texManager = TextureManager::Get();
   Texture2D& heightMap = texManager.GetTextureByPath(GetTexturesPath() / "iceland_heightmap.png");
   i32 width = heightMap.width;
@@ -342,18 +330,17 @@ static VertexArray CreateTerrain(i32 rez)
       vertices.push_back((j + 1) / (f32)rez); // v
     }
   }
-  Buffer vbo(GL_ARRAY_BUFFER, vertices.size() * sizeof(f32), vertices.data(), GL_STATIC_DRAW);
-  vao.AttachVertexBuffer(0, vbo.id, 0, sizeof(Vertex_P_UV));
-
-  vao.numVertices = 4 * pow(rez, 2);
-  vao.numIndices = 0;
-
-  return vao;
+  Buffer vbo(vertices.size() * sizeof(f32), vertices.data(), GL_STATIC_DRAW);
+  
+  Mesh terrain;
+  terrain.SetupAttribute(0, 0, VertexFormat(3, GL_FLOAT, false, offsetof(Vertex_P_UV, position)));
+  terrain.SetupAttribute(1, 0, VertexFormat(2, GL_FLOAT, false, offsetof(Vertex_P_UV, uv)));
+  terrain.vao.AttachVertexBuffer(0, vbo.id, 0, sizeof(Vertex_P_UV));
+  terrain.vao.numVertices = 4 * pow(rez, 2);
+  return terrain;
 }
-static VertexArray CreateGridPlane()
+static Mesh CreateGridPlane()
 {
-  VertexArray gridVao;
-
   constexpr f32 vertices[] = {
        1.f,  1.f, 0.f,
       -1.f, -1.f, 0.f,
@@ -362,18 +349,14 @@ static VertexArray CreateGridPlane()
        1.f,  1.f, 0.f,
        1.f, -1.f, 0.f
   };
+  Buffer gridVbo(sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-  gridVao.Create();
-  gridVao.SetAttribFormat(0, 3, GL_FLOAT, false, 0);
-  gridVao.SetAttribBinding(0, 0);
-  gridVao.EnableAttribute(0);
+  Mesh grid;
+  grid.SetupAttribute(0, 0, VertexFormat(3, GL_FLOAT, false, 0));
+  grid.vao.AttachVertexBuffer(0, gridVbo.id, 0, 3 * sizeof(f32));
+  grid.vao.numVertices = 6;
 
-  Buffer gridVbo(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-  gridVao.AttachVertexBuffer(0, gridVbo.id, 0, 3 * sizeof(f32));
-  gridVao.numVertices = 6;
-  gridVao.numIndices = 0;
-
-  return gridVao;
+  return grid;
 }
 
 /* -----------------------------------------------------
@@ -423,8 +406,8 @@ void Engine::Initialize()
   /* Initialize uniform block objects */
   /* -------------------------------- */
   /* Reserve memory for both projection,view matrices */
-  _uboCamera = Buffer(GL_UNIFORM_BUFFER, 2 * sizeof(mat4f), nullptr, GL_STATIC_DRAW);
-  _uboCamera.BindBase(0); /* cameraBlock to bindingpoint 0 */
+  _uboCamera = Buffer(2 * sizeof(mat4f), nullptr, GL_STATIC_DRAW);
+  _uboCamera.BindBase(GL_UNIFORM_BUFFER, 0); /* cameraBlock to bindingpoint 0 */
 
   /* Set the initial OpenGL states */
   /* ----------------------------- */
@@ -433,12 +416,11 @@ void Engine::Initialize()
 void Engine::Run()
 {
   /* Create grid plane */
-  VertexArray gridVao = CreateGridPlane();
+  Mesh gridPlane = CreateGridPlane();
 
   /* Create skybox object */
   TextureCubemap skyboxTexture;
-  VertexArray skybox;
-  CreateSkybox(skybox, skyboxTexture);
+  Mesh skybox = CreateSkybox(skyboxTexture);
 
   /* Create scene object */
   Scene scene((GetRootPath() / "Scene.ini").string());
@@ -465,8 +447,8 @@ void Engine::Run()
   FrameBuffer fboDepthCubeMap = CreateDepthCubeMapFbo(1024, 1024);
 
   /* Prepare vertices for terrain */
-  i32 rez = 20;
-  VertexArray terrain = CreateTerrain(rez);
+  //i32 rez = 20;
+  //Mesh terrain = CreateTerrain(rez);
 
   /* ---------------------------------------------------------------------- */
   /* -------------------------- Pre-loop section -------------------------- */
@@ -559,7 +541,7 @@ void Engine::Run()
       scene.Reg().view<Model, Transform>().each([&](auto& model, auto& transform) {
         depthMapProgram.SetUniformMat4f("u_model", transform.GetTransformation());
         for (auto& mesh : model.meshes)
-          mesh.DrawMesh(GL_TRIANGLES);
+          mesh.Draw(GL_TRIANGLES);
       });
     }
     fboDepthMap.Unbind(GL_FRAMEBUFFER);
@@ -595,7 +577,7 @@ void Engine::Run()
       scene.Reg().view<Model, Transform>().each([&](auto& model, auto& transform) {
         depthCubeMapProgram.SetUniformMat4f("u_model", transform.GetTransformation());
         for(auto& mesh : model.meshes)
-          mesh.DrawMesh(GL_TRIANGLES);
+          mesh.Draw(GL_TRIANGLES);
       });
     }
     fboDepthCubeMap.Unbind(GL_FRAMEBUFFER);
@@ -648,7 +630,7 @@ void Engine::Run()
       /* Render the infinite grid */
       {
         gridPlaneProgram.Use();
-        Renderer::DrawArrays(GL_TRIANGLES, gridVao);
+        Renderer::DrawArrays(GL_TRIANGLES, gridPlane.vao);
       }
 
       /* Draw skybox after the scene */
@@ -658,7 +640,7 @@ void Engine::Run()
         skyboxProgram.SetUniformMat4f("u_view", mat4f(mat3f(cameraView)));
         skyboxTexture.BindTextureUnit(0);
         DepthTest::SetDepthFun(DepthFun::LEQUAL);
-        Renderer::DrawArrays(GL_TRIANGLES, skybox);
+        Renderer::DrawArrays(GL_TRIANGLES, skybox.vao);
         DepthTest::SetDepthFun(DepthFun::LESS);
       }
 
@@ -702,10 +684,13 @@ void Engine::Run()
     windowManager.SwapWindowBuffers();
   }
   
+  scene.ClearScene();
+
   fboDepthCubeMap.Delete();
   fboDepthMap.Delete();
   
-  skybox.Delete();
+  gridPlane.Destroy();
+  skybox.Destroy();
   skyboxTexture.Delete();
 }
 void Engine::CleanUp()
@@ -774,7 +759,7 @@ void Engine::CreateScreenSquare()
      1.0f, -1.0f,  1.0f, 0.0f,
      1.0f,  1.0f,  1.0f, 1.0f
   };
-  Buffer vbo(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+  Buffer vbo(sizeof(vertices), vertices, GL_STATIC_DRAW);
   _screenSquare.AttachVertexBuffer(0, vbo.id, 0, 4 * sizeof(f32));
 
   _screenSquare.SetAttribFormat(0, 2, GL_FLOAT, true, 0);

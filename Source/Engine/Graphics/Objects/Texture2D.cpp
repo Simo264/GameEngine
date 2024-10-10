@@ -23,7 +23,6 @@ void Texture2D::Create(i32 target)
   if (target != GL_TEXTURE_2D && target != GL_TEXTURE_2D_MULTISAMPLE)
     CONSOLE_WARN("Invalid Texture2D target");
 
-  this->target = target;
   glCreateTextures(target, 1, &id);
 }
 void Texture2D::Delete() 
@@ -31,14 +30,7 @@ void Texture2D::Delete()
   glDeleteTextures(1, &id); 
   id = 0;
 }
-void Texture2D::Bind() const 
-{
-  glBindTexture(target, id);
-}
-void Texture2D::Unbind() const
-{
-  glBindTexture(target, 0);
-}
+
 void Texture2D::BindTextureUnit(i32 unit) const
 {
   glBindTextureUnit(unit, id);
