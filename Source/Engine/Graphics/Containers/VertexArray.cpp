@@ -10,6 +10,7 @@ void VertexArray::Create()
 
 void VertexArray::Delete()
 {
+  i32 numVBOAttached = GetNumVBOAttached();
   if (numVBOAttached > 0)
   {
     u32 bufferIDs[MAX_NUM_VBO_ATTACHMENTS + 1]{};
@@ -29,7 +30,6 @@ void VertexArray::Delete()
   numVertices = 0;
   numIndices = 0;
   eboAttachmentID = 0;
-  numVBOAttached = 0;
   std::fill_n(vboAttachmentIDs, MAX_NUM_VBO_ATTACHMENTS, 0);
 }
 
@@ -55,7 +55,7 @@ void VertexArray::DisableAttribute(i32 attribindex) const
 
 void VertexArray::AttachVertexBuffer(i32 bindingindex, u32 bufferID, i32 offset, i32 stride)
 {
-  vboAttachmentIDs[numVBOAttached++] = bufferID;
+  vboAttachmentIDs[GetNumVBOAttached()] = bufferID;
   glVertexArrayVertexBuffer(id, bindingindex, bufferID, offset, stride);
 }
 
@@ -78,4 +78,10 @@ void VertexArray::SetAttribBinding(i32 attribindex, i32 bindingindex) const
 void VertexArray::SetBindingDivisor(i32 bindingindex, i32 divisor) const
 {
   glVertexArrayBindingDivisor(id, bindingindex, divisor);
+}
+
+i32 VertexArray::GetNumVBOAttached() const
+{
+  static auto countNonZero = [](u32 id) { return id != 0; };
+  return std::count_if(std::begin(vboAttachmentIDs), std::end(vboAttachmentIDs), countNonZero);
 }

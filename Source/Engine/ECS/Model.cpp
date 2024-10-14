@@ -17,12 +17,13 @@ static u32 totalSize = 0;
 static chrono::steady_clock::time_point timeStart;
 static chrono::steady_clock::time_point timeEnd;
 
-/* -------------------------- */
-/*          PUBLIC            */
-/* -------------------------- */
+/* ---------------------------------------------------- */
+/*										PUBLIC														*/
+/* ---------------------------------------------------- */
 
 Model::Model(StringView modelPath)
-	: strPath{ modelPath.data() }
+	: strPath{ modelPath.data() },
+		meshes{}
 {
 	CONSOLE_TRACE("Loading model {}...", strPath);
 	timeStart = chrono::high_resolution_clock::now();
@@ -50,11 +51,11 @@ Model::Model(StringView modelPath)
 
 	timeEnd = chrono::high_resolution_clock::now();
 	chrono::duration<f64> diff = timeEnd - timeStart;
-	CONSOLE_TRACE(".numMeshes={}", scene->mNumMeshes);
-	CONSOLE_TRACE(".totalVertices={} ", totalVertices);
-	CONSOLE_TRACE(".totalIndices={}", totalIndices);
-	CONSOLE_TRACE(".totalSize={} bytes", totalSize);
-	CONSOLE_TRACE(".time={}s", diff.count());
+	CONSOLE_TRACE("time: {}s", diff.count());
+	CONSOLE_TRACE("numMeshes: {}", scene->mNumMeshes);
+	CONSOLE_TRACE("totalVertices: {} ", totalVertices);
+	CONSOLE_TRACE("totalIndices: {}", totalIndices);
+	CONSOLE_TRACE("totalSize: {} bytes", totalSize);
 }
 void Model::DestroyModel()
 {
@@ -79,9 +80,9 @@ void Model::DrawModel(i32 mode)
 	}
 }
 
-/* -------------------------- */
-/*          PRIVATE           */
-/* -------------------------- */
+/* ---------------------------------------------------- */
+/*										PRIVATE														*/
+/* ---------------------------------------------------- */
 
 void Model::ProcessNode(aiNode* node, const aiScene* scene)
 {
@@ -97,21 +98,21 @@ void Model::ProcessNode(aiNode* node, const aiScene* scene)
 		aiMesh* aimesh = scene->mMeshes[node->mMeshes[i]];
 
 		/* Load vertex buffer */
-		const i32 numVertices = aimesh->mNumVertices;
-		const u64 vSize = numVertices * sizeof(Vertex_P_N_UV_T);
+		i32 numVertices = aimesh->mNumVertices;
+		u64 vSize = numVertices * sizeof(Vertex_P_N_UV_T);
 		Buffer vbo(vSize, nullptr, GL_STATIC_DRAW);
 		LoadVertices(aimesh, vbo);
 		mesh.vao.AttachVertexBuffer(0, vbo.id, 0, sizeof(Vertex_P_N_UV_T));
 
 		/* Load index buffer */
-		static const auto pred = [](i32 n, aiFace& face) { return n + face.mNumIndices; };
-		const i32 numIndices = std::reduce(
-			aimesh-> mFaces, 
+		static auto countIndices = [](i32 n, aiFace& face) { return n + face.mNumIndices; };
+		i32 numIndices = std::reduce(
+			aimesh->mFaces,
 			aimesh->mFaces + aimesh->mNumFaces, 
 			0, 
-			pred
+			countIndices
 		);
-		const u64 iSize = numIndices * sizeof(u32);
+		u64 iSize = numIndices * sizeof(u32);
 		Buffer ebo(iSize, nullptr, GL_STATIC_DRAW);
 		LoadIndices(aimesh, ebo);
 		mesh.vao.AttachElementBuffer(ebo.id);
@@ -124,13 +125,13 @@ void Model::ProcessNode(aiNode* node, const aiScene* scene)
 		if (aimesh->mMaterialIndex >= 0)
 		{
 			aiMaterial* material = scene->mMaterials[aimesh->mMaterialIndex];
-			if (Texture2D* diffuse = GetTexture(material, aiTextureType_DIFFUSE))
+			if (Texture2D* diffuse = GetMaterialTexture(material, aiTextureType_DIFFUSE))
 				mesh.material.diffuse = diffuse;
-			if (Texture2D* specular = GetTexture(material, aiTextureType_SPECULAR))
+			if (Texture2D* specular = GetMaterialTexture(material, aiTextureType_SPECULAR))
 				mesh.material.specular = specular;
-			if (Texture2D* normal = GetTexture(material, aiTextureType_NORMALS))
+			if (Texture2D* normal = GetMaterialTexture(material, aiTextureType_NORMALS))
 				mesh.material.normal = normal;
-			if (Texture2D* height = GetTexture(material, aiTextureType_HEIGHT))
+			if (Texture2D* height = GetMaterialTexture(material, aiTextureType_HEIGHT))
 				mesh.material.height = height;
 		}
 	}
@@ -185,7 +186,7 @@ void Model::LoadIndices(aiMesh* aimesh, Buffer& ebo)
 	}
 	ebo.UnmapStorage();
 }
-Texture2D* Model::GetTexture(aiMaterial* material, aiTextureType type)
+Texture2D* Model::GetMaterialTexture(aiMaterial* material, aiTextureType type)
 {
 	aiString fileName;
 	if (material->GetTexture(type, 0, &fileName) == aiReturn_SUCCESS)

@@ -23,7 +23,6 @@ public:
     numIndices{ 0 },
     numVertices{ 0 },
     eboAttachmentID{ 0 },
-    numVBOAttached{ 0 },
     vboAttachmentIDs{}
   {}
   ~VertexArray() = default;
@@ -114,6 +113,8 @@ public:
    */
   void SetBindingDivisor(i32 bindingindex, i32 divisor) const;
 
+  i32 GetNumVBOAttached() const;
+
   u32 id;
 
   u32 numVertices;
@@ -121,12 +122,11 @@ public:
 
   /* A VAO can only have one index buffer associated with it at any given time */
   u32 eboAttachmentID;
-
+  
   /**
    * A VAO can have several vertex buffers associated with it at the same time (MAX 16). 
    * This is handled via the mechanism of attribute binding points.
    */
   inline static constexpr i32 MAX_NUM_VBO_ATTACHMENTS = 16;
-  i32 numVBOAttached;
   u32 vboAttachmentIDs[MAX_NUM_VBO_ATTACHMENTS];
 };
