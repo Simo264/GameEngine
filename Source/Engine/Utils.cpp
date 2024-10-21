@@ -116,9 +116,9 @@ namespace Utils
 		return (str == "1" || str == "true");
 	}
 
-	u8* LoadImageData(StringView strPath, i32& width, i32& height, i32& nChannels)
+	u8* LoadImageData(const fs::path& imagePath, i32& width, i32& height, i32& nChannels)
 	{
-		u8* data = stbi_load(strPath.data(), &width, &height, &nChannels, 0);
+		u8* data = stbi_load(imagePath.string().c_str(), &width, &height, &nChannels, 0);
 		return data;
 	}
 

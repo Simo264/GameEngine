@@ -4,6 +4,7 @@
 #include "Core/Log/Logger.hpp"
 
 /**
+ * @brief
  * Tags provide a way of marking and identifying types of GameObject in your scene
  */
 class Tag

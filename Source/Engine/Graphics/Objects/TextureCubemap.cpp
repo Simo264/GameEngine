@@ -17,6 +17,11 @@ void TextureCubemap::CreateStorage(i32 internalFormat, i32 width, i32 height) co
   glTextureStorage2D(id, 1, internalFormat, width, height);
 }
 
+bool TextureCubemap::IsValid() const
+{
+  return (id != 0) && (glIsTexture(id) == GL_TRUE);
+}
+
 void TextureCubemap::SubImage3D(
   i32 level,
   i32 xoffset,

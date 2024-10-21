@@ -3,7 +3,8 @@
 #include "Core/Core.hpp"
 #include "Core/Math/Math.hpp"
 
-struct Frustum {
+struct Frustum 
+{
 	f32 left{ -10.0f };
 	f32 right{ 10.0f };
 	f32 bottom{ -10.0f };
@@ -13,6 +14,7 @@ struct Frustum {
 };
 
 /**
+ * @brief
  * When we're talking about camera/view space we're talking about all the vertex
  * coordinates as seen from the camera's perspective as the origin of the scene:
  * the view matrix transforms all the world coordinates into view coordinates
@@ -50,23 +52,28 @@ public:
 	const vec3f& GetUpVector() { return _up; }
 
 	/**
+	 * @brief
 	 * Update front, up and right vectors
 	 */
 	void UpdateOrientation();
 
 	/**
+	 * @brief
 	 * Calculate the view matrix
 	 *
-	 * @param center: position where the camera is looking at
+	 * @param 
+	 * center: position where the camera is looking at
 	 */
 	mat4f CalculateView(vec3f center) const;
 
 	/**
+	 * @brief
 	 * Calculate the projection matrix
 	 */
 	mat4f CalculatePerspective(f32 aspect) const;
 
 	/**
+	 * @brief
 	 * Calculate the projection matrix
 	 */
 	mat4f CalculateOrtho() const;

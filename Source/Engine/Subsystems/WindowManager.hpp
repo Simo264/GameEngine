@@ -22,9 +22,6 @@ struct WindowProps
   {}
 };
 
-/**
- *  Window manager singleton class
- */
 class WindowManager
 {
 public:
@@ -34,7 +31,8 @@ public:
   void operator=(const WindowManager&) = delete;
 
   /**
-   * Return the instance of this WindowManager singleton class
+   * @return
+   * The instance of this WindowManager singleton class
    */
   static WindowManager& Get()
   {
@@ -43,28 +41,25 @@ public:
   }
 
   /**
+   * @brief
    * Initialize GLFW and OpenGL libraries and create context
    */
   void Initialize(WindowProps props);
 
   /**
+   * @brief
    * Destroy window context and free GLFW resources
    */
   void CleanUp() const;
 
   /**
+   * @brief
    * Processes all pending events
    */
   void PoolEvents() const;
 
-  /**
-   * Close window
-   */
   void Close() const;
 
-  /**
-   * Check if window is open
-   */
   bool IsOpen() const;
 
   void SetWindowTitle(const char* title) const;

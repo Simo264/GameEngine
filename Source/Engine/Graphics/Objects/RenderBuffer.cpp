@@ -14,6 +14,11 @@ void RenderBuffer::Delete()
 	id = 0;
 }
 
+bool RenderBuffer::IsValid() const
+{
+	return (id != 0) && (glIsRenderbuffer(id) == GL_TRUE);
+}
+
 void RenderBuffer::CreateStorage(i32 internalFormat, i32 width, i32 height) const
 {
 	glNamedRenderbufferStorage(id, internalFormat, width, height);

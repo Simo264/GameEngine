@@ -84,3 +84,4 @@ extern const fs::path& GetTexturesPath();
 extern const fs::path& GetIconsPath();
 extern const fs::path& GetFontsPath();
 extern const fs::path& GetModelsPath();
+extern const fs::path& GetSkeletalsPath();

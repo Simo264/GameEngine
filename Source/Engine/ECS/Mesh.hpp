@@ -5,6 +5,7 @@
 #include "Engine/Graphics/Containers/VertexArray.hpp"
 
 /**
+ * @brief
  * A mesh typically refers to a collection of vertices, edges, and faces that define the shape of a 3D object.
  * A mesh is a fundamental concept in 3D computer graphics and is used to represent the geometry of objects
  * that are rendered in a scene.
@@ -21,7 +22,9 @@ public:
 	Mesh();
 	~Mesh() = default;
 
-	void SetupAttribute(i32 attribindex, i32 bindingindex, struct VertexFormat format) const;
+	void SetupAttributeFloat(i32 attribindex, i32 bindingindex, struct VertexFormat format) const;
+	void SetupAttributeInteger(i32 attribindex, i32 bindingindex, struct VertexFormat format) const;
+	void SetupAttributeLong(i32 attribindex, i32 bindingindex, struct VertexFormat format) const;
 
 	VertexArray vao;
 	Material material;

@@ -4,8 +4,8 @@
 #include "Core/Math/Math.hpp"
 
 /**
+ * @brief
  * https://registry.khronos.org/OpenGL/specs/gl/glspec46.core.pdf (chapter 7)
- * 
  * 
  * A shader specifies operations that are meant to occur on data as it moves
  * through different programmable stages of the OpenGL processing pipeline, 
@@ -26,46 +26,44 @@ public:
   ~Shader() = default;
 
   /**
+   * @brief
    * Creates an empty shader object and returns a non-zero value by which it can be referenced.
    * A shader object is used to maintain the source code strings that define a shader.
-   * 
-   * @param shaderType: specifies the type of shader to be created. Must be one of 
-   *                    GL_COMPUTE_SHADER, GL_VERTEX_SHADER, GL_TESS_CONTROL_SHADER, GL_TESS_EVALUATION_SHADER, 
-   *                    GL_GEOMETRY_SHADER, or GL_FRAGMENT_SHADER.
+   * See https://registry.khronos.org/OpenGL-Refpages/gl4/html/glCreateShader.xhtml
    */
   void Create(i32 shaderType);
 
   /**
+   * @brief
    * Frees the memory and invalidates the name associated with the shader object
    */
   void Delete();
 
   /**
+   * @brief
    * Replaces the source code in a shader object.
    * If shader previously had source code loaded into it, the existing source code is completely replaced.
    * 
    * @param source: specifies the source code to be loaded into the shader
-   * @param size: specifies the string length
    */
   void LoadSource(StringView source) const;
 
   /**
+   * @brief
    * Compiles the source code strings that have been stored in the shader object.
    */
   bool Compile() const;
 
   /**
-   * Return a parameter from a shader object
-   * 
-   * @param name: accepted symbolic names are:
-   *              GL_SHADER_TYPE, GL_DELETE_STATUS, GL_COMPILE_STATUS, GL_INFO_LOG_LENGTH, 
-   *              GL_SHADER_SOURCE_LENGTH.
+   * @return
+   * A parameter from a shader object. See https://registry.khronos.org/OpenGL-Refpages/gl4/html/glGetShader.xhtml
    */
   i32 GetParameteri(i32 name) const;
 
   /**
-   * Returns the information log for the specified shader object. 
-   * The information log for a shader object is modified when the shader is compiled.
+   * @return
+   * The information log for the specified shader object.
+   * The log for a shader object is modified when the shader is compiled.
    */
   const char* GetShaderInfo() const;
 
@@ -73,6 +71,7 @@ public:
 };
 
 /**
+ * @brief
  * https://registry.khronos.org/OpenGL/specs/gl/glspec46.core.pdf (chapter 7)
  * 
  * One or more shader objects are attached to a program object. 
@@ -99,51 +98,53 @@ public:
   ~Program() = default;
 
   /**
+   * @brief
    * Creates an empty program object and returns a non-zero value by which it can be referenced. 
    * A program object is an object to which shader objects can be attached.
    */
   void Create();
 
   /**
+   * @brief
    * Frees the memory and invalidates the name associated with the program object
    */
   void Delete();
 
   /**
+   * @brief
    * Attaches a shader object to the program object
    */
   void AttachShader(const Shader& shader) const;
 
   /**
+   * @brief
    * Detaches the shader object specified from the program object
    */
   void DetachShader(const Shader& shader) const;
 
   /**
+   * @brief
    * Links the program object specified.
-   * Returns the status of the link operation.
+   * 
+   * @return
+   * The status of the link operation.
    */
   bool Link() const;
     
   /**
-   * Returns a parameter from the program object. 
-   * 
-   * @param name: accepted symbolic names are:
-   *              GL_DELETE_STATUS, GL_LINK_STATUS, GL_VALIDATE_STATUS, GL_INFO_LOG_LENGTH, GL_ATTACHED_SHADERS, 
-   *              GL_ACTIVE_ATOMIC_COUNTER_BUFFERS, GL_ACTIVE_ATTRIBUTES, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH, GL_ACTIVE_UNIFORMS, 
-   *              GL_ACTIVE_UNIFORM_BLOCKS, GL_ACTIVE_UNIFORM_BLOCK_MAX_NAME_LENGTH, GL_ACTIVE_UNIFORM_MAX_LENGTH, 
-   *              GL_COMPUTE_WORK_GROUP_SIZE, GL_PROGRAM_BINARY_LENGTH, GL_TRANSFORM_FEEDBACK_BUFFER_MODE, 
-   *              GL_TRANSFORM_FEEDBACK_VARYINGS, GL_TRANSFORM_FEEDBACK_VARYING_MAX_LENGTH, GL_GEOMETRY_VERTICES_OUT, 
-   *              GL_GEOMETRY_INPUT_TYPE, and GL_GEOMETRY_OUTPUT_TYPE.
+   * @return
+   * A parameter from the program object. See https://registry.khronos.org/OpenGL-Refpages/gl4/html/glGetProgram.xhtml
    */
   i32 GetParameteri(i32 name) const;
 
   /**
-   * Returns the information log for the program object
+   * @return 
+   * The information log for the program object
    */
   const char* GetProgramInfo() const;
 
   /**
+   * @brief
    * Installs the program object specified as part of current rendering state. 
    * One or more executables are created in a program object by successfully attaching shader objects,
    * successfully compiling the shader objects, and successfully linking the program object.
@@ -151,21 +152,25 @@ public:
   void Use() const;
 
   /**
-   * Returns the location of a uniform variable
+   * @return
+   * The location of a uniform variable
    */
   i32 GetUniformLocation(StringView name) const;
 
   /**
-   * Retrieve the index of a named uniform block
+   * @return
+   * The index of a named uniform block
    */
   i32 GetUniformBlockIndex(StringView name) const;
 
   /**
+   * @brief
    * Assign a binding poi32 to an active uniform block
    */
   void SetUniformBlockBinding(StringView blockname, i32 uniformBlockBinding) const;
 
   /**
+   * @brief
    * Specify the value of a uniform variable for the program object
    */
   void SetUniform1i(StringView uniformname, i32 value) const;
@@ -182,5 +187,5 @@ public:
 
   u32 id;
 
-  char name[64]; /* <- only for debugging use */
+  char name[64]; /* useful for log */
 };

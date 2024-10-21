@@ -1,8 +1,8 @@
 #include "Extensions.hpp"
 
-// Include all GLM extensions
-#include <glm/ext.hpp>									// perspective, translate, rotate
-#include <glm/gtx/matrix_decompose.hpp> // decompose
+/* Include all GLM extensions */ 
+#include <glm/ext.hpp>									/* perspective, translate, rotate */ 
+#include <glm/gtx/matrix_decompose.hpp> /* decompose */ 
 
 
 namespace Math

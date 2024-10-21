@@ -25,13 +25,6 @@ void FontManager::Initialize()
 	}
 }
 
-Map<String, fs::path>::iterator FontManager::GetRecordByName(StringView fontName)
-{
-	const auto& it = _fonts.find(fontName.data());
-	assert(it != _fonts.end() && "Font does not exist");
-	return it;
-}
-
 /* -----------------------------------------------------  */
 /*                    PRIVATE                             */
 /* -----------------------------------------------------  */

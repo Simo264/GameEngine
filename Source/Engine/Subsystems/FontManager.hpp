@@ -2,9 +2,6 @@
 
 #include "Core/Core.hpp"
 
-/**
- * Load and retrieve texture objects
- */
 class FontManager
 {
 public:
@@ -20,14 +17,21 @@ public:
 		return fontManager;
 	}
 
-	Map<String, fs::path>::iterator GetRecordByName(StringView fontName);
-
 	/**
 	 * Load all fonts from default directory
 	 */
 	void Initialize();
 
-	const Map<String, fs::path>& GetFonts() const { return _fonts; }
+	/**
+	 * @return
+	 * A iterator to the mapped value of the element with specified key.
+	 * 
+	 * @throw 
+	 * If no such element exists, an exception of type std::out_of_range is thrown.
+	 */
+	auto GetRecordByName(StringView fontName) { return _fonts.find(fontName.data()); }
+
+	const auto& GetFonts() const { return _fonts; }
 
 private:
 	FontManager() = default;

@@ -1,7 +1,6 @@
 #include "Engine.hpp"
 
 #include "Core/GL.hpp"
-#include "Core/Math/Math.hpp"
 #include "Core/Math/Extensions.hpp"
 #include "Core/Log/Logger.hpp"
 
@@ -221,8 +220,8 @@ static Mesh CreateSkybox(TextureCubemap& skyboxTexture)
   Buffer vbo(sizeof(vertices), vertices, GL_STATIC_DRAW);
 
   Mesh skybox;
-  skybox.SetupAttribute(0, 0, VertexFormat(3, GL_FLOAT, false, 0));
-  skybox.vao.AttachVertexBuffer(0, vbo.id, 0, sizeof(Vertex_P));
+  skybox.SetupAttributeFloat(0, 0, VertexFormat(3, GL_FLOAT, false, 0));
+  skybox.vao.AttachVertexBuffer(0, vbo, 0, sizeof(Vertex_P));
   skybox.vao.numVertices = 36;
 
   TextureManager& textureManager = TextureManager::Get();
@@ -251,9 +250,6 @@ static Mesh CreateSkybox(TextureCubemap& skyboxTexture)
 }
 static FrameBuffer CreateDepthMapFbo(i32 width, i32 height)
 {
-  FrameBuffer fbo;
-  fbo.Create();
-
   /* Create a 2D texture that we'll use as the framebuffer's depth buffer */
   Texture2D depthMap;
   depthMap.Create(GL_TEXTURE_2D);
@@ -269,6 +265,8 @@ static FrameBuffer CreateDepthMapFbo(i32 width, i32 height)
   depthMap.SetParameterfv(GL_TEXTURE_BORDER_COLOR, Array<f32, 4>{ 1.0, 1.0, 1.0, 1.0 }.data());
 
   /* With the generated depth texture we can attach it as the framebuffer's depth buffer */
+  FrameBuffer fbo;
+  fbo.Create();
   fbo.AttachTexture(GL_DEPTH_ATTACHMENT, depthMap.id, 0);
   return fbo;
 }
@@ -333,9 +331,9 @@ static Mesh CreateTerrain(i32 rez)
   Buffer vbo(vertices.size() * sizeof(f32), vertices.data(), GL_STATIC_DRAW);
   
   Mesh terrain;
-  terrain.SetupAttribute(0, 0, VertexFormat(3, GL_FLOAT, false, offsetof(Vertex_P_UV, position)));
-  terrain.SetupAttribute(1, 0, VertexFormat(2, GL_FLOAT, false, offsetof(Vertex_P_UV, uv)));
-  terrain.vao.AttachVertexBuffer(0, vbo.id, 0, sizeof(Vertex_P_UV));
+  terrain.SetupAttributeFloat(0, 0, VertexFormat(3, GL_FLOAT, false, offsetof(Vertex_P_UV, position)));
+  terrain.SetupAttributeFloat(1, 0, VertexFormat(2, GL_FLOAT, false, offsetof(Vertex_P_UV, uv)));
+  terrain.vao.AttachVertexBuffer(0, vbo, 0, sizeof(Vertex_P_UV));
   terrain.vao.numVertices = 4 * pow(rez, 2);
   return terrain;
 }
@@ -352,8 +350,8 @@ static Mesh CreateGridPlane()
   Buffer gridVbo(sizeof(vertices), vertices, GL_STATIC_DRAW);
 
   Mesh grid;
-  grid.SetupAttribute(0, 0, VertexFormat(3, GL_FLOAT, false, 0));
-  grid.vao.AttachVertexBuffer(0, gridVbo.id, 0, 3 * sizeof(f32));
+  grid.SetupAttributeFloat(0, 0, VertexFormat(3, GL_FLOAT, false, 0));
+  grid.vao.AttachVertexBuffer(0, gridVbo, 0, 3 * sizeof(f32));
   grid.vao.numVertices = 6;
 
   return grid;
@@ -375,7 +373,7 @@ void Engine::Initialize()
   WindowManager::Get().Initialize(WindowProps(
     vec2i32{ WINDOW_WIDTH, WINDOW_HEIGHT },
     vec2i32{ 50, 50 }, 
-    "GameEngine", 
+    "GameEngine",
     vec2i32{ 16, 9 },
     false
   ));
@@ -415,6 +413,9 @@ void Engine::Initialize()
 }
 void Engine::Run()
 {
+  Skeletal skeletal(GetSkeletalsPath() / "sk_walk_anim.fbx");
+  exit(0);
+
   /* Create grid plane */
   Mesh gridPlane = CreateGridPlane();
 
@@ -423,7 +424,7 @@ void Engine::Run()
   Mesh skybox = CreateSkybox(skyboxTexture);
 
   /* Create scene object */
-  Scene scene((GetRootPath() / "Scene.ini").string());
+  Scene scene((GetRootPath() / "Scene.ini"));
 
   DirectionalLight* directionalLight = nullptr;
   scene.Reg().view<DirectionalLight>().each([&](auto& light) { directionalLight = &light; });
@@ -466,9 +467,9 @@ void Engine::Run()
   Program& skyboxProgram = shaderManager.GetProgramByName("Skybox");
   Program& terrainProgram = shaderManager.GetProgramByName("Terrain");
   Program& gridPlaneProgram = shaderManager.GetProgramByName("GridPlane");
-  u32 fboTexture = _fboIntermediate.textAttachmentIDs.at(0);
-  u32 depthMapTexture = fboDepthMap.textAttachmentIDs.at(0);
-  u32 depthCubeMapTexture = fboDepthCubeMap.textAttachmentIDs.at(0);
+  u32 fboTexture = _fboIntermediate.textAttachments.at(0);
+  u32 depthMapTexture = fboDepthMap.textAttachments.at(0);
+  u32 depthCubeMapTexture = fboDepthCubeMap.textAttachments.at(0);
   
   bool shadowMode = true;
   bool normalMapMode = true;
@@ -484,7 +485,7 @@ void Engine::Run()
     /* Set new font before BeginFrame */
     if (gui.changeFontFamily)
     {
-      gui.SetFont(gui.selectedFont.second->string());
+      gui.SetFont(*gui.selectedFont.second);
       gui.changeFontFamily = false;
     }
 
@@ -760,13 +761,13 @@ void Engine::CreateScreenSquare()
      1.0f,  1.0f,  1.0f, 1.0f
   };
   Buffer vbo(sizeof(vertices), vertices, GL_STATIC_DRAW);
-  _screenSquare.AttachVertexBuffer(0, vbo.id, 0, 4 * sizeof(f32));
+  _screenSquare.AttachVertexBuffer(0, vbo, 0, 4 * sizeof(f32));
 
-  _screenSquare.SetAttribFormat(0, 2, GL_FLOAT, true, 0);
+  _screenSquare.SetAttribFormatFLoat(0, 2, GL_FLOAT, true, 0);
   _screenSquare.SetAttribBinding(0, 0);
   _screenSquare.EnableAttribute(0);
 
-  _screenSquare.SetAttribFormat(1, 2, GL_FLOAT, true, 2 * sizeof(f32));
+  _screenSquare.SetAttribFormatFLoat(1, 2, GL_FLOAT, true, 2 * sizeof(f32));
   _screenSquare.SetAttribBinding(1, 0);
   _screenSquare.EnableAttribute(1);
   

@@ -360,10 +360,12 @@ static void Insp_Model_MeshMaterialRow(StringView label, Texture2D*& matTexture,
 
   if (ImGui::BeginCombo(comboId, (noTexture ? "Select texture" : matTexture->strPath.c_str())))
   {
-    for (auto& [key, texture] : texManager.GetTextures())
-      if (key.at(0) != '#' && ImGui::Selectable(key.c_str(), texture.Compare(*matTexture)))
+    for (auto& [path, texture] : texManager.GetTextures())
+    {
+      String strPath = path.string();
+      if (strPath.at(0) != '#' && ImGui::Selectable(strPath.c_str(), texture.Compare(*matTexture)))
         matTexture = &texture;
-
+    }
     ImGui::EndCombo();
   }
 
