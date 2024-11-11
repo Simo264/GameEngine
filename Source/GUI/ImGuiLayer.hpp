@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Core/Core.hpp"
-#include "Core/Math/Math.hpp"
+#include "Core/Math/Core.hpp"
 #include "Engine/Scene.hpp"
 #include "Engine/Camera.hpp"
 #include "Engine/ECS/ECS.hpp"
@@ -125,8 +125,8 @@ public:
 	 */
 	void Debug(bool shadowMode, bool normalMode, bool wireframeMode);
 
-	vec2i32 viewportSize;
-	vec2i32 viewportPos;
+	vec2i viewportSize;
+	vec2i viewportPos;
 	bool viewportFocused;
 
 	i32 fontSize;

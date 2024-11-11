@@ -1,6 +1,5 @@
 #include "Mesh.hpp"
 
-#include "Core/GL.hpp"
 #include "Core/Log/Logger.hpp"
 #include "Engine/Graphics/Vertex.hpp"
 #include "Engine/Graphics/Renderer.hpp"
@@ -28,14 +27,14 @@ void Mesh::SetupAttributeFloat(i32 attribindex, i32 bindingindex, VertexFormat f
 	vao.SetAttribFormatFLoat(attribindex, format.size, format.type, format.normalized, format.relativeoffset);
 }
 
-void Mesh::SetupAttributeInteger(i32 attribindex, i32 bindingindex, struct VertexFormat format) const
+void Mesh::SetupAttributeInteger(i32 attribindex, i32 bindingindex, VertexFormat format) const
 {
 	vao.EnableAttribute(attribindex);
 	vao.SetAttribBinding(attribindex, bindingindex);
 	vao.SetAttribFormatInteger(attribindex, format.size, format.type, format.relativeoffset);
 }
 
-void Mesh::SetupAttributeLong(i32 attribindex, i32 bindingindex, struct VertexFormat format) const
+void Mesh::SetupAttributeLong(i32 attribindex, i32 bindingindex, VertexFormat format) const
 {
 	vao.EnableAttribute(attribindex);
 	vao.SetAttribBinding(attribindex, bindingindex);

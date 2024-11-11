@@ -1,8 +1,9 @@
 #include "Core/Core.hpp"
+#include "Core/Math/Core.hpp"
+#include "Core/Math/Ext.hpp"
 
 #include "ImGuiLayer.hpp"
 
-#include "Core/Math/Extensions.hpp"
 #include "Engine/ECS/ECS.hpp"
 
 #include <imgui/imgui.h>
@@ -24,10 +25,12 @@ static void GizmoWorldTranslation(Transform& transform, const mat4f& view, const
 
   if (ImGuizmo::IsUsing())
   {
-    vec3f translation;
-    vec3f scale;
-    quat  rotation;
-    Math::Decompose(model, translation, rotation, scale);
+    vec3f translation{};
+    vec3f scale{};
+    quat  rotation{};
+    vec3f skew{};
+    vec4f perspective{};
+    glm::decompose(model, translation, rotation, scale, skew, perspective);
 
     transform.position = translation;
     transform.UpdateTransformation();
@@ -45,15 +48,17 @@ static void GizmoWorldRotation(Transform& transform, const mat4f& view, const ma
 
   if (ImGuizmo::IsUsing())
   {
-    vec3f translation;
-    vec3f scale;
-    quat  rotation;
-    Math::Decompose(model, translation, rotation, scale);
+    vec3f translation{};
+    vec3f scale{};
+    quat  rotation{};
+    vec3f skew{};
+    vec4f perspective{};
+    glm::decompose(model, translation, rotation, scale, skew, perspective);
 
-    vec3f rotationDegrees = Math::EulerAngles(rotation);  /* Get vector rotation in radians */
-    rotationDegrees.x = Math::Degrees(rotationDegrees.x); /* Convert it in degrees */
-    rotationDegrees.y = Math::Degrees(rotationDegrees.y);
-    rotationDegrees.z = Math::Degrees(rotationDegrees.z);
+    vec3f rotationDegrees = glm::eulerAngles(rotation);  /* Get vector rotation in radians */
+    rotationDegrees.x = glm::degrees(rotationDegrees.x); /* Convert it in degrees */
+    rotationDegrees.y = glm::degrees(rotationDegrees.y);
+    rotationDegrees.z = glm::degrees(rotationDegrees.z);
     const vec3f deltaRotation = rotationDegrees - transform.rotation;
 
     transform.rotation += deltaRotation;
@@ -72,10 +77,12 @@ static void GizmoWorldScaling(Transform& transform, const mat4f& view, const mat
 
   if (ImGuizmo::IsUsing())
   {
-    vec3f translation;
-    vec3f scale;
-    quat  rotation;
-    Math::Decompose(model, translation, rotation, scale);
+    vec3f translation{};
+    vec3f scale{};
+    quat  rotation{};
+    vec3f skew{};
+    vec4f perspective{};
+    glm::decompose(model, translation, rotation, scale, skew, perspective);
 
     transform.scale = scale;
     transform.UpdateTransformation();

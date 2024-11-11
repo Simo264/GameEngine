@@ -1,6 +1,6 @@
 #include "Core/Core.hpp"
 
-#include "Core/Math/Math.hpp"
+#include "Core/Math/Core.hpp"
 #include "Engine/Subsystems/TextureManager.hpp"
 
 #include <imgui/imgui.h>
@@ -14,7 +14,7 @@
 /*                    PUBLIC                  */
 /* ------------------------------------------ */
 
-void GUI_RenderTransformToolBar(vec2i32 viewportPos, i32& gizmode)
+void GUI_RenderTransformToolBar(vec2i viewportPos, i32& gizmode)
 {
   auto& texManager = TextureManager::Get();
   static const auto& expandIcon = texManager.GetIconByPath(GetIconsPath() / "expand-arrows-32.png");

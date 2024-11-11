@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Core/Core.hpp"
-#include "Core/Math/Math.hpp"
+#include "Core/Math/Core.hpp"
 
 #include "Engine/Graphics/Objects/Buffer.hpp"
 #include "Engine/Graphics/Containers/VertexArray.hpp"
@@ -27,5 +27,5 @@ private:
 	Buffer _uboCamera; /* Uniform cameraBlock object */
 
 	VertexArray _screenSquare;
-	vec2i32 _viewportSize;
+	vec2i _viewportSize;
 };

@@ -1,16 +1,14 @@
 #pragma once
 
 #include "Core/Core.hpp"
-#include "Core/Math/Math.hpp"
-#include "Mesh.hpp"
+#include "Core/Math/Core.hpp"
+#include "Engine/ECS/Mesh.hpp"
+#include "Bone.hpp"
 
-struct BoneInfo
-{
-  /* ID is index in finalBoneMatrices */
-  i32 id;
-  /* Offset matrix transforms vertex from model space to bone space */
-  mat4f offset;
-};
+struct Vertex_P_N_UV_T_B;
+struct aiMesh;
+struct aiNode;
+struct aiScene;
 
 /**
  * @brief
@@ -26,17 +24,23 @@ struct BoneInfo
  * Bones are connected to each other hierarchically (parent-child), and transformations 
  * (translations, rotations, scaling) applied to a parent bone are propagated to its children.
  */
-class Skeletal
+class Skeleton
 {
 public:
-	Skeletal(const fs::path& skeletalPath);
-	~Skeletal() = default;
+	Skeleton(const fs::path& skeletalPath);
+	~Skeleton() = default;
 
   Vector<Mesh> meshes;
   String strPath;
 
+  auto& GetBoneInfoMap() { return _boneInfoMap; }
+  i32& GetBoneCount() { return _boneCounter; }
+
+  void DrawSkeleton(i32 mode);
+
 private:
-  void ProcessNode(struct aiNode* node, const struct aiScene* scene);
+  void ProcessNode(aiNode* node, const aiScene* scene);
+  void LoadBonesAndWeights(Vector<Vertex_P_N_UV_T_B>& vertices, const aiMesh* aimesh);
 
   UnorderedMap<String, BoneInfo> _boneInfoMap;
   i32 _boneCounter;

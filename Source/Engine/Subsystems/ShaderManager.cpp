@@ -94,8 +94,7 @@ void ShaderManager::LoadShaders()
     bool success = emplaceResult.second;
     if (success)
     {
-      auto& it = emplaceResult.first;
-      Shader& shader = it->second;
+      Shader& shader = emplaceResult.first->second;
       shader.Create(shaderType);
       shader.LoadSource(source);
     }
@@ -117,7 +116,7 @@ void ShaderManager::CompileShaders()
 
 void ShaderManager::LoadPrograms()
 {
-  ConfigFile conf((GetRootPath() / SM_FILE_CONFIG).string());
+  ConfigFile conf((GetRootPath() / SM_FILE_CONFIG));
   conf.ReadData();
 
   for (auto const& it : conf.GetData())
@@ -182,6 +181,13 @@ void ShaderManager::SetProgramsUniforms()
   sceneShadowsProg.SetUniform1i("u_depthMapTexture", 10);
   sceneShadowsProg.SetUniform1i("u_depthCubeMapTexture", 11);
   sceneShadowsProg.SetUniform1i("u_useNormalMap", 0);
+
+  auto& skeletalAnimProg = GetProgramByName("SkeletalAnim");
+  skeletalAnimProg.SetUniform1i("u_material.diffuseTexture", 0);
+  skeletalAnimProg.SetUniform1i("u_material.specularTexture", 1);
+  skeletalAnimProg.SetUniform1i("u_material.normalTexture", 2);
+  skeletalAnimProg.SetUniform1i("u_material.heightTexture", 3);
+  skeletalAnimProg.SetUniform1i("u_useNormalMap", 0);
 
   auto& skyboxProg = GetProgramByName("Skybox");
   skyboxProg.SetUniform1i("u_skyboxTexture", 0);

@@ -17,9 +17,9 @@ namespace Utils
 		return std::stof(str.data());
 	}
 
-	vec2i32 StringToVec2i32(StringView str, char delimiter)
+	vec2i StringToVec2i(StringView str, char delimiter)
 	{
-		vec2i32 vec{};
+		vec2i vec{};
 
 		int offset;
 		int sepIdx;
@@ -59,9 +59,9 @@ namespace Utils
 		return vec;
 	}
 
-	vec3i32 StringToVec3i32(StringView str, char delimiter)
+	vec3i StringToVec3i(StringView str, char delimiter)
 	{
-		vec3i32 vec{};
+		vec3i vec{};
 
 		int offset;
 		int sepIdx;

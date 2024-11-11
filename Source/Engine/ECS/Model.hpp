@@ -3,6 +3,9 @@
 #include "Core/Core.hpp"
 #include "Mesh.hpp"
 
+struct aiScene;
+struct aiNode;
+
 /**
  * @brief
  * A Model is a three-dimensional object whose geometry and position do not change over time. 
@@ -31,5 +34,5 @@ public:
 	void DrawModel(i32 mode);
 
 private:
-	void ProcessNode(struct aiNode* node, const struct aiScene* scene);
+	void ProcessNode(aiNode* node, const aiScene* scene);
 };

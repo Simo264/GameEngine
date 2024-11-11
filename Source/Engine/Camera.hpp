@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Core/Core.hpp"
-#include "Core/Math/Math.hpp"
+#include "Core/Math/Core.hpp"
 
 struct Frustum 
 {
@@ -29,19 +29,14 @@ class Camera
 {
 public:
 	Camera(
-		vec3f position,
-		f32 yaw = -90.0f,
-		f32 pitch = 0.0f,
-		f32 roll = 0.0f
+		vec3f position		= vec3f(0.f),							/* x,y,z */
+		vec3f orientation = vec3f(-90.f, 0.f, 0.f),	/* yaw, pitch, roll */
+		f32 fov						= 45.f										/* Field of view in degrees */
 	);
 	~Camera() = default;
 
-	vec3f position;
-
-	/* Euler angles (in degrees) */
-	f32 yaw;
-	f32 pitch;
-	f32 roll;
+	vec3f position;			/* x,y,z */
+	vec3f orientation;	/* Euler angles: yaw, pitch, roll */
 
 	f32 fov;
 

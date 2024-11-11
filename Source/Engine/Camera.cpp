@@ -1,6 +1,6 @@
 #include "Engine/Camera.hpp"
 
-#include "Core/Math/Extensions.hpp"
+#include "Core/Math/Ext.hpp"
 
 #include "Engine/Globals.hpp"
 #include "Engine/Subsystems/WindowManager.hpp"
@@ -12,45 +12,46 @@
  * -----------------------------------------------------
 */
 
-Camera::Camera(vec3f position, f32 yaw, f32 pitch, f32 roll)
+Camera::Camera(vec3f position, vec3f orientation, f32 fov)
 	: position{ position },
-		yaw{ yaw },
-		pitch{ pitch },
-		roll{ roll },
-		fov{ 45.0f }
+		orientation{ orientation },
+		fov{ fov }
 {
 	UpdateOrientation();
 }
 
 void Camera::UpdateOrientation()
 {
+	f32 yaw = orientation.x;
+	f32 pitch = orientation.y;
+	f32 roll = orientation.z;
+
 	vec3f direction{};
-	direction.x = Math::Cos(Math::Radians(yaw)) * Math::Cos(Math::Radians(pitch));
-	direction.y = Math::Sin(Math::Radians(pitch));
-	direction.z = Math::Sin(Math::Radians(yaw)) * Math::Cos(Math::Radians(pitch));
+	direction.x = glm::cos(glm::radians(yaw)) * glm::cos(glm::radians(pitch));
+	direction.y = glm::sin(glm::radians(pitch));
+	direction.z = glm::sin(glm::radians(yaw)) * glm::cos(glm::radians(pitch));
 
-	_front = Math::Normalize(direction);
+	_front = glm::normalize(direction);
+	_right = glm::normalize(glm::cross(_front, vec3f(0.0f, 1.0f, 0.0f)));
 
-	_right = Math::Normalize(Math::Cross(_front, vec3f(0.0f, 1.0f, 0.0f)));
-
-	const mat4f rollMat = Math::Rotate(mat4f(1.0f), Math::Radians(roll), _front);
-	_up = Math::Normalize(Math::Cross(_right, _front));
+	const mat4f rollMat = glm::rotate(mat4f(1.0f), glm::radians(roll), _front);
+	_up = glm::normalize(glm::cross(_right, _front));
 	_up = mat3f(rollMat) * _up;
 }
 
 mat4f Camera::CalculateView(vec3f center) const
 {
-	return Math::LookAt(position, center, _up);
+	return glm::lookAt(position, center, _up);
 }
 
 mat4f Camera::CalculatePerspective(f32 aspect) const
 {
-	return Math::Perspective(Math::Radians(fov), aspect, frustum.zNear, frustum.zFar);
+	return glm::perspective(glm::radians(fov), aspect, frustum.zNear, frustum.zFar);
 }
 
 mat4f Camera::CalculateOrtho() const
 {
-	return Math::Ortho(frustum.left, frustum.right, frustum.bottom, frustum.top, frustum.zNear, frustum.zFar);
+	return glm::ortho(frustum.left, frustum.right, frustum.bottom, frustum.top, frustum.zNear, frustum.zFar);
 }
 
 void Camera::ProcessKeyboard(f32 delta, f32 movementSpeed)
@@ -97,7 +98,7 @@ void Camera::ProcessMouse(f32 delta, f32 mouseSensitivity)
 	if (windowManager.GetMouseKey(GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
 	{
 		vec2d mousePos = windowManager.GetCursorPosition();
-		vec2i32 windowSize = windowManager.GetWindowSize();
+		vec2i windowSize = windowManager.GetWindowSize();
 		static f32 lastX = (f32)windowSize.x / 2.0f;
 		static f32 lastY = (f32)windowSize.y / 2.0f;
 		static bool firstMouse = true;
@@ -108,8 +109,11 @@ void Camera::ProcessMouse(f32 delta, f32 mouseSensitivity)
 			firstMouse = false;
 		}
 
-		const f32 velocity = mouseSensitivity * delta * 10;
+		f32& yaw = orientation.x;
+		f32& pitch = orientation.y;
+		f32& roll = orientation.z;
 
+		const f32 velocity = mouseSensitivity * delta * 10;
 		const f32 xoffset = lastX - mousePos.x;
 		if (xoffset < 0) /* Right */
 			yaw += velocity;

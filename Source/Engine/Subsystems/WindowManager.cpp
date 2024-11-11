@@ -75,9 +75,9 @@ void WindowManager::SwapWindowBuffers() const
   glfwSwapBuffers(_context); 
 }
 
-vec2i32 WindowManager::GetWindowSize() const
+vec2i WindowManager::GetWindowSize() const
 {
-  vec2i32 res{};
+  vec2i res{};
   glfwGetWindowSize(_context, &res.x, &res.y);
   return res;
 }
@@ -87,9 +87,9 @@ void WindowManager::SetWindowSize(i32 w, i32 h) const
   glfwSetWindowSize(_context, w, h);
 }
 
-vec2i32 WindowManager::GetFramebufferSize() const
+vec2i WindowManager::GetFramebufferSize() const
 {
-  vec2i32 res{};
+  vec2i res{};
   glfwGetFramebufferSize(_context, &res.x, &res.y);
   return res;
 }
@@ -137,9 +137,9 @@ const char* WindowManager::GetVersion() const
   return glfwGetVersionString();
 }
 
-vec2i32 WindowManager::GetWindowPos() const
+vec2i WindowManager::GetWindowPos() const
 {
-  vec2i32 res{};
+  vec2i res{};
   glfwGetWindowPos(_context, &res.x, &res.y);
   return res;
 }

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Core/Core.hpp"
-#include "Core/Math/Math.hpp"
+#include "Core/Math/Core.hpp"
 
 /**
  * @brief
@@ -174,9 +174,9 @@ public:
    * Specify the value of a uniform variable for the program object
    */
   void SetUniform1i(StringView uniformname, i32 value) const;
-  void SetUniform2i(StringView uniformname, const vec2i32& value) const;
-  void SetUniform3i(StringView uniformname, const vec3i32& value) const;
-  void SetUniform4i(StringView uniformname, const vec4i32& value) const;
+  void SetUniform2i(StringView uniformname, const vec2i& value) const;
+  void SetUniform3i(StringView uniformname, const vec3i& value) const;
+  void SetUniform4i(StringView uniformname, const vec4i& value) const;
   void SetUniform1f(StringView uniformname, f32 value) const;
   void SetUniform2f(StringView uniformname, const vec2f& value) const;
   void SetUniform3f(StringView uniformname, const vec3f& value) const;

@@ -30,7 +30,7 @@ void VertexArray::Delete()
   numVertices = 0;
   numIndices = 0;
   eboAttachment = Buffer();
-  Vector<Buffer>().swap(vboAttachments);
+  vboAttachments.clear();
 }
 
 void VertexArray::Bind() const

@@ -18,8 +18,8 @@ void FrameBuffer::Delete()
 
 	glDeleteFramebuffers(1, &id);
 	id = 0;
-	Vector<u32>().swap(textAttachments);
-	Vector<u32>().swap(rboAttachments);
+	textAttachments.clear();
+	rboAttachments.clear();
 }
 
 void FrameBuffer::Bind(i32 target) const

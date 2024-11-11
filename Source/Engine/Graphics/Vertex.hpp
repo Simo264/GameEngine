@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core/Math/Math.hpp"
+#include "Core/Math/Core.hpp"
 
 struct VertexFormat
 {
@@ -57,7 +57,7 @@ struct Vertex_P_N_UV_T
   vec3f tangent{};
 };
 
-static constexpr i32 MAX_BONE_WEIGHTS = 4;
+static constexpr i32 MAX_BONE_INFLUENCE = 4;
 
 /**
  * @brief
@@ -69,12 +69,12 @@ struct Vertex_P_N_UV_T_B
   vec3f normal{};
   vec2f uv{};
   vec3f tangent{};
-	i32 boneIDs[MAX_BONE_WEIGHTS];
-	f32 boneWeights[MAX_BONE_WEIGHTS];
+	i32 boneIDs[MAX_BONE_INFLUENCE];
+	f32 boneWeights[MAX_BONE_INFLUENCE];
 
   Vertex_P_N_UV_T_B()
   {
-    for (i32 i = 0; i < MAX_BONE_WEIGHTS; i++)
+    for (i32 i = 0; i < MAX_BONE_INFLUENCE; i++)
     {
       boneIDs[i] = -1;
       boneWeights[i] = 0.f;

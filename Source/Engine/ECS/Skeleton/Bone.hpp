@@ -1,7 +1,17 @@
 #pragma once
 
 #include "Core/Core.hpp"
-#include "Core/Math/Math.hpp"
+#include "Core/Math/Core.hpp"
+
+struct aiNodeAnim;
+
+struct BoneInfo
+{
+  /* ID is index in finalBoneMatrices */
+  i32 id;
+  /* Offset matrix transforms vertex from model space to bone space */
+  mat4f offset;
+};
 
 /**
  * @brief 
@@ -66,7 +76,7 @@ struct KeyScale
 class Bone
 {
 public:
-  Bone(StringView name, i32 id, const struct aiNodeAnim* channel);
+  Bone(StringView name, i32 id, const aiNodeAnim* channel);
 
   /**
    * @brief 
@@ -110,21 +120,24 @@ public:
    */
   i32 GetScaleIndex(f32 animationTime);
 
+  const String& GetName() const { return _name; }
+  const mat4f& GetLocalTransform() const { return _localTransform; }
+
 private:
   f32 GetScaleFactor(f32 lastTimeStamp, f32 nextTimeStamp, f32 animationTime);
   mat4f InterpolatePosition(f32 animationTime);
   mat4f InterpolateRotation(f32 animationTime);
   mat4f InterpolateScaling(f32 animationTime);
 
-
-  Vector<KeyPosition> _positions;
-  Vector<KeyRotation> _rotations;
-  Vector<KeyScale>    _scales;
-  i32 _numPositions;
-  i32 _numRotations;
-  i32 _numScalings;
-
-  mat4f _localTransform;
   String _name;
   i32 _id;
+
+  Vector<KeyPosition> _positionKeys;
+  Vector<KeyRotation> _rotationKeys;
+  Vector<KeyScale>    _scaleKeys;
+  i32 _numPositionKeys;
+  i32 _numRotationKeys;
+  i32 _numScalingKeys;
+
+  mat4f _localTransform;
 };

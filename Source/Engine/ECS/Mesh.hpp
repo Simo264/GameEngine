@@ -4,6 +4,8 @@
 #include "Engine/Material.hpp"
 #include "Engine/Graphics/Containers/VertexArray.hpp"
 
+struct VertexFormat;
+
 /**
  * @brief
  * A mesh typically refers to a collection of vertices, edges, and faces that define the shape of a 3D object.
@@ -22,9 +24,9 @@ public:
 	Mesh();
 	~Mesh() = default;
 
-	void SetupAttributeFloat(i32 attribindex, i32 bindingindex, struct VertexFormat format) const;
-	void SetupAttributeInteger(i32 attribindex, i32 bindingindex, struct VertexFormat format) const;
-	void SetupAttributeLong(i32 attribindex, i32 bindingindex, struct VertexFormat format) const;
+	void SetupAttributeFloat(i32 attribindex, i32 bindingindex, VertexFormat format) const;
+	void SetupAttributeInteger(i32 attribindex, i32 bindingindex, VertexFormat format) const;
+	void SetupAttributeLong(i32 attribindex, i32 bindingindex, VertexFormat format) const;
 
 	VertexArray vao;
 	Material material;

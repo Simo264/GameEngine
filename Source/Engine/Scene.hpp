@@ -3,6 +3,8 @@
 #include "Core/Core.hpp"
 #include <entt/entt.hpp> /* Entity component system */
 
+class GameObject;
+
 /**
  * @brief
  * Scenes are where you work with content. They are assets that contain all or part of a game or application. 
@@ -29,13 +31,13 @@ public:
 	 * @brief
 	 * Create object in scene
 	 */
-	class GameObject CreateObject();
+	GameObject CreateObject();
 
 	/**
 	 * @brief
 	 * Destroy an entity and releases its identifier
 	 */
-	void DestroyObject(class GameObject& object);
+	void DestroyObject(GameObject& object);
 
 	/**
 	 * @return
