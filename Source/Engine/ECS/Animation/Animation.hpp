@@ -9,35 +9,34 @@ struct aiNode;
 
 struct AssimpNodeData
 {
-  mat4f transformation;
-  String name;
-  i32 childrenCount;
-  Vector<AssimpNodeData> children;
+	mat4f transformation;
+	String name;
+	i32 childrenCount;
+	Vector<AssimpNodeData> children;
 };
-
 
 class Animation
 {
 public:
 	Animation() = default;
-  Animation(const fs::path& animationPath, Skeleton& skeletal);
+	Animation(const fs::path& path, Skeleton& skeleton);
 	~Animation() = default;
 
-  Bone* FindBone(StringView name);
+	Bone* FindBone(const String& name);
 
-  f32 GetDuration() const { return _duration; }
-  i32 GetTicksPerSecond() const { return _ticksPerSecond; }
-  const AssimpNodeData& GetRootNode() const { return _rootNode; }
-  const auto& GetBoneInfoMap() const { return _boneInfoMap; }
+	float GetTicksPerSecond() const { return m_TicksPerSecond; }
+	float GetDuration() const { return m_Duration; }
+	const AssimpNodeData& GetRootNode() { return m_RootNode; }
+	const Map<String, BoneInfo>& GetBoneIDMap() { return m_BoneInfoMap; }
 
 private:
-  void ReadMissingBones(const aiAnimation* animation, Skeleton& skeletal);
-  void ReadHeirarchyData(AssimpNodeData& dest, const aiNode* src);
+	void ReadMissingBones(const aiAnimation* animation, Skeleton& skeleton);
+	void ReadHierarchyData(AssimpNodeData& dest, const aiNode* src);
 
-  f32 _duration;
-  i32 _ticksPerSecond;
 
-  Vector<Bone> _bones;
-  AssimpNodeData _rootNode;
-  UnorderedMap<String, BoneInfo> _boneInfoMap;
+	f32 m_Duration;
+	i32 m_TicksPerSecond;
+	Vector<Bone> m_Bones;
+	AssimpNodeData m_RootNode;
+	Map<String, BoneInfo> m_BoneInfoMap;
 };

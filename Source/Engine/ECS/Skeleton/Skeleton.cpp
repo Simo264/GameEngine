@@ -93,7 +93,6 @@ Skeleton::Skeleton(const fs::path& skeletalPath)
 
 	CONSOLE_TRACE("Skeletal loaded!");
 }
-
 void Skeleton::DrawSkeleton(i32 mode)
 {
 	for (auto& mesh : meshes)
@@ -149,32 +148,40 @@ void Skeleton::ProcessNode(aiNode* node, const aiScene* scene)
 	for (i32 i = 0; i < node->mNumChildren; i++)
 		ProcessNode(node->mChildren[i], scene);
 }
+
 void Skeleton::LoadBonesAndWeights(Vector<Vertex_P_N_UV_T_B>& vertices, const aiMesh* aimesh)
 {
+	auto& boneInfoMap = _boneInfoMap;
+	i32& boneCount = _boneCounter;
+
 	for (i32 boneIndex = 0; boneIndex < aimesh->mNumBones; ++boneIndex)
 	{
 		i32 boneID = -1;
 		String boneName = aimesh->mBones[boneIndex]->mName.C_Str();
-		if (_boneInfoMap.find(boneName) == _boneInfoMap.end())
+		if (boneInfoMap.find(boneName) == boneInfoMap.end())
 		{
-			BoneInfo newBoneInfo{};
-			newBoneInfo.id = _boneCounter;
+			BoneInfo newBoneInfo;
+			newBoneInfo.id = boneCount;
 			newBoneInfo.offset = AiMatrixToGLM(aimesh->mBones[boneIndex]->mOffsetMatrix);
-			_boneInfoMap[boneName] = newBoneInfo;
-			boneID = _boneCounter;
-			_boneCounter++;
+			boneInfoMap[boneName] = newBoneInfo;
+			boneID = boneCount;
+			boneCount++;
 		}
 		else
 		{
-			boneID = _boneInfoMap[boneName].id;
+			boneID = boneInfoMap[boneName].id;
 		}
-		aiVertexWeight* weights = aimesh->mBones[boneIndex]->mWeights;
-		u32 numWeights = aimesh->mBones[boneIndex]->mNumWeights;
-		for (i32 weightIndex = 0; weightIndex < numWeights; weightIndex++)
+		assert(boneID != -1);
+		auto weights = aimesh->mBones[boneIndex]->mWeights;
+		i32 numWeights = aimesh->mBones[boneIndex]->mNumWeights;
+
+		for (i32 weightIndex = 0; weightIndex < numWeights; ++weightIndex)
 		{
-			u32 vertexId = weights[weightIndex].mVertexId;
+			i32 vertexId = weights[weightIndex].mVertexId;
 			f32 weight = weights[weightIndex].mWeight;
-			for (i32 i = 0; i < MAX_BONE_INFLUENCE; i++)
+			assert(vertexId <= vertices.size());
+			
+			for (i32 i = 0; i < MAX_BONE_INFLUENCE; ++i)
 			{
 				if (vertices[vertexId].boneIDs[i] < 0)
 				{

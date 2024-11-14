@@ -1,5 +1,7 @@
 #include "Animation.hpp"
 
+#include "Core/Log/Logger.hpp"
+
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
@@ -19,60 +21,65 @@ static mat4f AiMatrixToGLM(const aiMatrix4x4& from)
 /*										PUBLIC														*/
 /* ---------------------------------------------------- */
 
-Animation::Animation(const fs::path& animationPath, Skeleton& skeletal)
+Animation::Animation(const fs::path& path, Skeleton& skeleton)
 {
 	Assimp::Importer importer;
-	const aiScene* scene = importer.ReadFile(animationPath.string(), aiProcess_Triangulate);
-
-	const aiAnimation* animation = scene->mAnimations[0];
-	_duration = animation->mDuration;
-	_ticksPerSecond = animation->mTicksPerSecond;
-	ReadHeirarchyData(_rootNode, scene->mRootNode);
-	ReadMissingBones(animation, skeletal);
+	const aiScene* scene = importer.ReadFile(path.string(), aiProcess_Triangulate);
+	assert(scene && scene->mRootNode);
+	
+	auto animation = scene->mAnimations[0];
+	m_Duration = animation->mDuration;
+	m_TicksPerSecond = animation->mTicksPerSecond;
+	
+	ReadHierarchyData(m_RootNode, scene->mRootNode);
+	ReadMissingBones(animation, skeleton);
 }
-
-Bone* Animation::FindBone(StringView name)
+Bone* Animation::FindBone(const String& name)
 {
-	static auto f = [&](const Bone& bone) { return bone.GetName() == name; };
-	auto it = std::find_if(_bones.begin(), _bones.end(), f);
-	if (it != _bones.end())
-		return &(*it);
-
-	return nullptr;
+	auto iter = std::find_if(m_Bones.begin(), m_Bones.end(),
+		[&](const Bone& Bone)
+		{
+			return Bone.GetBoneName() == name;
+		}
+	);
+	if (iter == m_Bones.end())
+		return nullptr;
+	
+	return &(*iter);
 }
+
 
 /* ---------------------------------------------------- */
 /*										PRIVATE														*/
 /* ---------------------------------------------------- */
 
-void Animation::ReadMissingBones(const aiAnimation* animation, Skeleton& skeletal)
+void Animation::ReadMissingBones(const aiAnimation* animation, Skeleton& skeleton)
 {
-	auto& boneInfoMap = skeletal.GetBoneInfoMap();/* getting the BoneInfoMap from Skeletal */ 
-	i32& boneCount = skeletal.GetBoneCount();			/* getting the BoneCounter from Skeletal */
+	int size = animation->mNumChannels;
 
-	/* Reading channels (bones engaged in an animation and their keyframes) */
-	for (i32 i = 0; i < animation->mNumChannels; i++)
+	auto& boneInfoMap = skeleton.GetBoneInfoMap();
+	int& boneCount = skeleton.GetBoneCount();
+
+	//reading channels(bones engaged in an animation and their keyframes)
+	for (i32 i = 0; i < size; i++)
 	{
-		const aiNodeAnim* channel = animation->mChannels[i];
-		const char* boneName = channel->mNodeName.data;
+		auto channel = animation->mChannels[i];
+		String boneName = channel->mNodeName.data;
 
-		i32 boneId = 0;
-		auto it = boneInfoMap.find(boneName);
-		if (it == boneInfoMap.end())
+		if (boneInfoMap.find(boneName) == boneInfoMap.end())
 		{
-			boneId = boneCount;
+			boneInfoMap[boneName].id = boneCount;
 			boneCount++;
-			boneInfoMap.emplace(boneName, BoneInfo(boneId, mat4f(1.0f)));
 		}
-		else
-			boneId = it->second.id;
-
-		_bones.emplace_back(boneName, boneId, channel);
+		m_Bones.push_back(Bone(channel->mNodeName.data, boneInfoMap[channel->mNodeName.data].id, channel));
 	}
-	_boneInfoMap = boneInfoMap;
+
+	m_BoneInfoMap = boneInfoMap;
 }
-void Animation::ReadHeirarchyData(AssimpNodeData& dest, const aiNode* src)
+void Animation::ReadHierarchyData(AssimpNodeData& dest, const aiNode* src)
 {
+	assert(src);
+
 	dest.name = src->mName.data;
 	dest.transformation = AiMatrixToGLM(src->mTransformation);
 	dest.childrenCount = src->mNumChildren;
@@ -80,7 +87,7 @@ void Animation::ReadHeirarchyData(AssimpNodeData& dest, const aiNode* src)
 	for (i32 i = 0; i < src->mNumChildren; i++)
 	{
 		AssimpNodeData newData;
-		ReadHeirarchyData(newData, src->mChildren[i]);
+		ReadHierarchyData(newData, src->mChildren[i]);
 		dest.children.push_back(newData);
 	}
 }

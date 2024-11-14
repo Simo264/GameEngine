@@ -10,6 +10,7 @@ struct aiMesh;
 struct aiNode;
 struct aiScene;
 
+
 /**
  * @brief
  * A Skeletal object refers to a three-dimensional model that uses an animation system based on a skeleton. 
@@ -35,13 +36,12 @@ public:
 
   auto& GetBoneInfoMap() { return _boneInfoMap; }
   i32& GetBoneCount() { return _boneCounter; }
-
   void DrawSkeleton(i32 mode);
 
 private:
   void ProcessNode(aiNode* node, const aiScene* scene);
   void LoadBonesAndWeights(Vector<Vertex_P_N_UV_T_B>& vertices, const aiMesh* aimesh);
 
-  UnorderedMap<String, BoneInfo> _boneInfoMap;
+  Map<String, BoneInfo> _boneInfoMap;
   i32 _boneCounter;
 };

@@ -476,7 +476,7 @@ void Engine::Run()
     _uboCamera.UpdateStorage(0, sizeof(cameraView), &cameraView[0]);
     _uboCamera.UpdateStorage(sizeof(cameraView), sizeof(cameraProj), &cameraProj[0]);
     
-    //animator.UpdateAnimation(delta);
+    animator.UpdateAnimation(delta);
 
     /* ----------------------------------------------------------------------- */
     /* -------------------------- Rendering section -------------------------- */
@@ -501,6 +501,7 @@ void Engine::Run()
         
       mat4f model = mat4f(1.f);
       model = glm::scale(model, vec3f(1.f/64.f));
+      //model = glm::translate(vec3f(0.f));
       skeletalAnimProgram.SetUniformMat4f("u_model", model);
       skeleton.DrawSkeleton(GL_TRIANGLES);
 
