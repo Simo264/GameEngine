@@ -423,8 +423,10 @@ void Engine::Run()
   Camera primaryCamera(vec3f(7.f, 4.f, 6), vec3f(-135.0f, -25.0f, 0.f));
   primaryCamera.frustum.zFar = 100.0f;
 
-  Skeleton skeleton(GetSkeletalsPath() / "sk_walk_anim.fbx");
-  Animation animation(GetSkeletalsPath() / "sk_walk_anim.fbx", skeleton);
+  // dancing_vampire.dae
+  // sk_walk_anim.fbx
+  Skeleton skeleton(GetSkeletalsPath() / "dancing_vampire.dae");
+  Animation animation(GetSkeletalsPath() / "dancing_vampire.dae", skeleton);
   Animator animator(&animation);
 
   /* ---------------------------------------------------------------------- */
@@ -493,16 +495,13 @@ void Engine::Run()
       auto& transforms = animator.GetFinalBoneMatrices();
       for (u64 i = 0; i < transforms.size(); i++)
       {
-        char uniform[64]{};
+        char uniform[32]{};
         std::format_to_n(uniform, sizeof(uniform), "u_finalBonesMatrices[{}]", i);
         skeletalAnimProgram.SetUniformMat4f(uniform, transforms[i]);
       }
       scene.Reg().view<DirectionalLight>().each([&](auto& light)  { RenderDirectionalLight(skeletalAnimProgram, light); });
         
-      mat4f model = mat4f(1.f);
-      model = glm::scale(model, vec3f(1.f/64.f));
-      //model = glm::translate(vec3f(0.f));
-      skeletalAnimProgram.SetUniformMat4f("u_model", model);
+      skeletalAnimProgram.SetUniformMat4f("u_model", mat4f(1.f));
       skeleton.DrawSkeleton(GL_TRIANGLES);
 
       

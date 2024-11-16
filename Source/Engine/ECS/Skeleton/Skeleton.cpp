@@ -36,9 +36,9 @@ static void LoadVertices(Vector<Vertex_P_N_UV_T_B>& vertices, aiMesh* aimesh)
 static void LoadIndices(Vector<u32>& indices, aiMesh* aimesh)
 {
 	indices.reserve(static_cast<u64>(aimesh->mNumFaces * 3));
-	for (u32 f = 0; f < aimesh->mNumFaces; f++)
+	for (u32 i = 0; i < aimesh->mNumFaces; i++)
 	{
-		aiFace face = aimesh->mFaces[f];
+		aiFace face = aimesh->mFaces[i];
 		for (u32 j = 0; j < face.mNumIndices; ++j)
 			indices.push_back(face.mIndices[j]);
 	}
@@ -152,44 +152,37 @@ void Skeleton::ProcessNode(aiNode* node, const aiScene* scene)
 void Skeleton::LoadBonesAndWeights(Vector<Vertex_P_N_UV_T_B>& vertices, const aiMesh* aimesh)
 {
 	auto& boneInfoMap = _boneInfoMap;
-	i32& boneCount = _boneCounter;
+	u32& boneCount = _boneCounter;
 
-	for (i32 boneIndex = 0; boneIndex < aimesh->mNumBones; ++boneIndex)
+	for (u32 boneIndex = 0; boneIndex < aimesh->mNumBones; boneIndex++)
 	{
 		i32 boneID = -1;
-		String boneName = aimesh->mBones[boneIndex]->mName.C_Str();
-		if (boneInfoMap.find(boneName) == boneInfoMap.end())
+		const char* boneName = aimesh->mBones[boneIndex]->mName.C_Str();
+
+		auto it = boneInfoMap.find(boneName);
+		if (it == boneInfoMap.end())
 		{
-			BoneInfo newBoneInfo;
-			newBoneInfo.id = boneCount;
-			newBoneInfo.offset = AiMatrixToGLM(aimesh->mBones[boneIndex]->mOffsetMatrix);
-			boneInfoMap[boneName] = newBoneInfo;
+			mat4f offset = AiMatrixToGLM(aimesh->mBones[boneIndex]->mOffsetMatrix);
+			boneInfoMap.emplace(boneName, BoneInfo(boneCount, offset));
 			boneID = boneCount;
 			boneCount++;
 		}
 		else
 		{
-			boneID = boneInfoMap[boneName].id;
+			boneID = it->second.id;
 		}
-		assert(boneID != -1);
-		auto weights = aimesh->mBones[boneIndex]->mWeights;
-		i32 numWeights = aimesh->mBones[boneIndex]->mNumWeights;
 
-		for (i32 weightIndex = 0; weightIndex < numWeights; ++weightIndex)
+		aiVertexWeight* weights = aimesh->mBones[boneIndex]->mWeights;
+		u32 numWeights = aimesh->mBones[boneIndex]->mNumWeights;
+		for (u32 weightIndex = 0; weightIndex < numWeights; weightIndex++)
 		{
-			i32 vertexId = weights[weightIndex].mVertexId;
+			u32 vertexId = weights[weightIndex].mVertexId;
 			f32 weight = weights[weightIndex].mWeight;
-			assert(vertexId <= vertices.size());
 			
-			for (i32 i = 0; i < MAX_BONE_INFLUENCE; ++i)
-			{
-				if (vertices[vertexId].boneIDs[i] < 0)
-				{
-					vertices[vertexId].boneWeights[i] = weight;
-					vertices[vertexId].boneIDs[i] = boneID;
-					break;
-				}
-			}
+			Vertex_P_N_UV_T_B& vertex = vertices.at(vertexId);
+			i32 i = std::count_if(std::begin(vertex.boneIDs), std::end(vertex.boneIDs), [](i32 id) { return id != -1; });
+			vertex.boneWeights[i] = weight;
+			vertex.boneIDs[i] = boneID;
 		}
 	}
 }

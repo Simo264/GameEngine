@@ -57,7 +57,7 @@ struct Vertex_P_N_UV_T
   vec3f tangent{};
 };
 
-static constexpr i32 MAX_BONE_INFLUENCE = 4;
+static constexpr u32 MAX_BONE_INFLUENCE = 4;
 
 /**
  * @brief
@@ -74,7 +74,7 @@ struct Vertex_P_N_UV_T_B
 
   Vertex_P_N_UV_T_B()
   {
-    for (i32 i = 0; i < MAX_BONE_INFLUENCE; i++)
+    for (u32 i = 0; i < MAX_BONE_INFLUENCE; i++)
     {
       boneIDs[i] = -1;
       boneWeights[i] = 0.f;

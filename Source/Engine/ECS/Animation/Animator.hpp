@@ -7,17 +7,20 @@
 class Animator
 {
 public:
-	Animator(Animation* animation);
+	Animator(Animation* animation) :
+		_currentAnimation{ animation },
+		_currentTime{ 0.f },
+		_finalBoneMatrices(100, mat4f(1.0f))
+	{}
 	~Animator() = default;
 
 	void UpdateAnimation(f32 dt);
 	void PlayAnimation(Animation* pAnimation);
 	void CalculateBoneTransform(const AssimpNodeData* node, mat4f parentTransform);
-	const Vector<mat4f>& GetFinalBoneMatrices() const { return m_FinalBoneMatrices; }
+	const Vector<mat4f>& GetFinalBoneMatrices() const { return _finalBoneMatrices; }
 
 private:
-	Vector<mat4f> m_FinalBoneMatrices;
-	Animation* m_CurrentAnimation;
-	f32 m_CurrentTime;
-	f32 m_DeltaTime;
+	Vector<mat4f> _finalBoneMatrices;
+	Animation* _currentAnimation;
+	f32 _currentTime;
 };

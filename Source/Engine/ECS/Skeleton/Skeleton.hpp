@@ -31,17 +31,17 @@ public:
 	Skeleton(const fs::path& skeletalPath);
 	~Skeleton() = default;
 
+  auto& GetBoneInfoMap() { return _boneInfoMap; }
+  u32& GetBoneCount() { return _boneCounter; }
+  void DrawSkeleton(i32 mode);
+
   Vector<Mesh> meshes;
   String strPath;
-
-  auto& GetBoneInfoMap() { return _boneInfoMap; }
-  i32& GetBoneCount() { return _boneCounter; }
-  void DrawSkeleton(i32 mode);
 
 private:
   void ProcessNode(aiNode* node, const aiScene* scene);
   void LoadBonesAndWeights(Vector<Vertex_P_N_UV_T_B>& vertices, const aiMesh* aimesh);
 
-  Map<String, BoneInfo> _boneInfoMap;
-  i32 _boneCounter;
+  UnorderedMap<String, BoneInfo> _boneInfoMap;
+  u32 _boneCounter;
 };

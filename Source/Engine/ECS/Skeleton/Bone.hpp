@@ -13,12 +13,17 @@ struct BoneInfo
 
 	/* offset matrix transforms vertex from model space to bone space */
 	mat4f offset;
+
+	BoneInfo(i32 id = 0, mat4f offset = mat4f(1.0f)) 
+		: id{ id },
+			offset{ offset }
+	{}
 };
 
 struct KeyPosition
 {
 	vec3f position;
-	float timeStamp;
+	f32 timeStamp;
 };
 
 struct KeyRotation
@@ -36,29 +41,26 @@ struct KeyScale
 class Bone
 {
 public:
-	Bone(const String& name, i32 ID, const aiNodeAnim* channel);
+	Bone(StringView name, i32 id, const aiNodeAnim* channel);
 	
 	void Update(f32 animationTime);
 	
-	mat4f GetLocalTransform() const { return m_LocalTransform; }
-	String GetBoneName() const { return m_Name; }
-	i32 GetBoneID() const { return m_ID; }
+	const mat4f& GetLocalTransform() const { return _localTransform; }
+	const String& GetBoneName() const { return _name; }
+	i32 GetBoneID() const { return _id; }
 
 	i32 GetPositionIndex(f32 animationTime);
 	i32 GetRotationIndex(f32 animationTime);
 	i32 GetScaleIndex(f32 animationTime);
 
 private:
-	Vector<KeyPosition> m_Positions;
-	Vector<KeyRotation> m_Rotations;
-	Vector<KeyScale> m_Scales;
-	i32 m_NumPositions;
-	i32 m_NumRotations;
-	i32 m_NumScalings;
+	Vector<KeyPosition> _positions;
+	Vector<KeyRotation> _rotations;
+	Vector<KeyScale>		_scales;
 
-	mat4f m_LocalTransform;
-	String m_Name;
-	i32 m_ID;
+	i32			_id;
+	String	_name;
+	mat4f		_localTransform;
 
 	f32 GetScaleFactor(f32 lastTimeStamp, f32 nextTimeStamp, f32 animationTime);
 	mat4f InterpolatePosition(f32 animationTime);
