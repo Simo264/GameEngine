@@ -1,9 +1,10 @@
 #pragma once
 
 #include "Core/Core.hpp"
-#include "Core/Math/Math.hpp"
+#include "Core/Math/Core.hpp"
 
 /**
+ * @brief
  * Represents the GameObject's transformation (location, rotation, scale) in world space
  */
 class Transform
@@ -13,11 +14,13 @@ public:
 	~Transform() = default;
 
 	/**
+	 * @brief
 	 * Update the transformation matrix. Call this function after changing position, scale or rotation.
 	 */
 	void UpdateTransformation();
 
 	/**
+	 * @brief
 	 * Calculate the model matrix
 	 */
 	constexpr mat4f& GetTransformation() { return _transformation; }

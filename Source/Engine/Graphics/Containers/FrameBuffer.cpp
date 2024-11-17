@@ -8,19 +8,18 @@ void FrameBuffer::Create()
 
 void FrameBuffer::Delete()
 {
-	u64 numTextures = textAttachmentIDs.size();
-	if (numTextures > 0)
-		glDeleteTextures(numTextures, textAttachmentIDs.data());
-	
-	u64 numRBOs = rboAttachmentIDs.size();
-	if (numRBOs > 0)
-		glDeleteRenderbuffers(numRBOs, rboAttachmentIDs.data());
+	u64 size = textAttachments.size();
+	if (size > 0)
+		glDeleteTextures(size, textAttachments.data());
 
-	Vector<u32>().swap(textAttachmentIDs);
-	Vector<u32>().swap(rboAttachmentIDs);
+	size = rboAttachments.size();
+	if (size > 0)
+		glDeleteTextures(size, rboAttachments.data());
 
 	glDeleteFramebuffers(1, &id);
 	id = 0;
+	textAttachments.clear();
+	rboAttachments.clear();
 }
 
 void FrameBuffer::Bind(i32 target) const
@@ -38,16 +37,21 @@ i32 FrameBuffer::CheckStatus() const
 	return glCheckNamedFramebufferStatus(id, GL_FRAMEBUFFER);
 }
 
-void FrameBuffer::AttachTexture(i32 attachment, u32 textureID, i32 level)
+bool FrameBuffer::IsValid() const
 {
-	glNamedFramebufferTexture(id, attachment, textureID, level);
-	textAttachmentIDs.push_back(textureID);
+	return (id != 0) && (glIsFramebuffer(id) == GL_TRUE);
 }
 
-void FrameBuffer::AttachRenderBuffer(i32 attachment, u32 renderbufferID)
+void FrameBuffer::AttachTexture(i32 attachment, u32 texture, i32 level)
 {
-	glNamedFramebufferRenderbuffer(id, attachment, GL_RENDERBUFFER, renderbufferID);
-	rboAttachmentIDs.push_back(renderbufferID);
+	textAttachments.push_back(texture);
+	glNamedFramebufferTexture(id, attachment, texture, level);
+}
+
+void FrameBuffer::AttachRenderBuffer(i32 attachment, u32 renderbuffer)
+{
+	rboAttachments.push_back(renderbuffer);
+	glNamedFramebufferRenderbuffer(id, attachment, GL_RENDERBUFFER, renderbuffer);
 }
 
 void FrameBuffer::Blit(

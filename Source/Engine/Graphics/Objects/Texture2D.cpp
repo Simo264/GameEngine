@@ -5,7 +5,7 @@
 
 #include "Engine/Utils.hpp"
 
-Texture2D::Texture2D(i32 target, StringView strPath, bool gammaCorrection)
+Texture2D::Texture2D(i32 target, const fs::path& imagePath, bool gammaCorrection)
   : id{ 0 },
     internalFormat{ 0 },
     format{ 0 },
@@ -15,7 +15,7 @@ Texture2D::Texture2D(i32 target, StringView strPath, bool gammaCorrection)
     strPath{}
 {
   Create(target);
-  LoadImageData(strPath, gammaCorrection);
+  LoadImageData(imagePath, gammaCorrection);
 }
 
 void Texture2D::Create(i32 target)
@@ -29,6 +29,11 @@ void Texture2D::Delete()
 { 
   glDeleteTextures(1, &id); 
   id = 0;
+}
+
+bool Texture2D::IsValid() const
+{
+  return (id != 0) && (glIsTexture(id) == GL_TRUE);
 }
 
 void Texture2D::BindTextureUnit(i32 unit) const
@@ -66,10 +71,10 @@ void Texture2D::ClearStorage(i32 level, i32 type, const void* data) const
   glClearTexImage(id, level, format, type, data);
 }
 
-void Texture2D::LoadImageData(StringView strPath, bool gammaCorrection)
+void Texture2D::LoadImageData(const fs::path& imagePath, bool gammaCorrection)
 {
   i32 width, height, nChannels, internalFormat{ GL_RGB8 };
-  u8* data = Utils::LoadImageData(strPath, width, height, nChannels);
+  u8* data = Utils::LoadImageData(imagePath, width, height, nChannels);
   if (data)
   {
     /**
@@ -102,7 +107,7 @@ void Texture2D::LoadImageData(StringView strPath, bool gammaCorrection)
     }
 
     this->nChannels = nChannels;
-    this->strPath = strPath.data();
+    this->strPath = imagePath.string();
 
     SetParameteri(GL_TEXTURE_WRAP_S, GL_REPEAT);
     SetParameteri(GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -119,9 +124,9 @@ void Texture2D::LoadImageData(StringView strPath, bool gammaCorrection)
   Utils::FreeImageData(data);
 }
 
-void Texture2D::GetTextureImage(i32 level, i32 type, i32 bufSize, void* pixels) const
+void Texture2D::GetTextureImage(i32 level, i32 type, i32 buffSize, void* pixels) const
 {
-  glGetTextureImage(id, level, format, type, bufSize, pixels);
+  glGetTextureImage(id, level, format, type, buffSize, pixels);
 }
 
 void Texture2D::SetParameteri(i32 name, i32 value) const

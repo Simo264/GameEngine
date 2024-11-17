@@ -137,7 +137,7 @@ void Program::SetUniform1i(StringView uniformname, i32 value) const
 
   glProgramUniform1i(id, loc, value);
 }
-void Program::SetUniform2i(StringView uniformname, const vec2i32& value) const
+void Program::SetUniform2i(StringView uniformname, const vec2i& value) const
 {
   i32 loc = GetUniformLocation(uniformname);
   if (loc == -1)
@@ -145,7 +145,7 @@ void Program::SetUniform2i(StringView uniformname, const vec2i32& value) const
 
   glProgramUniform2i(id, loc, value.x, value.y);
 }
-void Program::SetUniform3i(StringView uniformname, const vec3i32& value) const
+void Program::SetUniform3i(StringView uniformname, const vec3i& value) const
 {
   i32 loc = GetUniformLocation(uniformname);
   if (loc == -1)
@@ -153,7 +153,7 @@ void Program::SetUniform3i(StringView uniformname, const vec3i32& value) const
 
   glProgramUniform3i(id, loc, value.x, value.y, value.z);
 }
-void Program::SetUniform4i(StringView uniformname, const vec4i32& value) const
+void Program::SetUniform4i(StringView uniformname, const vec4i& value) const
 {
   i32 loc = GetUniformLocation(uniformname);
   if (loc == -1)

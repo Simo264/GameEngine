@@ -5,6 +5,7 @@
 #include <entt/entt.hpp> 
 
 /**
+ * @brief
  * GameObject is an identifier that represents an object in the game world.
  * It does not contain data per se, but acts as a "container" with wich components are associated.
  * The entity has no behaviour or state without components associated with it.

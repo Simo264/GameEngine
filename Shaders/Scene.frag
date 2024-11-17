@@ -98,7 +98,7 @@ void main()
   g_diffuseColor  = texture(u_material.diffuseTexture, TexCoord);
   g_specularColor = texture(u_material.specularTexture, TexCoord);
 
-  const vec3 ambientLight = (u_ambientLightColor * u_ambientLightIntensity) * g_diffuseColor.rgb;
+  //const vec3 ambientLight = (u_ambientLightColor * u_ambientLightIntensity) * g_diffuseColor.rgb;
   vec3 result = vec3(0.0f);
 
   /* =========================== */

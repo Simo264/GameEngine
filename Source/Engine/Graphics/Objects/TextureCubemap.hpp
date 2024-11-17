@@ -5,37 +5,28 @@
 class TextureCubemap
 {
 public:
-	TextureCubemap() : id{ 0 } {}
+	TextureCubemap() : 
+    id{ 0 } 
+  {}
 	~TextureCubemap() = default;
 
 	/**
+	 * @brief
 	 * Create texture object
 	 */
 	void Create();
 
   /**
-   * Allocate the entire cubemap with a single call glTextureStorage2D
-   *
-   * @param width:  specifies the width of the texture, in texels.
-   * @param height: specifies the height of the texture, in texels.
+   * @brief
+   * Allocate the entire cubemap with a single call glTextureStorage2D.
+   * See https://registry.khronos.org/OpenGL-Refpages/gl4/html/glTexStorage2D.xhtml
    */
   void CreateStorage(i32 internalFormat, i32 width, i32 height) const;
 
   /**
-   * Specify a three-dimensional texture subimage
-   *
-   * @param level:    specifies the level-of-detail number; 0 is the base image level. 
-   *                  Level n is the nth mipmap reduction image
-   * @param xoffset:  specifies a texel offset in the x direction within the texture array
-   * @param yoffset:  specifies a texel offset in the y direction within the texture array.
-   * @param zoffset:  specifies a texel offset in the z direction within the texture array.
-   * @param width:    specifies the width of the texture subimage
-   * @param height:   specifies the height of the texture subimage
-   * @param depth:    specifies the depth of the texture subimage
-   * @param format:   specifies the format of the pixel data. The following symbolic values are accepted:
-   *                  GL_RED, GL_RG, GL_RGB, GL_BGR, GL_RGBA, GL_DEPTH_COMPONENT, and GL_STENCIL_INDEX.
-   * @param type:     specifies the data type of the pixel data
-   * @param pixels:   specifies a pointer to the image data in memory
+   * @brief 
+   * Specify a three-dimensional texture subimage. 
+   * See https://registry.khronos.org/OpenGL-Refpages/gl4/html/glTexSubImage3D.xhtml
    */
   void SubImage3D(
     i32 level,
@@ -50,11 +41,13 @@ public:
     const void* pixels) const;
 
   /**
+   * @brief
    * Delete texture object and invalidates the name associated with the texture object
    */
   void Delete();
 
   /**
+   * @brief
    * Bind the texture object to the specified texture unit
    *
    * @param unit: specifies the texture unit, to which the texture object should be bound to
@@ -62,6 +55,7 @@ public:
   void BindTextureUnit(i32 unit) const;
 
   /**
+   * @brief
    * Set texture parameters
    */
   void SetParameteri(i32 name, i32 value) const;
@@ -71,7 +65,7 @@ public:
 
   void LoadImages(const Array<class Texture2D*, 6>& images) const;
 
-	u32 id;
+  bool IsValid() const;
 
-	i32 target;
+	u32 id;
 };

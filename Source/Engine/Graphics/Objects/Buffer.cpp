@@ -20,7 +20,12 @@ void Buffer::Delete()
 	id = 0;
 }
 
-void Buffer::CopyStorage(const Buffer& writeBuffer, i32 readOffset, i32 writeOffset, u64 size) const
+bool Buffer::IsValid() const
+{
+	return (id != 0) && (glIsBuffer(id) == GL_TRUE);
+}
+
+void Buffer::CopyStorage(Buffer writeBuffer, i32 readOffset, i32 writeOffset, u64 size) const
 {
 	glCopyNamedBufferSubData(id, writeBuffer.id, readOffset, writeOffset, size);
 }

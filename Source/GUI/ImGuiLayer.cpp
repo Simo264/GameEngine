@@ -18,7 +18,7 @@ extern void GUI_RenderHierarchy(bool& open, Scene& scene, GameObject& objSelecte
 extern void GUI_RenderViewport(bool& open, u32 texID, GameObject& objSelected, i32 gizmode, const mat4f& view, const mat4f& proj);
 extern void GUI_RenderInspector(bool& open, GameObject& object);
 extern void GUI_RenderContentBrowser(bool& open);
-extern void GUI_RenderTransformToolBar(vec2i32 viewportPos, i32& gizmode);
+extern void GUI_RenderTransformToolBar(vec2i viewportPos, i32& gizmode);
 //extern void GUI_RenderCameraProperties(bool& open, Camera& camera);
 
 /* -------------------------- */
@@ -34,7 +34,7 @@ void ImGuiLayer::Initialize()
   Styling();
 
   /* Load default font */
-  ConfigFile config((GetRootPath() / "Configuration.ini").string());
+  ConfigFile config(GetRootPath() / "Configuration.ini");
   config.ReadData();
   const String& fontFamily = config.GetValue("GUI", "font-family");
   fontSize = std::atoi(config.GetValue("GUI", "font-size").c_str());
@@ -71,11 +71,11 @@ void ImGuiLayer::EndFrame()
     windowManager.MakeContextCurrent(backCurrentContext);
   }
 }
-void ImGuiLayer::SetFont(StringView fontPath) const
+void ImGuiLayer::SetFont(const fs::path& ttfFilePath) const
 {
   ImGuiIO& io = ImGui::GetIO();
   io.Fonts->Clear();
-  io.Fonts->AddFontFromFileTTF(fontPath.data(), fontSize);
+  io.Fonts->AddFontFromFileTTF(ttfFilePath.string().c_str(), fontSize);
   io.Fonts->Build();
   
   ImGui_ImplOpenGL3_DestroyDeviceObjects();

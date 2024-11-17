@@ -9,3 +9,5 @@
 #include "Mesh.hpp"
 #include "Model.hpp"
 #include "Light.hpp"
+#include "Skeleton/Skeleton.hpp"
+#include "Animation/Animator.hpp"

@@ -3,9 +3,6 @@
 #include "Core/Core.hpp"
 #include "Engine/Graphics/Shader.hpp"
 
-/**
- * Load and retrieve shaders and programs 
- */
 class ShaderManager
 {
 public:
@@ -13,7 +10,8 @@ public:
 	void operator=(const ShaderManager&) = delete;
 
 	/**
-	 * Return the instance of this ShaderManager singleton class
+	 * @return
+	 * The instance of this ShaderManager singleton class
 	 */
 	static ShaderManager& Get()
 	{
@@ -22,30 +20,37 @@ public:
 	}
 
 	/**
+	 * @brief
 	 * Load all shaders and programs
 	 */
 	void Initialize();
 
 	/**
+	 * @brief
 	 * Destroy all shader objects and program objects
 	 */
 	void CleanUp();
 
 	/**
-	 * Returns a reference to the mapped value of the element with specified key. 
+	 * @return
+	 * A reference to the mapped value of the element with specified key. 
+	 * 
+	 * @throw 
 	 * If no such element exists, an exception of type std::out_of_range is thrown.
 	 */
 	Shader& GetShaderByName(StringView filename);
 
 	/**
-	 * Returns a reference to the mapped value of the element with specified key. 
+	 * @return
+	 * A reference to the mapped value of the element with specified key.
+	 * 
+	 * @throw 
 	 * If no such element exists, an exception of type std::out_of_range is thrown.
 	 */
 	Program& GetProgramByName(StringView name);
 
-	const UnorderedMap<String, Shader>& GetShaders() const { return _shaders; }
-	
-	const UnorderedMap<String, Program>& GetPrograms() const { return _programs; }
+	const auto& GetShaders() const { return _shaders; }
+	const auto& GetPrograms() const { return _programs; }
 	
 private:
 	ShaderManager() = default;

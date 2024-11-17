@@ -12,7 +12,7 @@
 /*								PUBLIC							 */
 /* ------------------------------------*/
 
-Scene::Scene(StringView filePath)
+Scene::Scene(const fs::path& filePath)
 {
 	LoadScene(filePath);
 }
@@ -49,14 +49,14 @@ void Scene::ClearScene()
 	/* Clear scene */
 	_registry.clear();
 }
-void Scene::LoadScene(StringView filePath)
+void Scene::LoadScene(const fs::path& filePath)
 {
-	CONSOLE_INFO("Loading scene {}...", filePath);
+	CONSOLE_INFO("Loading scene {}...", filePath.string());
 	DeserializeScene(filePath);
 }
-void Scene::SaveScene(StringView filePath)
+void Scene::SaveScene(const fs::path& filePath)
 {
-	CONSOLE_INFO("Saving scene {}...", filePath);
+	CONSOLE_INFO("Saving scene {}...", filePath.string());
 	SerializeScene(filePath);
 }
 
@@ -64,7 +64,7 @@ void Scene::SaveScene(StringView filePath)
 /*								PRIVATE							 */
 /* ------------------------------------*/
 
-void Scene::SerializeScene(StringView filePath)
+void Scene::SerializeScene(const fs::path& filePath)
 {
 	ConfigFile conf(filePath);
 	for (auto [entity, tag] : Reg().view<Tag>().each())
@@ -150,7 +150,7 @@ void Scene::SerializeScene(StringView filePath)
 	}
 	conf.Generate(true);
 }
-void Scene::DeserializeScene(StringView filePath)
+void Scene::DeserializeScene(const fs::path& filePath)
 {
 	ConfigFile conf(filePath);
 	conf.ReadData();
@@ -161,7 +161,7 @@ void Scene::DeserializeScene(StringView filePath)
 	{
 		const String& section = it.first;
 		StringView view{ section };
-		i32 dots = view.find_first_of(':');
+		u64 dots = view.find_first_of(':');
 		u32 objectId = std::strtoul(view.substr(6, (dots - 6)).data(), nullptr, 10);
 		StringView component = view.substr(dots + 1);
 
@@ -191,7 +191,7 @@ void Scene::DeserializeScene(StringView filePath)
 		else if (component == "Model")
 		{
 			const String& strPath = conf.GetValue(section, "path");
-			object.AddComponent<Model>(strPath);
+			object.AddComponent<Model>(strPath.c_str());
 		}
 		else if (component == "Light")
 		{

@@ -1,6 +1,5 @@
 #include "Mesh.hpp"
 
-#include "Core/GL.hpp"
 #include "Core/Log/Logger.hpp"
 #include "Engine/Graphics/Vertex.hpp"
 #include "Engine/Graphics/Renderer.hpp"
@@ -21,11 +20,25 @@ Mesh::Mesh()
 	material.height = &textureManager.GetDefaultHeight();
 }
 
-void Mesh::SetupAttribute(i32 attribindex, i32 bindingindex, VertexFormat format) const
+void Mesh::SetupAttributeFloat(i32 attribindex, i32 bindingindex, VertexFormat format) const
 {
 	vao.EnableAttribute(attribindex);
 	vao.SetAttribBinding(attribindex, bindingindex);
-	vao.SetAttribFormat(attribindex, format.size, format.type, format.normalized, format.relativeoffset);
+	vao.SetAttribFormatFLoat(attribindex, format.size, format.type, format.normalized, format.relativeoffset);
+}
+
+void Mesh::SetupAttributeInteger(i32 attribindex, i32 bindingindex, VertexFormat format) const
+{
+	vao.EnableAttribute(attribindex);
+	vao.SetAttribBinding(attribindex, bindingindex);
+	vao.SetAttribFormatInteger(attribindex, format.size, format.type, format.relativeoffset);
+}
+
+void Mesh::SetupAttributeLong(i32 attribindex, i32 bindingindex, VertexFormat format) const
+{
+	vao.EnableAttribute(attribindex);
+	vao.SetAttribBinding(attribindex, bindingindex);
+	vao.SetAttribFormatLong(attribindex, format.size, format.relativeoffset);
 }
 
 void Mesh::Destroy()

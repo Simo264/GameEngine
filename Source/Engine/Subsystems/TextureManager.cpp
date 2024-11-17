@@ -89,14 +89,14 @@ void TextureManager::LoadTextures()
       gamma = true;
     
     CONSOLE_TRACE("{}", entryPathString);
-    auto emplaceResult = _textures.emplace(entryPathString, Texture2D());
+    auto emplaceResult = _textures.emplace(entryPathString.c_str(), Texture2D());
     bool success = emplaceResult.second;
     if (success)
     {
       auto& it = emplaceResult.first;
       Texture2D& texture = it->second;
       texture.Create(GL_TEXTURE_2D);
-      texture.LoadImageData(entryPathString, gamma);
+      texture.LoadImageData(entryPath, gamma);
     }
     else
       CONSOLE_ERROR("Error on loading texture object");
@@ -113,14 +113,14 @@ void TextureManager::LoadIcons()
     String entryPathString = entryPath.string();
     
     CONSOLE_TRACE("{}", entryPathString);
-    auto emplaceResult = _icons.emplace(entryPathString, Texture2D());
+    auto emplaceResult = _icons.emplace(entryPathString.c_str(), Texture2D());
     bool success = emplaceResult.second;
     if (success)
     {
       auto& it = emplaceResult.first;
       Texture2D& texture = it->second;
       texture.Create(GL_TEXTURE_2D);
-      texture.LoadImageData(entryPathString, false);
+      texture.LoadImageData(entryPath, false);
     }
     else
       CONSOLE_ERROR("Error on loading texture object");

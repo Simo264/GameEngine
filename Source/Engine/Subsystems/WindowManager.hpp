@@ -1,19 +1,19 @@
 #pragma once
 
 #include "Core/Core.hpp"
-#include "Core/Math/Math.hpp"
+#include "Core/Math/Core.hpp"
 
 struct WindowProps 
 {
-  vec2i32 size;
-  vec2i32 position;
+  vec2i size;
+  vec2i position;
   StringView title;
 
-  vec2i32 aspectRatio;
+  vec2i aspectRatio;
 
   bool vsync;
 
-  WindowProps(vec2i32 size, vec2i32 position, const char* title, vec2i32 aspectRatio, bool vsync)
+  WindowProps(vec2i size, vec2i position, const char* title, vec2i aspectRatio, bool vsync)
     : size{ size },
       position{ position },
       title{ title }, 
@@ -22,9 +22,6 @@ struct WindowProps
   {}
 };
 
-/**
- *  Window manager singleton class
- */
 class WindowManager
 {
 public:
@@ -34,7 +31,8 @@ public:
   void operator=(const WindowManager&) = delete;
 
   /**
-   * Return the instance of this WindowManager singleton class
+   * @return
+   * The instance of this WindowManager singleton class
    */
   static WindowManager& Get()
   {
@@ -43,28 +41,25 @@ public:
   }
 
   /**
+   * @brief
    * Initialize GLFW and OpenGL libraries and create context
    */
   void Initialize(WindowProps props);
 
   /**
+   * @brief
    * Destroy window context and free GLFW resources
    */
   void CleanUp() const;
 
   /**
+   * @brief
    * Processes all pending events
    */
   void PoolEvents() const;
 
-  /**
-   * Close window
-   */
   void Close() const;
 
-  /**
-   * Check if window is open
-   */
   bool IsOpen() const;
 
   void SetWindowTitle(const char* title) const;
@@ -73,13 +68,13 @@ public:
 
   void SetWindowAspectRatio(i32 numer, i32 denom) const;
 
-  vec2i32 GetWindowSize() const;
+  vec2i GetWindowSize() const;
   
   void SetWindowSize(i32 w, i32 h) const;
 
-  vec2i32 GetWindowPos() const;
+  vec2i GetWindowPos() const;
 
-  vec2i32 GetFramebufferSize() const;
+  vec2i GetFramebufferSize() const;
 
   i32 GetKey(u32 key) const;
 

@@ -9,10 +9,10 @@
 class ConfigFile
 {
 public:
-	ConfigFile(StringView filePath)
+	ConfigFile(const fs::path& filePath)
 	{
 		/* Create a file instance */
-		_file = std::make_unique<mINI::INIFile>(filePath.data());
+		_file = std::make_unique<mINI::INIFile>(filePath.string());
 	}
 	~ConfigFile() = default;
 

@@ -17,9 +17,9 @@ namespace Utils
 		return std::stof(str.data());
 	}
 
-	vec2i32 StringToVec2i32(StringView str, char delimiter)
+	vec2i StringToVec2i(StringView str, char delimiter)
 	{
-		vec2i32 vec{};
+		vec2i vec{};
 
 		int offset;
 		int sepIdx;
@@ -59,9 +59,9 @@ namespace Utils
 		return vec;
 	}
 
-	vec3i32 StringToVec3i32(StringView str, char delimiter)
+	vec3i StringToVec3i(StringView str, char delimiter)
 	{
-		vec3i32 vec{};
+		vec3i vec{};
 
 		int offset;
 		int sepIdx;
@@ -116,9 +116,9 @@ namespace Utils
 		return (str == "1" || str == "true");
 	}
 
-	u8* LoadImageData(StringView strPath, i32& width, i32& height, i32& nChannels)
+	u8* LoadImageData(const fs::path& imagePath, i32& width, i32& height, i32& nChannels)
 	{
-		u8* data = stbi_load(strPath.data(), &width, &height, &nChannels, 0);
+		u8* data = stbi_load(imagePath.string().c_str(), &width, &height, &nChannels, 0);
 		return data;
 	}
 
