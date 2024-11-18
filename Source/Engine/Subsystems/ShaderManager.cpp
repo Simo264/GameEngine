@@ -162,33 +162,54 @@ void ShaderManager::LinkPrograms()
 
 void ShaderManager::SetProgramsUniforms()
 {
+  auto& skyboxProg = GetProgramByName("Skybox");
+  skyboxProg.SetUniform1i("u_skyboxTexture", 0);
+
   auto& framebufferProg = GetProgramByName("Framebuffer");
   framebufferProg.SetUniform1i("u_fboImageTexture", 0);
   framebufferProg.SetUniform1i("u_postProcessingType", 0);
 
   auto& sceneProg = GetProgramByName("Scene");
+  sceneProg.SetUniform1i("u_useNormalMap", 0);
   sceneProg.SetUniform1i("u_material.diffuseTexture", 0);
   sceneProg.SetUniform1i("u_material.specularTexture", 1);
   sceneProg.SetUniform1i("u_material.normalTexture", 2);
   sceneProg.SetUniform1i("u_material.heightTexture", 3);
-  sceneProg.SetUniform1i("u_useNormalMap", 0);
 
   auto& sceneShadowsProg = GetProgramByName("SceneShadows");
+  sceneShadowsProg.SetUniform1i("u_useNormalMap", 0);
   sceneShadowsProg.SetUniform1i("u_material.diffuseTexture", 0);
   sceneShadowsProg.SetUniform1i("u_material.specularTexture", 1);
   sceneShadowsProg.SetUniform1i("u_material.normalTexture", 2);
   sceneShadowsProg.SetUniform1i("u_material.heightTexture", 3);
   sceneShadowsProg.SetUniform1i("u_depthMapTexture", 10);
   sceneShadowsProg.SetUniform1i("u_depthCubeMapTexture", 11);
-  sceneShadowsProg.SetUniform1i("u_useNormalMap", 0);
-
+  
   auto& skeletalAnimProg = GetProgramByName("SkeletalAnim");
+  skeletalAnimProg.SetUniform1i("u_useNormalMap", 0);
   skeletalAnimProg.SetUniform1i("u_material.diffuseTexture", 0);
   skeletalAnimProg.SetUniform1i("u_material.specularTexture", 1);
   skeletalAnimProg.SetUniform1i("u_material.normalTexture", 2);
   skeletalAnimProg.SetUniform1i("u_material.heightTexture", 3);
-  skeletalAnimProg.SetUniform1i("u_useNormalMap", 0);
+  for (u64 i = 0; i < 100; i++)
+  {
+    char uniform[32]{};
+    std::format_to_n(uniform, sizeof(uniform), "u_finalBonesMatrices[{}]", i);
+    skeletalAnimProg.SetUniformMat4f(uniform, mat4f(1.0f));
+  }
 
-  auto& skyboxProg = GetProgramByName("Skybox");
-  skyboxProg.SetUniform1i("u_skyboxTexture", 0);
+  auto& skeletalAnimShadowsProg = GetProgramByName("SkeletalAnimShadows");
+  skeletalAnimShadowsProg.SetUniform1i("u_useNormalMap", 0);
+  skeletalAnimShadowsProg.SetUniform1i("u_material.diffuseTexture", 0);
+  skeletalAnimShadowsProg.SetUniform1i("u_material.specularTexture", 1);
+  skeletalAnimShadowsProg.SetUniform1i("u_material.normalTexture", 2);
+  skeletalAnimShadowsProg.SetUniform1i("u_material.heightTexture", 3);
+  skeletalAnimShadowsProg.SetUniform1i("u_depthMapTexture", 10);
+  skeletalAnimShadowsProg.SetUniform1i("u_depthCubeMapTexture", 11);
+  for (u64 i = 0; i < 100; i++)
+  {
+    char uniform[32]{};
+    std::format_to_n(uniform, sizeof(uniform), "u_finalBonesMatrices[{}]", i);
+    skeletalAnimShadowsProg.SetUniformMat4f(uniform, mat4f(1.0f));
+  }
 }

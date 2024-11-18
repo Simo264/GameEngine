@@ -116,59 +116,30 @@ static void CalculatePerFrameTime()
   }
 }
 
-static void RenderDirectionalLight(Program& program, const DirectionalLight& light)
+static void RenderModel(Program& program, Model& model, Transform& transform)
 {
-  program.SetUniform3f("u_directionalLight.color", light.color);
-  program.SetUniform1f("u_directionalLight.intensity", light.intensity);
-  program.SetUniform3f("u_directionalLight.direction", light.direction);
-}
-static void RenderPointLight(Program& program, const PointLight& light)
-{
-  program.SetUniform3f("u_pointLight.color", light.color);
-  program.SetUniform1f("u_pointLight.intensity", light.intensity);
-  program.SetUniform3f("u_pointLight.position", light.position);
-  program.SetUniform1f("u_pointLight.attenuation.kl", light.attenuation.kl);
-  program.SetUniform1f("u_pointLight.attenuation.kq", light.attenuation.kq);
-
-#if 0
-  program.SetUniform3f(std::format("u_pointLight[{}].color", i).c_str(), light.color);
-  program.SetUniform1f(std::format("u_pointLight[{}].intensity", i).c_str(), light.intensity);
-  program.SetUniform3f(std::format("u_pointLight[{}].position", i).c_str(), light.position);
-  program.SetUniform1f(std::format("u_pointLight[{}].attenuation.kl", i).c_str(), light.attenuation.kl);
-  program.SetUniform1f(std::format("u_pointLight[{}].attenuation.kq", i).c_str(), light.attenuation.kq);
-#endif
-}
-static void RenderSpotLight(Program& program, const SpotLight& light)
-{
-  program.SetUniform3f("u_spotLight.color", light.color);
-  program.SetUniform1f("u_spotLight.intensity", light.intensity);
-  program.SetUniform3f("u_spotLight.direction", light.direction);
-  program.SetUniform3f("u_spotLight.position", light.position);
-  program.SetUniform1f("u_spotLight.attenuation.kl", light.attenuation.kl);
-  program.SetUniform1f("u_spotLight.attenuation.kq", light.attenuation.kq);
-  program.SetUniform1f("u_spotLight.cutOff", light.cutOff);
-  program.SetUniform1f("u_spotLight.outerCutOff", light.outerCutOff);
+  program.SetUniformMat4f("u_model", transform.GetTransformation());
+  model.DrawModel(GL_TRIANGLES);
 }
 static void RenderScene(Scene& scene, Program& program)
 {
-  scene.Reg().view<DirectionalLight>().each([&](auto& light) {
-    RenderDirectionalLight(program, light);
-  });
-
-  //i32 i = 0;
-  scene.Reg().view<PointLight>().each([&](auto& light) {
-    RenderPointLight(program, light);
-    //i++;
-  });
-
-  scene.Reg().view<SpotLight>().each([&](auto& light) {
-    RenderSpotLight(program, light);
-  });
-
   scene.Reg().view<Model, Transform>().each([&](auto& model, auto& transform) {
-    program.SetUniformMat4f("u_model", transform.GetTransformation());
-    model.DrawModel(GL_TRIANGLES);
+    RenderModel(program, model, transform);
   });
+
+  //scene.Reg().view<Skeleton, Transform>().each([&](auto& skeleton, auto& transform) {
+  //  //scene.Reg().view<DirectionalLight>().each([&](auto& light) { RenderDirectionalLight(skeletalAnimProgram, light); });
+  //  //auto& transforms = animator.GetFinalBoneMatrices();
+  //  //for (u64 i = 0; i < transforms.size(); i++)
+  //  //{
+  //  //  char uniform[32]{};
+  //  //  std::format_to_n(uniform, sizeof(uniform), "u_finalBonesMatrices[{}]", i);
+  //  //  skeletalAnimProgram.SetUniformMat4f(uniform, transforms[i]);
+  //  //}
+  //  
+  //  skeletalAnimProgram.SetUniformMat4f("u_model", transform.GetTransformation());
+  //  skeleton.DrawSkeleton(GL_TRIANGLES);
+  //});
 }
 
 static Mesh CreateSkybox(TextureCubemap& skyboxTexture)
@@ -403,9 +374,21 @@ void Engine::Initialize()
 
   /* Initialize uniform block objects */
   /* -------------------------------- */
-  /* Reserve memory for both projection,view matrices */
-  _uboCamera = Buffer(2 * sizeof(mat4f), nullptr, GL_STATIC_DRAW);
+  /* Reserve memory for both projection and view matrices */
+  _uboCamera = Buffer(2 * sizeof(mat4f), nullptr, GL_STREAM_DRAW);
   _uboCamera.BindBase(GL_UNIFORM_BUFFER, 0); /* cameraBlock to bindingpoint 0 */
+
+  {
+    /* Reserve memory for DirectionalLight, PointLight and SpotLight structures */
+    DirectionalLight dl;
+    PointLight pl;
+    SpotLight sl;
+    _uboLight = Buffer(sizeof(dl) + sizeof(pl) + sizeof(sl), nullptr, GL_STREAM_DRAW);
+    _uboLight.UpdateStorage(0, sizeof(dl), reinterpret_cast<void*>(&dl));
+    _uboLight.UpdateStorage(sizeof(dl), sizeof(pl), reinterpret_cast<void*>(&pl));
+    _uboLight.UpdateStorage(sizeof(dl) + sizeof(pl), sizeof(sl), reinterpret_cast<void*>(&sl));
+    _uboLight.BindBase(GL_UNIFORM_BUFFER, 1); /* lightBlock to bindingpoint 1 */
+  }
 
   /* Set the initial OpenGL states */
   /* ----------------------------- */
@@ -413,21 +396,42 @@ void Engine::Initialize()
 }
 void Engine::Run()
 {
-  /* Create scene object */
-  Scene scene((GetRootPath() / "Scene.ini"));
+  /* Create grid plane */
+  Mesh gridPlane = CreateGridPlane();
 
+  /* Create skybox object */
+  TextureCubemap skyboxTexture;
+  Mesh skybox = CreateSkybox(skyboxTexture);
+
+  /* Create scene object */
+  Scene scene((GetRootPath() / "Scene.ini").string());
   DirectionalLight* directionalLight = nullptr;
   scene.Reg().view<DirectionalLight>().each([&](auto& light) { directionalLight = &light; });
+  PointLight* pointLight = nullptr;
+  scene.Reg().view<PointLight>().each([&](auto& light) { pointLight = &light; });
 
   /* Create primary camera object */
   Camera primaryCamera(vec3f(7.f, 4.f, 6), vec3f(-135.0f, -25.0f, 0.f));
   primaryCamera.frustum.zFar = 100.0f;
 
-  // dancing_vampire.dae
-  // sk_walk_anim.fbx
-  Skeleton skeleton(GetSkeletalsPath() / "dancing_vampire.dae");
-  Animation animation(GetSkeletalsPath() / "dancing_vampire.dae", skeleton);
-  Animator animator(&animation);
+  /* Create the directional light camera */
+  Camera directLightCamera(vec3f(0.0f, 10.0f, 10.0f));
+  directLightCamera.frustum.zFar = 30.0f;
+
+  /* Setting up the directional shadow mapping  */
+  FrameBuffer fboDepthMap = CreateDepthMapFbo(1024, 1024);
+  
+  /* Setting up the omnidirectional shadow mapping */
+  FrameBuffer fboDepthCubeMap = CreateDepthCubeMapFbo(1024, 1024);
+
+  /* Prepare vertices for terrain */
+  i32 rez = 20;
+  Mesh terrain = CreateTerrain(rez);
+  glPatchParameteri(GL_PATCH_VERTICES, 4);
+
+  //Skeleton skeleton(GetSkeletalsPath() / "dancing_vampire.dae");
+  //Animation animation(GetSkeletalsPath() / "dancing_vampire.dae", skeleton);
+  //Animator animator(&animation);
 
   /* ---------------------------------------------------------------------- */
   /* -------------------------- Pre-loop section -------------------------- */
@@ -438,7 +442,22 @@ void Engine::Run()
   ShaderManager& shaderManager = ShaderManager::Get();
   Program& skyboxProgram = shaderManager.GetProgramByName("Skybox");
   Program& gridPlaneProgram = shaderManager.GetProgramByName("GridPlane");
+  Program& terrainProgram = shaderManager.GetProgramByName("Terrain");
+  Program& depthMapProgram = shaderManager.GetProgramByName("DepthMap");
+  Program& depthCubeMapProgram = shaderManager.GetProgramByName("DepthCubeMap");
+  Program& sceneProgram = shaderManager.GetProgramByName("Scene");
+  Program& sceneShadowsProgram = shaderManager.GetProgramByName("SceneShadows");
   Program& skeletalAnimProgram = shaderManager.GetProgramByName("SkeletalAnim");
+  Program& skeletalAnimShadowsProgram = shaderManager.GetProgramByName("SkeletalAnimShadows");
+  Texture2D& heightMap = textureManager.GetTextureByPath(GetTexturesPath() / "iceland_heightmap.png");
+
+  constexpr bool renderTerrain = false;
+  constexpr bool renderInfiniteGrid = true;
+  constexpr bool renderSkybox = true;
+
+  bool shadowMode = false;
+  bool normalMapMode = false;
+  bool wireframeMode = false;
   
   /* ------------------------------------------------------------------ */
   /* -------------------------- loop section -------------------------- */
@@ -467,6 +486,19 @@ void Engine::Run()
     {
       primaryCamera.ProcessKeyboard(delta, 5.0f);
       primaryCamera.ProcessMouse(delta, 15.0f);
+
+      if (windowManager.GetKey(GLFW_KEY_F1) == GLFW_PRESS) 
+        shadowMode = true;
+      else if (windowManager.GetKey(GLFW_KEY_F2) == GLFW_PRESS) 
+        shadowMode = false;
+      if (windowManager.GetKey(GLFW_KEY_F5) == GLFW_PRESS) 
+        normalMapMode = true;
+      else if (windowManager.GetKey(GLFW_KEY_F6) == GLFW_PRESS) 
+        normalMapMode = false;
+      if (windowManager.GetKey(GLFW_KEY_F9) == GLFW_PRESS) 
+        wireframeMode = true;
+      else if (windowManager.GetKey(GLFW_KEY_F10) == GLFW_PRESS) 
+        wireframeMode = false;
     }
 
     /* -------------------------------------------------------------------- */
@@ -475,36 +507,199 @@ void Engine::Run()
     primaryCamera.UpdateOrientation();
     mat4f cameraView = primaryCamera.CalculateView(primaryCamera.position + primaryCamera.GetFrontVector());
     mat4f cameraProj = primaryCamera.CalculatePerspective(static_cast<f32>(_viewportSize.x) / static_cast<f32>(_viewportSize.y));
-    _uboCamera.UpdateStorage(0, sizeof(cameraView), &cameraView[0]);
-    _uboCamera.UpdateStorage(sizeof(cameraView), sizeof(cameraProj), &cameraProj[0]);
-    
-    animator.UpdateAnimation(delta);
+    _uboCamera.UpdateStorage(0, sizeof(cameraView), reinterpret_cast<void*>(&cameraView[0]));  /* Update u_view */
+    _uboCamera.UpdateStorage(sizeof(cameraView), sizeof(cameraProj), reinterpret_cast<void*>(&cameraProj[0])); /* Update u_projection */
+
+    directLightCamera.UpdateOrientation();
+    mat4f directLightProjection = directLightCamera.CalculateOrtho();
+    mat4f directLightView = directLightCamera.CalculateView(directionalLight->direction);
+    _uboLight.UpdateStorage(0, sizeof(DirectionalLight), reinterpret_cast<void*>(directionalLight));  /* Update u_directionalLight */
+    _uboLight.UpdateStorage(sizeof(DirectionalLight), sizeof(PointLight), reinterpret_cast<void*>(pointLight)); /* Update u_pointLight */
+    //_uboLight.UpdateStorage(sizeof(DirectionalLight) + sizeof(PointLight), sizeof(SpotLight), reinterpret_cast<void*>(...)); /* Update u_spotLight */
+
+    //animator.UpdateAnimation(delta);
 
     /* ----------------------------------------------------------------------- */
     /* -------------------------- Rendering section -------------------------- */
     /* ----------------------------------------------------------------------- */
 
-    /* Fill the framebuffer color texture */
+    ///* Fill the depth map from directional light's perspective */
+    fboDepthMap.Bind(GL_FRAMEBUFFER);
+    {
+      glViewport(0, 0, 1024, 1024);
+      glClear(GL_DEPTH_BUFFER_BIT);
+      depthMapProgram.Use();
+      depthMapProgram.SetUniformMat4f("u_lightView", directLightView);
+      depthMapProgram.SetUniformMat4f("u_lightProjection", directLightProjection);
+      scene.Reg().view<Model, Transform>().each([&](auto& model, auto& transform) {
+        depthMapProgram.SetUniformMat4f("u_model", transform.GetTransformation());
+        for (auto& mesh : model.meshes)
+          mesh.Draw(GL_TRIANGLES);
+      });
+    }
+    fboDepthMap.Unbind(GL_FRAMEBUFFER);
+
+    ///* Fill the depth map from point light's perspective */
+    fboDepthCubeMap.Bind(GL_FRAMEBUFFER);
+    {
+      glViewport(0, 0, 1024, 1024);
+      glClear(GL_DEPTH_BUFFER_BIT);
+
+      const vec3f& lightPos = pointLight->position;
+      mat4f pointLightProj = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 15.0f);
+
+      Array<mat4f, 6> pointLightViews{};
+      pointLightViews[0] = glm::lookAt(lightPos, lightPos + vec3f(1.0f, 0.0f, 0.0f), vec3f(0.0f, -1.0f, 0.0f));
+      pointLightViews[1] = glm::lookAt(lightPos, lightPos + vec3f(-1.0f, 0.0f, 0.0f), vec3f(0.0f, -1.0f, 0.0f));
+      pointLightViews[2] = glm::lookAt(lightPos, lightPos + vec3f(0.0f, 1.0f, 0.0f), vec3f(0.0f, 0.0f, 1.0f));
+      pointLightViews[3] = glm::lookAt(lightPos, lightPos + vec3f(0.0f, -1.0f, 0.0f), vec3f(0.0f, 0.0f, -1.0f));
+      pointLightViews[4] = glm::lookAt(lightPos, lightPos + vec3f(0.0f, 0.0f, 1.0f), vec3f(0.0f, -1.0f, 0.0f));
+      pointLightViews[5] = glm::lookAt(lightPos, lightPos + vec3f(0.0f, 0.0f, -1.0f), vec3f(0.0f, -1.0f, 0.0f));
+
+      depthCubeMapProgram.Use();
+      depthCubeMapProgram.SetUniformMat4f("u_lightProjection", pointLightProj);
+      depthCubeMapProgram.SetUniformMat4f("u_lightViews[0]", pointLightViews.at(0));
+      depthCubeMapProgram.SetUniformMat4f("u_lightViews[1]", pointLightViews.at(1));
+      depthCubeMapProgram.SetUniformMat4f("u_lightViews[2]", pointLightViews.at(2));
+      depthCubeMapProgram.SetUniformMat4f("u_lightViews[3]", pointLightViews.at(3));
+      depthCubeMapProgram.SetUniformMat4f("u_lightViews[4]", pointLightViews.at(4));
+      depthCubeMapProgram.SetUniformMat4f("u_lightViews[5]", pointLightViews.at(5));
+      depthCubeMapProgram.SetUniform3f("u_lightPos", lightPos);
+      depthCubeMapProgram.SetUniform1f("u_zFar", 15.0f);
+
+      scene.Reg().view<Model, Transform>().each([&](auto& model, auto& transform) {
+        depthCubeMapProgram.SetUniformMat4f("u_model", transform.GetTransformation());
+        for (auto& mesh : model.meshes)
+          mesh.Draw(GL_TRIANGLES);
+      });
+    }
+    fboDepthCubeMap.Unbind(GL_FRAMEBUFFER);
+
+    ///* Fill the framebuffer color texture */
     _fboMultisampled.Bind(GL_FRAMEBUFFER);
     { 
       glViewport(0, 0, _viewportSize.x, _viewportSize.y);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-      skeletalAnimProgram.Use();
-      skeletalAnimProgram.SetUniform3f("u_viewPos", primaryCamera.position);
-      auto& transforms = animator.GetFinalBoneMatrices();
-      for (u64 i = 0; i < transforms.size(); i++)
-      {
-        char uniform[32]{};
-        std::format_to_n(uniform, sizeof(uniform), "u_finalBonesMatrices[{}]", i);
-        skeletalAnimProgram.SetUniformMat4f(uniform, transforms[i]);
-      }
-      scene.Reg().view<DirectionalLight>().each([&](auto& light)  { RenderDirectionalLight(skeletalAnimProgram, light); });
-        
-      skeletalAnimProgram.SetUniformMat4f("u_model", mat4f(1.f));
-      skeleton.DrawSkeleton(GL_TRIANGLES);
+      glPolygonMode(GL_FRONT, wireframeMode ? GL_LINE : GL_FILL);
+      glPolygonMode(GL_BACK, wireframeMode ? GL_LINE : GL_FILL);
 
+      ///* Render terrain */
+      if(renderTerrain)
+      {
+        terrainProgram.Use();
+        terrainProgram.SetUniformMat4f("u_model", mat4f(1.0f));
+        terrainProgram.SetUniformMat4f("u_view", cameraView);
+        terrainProgram.SetUniformMat4f("u_projection", cameraProj);
+        terrainProgram.SetUniform1i("u_heightMap", 0);
+        heightMap.BindTextureUnit(0);
+        Renderer::DrawArrays(GL_PATCHES, terrain.vao);
+      }
       
+      ///* Render scene with shadows map */
+      if (shadowMode)
+      {
+        u32 depthMapTexture = fboDepthMap.textAttachments.at(0);
+        u32 depthCubeMapTexture = fboDepthCubeMap.textAttachments.at(0);
+        glBindTextureUnit(10, depthMapTexture);
+        glBindTextureUnit(11, depthCubeMapTexture);
+
+        sceneShadowsProgram.Use();
+        sceneShadowsProgram.SetUniform3f("u_viewPos", primaryCamera.position);
+        sceneShadowsProgram.SetUniformMat4f("u_lightView", directLightView);
+        sceneShadowsProgram.SetUniformMat4f("u_lightProjection", directLightProjection);
+        sceneShadowsProgram.SetUniform1i("u_useNormalMap", normalMapMode);
+        scene.Reg().view<Model, Transform>().each([&](auto& model, auto& transform) {
+          RenderModel(sceneShadowsProgram, model, transform);
+        });
+
+        //skeletalAnimShadowsProgram.Use();
+        //skeletalAnimShadowsProgram.SetUniform3f("u_viewPos", primaryCamera.position);
+        //skeletalAnimShadowsProgram.SetUniformMat4f("u_lightView", directLightView);
+        //skeletalAnimShadowsProgram.SetUniformMat4f("u_lightProjection", directLightProjection);
+        //skeletalAnimShadowsProgram.SetUniform1i("u_useNormalMap", normalMapMode);
+        //RenderScene(scene, skeletalAnimShadowsProgram);
+
+        //auto& transforms = animator.GetFinalBoneMatrices();
+        //for (u64 i = 0; i < transforms.size(); i++)
+        //{
+        //  char uniform[32]{};
+        //  std::format_to_n(uniform, sizeof(uniform), "u_finalBonesMatrices[{}]", i);
+        //  skeletalAnimShadowsProgram.SetUniformMat4f(uniform, transforms[i]);
+        //}
+        //skeletalAnimShadowsProgram.SetUniformMat4f("u_model", mat4f(1.0f));
+        //scene.Reg().view<DirectionalLight>().each([&](auto& light) { RenderDirectionalLight(skeletalAnimShadowsProgram, light); });
+        //skeleton.DrawSkeleton(GL_TRIANGLES);
+      }
+      ///* Render scene with no shadows */
+      else
+      {
+        sceneProgram.Use();
+        sceneProgram.SetUniform3f("u_viewPos", primaryCamera.position);
+        sceneProgram.SetUniform1i("u_useNormalMap", normalMapMode);
+
+        scene.Reg().view<Model, Transform>().each([&](auto& model, auto& transform) {
+          RenderModel(sceneProgram, model, transform);
+        });
+
+        //skeletalAnimProgram.Use();
+        //skeletalAnimProgram.SetUniform3f("u_viewPos", primaryCamera.position);
+        //skeletalAnimProgram.SetUniform1i("u_useNormalMap", normalMapMode);
+        //scene.Reg().view<DirectionalLight>().each([&](auto& light) {
+        //  RenderDirectionalLight(skeletalAnimProgram, light);
+        //});
+        //scene.Reg().view<PointLight>().each([&](auto& light) {
+        //  RenderPointLight(skeletalAnimProgram, light);
+        //});
+        //scene.Reg().view<SpotLight>().each([&](auto& light) {
+        //  RenderSpotLight(skeletalAnimProgram, light);
+        //});
+        //scene.Reg().view<Skeleton, Transform>().each([&](auto& skeleton, auto& transform) {
+        //  skeletalAnimProgram.SetUniformMat4f("u_model", mat4f(1.0f));
+        //  skeleton.DrawSkeleton(GL_TRIANGLES);
+        //});
+
+        //sceneProgram.Use();
+        //sceneProgram.SetUniform3f("u_viewPos", primaryCamera.position);
+        //sceneProgram.SetUniform1i("u_useNormalMap", normalMapMode);
+        //RenderScene(scene, sceneProgram);
+
+        //skeletalAnimProgram.Use();
+        //skeletalAnimProgram.SetUniform3f("u_viewPos", primaryCamera.position);
+        //skeletalAnimProgram.SetUniform1i("u_useNormalMap", normalMapMode);
+        //RenderScene(scene, skeletalAnimProgram);
+        
+        //scene.Reg().view<DirectionalLight>().each([&](auto& light) { RenderDirectionalLight(skeletalAnimProgram, light); });
+        //auto& transforms = animator.GetFinalBoneMatrices();
+        //for (u64 i = 0; i < transforms.size(); i++)
+        //{
+        //  char uniform[32]{};
+        //  std::format_to_n(uniform, sizeof(uniform), "u_finalBonesMatrices[{}]", i);
+        //  skeletalAnimProgram.SetUniformMat4f(uniform, transforms[i]);
+        //}
+        //skeletalAnimProgram.SetUniformMat4f("u_model", mat4f(1.0f));
+        //skeleton.DrawSkeleton(GL_TRIANGLES);
+      }
+
+      ///* Render the infinite grid */
+      if(renderInfiniteGrid)
+      {
+        gridPlaneProgram.Use();
+        Renderer::DrawArrays(GL_TRIANGLES, gridPlane.vao);
+      }
+
+      ///* Draw skybox after the scene */
+      if(renderSkybox)
+      {
+        skyboxProgram.Use();
+        skyboxProgram.SetUniformMat4f("u_projection", cameraProj);
+        skyboxProgram.SetUniformMat4f("u_view", mat4f(mat3f(cameraView)));
+        skyboxTexture.BindTextureUnit(0);
+        DepthTest::SetDepthFun(DepthFun::LEQUAL);
+        Renderer::DrawArrays(GL_TRIANGLES, skybox.vao);
+        DepthTest::SetDepthFun(DepthFun::LESS);
+      }
+
       /* Blit multisampled buffer to normal color buffer of intermediate FBO */
       _fboMultisampled.Blit(_fboIntermediate,
         0, 0, _viewportSize.x, _viewportSize.y,

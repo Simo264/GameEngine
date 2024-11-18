@@ -20,10 +20,10 @@ public:
 	void UpdateTransformation();
 
 	/**
-	 * @brief
-	 * Calculate the model matrix
+	 * @return 
+	 * The transformation matrix
 	 */
-	constexpr mat4f& GetTransformation() { return _transformation; }
+	mat4f& GetTransformation() { return _transformation; }
 
 	vec3f position;
 	vec3f scale;

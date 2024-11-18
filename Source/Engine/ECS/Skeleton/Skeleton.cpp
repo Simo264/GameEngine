@@ -104,6 +104,11 @@ void Skeleton::DrawSkeleton(i32 mode)
 		material.height->BindTextureUnit(3);
 		mesh.Draw(mode);
 	}
+
+	glBindTextureUnit(0, 0);
+	glBindTextureUnit(1, 0);
+	glBindTextureUnit(2, 0);
+	glBindTextureUnit(3, 0);
 }
 
 /* ---------------------------------------------------- */

@@ -24,7 +24,8 @@ private:
 	FrameBuffer _fboMultisampled;
 	FrameBuffer _fboIntermediate;
 
-	Buffer _uboCamera; /* Uniform cameraBlock object */
+	Buffer _uboCamera;	/* Uniform buffer object camera */
+	Buffer _uboLight;		/* Uniform buffer object light */
 
 	VertexArray _screenSquare;
 	vec2i _viewportSize;

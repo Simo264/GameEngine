@@ -17,49 +17,61 @@ out vec4 FragColor;
 
 /* ---------- Structs ---------- */
 /* ----------------------------- */
-struct Attenuation{
-  float kl; /* linear attenuation factor */
-  float kq; /* quadratic attenuation factor */
-};
-struct Material {
+struct Material 
+{
   sampler2D diffuseTexture;
   sampler2D specularTexture;
   sampler2D normalTexture;
   sampler2D heightTexture;
 };
-struct DirectionalLight {
+struct DirectionalLight 
+{
   vec3  color;
   float intensity;
   vec3  direction;
+  float __padding;  /* Needed for std140 alignment */ 
 };
-struct PointLight {
+
+struct Attenuation
+{
+	int range;  /* If an objects distance is greater than the range, the light has no effect on the object */
+	float kl;	  /* Linear attenuation factor */
+	float kq;   /* Quadratic attenuation factor */
+};
+struct PointLight 
+{
   vec3  color;
   float intensity;
   vec3  position;
-  
+  float __padding_1;  /* Needed for std140 alignment */ 
   Attenuation attenuation;
+  float __padding_2;  /* Needed for std140 alignment */ 
 };
-struct SpotLight {
+struct SpotLight 
+{
   vec3  color;
   float intensity;
   vec3  position;
+  float __padding_1;  /* Needed for std140 alignment */ 
   vec3  direction;
+  float __padding_2;  /* Needed for std140 alignment */ 
   float cutOff;
   float outerCutOff; /* smoother edges */
-
+  float __padding_3[2];  /* Needed for std140 alignment */ 
   Attenuation attenuation;
 };
 
 
 /* ---------- Uniforms ---------- */
 /* ------------------------------ */
+layout (std140, binding = 1) uniform lightBlock
+{
+  DirectionalLight  u_directionalLight;
+  PointLight        u_pointLight;
+  SpotLight         u_spotLight;
+};
 uniform Material          u_material;
-uniform DirectionalLight  u_directionalLight;
-uniform PointLight        u_pointLight;
-uniform SpotLight         u_spotLight;
 
-uniform vec3  u_ambientLightColor;
-uniform float u_ambientLightIntensity;
 
 uniform int u_useNormalMap;
 
@@ -98,7 +110,6 @@ void main()
   g_diffuseColor  = texture(u_material.diffuseTexture, TexCoord);
   g_specularColor = texture(u_material.specularTexture, TexCoord);
 
-  //const vec3 ambientLight = (u_ambientLightColor * u_ambientLightIntensity) * g_diffuseColor.rgb;
   vec3 result = vec3(0.0f);
 
   /* =========================== */
@@ -118,7 +129,7 @@ void main()
   /* ==================== */
   /* Calculate spot light */
   /* ==================== */
-  //result += CalculateSpotLight(u_spotLight, normal, viewDir);
+  result += CalculateSpotLight(u_spotLight, normal, viewDir);
 
   /* Apply gamma correction */
   result = pow(result, vec3(1.0f / 2.2f));
