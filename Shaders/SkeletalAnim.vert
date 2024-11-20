@@ -43,7 +43,6 @@ void main()
     
     vec4 localPosition = u_finalBonesMatrices[aBoneIds[i]] * vec4(aPos, 1.0f);
     totalPosition += localPosition * aWeights[i];
-    //vec3 localNormal = mat3(u_finalBonesMatrices[aBoneIds[i]]) * aNormal;
   }
 
 

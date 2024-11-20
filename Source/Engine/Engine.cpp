@@ -429,9 +429,9 @@ void Engine::Run()
   Mesh terrain = CreateTerrain(rez);
   glPatchParameteri(GL_PATCH_VERTICES, 4);
 
-  //Skeleton skeleton(GetSkeletalsPath() / "dancing_vampire.dae");
-  //Animation animation(GetSkeletalsPath() / "dancing_vampire.dae", skeleton);
-  //Animator animator(&animation);
+  Skeleton skeleton(GetSkeletonsPath() / "Taunt.glb");
+  Animation animation(GetSkeletonsPath() / "Taunt.glb", skeleton);
+  Animator animator(&animation);
 
   /* ---------------------------------------------------------------------- */
   /* -------------------------- Pre-loop section -------------------------- */
@@ -517,7 +517,7 @@ void Engine::Run()
     _uboLight.UpdateStorage(sizeof(DirectionalLight), sizeof(PointLight), reinterpret_cast<void*>(pointLight)); /* Update u_pointLight */
     //_uboLight.UpdateStorage(sizeof(DirectionalLight) + sizeof(PointLight), sizeof(SpotLight), reinterpret_cast<void*>(...)); /* Update u_spotLight */
 
-    //animator.UpdateAnimation(delta);
+    animator.UpdateAnimation(delta);
 
     /* ----------------------------------------------------------------------- */
     /* -------------------------- Rendering section -------------------------- */
@@ -618,7 +618,6 @@ void Engine::Run()
         //skeletalAnimShadowsProgram.SetUniformMat4f("u_lightView", directLightView);
         //skeletalAnimShadowsProgram.SetUniformMat4f("u_lightProjection", directLightProjection);
         //skeletalAnimShadowsProgram.SetUniform1i("u_useNormalMap", normalMapMode);
-        //RenderScene(scene, skeletalAnimShadowsProgram);
 
         //auto& transforms = animator.GetFinalBoneMatrices();
         //for (u64 i = 0; i < transforms.size(); i++)
@@ -628,7 +627,6 @@ void Engine::Run()
         //  skeletalAnimShadowsProgram.SetUniformMat4f(uniform, transforms[i]);
         //}
         //skeletalAnimShadowsProgram.SetUniformMat4f("u_model", mat4f(1.0f));
-        //scene.Reg().view<DirectionalLight>().each([&](auto& light) { RenderDirectionalLight(skeletalAnimShadowsProgram, light); });
         //skeleton.DrawSkeleton(GL_TRIANGLES);
       }
       ///* Render scene with no shadows */
@@ -637,39 +635,28 @@ void Engine::Run()
         sceneProgram.Use();
         sceneProgram.SetUniform3f("u_viewPos", primaryCamera.position);
         sceneProgram.SetUniform1i("u_useNormalMap", normalMapMode);
-
         scene.Reg().view<Model, Transform>().each([&](auto& model, auto& transform) {
           RenderModel(sceneProgram, model, transform);
         });
 
-        //skeletalAnimProgram.Use();
-        //skeletalAnimProgram.SetUniform3f("u_viewPos", primaryCamera.position);
-        //skeletalAnimProgram.SetUniform1i("u_useNormalMap", normalMapMode);
-        //scene.Reg().view<DirectionalLight>().each([&](auto& light) {
-        //  RenderDirectionalLight(skeletalAnimProgram, light);
-        //});
-        //scene.Reg().view<PointLight>().each([&](auto& light) {
-        //  RenderPointLight(skeletalAnimProgram, light);
-        //});
-        //scene.Reg().view<SpotLight>().each([&](auto& light) {
-        //  RenderSpotLight(skeletalAnimProgram, light);
-        //});
+        skeletalAnimProgram.Use();
+        skeletalAnimProgram.SetUniform3f("u_viewPos", primaryCamera.position);
+        skeletalAnimProgram.SetUniform1i("u_useNormalMap", normalMapMode);
+        skeletalAnimProgram.SetUniformMat4f("u_model", mat4f(1.0f));
+        auto& transforms = animator.GetFinalBoneMatrices();
+        for (u64 i = 0; i < transforms.size(); i++)
+        {
+          char uniform[32]{};
+          std::format_to_n(uniform, sizeof(uniform), "u_finalBonesMatrices[{}]", i);
+          skeletalAnimProgram.SetUniformMat4f(uniform, transforms[i]);
+        }
+        skeleton.DrawSkeleton(GL_TRIANGLES);
+
         //scene.Reg().view<Skeleton, Transform>().each([&](auto& skeleton, auto& transform) {
-        //  skeletalAnimProgram.SetUniformMat4f("u_model", mat4f(1.0f));
+        //  skeletalAnimProgram.SetUniformMat4f("u_model", transform.GetTransformation());
         //  skeleton.DrawSkeleton(GL_TRIANGLES);
         //});
-
-        //sceneProgram.Use();
-        //sceneProgram.SetUniform3f("u_viewPos", primaryCamera.position);
-        //sceneProgram.SetUniform1i("u_useNormalMap", normalMapMode);
-        //RenderScene(scene, sceneProgram);
-
-        //skeletalAnimProgram.Use();
-        //skeletalAnimProgram.SetUniform3f("u_viewPos", primaryCamera.position);
-        //skeletalAnimProgram.SetUniform1i("u_useNormalMap", normalMapMode);
-        //RenderScene(scene, skeletalAnimProgram);
         
-        //scene.Reg().view<DirectionalLight>().each([&](auto& light) { RenderDirectionalLight(skeletalAnimProgram, light); });
         //auto& transforms = animator.GetFinalBoneMatrices();
         //for (u64 i = 0; i < transforms.size(); i++)
         //{
@@ -721,6 +708,7 @@ void Engine::Run()
     gui.TimeInfo(delta, avgTime, frameRate);
     gui.GraphicsInfo();
     gui.Demo();
+    gui.Debug(shadowMode, normalMapMode, wireframeMode);
     gui.EndFrame();
 
     /* Checking viewport size */

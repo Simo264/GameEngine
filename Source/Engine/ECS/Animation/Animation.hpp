@@ -31,7 +31,7 @@ public:
 
 private:
 	void ReadMissingBones(const aiAnimation* animation, Skeleton& skeleton);
-	void ReadHierarchyData(AssimpNodeData& dest, const aiNode* src);
+	void ReadHierarchyData(AssimpNodeData& dest, const aiNode* src, const aiScene* scene);
 
 	AssimpNodeData _rootNode;
 	f32 _duration;

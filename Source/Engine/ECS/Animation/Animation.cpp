@@ -5,6 +5,8 @@
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
+#include <assimp/matrix4x4.h>
+#include <glm/gtx/string_cast.hpp>
 
 static mat4f AiMatrixToGLM(const aiMatrix4x4& from)
 {
@@ -39,8 +41,8 @@ Animation::Animation(const fs::path& path, Skeleton& skeleton) :
 	aiAnimation* animation = scene->mAnimations[0];
 	_duration = animation->mDuration;
 	_ticksPerSecond = animation->mTicksPerSecond;
-	
-	ReadHierarchyData(_rootNode, scene->mRootNode);
+
+	ReadHierarchyData(_rootNode, scene->mRootNode, scene);
 	ReadMissingBones(animation, skeleton);
 }
 Bone* Animation::FindBone(StringView name)
@@ -85,15 +87,16 @@ void Animation::ReadMissingBones(const aiAnimation* animation, Skeleton& skeleto
 
 	_boneInfoMap = &boneInfoMap;
 }
-void Animation::ReadHierarchyData(AssimpNodeData& dest, const aiNode* src)
+void Animation::ReadHierarchyData(AssimpNodeData& dest, const aiNode* src, const aiScene* scene)
 {
+	mat4f transform = AiMatrixToGLM(src->mTransformation);
 	dest.name = src->mName.data;
-	dest.transformation = AiMatrixToGLM(src->mTransformation);
+	dest.transformation = transform;
 	dest.childrenCount = src->mNumChildren;
 	for (u32 i = 0; i < src->mNumChildren; i++)
 	{
 		AssimpNodeData newData;
-		ReadHierarchyData(newData, src->mChildren[i]);
+		ReadHierarchyData(newData, src->mChildren[i], scene);
 		dest.children.push_back(newData);
 	}
 }

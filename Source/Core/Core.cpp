@@ -42,8 +42,8 @@ const fs::path& GetModelsPath()
 	return MODELS_PATH;
 }
 
-const fs::path& GetSkeletalsPath()
+const fs::path& GetSkeletonsPath()
 {
-	static const fs::path SKELETALS_PATH = (GetAssetsPath() / "Skeletals").lexically_normal();
-	return SKELETALS_PATH;
+	static const fs::path SKELETONS_PATH = (GetAssetsPath() / "Skeletons").lexically_normal();
+	return SKELETONS_PATH;
 }

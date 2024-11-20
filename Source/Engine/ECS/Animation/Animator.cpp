@@ -25,7 +25,6 @@ void Animator::CalculateBoneTransform(const AssimpNodeData* node, mat4f parentTr
 {
 	const String& nodeName = node->name;
 	mat4f nodeTransform = node->transformation;
-
 	Bone* Bone = _currentAnimation->FindBone(nodeName);
 	if (Bone)
 	{

@@ -256,15 +256,5 @@ void Scene::DeserializeScene(const fs::path& filePath)
 				CONSOLE_ERROR("Invalid LightType!");
 			}
 		}
-		else if (component == "Skeleton")
-		{
-			const String& strPath = conf.GetValue(section, "path");
-			object.AddComponent<Skeleton>(strPath.c_str());
-		}
-		else if (component == "Animation")
-		{
-			//const String& strPath = conf.GetValue(section, "path");
-			//object.AddComponent<Animation>(strPath.c_str());
-		}
 	}
 }

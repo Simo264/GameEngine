@@ -13,7 +13,6 @@
 
 static u32 totalVertices = 0;
 static u32 totalIndices = 0;
-static u32 totalSize = 0;
 static chrono::steady_clock::time_point timeStart;
 static chrono::steady_clock::time_point timeEnd;
 
@@ -23,7 +22,6 @@ static Buffer LoadVertices(aiMesh* aimesh, i32& numVertices)
 	u64 size = numVertices * sizeof(Vertex_P_N_UV_T);
 
 	totalVertices += numVertices;
-	totalSize += size;
 
 	Buffer buffer;
 	buffer.Create();
@@ -63,7 +61,6 @@ static Buffer LoadIndices(aiMesh* aimesh, i32& numIndices)
 	u64 size = numIndices * sizeof(u32);
 
 	totalIndices += numIndices;
-	totalSize += size;
 
 	Buffer buffer;
 	buffer.Create();
@@ -116,9 +113,13 @@ Model::Model(const fs::path& modelPath)
 
 	totalVertices = 0;
 	totalIndices = 0;
-	totalSize = 0;
+	
 	meshes.reserve(scene->mNumMeshes);
 	ProcessNode(scene->mRootNode, scene);
+
+	u64 totalSizeBytes = 0;
+	totalSizeBytes += totalVertices * sizeof(Vertex_P_N_UV_T);
+	totalSizeBytes += totalIndices * sizeof(u32);
 
 	timeEnd = chrono::high_resolution_clock::now();
 	chrono::duration<f64> diff = timeEnd - timeStart;
@@ -126,7 +127,7 @@ Model::Model(const fs::path& modelPath)
 	CONSOLE_TRACE("Nr. meshes: {}", scene->mNumMeshes);
 	CONSOLE_TRACE("Vertices: {} ", totalVertices);
 	CONSOLE_TRACE("Indices: {}", totalIndices);
-	CONSOLE_TRACE("Size: {} bytes", totalSize);
+	CONSOLE_TRACE("Size: {} bytes", totalSizeBytes);
 }
 void Model::DestroyModel()
 {
@@ -203,4 +204,3 @@ void Model::ProcessNode(aiNode* node, const aiScene* scene)
 	for (i32 i = 0; i < node->mNumChildren; i++)
 		ProcessNode(node->mChildren[i], scene);
 }
-

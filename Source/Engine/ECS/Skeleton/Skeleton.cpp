@@ -163,7 +163,6 @@ void Skeleton::LoadBonesAndWeights(Vector<Vertex_P_N_UV_T_B>& vertices, const ai
 	{
 		i32 boneID = -1;
 		const char* boneName = aimesh->mBones[boneIndex]->mName.C_Str();
-
 		auto it = boneInfoMap.find(boneName);
 		if (it == boneInfoMap.end())
 		{
