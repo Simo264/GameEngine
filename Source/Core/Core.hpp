@@ -7,12 +7,11 @@
 #include <fstream>
 #include <map>
 #include <unordered_map>
-#include <set>
 #include <string>
 #include <string_view>
 #include <sstream>
-#include <tuple>
 #include <vector>
+#include <list>
 
 #include <cstdint>
 #include <limits>
@@ -35,14 +34,12 @@ template<typename Type, size_t size>
 using Array = std::array<Type, size>;
 template<typename Type>
 using Vector = std::vector<Type>;
+template<typename Type>
+using List = std::list<Type>;
 template<typename TypeName, typename TypeVal>
 using Map = std::map<TypeName, TypeVal>;
 template<typename TypeName, typename TypeVal>
 using UnorderedMap = std::unordered_map<TypeName, TypeVal>;
-template<typename Type>
-using Set = std::set<Type>;
-template<typename... Types>
-using Tuple = std::tuple<Types...>;
 
 
 /************** Smart pointers **************/
@@ -85,3 +82,4 @@ extern const fs::path& GetIconsPath();
 extern const fs::path& GetFontsPath();
 extern const fs::path& GetModelsPath();
 extern const fs::path& GetSkeletonsPath();
+extern const fs::path& GetAnimationsPath();

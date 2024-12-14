@@ -113,7 +113,7 @@ void Texture2D::LoadImageData(const fs::path& imagePath, bool gammaCorrection)
     SetParameteri(GL_TEXTURE_WRAP_T, GL_REPEAT);
     SetParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     SetParameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    
+
     CreateStorage(internalFormat, width, height);
     UpdateStorage(0, 0, 0, GL_UNSIGNED_BYTE, data);
     GenerateMipmap();

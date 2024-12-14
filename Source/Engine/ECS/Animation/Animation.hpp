@@ -2,40 +2,26 @@
 
 #include "Core/Core.hpp"
 #include "Core/Math/Core.hpp"
-#include "Engine/ECS/Skeleton/Skeleton.hpp"
+#include "Engine/ECS/Skeleton/SkeletonMesh.hpp"
 
 struct aiAnimation;
 struct aiNode;
 
-struct AssimpNodeData
-{
-	mat4f transformation{};
-	String name{};
-	Vector<AssimpNodeData> children{};
-	u32 childrenCount{};
-};
-
 class Animation
 {
 public:
-	Animation() = default;
-	Animation(const fs::path& path, Skeleton& skeleton);
+	Animation(const fs::path& path, SkeletonMesh& skeleton);
 	~Animation() = default;
 
 	Bone* FindBone(StringView name);
 
-	f32 GetTicksPerSecond() const { return _ticksPerSecond; }
-	f32 GetDuration() const { return _duration; }
-	const AssimpNodeData& GetRootNode() { return _rootNode; }
-	const auto* GetBoneInfoMap() { return _boneInfoMap; }
+	BoneNode rootNode;
+	f32 duration;
+	f32 ticksPerSecond;
+	Vector<Bone> bones;
+	UnorderedMap<String, BoneInfo>* boneMap;
 
 private:
-	void ReadMissingBones(const aiAnimation* animation, Skeleton& skeleton);
-	void ReadHierarchyData(AssimpNodeData& dest, const aiNode* src, const aiScene* scene);
-
-	AssimpNodeData _rootNode;
-	f32 _duration;
-	f32 _ticksPerSecond;
-	Vector<Bone> _bones;
-	UnorderedMap<String, BoneInfo>* _boneInfoMap;
+	void ReadMissingBones(const aiAnimation* animation, SkeletonMesh& skeleton);
+	void ReadHierarchyData(BoneNode& dest, const aiNode* src);
 };

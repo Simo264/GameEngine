@@ -5,8 +5,6 @@
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
-#include <assimp/matrix4x4.h>
-#include <glm/gtx/string_cast.hpp>
 
 static mat4f AiMatrixToGLM(const aiMatrix4x4& from)
 {
@@ -23,12 +21,12 @@ static mat4f AiMatrixToGLM(const aiMatrix4x4& from)
 /*										PUBLIC														*/
 /* ---------------------------------------------------- */
 
-Animation::Animation(const fs::path& path, Skeleton& skeleton) : 
-	_duration{ 0 },
-	_ticksPerSecond{ 0 },
-	_rootNode{},
-	_bones{},
-	_boneInfoMap{}
+Animation::Animation(const fs::path& path, SkeletonMesh& skeleton) :
+	duration{ 0 },
+	ticksPerSecond{ 0 },
+	rootNode{},
+	bones{},
+	boneMap{}
 {
 	Assimp::Importer importer;
 	const aiScene* scene = importer.ReadFile(path.string(), aiProcess_Triangulate);
@@ -37,23 +35,37 @@ Animation::Animation(const fs::path& path, Skeleton& skeleton) :
 		CONSOLE_ERROR("Assimp importer error: {}", importer.GetErrorString());
 		return;
 	}
-	
-	aiAnimation* animation = scene->mAnimations[0];
-	_duration = animation->mDuration;
-	_ticksPerSecond = animation->mTicksPerSecond;
+	if (!scene->HasAnimations())
+	{
+		CONSOLE_ERROR("Error: '{}' !scene->HasAnimations() ", path.string());
+		return;
+	}
 
-	ReadHierarchyData(_rootNode, scene->mRootNode, scene);
+	aiAnimation* animation = scene->mAnimations[0];
+	duration = animation->mDuration;
+	ticksPerSecond = animation->mTicksPerSecond;
+
+	ReadHierarchyData(rootNode, scene->mRootNode);
 	ReadMissingBones(animation, skeleton);
 }
 Bone* Animation::FindBone(StringView name)
 {
-	auto it = std::find_if(_bones.begin(), _bones.end(), 
-		[&](const Bone& Bone) { return Bone.GetBoneName().compare(name.data()) == 0; }
-	);
-	if (it == _bones.end())
-		return nullptr;
+	auto it = std::find_if(bones.begin(), bones.end(), [&](const Bone& Bone) { 
+		return Bone.GetBoneName().compare(name.data()) == 0;
+	});
 	
-	return &(*it);
+	if (it != bones.end())
+		return &(*it);
+
+	return nullptr;
+
+	//auto it = boneMap->find(name.data());
+	//if (it != boneMap->end())
+	//{
+	//	BoneInfo& info = it->second;
+	//	return &bones.at(info.id);
+	//}
+	//return nullptr;
 }
 
 
@@ -61,42 +73,40 @@ Bone* Animation::FindBone(StringView name)
 /*										PRIVATE														*/
 /* ---------------------------------------------------- */
 
-void Animation::ReadMissingBones(const aiAnimation* animation, Skeleton& skeleton)
+void Animation::ReadMissingBones(const aiAnimation* animation, SkeletonMesh& skeleton)
 {
-	auto& boneInfoMap = skeleton.GetBoneInfoMap();
-	u32& boneCount = skeleton.GetBoneCount();
-
-	u32 size = animation->mNumChannels;
-	for (i32 i = 0; i < size; i++)
+	for (i32 i = 0; i < animation->mNumChannels; i++)
 	{
 		aiNodeAnim* channel = animation->mChannels[i];
 		const char* boneName = channel->mNodeName.data;
 
-		i32 boneID = boneCount;
-		auto it = boneInfoMap.find(boneName);
-		if (it == boneInfoMap.end())
+		i32 boneId{};
+		auto it = skeleton.boneMap.find(boneName);
+		if (it == skeleton.boneMap.end())
 		{
-			boneInfoMap.emplace(boneName, BoneInfo(boneCount, mat4f(1.0f)));
-			boneCount++;
+			boneId = skeleton.boneMap.size();
+			skeleton.boneMap.emplace(
+				std::piecewise_construct,
+				std::forward_as_tuple(boneName),
+				std::forward_as_tuple(boneId, mat4f(1.0f))
+			);
 		}
 		else
-			boneID = it->second.id;
-		
-		_bones.emplace_back(boneName, boneID, channel);
+			boneId = it->second.id;
+
+		bones.emplace_back(boneName, boneId, channel);
 	}
 
-	_boneInfoMap = &boneInfoMap;
+	boneMap = &skeleton.boneMap;
 }
-void Animation::ReadHierarchyData(AssimpNodeData& dest, const aiNode* src, const aiScene* scene)
+void Animation::ReadHierarchyData(BoneNode& dest, const aiNode* src)
 {
-	mat4f transform = AiMatrixToGLM(src->mTransformation);
 	dest.name = src->mName.data;
-	dest.transformation = transform;
-	dest.childrenCount = src->mNumChildren;
+	dest.transformation = AiMatrixToGLM(src->mTransformation);
+	dest.children.reserve(src->mNumChildren);
 	for (u32 i = 0; i < src->mNumChildren; i++)
 	{
-		AssimpNodeData newData;
-		ReadHierarchyData(newData, src->mChildren[i], scene);
-		dest.children.push_back(newData);
+		BoneNode& child = dest.children.emplace_back();
+		ReadHierarchyData(child, src->mChildren[i]);
 	}
 }

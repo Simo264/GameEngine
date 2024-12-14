@@ -126,20 +126,6 @@ static void RenderScene(Scene& scene, Program& program)
   scene.Reg().view<Model, Transform>().each([&](auto& model, auto& transform) {
     RenderModel(program, model, transform);
   });
-
-  //scene.Reg().view<Skeleton, Transform>().each([&](auto& skeleton, auto& transform) {
-  //  //scene.Reg().view<DirectionalLight>().each([&](auto& light) { RenderDirectionalLight(skeletalAnimProgram, light); });
-  //  //auto& transforms = animator.GetFinalBoneMatrices();
-  //  //for (u64 i = 0; i < transforms.size(); i++)
-  //  //{
-  //  //  char uniform[32]{};
-  //  //  std::format_to_n(uniform, sizeof(uniform), "u_finalBonesMatrices[{}]", i);
-  //  //  skeletalAnimProgram.SetUniformMat4f(uniform, transforms[i]);
-  //  //}
-  //  
-  //  skeletalAnimProgram.SetUniformMat4f("u_model", transform.GetTransformation());
-  //  skeleton.DrawSkeleton(GL_TRIANGLES);
-  //});
 }
 
 static Mesh CreateSkybox(TextureCubemap& skyboxTexture)
@@ -397,41 +383,44 @@ void Engine::Initialize()
 void Engine::Run()
 {
   /* Create grid plane */
-  Mesh gridPlane = CreateGridPlane();
+  //Mesh gridPlane = CreateGridPlane();
 
   /* Create skybox object */
-  TextureCubemap skyboxTexture;
-  Mesh skybox = CreateSkybox(skyboxTexture);
+  //TextureCubemap skyboxTexture;
+  //Mesh skybox = CreateSkybox(skyboxTexture);
 
   /* Create scene object */
-  Scene scene((GetRootPath() / "Scene.ini").string());
-  DirectionalLight* directionalLight = nullptr;
-  scene.Reg().view<DirectionalLight>().each([&](auto& light) { directionalLight = &light; });
-  PointLight* pointLight = nullptr;
-  scene.Reg().view<PointLight>().each([&](auto& light) { pointLight = &light; });
+  Scene scene;
+  //Scene scene((GetRootPath() / "Scene.ini").string());
+  //DirectionalLight* directionalLight = nullptr;
+  //scene.Reg().view<DirectionalLight>().each([&](auto& light) { directionalLight = &light; });
+  //PointLight* pointLight = nullptr;
+  //scene.Reg().view<PointLight>().each([&](auto& light) { pointLight = &light; });
 
   /* Create primary camera object */
   Camera primaryCamera(vec3f(7.f, 4.f, 6), vec3f(-135.0f, -25.0f, 0.f));
   primaryCamera.frustum.zFar = 100.0f;
 
   /* Create the directional light camera */
-  Camera directLightCamera(vec3f(0.0f, 10.0f, 10.0f));
-  directLightCamera.frustum.zFar = 30.0f;
+  //Camera directLightCamera(vec3f(0.0f, 10.0f, 10.0f));
+  //directLightCamera.frustum.zFar = 30.0f;
 
   /* Setting up the directional shadow mapping  */
-  FrameBuffer fboDepthMap = CreateDepthMapFbo(1024, 1024);
+  //FrameBuffer fboDepthMap = CreateDepthMapFbo(1024, 1024);
   
   /* Setting up the omnidirectional shadow mapping */
-  FrameBuffer fboDepthCubeMap = CreateDepthCubeMapFbo(1024, 1024);
+  //FrameBuffer fboDepthCubeMap = CreateDepthCubeMapFbo(1024, 1024);
 
   /* Prepare vertices for terrain */
-  i32 rez = 20;
-  Mesh terrain = CreateTerrain(rez);
-  glPatchParameteri(GL_PATCH_VERTICES, 4);
+  //i32 rez = 20;
+  //Mesh terrain = CreateTerrain(rez);
+  //glPatchParameteri(GL_PATCH_VERTICES, 4);
 
-  Skeleton skeleton(GetSkeletonsPath() / "Taunt.glb");
-  Animation animation(GetSkeletonsPath() / "Taunt.glb", skeleton);
-  Animator animator(&animation);
+  static auto mutant_skeleton_path = GetSkeletonsPath() / "Mutant.gltf";
+  static auto mutant_anim_path = GetAnimationsPath() / "Anim_Mutant_Dying_gltf.gltf";
+  SkeletonMesh skeleton_mutant(mutant_skeleton_path);
+  Animation anim_dying(mutant_anim_path, skeleton_mutant);
+  Animator animator(anim_dying);
 
   /* ---------------------------------------------------------------------- */
   /* -------------------------- Pre-loop section -------------------------- */
@@ -455,10 +444,13 @@ void Engine::Run()
   constexpr bool renderInfiniteGrid = true;
   constexpr bool renderSkybox = true;
 
-  bool shadowMode = false;
   bool normalMapMode = false;
-  bool wireframeMode = false;
-  
+  bool shadowMode = false;
+  bool wireframeMode = true;
+
+  DirectionalLight directionalLight;
+  directionalLight.intensity = 1.0f;
+
   /* ------------------------------------------------------------------ */
   /* -------------------------- loop section -------------------------- */
   /* ------------------------------------------------------------------ */
@@ -510,11 +502,11 @@ void Engine::Run()
     _uboCamera.UpdateStorage(0, sizeof(cameraView), reinterpret_cast<void*>(&cameraView[0]));  /* Update u_view */
     _uboCamera.UpdateStorage(sizeof(cameraView), sizeof(cameraProj), reinterpret_cast<void*>(&cameraProj[0])); /* Update u_projection */
 
-    directLightCamera.UpdateOrientation();
-    mat4f directLightProjection = directLightCamera.CalculateOrtho();
-    mat4f directLightView = directLightCamera.CalculateView(directionalLight->direction);
-    _uboLight.UpdateStorage(0, sizeof(DirectionalLight), reinterpret_cast<void*>(directionalLight));  /* Update u_directionalLight */
-    _uboLight.UpdateStorage(sizeof(DirectionalLight), sizeof(PointLight), reinterpret_cast<void*>(pointLight)); /* Update u_pointLight */
+    //directLightCamera.UpdateOrientation();
+    //mat4f directLightProjection = directLightCamera.CalculateOrtho();
+    //mat4f directLightView = directLightCamera.CalculateView(directionalLight->direction);
+    _uboLight.UpdateStorage(0, sizeof(DirectionalLight), reinterpret_cast<void*>(&directionalLight));  /* Update u_directionalLight */
+    //_uboLight.UpdateStorage(sizeof(DirectionalLight), sizeof(PointLight), reinterpret_cast<void*>(pointLight)); /* Update u_pointLight */
     //_uboLight.UpdateStorage(sizeof(DirectionalLight) + sizeof(PointLight), sizeof(SpotLight), reinterpret_cast<void*>(...)); /* Update u_spotLight */
 
     animator.UpdateAnimation(delta);
@@ -523,7 +515,8 @@ void Engine::Run()
     /* -------------------------- Rendering section -------------------------- */
     /* ----------------------------------------------------------------------- */
 
-    ///* Fill the depth map from directional light's perspective */
+#if 0 
+    /** Fill the depth map from directional light's perspective */
     fboDepthMap.Bind(GL_FRAMEBUFFER);
     {
       glViewport(0, 0, 1024, 1024);
@@ -538,44 +531,47 @@ void Engine::Run()
       });
     }
     fboDepthMap.Unbind(GL_FRAMEBUFFER);
+#endif
 
-    ///* Fill the depth map from point light's perspective */
-    fboDepthCubeMap.Bind(GL_FRAMEBUFFER);
-    {
-      glViewport(0, 0, 1024, 1024);
-      glClear(GL_DEPTH_BUFFER_BIT);
+#if 0 
+    /** Fill the depth map from point light's perspective */
+    //fboDepthCubeMap.Bind(GL_FRAMEBUFFER);
+    //{
+    //  glViewport(0, 0, 1024, 1024);
+    //  glClear(GL_DEPTH_BUFFER_BIT);
 
-      const vec3f& lightPos = pointLight->position;
-      mat4f pointLightProj = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 15.0f);
+    //  const vec3f& lightPos = pointLight->position;
+    //  mat4f pointLightProj = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 15.0f);
 
-      Array<mat4f, 6> pointLightViews{};
-      pointLightViews[0] = glm::lookAt(lightPos, lightPos + vec3f(1.0f, 0.0f, 0.0f), vec3f(0.0f, -1.0f, 0.0f));
-      pointLightViews[1] = glm::lookAt(lightPos, lightPos + vec3f(-1.0f, 0.0f, 0.0f), vec3f(0.0f, -1.0f, 0.0f));
-      pointLightViews[2] = glm::lookAt(lightPos, lightPos + vec3f(0.0f, 1.0f, 0.0f), vec3f(0.0f, 0.0f, 1.0f));
-      pointLightViews[3] = glm::lookAt(lightPos, lightPos + vec3f(0.0f, -1.0f, 0.0f), vec3f(0.0f, 0.0f, -1.0f));
-      pointLightViews[4] = glm::lookAt(lightPos, lightPos + vec3f(0.0f, 0.0f, 1.0f), vec3f(0.0f, -1.0f, 0.0f));
-      pointLightViews[5] = glm::lookAt(lightPos, lightPos + vec3f(0.0f, 0.0f, -1.0f), vec3f(0.0f, -1.0f, 0.0f));
+    //  Array<mat4f, 6> pointLightViews{};
+    //  pointLightViews[0] = glm::lookAt(lightPos, lightPos + vec3f(1.0f, 0.0f, 0.0f), vec3f(0.0f, -1.0f, 0.0f));
+    //  pointLightViews[1] = glm::lookAt(lightPos, lightPos + vec3f(-1.0f, 0.0f, 0.0f), vec3f(0.0f, -1.0f, 0.0f));
+    //  pointLightViews[2] = glm::lookAt(lightPos, lightPos + vec3f(0.0f, 1.0f, 0.0f), vec3f(0.0f, 0.0f, 1.0f));
+    //  pointLightViews[3] = glm::lookAt(lightPos, lightPos + vec3f(0.0f, -1.0f, 0.0f), vec3f(0.0f, 0.0f, -1.0f));
+    //  pointLightViews[4] = glm::lookAt(lightPos, lightPos + vec3f(0.0f, 0.0f, 1.0f), vec3f(0.0f, -1.0f, 0.0f));
+    //  pointLightViews[5] = glm::lookAt(lightPos, lightPos + vec3f(0.0f, 0.0f, -1.0f), vec3f(0.0f, -1.0f, 0.0f));
 
-      depthCubeMapProgram.Use();
-      depthCubeMapProgram.SetUniformMat4f("u_lightProjection", pointLightProj);
-      depthCubeMapProgram.SetUniformMat4f("u_lightViews[0]", pointLightViews.at(0));
-      depthCubeMapProgram.SetUniformMat4f("u_lightViews[1]", pointLightViews.at(1));
-      depthCubeMapProgram.SetUniformMat4f("u_lightViews[2]", pointLightViews.at(2));
-      depthCubeMapProgram.SetUniformMat4f("u_lightViews[3]", pointLightViews.at(3));
-      depthCubeMapProgram.SetUniformMat4f("u_lightViews[4]", pointLightViews.at(4));
-      depthCubeMapProgram.SetUniformMat4f("u_lightViews[5]", pointLightViews.at(5));
-      depthCubeMapProgram.SetUniform3f("u_lightPos", lightPos);
-      depthCubeMapProgram.SetUniform1f("u_zFar", 15.0f);
+    //  depthCubeMapProgram.Use();
+    //  depthCubeMapProgram.SetUniformMat4f("u_lightProjection", pointLightProj);
+    //  depthCubeMapProgram.SetUniformMat4f("u_lightViews[0]", pointLightViews.at(0));
+    //  depthCubeMapProgram.SetUniformMat4f("u_lightViews[1]", pointLightViews.at(1));
+    //  depthCubeMapProgram.SetUniformMat4f("u_lightViews[2]", pointLightViews.at(2));
+    //  depthCubeMapProgram.SetUniformMat4f("u_lightViews[3]", pointLightViews.at(3));
+    //  depthCubeMapProgram.SetUniformMat4f("u_lightViews[4]", pointLightViews.at(4));
+    //  depthCubeMapProgram.SetUniformMat4f("u_lightViews[5]", pointLightViews.at(5));
+    //  depthCubeMapProgram.SetUniform3f("u_lightPos", lightPos);
+    //  depthCubeMapProgram.SetUniform1f("u_zFar", 15.0f);
 
-      scene.Reg().view<Model, Transform>().each([&](auto& model, auto& transform) {
-        depthCubeMapProgram.SetUniformMat4f("u_model", transform.GetTransformation());
-        for (auto& mesh : model.meshes)
-          mesh.Draw(GL_TRIANGLES);
-      });
-    }
-    fboDepthCubeMap.Unbind(GL_FRAMEBUFFER);
+    //  scene.Reg().view<Model, Transform>().each([&](auto& model, auto& transform) {
+    //    depthCubeMapProgram.SetUniformMat4f("u_model", transform.GetTransformation());
+    //    for (auto& mesh : model.meshes)
+    //      mesh.Draw(GL_TRIANGLES);
+    //  });
+    //}
+    //fboDepthCubeMap.Unbind(GL_FRAMEBUFFER);
+#endif
 
-    ///* Fill the framebuffer color texture */
+    /** Fill the framebuffer color texture */
     _fboMultisampled.Bind(GL_FRAMEBUFFER);
     { 
       glViewport(0, 0, _viewportSize.x, _viewportSize.y);
@@ -584,7 +580,8 @@ void Engine::Run()
       glPolygonMode(GL_FRONT, wireframeMode ? GL_LINE : GL_FILL);
       glPolygonMode(GL_BACK, wireframeMode ? GL_LINE : GL_FILL);
 
-      ///* Render terrain */
+#if 0 
+      /** Render terrain */
       if(renderTerrain)
       {
         terrainProgram.Use();
@@ -595,87 +592,63 @@ void Engine::Run()
         heightMap.BindTextureUnit(0);
         Renderer::DrawArrays(GL_PATCHES, terrain.vao);
       }
+#endif
       
-      ///* Render scene with shadows map */
+      /** Render scene with shadows map */
       if (shadowMode)
       {
-        u32 depthMapTexture = fboDepthMap.textAttachments.at(0);
-        u32 depthCubeMapTexture = fboDepthCubeMap.textAttachments.at(0);
-        glBindTextureUnit(10, depthMapTexture);
-        glBindTextureUnit(11, depthCubeMapTexture);
+        //u32 depthMapTexture = fboDepthMap.textAttachments.at(0);
+        //u32 depthCubeMapTexture = fboDepthCubeMap.textAttachments.at(0);
+        //glBindTextureUnit(10, depthMapTexture);
+        //glBindTextureUnit(11, depthCubeMapTexture);
 
-        sceneShadowsProgram.Use();
-        sceneShadowsProgram.SetUniform3f("u_viewPos", primaryCamera.position);
-        sceneShadowsProgram.SetUniformMat4f("u_lightView", directLightView);
-        sceneShadowsProgram.SetUniformMat4f("u_lightProjection", directLightProjection);
-        sceneShadowsProgram.SetUniform1i("u_useNormalMap", normalMapMode);
-        scene.Reg().view<Model, Transform>().each([&](auto& model, auto& transform) {
-          RenderModel(sceneShadowsProgram, model, transform);
-        });
-
-        //skeletalAnimShadowsProgram.Use();
-        //skeletalAnimShadowsProgram.SetUniform3f("u_viewPos", primaryCamera.position);
-        //skeletalAnimShadowsProgram.SetUniformMat4f("u_lightView", directLightView);
-        //skeletalAnimShadowsProgram.SetUniformMat4f("u_lightProjection", directLightProjection);
-        //skeletalAnimShadowsProgram.SetUniform1i("u_useNormalMap", normalMapMode);
-
-        //auto& transforms = animator.GetFinalBoneMatrices();
-        //for (u64 i = 0; i < transforms.size(); i++)
-        //{
-        //  char uniform[32]{};
-        //  std::format_to_n(uniform, sizeof(uniform), "u_finalBonesMatrices[{}]", i);
-        //  skeletalAnimShadowsProgram.SetUniformMat4f(uniform, transforms[i]);
-        //}
-        //skeletalAnimShadowsProgram.SetUniformMat4f("u_model", mat4f(1.0f));
-        //skeleton.DrawSkeleton(GL_TRIANGLES);
+        //sceneShadowsProgram.Use();
+        //sceneShadowsProgram.SetUniform3f("u_viewPos", primaryCamera.position);
+        //sceneShadowsProgram.SetUniformMat4f("u_lightView", directLightView);
+        //sceneShadowsProgram.SetUniformMat4f("u_lightProjection", directLightProjection);
+        //sceneShadowsProgram.SetUniform1i("u_useNormalMap", normalMapMode);
+        //scene.Reg().view<Model, Transform>().each([&](auto& model, auto& transform) {
+        //  RenderModel(sceneShadowsProgram, model, transform);
+        //});
       }
-      ///* Render scene with no shadows */
+      /** Render scene with no shadows */
       else
       {
-        sceneProgram.Use();
-        sceneProgram.SetUniform3f("u_viewPos", primaryCamera.position);
-        sceneProgram.SetUniform1i("u_useNormalMap", normalMapMode);
-        scene.Reg().view<Model, Transform>().each([&](auto& model, auto& transform) {
-          RenderModel(sceneProgram, model, transform);
-        });
-
-        skeletalAnimProgram.Use();
-        skeletalAnimProgram.SetUniform3f("u_viewPos", primaryCamera.position);
-        skeletalAnimProgram.SetUniform1i("u_useNormalMap", normalMapMode);
-        skeletalAnimProgram.SetUniformMat4f("u_model", mat4f(1.0f));
-        auto& transforms = animator.GetFinalBoneMatrices();
+        //sceneProgram.Use();
+        //sceneProgram.SetUniform3f("u_viewPos", primaryCamera.position);
+        //sceneProgram.SetUniform1i("u_useNormalMap", normalMapMode);
+        //scene.Reg().view<Model, Transform>().each([&](auto& model, auto& transform) {
+        //  RenderModel(sceneProgram, model, transform);
+        //});
+        
+        auto& transforms = animator.GetBoneTransforms();
         for (u64 i = 0; i < transforms.size(); i++)
         {
           char uniform[32]{};
-          std::format_to_n(uniform, sizeof(uniform), "u_finalBonesMatrices[{}]", i);
+          std::format_to_n(uniform, sizeof(uniform), "u_boneTransforms[{}]", i);
           skeletalAnimProgram.SetUniformMat4f(uniform, transforms[i]);
         }
-        skeleton.DrawSkeleton(GL_TRIANGLES);
 
-        //scene.Reg().view<Skeleton, Transform>().each([&](auto& skeleton, auto& transform) {
-        //  skeletalAnimProgram.SetUniformMat4f("u_model", transform.GetTransformation());
-        //  skeleton.DrawSkeleton(GL_TRIANGLES);
-        //});
-        
-        //auto& transforms = animator.GetFinalBoneMatrices();
-        //for (u64 i = 0; i < transforms.size(); i++)
-        //{
-        //  char uniform[32]{};
-        //  std::format_to_n(uniform, sizeof(uniform), "u_finalBonesMatrices[{}]", i);
-        //  skeletalAnimProgram.SetUniformMat4f(uniform, transforms[i]);
-        //}
-        //skeletalAnimProgram.SetUniformMat4f("u_model", mat4f(1.0f));
-        //skeleton.DrawSkeleton(GL_TRIANGLES);
+        skeletalAnimProgram.Use();
+        skeletalAnimProgram.SetUniform3f("u_viewPos", primaryCamera.position);
+        skeletalAnimProgram.SetUniform1i("u_useNormalMap", 0);
+        skeletalAnimProgram.SetUniformMat4f("u_model", mat4f(1.0f));
+        skeleton_mutant.DrawSkeleton(GL_TRIANGLES);
+
+        //std::this_thread::sleep_for(std::chrono::milliseconds(1000));
       }
 
-      ///* Render the infinite grid */
+#if 0 
+      /** Render the infinite grid */
       if(renderInfiniteGrid)
       {
         gridPlaneProgram.Use();
         Renderer::DrawArrays(GL_TRIANGLES, gridPlane.vao);
       }
+#endif
 
-      ///* Draw skybox after the scene */
+#if 0 
+      /** Draw skybox after the scene */
       if(renderSkybox)
       {
         skyboxProgram.Use();
@@ -686,6 +659,7 @@ void Engine::Run()
         Renderer::DrawArrays(GL_TRIANGLES, skybox.vao);
         DepthTest::SetDepthFun(DepthFun::LESS);
       }
+#endif
 
       /* Blit multisampled buffer to normal color buffer of intermediate FBO */
       _fboMultisampled.Blit(_fboIntermediate,

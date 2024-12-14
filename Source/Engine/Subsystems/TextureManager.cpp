@@ -28,10 +28,9 @@ void TextureManager::Initialize()
   Texture2D defNormal;
   Texture2D defHeight;
   CreateDefaultTexture(defDiffuse, 128, 128, 255, "#default_diffuse");
-  CreateDefaultTexture(defSpecular, 255, 255, 255, "#default_specular");
+  CreateDefaultTexture(defSpecular, 0, 0, 0, "#default_specular");
   CreateDefaultTexture(defNormal, 0, 0, 0, "#default_normal");
   CreateDefaultTexture(defHeight,0, 0, 0, "#default_height");
-
   _textures.emplace("#default_diffuse", defDiffuse);
   _textures.emplace("#default_specular", defSpecular);
   _textures.emplace("#default_normal", defNormal);
@@ -60,13 +59,25 @@ void TextureManager::CleanUp()
 
 Texture2D& TextureManager::GetTextureByPath(const fs::path& path)
 {
-  String lexNormal = path.lexically_normal().string();
-  return _textures.at(lexNormal);
+  try
+  {
+    return _textures.at(path);
+  }
+  catch (const std::exception&)
+  {
+    throw std::runtime_error(std::format("texture '{}' does not exist", path.string()));
+  }
 }
 Texture2D& TextureManager::GetIconByPath(const fs::path& path)
 {
-  String lexNormal = path.lexically_normal().string();
-  return _icons.at(lexNormal);
+  try
+  {
+    return _icons.at(path);
+  }
+  catch (const std::exception&)
+  {
+    throw std::runtime_error(std::format("texture '{}' does not exist", path.string()));
+  }
 }
 
 

@@ -18,10 +18,9 @@ static chrono::steady_clock::time_point timeEnd;
 
 static Buffer LoadVertices(aiMesh* aimesh, i32& numVertices)
 {
+	totalVertices += aimesh->mNumVertices;
 	numVertices = aimesh->mNumVertices;
 	u64 size = numVertices * sizeof(Vertex_P_N_UV_T);
-
-	totalVertices += numVertices;
 
 	Buffer buffer;
 	buffer.Create();
@@ -99,10 +98,10 @@ Model::Model(const fs::path& modelPath)
 	Assimp::Importer importer;
 	const aiScene* scene = importer.ReadFile(strPath.c_str(),
 		aiProcess_Triangulate |
-		aiProcess_JoinIdenticalVertices |
-		aiProcess_FlipUVs |
 		aiProcess_GenSmoothNormals |
-		aiProcess_CalcTangentSpace
+		aiProcess_CalcTangentSpace |
+		aiProcess_FlipUVs |
+		aiProcess_JoinIdenticalVertices
 	);
 
 	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
@@ -186,7 +185,7 @@ void Model::ProcessNode(aiNode* node, const aiScene* scene)
 		mesh.vao.AttachElementBuffer(ebo);
 		mesh.vao.numIndices = numIndices;
 
-		if (aimesh->mMaterialIndex >= 0)
+		if (scene->HasMaterials())
 		{
 			aiMaterial* material = scene->mMaterials[aimesh->mMaterialIndex];
 			if (Texture2D* diffuse = GetMaterialTexture(material, aiTextureType_DIFFUSE))

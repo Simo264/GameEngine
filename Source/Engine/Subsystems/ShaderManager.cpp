@@ -3,7 +3,7 @@
 #include "Core/GL.hpp"
 #include "Core/Log/Logger.hpp"
 #include "Engine/Filesystem/ConfigFile.hpp"
-
+#include "Engine/Graphics/Vertex.hpp"
 #include "Engine/Globals.hpp"
 
 constexpr char SM_FILE_CONFIG[] = { "Shader_Manager.ini" };
@@ -191,25 +191,25 @@ void ShaderManager::SetProgramsUniforms()
   skeletalAnimProg.SetUniform1i("u_material.specularTexture", 1);
   skeletalAnimProg.SetUniform1i("u_material.normalTexture", 2);
   skeletalAnimProg.SetUniform1i("u_material.heightTexture", 3);
-  for (u64 i = 0; i < 100; i++)
+  for (u32 i = 0; i < 100; i++)
   {
     char uniform[32]{};
-    std::format_to_n(uniform, sizeof(uniform), "u_finalBonesMatrices[{}]", i);
+    std::format_to_n(uniform, sizeof(uniform), "u_boneTransforms[{}]", i);
     skeletalAnimProg.SetUniformMat4f(uniform, mat4f(1.0f));
   }
 
-  auto& skeletalAnimShadowsProg = GetProgramByName("SkeletalAnimShadows");
-  skeletalAnimShadowsProg.SetUniform1i("u_useNormalMap", 0);
-  skeletalAnimShadowsProg.SetUniform1i("u_material.diffuseTexture", 0);
-  skeletalAnimShadowsProg.SetUniform1i("u_material.specularTexture", 1);
-  skeletalAnimShadowsProg.SetUniform1i("u_material.normalTexture", 2);
-  skeletalAnimShadowsProg.SetUniform1i("u_material.heightTexture", 3);
-  skeletalAnimShadowsProg.SetUniform1i("u_depthMapTexture", 10);
-  skeletalAnimShadowsProg.SetUniform1i("u_depthCubeMapTexture", 11);
-  for (u64 i = 0; i < 100; i++)
-  {
-    char uniform[32]{};
-    std::format_to_n(uniform, sizeof(uniform), "u_finalBonesMatrices[{}]", i);
-    skeletalAnimShadowsProg.SetUniformMat4f(uniform, mat4f(1.0f));
-  }
+  //auto& skeletalAnimShadowsProg = GetProgramByName("SkeletalAnimShadows");
+  //skeletalAnimShadowsProg.SetUniform1i("u_useNormalMap", 0);
+  //skeletalAnimShadowsProg.SetUniform1i("u_material.diffuseTexture", 0);
+  //skeletalAnimShadowsProg.SetUniform1i("u_material.specularTexture", 1);
+  //skeletalAnimShadowsProg.SetUniform1i("u_material.normalTexture", 2);
+  //skeletalAnimShadowsProg.SetUniform1i("u_material.heightTexture", 3);
+  //skeletalAnimShadowsProg.SetUniform1i("u_depthMapTexture", 10);
+  //skeletalAnimShadowsProg.SetUniform1i("u_depthCubeMapTexture", 11);
+  //for (u32 i = 0; i < 100; i++)
+  //{
+  //  char uniform[32]{};
+  //  std::format_to_n(uniform, sizeof(uniform), "u_boneTransforms[{}]", i);
+  //  skeletalAnimShadowsProg.SetUniformMat4f(uniform, mat4f(1.0f));
+  //}
 }
