@@ -1,8 +1,12 @@
 #include "Bone.hpp"
 
 #include "Core/Math/Ext.hpp"
+#include "Core/Log/Logger.hpp"
 
 #include <assimp/scene.h>
+
+
+
 
 static mat4f AiMatrixToGLM(const aiMatrix4x4& from)
 {
@@ -20,157 +24,146 @@ static mat4f AiMatrixToGLM(const aiMatrix4x4& from)
 /*										PUBLIC														*/
 /* ---------------------------------------------------- */
 
-Bone::Bone(StringView name, i32 id, const aiNodeAnim* channel) :
-	_name{ name.data() },
-	_id{ id },
-	_positions{},
-	_rotations{},
-	_scales{},
-	_localTransform{}
+Bone::Bone(StringView name, u32 id, const aiNodeAnim* channel) :
+	name{ name.data() },
+	id{ id },
+	_localTransform{},
+	_positionKeys{},
+	_rotationKeys{},
+	_scaleKeys{}
 {
-	_positions.reserve(channel->mNumPositionKeys);
+	_positionKeys.reserve(channel->mNumPositionKeys);
+	_rotationKeys.reserve(channel->mNumRotationKeys);
+	_scaleKeys.reserve(channel->mNumScalingKeys);
+
 	for (u32 i = 0; i < channel->mNumPositionKeys; i++)
 	{
-		const aiVector3D& aiPosition = channel->mPositionKeys[i].mValue;
+		f32 timestamp = channel->mPositionKeys[i].mTime;
 		vec3f position = vec3f(
-			aiPosition.x, 
-			aiPosition.y, 
-			aiPosition.z
+			channel->mPositionKeys[i].mValue.x,
+			channel->mPositionKeys[i].mValue.y,
+			channel->mPositionKeys[i].mValue.z
 		);
-		f32 timeStamp = channel->mPositionKeys[i].mTime;
-		_positions.emplace_back(position, timeStamp);
+		auto& key = _positionKeys.emplace_back();
+		key.timeStamp = timestamp;
+		key.position = position;
 	}
-
-	_rotations.reserve(channel->mNumRotationKeys);
 	for (u32 i = 0; i < channel->mNumRotationKeys; i++)
 	{
-		const aiQuaternion& aiOrientation = channel->mRotationKeys[i].mValue;
+		f32 timestamp = channel->mRotationKeys[i].mTime;
 		quat orientation = quat(
-			aiOrientation.w, 
-			aiOrientation.x, 
-			aiOrientation.y, 
-			aiOrientation.z
+			channel->mRotationKeys[i].mValue.w,
+			channel->mRotationKeys[i].mValue.x,
+			channel->mRotationKeys[i].mValue.y,
+			channel->mRotationKeys[i].mValue.z
 		);
-		f32 timeStamp = channel->mRotationKeys[i].mTime;
-		_rotations.emplace_back(orientation, timeStamp);
+		auto& key = _rotationKeys.emplace_back();
+		key.timeStamp = timestamp;
+		key.orientation = orientation;
 	}
-
-	_scales.reserve(channel->mNumScalingKeys);
 	for (u32 i = 0; i < channel->mNumScalingKeys; i++)
 	{
-		const aiVector3D& aiscale = channel->mScalingKeys[i].mValue;
+		f32 timestamp = channel->mScalingKeys[i].mTime;
 		vec3f scale = vec3f(
-			aiscale.x, 
-			aiscale.y, 
-			aiscale.z
+			channel->mScalingKeys[i].mValue.x,
+			channel->mScalingKeys[i].mValue.y,
+			channel->mScalingKeys[i].mValue.z
 		);
-		f32 timeStamp = channel->mScalingKeys[i].mTime;
-		_scales.emplace_back(scale, timeStamp);
+		auto& key = _scaleKeys.emplace_back();
+		key.timeStamp = timestamp;
+		key.scale = scale;
 	}
 }
-void Bone::Interpolate(f32 animationTime)
+Bone::~Bone()
 {
-	/**
-		* Interpolates  b/w positions,rotations & scaling keys based on the curren time of
-		* the animation and prepares the local transformation matrix by combining all keys
-		* tranformations
-		*/
-	mat4f translation = InterpolatePosition(animationTime);
-	mat4f rotation = InterpolateRotation(animationTime);
-	mat4f scale = InterpolateScaling(animationTime);
-	_localTransform = translation * rotation * scale;
+	CONSOLE_DEBUG("Destroy bone {}", name);
+
+	//if (_positionKeys)
+	//	delete[] _positionKeys;
+	//if (_rotationKeys )
+	//	delete[] _rotationKeys;
+	//if (_scaleKeys)
+	//	delete[] _scaleKeys;
 }
 
-i32 Bone::GetPositionIndex(f32 animationTime)
+void Bone::Interpolate(f32 currentTime)
 {
-	/**
-	 * Gets the current index on mKeyPositions to interpolate to based on
-	 * the current animation time
-	 */
-
-	u64 numPositions = _positions.size();
-	for (u64 i = 0; i < numPositions - 1; i++)
-		if (animationTime < _positions.at(i + 1).timeStamp)
-			return i;
-
-	return -1;
+	mat4f translation = InterpolatePosition(currentTime);
+	mat4f rotation		= InterpolateRotation(currentTime);
+	mat4f scale				= InterpolateScaling(currentTime);
+	_localTransform		= translation * rotation * scale;
 }
-i32 Bone::GetRotationIndex(f32 animationTime)
-{
-	/**
-	 * Gets the current index on mKeyRotations to interpolate to based on the
-	 * current animation time.
-	 */
-
-	u64 numRotations = _rotations.size();
-	for (u64 i = 0; i < numRotations - 1; i++)
-		if (animationTime < _rotations.at(i + 1).timeStamp)
-			return i;
-
-	return -1;
-}
-i32 Bone::GetScaleIndex(f32 animationTime)
-{
-	/**
-	 * Gets the current index on mKeyScalings to interpolate to based on the
-	 * current animation time
-	 */
-
-	u64 numScalings = _scales.size();
-	for (u64 i = 0; i < numScalings - 1; i++)
-		if (animationTime < _scales.at(i + 1).timeStamp)
-			return i;
-
-	return -1;
-}
-
 
 /* ---------------------------------------------------- */
 /*										PRIVATE														*/
 /* ---------------------------------------------------- */
 
-
-f32 Bone::GetScaleFactor(f32 lastTimeStamp, f32 nextTimeStamp, f32 animationTime)
-{
-	f32 midWayLength = animationTime - lastTimeStamp;
-	f32 framesDiff = nextTimeStamp - lastTimeStamp;
+f32 Bone::CalculateBlendFactor(f32 prevTimestamp, f32 nextTimestamp, f32 currentTime)
+{ 
+	f32 midWayLength = currentTime - prevTimestamp;
+	f32 framesDiff = nextTimestamp - prevTimestamp;
 	return midWayLength / framesDiff;
 }
-mat4f Bone::InterpolatePosition(f32 animationTime)
+mat4f Bone::InterpolatePosition(f32 currentTime)
 {
-	if (_positions.size() == 1)
-		return glm::translate(mat4f(1.0f), _positions.at(0).position);
-
-	i32 p0Index = GetPositionIndex(animationTime);
-	i32 p1Index = p0Index + 1;
-	f32 scaleFactor = GetScaleFactor(_positions.at(p0Index).timeStamp, _positions.at(p1Index).timeStamp, animationTime);
-	vec3f finalPosition = glm::mix(_positions.at(p0Index).position, _positions.at(p1Index).position, scaleFactor);
+	if (_positionKeys.empty())
+		return mat4f(1.0f);
+	if(_positionKeys.size() == 1)
+		return glm::translate(mat4f(1.0f), _positionKeys[0].position);
+	
+	const auto [currentKey, nextKey] = FindCurrentPositionKey(currentTime);
+	f32 scaleFactor = CalculateBlendFactor(currentKey->timeStamp, nextKey->timeStamp, currentTime);
+	vec3f finalPosition = glm::mix(currentKey->position, nextKey->position, scaleFactor);
 	return glm::translate(mat4f(1.0f), finalPosition);
 }
-mat4f Bone::InterpolateRotation(f32 animationTime)
+mat4f Bone::InterpolateRotation(f32 currentTime)
 {
-	if (_rotations.size() == 1)
+	if (_rotationKeys.empty())
+		return mat4f(1.0f);
+	if (_rotationKeys.size() == 1)
 	{
-		quat rotation = glm::normalize(_rotations.at(0).orientation);
+		quat rotation = glm::normalize(_rotationKeys[0].orientation);
 		return glm::mat4_cast(rotation);
 	}
 
-	i32 p0Index = GetRotationIndex(animationTime);
-	i32 p1Index = p0Index + 1;
-	f32 scaleFactor = GetScaleFactor(_rotations.at(p0Index).timeStamp, _rotations.at(p1Index).timeStamp, animationTime);
-	quat finalRotation = glm::slerp(_rotations.at(p0Index).orientation, _rotations.at(p1Index).orientation, scaleFactor);
+	const auto [currentKey, nextKey] = FindCurrentRotationKey(currentTime);
+	f32 scaleFactor = CalculateBlendFactor(currentKey->timeStamp, nextKey->timeStamp, currentTime);
+	quat finalRotation = glm::slerp(currentKey->orientation, nextKey->orientation, scaleFactor);
 	finalRotation = glm::normalize(finalRotation);
 	return glm::mat4_cast(finalRotation);
 
 }
-mat4f Bone::InterpolateScaling(f32 animationTime)
+mat4f Bone::InterpolateScaling(f32 currentTime)
 {
-	if (_scales.size() == 1)
-		return glm::scale(mat4f(1.0f), _scales.at(0).scale);
+	if (_scaleKeys.empty())
+		return mat4f(1.0f);
+	if (_scaleKeys.size() == 1)
+		return glm::scale(mat4f(1.0f), _scaleKeys[0].scale);
 
-	i32 p0Index = GetScaleIndex(animationTime);
-	i32 p1Index = p0Index + 1;
-	f32 scaleFactor = GetScaleFactor(_scales.at(p0Index).timeStamp, _scales.at(p1Index).timeStamp, animationTime);
-	vec3f finalScale = glm::mix(_scales.at(p0Index).scale, _scales.at(p1Index).scale, scaleFactor);
+	const auto [currentKey, nextKey] = FindCurrentScaleKey(currentTime);
+	f32 scaleFactor = CalculateBlendFactor(currentKey->timeStamp, nextKey->timeStamp,currentTime);
+	vec3f finalScale = glm::mix(currentKey->scale, nextKey->scale, scaleFactor);
 	return glm::scale(mat4f(1.0f), finalScale);
+}
+
+std::pair<KeyPosition*, KeyPosition*> Bone::FindCurrentPositionKey(f32 currentTime)
+{
+	for (u64 i = 0; i < _positionKeys.size() - 1; i++)
+		if (currentTime < _positionKeys[i + 1].timeStamp)
+			return { &_positionKeys[i], &_positionKeys[i + 1] };
+	return { nullptr, nullptr };
+}
+std::pair<KeyRotation*, KeyRotation*> Bone::FindCurrentRotationKey(f32 currentTime)
+{
+	for (u64 i = 0; i < _rotationKeys.size() - 1; i++)
+		if (currentTime < _rotationKeys[i + 1].timeStamp)
+			return { &_rotationKeys[i], &_rotationKeys[i + 1] };
+	return { nullptr, nullptr };
+}
+std::pair<KeyScale*, KeyScale*> Bone::FindCurrentScaleKey(f32 currentTime)
+{
+	for (u64 i = 0; i < _scaleKeys.size() - 1; i++)
+		if (currentTime < _scaleKeys[i + 1].timeStamp)
+			return { &_scaleKeys[i], &_scaleKeys[i + 1] };
+	return { nullptr, nullptr };
 }

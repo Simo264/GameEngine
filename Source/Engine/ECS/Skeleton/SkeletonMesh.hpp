@@ -20,8 +20,9 @@ public:
 
   void DrawSkeleton(i32 mode);
 
-  Vector<Mesh> meshes;
   String strPath;
+  
+  Vector<Mesh> meshes;
   UnorderedMap<String, BoneInfo> boneMap;
 
 private:

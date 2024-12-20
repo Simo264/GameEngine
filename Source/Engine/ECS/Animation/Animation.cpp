@@ -51,21 +51,13 @@ Animation::Animation(const fs::path& path, SkeletonMesh& skeleton) :
 Bone* Animation::FindBone(StringView name)
 {
 	auto it = std::find_if(bones.begin(), bones.end(), [&](const Bone& Bone) { 
-		return Bone.GetBoneName().compare(name.data()) == 0;
+		return Bone.name.compare(name.data()) == 0;
 	});
 	
 	if (it != bones.end())
 		return &(*it);
 
 	return nullptr;
-
-	//auto it = boneMap->find(name.data());
-	//if (it != boneMap->end())
-	//{
-	//	BoneInfo& info = it->second;
-	//	return &bones.at(info.id);
-	//}
-	//return nullptr;
 }
 
 
@@ -80,7 +72,7 @@ void Animation::ReadMissingBones(const aiAnimation* animation, SkeletonMesh& ske
 		aiNodeAnim* channel = animation->mChannels[i];
 		const char* boneName = channel->mNodeName.data;
 
-		i32 boneId{};
+		u32 boneId{};
 		auto it = skeleton.boneMap.find(boneName);
 		if (it == skeleton.boneMap.end())
 		{

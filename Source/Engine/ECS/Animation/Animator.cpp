@@ -30,7 +30,7 @@ void Animator::CalculateBoneTransform(const BoneNode& node, mat4f parentTransfor
 	if (Bone)
 	{
 		Bone->Interpolate(_currentTime);
-		nodeTransform = Bone->GetLocalTransform();
+		nodeTransform = Bone->LocalTransform();
 	}
 
 	mat4f globalTransformation = parentTransform * nodeTransform;

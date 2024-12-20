@@ -15,9 +15,9 @@ public:
 
 	Bone* FindBone(StringView name);
 
-	BoneNode rootNode;
 	f32 duration;
 	f32 ticksPerSecond;
+	BoneNode rootNode;
 	Vector<Bone> bones;
 	UnorderedMap<String, BoneInfo>* boneMap;
 
