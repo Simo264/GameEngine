@@ -31,7 +31,7 @@ SkeletonMesh::SkeletonMesh(const fs::path& skeletalPath) :
 	meshes{},
 	boneMap{}
 {
-	CONSOLE_TRACE("Loading skeletal {}...", strPath);
+	CONSOLE_TRACE("Loading skeleton mesh {}...", strPath);
 
 	Assimp::Importer importer;
 	const aiScene* scene = importer.ReadFile(strPath.c_str(),
@@ -48,8 +48,9 @@ SkeletonMesh::SkeletonMesh(const fs::path& skeletalPath) :
 
 	meshes.reserve(scene->mNumMeshes);
 	ProcessNode(scene->mRootNode, scene);
+	LoadBoneHierarchy(rootNode, scene->mRootNode);
 
-	CONSOLE_TRACE("Skeletal loaded!");
+	CONSOLE_TRACE("Skeleton loaded!");
 }
 void SkeletonMesh::DrawSkeleton(i32 mode)
 {
@@ -62,6 +63,17 @@ void SkeletonMesh::DrawSkeleton(i32 mode)
 		material.height->BindTextureUnit(3);
 		mesh.Draw(mode);
 	}
+}
+std::pair<Bone*, u32> SkeletonMesh::FindBone(StringView boneName)
+{
+	auto it = boneMap.find(boneName.data());
+	if (it != boneMap.end())
+	{
+		u32 boneIndex = it->second;
+		return { &bones.at(boneIndex), boneIndex };
+	}
+
+	return { nullptr, -1 };
 }
 
 /* ---------------------------------------------------- */
@@ -140,33 +152,42 @@ void SkeletonMesh::LoadIndices(Vector<u32>& indices, aiMesh* aimesh)
 }
 void SkeletonMesh::LoadBonesAndWeights(Vector<Vertex_P_N_UV_T_B>& vertices, const aiMesh* aimesh)
 {
-	for (u32 boneIdx = 0; boneIdx < aimesh->mNumBones; boneIdx++)
+	for (u32 i = 0; i < aimesh->mNumBones; i++)
 	{
-		aiBone* bone = aimesh->mBones[boneIdx];
-		const char* boneName = bone->mName.C_Str();
-		
-		i32 boneId{};
-		auto it = boneMap.find(boneName);
-		if (it == boneMap.end())
+		aiBone* aibone = aimesh->mBones[i];
+		const char* boneName = aibone->mName.C_Str();
+
+		u32 boneIndex{};
+		auto [bone, idx] = FindBone(boneName);
+		if (!bone)
 		{
-			boneId = boneMap.size();
-			mat4f offset = AiMatrixToGLM(bone->mOffsetMatrix);
-			boneMap.emplace(
-				std::piecewise_construct,
-				std::forward_as_tuple(boneName),
-				std::forward_as_tuple(boneId, offset)
-			);
+			boneIndex = bones.size();
+			boneMap.insert({ boneName, boneIndex });
+
+			Bone& bone = bones.emplace_back();
+			bone.offset = AiMatrixToGLM(aibone->mOffsetMatrix);
 		}
 		else
-			boneId = it->second.id;
+			boneIndex = idx;
 
-		for (u32 weightIndex = 0; weightIndex < bone->mNumWeights; weightIndex++)
+		for (u32 weightIndex = 0; weightIndex < aibone->mNumWeights; weightIndex++)
 		{
-			u32 vertexId = bone->mWeights[weightIndex].mVertexId;
-			f32 weight = bone->mWeights[weightIndex].mWeight;
+			u32 vertexId = aibone->mWeights[weightIndex].mVertexId;
+			f32 weight = aibone->mWeights[weightIndex].mWeight;
 			Vertex_P_N_UV_T_B& vertex = vertices.at(vertexId);
-			vertex.AddBone(boneId, weight);
+			vertex.AddBone(boneIndex, weight);
 		}
+	}
+}
+void SkeletonMesh::LoadBoneHierarchy(BoneNode& dest, const aiNode* src)
+{
+	dest.name = src->mName.data;
+	dest.transformation = AiMatrixToGLM(src->mTransformation);
+	dest.children.reserve(src->mNumChildren);
+	for (u32 i = 0; i < src->mNumChildren; i++)
+	{
+		BoneNode& child = dest.children.emplace_back();
+		LoadBoneHierarchy(child, src->mChildren[i]);
 	}
 }
 Texture2D* SkeletonMesh::GetMaterialTexture(aiMaterial* material, u32 textureType)
@@ -177,4 +198,3 @@ Texture2D* SkeletonMesh::GetMaterialTexture(aiMaterial* material, u32 textureTyp
 
 	return nullptr;
 }
-

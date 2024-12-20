@@ -24,9 +24,7 @@ static mat4f AiMatrixToGLM(const aiMatrix4x4& from)
 Animation::Animation(const fs::path& path, SkeletonMesh& skeleton) :
 	duration{ 0 },
 	ticksPerSecond{ 0 },
-	rootNode{},
-	bones{},
-	boneMap{}
+	boneKeys{}
 {
 	Assimp::Importer importer;
 	const aiScene* scene = importer.ReadFile(path.string(), aiProcess_Triangulate);
@@ -44,61 +42,78 @@ Animation::Animation(const fs::path& path, SkeletonMesh& skeleton) :
 	aiAnimation* animation = scene->mAnimations[0];
 	duration = animation->mDuration;
 	ticksPerSecond = animation->mTicksPerSecond;
-
-	ReadHierarchyData(rootNode, scene->mRootNode);
-	ReadMissingBones(animation, skeleton);
+	LoadAnimation(animation, skeleton);
 }
-Bone* Animation::FindBone(StringView name)
-{
-	auto it = std::find_if(bones.begin(), bones.end(), [&](const Bone& Bone) { 
-		return Bone.name.compare(name.data()) == 0;
-	});
-	
-	if (it != bones.end())
-		return &(*it);
-
-	return nullptr;
-}
-
 
 /* ---------------------------------------------------- */
 /*										PRIVATE														*/
 /* ---------------------------------------------------- */
 
-void Animation::ReadMissingBones(const aiAnimation* animation, SkeletonMesh& skeleton)
+void Animation::LoadAnimation(const aiAnimation* animation, SkeletonMesh& skeleton)
 {
 	for (i32 i = 0; i < animation->mNumChannels; i++)
 	{
 		aiNodeAnim* channel = animation->mChannels[i];
 		const char* boneName = channel->mNodeName.data;
 
-		u32 boneId{};
-		auto it = skeleton.boneMap.find(boneName);
-		if (it == skeleton.boneMap.end())
-		{
-			boneId = skeleton.boneMap.size();
-			skeleton.boneMap.emplace(
-				std::piecewise_construct,
-				std::forward_as_tuple(boneName),
-				std::forward_as_tuple(boneId, mat4f(1.0f))
-			);
-		}
-		else
-			boneId = it->second.id;
+		/* Load skeleton bones */
+		auto [bone, index] = skeleton.FindBone(boneName);
+		if (!bone)
+			LoadSkeletonBone(skeleton, boneName);
 
-		bones.emplace_back(boneName, boneId, channel);
+
+		/* Load bone keys */
+		auto [boneKeysIt, success] = boneKeys.insert({ boneName, AnimationKeys() });
+		AnimationKeys& keys = boneKeysIt->second;
+		keys.positionKeys.reserve(channel->mNumPositionKeys);
+		keys.rotationKeys.reserve(channel->mNumRotationKeys);
+		keys.scaleKeys.reserve(channel->mNumScalingKeys);
+		LoadBoneKeys(keys, channel);
 	}
-
-	boneMap = &skeleton.boneMap;
 }
-void Animation::ReadHierarchyData(BoneNode& dest, const aiNode* src)
+void Animation::LoadSkeletonBone(SkeletonMesh& skeleton, StringView boneName)
 {
-	dest.name = src->mName.data;
-	dest.transformation = AiMatrixToGLM(src->mTransformation);
-	dest.children.reserve(src->mNumChildren);
-	for (u32 i = 0; i < src->mNumChildren; i++)
+	u32 boneIndex = skeleton.bones.size();
+	skeleton.boneMap.insert({ boneName.data(), boneIndex});
+	auto& bone = skeleton.bones.emplace_back();
+}
+void Animation::LoadBoneKeys(AnimationKeys& keys, const aiNodeAnim* channel)
+{
+	for (u32 i = 0; i < channel->mNumPositionKeys; i++)
 	{
-		BoneNode& child = dest.children.emplace_back();
-		ReadHierarchyData(child, src->mChildren[i]);
+		f32 timestamp = channel->mPositionKeys[i].mTime;
+		vec3f position = vec3f(
+			channel->mPositionKeys[i].mValue.x,
+			channel->mPositionKeys[i].mValue.y,
+			channel->mPositionKeys[i].mValue.z
+		);
+		auto& key = keys.positionKeys.emplace_back();
+		key.timeStamp = timestamp;
+		key.position = position;
+	}
+	for (u32 i = 0; i < channel->mNumRotationKeys; i++)
+	{
+		f32 timestamp = channel->mRotationKeys[i].mTime;
+		quat orientation = quat(
+			channel->mRotationKeys[i].mValue.w,
+			channel->mRotationKeys[i].mValue.x,
+			channel->mRotationKeys[i].mValue.y,
+			channel->mRotationKeys[i].mValue.z
+		);
+		auto& key = keys.rotationKeys.emplace_back();
+		key.timeStamp = timestamp;
+		key.orientation = orientation;
+	}
+	for (u32 i = 0; i < channel->mNumScalingKeys; i++)
+	{
+		f32 timestamp = channel->mScalingKeys[i].mTime;
+		vec3f scale = vec3f(
+			channel->mScalingKeys[i].mValue.x,
+			channel->mScalingKeys[i].mValue.y,
+			channel->mScalingKeys[i].mValue.z
+		);
+		auto& key = keys.scaleKeys.emplace_back();
+		key.timeStamp = timestamp;
+		key.scale = scale;
 	}
 }

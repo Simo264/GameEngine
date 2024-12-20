@@ -5,7 +5,30 @@
 #include "Engine/ECS/Skeleton/SkeletonMesh.hpp"
 
 struct aiAnimation;
+struct aiNodeAnim;
 struct aiNode;
+
+struct KeyPosition
+{
+	f32 timeStamp{};
+	vec3f position{};
+};
+struct KeyRotation
+{
+	f32 timeStamp{};
+	quat orientation{};
+};
+struct KeyScale
+{
+	f32 timeStamp{};
+	vec3f scale{};
+};
+struct AnimationKeys
+{
+	Vector<KeyPosition> positionKeys{};
+	Vector<KeyRotation> rotationKeys{};
+	Vector<KeyScale>		scaleKeys{};
+};
 
 class Animation
 {
@@ -13,15 +36,12 @@ public:
 	Animation(const fs::path& path, SkeletonMesh& skeleton);
 	~Animation() = default;
 
-	Bone* FindBone(StringView name);
-
 	f32 duration;
 	f32 ticksPerSecond;
-	BoneNode rootNode;
-	Vector<Bone> bones;
-	UnorderedMap<String, BoneInfo>* boneMap;
+	Map<String, AnimationKeys> boneKeys; // BoneName - KeyFrames
 
 private:
-	void ReadMissingBones(const aiAnimation* animation, SkeletonMesh& skeleton);
-	void ReadHierarchyData(BoneNode& dest, const aiNode* src);
+	void LoadAnimation(const aiAnimation* animation, SkeletonMesh& skeleton);
+	void LoadSkeletonBone(SkeletonMesh& skeleton, StringView boneName);
+	void LoadBoneKeys(AnimationKeys& keys, const aiNodeAnim* channel);
 };

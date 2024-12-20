@@ -420,7 +420,7 @@ void Engine::Run()
   static auto mutant_anim_path = GetAnimationsPath() / "Anim_Mutant_Dying_gltf.gltf";
   SkeletonMesh skeleton_mutant(mutant_skeleton_path);
   Animation anim_dying(mutant_anim_path, skeleton_mutant);
-  Animator animator(anim_dying);
+  Animator animator(skeleton_mutant, anim_dying);
 
   /* ---------------------------------------------------------------------- */
   /* -------------------------- Pre-loop section -------------------------- */
