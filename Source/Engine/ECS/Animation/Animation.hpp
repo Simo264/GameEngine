@@ -25,23 +25,41 @@ struct KeyScale
 };
 struct AnimationKeys
 {
+	u32 boneIndex{};
 	Vector<KeyPosition> positionKeys{};
 	Vector<KeyRotation> rotationKeys{};
 	Vector<KeyScale>		scaleKeys{};
 };
 
+/**
+ * @class Animation
+ * @brief Represents an animation associated with a skeleton mesh.
+ */
 class Animation
 {
 public:
+	/**
+	 * @brief Constructs an Animation object by loading animation data from the specified file path.
+	 * @param path The file path to the animation data.
+	 * @param skeleton The skeleton mesh associated with the animation.
+	 */
 	Animation(const fs::path& path, SkeletonMesh& skeleton);
+	
+	/**
+	 * @brief Default destructor for the Animation class.
+	 */
 	~Animation() = default;
 
-	f32 duration;
-	f32 ticksPerSecond;
-	Map<String, AnimationKeys> boneKeys; // BoneName - KeyFrames
-
+	f32 Duration() const { return _duration; }
+	f32 TickPerSecond() const { return _ticksPerSecond; }
+	const Vector<AnimationKeys>& BoneKeys() const { return _boneKeys; }
+	const fs::path& Path() const { return _path; }
 private:
 	void LoadAnimation(const aiAnimation* animation, SkeletonMesh& skeleton);
-	void LoadSkeletonBone(SkeletonMesh& skeleton, StringView boneName);
 	void LoadBoneKeys(AnimationKeys& keys, const aiNodeAnim* channel);
+
+	fs::path _path;
+	f32 _duration;
+	f32 _ticksPerSecond;
+	Vector<AnimationKeys> _boneKeys;
 };

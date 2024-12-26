@@ -17,7 +17,13 @@ Mesh::Mesh()
 	material.diffuse = &textureManager.GetDefaultDiffuse();
 	material.specular = &textureManager.GetDefaultSpecular();
 	material.normal = &textureManager.GetDefaultNormal();
-	material.height = &textureManager.GetDefaultHeight();
+}
+Mesh::~Mesh()
+{
+	vao.Delete();
+	material.diffuse = nullptr;
+	material.specular = nullptr;
+	material.normal = nullptr;
 }
 
 void Mesh::SetupAttributeFloat(i32 attribindex, i32 bindingindex, VertexFormat format) const
@@ -41,24 +47,10 @@ void Mesh::SetupAttributeLong(i32 attribindex, i32 bindingindex, VertexFormat fo
 	vao.SetAttribFormatLong(attribindex, format.size, format.relativeoffset);
 }
 
-void Mesh::Destroy()
-{
-	vao.Delete();
-	material.diffuse = nullptr;
-	material.specular = nullptr;
-	material.normal = nullptr;
-	material.height = nullptr;
-}
-
-void Mesh::Draw(i32 mode)
+void Mesh::Draw(i32 mode) const
 {
 	if (vao.numIndices == 0)
 		Renderer::DrawArrays(mode, vao);
 	else
 		Renderer::DrawElements(mode, vao);
 }
-
-
-/* -------------------------- */
-/*          PRIVATE           */
-/* -------------------------- */

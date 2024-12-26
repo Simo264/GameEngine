@@ -5,6 +5,10 @@
 #include "Engine/Subsystems/WindowManager.hpp"
 #include "Engine/Subsystems/FontManager.hpp"
 #include "Engine/Filesystem/ConfigFile.hpp"
+#include "Engine/Graphics/Objects/Texture2D.hpp"
+#include "Engine/Scene.hpp"
+#include "Engine/Camera.hpp"
+#include "Engine/ECS/ECS.hpp"
 
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_glfw.h>
@@ -201,7 +205,6 @@ void ImGuiLayer::DebugDepthMap(u32 tetxureID)
 
   style.WindowPadding = paddingTmp;
 }
-
 
 
 /* -------------------------- */

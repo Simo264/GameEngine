@@ -22,7 +22,6 @@ struct Material
   sampler2D diffuseTexture;
   sampler2D specularTexture;
   sampler2D normalTexture;
-  sampler2D heightTexture;
 };
 struct DirectionalLight 
 {
@@ -102,8 +101,8 @@ vec3 CalculateSpotLight(SpotLight light, vec3 normal, vec3 viewDir);
 
 void main() 
 {
-  FragColor = vec4(1.f, 0.f, 0.f, 1.0f);
-  return;
+  // FragColor = vec4(1.f, 0.f, 0.f, 1.0f);
+  // return;
 
   g_normalTexSize = textureSize(u_material.normalTexture, 0);
 

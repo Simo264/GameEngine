@@ -6,29 +6,21 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
-static mat4f AiMatrixToGLM(const aiMatrix4x4& from)
-{
-	mat4f to{};
-	//the a,b,c,d in assimp is the row ; the 1,2,3,4 is the column
-	to[0][0] = from.a1; to[1][0] = from.a2; to[2][0] = from.a3; to[3][0] = from.a4;
-	to[0][1] = from.b1; to[1][1] = from.b2; to[2][1] = from.b3; to[3][1] = from.b4;
-	to[0][2] = from.c1; to[1][2] = from.c2; to[2][2] = from.c3; to[3][2] = from.c4;
-	to[0][3] = from.d1; to[1][3] = from.d2; to[2][3] = from.d3; to[3][3] = from.d4;
-	return to;
-}
-
 /* ---------------------------------------------------- */
 /*										PUBLIC														*/
 /* ---------------------------------------------------- */
 
 Animation::Animation(const fs::path& path, SkeletonMesh& skeleton) :
-	duration{ 0 },
-	ticksPerSecond{ 0 },
-	boneKeys{}
+	_path{ path },
+	_duration{ 0 },
+	_ticksPerSecond{ 0 },
+	_boneKeys{}
 {
+	CONSOLE_INFO("Loading animation '{}'", path.string());
+
 	Assimp::Importer importer;
 	const aiScene* scene = importer.ReadFile(path.string(), aiProcess_Triangulate);
-	if (!scene || !scene->mRootNode || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE)
+	if (!scene || !scene->mRootNode)
 	{
 		CONSOLE_ERROR("Assimp importer error: {}", importer.GetErrorString());
 		return;
@@ -40,9 +32,14 @@ Animation::Animation(const fs::path& path, SkeletonMesh& skeleton) :
 	}
 
 	aiAnimation* animation = scene->mAnimations[0];
-	duration = animation->mDuration;
-	ticksPerSecond = animation->mTicksPerSecond;
+	_duration = animation->mDuration;
+	_ticksPerSecond = animation->mTicksPerSecond;
+	_boneKeys.reserve(animation->mNumChannels);
 	LoadAnimation(animation, skeleton);
+
+	std::sort(_boneKeys.begin(), _boneKeys.end(), [](const AnimationKeys& a, const AnimationKeys& b) {
+		return a.boneIndex < b.boneIndex;
+	});
 }
 
 /* ---------------------------------------------------- */
@@ -56,26 +53,26 @@ void Animation::LoadAnimation(const aiAnimation* animation, SkeletonMesh& skelet
 		aiNodeAnim* channel = animation->mChannels[i];
 		const char* boneName = channel->mNodeName.data;
 
+		u32 boneIndex{};
+
 		/* Load skeleton bones */
 		auto [bone, index] = skeleton.FindBone(boneName);
 		if (!bone)
-			LoadSkeletonBone(skeleton, boneName);
-
+		{
+			auto [newBone, newIndex] = skeleton.InsertBone(boneName);
+			boneIndex = newIndex;
+		}
+		else
+			boneIndex = index;
 
 		/* Load bone keys */
-		auto [boneKeysIt, success] = boneKeys.insert({ boneName, AnimationKeys() });
-		AnimationKeys& keys = boneKeysIt->second;
+		AnimationKeys& keys = _boneKeys.emplace_back();
+		keys.boneIndex = boneIndex;
 		keys.positionKeys.reserve(channel->mNumPositionKeys);
 		keys.rotationKeys.reserve(channel->mNumRotationKeys);
 		keys.scaleKeys.reserve(channel->mNumScalingKeys);
 		LoadBoneKeys(keys, channel);
 	}
-}
-void Animation::LoadSkeletonBone(SkeletonMesh& skeleton, StringView boneName)
-{
-	u32 boneIndex = skeleton.bones.size();
-	skeleton.boneMap.insert({ boneName.data(), boneIndex});
-	auto& bone = skeleton.bones.emplace_back();
 }
 void Animation::LoadBoneKeys(AnimationKeys& keys, const aiNodeAnim* channel)
 {

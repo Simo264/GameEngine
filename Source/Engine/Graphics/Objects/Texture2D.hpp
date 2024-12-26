@@ -38,7 +38,7 @@ public:
     nChannels{ 0 },
     width{ 0 },
     height{ 0 },
-    strPath{}
+    path{}
   {}
 
   /**
@@ -137,5 +137,5 @@ public:
 
   i32 nChannels;
   
-  String strPath;
+  fs::path path;
 };

@@ -40,11 +40,25 @@ void ShaderManager::CleanUp()
 
 Shader& ShaderManager::GetShaderByName(StringView filename)
 {
-  return _shaders.at(filename.data());
+  try 
+  {
+    return _shaders.at(filename.data());
+  }
+  catch (std::out_of_range& e)
+  {
+    throw std::out_of_range(std::format("ShaderManager::GetShaderByName: invalid shader name '{}'", filename.data()));
+  }
 }
 Program& ShaderManager::GetProgramByName(StringView name)
 {
-  return _programs.at(name.data());
+  try
+  {
+    return _programs.at(name.data());
+  }
+  catch (std::out_of_range& e)
+  {
+    throw std::out_of_range(std::format("ShaderManager::GetProgramByName: invalid program name '{}'", name.data()));
+  }
 }
 
 /* -------------------------------------------- */
@@ -90,11 +104,10 @@ void ShaderManager::LoadShaders()
     String source;
     source.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
 
-    auto emplaceResult = _shaders.emplace(filename, Shader());
-    bool success = emplaceResult.second;
+    auto [it, success] = _shaders.emplace(filename, Shader());
     if (success)
     {
-      Shader& shader = emplaceResult.first->second;
+      Shader& shader = it->second;
       shader.Create(shaderType);
       shader.LoadSource(source);
     }
@@ -174,14 +187,12 @@ void ShaderManager::SetProgramsUniforms()
   sceneProg.SetUniform1i("u_material.diffuseTexture", 0);
   sceneProg.SetUniform1i("u_material.specularTexture", 1);
   sceneProg.SetUniform1i("u_material.normalTexture", 2);
-  sceneProg.SetUniform1i("u_material.heightTexture", 3);
 
   auto& sceneShadowsProg = GetProgramByName("SceneShadows");
   sceneShadowsProg.SetUniform1i("u_useNormalMap", 0);
   sceneShadowsProg.SetUniform1i("u_material.diffuseTexture", 0);
   sceneShadowsProg.SetUniform1i("u_material.specularTexture", 1);
   sceneShadowsProg.SetUniform1i("u_material.normalTexture", 2);
-  sceneShadowsProg.SetUniform1i("u_material.heightTexture", 3);
   sceneShadowsProg.SetUniform1i("u_depthMapTexture", 10);
   sceneShadowsProg.SetUniform1i("u_depthCubeMapTexture", 11);
   
@@ -190,26 +201,10 @@ void ShaderManager::SetProgramsUniforms()
   skeletalAnimProg.SetUniform1i("u_material.diffuseTexture", 0);
   skeletalAnimProg.SetUniform1i("u_material.specularTexture", 1);
   skeletalAnimProg.SetUniform1i("u_material.normalTexture", 2);
-  skeletalAnimProg.SetUniform1i("u_material.heightTexture", 3);
   for (u32 i = 0; i < 100; i++)
   {
     char uniform[32]{};
     std::format_to_n(uniform, sizeof(uniform), "u_boneTransforms[{}]", i);
     skeletalAnimProg.SetUniformMat4f(uniform, mat4f(1.0f));
   }
-
-  //auto& skeletalAnimShadowsProg = GetProgramByName("SkeletalAnimShadows");
-  //skeletalAnimShadowsProg.SetUniform1i("u_useNormalMap", 0);
-  //skeletalAnimShadowsProg.SetUniform1i("u_material.diffuseTexture", 0);
-  //skeletalAnimShadowsProg.SetUniform1i("u_material.specularTexture", 1);
-  //skeletalAnimShadowsProg.SetUniform1i("u_material.normalTexture", 2);
-  //skeletalAnimShadowsProg.SetUniform1i("u_material.heightTexture", 3);
-  //skeletalAnimShadowsProg.SetUniform1i("u_depthMapTexture", 10);
-  //skeletalAnimShadowsProg.SetUniform1i("u_depthCubeMapTexture", 11);
-  //for (u32 i = 0; i < 100; i++)
-  //{
-  //  char uniform[32]{};
-  //  std::format_to_n(uniform, sizeof(uniform), "u_boneTransforms[{}]", i);
-  //  skeletalAnimShadowsProg.SetUniformMat4f(uniform, mat4f(1.0f));
-  //}
 }

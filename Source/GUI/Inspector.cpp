@@ -23,7 +23,34 @@ static bool ButtonCentered(const char* label, ImVec2 size)
 
   return ImGui::Button(label, size);
 }
+static void Insp_Tag(Tag& tag)
+{
+  /* Create a table with two columns: one for the labels and one for input */
+  if (ImGui::BeginTable("Tag_Table", 2, ImGuiTableFlags_SizingFixedFit))
+  {
+    ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthFixed, 25.f);
+    ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthStretch);
 
+    ImGui::TableNextRow();
+
+    /* First column: label */
+    ImGui::TableNextColumn();
+    ImGui::Text("Tag");
+
+    /* First column: input */
+    ImGui::TableNextColumn();
+    char buffer[64]{};
+    std::format_to_n(buffer, sizeof(buffer), "{}", tag.value);
+
+    if (ImGui::InputText("##Value", buffer, sizeof(buffer), ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_EnterReturnsTrue))
+    {
+      if (std::strlen(buffer) > 0)
+        tag.UpdateValue(buffer);
+    }
+
+    ImGui::EndTable();
+  }
+}
 static void Insp_Light_ComboAttenuation(Attenuation& destAtt)
 {
   char currentAttRange[16]{};
@@ -341,11 +368,10 @@ static void Insp_Transform(GameObject& object, Transform& transform)
     object.RemoveComponent<Transform>();
   ImGui::PopStyleColor(3);
 }
-static void Insp_Model_MeshMaterialRow(StringView label, Texture2D*& matTexture, Texture2D& defaultTex)
+static void Insp_MaterialRow(StringView label, Texture2D*& matTexture, Texture2D& defaultTex)
 {
   auto& texManager = TextureManager::Get();
-  
-  const bool noTexture = (matTexture->strPath.at(0) == '#');
+  const bool noTexture = (matTexture->path.string().at(0) == '#');
   
   /* First column: label */
   ImGui::TableNextColumn();
@@ -358,7 +384,7 @@ static void Insp_Model_MeshMaterialRow(StringView label, Texture2D*& matTexture,
   char comboId[32]{}; // "##Diffuse"
   std::format_to_n(comboId, sizeof(comboId), "##{}", label.data());
 
-  if (ImGui::BeginCombo(comboId, (noTexture ? "Select texture" : matTexture->strPath.c_str())))
+  if (ImGui::BeginCombo(comboId, (noTexture ? "Select texture" : matTexture->path.string().c_str())))
   {
     for (auto& [path, texture] : texManager.GetTextures())
     {
@@ -383,21 +409,25 @@ static void Insp_Model_MeshMaterialRow(StringView label, Texture2D*& matTexture,
     ImGui::PopStyleColor();
   }
 }
-static void Insp_Model(GameObject& object, Model& model)
+static void Insp_StaticMesh(GameObject& object, StaticMesh& staticMesh)
 {
-  /* View model meshes with a tree */
+  ImGui::Text("Path: %s", staticMesh.Path().string().c_str());
+  ImGui::Text("Nr meshes: %d", staticMesh.MeshVector().size());
+  ImGui::Text("Total vertices: %d", staticMesh.TotalVertices());
+  ImGui::Text("Total indices: %d", staticMesh.TotalIndices());
+
+  /* View meshes with a tree */
   if (ImGui::TreeNode("Material"))
   {
-    const i64 numMeshes = model.meshes.size();
-    for (i32 i = 0; i < numMeshes; i++)
+    for (i32 i = 0; i < staticMesh.MeshVector().size(); i++)
     {
-      auto& mesh = model.meshes.at(i);
+      auto& mesh = staticMesh.MeshVector().at(i);
       Material& material = mesh.material;
       TextureManager& texManager = TextureManager::Get();
 
-      char meshName[16]{};
-      std::format_to_n(meshName, sizeof(meshName), "Mesh_{}", i);
-      if (ImGui::TreeNode(meshName))
+      char label[16]{};
+      std::format_to_n(label, sizeof(label), "Mesh_{}", i+1);
+      if (ImGui::TreeNode(label))
       {
         if (ImGui::BeginTable("TextureTable", 3, ImGuiTableFlags_SizingFixedFit))
         {
@@ -407,19 +437,15 @@ static void Insp_Model(GameObject& object, Model& model)
 
           /* Diffuse row */
           ImGui::TableNextRow();
-          Insp_Model_MeshMaterialRow("Diffuse", material.diffuse, texManager.GetDefaultDiffuse());
+          Insp_MaterialRow("Diffuse", material.diffuse, texManager.GetDefaultDiffuse());
           
           /* Specular row */
           ImGui::TableNextRow();
-          Insp_Model_MeshMaterialRow("Specular", material.specular, texManager.GetDefaultSpecular());
+          Insp_MaterialRow("Specular", material.specular, texManager.GetDefaultSpecular());
           
           /* Normal row */
           ImGui::TableNextRow();
-          Insp_Model_MeshMaterialRow("Normal", material.normal, texManager.GetDefaultNormal());
-
-          /* Height row */
-          ImGui::TableNextRow();
-          Insp_Model_MeshMaterialRow("Height", material.height, texManager.GetDefaultHeight());
+          Insp_MaterialRow("Normal", material.normal, texManager.GetDefaultNormal());
 
           ImGui::EndTable();
         }
@@ -435,35 +461,110 @@ static void Insp_Model(GameObject& object, Model& model)
   ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.45f, 0.f, 0.f, 0.5f));
   ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.45f, 0.f, 0.f, 0.5f));
   if (ImGui::Button("Remove component##model"))
-    object.RemoveComponent<Model>();
+    object.RemoveComponent<StaticMesh>();
   ImGui::PopStyleColor(3);
 }
-static void Insp_Tag(Tag& tag)
+static void Insp_SkeletonMesh(GameObject& object, SkeletonMesh& skeleton)
 {
-  /* Create a table with two columns: one for the labels and one for input */
-  if (ImGui::BeginTable("Tag_Table", 2, ImGuiTableFlags_SizingFixedFit))
+  ImGui::Text("Path: %s", skeleton.path.string().c_str());
+  ImGui::Text("Nr meshes: %d", skeleton.meshes.size());
+  ImGui::Text("Nr bones: %d", skeleton.bones.size());
+  ImGui::Text("Total vertices: %d", skeleton.TotalVertices());
+  ImGui::Text("Total indices: %d", skeleton.TotalIndices());
+
+  if (ImGui::TreeNode("Material"))
   {
-    ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthFixed, 25.f);
-    ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthStretch);
-
-    ImGui::TableNextRow();
-
-    /* First column: label */
-    ImGui::TableNextColumn();
-    ImGui::Text("Tag");
-
-    /* First column: input */
-    ImGui::TableNextColumn();
-    char buffer[64]{};
-    std::format_to_n(buffer, sizeof(buffer), "{}", tag.value);
-
-    if (ImGui::InputText("##Value", buffer, sizeof(buffer), ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_EnterReturnsTrue))
+    for (i32 i = 0; i < skeleton.meshes.size(); i++)
     {
-      if (std::strlen(buffer) > 0)
-        tag.UpdateValue(buffer);
-    }
+      auto& mesh = skeleton.meshes.at(i);
+      Material& material = mesh.material;
+      TextureManager& texManager = TextureManager::Get();
 
-    ImGui::EndTable();
+      char label[16]{};
+      std::format_to_n(label, sizeof(label), "Mesh_{}", i+1);
+      if (ImGui::TreeNode(label))
+      {
+        if (ImGui::BeginTable("TextureTable", 3, ImGuiTableFlags_SizingFixedFit))
+        {
+          ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthFixed, 48.0f);
+          ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthStretch);
+          ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthFixed, 24.0f);
+
+          /* Diffuse row */
+          ImGui::TableNextRow();
+          Insp_MaterialRow("Diffuse", material.diffuse, texManager.GetDefaultDiffuse());
+
+          /* Specular row */
+          ImGui::TableNextRow();
+          Insp_MaterialRow("Specular", material.specular, texManager.GetDefaultSpecular());
+
+          /* Normal row */
+          ImGui::TableNextRow();
+          Insp_MaterialRow("Normal", material.normal, texManager.GetDefaultNormal());
+
+          ImGui::EndTable();
+        }
+        ImGui::TreePop();
+      }
+    }
+    ImGui::TreePop();
+  }
+
+  ImGui::SeparatorText("Advanced");
+  ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.55f, 0.f, 0.f, 0.5f));
+  ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.45f, 0.f, 0.f, 0.5f));
+  ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.45f, 0.f, 0.f, 0.5f));
+  if (ImGui::Button("Remove component##model"))
+    object.RemoveComponent<SkeletonMesh>();
+  ImGui::PopStyleColor(3);
+}
+static void Insp_Animator(GameObject& object, Animator& animator)
+{
+  auto [animNameTarget, animTarget] = animator.AttachedAnimation();
+  ImGui::Text("Current animation: %s", (animNameTarget == nullptr ? "None" : animNameTarget));
+
+  auto& animationsMap = animator.AnimationsMap();
+  if (ImGui::BeginCombo("Animation list", (animNameTarget == nullptr ? "Select animation" : animNameTarget)))
+  {
+    for (const auto& [name, anim] : animationsMap)
+      if (ImGui::Selectable(name.c_str(), animNameTarget == name.c_str()))
+        animator.AttachAnimation(name);
+
+    ImGui::EndCombo();
+  }
+
+  if (animNameTarget)
+  {
+    Texture2D& playIcon = TextureManager::Get().GetIconByPath(GetIconsPath() / "play-button-32.png");
+    Texture2D& pauseIcon = TextureManager::Get().GetIconByPath(GetIconsPath() / "pause-button-32.png");
+    Texture2D& restartIcon = TextureManager::Get().GetIconByPath(GetIconsPath() / "restart-button-32.png");
+
+    if (ImGui::ImageButton(reinterpret_cast<void*>(playIcon.id), ImVec2(16, 16)))
+      animator.PlayAnimation();
+    
+    ImGui::SameLine();
+    
+    if (ImGui::ImageButton(reinterpret_cast<void*>(pauseIcon.id), ImVec2(16, 16)))
+      animator.PauseAnimation();
+    
+    ImGui::SameLine();
+
+    if (ImGui::ImageButton(reinterpret_cast<void*>(restartIcon.id), ImVec2(16, 16)))
+      animator.RestartAnimation();
+    
+    ImGui::SameLine();
+    
+    if (ImGui::Button("Unbind animation"))
+      animator.DetachAnimation();
+
+    f32 duration = animTarget->Duration();
+    f32 currentTime = animator.CurrentTime();
+    f32 progression = currentTime / duration;
+    char label[8]{};
+    std::format_to_n(label, sizeof(label), "{}%", static_cast<u32>(progression*100));
+
+    ImGui::Text("Animation progress:");
+    ImGui::ProgressBar(progression, ImVec2(-1, 0), label);
   }
 }
 
@@ -471,21 +572,30 @@ static void Insp_ListAllComponents(GameObject& object)
 {
   if (ImGui::CollapsingHeader("Tag"))
   {
-    auto* tag = object.GetComponent<Tag>();
+    Tag* tag = object.GetComponent<Tag>();
     Insp_Tag(*tag);
   }
-
-  if (auto* transform = object.GetComponent<Transform>())
+  if (Transform* transform = object.GetComponent<Transform>())
   {
     if (ImGui::CollapsingHeader("Transform"))
       Insp_Transform(object, *transform);
   }
-  if (auto* model = object.GetComponent<Model>())
+  if (StaticMesh* staticMesh = object.GetComponent<StaticMesh>())
   {
-    if (ImGui::CollapsingHeader("Model"))
-      Insp_Model(object, *model);
+    if (ImGui::CollapsingHeader("StaticMesh"))
+      Insp_StaticMesh(object, *staticMesh);
   }
-  if (auto* light = object.GetComponent<Light>())
+  if (SkeletonMesh* skeleton = object.GetComponent<SkeletonMesh>())
+  {
+    if (ImGui::CollapsingHeader("SkeletonMesh"))
+      Insp_SkeletonMesh(object, *skeleton);
+  }
+  if (Animator* animator = object.GetComponent<Animator>())
+  {
+    if (ImGui::CollapsingHeader("Animator"))
+      Insp_Animator(object, *animator);
+  }
+  if (Light* light = object.GetComponent<Light>())
   {
     if (ImGui::CollapsingHeader("Light"))
     {
@@ -524,7 +634,7 @@ static void Insp_NewComponentPopup(GameObject& object)
 
     ImGui::Spacing();
 
-    if (object.HasComponent<Model>()) /* Component already present, disabled */
+    if (object.HasComponent<StaticMesh>()) /* Component already present, disabled */
       ImGui::Selectable("Model", false, ImGuiSelectableFlags_Disabled);
     else if (ImGui::BeginMenu("Model"))
     {
@@ -542,7 +652,7 @@ static void Insp_NewComponentPopup(GameObject& object)
       {
         if (ImGui::Button("Ok"))
         {
-          object.AddComponent<Model>(path);
+          object.AddComponent<StaticMesh>(path);
           path.clear();
         }
       }

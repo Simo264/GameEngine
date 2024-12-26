@@ -2,10 +2,11 @@
 
 #include "Core/Core.hpp"
 #include "Core/Math/Core.hpp"
-#include "Engine/Scene.hpp"
-#include "Engine/Camera.hpp"
-#include "Engine/ECS/ECS.hpp"
-#include "Engine/Graphics/Objects/Texture2D.hpp"
+
+class Camera;
+class Scene;
+class GameObject;
+class Animator;
 
 class ImGuiLayer
 {

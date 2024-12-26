@@ -49,7 +49,45 @@ static void GLAPIENTRY MessageCallback(GLenum source, GLenum type, GLuint id, GL
   if (id == 131169 || id == 131185 || id == 131218 || id == 131204) 
     return;
 
-  CONSOLE_ERROR("GL callback: {} ", message);
+  const char* sourceStr;
+  const char* typeStr;
+  const char* severityStr;
+  
+  switch (source) 
+  {
+    case GL_DEBUG_SOURCE_API:             sourceStr = "API"; break;
+    case GL_DEBUG_SOURCE_WINDOW_SYSTEM:   sourceStr = "Window System"; break;
+    case GL_DEBUG_SOURCE_SHADER_COMPILER: sourceStr = "Shader Compiler"; break;
+    case GL_DEBUG_SOURCE_THIRD_PARTY:     sourceStr = "Third Party"; break;
+    case GL_DEBUG_SOURCE_APPLICATION:     sourceStr = "Application"; break;
+    case GL_DEBUG_SOURCE_OTHER:           sourceStr = "Other"; break;
+    default:                              sourceStr = "Unknown"; break;
+  }
+
+  switch (type) 
+  {
+    case GL_DEBUG_TYPE_ERROR:               typeStr = "Error"; break;
+    case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: typeStr = "Deprecated Behavior"; break;
+    case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:  typeStr = "Undefined Behavior"; break;
+    case GL_DEBUG_TYPE_PORTABILITY:         typeStr = "Portability"; break;
+    case GL_DEBUG_TYPE_PERFORMANCE:         typeStr = "Performance"; break;
+    case GL_DEBUG_TYPE_MARKER:              typeStr = "Marker"; break;
+    case GL_DEBUG_TYPE_PUSH_GROUP:          typeStr = "Push Group"; break;
+    case GL_DEBUG_TYPE_POP_GROUP:           typeStr = "Pop Group"; break;
+    case GL_DEBUG_TYPE_OTHER:               typeStr = "Other"; break;
+    default:                                typeStr = "Unknown"; break;
+  }
+
+  switch (severity) 
+  {
+    case GL_DEBUG_SEVERITY_HIGH:         severityStr = "High"; break;
+    case GL_DEBUG_SEVERITY_MEDIUM:       severityStr = "Medium"; break;
+    case GL_DEBUG_SEVERITY_LOW:          severityStr = "Low"; break;
+    case GL_DEBUG_SEVERITY_NOTIFICATION: severityStr = "Notification"; break;
+    default:                             severityStr = "Unknown"; break;
+  }
+  CONSOLE_ERROR("GL CALLBACK: {} type = {}, severity = {}, message = {}", sourceStr, typeStr, severityStr, message);
+  exit(EXIT_FAILURE);
 }
 static void SetOpenGLStates()
 {
@@ -115,16 +153,15 @@ static void CalculatePerFrameTime()
     totalDeltasPerSecond = 0;
   }
 }
-
-static void RenderModel(Program& program, Model& model, Transform& transform)
+static void RenderStaticMesh(Program& program, StaticMesh& staticMesh, Transform& transform)
 {
   program.SetUniformMat4f("u_model", transform.GetTransformation());
-  model.DrawModel(GL_TRIANGLES);
+  staticMesh.Draw(GL_TRIANGLES);
 }
 static void RenderScene(Scene& scene, Program& program)
 {
-  scene.Reg().view<Model, Transform>().each([&](auto& model, auto& transform) {
-    RenderModel(program, model, transform);
+  scene.Reg().view<StaticMesh, Transform>().each([&](auto& staticMesh, auto& transform) {
+    RenderStaticMesh(program, staticMesh, transform);
   });
 }
 
@@ -247,7 +284,7 @@ static FrameBuffer CreateDepthCubeMapFbo(i32 width, i32 height)
   fbo.AttachTexture(GL_DEPTH_ATTACHMENT, texture.id, 0);
   return fbo;
 }
-static Mesh CreateTerrain(i32 rez)
+static void CreateTerrain(i32 rez, Mesh& terrain)
 {
   auto& texManager = TextureManager::Get();
   Texture2D& heightMap = texManager.GetTextureByPath(GetTexturesPath() / "iceland_heightmap.png");
@@ -256,6 +293,7 @@ static Mesh CreateTerrain(i32 rez)
 
   // vertex generation
   Vector<f32> vertices;
+  vertices.resize(rez * rez);
   for (i32 i = 0; i <= rez - 1; i++)
   {
     for (i32 j = 0; j <= rez - 1; j++)
@@ -286,13 +324,11 @@ static Mesh CreateTerrain(i32 rez)
     }
   }
   Buffer vbo(vertices.size() * sizeof(f32), vertices.data(), GL_STATIC_DRAW);
-  
-  Mesh terrain;
+    
   terrain.SetupAttributeFloat(0, 0, VertexFormat(3, GL_FLOAT, false, offsetof(Vertex_P_UV, position)));
   terrain.SetupAttributeFloat(1, 0, VertexFormat(2, GL_FLOAT, false, offsetof(Vertex_P_UV, uv)));
   terrain.vao.AttachVertexBuffer(0, vbo, 0, sizeof(Vertex_P_UV));
   terrain.vao.numVertices = 4 * pow(rez, 2);
-  return terrain;
 }
 static Mesh CreateGridPlane()
 {
@@ -413,20 +449,35 @@ void Engine::Run()
 
   /* Prepare vertices for terrain */
   //i32 rez = 20;
-  //Mesh terrain = CreateTerrain(rez);
+  //Mesh terrain;
+  //CreateTerrain(rez, terrain);
   //glPatchParameteri(GL_PATCH_VERTICES, 4);
 
-  static auto mutant_skeleton_path = GetSkeletonsPath() / "Mutant.gltf";
-  static auto mutant_anim_path = GetAnimationsPath() / "Anim_Mutant_Dying_gltf.gltf";
-  SkeletonMesh skeleton_mutant(mutant_skeleton_path);
-  Animation anim_dying(mutant_anim_path, skeleton_mutant);
-  Animator animator(skeleton_mutant, anim_dying);
-
+  //const fs::path skeletonPath          = GetSkeletonsPath() / "Mutant.gltf";
+  //const fs::path dancingAnimationPath  = GetAnimationsPath() / "Anim_Mutant_Silly_Dancing.glb";
+  //const fs::path walkAnimationPath     = GetAnimationsPath() / "Anim_Mutant_Drunk_Walk.glb";
+  //GameObject mutant = scene.CreateObject("Mutant");
+  //Transform& transformMutant = mutant.AddComponent<Transform>();
+  //SkeletonMesh& skeletonMutant = mutant.AddComponent<SkeletonMesh>(skeletonPath);
+  //Animator& animator = mutant.AddComponent<Animator>(skeletonMutant);
+  //animator.InsertAnimation(dancingAnimationPath);
+  //animator.InsertAnimation(walkAnimationPath);
+  
+  scene.LoadScene(GetRootPath() / "Scene.ini");
+  Transform* transform = nullptr;
+  SkeletonMesh* skeleton = nullptr;
+  Animator* animator = nullptr;
+  scene.Reg().view<Transform, SkeletonMesh, Animator>().each([&](Transform& t, SkeletonMesh& s, Animator& a) {
+    transform = &t;
+    skeleton = &s;
+    animator = &a;
+  });
+  
   /* ---------------------------------------------------------------------- */
   /* -------------------------- Pre-loop section -------------------------- */
   /* ---------------------------------------------------------------------- */
-  WindowManager& windowManager = WindowManager::Get();
   ImGuiLayer& gui = ImGuiLayer::Get();
+  WindowManager& windowManager = WindowManager::Get();
   TextureManager& textureManager = TextureManager::Get();
   ShaderManager& shaderManager = ShaderManager::Get();
   Program& skyboxProgram = shaderManager.GetProgramByName("Skybox");
@@ -446,7 +497,7 @@ void Engine::Run()
 
   bool normalMapMode = false;
   bool shadowMode = false;
-  bool wireframeMode = true;
+  bool wireframeMode = false;
 
   DirectionalLight directionalLight;
   directionalLight.intensity = 1.0f;
@@ -509,7 +560,7 @@ void Engine::Run()
     //_uboLight.UpdateStorage(sizeof(DirectionalLight), sizeof(PointLight), reinterpret_cast<void*>(pointLight)); /* Update u_pointLight */
     //_uboLight.UpdateStorage(sizeof(DirectionalLight) + sizeof(PointLight), sizeof(SpotLight), reinterpret_cast<void*>(...)); /* Update u_spotLight */
 
-    animator.UpdateAnimation(delta);
+    animator->UpdateAnimation(delta);
 
     /* ----------------------------------------------------------------------- */
     /* -------------------------- Rendering section -------------------------- */
@@ -621,7 +672,7 @@ void Engine::Run()
         //  RenderModel(sceneProgram, model, transform);
         //});
         
-        auto& transforms = animator.GetBoneTransforms();
+        auto& transforms = animator->BoneTransforms();
         for (u64 i = 0; i < transforms.size(); i++)
         {
           char uniform[32]{};
@@ -632,10 +683,8 @@ void Engine::Run()
         skeletalAnimProgram.Use();
         skeletalAnimProgram.SetUniform3f("u_viewPos", primaryCamera.position);
         skeletalAnimProgram.SetUniform1i("u_useNormalMap", 0);
-        skeletalAnimProgram.SetUniformMat4f("u_model", mat4f(1.0f));
-        skeleton_mutant.DrawSkeleton(GL_TRIANGLES);
-
-        //std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        skeletalAnimProgram.SetUniformMat4f("u_model", transform->GetTransformation());
+        skeleton->Draw(GL_TRIANGLES);
       }
 
 #if 0 
@@ -698,8 +747,6 @@ void Engine::Run()
     /* -------------------------- Swap buffers -------------------------- */
     /* ------------------------------------------------------------------ */
     windowManager.SwapWindowBuffers();
-
-    //std::this_thread::sleep_for(std::chrono::milliseconds(1000));
   }
  
   scene.ClearScene();
@@ -734,10 +781,9 @@ void Engine::CreateFramebuffer(i32 samples, i32 width, i32 height)
   RenderBuffer depthStencMultAtt;
   depthStencMultAtt.Create();
   depthStencMultAtt.CreateStorageMulstisampled(GL_DEPTH24_STENCIL8, samples, width, height);
-
   _fboMultisampled.AttachTexture(GL_COLOR_ATTACHMENT0, textColMultAtt.id, 0);
   _fboMultisampled.AttachRenderBuffer(GL_DEPTH_STENCIL_ATTACHMENT, depthStencMultAtt.id);
-
+  
   if (_fboMultisampled.CheckStatus() != GL_FRAMEBUFFER_COMPLETE)
     CONSOLE_WARN("Multisampled framebuffer is not complete!");
 
@@ -750,7 +796,6 @@ void Engine::CreateFramebuffer(i32 samples, i32 width, i32 height)
   textColAtt.CreateStorage(GL_RGB8, width, height);
   textColAtt.SetParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   textColAtt.SetParameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
   _fboIntermediate.AttachTexture(GL_COLOR_ATTACHMENT0, textColAtt.id, 0);
 
   if (_fboIntermediate.CheckStatus() != GL_FRAMEBUFFER_COMPLETE)
