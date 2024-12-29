@@ -22,7 +22,6 @@ struct Material
   sampler2D diffuseTexture;
   sampler2D specularTexture;
   sampler2D normalTexture;
-  sampler2D heightTexture;
 };
 struct DirectionalLight 
 {
@@ -102,6 +101,9 @@ vec3 CalculateSpotLight(SpotLight light, vec3 normal, vec3 viewDir);
 
 void main() 
 {
+  // FragColor = vec4(1.f, 0.f, 0.f, 1.0f);
+  // return;
+
   g_normalTexSize = textureSize(u_material.normalTexture, 0);
 
   const vec3 viewDir = CalculateViewDirVector();
@@ -123,13 +125,13 @@ void main()
   /* ===================== */
   //for(int i = 0; i < 4; i++)
   //  result += CalculateBlinnPhongLight(u_pointLight[i], normal, viewDir);
-  result += CalculateBlinnPhongLight(u_pointLight, normal, viewDir);
+  //result += CalculateBlinnPhongLight(u_pointLight, normal, viewDir);
 
 
   /* ==================== */
   /* Calculate spot light */
   /* ==================== */
-  result += CalculateSpotLight(u_spotLight, normal, viewDir);
+  //result += CalculateSpotLight(u_spotLight, normal, viewDir);
 
   /* Apply gamma correction */
   result = pow(result, vec3(1.0f / 2.2f));
@@ -154,7 +156,7 @@ bool HasNormalTexture()
 
 vec3 CalculateNormalVector(vec2 textureCoord) 
 {
-  if(HasNormalTexture() && IsNormalMapActive())
+  if(IsNormalMapActive() && HasNormalTexture())
   {
     /* Obtain normal from normal map in range [0,1] */
     vec3 N = texture(u_material.normalTexture, textureCoord).rgb;
@@ -181,7 +183,7 @@ float CalculateAttenuation(float d, float kl, float kq)
 
 vec3 CalculateDirectionalLight(DirectionalLight light, vec3 normal, vec3 viewDir)
 {
-  if(light.intensity == 0.f)
+  if(light.intensity == 0.0f)
     return vec3(0.f);
 
   const vec3 lightDir = normalize(-light.direction);

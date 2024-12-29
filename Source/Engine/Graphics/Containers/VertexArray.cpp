@@ -13,7 +13,7 @@ void VertexArray::Delete()
   if (vboAttachments.size() > 0)
   {
     u32 bufferIDs[MAX_NUM_VBO_ATTACHMENTS + 1]{};
-    i32 size = 0;
+    u32 size = 0;
     
     for (const Buffer& buffer : vboAttachments)
       if(buffer.IsValid())

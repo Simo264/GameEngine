@@ -21,11 +21,8 @@ namespace Utils
 	{
 		vec2i vec{};
 
-		int offset;
-		int sepIdx;
-
-		offset = 0;
-		sepIdx = str.find_first_of(delimiter, offset);
+		u32 offset = 0;
+		u32 sepIdx = str.find_first_of(delimiter, offset);
 		StringView strX = str.substr(offset, (sepIdx - offset));
 		
 		offset = sepIdx + 1;
@@ -42,11 +39,8 @@ namespace Utils
 	{
 		vec2f vec{};
 
-		int offset;
-		int sepIdx;
-
-		offset = 0;
-		sepIdx = str.find_first_of(delimiter, offset);
+		u32 offset = 0;
+		u32 sepIdx = str.find_first_of(delimiter, offset);
 		StringView strX = str.substr(offset, (sepIdx - offset));
 
 		offset = sepIdx + 1;
@@ -63,11 +57,8 @@ namespace Utils
 	{
 		vec3i vec{};
 
-		int offset;
-		int sepIdx;
-
-		offset = 0;
-		sepIdx = str.find_first_of(delimiter, offset);
+		u32 offset = 0;
+		u32 sepIdx = str.find_first_of(delimiter, offset);
 		StringView strX = str.substr(offset, (sepIdx - offset));
 
 		offset = sepIdx + 1;
@@ -89,11 +80,8 @@ namespace Utils
 	{
 		vec3f vec{};
 
-		int offset;
-		int sepIdx;
-
-		offset = 0;
-		sepIdx = str.find_first_of(delimiter, offset);
+		u32 offset = 0;
+		u32 sepIdx = str.find_first_of(delimiter, offset);
 		StringView strX = str.substr(offset, (sepIdx - offset));
 
 		offset = sepIdx + 1;
@@ -107,7 +95,6 @@ namespace Utils
 		vec.x = std::atof(strX.data());
 		vec.y = std::atof(strY.data());
 		vec.z = std::atof(strZ.data());
-
 		return vec;
 	}
 

@@ -5,98 +5,112 @@
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
-#include <assimp/matrix4x4.h>
-#include <glm/gtx/string_cast.hpp>
-
-static mat4f AiMatrixToGLM(const aiMatrix4x4& from)
-{
-	mat4f to{};
-	//the a,b,c,d in assimp is the row ; the 1,2,3,4 is the column
-	to[0][0] = from.a1; to[1][0] = from.a2; to[2][0] = from.a3; to[3][0] = from.a4;
-	to[0][1] = from.b1; to[1][1] = from.b2; to[2][1] = from.b3; to[3][1] = from.b4;
-	to[0][2] = from.c1; to[1][2] = from.c2; to[2][2] = from.c3; to[3][2] = from.c4;
-	to[0][3] = from.d1; to[1][3] = from.d2; to[2][3] = from.d3; to[3][3] = from.d4;
-	return to;
-}
 
 /* ---------------------------------------------------- */
 /*										PUBLIC														*/
 /* ---------------------------------------------------- */
 
-Animation::Animation(const fs::path& path, Skeleton& skeleton) : 
+Animation::Animation(const fs::path& path, SkeletonMesh& skeleton) :
+	_path{ path },
 	_duration{ 0 },
 	_ticksPerSecond{ 0 },
-	_rootNode{},
-	_bones{},
-	_boneInfoMap{}
+	_boneKeys{}
 {
+	CONSOLE_INFO("Loading animation '{}'", path.string());
+
 	Assimp::Importer importer;
 	const aiScene* scene = importer.ReadFile(path.string(), aiProcess_Triangulate);
-	if (!scene || !scene->mRootNode || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE)
+	if (!scene || !scene->mRootNode)
 	{
 		CONSOLE_ERROR("Assimp importer error: {}", importer.GetErrorString());
 		return;
 	}
-	
+	if (!scene->HasAnimations())
+	{
+		CONSOLE_ERROR("Error: '{}' !scene->HasAnimations() ", path.string());
+		return;
+	}
+
 	aiAnimation* animation = scene->mAnimations[0];
 	_duration = animation->mDuration;
 	_ticksPerSecond = animation->mTicksPerSecond;
+	_boneKeys.reserve(animation->mNumChannels);
+	LoadAnimation(animation, skeleton);
 
-	ReadHierarchyData(_rootNode, scene->mRootNode, scene);
-	ReadMissingBones(animation, skeleton);
+	std::sort(_boneKeys.begin(), _boneKeys.end(), [](const AnimationKeys& a, const AnimationKeys& b) {
+		return a.boneIndex < b.boneIndex;
+	});
 }
-Bone* Animation::FindBone(StringView name)
-{
-	auto it = std::find_if(_bones.begin(), _bones.end(), 
-		[&](const Bone& Bone) { return Bone.GetBoneName().compare(name.data()) == 0; }
-	);
-	if (it == _bones.end())
-		return nullptr;
-	
-	return &(*it);
-}
-
 
 /* ---------------------------------------------------- */
 /*										PRIVATE														*/
 /* ---------------------------------------------------- */
 
-void Animation::ReadMissingBones(const aiAnimation* animation, Skeleton& skeleton)
+void Animation::LoadAnimation(const aiAnimation* animation, SkeletonMesh& skeleton)
 {
-	auto& boneInfoMap = skeleton.GetBoneInfoMap();
-	u32& boneCount = skeleton.GetBoneCount();
-
-	u32 size = animation->mNumChannels;
-	for (i32 i = 0; i < size; i++)
+	for (i32 i = 0; i < animation->mNumChannels; i++)
 	{
 		aiNodeAnim* channel = animation->mChannels[i];
 		const char* boneName = channel->mNodeName.data;
 
-		i32 boneID = boneCount;
-		auto it = boneInfoMap.find(boneName);
-		if (it == boneInfoMap.end())
+		u32 boneIndex{};
+
+		/* Load skeleton bones */
+		auto [bone, index] = skeleton.FindBone(boneName);
+		if (!bone)
 		{
-			boneInfoMap.emplace(boneName, BoneInfo(boneCount, mat4f(1.0f)));
-			boneCount++;
+			auto [newBone, newIndex] = skeleton.InsertBone(boneName);
+			boneIndex = newIndex;
 		}
 		else
-			boneID = it->second.id;
-		
-		_bones.emplace_back(boneName, boneID, channel);
-	}
+			boneIndex = index;
 
-	_boneInfoMap = &boneInfoMap;
+		/* Load bone keys */
+		AnimationKeys& keys = _boneKeys.emplace_back();
+		keys.boneIndex = boneIndex;
+		keys.positionKeys.reserve(channel->mNumPositionKeys);
+		keys.rotationKeys.reserve(channel->mNumRotationKeys);
+		keys.scaleKeys.reserve(channel->mNumScalingKeys);
+		LoadBoneKeys(keys, channel);
+	}
 }
-void Animation::ReadHierarchyData(AssimpNodeData& dest, const aiNode* src, const aiScene* scene)
+void Animation::LoadBoneKeys(AnimationKeys& keys, const aiNodeAnim* channel)
 {
-	mat4f transform = AiMatrixToGLM(src->mTransformation);
-	dest.name = src->mName.data;
-	dest.transformation = transform;
-	dest.childrenCount = src->mNumChildren;
-	for (u32 i = 0; i < src->mNumChildren; i++)
+	for (u32 i = 0; i < channel->mNumPositionKeys; i++)
 	{
-		AssimpNodeData newData;
-		ReadHierarchyData(newData, src->mChildren[i], scene);
-		dest.children.push_back(newData);
+		f32 timestamp = channel->mPositionKeys[i].mTime;
+		vec3f position = vec3f(
+			channel->mPositionKeys[i].mValue.x,
+			channel->mPositionKeys[i].mValue.y,
+			channel->mPositionKeys[i].mValue.z
+		);
+		auto& key = keys.positionKeys.emplace_back();
+		key.timeStamp = timestamp;
+		key.position = position;
+	}
+	for (u32 i = 0; i < channel->mNumRotationKeys; i++)
+	{
+		f32 timestamp = channel->mRotationKeys[i].mTime;
+		quat orientation = quat(
+			channel->mRotationKeys[i].mValue.w,
+			channel->mRotationKeys[i].mValue.x,
+			channel->mRotationKeys[i].mValue.y,
+			channel->mRotationKeys[i].mValue.z
+		);
+		auto& key = keys.rotationKeys.emplace_back();
+		key.timeStamp = timestamp;
+		key.orientation = orientation;
+	}
+	for (u32 i = 0; i < channel->mNumScalingKeys; i++)
+	{
+		f32 timestamp = channel->mScalingKeys[i].mTime;
+		vec3f scale = vec3f(
+			channel->mScalingKeys[i].mValue.x,
+			channel->mScalingKeys[i].mValue.y,
+			channel->mScalingKeys[i].mValue.z
+		);
+		auto& key = keys.scaleKeys.emplace_back();
+		key.timeStamp = timestamp;
+		key.scale = scale;
 	}
 }

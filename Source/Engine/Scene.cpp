@@ -16,12 +16,15 @@ Scene::Scene(const fs::path& filePath)
 {
 	LoadScene(filePath);
 }
-GameObject Scene::CreateObject()
+GameObject Scene::CreateObject(StringView objName)
 {
 	auto id = _registry.create();
 	
 	char defaultTag[64]{};
-	std::format_to_n(defaultTag, sizeof(defaultTag), "Object_{}", static_cast<u32>(id));
+	if(objName.empty())
+		std::format_to_n(defaultTag, sizeof(defaultTag), "Object_{}", static_cast<u32>(id));
+	else
+		std::format_to_n(defaultTag, sizeof(defaultTag), "{}", objName.data());
 
 	GameObject object = GameObject{ id, &_registry };
 	object.AddComponent<Tag>(defaultTag);
@@ -33,16 +36,9 @@ void Scene::DestroyObject(GameObject& object)
 }
 void Scene::ClearScene()
 {
-	for (auto [entity, lComp] : _registry.view<Tag>().each())
+	for (auto [entity, tagComp] : _registry.view<Tag>().each())
 	{
 		GameObject object{ entity, &_registry };
-		
-		/* Free GPU memory */
-		if(auto* model = object.GetComponent<Model>())
-			model->DestroyModel();
-		if (auto* mesh = object.GetComponent<Mesh>())
-			mesh->Destroy();
-
 		object.Invalidate();
 	}
 	
@@ -75,19 +71,41 @@ void Scene::SerializeScene(const fs::path& filePath)
 		String section = std::format("Entity{}:Tag", objectID);
 		conf.Update(section, "value", tag.value);
 
-		if (auto* transform = object.GetComponent<Transform>())
+		if (Transform* transform = object.GetComponent<Transform>())
 		{
 			String section = std::format("Entity{}:Transform", objectID);
 			conf.Update(section, "position", std::format("{},{},{}", transform->position.x, transform->position.y, transform->position.z));
 			conf.Update(section, "scale", std::format("{},{},{}", transform->scale.x, transform->scale.y, transform->scale.z));
 			conf.Update(section, "rotation", std::format("{},{},{}", transform->rotation.x, transform->rotation.y, transform->rotation.z));
 		}
-		if (auto* model = object.GetComponent<Model>())
+		if (StaticMesh* staticMesh = object.GetComponent<StaticMesh>())
 		{
-			String section = std::format("Entity{}:Model", objectID);
-			conf.Update(section, "path", model->strPath);
+			String section = std::format("Entity{}:StaticMesh", objectID);
+			conf.Update(section, "path", staticMesh->Path().string());
 		}
-		if (auto* light = object.GetComponent<Light>())
+		if (SkeletonMesh* skeleton = object.GetComponent<SkeletonMesh>())
+		{
+			String section = std::format("Entity{}:SkeletonMesh", objectID);
+			conf.Update(section, "path", skeleton->path.string());
+		}
+		if (Animator* animator = object.GetComponent<Animator>())
+		{
+			String section = std::format("Entity{}:Animator", objectID);
+			auto& animMap = animator->AnimationsMap();
+			
+			char nrAnimations[4]{};
+			std::format_to_n(nrAnimations, sizeof(nrAnimations), "{}", animMap.size());
+			conf.Update(section, "animations", nrAnimations);
+
+			u32 i = 0;
+			for (const auto& [name, anim] : animMap)
+			{
+				char key[32]{};
+				std::format_to_n(key, sizeof(key), "anim_{}", i++);
+				conf.Update(section, key, anim.Path().string());
+			}
+		}
+		if (Light* light = object.GetComponent<Light>())
 		{
 			String section = std::format("Entity{}:Light", objectID);
 			String type = std::to_string(static_cast<i32>(light->type));
@@ -148,7 +166,7 @@ void Scene::SerializeScene(const fs::path& filePath)
 			}
 		}
 	}
-	conf.Generate(true);
+	conf.Generate(false);
 }
 void Scene::DeserializeScene(const fs::path& filePath)
 {
@@ -161,7 +179,7 @@ void Scene::DeserializeScene(const fs::path& filePath)
 	{
 		const String& section = it.first;
 		StringView view{ section };
-		u64 dots = view.find_first_of(':');
+		u32 dots = view.find_first_of(':');
 		u32 objectId = std::strtoul(view.substr(6, (dots - 6)).data(), nullptr, 10);
 		StringView component = view.substr(dots + 1);
 
@@ -188,10 +206,36 @@ void Scene::DeserializeScene(const fs::path& filePath)
 			transform.scale = Utils::StringToVec3f(scale);
 			transform.UpdateTransformation();
 		}
-		else if (component == "Model")
+		else if (component == "StaticMesh")
 		{
 			const String& strPath = conf.GetValue(section, "path");
-			object.AddComponent<Model>(strPath.c_str());
+			object.AddComponent<StaticMesh>(strPath.c_str());
+		}
+		else if (component == "SkeletonMesh")
+		{
+			const String& strPath = conf.GetValue(section, "path");
+			object.AddComponent<SkeletonMesh>(strPath.c_str());
+		}
+		else if (component == "Animator")
+		{
+			SkeletonMesh* skeleton = object.GetComponent<SkeletonMesh>();
+			if (skeleton)
+			{
+				Animator& animator = object.AddComponent<Animator>(*skeleton);
+
+				const String& animations = conf.GetValue(section, "animations");
+				i32 nrAnimations = Utils::StringToI32(animations);
+				for (u32 i = 0; i < nrAnimations; i++)
+				{
+					char key[32]{};
+					std::format_to_n(key, sizeof(key), "anim_{}", i);
+
+					const String& animPath = conf.GetValue(section, key);
+					animator.InsertAnimation(animPath);
+				}
+			}
+			else
+				CONSOLE_WARN("Can't add Animator component");
 		}
 		else if (component == "Light")
 		{

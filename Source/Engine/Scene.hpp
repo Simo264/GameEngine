@@ -31,7 +31,7 @@ public:
 	 * @brief
 	 * Create object in scene
 	 */
-	GameObject CreateObject();
+	GameObject CreateObject(StringView objName = "");
 
 	/**
 	 * @brief

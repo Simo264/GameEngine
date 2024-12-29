@@ -22,7 +22,6 @@ struct Material
   sampler2D diffuseTexture;
   sampler2D specularTexture;
   sampler2D normalTexture;
-  sampler2D heightTexture;
 };
 struct DirectionalLight 
 {

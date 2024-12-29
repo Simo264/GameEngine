@@ -22,15 +22,14 @@ class Mesh
 {
 public:
 	Mesh();
-	~Mesh() = default;
+	~Mesh();
 
 	void SetupAttributeFloat(i32 attribindex, i32 bindingindex, VertexFormat format) const;
 	void SetupAttributeInteger(i32 attribindex, i32 bindingindex, VertexFormat format) const;
 	void SetupAttributeLong(i32 attribindex, i32 bindingindex, VertexFormat format) const;
 
+	void Draw(i32 mode) const;
+
 	VertexArray vao;
 	Material material;
-
-	void Destroy();
-	void Draw(i32 mode);
 };

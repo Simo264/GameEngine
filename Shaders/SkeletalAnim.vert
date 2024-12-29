@@ -25,7 +25,7 @@ uniform vec3 u_viewPos;
 
 const int MAX_BONES = 100;
 const int MAX_BONE_INFLUENCE = 4;
-uniform mat4 u_finalBonesMatrices[MAX_BONES];
+uniform mat4 u_boneTransforms[MAX_BONES];
 
 void main()
 {
@@ -35,14 +35,9 @@ void main()
     if(aBoneIds[i] == -1) 
       continue;
     
-    if(aBoneIds[i] >= MAX_BONES) 
-    {
-      totalPosition = vec4(aPos, 1.0f);
-      break;
-    }
-    
-    vec4 localPosition = u_finalBonesMatrices[aBoneIds[i]] * vec4(aPos, 1.0f);
+    vec4 localPosition = u_boneTransforms[aBoneIds[i]] * vec4(aPos, 1.0f);
     totalPosition += localPosition * aWeights[i];
+    //vec3 localNormal = mat3(u_boneMatrices[aBoneIds[i]]) * aNormal;
   }
 
 

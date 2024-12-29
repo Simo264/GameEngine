@@ -2,40 +2,64 @@
 
 #include "Core/Core.hpp"
 #include "Core/Math/Core.hpp"
-#include "Engine/ECS/Skeleton/Skeleton.hpp"
+#include "Engine/ECS/Skeleton/SkeletonMesh.hpp"
 
 struct aiAnimation;
+struct aiNodeAnim;
 struct aiNode;
 
-struct AssimpNodeData
+struct KeyPosition
 {
-	mat4f transformation{};
-	String name{};
-	Vector<AssimpNodeData> children{};
-	u32 childrenCount{};
+	f32 timeStamp{};
+	vec3f position{};
+};
+struct KeyRotation
+{
+	f32 timeStamp{};
+	quat orientation{};
+};
+struct KeyScale
+{
+	f32 timeStamp{};
+	vec3f scale{};
+};
+struct AnimationKeys
+{
+	u32 boneIndex{};
+	Vector<KeyPosition> positionKeys{};
+	Vector<KeyRotation> rotationKeys{};
+	Vector<KeyScale>		scaleKeys{};
 };
 
+/**
+ * @class Animation
+ * @brief Represents an animation associated with a skeleton mesh.
+ */
 class Animation
 {
 public:
-	Animation() = default;
-	Animation(const fs::path& path, Skeleton& skeleton);
+	/**
+	 * @brief Constructs an Animation object by loading animation data from the specified file path.
+	 * @param path The file path to the animation data.
+	 * @param skeleton The skeleton mesh associated with the animation.
+	 */
+	Animation(const fs::path& path, SkeletonMesh& skeleton);
+	
+	/**
+	 * @brief Default destructor for the Animation class.
+	 */
 	~Animation() = default;
 
-	Bone* FindBone(StringView name);
-
-	f32 GetTicksPerSecond() const { return _ticksPerSecond; }
-	f32 GetDuration() const { return _duration; }
-	const AssimpNodeData& GetRootNode() { return _rootNode; }
-	const auto* GetBoneInfoMap() { return _boneInfoMap; }
-
+	f32 Duration() const { return _duration; }
+	f32 TickPerSecond() const { return _ticksPerSecond; }
+	const Vector<AnimationKeys>& BoneKeys() const { return _boneKeys; }
+	const fs::path& Path() const { return _path; }
 private:
-	void ReadMissingBones(const aiAnimation* animation, Skeleton& skeleton);
-	void ReadHierarchyData(AssimpNodeData& dest, const aiNode* src, const aiScene* scene);
+	void LoadAnimation(const aiAnimation* animation, SkeletonMesh& skeleton);
+	void LoadBoneKeys(AnimationKeys& keys, const aiNodeAnim* channel);
 
-	AssimpNodeData _rootNode;
+	fs::path _path;
 	f32 _duration;
 	f32 _ticksPerSecond;
-	Vector<Bone> _bones;
-	UnorderedMap<String, BoneInfo>* _boneInfoMap;
+	Vector<AnimationKeys> _boneKeys;
 };

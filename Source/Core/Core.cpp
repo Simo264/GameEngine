@@ -47,3 +47,9 @@ const fs::path& GetSkeletonsPath()
 	static const fs::path SKELETONS_PATH = (GetAssetsPath() / "Skeletons").lexically_normal();
 	return SKELETONS_PATH;
 }
+
+const fs::path& GetAnimationsPath()
+{
+	static const fs::path ANIMATIONS_PATH = (GetAssetsPath() / "Animations").lexically_normal();
+	return ANIMATIONS_PATH;
+}

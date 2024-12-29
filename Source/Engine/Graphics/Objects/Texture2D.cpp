@@ -12,7 +12,7 @@ Texture2D::Texture2D(i32 target, const fs::path& imagePath, bool gammaCorrection
     nChannels{ 0 },
     width{ 0 },
     height{ 0 },
-    strPath{}
+    path{}
 {
   Create(target);
   LoadImageData(imagePath, gammaCorrection);
@@ -107,19 +107,19 @@ void Texture2D::LoadImageData(const fs::path& imagePath, bool gammaCorrection)
     }
 
     this->nChannels = nChannels;
-    this->strPath = imagePath.string();
+    this->path = imagePath;
 
     SetParameteri(GL_TEXTURE_WRAP_S, GL_REPEAT);
     SetParameteri(GL_TEXTURE_WRAP_T, GL_REPEAT);
     SetParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     SetParameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    
+
     CreateStorage(internalFormat, width, height);
     UpdateStorage(0, 0, 0, GL_UNSIGNED_BYTE, data);
     GenerateMipmap();
   }
   else
-    CONSOLE_ERROR("Failed to load image data {}", strPath);
+    CONSOLE_ERROR("Failed to load image data {}", imagePath.string());
 
   Utils::FreeImageData(data);
 }

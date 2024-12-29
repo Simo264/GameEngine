@@ -57,27 +57,24 @@ struct Vertex_P_N_UV_T
   vec3f tangent{};
 };
 
-static constexpr u32 MAX_BONE_INFLUENCE = 4;
-
 /**
  * @brief
  * Vertex format with position, normal, uv coordinates, tangent and bones
  */
 struct Vertex_P_N_UV_T_B 
 {
+  /* One vertex can be affected by 4 bones */
+  static constexpr u32 MAX_BONES_INFLUENCE = 4;
+
   vec3f position{};
   vec3f normal{};
   vec2f uv{};
   vec3f tangent{};
-	i32 boneIDs[MAX_BONE_INFLUENCE];
-	f32 boneWeights[MAX_BONE_INFLUENCE];
 
-  Vertex_P_N_UV_T_B()
-  {
-    for (u32 i = 0; i < MAX_BONE_INFLUENCE; i++)
-    {
-      boneIDs[i] = -1;
-      boneWeights[i] = 0.f;
-    }
-  }
+  /* Joints which will influence this vertex */
+  i32 boneIds[MAX_BONES_INFLUENCE] = { -1 };
+  /* Weights from each bone */
+  f32 boneWeights[MAX_BONES_INFLUENCE] = { 0.f };
+
+  void AddBone(u32 id, f32 weight);
 };

@@ -3,7 +3,7 @@
 #include "Core/GL.hpp"
 #include "Core/Log/Logger.hpp"
 
-static void CreateDefaultTexture(Texture2D& texture, u8 r, u8 g, u8 b, StringView strPath)
+static void CreateDefaultTexture(Texture2D& texture, u8 r, u8 g, u8 b, StringView defaultPath)
 {
   texture.format = GL_RGB;
   texture.Create(GL_TEXTURE_2D);
@@ -13,7 +13,7 @@ static void CreateDefaultTexture(Texture2D& texture, u8 r, u8 g, u8 b, StringVie
   texture.SetParameteri(GL_TEXTURE_WRAP_T, GL_REPEAT);
   texture.SetParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   texture.SetParameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  texture.strPath = String(strPath.data());
+  texture.path = fs::path(defaultPath.data());
 }
 
 /* -----------------------------------------------------  */
@@ -26,16 +26,12 @@ void TextureManager::Initialize()
   Texture2D defDiffuse;
   Texture2D defSpecular;
   Texture2D defNormal;
-  Texture2D defHeight;
   CreateDefaultTexture(defDiffuse, 128, 128, 255, "#default_diffuse");
-  CreateDefaultTexture(defSpecular, 255, 255, 255, "#default_specular");
+  CreateDefaultTexture(defSpecular, 0, 0, 0, "#default_specular");
   CreateDefaultTexture(defNormal, 0, 0, 0, "#default_normal");
-  CreateDefaultTexture(defHeight,0, 0, 0, "#default_height");
-
   _textures.emplace("#default_diffuse", defDiffuse);
   _textures.emplace("#default_specular", defSpecular);
   _textures.emplace("#default_normal", defNormal);
-  _textures.emplace("#default_height", defHeight);
 
   /* 2. Load all textures */
   CONSOLE_INFO("Loading textures...");
@@ -60,13 +56,25 @@ void TextureManager::CleanUp()
 
 Texture2D& TextureManager::GetTextureByPath(const fs::path& path)
 {
-  String lexNormal = path.lexically_normal().string();
-  return _textures.at(lexNormal);
+  try
+  {
+    return _textures.at(path);
+  }
+  catch (const std::exception&)
+  {
+    throw std::runtime_error(std::format("TextureManager::GetTextureByPath: texture '{}' does not exist", path.string()));
+  }
 }
 Texture2D& TextureManager::GetIconByPath(const fs::path& path)
 {
-  String lexNormal = path.lexically_normal().string();
-  return _icons.at(lexNormal);
+  try
+  {
+    return _icons.at(path);
+  }
+  catch (const std::exception&)
+  {
+    throw std::runtime_error(std::format("TextureManager::GetIconByPath: texture '{}' does not exist", path.string()));
+  }
 }
 
 

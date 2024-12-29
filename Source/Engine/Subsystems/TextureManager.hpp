@@ -55,7 +55,6 @@ public:
 	Texture2D& GetDefaultDiffuse() { return _textures.at("#default_diffuse"); }
 	Texture2D& GetDefaultSpecular() { return _textures.at("#default_specular"); }
 	Texture2D& GetDefaultNormal() { return _textures.at("#default_normal"); }
-	Texture2D& GetDefaultHeight() { return _textures.at("#default_height"); }
 	auto& GetTextures() { return _textures; }
 
 private:
