@@ -29,7 +29,7 @@ void VertexArray::Delete()
   id = 0;
   numVertices = 0;
   numIndices = 0;
-  eboAttachment = Buffer();
+  eboAttachment.id = 0;
   vboAttachments.clear();
 }
 

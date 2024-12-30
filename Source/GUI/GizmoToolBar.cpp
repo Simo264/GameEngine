@@ -6,14 +6,6 @@
 #include <imgui/imgui.h>
 #include <imgui/ImGuizmo.h>
 
-/* ------------------------------------------ */
-/*                  PRIVATE                   */
-/* ------------------------------------------ */
-
-/* ------------------------------------------ */
-/*                    PUBLIC                  */
-/* ------------------------------------------ */
-
 void GUI_RenderTransformToolBar(vec2i viewportPos, i32& gizmode)
 {
   auto& texManager = TextureManager::Get();

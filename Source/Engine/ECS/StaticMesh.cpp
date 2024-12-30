@@ -16,10 +16,10 @@
 /* ---------------------------------------------------- */
 
 StaticMesh::StaticMesh(const fs::path& modelPath)
-	: _path{ modelPath },
-		_meshes{}
+	: path{ modelPath },
+		meshes{}
 {
-	String pathStr = _path.string();
+	String pathStr = path.string();
 	CONSOLE_TRACE("Loading static mesh {}...", pathStr);
 
 	Assimp::Importer importer;
@@ -44,12 +44,12 @@ StaticMesh::StaticMesh(const fs::path& modelPath)
 		return;
 	}
 
-	_meshes.reserve(scene->mNumMeshes);
+	meshes.reserve(scene->mNumMeshes);
 	ProcessNode(scene->mRootNode, scene);
 }
 void StaticMesh::Draw(i32 mode)
 {
-	for (const auto& mesh : _meshes)
+	for (const auto& mesh : meshes)
 	{
 		auto& material = mesh.material;
 		material.diffuse->BindTextureUnit(0);
@@ -60,13 +60,13 @@ void StaticMesh::Draw(i32 mode)
 }
 u32 StaticMesh::TotalVertices() const
 {
-	return std::reduce(_meshes.begin(), _meshes.end(), 0, [](i32 acc, const Mesh& mesh) {
+	return std::reduce(meshes.begin(), meshes.end(), 0, [](i32 acc, const Mesh& mesh) {
 		return acc + mesh.vao.numVertices;
 	});
 }
 u32 StaticMesh::TotalIndices() const
 {
-	return std::reduce(_meshes.begin(), _meshes.end(), 0, [](i32 acc, const Mesh& mesh) {
+	return std::reduce(meshes.begin(), meshes.end(), 0, [](i32 acc, const Mesh& mesh) {
 		return acc + mesh.vao.numIndices;
 		});
 }
@@ -80,7 +80,7 @@ void StaticMesh::ProcessNode(aiNode* node, const aiScene* scene)
 	/* Process all the node's meshes */
 	for (i32 i = 0; i < node->mNumMeshes; i++)
 	{
-		Mesh& mesh = _meshes.emplace_back();
+		Mesh& mesh = meshes.emplace_back();
 		mesh.SetupAttributeFloat(0, 0, VertexFormat(3, GL_FLOAT, false, offsetof(Vertex_P_N_UV_T, position)));
 		mesh.SetupAttributeFloat(1, 0, VertexFormat(3, GL_FLOAT, false, offsetof(Vertex_P_N_UV_T, normal)));
 		mesh.SetupAttributeFloat(2, 0, VertexFormat(2, GL_FLOAT, false, offsetof(Vertex_P_N_UV_T, uv))); 

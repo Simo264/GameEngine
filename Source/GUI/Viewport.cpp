@@ -102,19 +102,19 @@ void GUI_RenderViewport(bool& open, u32 texID, GameObject& objSelected, i32 gizm
 
   /* Begin main viewport */
   ImGui::Begin("Viewport", &open);
-  const ImVec2 viewportWinSize = ImGui::GetWindowSize();
-  const ImVec2 viewportWinPos = ImGui::GetWindowPos();
+  const ImVec2 winSize = ImGui::GetWindowSize();
+  const ImVec2 winPos = ImGui::GetWindowPos();
   auto& guiLayer = ImGuiLayer::Get();
-  guiLayer.viewportSize = { viewportWinSize.x, viewportWinSize.y };
-  guiLayer.viewportPos = { viewportWinPos.x, viewportWinPos.y };
+  guiLayer.viewportSize = { winSize.x, winSize.y };
+  guiLayer.viewportPos = { winPos.x, winPos.y };
   guiLayer.viewportFocused = ImGui::IsWindowFocused();
 
   /* Being child viewport */
   ImGui::BeginChild("Viewport_Child");
   guiLayer.viewportFocused |= ImGui::IsWindowFocused();
 
-  const ImVec2 viewportChildWinSize = ImGui::GetWindowSize();
-  ImGui::Image(reinterpret_cast<void*>(texID), viewportChildWinSize, ImVec2(0, 1), ImVec2(1, 0));
+  const ImVec2 winChildSize = ImGui::GetWindowSize();
+  ImGui::Image(reinterpret_cast<void*>(texID), winChildSize, ImVec2(0, 1), ImVec2(1, 0));
   if (objSelected.IsValid())
   {
     auto* transform = objSelected.GetComponent<Transform>();

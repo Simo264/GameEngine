@@ -4,11 +4,6 @@
 
 #include <imgui/imgui.h>
 
-
-/* ------------------------------------------ */
-/*                  PRIVATE                   */
-/* ------------------------------------------ */
-
 static fs::path contentBrowser_left_nodeSelected = GetAssetsPath();
 static fs::path contentBrowser_right_navCurrentDir = contentBrowser_left_nodeSelected;
 

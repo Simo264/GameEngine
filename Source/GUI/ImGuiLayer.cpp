@@ -181,14 +181,12 @@ void ImGuiLayer::Debug(bool shadowMode, bool normalMode, bool wireframeMode)
   ImGui::TextWrapped("Wireframe mode (F9 on/F10 off): %d", wireframeMode);
   ImGui::End();
 }
-
 void ImGuiLayer::CameraProps(Camera& camera)
 {
   //static bool open = true;
   //if (open)
   //  GUI_RenderCameraProperties(open, camera);
 }
-
 void ImGuiLayer::DebugDepthMap(u32 tetxureID)
 {
   ImGuiStyle& style = ImGui::GetStyle();
@@ -206,20 +204,10 @@ void ImGuiLayer::DebugDepthMap(u32 tetxureID)
   style.WindowPadding = paddingTmp;
 }
 
-
 /* -------------------------- */
 /*          PRIVATE           */
 /* -------------------------- */
 
-ImGuiLayer::ImGuiLayer()
-  : viewportFocused{ false },
-    viewportSize{},
-    viewportPos{},
-    selectedFont{},
-    changeFontFamily{ false },
-    gizmode{ -1 },
-    fontSize{ 0 }
-{}
 void ImGuiLayer::SetupContext()
 {
   IMGUI_CHECKVERSION();
@@ -312,7 +300,7 @@ void ImGuiLayer::Styling()
 }
 void ImGuiLayer::Docking()
 {
-  ImGuiWindowFlags windowFlags = 
+  constexpr ImGuiWindowFlags windowFlags = 
     ImGuiWindowFlags_NoDocking |
     ImGuiWindowFlags_NoBackground |
     ImGuiWindowFlags_NoTitleBar |

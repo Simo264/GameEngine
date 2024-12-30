@@ -2,7 +2,7 @@
 
 #include "Core/Core.hpp"
 #include "Core/Math/Core.hpp"
-#include "Engine/ECS/Mesh.hpp"
+#include "Engine/Graphics/Mesh.hpp"
 #include "Engine/ECS/Skeleton/Bone.hpp"
 
 class Texture2D;

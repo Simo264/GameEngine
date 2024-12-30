@@ -81,7 +81,7 @@ void Scene::SerializeScene(const fs::path& filePath)
 		if (StaticMesh* staticMesh = object.GetComponent<StaticMesh>())
 		{
 			String section = std::format("Entity{}:StaticMesh", objectID);
-			conf.Update(section, "path", staticMesh->Path().string());
+			conf.Update(section, "path", staticMesh->path.string());
 		}
 		if (SkeletonMesh* skeleton = object.GetComponent<SkeletonMesh>())
 		{

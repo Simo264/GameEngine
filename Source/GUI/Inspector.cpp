@@ -411,17 +411,17 @@ static void Insp_MaterialRow(StringView label, Texture2D*& matTexture, Texture2D
 }
 static void Insp_StaticMesh(GameObject& object, StaticMesh& staticMesh)
 {
-  ImGui::Text("Path: %s", staticMesh.Path().string().c_str());
-  ImGui::Text("Nr meshes: %d", staticMesh.MeshVector().size());
+  ImGui::Text("Path: %s", staticMesh.path.string().c_str());
+  ImGui::Text("Nr meshes: %d", staticMesh.meshes.size());
   ImGui::Text("Total vertices: %d", staticMesh.TotalVertices());
   ImGui::Text("Total indices: %d", staticMesh.TotalIndices());
 
   /* View meshes with a tree */
   if (ImGui::TreeNode("Material"))
   {
-    for (i32 i = 0; i < staticMesh.MeshVector().size(); i++)
+    for (i32 i = 0; i < staticMesh.meshes.size(); i++)
     {
-      auto& mesh = staticMesh.MeshVector().at(i);
+      auto& mesh = staticMesh.meshes.at(i);
       Material& material = mesh.material;
       TextureManager& texManager = TextureManager::Get();
 

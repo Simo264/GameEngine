@@ -1,5 +1,6 @@
 #include "FrameBuffer.hpp"
 #include "Core/GL.hpp"
+#include "Core/Log/Logger.hpp"
 
 void FrameBuffer::Create()
 {
@@ -14,7 +15,7 @@ void FrameBuffer::Delete()
 
 	size = rboAttachments.size();
 	if (size > 0)
-		glDeleteTextures(size, rboAttachments.data());
+		glDeleteRenderbuffers(size, rboAttachments.data());
 
 	glDeleteFramebuffers(1, &id);
 	id = 0;
@@ -44,12 +45,24 @@ bool FrameBuffer::IsValid() const
 
 void FrameBuffer::AttachTexture(i32 attachment, u32 texture, i32 level)
 {
+	if (textAttachments.size() >= MAX_NUM_TEXTURE_ATTACHMENTS)
+	{
+		CONSOLE_WARN("Cannot add more texture attachments. Maximum limit of {} reached.", MAX_NUM_TEXTURE_ATTACHMENTS);
+		return;
+	}
+
 	textAttachments.push_back(texture);
 	glNamedFramebufferTexture(id, attachment, texture, level);
 }
 
 void FrameBuffer::AttachRenderBuffer(i32 attachment, u32 renderbuffer)
 {
+	if (rboAttachments.size() >= MAX_NUM_RBO_ATTACHMENTS)
+	{
+		CONSOLE_WARN("Cannot add more renderbuffer attachments. Maximum limit of {} reached.", MAX_NUM_RBO_ATTACHMENTS);
+		return;
+	}
+
 	rboAttachments.push_back(renderbuffer);
 	glNamedFramebufferRenderbuffer(id, attachment, GL_RENDERBUFFER, renderbuffer);
 }

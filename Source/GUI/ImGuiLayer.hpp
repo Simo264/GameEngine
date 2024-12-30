@@ -142,7 +142,15 @@ public:
 	bool changeFontFamily;
 
 private:
-	ImGuiLayer();
+	ImGuiLayer() : 
+		viewportFocused{ false },
+		viewportSize{},
+		viewportPos{},
+		selectedFont{},
+		changeFontFamily{ false },
+		gizmode{ -1 },
+		fontSize{ 0 }
+	{}
 	~ImGuiLayer() = default;
 
 	void SetupContext();
