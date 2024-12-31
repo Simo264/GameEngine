@@ -2,79 +2,94 @@
 
 #include "Core/Math/Core.hpp"
 
+/**
+ * @struct VertexFormat
+ * @brief Defines the structure of a vertex attribute in a vertex buffer.
+ */
 struct VertexFormat
 {
-  /**
-   * The number of components per vertex are allocated to the specified attribute and must be 1, 2, 3, 4, or GL_BGRA
-   */
+  /** @brief Number of components per vertex attribute. Must be 1, 2, 3, 4, or GL_BGRA.*/
   i32 size{ 0 };
 
-  /**
-   * Indicates the type of the data. See https://registry.khronos.org/OpenGL-Refpages/gl4/html/glVertexAttribFormat.xhtml
-   */
+  /** @brief Specifies the data type of the attribute. https://registry.khronos.org/OpenGL-Refpages/gl4/html/glVertexAttribFormat.xhtml */
   i32 type{ 0 };
 
   /**
-   * If true then integer data is normalized to the range [-1, 1] or [0, 1] if it is signed or unsigned, respectively.
-   * Otherwise if normalized is false then integer data is directly converted to floating point
+   * @brief Specifies if integer data should be normalized to [0, 1] or [-1, 1].
+   * If true, signed/unsigned integers are normalized. If false, data is converted directly to float.
    */
   bool normalized{ false };
 
-  /**
-   * Is the offset of the first element relative to the start of the vertex buffer binding this attribute fetches from
-   */
+  /** @brief Offset of the attribute relative to the start of the vertex buffer. */
   i32 relativeoffset{ 0 };
 };
 
 /**
- * @brief
- * Vertex format with position
+ * @struct Vertex_P
+ * @brief Vertex format containing only position.
  */
 struct Vertex_P
 {
+  /** @brief Vertex position (x, y, z). */
 	vec3f position{};
 };
 
 /**
- * @brief
- * Vertex format with position and uv coordinates
+ * @struct Vertex_P_UV
+ * @brief Vertex format containing position and UV coordinates.
  */
 struct Vertex_P_UV
 {
+  /** @brief Vertex position (x, y, z). */
 	vec3f position{};
+  /** @brief Texture UV coordinates (u, v). */
 	vec2f uv{};
 };
 
 /**
- * @brief
- * Vertex format with position, normal, uv coordinates and tangent
+ * @struct Vertex_P_N_UV_T
+ * @brief Vertex format containing position, normal, UV coordinates, and tangent.
  */
 struct Vertex_P_N_UV_T
 {
+  /** @brief Vertex position (x, y, z). */
   vec3f position{};
+  /** @brief Vertex normal vector (x, y, z). */
   vec3f normal{};
+  /** @brief Texture UV coordinates (u, v). */
   vec2f uv{};
+  /** @brief Tangent vector (x, y, z). */
   vec3f tangent{};
 };
 
 /**
- * @brief
- * Vertex format with position, normal, uv coordinates, tangent and bones
+ * @struct Vertex_P_N_UV_T_B
+ * @brief Vertex format containing position, normal, UV coordinates, tangent, and bone influences.
  */
 struct Vertex_P_N_UV_T_B 
 {
-  /* One vertex can be affected by 4 bones */
+  /** @brief Maximum number of bones influencing a single vertex. */
   static constexpr u32 MAX_BONES_INFLUENCE = 4;
 
+  /** @brief Vertex position (x, y, z). */
   vec3f position{};
+  /** @brief Vertex normal vector (x, y, z). */
   vec3f normal{};
+  /** @brief Texture UV coordinates (u, v). */
   vec2f uv{};
+  /** @brief Tangent vector (x, y, z). */
   vec3f tangent{};
 
-  /* Joints which will influence this vertex */
+  /** @brief IDs of bones affecting the vertex. */
   i32 boneIds[MAX_BONES_INFLUENCE] = { -1 };
-  /* Weights from each bone */
+  /** @brief Weights from each bone. */
   f32 boneWeights[MAX_BONES_INFLUENCE] = { 0.f };
 
+  /**
+   * @brief Adds a bone influence to the vertex.
+   *
+   * @param id ID of the bone.
+   * @param weight Weight of the bone's influence.
+   */
   void AddBone(u32 id, f32 weight);
 };

@@ -38,14 +38,14 @@ void GUI_RenderPreferencesWindow(bool& open, i32 fontSize)
     case 0: /* Font properties */
       ImGui::SeparatorText("Font properties");
       ImGui::TextWrapped("Font size: %dpx", fontSize);
-      if (ImGui::BeginCombo("Font family", guiLayer.selectedFont.first->c_str()))
+      if (ImGui::BeginCombo("Font family", guiLayer.currentFont.first))
       {
         for (const auto& [key, font] : FontManager::Get().GetFonts())
         {
-          if (ImGui::Selectable(key.c_str(), guiLayer.selectedFont.first == &key) && guiLayer.selectedFont.first != &key)
+          if (ImGui::Selectable(key.c_str(), key == guiLayer.currentFont.first))
           {
-            guiLayer.selectedFont = std::make_pair(const_cast<String*>(&key), const_cast<fs::path*>(&font));
-            guiLayer.changeFontFamily = true;
+            guiLayer.currentFont = { key.c_str(), &font };
+            guiLayer.changeFontFamilyFlag = true;
           }
         }
         ImGui::EndCombo();

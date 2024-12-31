@@ -17,10 +17,10 @@ void FontManager::Initialize()
 
 		const fs::path& entryPath = entry.path();
 		const String filename = entryPath.filename().string();
-		auto res = _fonts.emplace(filename.c_str(), entryPath);
+		auto [font, success] = _fonts.emplace(filename.c_str(), entryPath);
 		CONSOLE_TRACE("{}", filename);
 
-		if (!res.second)
+		if (!success)
 			CONSOLE_ERROR("Error on loading font");
 	}
 }

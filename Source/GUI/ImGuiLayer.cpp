@@ -42,9 +42,9 @@ void ImGuiLayer::Initialize()
   config.ReadData();
   const String& fontFamily = config.GetValue("GUI", "font-family");
   fontSize = std::atoi(config.GetValue("GUI", "font-size").c_str());
-  auto record = FontManager::Get().GetRecordByName(fontFamily.c_str());
-  selectedFont = std::make_pair(const_cast<String*>(&record->first), const_cast<fs::path*>(&record->second));
-  SetFont(selectedFont.second->string());
+  auto recordIt = FontManager::Get().GetRecordByName(fontFamily.c_str());
+  currentFont = { recordIt->first.c_str(), &recordIt->second };
+  SetFont(currentFont.second->string());
 }
 void ImGuiLayer::CleanUp()
 {
@@ -85,13 +85,13 @@ void ImGuiLayer::SetFont(const fs::path& ttfFilePath) const
   ImGui_ImplOpenGL3_DestroyDeviceObjects();
   ImGui_ImplOpenGL3_CreateDeviceObjects();
 }
-void ImGuiLayer::Demo()
+void ImGuiLayer::RenderDemo()
 {
   static bool open = true;
   if(open)
     ImGui::ShowDemoWindow(&open);
 }
-void ImGuiLayer::MenuBar(Scene& scene) const
+void ImGuiLayer::RenderMenuBar(Scene& scene) const
 {
   static bool viewPrefWindow = false;
   GUI_RenderMenuBar(scene, viewPrefWindow);
@@ -100,13 +100,13 @@ void ImGuiLayer::MenuBar(Scene& scene) const
   if (viewPrefWindow)
     GUI_RenderPreferencesWindow(viewPrefWindow, fontSize);
 }
-void ImGuiLayer::Viewport(u32 textureID, GameObject& objSelected, const mat4f& view, const mat4f& proj) const
+void ImGuiLayer::RenderViewport(u32 texture, GameObject& objSelected, const mat4f& view, const mat4f& proj) const
 {
   static bool open = true;
   if (open)
-    GUI_RenderViewport(open, textureID, objSelected, gizmode, view, proj);
+    GUI_RenderViewport(open, texture, objSelected, gizmode, view, proj);
 }
-GameObject& ImGuiLayer::Hierarchy(Scene& scene)
+GameObject& ImGuiLayer::RenderHierarchy(Scene& scene)
 {
   static bool open = true;
   static GameObject object;
@@ -116,23 +116,23 @@ GameObject& ImGuiLayer::Hierarchy(Scene& scene)
   
   return object;
 }
-void ImGuiLayer::Inspector(GameObject& object)
+void ImGuiLayer::RenderInspector(GameObject& object)
 {
   static bool open = true;
   if (open)
     GUI_RenderInspector(open, object);
 }
-void ImGuiLayer::ContentBrowser()
+void ImGuiLayer::RenderContentBrowser()
 {
   static bool open = true;
   if (open)
     GUI_RenderContentBrowser(open);
 }
-void ImGuiLayer::GizmoToolBar(GameObject& objSelected)
+void ImGuiLayer::RenderGizmoToolBar(GameObject& objSelected)
 {
   GUI_RenderTransformToolBar(viewportPos, gizmode);
 }
-void ImGuiLayer::GraphicsInfo()
+void ImGuiLayer::RenderGraphicsInfo()
 {
   static bool open = true;
   ImGui::Begin("Graphics info", &open);
@@ -152,7 +152,7 @@ void ImGuiLayer::GraphicsInfo()
 
   ImGui::End();
 }
-void ImGuiLayer::TimeInfo(f64 delta, f64 avg, i32 frameRate)
+void ImGuiLayer::RenderTimeInfo(f64 delta, f64 avg, i32 frameRate)
 {
   constexpr i32 flags = ImGuiWindowFlags_NoDocking |
     ImGuiWindowFlags_NoTitleBar |
@@ -173,7 +173,7 @@ void ImGuiLayer::TimeInfo(f64 delta, f64 avg, i32 frameRate)
 
   ImGui::End();
 }
-void ImGuiLayer::Debug(bool shadowMode, bool normalMode, bool wireframeMode)
+void ImGuiLayer::RenderDebug(bool shadowMode, bool normalMode, bool wireframeMode)
 {
   ImGui::Begin("Debug", nullptr);
   ImGui::TextWrapped("Shadow mode (F1 on/F2 off): %d", shadowMode);
@@ -181,13 +181,13 @@ void ImGuiLayer::Debug(bool shadowMode, bool normalMode, bool wireframeMode)
   ImGui::TextWrapped("Wireframe mode (F9 on/F10 off): %d", wireframeMode);
   ImGui::End();
 }
-void ImGuiLayer::CameraProps(Camera& camera)
+void ImGuiLayer::RenderCameraProps(Camera& camera)
 {
   //static bool open = true;
   //if (open)
   //  GUI_RenderCameraProperties(open, camera);
 }
-void ImGuiLayer::DebugDepthMap(u32 tetxureID)
+void ImGuiLayer::RenderDebugDepthMap(u32 texture)
 {
   ImGuiStyle& style = ImGui::GetStyle();
   const ImVec2 paddingTmp = style.WindowPadding;
@@ -196,7 +196,7 @@ void ImGuiLayer::DebugDepthMap(u32 tetxureID)
   ImGui::Begin("Depth map", nullptr);
   ImGui::BeginChild("Map");
 
-  ImGui::Image(reinterpret_cast<void*>(tetxureID), { 1024,1024 }, ImVec2(0, 1), ImVec2(1, 0));
+  ImGui::Image(reinterpret_cast<void*>(texture), { 1024,1024 }, ImVec2(0, 1), ImVec2(1, 0));
 
   ImGui::EndChild();
   ImGui::End();

@@ -2,15 +2,22 @@
 
 #include "Core/Core.hpp"
 
+/**
+ * @class FontManager
+ * @brief Singleton class responsible for managing font resources.
+ *
+ * This class provides functionalities to load and access fonts from a specified directory.
+ * It follows the singleton pattern to ensure only one instance of the manager exists throughout the application lifecycle.
+ */
 class FontManager
 {
 public:
+	/** @brief Deleted copy constructor to enforce singleton pattern. */
 	FontManager(const FontManager&) = delete;
+	/** @brief Deleted assignment constructor to enforce singleton pattern. */
 	void operator=(const FontManager&) = delete;
 
-	/**
-	 * Return the instance of this FontManager singleton class
-	 */
+	/** @return Returns the singleton instance of FontManager. */
 	static FontManager& Get()
 	{
 		static FontManager fontManager;
@@ -18,19 +25,20 @@ public:
 	}
 
 	/**
-	 * Load all fonts from default directory
+	 * @brief Initializes the FontManager by loading all available fonts from the specified directory.
+	 *
+	 * This method scans the directory returned by GetFontsPath() and loads all font files recursively.
 	 */
 	void Initialize();
-
+	
 	/**
-	 * @return
-	 * A iterator to the mapped value of the element with specified key.
+	 * @brief Retrieves the font record by its name.
 	 * 
-	 * @throw 
-	 * If no such element exists, an exception of type std::out_of_range is thrown.
+	 * @return Returns an iterator to the font record if found, otherwise returns _fonts.end().
 	 */
 	auto GetRecordByName(StringView fontName) { return _fonts.find(fontName.data()); }
-
+	
+	/** @return Returns a constant reference to the map of loaded fonts. */
 	const auto& GetFonts() const { return _fonts; }
 
 private:
@@ -38,8 +46,9 @@ private:
 	~FontManager() = default;
 
 	/**
-	 * First: the font name
-	 * Second: the path of the font file
+	 * @brief Map to store loaded font records.
+	 *
+	 * The key is the font name, and the value is the file path to the font.
 	 */
 	Map<String, fs::path> _fonts;
 };

@@ -390,7 +390,7 @@ static void Insp_MaterialRow(StringView label, Texture2D*& matTexture, Texture2D
     {
       String strPath = path.string();
       if (strPath.at(0) != '#' && ImGui::Selectable(strPath.c_str(), texture.Compare(*matTexture)))
-        matTexture = &texture;
+        matTexture = const_cast<Texture2D*>(&texture);
     }
     ImGui::EndCombo();
   }

@@ -428,10 +428,10 @@ void Engine::Run()
   while (windowManager.IsOpen())
   {
     /* Set new font before BeginFrame */
-    if (gui.changeFontFamily)
+    if (gui.changeFontFamilyFlag)
     {
-      gui.SetFont(*gui.selectedFont.second);
-      gui.changeFontFamily = false;
+      gui.SetFont(*gui.currentFont.second);
+      gui.changeFontFamilyFlag = false;
     }
     gui.BeginFrame();
 
@@ -622,17 +622,17 @@ void Engine::Run()
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
-    gui.MenuBar(scene);
-    GameObject& objSelected = gui.Hierarchy(scene);
-    gui.Inspector(objSelected);
+    gui.RenderMenuBar(scene);
+    GameObject& objSelected = gui.RenderHierarchy(scene);
+    gui.RenderInspector(objSelected);
     u32 fboTexture = _fboIntermediate.textAttachments.at(0);
-    gui.Viewport(fboTexture, objSelected, cameraView, cameraProj);
-    gui.ContentBrowser();
-    gui.GizmoToolBar(objSelected);
-    gui.TimeInfo(delta, avgTime, frameRate);
-    gui.GraphicsInfo();
-    gui.Demo();
-    gui.Debug(shadowMode, normalMapMode, wireframeMode);
+    gui.RenderViewport(fboTexture, objSelected, cameraView, cameraProj);
+    gui.RenderContentBrowser();
+    gui.RenderGizmoToolBar(objSelected);
+    gui.RenderTimeInfo(delta, avgTime, frameRate);
+    gui.RenderGraphicsInfo();
+    gui.RenderDemo();
+    gui.RenderDebug(shadowMode, normalMapMode, wireframeMode);
     gui.EndFrame();
 
     /* Checking viewport size */

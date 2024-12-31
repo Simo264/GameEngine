@@ -51,27 +51,20 @@ enum class StencilOp : i32
 
 namespace StencilTest
 {
-	/**
-	 * @brief
-	 * Enable stencil testing and update the stencil buffer
-	 */
+	/** @brief Enable stencil testing and update the stencil buffer */
 	void EnableTest()
 	{
 		glEnable(GL_STENCIL_TEST);
 	}
 
-	/**
-	 * @brief
-	 * Disable stencil testing
-	 */
+	/** @brief Disable stencil testing */
 	void DisableTest()
 	{
 		glDisable(GL_STENCIL_TEST);
 	}
 
 	/**
-	 * @brief
-	 * Specifies the conditions under which a fragment passes the stencil test.
+	 * @brief Specifies the conditions under which a fragment passes the stencil test.
 	 * See https://registry.khronos.org/OpenGL-Refpages/gl4/html/glStencilFunc.xhtml
 	 */
 	void SetStencilFun(StencilFun fun, i32 ref, i32 mask)
@@ -90,8 +83,7 @@ namespace StencilTest
 	}
 
 	/**
-	 * @brief
-	 * Specifies a bit mask to enable and disable writing of individual bits in the stencil planes.
+	 * @brief Specifies a bit mask to enable and disable writing of individual bits in the stencil planes.
 	 * See https://registry.khronos.org/OpenGL-Refpages/gl4/html/glStencilMask.xhtml
 	 */
 	void SetStencilMask(i32 mask)

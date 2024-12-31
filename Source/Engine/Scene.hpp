@@ -6,43 +6,40 @@
 class GameObject;
 
 /**
- * @brief
- * Scenes are where you work with content. They are assets that contain all or part of a game or application. 
- * For example, you might build a simple game in a single scene, while for a more complex game, 
- * you might use one scene per level, each with its own environments, characters, obstacles, decorations, and UI.
+ * @class Scene
+ * 
+ * @brief Represents and manages a 3D scene, including loading, saving, and manipulating objects.
  */
 class Scene
 {
 public:
+	/** @brief Default constructor for Scene. */
 	Scene() = default;
+	/** @brief Constructs a Scene by loading from a file. */
 	Scene(const fs::path& filePath);
+	/** @brief Default destructor for Scene. */
 	~Scene() = default;
 
+	/** @brief Loads a scene from a file. */
 	void LoadScene(const fs::path& filePath);
+	/** @brief Saves the current scene to a file. */
 	void SaveScene(const fs::path& filePath);
-
-	/**
-	 * @brief
-	 * Remove all objects from scene
-	 */
+	/** @brief Clears all objects and data from the current scene. */
 	void ClearScene();
 
 	/**
-	 * @brief
-	 * Create object in scene
+	 * @brief Creates a new object in the scene.
+	 * 
+	 * @param objName Optional name for the object.
+	 * 
+	 * @return The created GameObject.
 	 */
 	GameObject CreateObject(StringView objName = "");
-
-	/**
-	 * @brief
-	 * Destroy an entity and releases its identifier
-	 */
+	
+	/** @brief Destroys an object in the scene. */
 	void DestroyObject(GameObject& object);
 
-	/**
-	 * @return
-	 * The reference of registry
-	 */
+	/** @brief Provides access to the internal entity registry. */
 	entt::registry& Reg() { return _registry; }
 
 private:
