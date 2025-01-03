@@ -12,6 +12,15 @@
 struct BoneNode
 {
 	/**
+	 * @brief Name of the bone.
+	 *
+	 * This field stores the name of the bone as a null-terminated string. It is used for identification
+	 * purposes within a bone hierarchy, typically allowing the bone to be referenced in animations
+	 * or when manipulating the skeleton structure.
+	 */
+	char name[32]{};
+
+	/**
 	 * @brief Local transformation matrix.
 	 *
 	 * Represents the position, rotation, and scale of this bone relative to its parent in the hierarchy.

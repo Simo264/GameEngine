@@ -45,9 +45,7 @@ public:
 	 */
 	Animation(const fs::path& path, SkeletonMesh& skeleton);
 	
-	/**
-	 * @brief Default destructor for the Animation class.
-	 */
+	/** @brief Default destructor for the Animation class. */
 	~Animation() = default;
 
 	f32 Duration() const { return _duration; }

@@ -22,9 +22,9 @@ static mat4f AiMatrixToGLM(const aiMatrix4x4& matrix)
 	return m;
 }
 
-/* ---------------------------------------------------- */
-/*										PUBLIC														*/
-/* ---------------------------------------------------- */
+// ----------------------------------------------------
+//										PUBLIC													
+// ----------------------------------------------------
 
 SkeletonMesh::SkeletonMesh(const fs::path& skeletalPath) :
 	path{ skeletalPath },
@@ -83,7 +83,6 @@ std::pair<Bone*, u32> SkeletonMesh::FindBone(StringView boneName)
 std::pair<Bone*, u32> SkeletonMesh::InsertBone(StringView boneName)
 {
 	u32 boneIndex = bones.size();
-	
 	auto [it, success] = _boneMap.insert({ boneName.data(), boneIndex });
 	if (success)
 	{
@@ -93,12 +92,6 @@ std::pair<Bone*, u32> SkeletonMesh::InsertBone(StringView boneName)
 	
 	CONSOLE_WARN("Can't insert bone '{}'", boneName.data());
 	return { nullptr, -1 };
-}
-Bone* SkeletonMesh::GetBone(u32 i)
-{
-	if (i < 0 || i >= bones.size())
-		return nullptr;
-	return &bones.at(i);
 }
 u32 SkeletonMesh::TotalVertices() const
 {
@@ -113,13 +106,13 @@ u32 SkeletonMesh::TotalIndices() const
 	});
 }
 
-/* ---------------------------------------------------- */
-/*										PRIVATE														*/
-/* ---------------------------------------------------- */
+// ----------------------------------------------------
+//										PRIVATE													
+// ----------------------------------------------------
 
 void SkeletonMesh::ProcessNode(aiNode* node, const aiScene* scene)
 {
-	/* Process all the node's meshes */
+	// Process all the node's meshes
 	for (i32 i = 0; i < node->mNumMeshes; i++)
 	{
 		u32 MAX_BONES_INFLUENCE = Vertex_P_N_UV_T_B::MAX_BONES_INFLUENCE;
@@ -134,12 +127,12 @@ void SkeletonMesh::ProcessNode(aiNode* node, const aiScene* scene)
 
 		aiMesh* aimesh = scene->mMeshes[node->mMeshes[i]];
 
-		/* 1) Load vertex data */
+		// 1) Load vertex data
 		Buffer vbo = LoadVertices(aimesh);
 		mesh.vao.AttachVertexBuffer(0, vbo, 0, sizeof(Vertex_P_N_UV_T_B));
 		mesh.vao.numVertices = aimesh->mNumVertices;
 
-		/* 2) Load indices */
+		// 2) Load indices
 		Buffer ebo = LoadIndices(aimesh);
 		mesh.vao.AttachElementBuffer(ebo);
 		mesh.vao.numIndices = aimesh->mNumFaces * 3;
@@ -166,7 +159,7 @@ void SkeletonMesh::ProcessNode(aiNode* node, const aiScene* scene)
 		}
 	}
 
-	/* Then do the same for each of its children */
+	// Then do the same for each of its children
 	for (i32 i = 0; i < node->mNumChildren; i++)
 		ProcessNode(node->mChildren[i], scene);
 }
@@ -243,7 +236,11 @@ Buffer SkeletonMesh::LoadIndices(aiMesh* aimesh)
 }
 void SkeletonMesh::LoadBoneHierarchy(BoneNode& dest, const aiNode* src)
 {
+	if (std::strlen(src->mName.C_Str()) >= sizeof(dest.name))
+		CONSOLE_WARN("Bone name size >= sizeof(dest.name)");
+
 	auto [bone, index] = FindBone(src->mName.data);
+	std::strncpy(dest.name, src->mName.C_Str(), sizeof(dest.name));
 	dest.boneIndex = index;
 	dest.transformation = AiMatrixToGLM(src->mTransformation);
 	dest.children.reserve(src->mNumChildren);

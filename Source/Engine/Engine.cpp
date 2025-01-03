@@ -34,18 +34,18 @@
 
 static chrono::steady_clock::time_point now{};
 static chrono::steady_clock::time_point lastFrameTime{};
-static f64 delta = 0.0f; /* Time elapsed between two frames */
+static f64 delta = 0.0f; // Time elapsed between two frames
 
 static chrono::steady_clock::time_point timerT0 = chrono::steady_clock::now();
 static chrono::steady_clock::time_point timerT1{};
 static i32 frames = 0;
-static i32 frameRate = 0; /* How many frames generated per seconds */
+static i32 frameRate = 0; // How many frames generated per seconds
 static f64 totalDeltasPerSecond = 0.0f;
-static f64 avgTime = 0.0f; /* The average rendering time per seconds */
+static f64 avgTime = 0.0f; // The average rendering time per seconds
 
 static void GLAPIENTRY MessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam)
 {
-  /* Ignore non-significant error/warning codes */ 
+  // Ignore non-significant error/warning codes
   if (id == 131169 || id == 131185 || id == 131218 || id == 131204) 
     return;
 
@@ -91,42 +91,42 @@ static void GLAPIENTRY MessageCallback(GLenum source, GLenum type, GLuint id, GL
 }
 static void SetOpenGLStates()
 {
-  /* Enable debug output */ 
-  /* ------------------- */
+  // Enable debug output 
+  // -------------------
   glEnable(GL_DEBUG_OUTPUT);
   glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
   glDebugMessageCallback(MessageCallback, 0);
   glDebugMessageControl(GL_DEBUG_SOURCE_API, GL_DEBUG_TYPE_ERROR, GL_DONT_CARE, 0, nullptr, GL_TRUE);
 
-  /* Depth testing ON */
-  /* ---------------- */
+  // Depth testing ON
+  // ----------------
   DepthTest::EnableTest();
   DepthTest::EnableWritingBuffer();
   DepthTest::SetDepthFun(DepthFun::LESS);
 
-  /* Stencil testing OFF */
-  /* ------------------- */
+  // Stencil testing OFF
+  // -------------------
   StencilTest::DisableTest();
   StencilTest::SetStencilFun(StencilFun::ALWAYS, 0, 0xFF);
   StencilTest::SetStencilOp(StencilOp::KEEP, StencilOp::KEEP, StencilOp::KEEP);
 
-  /* Culling OFF */
-  /* ----------- */
+  // Culling OFF
+  // -----------
   FaceCulling::DisableFaceCulling();
   FaceCulling::SetCullFace(CullFace::BACK);
   FaceCulling::SetFrontFacing(FrontFace::COUNTER_CLOCKWISE);
 
-  /* Blending OFF */
-  /* ------------ */
+  // Blending OFF
+  // ------------
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-  /* Gamma correction OFF */
-  /* -------------------- */
+  // Gamma correction OFF
+  // --------------------
   glDisable(GL_FRAMEBUFFER_SRGB);
 
-  /* Antialising ON */
-  /* -------------- */
+  // Antialising ON
+  // --------------
   glEnable(GL_MULTISAMPLE);
 
   glClearColor(0.15f, 0.15f, 0.15f, 1.0f);
@@ -158,11 +158,19 @@ static void RenderStaticMesh(Program& program, StaticMesh& staticMesh, Transform
   program.SetUniformMat4f("u_model", transform.GetTransformation());
   staticMesh.Draw(GL_TRIANGLES);
 }
-static void RenderScene(Scene& scene, Program& program)
+static void RenderSkeletonMesh(Program& program, 
+  SkeletonMesh& skeletonMesh, 
+  Transform& transform, 
+  const Vector<mat4f>& boneTransforms)
 {
-  scene.Reg().view<StaticMesh, Transform>().each([&](auto& staticMesh, auto& transform) {
-    RenderStaticMesh(program, staticMesh, transform);
-  });
+  for (u64 i = 0; i < boneTransforms.size(); i++)
+  {
+    char uniform[32]{};
+    std::format_to_n(uniform, sizeof(uniform), "u_boneTransforms[{}]", i);
+    program.SetUniformMat4f(uniform, boneTransforms[i]);
+  }
+  program.SetUniformMat4f("u_model", transform.GetTransformation());
+  skeletonMesh.Draw(GL_TRIANGLES);
 }
 
 static void CreateSkybox(Mesh& skybox, TextureCubemap& skyboxTexture)
@@ -241,7 +249,7 @@ static void CreateSkybox(Mesh& skybox, TextureCubemap& skyboxTexture)
 }
 static FrameBuffer CreateDepthMapFbo(i32 width, i32 height)
 {
-  /* Create a 2D texture that we'll use as the framebuffer's depth buffer */
+  // Create a 2D texture that we'll use as the framebuffer's depth buffer
   Texture2D depthMap;
   depthMap.Create(GL_TEXTURE_2D);
   depthMap.CreateStorage(GL_DEPTH_COMPONENT24, width, height);
@@ -250,12 +258,12 @@ static FrameBuffer CreateDepthMapFbo(i32 width, i32 height)
   depthMap.SetParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   depthMap.SetParameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-  /* Resolve the problem of over sampling */
+  // Resolve the problem of over sampling
   depthMap.SetParameteri(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
   depthMap.SetParameteri(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
   depthMap.SetParameterfv(GL_TEXTURE_BORDER_COLOR, Array<f32, 4>{ 1.0, 1.0, 1.0, 1.0 }.data());
 
-  /* With the generated depth texture we can attach it as the framebuffer's depth buffer */
+  // With the generated depth texture we can attach it as the framebuffer's depth buffer
   FrameBuffer fbo;
   fbo.Create();
   fbo.AttachTexture(GL_DEPTH_ATTACHMENT, depthMap.id, 0);
@@ -298,19 +306,18 @@ static void CreateGridPlane(Mesh& grid)
   grid.vao.numVertices = 6;
 }
 
-/* -----------------------------------------------------
- *          PUBLIC METHODS
- * -----------------------------------------------------
-*/
+// -----------------------------------------------------
+//                PUBLIC METHODS
+// -----------------------------------------------------
 
 void Engine::Initialize()
 {
-  /* Initialize logger */
-  /* ----------------- */
+  // Initialize logger
+  // -----------------
   Logger::Initialize();
 
-  /* Initialize window manager */
-  /* ------------------------- */
+  // Initialize window manager
+  // -------------------------
   WindowManager::Get().Initialize(WindowProps(
     vec2i{ WINDOW_WIDTH, WINDOW_HEIGHT },
     vec2i{ 50, 50 }, 
@@ -319,37 +326,37 @@ void Engine::Initialize()
     false
   ));
 
-  /* Initialize font manager */
-  /* -------------------------- */
+  // Initialize font manager
+  // --------------------------
   FontManager::Get().Initialize();
   
-  /* Initialize shader manager */
-  /* ------------------------- */
+  // Initialize shader manager
+  // -------------------------
   ShaderManager::Get().Initialize();
 
-  /* Initialize texture manager */
-  /* -------------------------- */
+  // Initialize texture manager
+  // --------------------------
   TextureManager::Get().Initialize();
 
-  /* Setup ImGui context */
-  /* ------------------- */
+  // Setup ImGui context
+  // -------------------
   ImGuiLayer::Get().Initialize();
   CONSOLE_INFO("ImGui layer initialized");
 
-  /* Create Framebuffer object */
-  /* ------------------------- */
+  // Create Framebuffer object
+  // -------------------------
   _viewportSize = { WINDOW_WIDTH, WINDOW_HEIGHT };
   CreateFramebuffer(4, _viewportSize.x, _viewportSize.y);
   CreateScreenSquare();
 
-  /* Initialize uniform block objects */
-  /* -------------------------------- */
-  /* Reserve memory for both projection and view matrices */
+  // Initialize uniform block objects
+  // --------------------------------
+  // Reserve memory for both projection and view matrices
   _uboCamera = Buffer(2 * sizeof(mat4f), nullptr, GL_STREAM_DRAW);
-  _uboCamera.BindBase(GL_UNIFORM_BUFFER, 0); /* cameraBlock to bindingpoint 0 */
+  _uboCamera.BindBase(GL_UNIFORM_BUFFER, 0); // cameraBlock to bindingpoint 0
 
   {
-    /* Reserve memory for DirectionalLight, PointLight and SpotLight structures */
+    // Reserve memory for DirectionalLight, PointLight and SpotLight structures
     DirectionalLight dl;
     PointLight pl;
     SpotLight sl;
@@ -357,43 +364,43 @@ void Engine::Initialize()
     _uboLight.UpdateStorage(0, sizeof(dl), reinterpret_cast<void*>(&dl));
     _uboLight.UpdateStorage(sizeof(dl), sizeof(pl), reinterpret_cast<void*>(&pl));
     _uboLight.UpdateStorage(sizeof(dl) + sizeof(pl), sizeof(sl), reinterpret_cast<void*>(&sl));
-    _uboLight.BindBase(GL_UNIFORM_BUFFER, 1); /* lightBlock to bindingpoint 1 */
+    _uboLight.BindBase(GL_UNIFORM_BUFFER, 1); // lightBlock to bindingpoint 1
   }
 
-  /* Set the initial OpenGL states */
-  /* ----------------------------- */
+  // Set the initial OpenGL states
+  // -----------------------------
   SetOpenGLStates();
 }
 void Engine::Run()
 {
-  /* Create grid plane */
+  // Create grid plane
   Mesh gridPlane; 
   CreateGridPlane(gridPlane);
 
-  /* Create skybox object */
+  // Create skybox object
   TextureCubemap skyboxTexture;
   Mesh skybox; 
   CreateSkybox(skybox, skyboxTexture);
 
-  /* Create scene object */
-  Scene scene((GetRootPath() / "Scene.ini").string());
+  // Create scene object
+  Scene scene((GetRootPath() / "Scene.ini"));
 
-  /* Create primary camera object */
+  // Create primary camera object
   Camera primaryCamera(vec3f(7.f, 4.f, 6), vec3f(-135.0f, -25.0f, 0.f));
   primaryCamera.frustum.zFar = 100.0f;
 
-  /* Create the directional light camera */
+  // Create the directional light camera
   Camera directLightCamera(vec3f(0.0f, 10.0f, 10.0f));
   directLightCamera.frustum.zFar = 30.0f;
 
-  /* Setting up the directional shadow mapping  */
+  // Setting up the directional shadow mapping
   FrameBuffer fboDepthMap = CreateDepthMapFbo(1024, 1024);
-  /* Setting up the omnidirectional shadow mapping */
+  // Setting up the omnidirectional shadow mapping
   FrameBuffer fboDepthCubeMap = CreateDepthCubeMapFbo(1024, 1024);
 
-  /* ---------------------------------------------------------------------- */
-  /* -------------------------- Pre-loop section -------------------------- */
-  /* ---------------------------------------------------------------------- */
+  // ----------------------------------------------------------------------
+  // -------------------------- Pre-loop section --------------------------
+  // ----------------------------------------------------------------------
   ImGuiLayer& gui = ImGuiLayer::Get();
   WindowManager& windowManager = WindowManager::Get();
   TextureManager& textureManager = TextureManager::Get();
@@ -407,7 +414,6 @@ void Engine::Run()
   Program& sceneShadowsProgram = shaderManager.GetProgramByName("SceneShadows");
   Program& skeletalAnimProgram = shaderManager.GetProgramByName("SkeletalAnim");
   Program& skeletalAnimShadowsProgram = shaderManager.GetProgramByName("SkeletalAnimShadows");
-  Texture2D& heightMap = textureManager.GetTextureByPath(GetTexturesPath() / "iceland_heightmap.png");
 
   constexpr bool renderTerrain = false;
   constexpr bool renderInfiniteGrid = true;
@@ -422,9 +428,9 @@ void Engine::Run()
   PointLight pointLight;
   SpotLight spotLight;
 
-  /* ------------------------------------------------------------------ */
-  /* -------------------------- loop section -------------------------- */
-  /* ------------------------------------------------------------------ */
+  // ------------------------------------------------------------------
+  // -------------------------- loop section --------------------------
+  // ------------------------------------------------------------------
   while (windowManager.IsOpen())
   {
     /* Set new font before BeginFrame */
@@ -435,15 +441,15 @@ void Engine::Run()
     }
     gui.BeginFrame();
 
-    /* ---------------------------------------------------------------------------------- */
-    /* -------------------------- Per-frame time logic section -------------------------- */
-    /* ---------------------------------------------------------------------------------- */
+    // ---------------------------------------------------------------------------------- 
+    // -------------------------- Per-frame time logic section -------------------------- 
+    // ---------------------------------------------------------------------------------- 
     CalculatePerFrameTime();
     g_drawCalls = 0;
 
-    /* ------------------------------------------------------------------- */
-    /* -------------------------- Input section -------------------------- */
-    /* ------------------------------------------------------------------- */
+    // -------------------------------------------------------------------
+    // -------------------------- Input section --------------------------
+    // -------------------------------------------------------------------
     windowManager.PoolEvents();
     if (gui.viewportFocused)
     {
@@ -464,9 +470,9 @@ void Engine::Run()
         wireframeMode = false;
     }
 
-    /* -------------------------------------------------------------------- */
-    /* -------------------------- Update section -------------------------- */
-    /* -------------------------------------------------------------------- */
+    // --------------------------------------------------------------------
+    // -------------------------- Update section --------------------------
+    // --------------------------------------------------------------------
     primaryCamera.UpdateOrientation();
     mat4f cameraView = primaryCamera.CalculateView(primaryCamera.position + primaryCamera.GetFrontVector());
     mat4f cameraProj = primaryCamera.CalculatePerspective(static_cast<f32>(_viewportSize.x) / static_cast<f32>(_viewportSize.y));
@@ -480,13 +486,11 @@ void Engine::Run()
     _uboLight.UpdateStorage(sizeof(DirectionalLight), sizeof(PointLight), reinterpret_cast<void*>(&pointLight));
     _uboLight.UpdateStorage(sizeof(DirectionalLight) + sizeof(PointLight), sizeof(SpotLight), reinterpret_cast<void*>(&spotLight));
 
-    //animator->UpdateAnimation(delta);
+    // -----------------------------------------------------------------------
+    // -------------------------- Rendering section --------------------------
+    // -----------------------------------------------------------------------
 
-    /* ----------------------------------------------------------------------- */
-    /* -------------------------- Rendering section -------------------------- */
-    /* ----------------------------------------------------------------------- */
-
-    /** Fill the depth map from directional light's perspective */
+    /// Fill the depth map from directional light's perspective
 #if 0 
     fboDepthMap.Bind(GL_FRAMEBUFFER);
     {
@@ -504,7 +508,7 @@ void Engine::Run()
     fboDepthMap.Unbind(GL_FRAMEBUFFER);
 #endif
 
-    /** Fill the depth map from point light's perspective */
+    /// Fill the depth map from point light's perspective
 #if 0 
     fboDepthCubeMap.Bind(GL_FRAMEBUFFER);
     {
@@ -542,7 +546,7 @@ void Engine::Run()
     fboDepthCubeMap.Unbind(GL_FRAMEBUFFER);
 #endif
 
-    /** Fill the framebuffer color texture */
+    /// Fill the framebuffer color texture
     _fboMultisampled.Bind(GL_FRAMEBUFFER);
     { 
       glViewport(0, 0, _viewportSize.x, _viewportSize.y);
@@ -551,8 +555,8 @@ void Engine::Run()
       glPolygonMode(GL_FRONT, wireframeMode ? GL_LINE : GL_FILL);
       glPolygonMode(GL_BACK, wireframeMode ? GL_LINE : GL_FILL);
 
-      /** Render scene with shadows map */
-      if (shadowMode)
+      /// Render scene with shadows map 
+      if (false && shadowMode)
       {
         //u32 depthMapTexture = fboDepthMap.textAttachments.at(0);
         //u32 depthCubeMapTexture = fboDepthCubeMap.textAttachments.at(0);
@@ -568,38 +572,38 @@ void Engine::Run()
         //  RenderStaticMesh(sceneShadowsProgram, staticMesh, transform);
         //});
       }
-      /** Render scene with no shadows */
+      /// Render scene with no shadows
       else
       {
-        //sceneProgram.Use();
-        //sceneProgram.SetUniform3f("u_viewPos", primaryCamera.position);
-        //sceneProgram.SetUniform1i("u_useNormalMap", normalMapMode);
-        //scene.Reg().view<StaticMesh, Transform>().each([&](auto& staticMesh, auto& transform) {
-        //  RenderStaticMesh(sceneProgram, staticMesh, transform);
-        //});
-        
-        //auto& transforms = animator->BoneTransforms();
-        //for (u64 i = 0; i < transforms.size(); i++)
-        //{
-        //  char uniform[32]{};
-        //  std::format_to_n(uniform, sizeof(uniform), "u_boneTransforms[{}]", i);
-        //  skeletalAnimProgram.SetUniformMat4f(uniform, transforms[i]);
-        //}
-        //skeletalAnimProgram.Use();
-        //skeletalAnimProgram.SetUniform3f("u_viewPos", primaryCamera.position);
-        //skeletalAnimProgram.SetUniform1i("u_useNormalMap", 0);
-        //skeletalAnimProgram.SetUniformMat4f("u_model", transform->GetTransformation());
-        //skeleton->Draw(GL_TRIANGLES);
+        // Render all static meshes
+        sceneProgram.Use();
+        sceneProgram.SetUniform3f("u_viewPos", primaryCamera.position);
+        sceneProgram.SetUniform1i("u_useNormalMap", normalMapMode);
+        scene.Reg().view<StaticMesh, Transform>().each([&](auto& staticMesh, auto& transform) {
+          RenderStaticMesh(sceneProgram, staticMesh, transform);
+        });
+
+        // Render all skeleton meshes
+        skeletalAnimProgram.Use();
+        skeletalAnimProgram.SetUniform3f("u_viewPos", primaryCamera.position);
+        skeletalAnimProgram.SetUniform1i("u_useNormalMap", normalMapMode);
+        scene.Reg().view<SkeletonMesh, Animator, Transform>().each(
+          [&](auto& skeletonMesh, auto& animator, auto& transform) {
+            animator.UpdateAnimation(delta);
+            auto& boneTransforms = animator.BoneTransforms();
+            RenderSkeletonMesh(skeletalAnimProgram, skeletonMesh, transform, boneTransforms);
+          }
+        );
       }
 
-      /** Render the infinite grid */
+      /// Render the infinite grid
       if(renderInfiniteGrid)
       {
         gridPlaneProgram.Use();
         Renderer::DrawArrays(GL_TRIANGLES, gridPlane.vao);
       }
 
-      /** Draw skybox after the scene */
+      /// Draw skybox after the scene
       if(renderSkybox)
       {
         skyboxProgram.Use();
@@ -611,7 +615,7 @@ void Engine::Run()
         DepthTest::SetDepthFun(DepthFun::LESS);
       }
 
-      /* Blit multisampled buffer to normal color buffer of intermediate FBO */
+      // Blit multisampled buffer to normal color buffer of intermediate FBO
       _fboMultisampled.Blit(_fboIntermediate,
         0, 0, _viewportSize.x, _viewportSize.y,
         0, 0, _viewportSize.x, _viewportSize.y,
@@ -635,7 +639,7 @@ void Engine::Run()
     gui.RenderDebug(shadowMode, normalMapMode, wireframeMode);
     gui.EndFrame();
 
-    /* Checking viewport size */
+    // Checking viewport size
     if (_viewportSize != gui.viewportSize)
     {
       _viewportSize = gui.viewportSize;
@@ -644,9 +648,9 @@ void Engine::Run()
       CreateFramebuffer(4, _viewportSize.x, _viewportSize.y);
     }
 
-    /* ------------------------------------------------------------------ */
-    /* -------------------------- Swap buffers -------------------------- */
-    /* ------------------------------------------------------------------ */
+    // ------------------------------------------------------------------
+    // -------------------------- Swap buffers --------------------------
+    // ------------------------------------------------------------------
     windowManager.SwapWindowBuffers();
   }
  
@@ -665,10 +669,9 @@ void Engine::CleanUp()
   WindowManager::Get().CleanUp(); /* !!Raise exception here */
 }
 
-/* -----------------------------------------------------
- *          PRIVATE METHODS
- * -----------------------------------------------------
-*/
+// -----------------------------------------------------
+//            PRIVATE METHODS
+// -----------------------------------------------------
 
 void Engine::CreateFramebuffer(i32 samples, i32 width, i32 height)
 {

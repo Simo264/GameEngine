@@ -18,7 +18,7 @@ void GUI_RenderMenuBar(Scene& scene, bool& openPreferences)
       {
         static const char* filter[] = { "*.ini" };
 
-        String filePath = OpenFileDialog(1, filter, "Open scene", false);
+        fs::path filePath = OpenFileDialog(1, filter, "Open scene", false);
         if (!filePath.empty())
         {
           /* Unset all lights */
@@ -40,7 +40,7 @@ void GUI_RenderMenuBar(Scene& scene, bool& openPreferences)
       if (ImGui::MenuItem("Save as..."))
       {
         const char* filters[] = { "*.ini" };
-        String filepath = SaveFileDialog(1, filters, "Save as .ini");
+        fs::path filepath = SaveFileDialog(1, filters, "Save as .ini");
         
         scene.SaveScene(filepath);
         CONSOLE_TRACE("The scene has been successfully saved");

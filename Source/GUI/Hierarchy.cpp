@@ -109,7 +109,7 @@ void GUI_RenderHierarchy(bool& open, Scene& scene, GameObject& objSelected)
 {
   static bool createNewObject = false;
 
-  ImGui::Begin("Outliner", &open);
+  ImGui::Begin("Hierarchy", &open);
 
   /* "+New object" button */
   f32 btnWidth = ImGui::GetContentRegionAvail().x - 32.f;

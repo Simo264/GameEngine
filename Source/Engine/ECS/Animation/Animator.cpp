@@ -2,9 +2,9 @@
 
 #include "Core/Log/Logger.hpp"
 
-/* ---------------------------------------------------- */
-/*										PUBLIC														*/
-/* ---------------------------------------------------- */
+// ----------------------------------------------------
+//										PUBLIC													
+// ----------------------------------------------------
 
 void Animator::PlayAnimation()
 {
@@ -20,7 +20,7 @@ void Animator::RestartAnimation()
 }
 void Animator::UpdateAnimation(f32 dt)
 {
-	if (!_playAnimation || !_skeletonAttached || _animationAttached.second == nullptr)
+	if (!_playAnimation || !_animationAttached.second)
 		return;
 
 	_currentTime += _animationAttached.second->TickPerSecond() * dt;
@@ -63,9 +63,9 @@ std::pair<const char*, const Animation*> Animator::FindAnimation(StringView anim
 	return { nullptr, nullptr };
 }
 
-/* ---------------------------------------------------- */
-/*										PRIVATE														*/
-/* ---------------------------------------------------- */
+// ---------------------------------------------------- 
+//										PRIVATE														
+// ---------------------------------------------------- 
 
 void Animator::CalculateBoneTransform(const BoneNode& node, mat4f parentTransform)
 {
@@ -73,20 +73,20 @@ void Animator::CalculateBoneTransform(const BoneNode& node, mat4f parentTransfor
 	mat4f nodeTransform = node.transformation;
 	mat4f globalTransformation = parentTransform * nodeTransform;
 
-	Bone* bone = _skeletonAttached->GetBone(boneIndex);
-	if (bone)
+	if (boneIndex >= 0 && boneIndex < _skeletonAttached->bones.size())
 	{
+		Bone& bone = _skeletonAttached->bones.at(boneIndex);
 		InterpolateBone(bone, boneIndex);
-		nodeTransform = bone->localTransform;
+		nodeTransform = bone.localTransform;
 		globalTransformation = parentTransform * nodeTransform;
-		const mat4f& offset = bone->offset;
+		const mat4f& offset = bone.offset;
 		_boneTransforms[boneIndex] = globalTransformation * offset;
 	}
 
 	for (auto& child : node.children)
 		CalculateBoneTransform(child, globalTransformation);
 }
-void Animator::InterpolateBone(Bone* bone, u32 boneIndex)
+void Animator::InterpolateBone(Bone& bone, u32 boneIndex)
 {
 	auto& boneKeys = _animationAttached.second->BoneKeys();
 	auto keys = std::find_if(boneKeys.begin(), boneKeys.end(),
@@ -97,7 +97,7 @@ void Animator::InterpolateBone(Bone* bone, u32 boneIndex)
 	mat4f translation = InterpolateBonePosition(*keys);
 	mat4f rotation = InterpolateBoneRotation(*keys);
 	mat4f scale = InterpolateBoneScale(*keys);
-	bone->localTransform = translation * rotation * scale;
+	bone.localTransform = translation * rotation * scale;
 }
 mat4f Animator::InterpolateBonePosition(const AnimationKeys& keys)
 {

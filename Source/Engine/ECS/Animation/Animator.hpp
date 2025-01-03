@@ -19,23 +19,15 @@ public:
 		_animationAttached{ nullptr, nullptr }
 	{}
 
-	/**
-	 * @brief Default destructor for the Animator class.
-	 */
+	/** @brief Default destructor for the Animator class. */
 	~Animator() = default;
 
 	std::pair<const char*, const Animation*> InsertAnimation(const fs::path& animationPath);
-
 	void AttachAnimation(StringView animationName);
-	
 	void DetachAnimation();
-
 	void UpdateAnimation(f32 dt);
-	
 	void PlayAnimation();
-
 	void PauseAnimation();
-
 	void RestartAnimation();
 
 	std::pair<const char*, const Animation*> FindAnimation(StringView animationName);
@@ -46,7 +38,7 @@ public:
 	const SkeletonMesh& AttachedSkeleton() const { return *_skeletonAttached; }
 private:
 	void CalculateBoneTransform(const BoneNode& node, mat4f parentTransform);
-	void InterpolateBone(Bone* bone, u32 boneIndex);
+	void InterpolateBone(Bone& bone, u32 boneIndex);
 	mat4f InterpolateBonePosition(const AnimationKeys& keys);
 	mat4f InterpolateBoneRotation(const AnimationKeys& keys);
 	mat4f InterpolateBoneScale(const AnimationKeys& keys);

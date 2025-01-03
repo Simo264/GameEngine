@@ -6,9 +6,9 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
-/* ---------------------------------------------------- */
-/*										PUBLIC														*/
-/* ---------------------------------------------------- */
+// ---------------------------------------------------- 
+// 									PUBLIC														
+// ---------------------------------------------------- 
 
 Animation::Animation(const fs::path& path, SkeletonMesh& skeleton) :
 	_path{ path },
@@ -42,9 +42,9 @@ Animation::Animation(const fs::path& path, SkeletonMesh& skeleton) :
 	});
 }
 
-/* ---------------------------------------------------- */
-/*										PRIVATE														*/
-/* ---------------------------------------------------- */
+// ----------------------------------------------------
+//										PRIVATE													
+// ----------------------------------------------------
 
 void Animation::LoadAnimation(const aiAnimation* animation, SkeletonMesh& skeleton)
 {
@@ -55,17 +55,19 @@ void Animation::LoadAnimation(const aiAnimation* animation, SkeletonMesh& skelet
 
 		u32 boneIndex{};
 
-		/* Load skeleton bones */
+		// Load skeleton bones
 		auto [bone, index] = skeleton.FindBone(boneName);
 		if (!bone)
 		{
+			CONSOLE_DEBUG("Insert new bone into skeleton: '{}'", boneName);
+			//continue;
 			auto [newBone, newIndex] = skeleton.InsertBone(boneName);
 			boneIndex = newIndex;
 		}
 		else
 			boneIndex = index;
 
-		/* Load bone keys */
+		// Load bone keys
 		AnimationKeys& keys = _boneKeys.emplace_back();
 		keys.boneIndex = boneIndex;
 		keys.positionKeys.reserve(channel->mNumPositionKeys);

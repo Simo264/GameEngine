@@ -68,6 +68,17 @@ struct Vertex_P_N_UV_T
  */
 struct Vertex_P_N_UV_T_B 
 {
+  Vertex_P_N_UV_T_B();
+
+  /**
+   * @brief Adds a bone influence to the vertex.
+   *
+   * @param id ID of the bone.
+   * @param weight Weight of the bone's influence.
+   */
+  void AddBone(u32 id, f32 weight);
+
+
   /** @brief Maximum number of bones influencing a single vertex. */
   static constexpr u32 MAX_BONES_INFLUENCE = 4;
 
@@ -81,15 +92,7 @@ struct Vertex_P_N_UV_T_B
   vec3f tangent{};
 
   /** @brief IDs of bones affecting the vertex. */
-  i32 boneIds[MAX_BONES_INFLUENCE] = { -1 };
+  i32 boneIds[MAX_BONES_INFLUENCE];
   /** @brief Weights from each bone. */
-  f32 boneWeights[MAX_BONES_INFLUENCE] = { 0.f };
-
-  /**
-   * @brief Adds a bone influence to the vertex.
-   *
-   * @param id ID of the bone.
-   * @param weight Weight of the bone's influence.
-   */
-  void AddBone(u32 id, f32 weight);
+  f32 boneWeights[MAX_BONES_INFLUENCE];
 };

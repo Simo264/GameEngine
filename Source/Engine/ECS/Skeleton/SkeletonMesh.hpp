@@ -25,23 +25,14 @@ public:
    */
   SkeletonMesh(const fs::path& skeletalPath);
   
-  /**
-   * @brief Default destructor for the SkeletonMesh class.
-   */
+  /** @brief Default destructor for the SkeletonMesh class. */
   ~SkeletonMesh() = default;
 
   /**
    * @brief Draws the skeleton using the specified rendering mode.
-   * @param mode The rendering mode (e.g., wireframe, solid).
+   * @param mode The rendering mode
    */
   void Draw(i32 mode);
-  
-  /**
-   * @brief Retrieves a pointer to a bone by its index.
-   * @param i The index of the bone.
-   * @return A pointer to the bone at the specified index.
-   */
-  Bone* GetBone(u32 i);
   
   /**
    * @brief Searches for a bone by its name.
@@ -60,24 +51,16 @@ public:
   u32 TotalVertices() const;
   u32 TotalIndices() const;
 
-  /**
-   * @brief The file path of the skeletal model.
-   */
+  /** @brief The file path of the skeletal model. */
   fs::path path;
 
-  /**
-   * @brief A collection of meshes associated with the skeleton.
-   */
+  /** @brief A collection of meshes associated with the skeleton. */
   Vector<Mesh> meshes;
 
-  /**
-   * @brief A collection of bones defining the skeleton.
-   */
+  /** @brief A collection of bones defining the skeleton. */
   Vector<Bone> bones;
 
-  /**
-   * @brief The root node of the bone hierarchy.
-   */
+  /** @brief The root node of the bone hierarchy. */
   BoneNode rootNode;
   
 private:
@@ -88,5 +71,5 @@ private:
   void LoadBonesAndWeights(Vector<Vertex_P_N_UV_T_B>& vertices, const aiMesh* aimesh);
   void LoadBoneHierarchy(BoneNode& dest, const aiNode* src);
 
-  UnorderedMap<String, u32> _boneMap; /* BoneName - boneIndex */
+  UnorderedMap<String, u32> _boneMap; // BoneName - boneIndex
 };
