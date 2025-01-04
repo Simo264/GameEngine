@@ -25,6 +25,8 @@
 #include "Engine/Subsystems/TextureManager.hpp"
 #include "Engine/Subsystems/FontManager.hpp"
 
+#include "Engine/Filesystem/Filesystem.hpp"
+
 #include "GUI/ImGuiLayer.hpp"
 
 #include <GLFW/glfw3.h>
@@ -158,10 +160,7 @@ static void RenderStaticMesh(Program& program, StaticMesh& staticMesh, Transform
   program.SetUniformMat4f("u_model", transform.GetTransformation());
   staticMesh.Draw(GL_TRIANGLES);
 }
-static void RenderSkeletonMesh(Program& program, 
-  SkeletonMesh& skeletonMesh, 
-  Transform& transform, 
-  const Vector<mat4f>& boneTransforms)
+static void RenderSkeletonMesh(Program& program, SkeletonMesh& skeletonMesh, Transform& transform, const Vector<mat4f>& boneTransforms)
 {
   for (u64 i = 0; i < boneTransforms.size(); i++)
   {
@@ -227,12 +226,12 @@ static void CreateSkybox(Mesh& skybox, TextureCubemap& skyboxTexture)
 
   TextureManager& textureManager = TextureManager::Get();
   Array<Texture2D*, 6> images = {
-    &textureManager.GetTextureByPath(GetTexturesPath() / "skybox/right.jpg"),
-    &textureManager.GetTextureByPath(GetTexturesPath() / "skybox/left.jpg"),
-    &textureManager.GetTextureByPath(GetTexturesPath() / "skybox/top.jpg"),
-    &textureManager.GetTextureByPath(GetTexturesPath() / "skybox/bottom.jpg"),
-    &textureManager.GetTextureByPath(GetTexturesPath() / "skybox/front.jpg"),
-    &textureManager.GetTextureByPath(GetTexturesPath() / "skybox/back.jpg"),
+    &textureManager.GetTextureByPath(Filesystem::GetTexturesPath() / "skybox/right.jpg"),
+    &textureManager.GetTextureByPath(Filesystem::GetTexturesPath() / "skybox/left.jpg"),
+    &textureManager.GetTextureByPath(Filesystem::GetTexturesPath() / "skybox/top.jpg"),
+    &textureManager.GetTextureByPath(Filesystem::GetTexturesPath() / "skybox/bottom.jpg"),
+    &textureManager.GetTextureByPath(Filesystem::GetTexturesPath() / "skybox/front.jpg"),
+    &textureManager.GetTextureByPath(Filesystem::GetTexturesPath() / "skybox/back.jpg"),
   };
   i32 cubemapInternalFormat = images.at(0)->internalFormat;
   i32 width = images.at(0)->width;
@@ -319,11 +318,11 @@ void Engine::Initialize()
   // Initialize window manager
   // -------------------------
   WindowManager::Get().Initialize(WindowProps(
-    vec2i{ WINDOW_WIDTH, WINDOW_HEIGHT },
-    vec2i{ 50, 50 }, 
-    "GameEngine",
-    vec2i{ 16, 9 },
-    false
+    vec2i{ WINDOW_WIDTH, WINDOW_HEIGHT }, // window size
+    vec2i{ 50, 50 },                      // window pos
+    "GameEngine",                         // window title
+    vec2i{ 16, 9 },                       // window aspect ratio
+    false                                 // window v-sync
   ));
 
   // Initialize font manager
@@ -383,7 +382,7 @@ void Engine::Run()
   CreateSkybox(skybox, skyboxTexture);
 
   // Create scene object
-  Scene scene((GetRootPath() / "Scene.ini"));
+  Scene scene((Filesystem::GetRootPath() / "Scene.ini"));
 
   // Create primary camera object
   Camera primaryCamera(vec3f(7.f, 4.f, 6), vec3f(-135.0f, -25.0f, 0.f));
@@ -407,7 +406,6 @@ void Engine::Run()
   ShaderManager& shaderManager = ShaderManager::Get();
   Program& skyboxProgram = shaderManager.GetProgramByName("Skybox");
   Program& gridPlaneProgram = shaderManager.GetProgramByName("GridPlane");
-  Program& terrainProgram = shaderManager.GetProgramByName("Terrain");
   Program& depthMapProgram = shaderManager.GetProgramByName("DepthMap");
   Program& depthCubeMapProgram = shaderManager.GetProgramByName("DepthCubeMap");
   Program& sceneProgram = shaderManager.GetProgramByName("Scene");

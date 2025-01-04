@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Core/Core.hpp"
-#include "Engine/Material.hpp"
+#include "Engine/Graphics/Material.hpp"
 #include "Engine/Graphics/Containers/VertexArray.hpp"
 
 struct VertexFormat;

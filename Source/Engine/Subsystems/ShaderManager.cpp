@@ -2,25 +2,26 @@
 
 #include "Core/GL.hpp"
 #include "Core/Log/Logger.hpp"
-#include "Engine/Filesystem/ConfigFile.hpp"
 #include "Engine/Graphics/Vertex.hpp"
 #include "Engine/Globals.hpp"
+#include "Engine/IniFileHandler.hpp"
+#include "Engine/Filesystem/Filesystem.hpp"
 
-constexpr char SM_FILE_CONFIG[] = { "Shader_Manager.ini" };
+constexpr char SM_FILE_CONFIG[] = "Shader_Manager.ini";
 
-/* -------------------------------------------- */
-/*                  PUBLIC                      */
-/* -------------------------------------------- */
+//*--------------------------------------------
+//*                 PUBLIC                     
+//*--------------------------------------------
 
 void ShaderManager::Initialize()
 {
-  /* Load shader files */
+  // Load shader files
   CONSOLE_INFO("Loading shader...");
   LoadShaders();
   CONSOLE_INFO("Compiling shader...");
   CompileShaders();
 
-  /* Load and link programs and set uniforms */
+  // Load and link programs and set uniforms
   CONSOLE_INFO("Loading programs...");
   LoadPrograms();
   CONSOLE_INFO("Linking programs...");
@@ -29,11 +30,11 @@ void ShaderManager::Initialize()
 }
 void ShaderManager::CleanUp()
 {
-  /* Destoy all program objects */
+  // Destoy all program objects
   for (auto& [key, program] : _programs)
     program.Delete();
 
-  /* Destoy all shaders objects */
+  // Destoy all shaders objects 
   for (auto& [key, shader]  : _shaders)
     shader.Delete();
 }
@@ -61,13 +62,13 @@ Program& ShaderManager::GetProgramByName(StringView name)
   }
 }
 
-/* -------------------------------------------- */
-/*                  PRIVATE                     */
-/* -------------------------------------------- */
+// --------------------------------------------
+//                  PRIVATE                    
+// --------------------------------------------
 
 void ShaderManager::LoadShaders()
 {
-  for (auto& entry : fs::directory_iterator(GetShadersPath()))
+  for (auto& entry : fs::directory_iterator(Filesystem::GetShadersPath()))
   {
     if (fs::is_directory(entry))
       continue;
@@ -79,13 +80,13 @@ void ShaderManager::LoadShaders()
     String ext = filenamePath.extension().string();
     CONSOLE_TRACE("{}", filename);
 
-    /**
-     * GL_VERTEX_SHADER
-     * GL_TESS_CONTROL_SHADER
-     * GL_TESS_EVALUATION_SHADER
-     * GL_GEOMETRY_SHADER 
-     * GL_FRAGMENT_SHADER
-     */
+    
+    // GL_VERTEX_SHADER
+    // GL_TESS_CONTROL_SHADER
+    // GL_TESS_EVALUATION_SHADER
+    // GL_GEOMETRY_SHADER 
+    // GL_FRAGMENT_SHADER
+    
     i32 shaderType = 0;
     if (ext == ".vert")
       shaderType = GL_VERTEX_SHADER;
@@ -126,10 +127,9 @@ void ShaderManager::CompileShaders()
       CONSOLE_ERROR("Error on compiling shader");
   }
 }
-
 void ShaderManager::LoadPrograms()
 {
-  ConfigFile conf((GetRootPath() / SM_FILE_CONFIG));
+  IniFileHandler conf((Filesystem::GetRootPath() / SM_FILE_CONFIG));
   conf.ReadData();
 
   for (auto const& it : conf.GetData())
@@ -172,7 +172,6 @@ void ShaderManager::LinkPrograms()
       CONSOLE_ERROR("Error on linking program");
   }
 }
-
 void ShaderManager::SetProgramsUniforms()
 {
   auto& skyboxProg = GetProgramByName("Skybox");

@@ -2,9 +2,10 @@
 
 #include "Engine/Scene.hpp"
 #include "Engine/ECS/ECS.hpp"
+#include "Engine/Utils.hpp"
 #include "Engine/Subsystems/TextureManager.hpp"
 #include "Engine/Subsystems/ShaderManager.hpp"
-#include "Engine/Filesystem/Dialog.hpp"
+#include "Engine/Filesystem/Filesystem.hpp"
 
 #include <imgui/imgui.h>
 #include <imgui/ImGuizmo.h>
@@ -402,7 +403,7 @@ static void Insp_MaterialRow(StringView label, Texture2D*& matTexture, Texture2D
     char buttonID[32]{}; // "Reset##Diffuse"
     std::format_to_n(buttonID, sizeof(buttonID), "Reset##{}", label.data());
 
-    static const auto& resetIcon = texManager.GetIconByPath(GetIconsPath() / "reset-arrow-16.png");
+    static const auto& resetIcon = texManager.GetIconByPath(Filesystem::GetIconsPath() / "reset-arrow-16.png");
     ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.f,0.f,0.f,0.f });
     if (ImGui::ImageButton(buttonID, reinterpret_cast<void*>(resetIcon.id), ImVec2(16.f, 16.f)))
       matTexture = &defaultTex;
@@ -539,7 +540,7 @@ static void Insp_Animator(GameObject& object, Animator& animator)
   {
     const char* filter[] = { "*.obj", "*.glb", "*.gltf", "*.fbx" };
     u32 numFilters = sizeof(filter) / sizeof(filter[0]);
-    fs::path path = OpenFileDialog(numFilters, filter, "Static mesh file", false);
+    fs::path path = Utils::OpenFileDialog(numFilters, filter, "Static mesh file", false);
     if (!path.empty())
     {
       auto [name, anim] = animator.InsertAnimation(path);
@@ -561,9 +562,9 @@ static void Insp_Animator(GameObject& object, Animator& animator)
 
   if (animNameTarget)
   {
-    Texture2D& playIcon = TextureManager::Get().GetIconByPath(GetIconsPath() / "play-button-32.png");
-    Texture2D& pauseIcon = TextureManager::Get().GetIconByPath(GetIconsPath() / "pause-button-32.png");
-    Texture2D& restartIcon = TextureManager::Get().GetIconByPath(GetIconsPath() / "restart-button-32.png");
+    Texture2D& playIcon = TextureManager::Get().GetIconByPath(Filesystem::GetIconsPath() / "play-button-32.png");
+    Texture2D& pauseIcon = TextureManager::Get().GetIconByPath(Filesystem::GetIconsPath() / "pause-button-32.png");
+    Texture2D& restartIcon = TextureManager::Get().GetIconByPath(Filesystem::GetIconsPath() / "restart-button-32.png");
 
     if (ImGui::ImageButton(reinterpret_cast<void*>(playIcon.id), ImVec2(16, 16)))
       animator.PlayAnimation();
@@ -620,7 +621,7 @@ static void Insp_AddStaticMeshComponent(GameObject& object)
   {
     const char* filter[] = { "*.obj", "*.glb", "*.gltf", "*.fbx" };
     u32 numFilters = sizeof(filter) / sizeof(filter[0]);
-    path = OpenFileDialog(numFilters, filter, "Static mesh file", false);
+    path = Utils::OpenFileDialog(numFilters, filter, "Static mesh file", false);
   }
   String pathS = path.string();
 
@@ -651,7 +652,7 @@ static void Insp_AddSkeletonComponent(GameObject& object)
   {
     const char* filter[] = { "*.obj", "*.glb", "*.gltf", "*.fbx" };
     u32 numFilters = sizeof(filter) / sizeof(filter[0]);
-    path = OpenFileDialog(numFilters, filter, "Skeleton mesh file", false);
+    path = Utils::OpenFileDialog(numFilters, filter, "Skeleton mesh file", false);
   }
   String pathS = path.string();
 

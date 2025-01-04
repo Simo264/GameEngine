@@ -2,10 +2,11 @@
 
 #include "Core/GL.hpp"
 #include "Core/Log/Logger.hpp"
-#include "Engine/Material.hpp"
+#include "Engine/Graphics/Material.hpp"
 #include "Engine/Graphics/Vertex.hpp"
 #include "Engine/Graphics/Objects/Buffer.hpp"
 #include "Engine/Subsystems/TextureManager.hpp"
+#include "Engine/Filesystem/Filesystem.hpp"
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -56,6 +57,11 @@ SkeletonMesh::SkeletonMesh(const fs::path& skeletalPath) :
 	}
 
 	meshes.reserve(scene->mNumMeshes);
+	u32 totalBones = std::accumulate(scene->mMeshes, scene->mMeshes + scene->mNumMeshes, 0, [](u32 sum, aiMesh* mesh) {
+			return sum + mesh->mNumBones;
+		});
+	bones.reserve(totalBones);
+	
 	ProcessNode(scene->mRootNode, scene);
 	LoadBoneHierarchy(rootNode, scene->mRootNode);
 }
@@ -70,7 +76,7 @@ void SkeletonMesh::Draw(i32 mode)
 		mesh.Draw(mode);
 	}
 }
-std::pair<Bone*, u32> SkeletonMesh::FindBone(StringView boneName)
+std::pair<Bone*, i32> SkeletonMesh::FindBone(StringView boneName)
 {
 	auto it = _boneMap.find(boneName.data());
 	if (it != _boneMap.end())
@@ -80,7 +86,7 @@ std::pair<Bone*, u32> SkeletonMesh::FindBone(StringView boneName)
 	}
 	return { nullptr, -1 };
 }
-std::pair<Bone*, u32> SkeletonMesh::InsertBone(StringView boneName)
+std::pair<Bone*, i32> SkeletonMesh::InsertBone(StringView boneName)
 {
 	u32 boneIndex = bones.size();
 	auto [it, success] = _boneMap.insert({ boneName.data(), boneIndex });
@@ -89,7 +95,7 @@ std::pair<Bone*, u32> SkeletonMesh::InsertBone(StringView boneName)
 		Bone& bone = bones.emplace_back();
 		return { &bone, boneIndex };
 	}
-	
+
 	CONSOLE_WARN("Can't insert bone '{}'", boneName.data());
 	return { nullptr, -1 };
 }
@@ -143,17 +149,17 @@ void SkeletonMesh::ProcessNode(aiNode* node, const aiScene* scene)
 			aiMaterial* material = scene->mMaterials[aimesh->mMaterialIndex];
 			if (material->GetTexture(aiTextureType_DIFFUSE, 0, &filename) == aiReturn_SUCCESS)
 			{
-				auto& diffuse = TextureManager::Get().GetTextureByPath(GetTexturesPath() / filename.C_Str());
+				auto& diffuse = TextureManager::Get().GetTextureByPath(Filesystem::GetTexturesPath() / filename.C_Str());
 				mesh.material.diffuse = &diffuse;
 			}
 			if (material->GetTexture(aiTextureType_SPECULAR, 0, &filename) == aiReturn_SUCCESS)
 			{
-				auto& specular = TextureManager::Get().GetTextureByPath(GetTexturesPath() / filename.C_Str());
+				auto& specular = TextureManager::Get().GetTextureByPath(Filesystem::GetTexturesPath() / filename.C_Str());
 				mesh.material.specular = &specular;
 			}
 			if (material->GetTexture(aiTextureType_NORMALS, 0, &filename) == aiReturn_SUCCESS)
 			{
-				auto& normal = TextureManager::Get().GetTextureByPath(GetTexturesPath() / filename.C_Str());
+				auto& normal = TextureManager::Get().GetTextureByPath(Filesystem::GetTexturesPath() / filename.C_Str());
 				mesh.material.normal = &normal;
 			}
 		}
@@ -195,7 +201,7 @@ void SkeletonMesh::LoadBonesAndWeights(Vector<Vertex_P_N_UV_T_B>& vertices, cons
 		aiBone* aibone = aimesh->mBones[i];
 		const char* boneName = aibone->mName.C_Str();
 
-		u32 boneIndex = -1;
+		i32 boneIndex = -1;
 		auto [bone, index] = FindBone(boneName);
 		if (!bone)
 		{
@@ -242,7 +248,7 @@ void SkeletonMesh::LoadBoneHierarchy(BoneNode& dest, const aiNode* src)
 	auto [bone, index] = FindBone(src->mName.data);
 	std::strncpy(dest.name, src->mName.C_Str(), sizeof(dest.name));
 	dest.boneIndex = index;
-	dest.transformation = AiMatrixToGLM(src->mTransformation);
+	dest.bindPoseTransform = AiMatrixToGLM(src->mTransformation);
 	dest.children.reserve(src->mNumChildren);
 	for (u32 i = 0; i < src->mNumChildren; i++)
 	{
@@ -254,7 +260,7 @@ Texture2D* SkeletonMesh::GetMaterialTexture(aiMaterial* material, u32 textureTyp
 {
 	aiString fileName;
 	if (material->GetTexture(static_cast<aiTextureType>(textureType), 0, &fileName) == aiReturn_SUCCESS)
-		return &TextureManager::Get().GetTextureByPath(GetTexturesPath() / fileName.C_Str());
+		return &TextureManager::Get().GetTextureByPath(Filesystem::GetTexturesPath() / fileName.C_Str());
 
 	return nullptr;
 }

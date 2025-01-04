@@ -4,11 +4,12 @@
 
 #include "Engine/Subsystems/WindowManager.hpp"
 #include "Engine/Subsystems/FontManager.hpp"
-#include "Engine/Filesystem/ConfigFile.hpp"
 #include "Engine/Graphics/Objects/Texture2D.hpp"
 #include "Engine/Scene.hpp"
 #include "Engine/Camera.hpp"
 #include "Engine/ECS/ECS.hpp"
+#include "Engine/IniFileHandler.hpp"
+#include "Engine/Filesystem/Filesystem.hpp"
 
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_glfw.h>
@@ -25,20 +26,20 @@ extern void GUI_RenderContentBrowser(bool& open);
 extern void GUI_RenderTransformToolBar(vec2i viewportPos, i32& gizmode);
 //extern void GUI_RenderCameraProperties(bool& open, Camera& camera);
 
-/* -------------------------- */
-/*          PUBLIC            */
-/* -------------------------- */
+// --------------------------
+//          PUBLIC           
+// --------------------------
 
 void ImGuiLayer::Initialize()
 {
-  /* Setup ImGui context */
+  // Setup ImGui context
   SetupContext();
   
-  /* Custom styling */
+  // Custom styling
   Styling();
 
-  /* Load default font */
-  ConfigFile config(GetRootPath() / "Configuration.ini");
+  // Load default font
+  IniFileHandler config(Filesystem::GetRootPath() / "Configuration.ini");
   config.ReadData();
   const String& fontFamily = config.GetValue("GUI", "font-family");
   fontSize = std::atoi(config.GetValue("GUI", "font-size").c_str());
@@ -96,7 +97,7 @@ void ImGuiLayer::RenderMenuBar(Scene& scene) const
   static bool viewPrefWindow = false;
   GUI_RenderMenuBar(scene, viewPrefWindow);
 
-  /* Render preferences window */
+  // Render preferences window
   if (viewPrefWindow)
     GUI_RenderPreferencesWindow(viewPrefWindow, fontSize);
 }
@@ -204,9 +205,9 @@ void ImGuiLayer::RenderDebugDepthMap(u32 texture)
   style.WindowPadding = paddingTmp;
 }
 
-/* -------------------------- */
-/*          PRIVATE           */
-/* -------------------------- */
+// --------------------------
+//          PRIVATE          
+// --------------------------
 
 void ImGuiLayer::SetupContext()
 {

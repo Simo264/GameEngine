@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Core/Core.hpp"
-#include "Core/Math/Core.hpp"
+#include "Core/Math/Base.hpp"
 #include "Engine/ECS/Animation/Animation.hpp"
 
 /**

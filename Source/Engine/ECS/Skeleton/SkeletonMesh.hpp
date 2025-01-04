@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Core/Core.hpp"
-#include "Core/Math/Core.hpp"
+#include "Core/Math/Base.hpp"
 #include "Engine/Graphics/Mesh.hpp"
 #include "Engine/ECS/Skeleton/Bone.hpp"
 
@@ -39,16 +39,19 @@ public:
    * @param boneName The name of the bone to search for.
    * @return A pair containing a pointer to the bone and its index, or {nullptr, -1} if the bone is not found.
    */
-  std::pair<Bone*, u32> FindBone(StringView boneName);
+  std::pair<Bone*, i32> FindBone(StringView boneName);
   
   /**
    * @brief Inserts a new bone with the specified name or retrieves it if it already exists.
    * @param boneName The name of the bone to insert or retrieve.
    * @return A pair containing a pointer to the bone and its index.
    */
-  std::pair<Bone*, u32> InsertBone(StringView boneName);
+  std::pair<Bone*, i32> InsertBone(StringView boneName);
 
+  /** @brief This method calculates and returns the total count of vertices. */
   u32 TotalVertices() const;
+
+  /** @brief This method calculates and returns the total count of indices.  */
   u32 TotalIndices() const;
 
   /** @brief The file path of the skeletal model. */

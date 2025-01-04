@@ -1,9 +1,10 @@
 #include "Core/Core.hpp"
 #include "Engine/Scene.hpp"
 #include "Engine/ECS/ECS.hpp"
+#include "Engine/Utils.hpp"
 #include "Engine/Subsystems/ShaderManager.hpp"
 #include "Engine/Subsystems/TextureManager.hpp"
-#include "Engine/Filesystem/Dialog.hpp"
+#include "Engine/Filesystem/Filesystem.hpp"
 
 #include "ImGuiLayer.hpp"
 
@@ -36,7 +37,7 @@ static void Hierarchy_ListObjects(Scene& scene, GameObject& objSelected)
     ImGui::BeginGroup();
     ImGui::SetCursorPosY(ImGui::GetCursorPosY() + (ImGui::GetTextLineHeight() - 16.f) / 2);
     
-    const auto& icon = TextureManager::Get().GetIconByPath(GetIconsPath() / "game-object-16.png");
+    const auto& icon = TextureManager::Get().GetIconByPath(Filesystem::GetIconsPath() / "game-object-16.png");
     ImGui::Image(reinterpret_cast<void*>(icon.id), ImVec2(16.f, 16.f));
     ImGui::SameLine();
     

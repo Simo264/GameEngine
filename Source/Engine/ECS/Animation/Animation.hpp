@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Core/Core.hpp"
-#include "Core/Math/Core.hpp"
+#include "Core/Math/Base.hpp"
 #include "Engine/ECS/Skeleton/SkeletonMesh.hpp"
 
 struct aiAnimation;
@@ -25,7 +25,7 @@ struct KeyScale
 };
 struct AnimationKeys
 {
-	u32 boneIndex{};
+	i32 boneIndex{};
 	Vector<KeyPosition> positionKeys{};
 	Vector<KeyRotation> rotationKeys{};
 	Vector<KeyScale>		scaleKeys{};

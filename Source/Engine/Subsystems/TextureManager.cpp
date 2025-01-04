@@ -2,6 +2,7 @@
 
 #include "Core/GL.hpp"
 #include "Core/Log/Logger.hpp"
+#include "Engine/Filesystem/Filesystem.hpp"
 
 static void CreateDefaultTexture(Texture2D& texture, u8 r, u8 g, u8 b, StringView defaultPath)
 {
@@ -84,7 +85,7 @@ Texture2D& TextureManager::GetIconByPath(const fs::path& path)
 
 void TextureManager::LoadTextures()
 {
-  for (auto& entry : fs::recursive_directory_iterator(GetTexturesPath()))
+  for (auto& entry : fs::recursive_directory_iterator(Filesystem::GetTexturesPath()))
   {
     if (fs::is_directory(entry))
       continue;
@@ -112,7 +113,7 @@ void TextureManager::LoadTextures()
 }
 void TextureManager::LoadIcons()
 {
-  for (auto& entry : fs::recursive_directory_iterator(GetIconsPath()))
+  for (auto& entry : fs::recursive_directory_iterator(Filesystem::GetIconsPath()))
   {
     if (fs::is_directory(entry))
       continue;

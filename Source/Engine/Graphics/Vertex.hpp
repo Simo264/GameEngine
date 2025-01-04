@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core/Math/Core.hpp"
+#include "Core/Math/Base.hpp"
 
 /**
  * @struct VertexFormat
@@ -76,7 +76,7 @@ struct Vertex_P_N_UV_T_B
    * @param id ID of the bone.
    * @param weight Weight of the bone's influence.
    */
-  void AddBone(u32 id, f32 weight);
+  void AddBone(i32 id, f32 weight);
 
 
   /** @brief Maximum number of bones influencing a single vertex. */

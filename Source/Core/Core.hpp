@@ -70,16 +70,3 @@ using IStringStream = std::istringstream;
 using OStringStream = std::ostringstream;
 using IStream				= std::ifstream;
 using OStream				= std::ofstream;
-
-
-/************** Default paths **************/
-/*******************************************/
-extern const fs::path& GetRootPath();
-extern const fs::path& GetAssetsPath();
-extern const fs::path& GetShadersPath();
-extern const fs::path& GetTexturesPath();
-extern const fs::path& GetIconsPath();
-extern const fs::path& GetFontsPath();
-extern const fs::path& GetModelsPath();
-extern const fs::path& GetSkeletonsPath();
-extern const fs::path& GetAnimationsPath();

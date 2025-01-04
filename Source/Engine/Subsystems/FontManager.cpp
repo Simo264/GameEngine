@@ -1,6 +1,7 @@
 #include "FontManager.hpp"
 
 #include "Core/Log/Logger.hpp"
+#include "Engine/Filesystem/Filesystem.hpp"
 
 /* -----------------------------------------------------  */
 /*                    PUBLIC                              */
@@ -10,7 +11,7 @@ void FontManager::Initialize()
 {
 	CONSOLE_INFO("Loading fonts...");
 	
-	for (auto& entry : fs::recursive_directory_iterator(GetFontsPath()))
+	for (auto& entry : fs::recursive_directory_iterator(Filesystem::GetFontsPath()))
 	{
 		if (fs::is_directory(entry))
 			continue;

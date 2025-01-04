@@ -1,9 +1,9 @@
 #include "Core/Core.hpp"
 #include "Core/Log/Logger.hpp"
 #include "Engine/Scene.hpp"
+#include "Engine/Utils.hpp"
 #include "Engine/Subsystems/ShaderManager.hpp"
 #include "Engine/Subsystems/WindowManager.hpp"
-#include "Engine/Filesystem/Dialog.hpp"
 
 #include <imgui/imgui.h>
 
@@ -18,7 +18,7 @@ void GUI_RenderMenuBar(Scene& scene, bool& openPreferences)
       {
         static const char* filter[] = { "*.ini" };
 
-        fs::path filePath = OpenFileDialog(1, filter, "Open scene", false);
+        fs::path filePath = Utils::OpenFileDialog(1, filter, "Open scene", false);
         if (!filePath.empty())
         {
           /* Unset all lights */
@@ -40,7 +40,7 @@ void GUI_RenderMenuBar(Scene& scene, bool& openPreferences)
       if (ImGui::MenuItem("Save as..."))
       {
         const char* filters[] = { "*.ini" };
-        fs::path filepath = SaveFileDialog(1, filters, "Save as .ini");
+        fs::path filepath = Utils::SaveFileDialog(1, filters, "Save as .ini");
         
         scene.SaveScene(filepath);
         CONSOLE_TRACE("The scene has been successfully saved");

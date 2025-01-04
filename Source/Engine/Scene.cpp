@@ -5,12 +5,12 @@
 
 #include "Engine/Utils.hpp"
 #include "Engine/ECS/ECS.hpp"
-#include "Engine/Filesystem/ConfigFile.hpp"
+#include "Engine/IniFileHandler.hpp"
 #include "Engine/Graphics/Shader.hpp"
 
-/* ----------------------------------- */
-/*								PUBLIC							 */
-/* ------------------------------------*/
+// ----------------------------------- 
+//								PUBLIC							 
+// -----------------------------------
 
 Scene::Scene(const fs::path& filePath)
 {
@@ -56,13 +56,13 @@ void Scene::SaveScene(const fs::path& filePath)
 	SerializeScene(filePath);
 }
 
-/* ----------------------------------- */
-/*								PRIVATE							 */
-/* ------------------------------------*/
+// -----------------------------------
+//								PRIVATE							
+// -----------------------------------
 
 void Scene::SerializeScene(const fs::path& filePath)
 {
-	ConfigFile conf(filePath);
+	IniFileHandler conf(filePath);
 	for (auto [entity, tag] : Reg().view<Tag>().each())
 	{
 		GameObject object{ entity, &Reg() };
@@ -170,7 +170,7 @@ void Scene::SerializeScene(const fs::path& filePath)
 }
 void Scene::DeserializeScene(const fs::path& filePath)
 {
-	ConfigFile conf(filePath);
+	IniFileHandler conf(filePath);
 	conf.ReadData();
 
 	GameObject object;

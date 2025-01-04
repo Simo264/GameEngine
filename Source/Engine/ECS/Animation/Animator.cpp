@@ -69,11 +69,11 @@ std::pair<const char*, const Animation*> Animator::FindAnimation(StringView anim
 
 void Animator::CalculateBoneTransform(const BoneNode& node, mat4f parentTransform)
 {
-	u32 boneIndex = node.boneIndex;
-	mat4f nodeTransform = node.transformation;
+	i32 boneIndex = node.boneIndex;
+	mat4f nodeTransform = node.bindPoseTransform;
 	mat4f globalTransformation = parentTransform * nodeTransform;
 
-	if (boneIndex >= 0 && boneIndex < _skeletonAttached->bones.size())
+	if (boneIndex != -1)
 	{
 		Bone& bone = _skeletonAttached->bones.at(boneIndex);
 		InterpolateBone(bone, boneIndex);

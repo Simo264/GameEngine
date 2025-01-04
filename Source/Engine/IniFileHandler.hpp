@@ -6,15 +6,15 @@
 #define MINI_CASE_SENSITIVE
 #include <mini/ini.h>
 
-class ConfigFile
+class IniFileHandler
 {
 public:
-	ConfigFile(const fs::path& filePath)
+	IniFileHandler(const fs::path& filePath)
 	{
-		/* Create a file instance */
+		// Create a file instance
 		_file = std::make_unique<mINI::INIFile>(filePath.string());
 	}
-	~ConfigFile() = default;
+	~IniFileHandler() = default;
 
 	/** @brief Return reference of ini data structure */
 	mINI::INIStructure& GetData()

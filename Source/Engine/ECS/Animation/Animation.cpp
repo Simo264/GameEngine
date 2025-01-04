@@ -53,19 +53,13 @@ void Animation::LoadAnimation(const aiAnimation* animation, SkeletonMesh& skelet
 		aiNodeAnim* channel = animation->mChannels[i];
 		const char* boneName = channel->mNodeName.data;
 
-		u32 boneIndex{};
-
 		// Load skeleton bones
-		auto [bone, index] = skeleton.FindBone(boneName);
+		auto [bone, boneIndex] = skeleton.FindBone(boneName);
 		if (!bone)
 		{
-			CONSOLE_DEBUG("Insert new bone into skeleton: '{}'", boneName);
-			//continue;
-			auto [newBone, newIndex] = skeleton.InsertBone(boneName);
-			boneIndex = newIndex;
+			CONSOLE_DEBUG("Ignore bone: '{}'", boneName);
+			continue;
 		}
-		else
-			boneIndex = index;
 
 		// Load bone keys
 		AnimationKeys& keys = _boneKeys.emplace_back();

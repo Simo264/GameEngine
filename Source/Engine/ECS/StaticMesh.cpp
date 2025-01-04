@@ -2,10 +2,11 @@
 
 #include "Core/GL.hpp"
 #include "Core/Log/Logger.hpp"
-#include "Engine/Material.hpp"
+#include "Engine/Graphics/Material.hpp"
 #include "Engine/Graphics/Vertex.hpp"
 #include "Engine/Graphics/Objects/Buffer.hpp"
 #include "Engine/Subsystems/TextureManager.hpp"
+#include "Engine/Filesystem/Filesystem.hpp"
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -166,7 +167,7 @@ Texture2D* StaticMesh::GetMaterialTexture(aiMaterial* material, u32 textureType)
 {
 	aiString fileName;
 	if (material->GetTexture(static_cast<aiTextureType>(textureType), 0, &fileName) == aiReturn_SUCCESS)
-		return &TextureManager::Get().GetTextureByPath(GetTexturesPath() / fileName.C_Str());
+		return &TextureManager::Get().GetTextureByPath(Filesystem::GetTexturesPath() / fileName.C_Str());
 
 	return nullptr;
 }

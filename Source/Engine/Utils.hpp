@@ -1,80 +1,34 @@
 #pragma once
 
 #include "Core/Core.hpp"
-#include "Core/Math/Core.hpp"
+#include "Core/Math/Base.hpp"
 
 /**
  * @namespace Utils
  * 
- * @brief Collection of utility functions for string conversion and image loading
+ * @brief Collection of utility functions
  */
 namespace Utils
 {
-	/**
-	 * @brief Converts a string to a 32-bit integer.
-	 * 
-	 * @param str String view containing the number to convert.
-	 * 
-	 * @return Converted 32-bit integer.
-	 */
+	/** @brief Converts a string to a 32-bit integer. */
 	i32 StringToI32(StringView str);
 
-	/**
-	 * @brief Converts a string to a 32-bit floating-point number.
-	 * 
-	 * @param str String view containing the number to convert.
-	 * 
-	 * @return Converted 32-bit floating-point number.
-	 */
+	/** @brief Converts a string to a 32-bit floating-point number. */
 	f32 StringToF32(StringView str);
 
-	/**
-	 * @brief Converts a delimited string to a 2D integer vector.
-	 * 
-	 * @param str String view containing the vector components.
-	 * @param delimiter Character separating the components.
-	 * 
-	 * @return 2D integer vector.
-	 */
+	/** @brief Converts a delimited string to a 2D integer vector. */
 	vec2i StringToVec2i(StringView str, char delimiter = ',');
 
-	/**
-	 * @brief Converts a delimited string to a 2D floating-point vector.
-	 *
-	 * @param str String view containing the vector components.
-	 * @param delimiter Character separating the components.
-	 *
-	 * @return 2D floating-point vector.
-	 */
+	/** @brief Converts a delimited string to a 2D floating-point vector. */
 	vec2f StringToVec2f(StringView str, char delimiter = ',');
 
-	/**
-	 * @brief Converts a delimited string to a 3D integer vector.
-	 *
-	 * @param str String view containing the vector components.
-	 * @param delimiter Character separating the components.
-	 *
-	 * @return 3D integer vector.
-	 */
+	/** @brief Converts a delimited string to a 3D integer vector. */
 	vec3i StringToVec3i(StringView str, char delimiter = ',');
 	
-	/**
-	 * @brief Converts a delimited string to a 3D floating-point vector.
-	 *
-	 * @param str String view containing the vector components.
-	 * @param delimiter Character separating the components.
-	 *
-	 * @return 3D floating-point vector.
-	 */
+	/** @brief Converts a delimited string to a 3D floating-point vector. */
 	vec3f StringToVec3f(StringView str, char delimiter = ',');
 
-	/**
-	 * @brief Converts a string to a boolean value.
-	 * 
-	 * @param str String view containing the boolean representation.
-	 * 
-	 * @return True if the string is "1" or "true", otherwise false.
-	 */
+	/** @brief Converts a string to a boolean value. */
 	bool StringToBool(StringView str);
 
 	/**
@@ -95,4 +49,32 @@ namespace Utils
 	 * @param data Pointer to the image data to free.
 	 */
 	void FreeImageData(u8* data);
+
+	/**
+	 * @brief Opens a native file dialog to select files.
+	 *
+	 * This function displays an open file dialog, allowing the user to select one or multiple files
+	 * based on the specified filters and description.
+	 *
+	 * @param numFilters Number of filter patterns.
+	 * @param filter Array of filter patterns (e.g., {"*.txt", "*.png"}).
+	 * @param filterDescription Description for the filter (e.g., "Text Files").
+	 * @param multipleSelects Boolean flag indicating if multiple files can be selected.
+	 * @return A path containing the path of the selected file(s). If multiple files are selected,
+	 *         the paths are separated by '|'. Returns an empty String if the dialog is canceled.
+	 */
+	fs::path OpenFileDialog(i32 numFilters, const char* filter[], const char* filterDescription, bool multipleSelects);
+
+	/**
+	 * @brief Opens a native file dialog to save a file.
+	 *
+	 * This function displays a save file dialog, allowing the user to specify the location
+	 * and name of the file to save, based on the provided filters and description.
+	 *
+	 * @param numFilters Number of filter patterns.
+	 * @param filter Array of filter patterns (e.g., {"*.txt", "*.png"}).
+	 * @param filterDescription Description for the filter (e.g., "Text Files").
+	 * @return A path containing the path of the file to be saved. Returns an empty String if the dialog is canceled.
+	 */
+	fs::path SaveFileDialog(i32 numFilters, const char* filter[], const char* filterDescription);
 };
