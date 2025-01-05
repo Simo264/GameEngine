@@ -1,13 +1,13 @@
-#include "FontManager.hpp"
+#include "FontsManager.hpp"
 
 #include "Core/Log/Logger.hpp"
 #include "Engine/Filesystem/Filesystem.hpp"
 
-/* -----------------------------------------------------  */
-/*                    PUBLIC                              */
-/* -----------------------------------------------------  */
+// -----------------------------------------------------
+//                    PUBLIC                            
+// -----------------------------------------------------
 
-void FontManager::Initialize()
+void FontsManager::Initialize()
 {
 	CONSOLE_INFO("Loading fonts...");
 	
@@ -25,8 +25,3 @@ void FontManager::Initialize()
 			CONSOLE_ERROR("Error on loading font");
 	}
 }
-
-/* -----------------------------------------------------  */
-/*                    PRIVATE                             */
-/* -----------------------------------------------------  */
-

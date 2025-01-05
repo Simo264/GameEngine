@@ -1,4 +1,4 @@
-#include "ShaderManager.hpp"
+#include "ShadersManager.hpp"
 
 #include "Core/GL.hpp"
 #include "Core/Log/Logger.hpp"
@@ -9,11 +9,11 @@
 
 constexpr char SM_FILE_CONFIG[] = "Shader_Manager.ini";
 
-//*--------------------------------------------
-//*                 PUBLIC                     
-//*--------------------------------------------
+// --------------------------------------------
+//                  PUBLIC                     
+// --------------------------------------------
 
-void ShaderManager::Initialize()
+void ShadersManager::Initialize()
 {
   // Load shader files
   CONSOLE_INFO("Loading shader...");
@@ -28,7 +28,7 @@ void ShaderManager::Initialize()
   LinkPrograms();
   SetProgramsUniforms();
 }
-void ShaderManager::CleanUp()
+void ShadersManager::CleanUp()
 {
   // Destoy all program objects
   for (auto& [key, program] : _programs)
@@ -39,7 +39,7 @@ void ShaderManager::CleanUp()
     shader.Delete();
 }
 
-Shader& ShaderManager::GetShaderByName(StringView filename)
+Shader& ShadersManager::GetShaderByName(StringView filename)
 {
   try 
   {
@@ -50,7 +50,7 @@ Shader& ShaderManager::GetShaderByName(StringView filename)
     throw std::out_of_range(std::format("ShaderManager::GetShaderByName: invalid shader name '{}'", filename.data()));
   }
 }
-Program& ShaderManager::GetProgramByName(StringView name)
+Program& ShadersManager::GetProgramByName(StringView name)
 {
   try
   {
@@ -66,7 +66,7 @@ Program& ShaderManager::GetProgramByName(StringView name)
 //                  PRIVATE                    
 // --------------------------------------------
 
-void ShaderManager::LoadShaders()
+void ShadersManager::LoadShaders()
 {
   for (auto& entry : fs::directory_iterator(Filesystem::GetShadersPath()))
   {
@@ -116,7 +116,7 @@ void ShaderManager::LoadShaders()
       CONSOLE_ERROR("Error on loading shader object");
   }
 }
-void ShaderManager::CompileShaders()
+void ShadersManager::CompileShaders()
 {
   for (const auto& [key, shader] : _shaders)
   {
@@ -127,7 +127,7 @@ void ShaderManager::CompileShaders()
       CONSOLE_ERROR("Error on compiling shader");
   }
 }
-void ShaderManager::LoadPrograms()
+void ShadersManager::LoadPrograms()
 {
   IniFileHandler conf((Filesystem::GetRootPath() / SM_FILE_CONFIG));
   conf.ReadData();
@@ -156,12 +156,12 @@ void ShaderManager::LoadPrograms()
     if (geomShader)  program.AttachShader(*geomShader);
     if (fragShader)  program.AttachShader(*fragShader);
     
-    auto res = _programs.emplace(section, program);
-    if (!res.second)
+    auto [it, success] = _programs.emplace(section, program);
+    if (!success)
       CONSOLE_ERROR("Error on loading program");
   }
 }
-void ShaderManager::LinkPrograms()
+void ShadersManager::LinkPrograms()
 {
   for (const auto& [key, program] : _programs)
   {
@@ -172,7 +172,7 @@ void ShaderManager::LinkPrograms()
       CONSOLE_ERROR("Error on linking program");
   }
 }
-void ShaderManager::SetProgramsUniforms()
+void ShadersManager::SetProgramsUniforms()
 {
   auto& skyboxProg = GetProgramByName("Skybox");
   skyboxProg.SetUniform1i("u_skyboxTexture", 0);

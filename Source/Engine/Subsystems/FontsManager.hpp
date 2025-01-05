@@ -9,18 +9,18 @@
  * This class provides functionalities to load and access fonts from a specified directory.
  * It follows the singleton pattern to ensure only one instance of the manager exists throughout the application lifecycle.
  */
-class FontManager
+class FontsManager
 {
 public:
 	/** @brief Deleted copy constructor to enforce singleton pattern. */
-	FontManager(const FontManager&) = delete;
+	FontsManager(const FontsManager&) = delete;
 	/** @brief Deleted assignment constructor to enforce singleton pattern. */
-	void operator=(const FontManager&) = delete;
+	void operator=(const FontsManager&) = delete;
 
 	/** @return Returns the singleton instance of FontManager. */
-	static FontManager& Get()
+	static FontsManager& Get()
 	{
-		static FontManager fontManager;
+		static FontsManager fontManager;
 		return fontManager;
 	}
 
@@ -42,8 +42,8 @@ public:
 	const auto& GetFonts() const { return _fonts; }
 
 private:
-	FontManager() = default;
-	~FontManager() = default;
+	FontsManager() = default;
+	~FontsManager() = default;
 
 	/**
 	 * @brief Map to store loaded font records.

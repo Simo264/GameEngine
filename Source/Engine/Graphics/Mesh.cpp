@@ -3,20 +3,20 @@
 #include "Core/Log/Logger.hpp"
 #include "Engine/Graphics/Vertex.hpp"
 #include "Engine/Graphics/Renderer.hpp"
-#include "Engine/Subsystems/TextureManager.hpp"
+#include "Engine/Subsystems/TexturesManager.hpp"
 
-/* -------------------------- */
-/*          PUBLIC            */
-/* -------------------------- */
+// --------------------------
+//          PUBLIC           
+// --------------------------
 
 Mesh::Mesh()
 {
 	vao.Create();
 
-	TextureManager& textureManager = TextureManager::Get();
-	material.diffuse = &textureManager.GetDefaultDiffuse();
-	material.specular = &textureManager.GetDefaultSpecular();
-	material.normal = &textureManager.GetDefaultNormal();
+	TexturesManager& texturesManager = TexturesManager::Get();
+	material.diffuse = &texturesManager.GetDefaultDiffuse();
+	material.specular = &texturesManager.GetDefaultSpecular();
+	material.normal = &texturesManager.GetDefaultNormal();
 }
 Mesh::~Mesh()
 {

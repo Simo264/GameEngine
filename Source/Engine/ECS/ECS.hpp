@@ -8,6 +8,6 @@
 #include "Transform.hpp"
 #include "Light.hpp"
 #include "StaticMesh.hpp"
-#include "Skeleton/SkeletonMesh.hpp"
+#include "Skeleton/SkeletalMesh.hpp"
 #include "Animation/Animation.hpp"
 #include "Animation/Animator.hpp"

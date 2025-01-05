@@ -1,6 +1,6 @@
 #include "Core/Core.hpp"
 #include "ImGuiLayer.hpp"
-#include "Engine/Subsystems/FontManager.hpp"
+#include "Engine/Subsystems/FontsManager.hpp"
 
 #include <imgui/imgui.h>
 
@@ -40,7 +40,7 @@ void GUI_RenderPreferencesWindow(bool& open, i32 fontSize)
       ImGui::TextWrapped("Font size: %dpx", fontSize);
       if (ImGui::BeginCombo("Font family", guiLayer.currentFont.first))
       {
-        for (const auto& [key, font] : FontManager::Get().GetFonts())
+        for (const auto& [key, font] : FontsManager::Get().GetFonts())
         {
           if (ImGui::Selectable(key.c_str(), key == guiLayer.currentFont.first))
           {

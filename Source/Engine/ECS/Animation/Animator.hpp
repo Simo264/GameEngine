@@ -11,7 +11,7 @@
 class Animator
 {
 public:
-	Animator(SkeletonMesh& skeleton) :
+	Animator(SkeletalMesh& skeleton) :
 		_playAnimation{ false },
 		_currentTime{ 0.f },
 		_boneTransforms(100, mat4f(1.0f)),
@@ -35,7 +35,7 @@ public:
 	f32 CurrentTime() const { return _currentTime; }
 	const Map<String, Animation>& AnimationsMap() const { return _animationsMap; }
 	const Vector<mat4f>& BoneTransforms() const { return _boneTransforms; }
-	const SkeletonMesh& AttachedSkeleton() const { return *_skeletonAttached; }
+	const SkeletalMesh& AttachedSkeleton() const { return *_skeletonAttached; }
 private:
 	void CalculateBoneTransform(const BoneNode& node, mat4f parentTransform);
 	void InterpolateBone(Bone& bone, u32 boneIndex);
@@ -53,6 +53,6 @@ private:
 	Vector<mat4f> _boneTransforms;
 	Map<String, Animation> _animationsMap;
 	
-	SkeletonMesh* _skeletonAttached;
+	SkeletalMesh* _skeletonAttached;
 	std::pair<const char*, const Animation*> _animationAttached;
 };

@@ -1,6 +1,6 @@
 #include "Core/Core.hpp"
 #include "Core/Log/Logger.hpp"
-#include "Engine/Subsystems/TextureManager.hpp"
+#include "Engine/Subsystems/TexturesManager.hpp"
 #include "Engine/Filesystem/Filesystem.hpp"
 
 #include <imgui/imgui.h>
@@ -43,13 +43,13 @@ static void ContentBrowser_LeftCol_ListTree(const fs::path& currentDir)
 }
 static void ContentBrowser_RightCol_Navbar(f32 navbarHeight)
 {
-  TextureManager& texManager = TextureManager::Get();
+  TexturesManager& texManager = TexturesManager::Get();
 
   ImGui::BeginChild("RightCol_Child_NavBar", ImVec2(ImGui::GetColumnWidth(), navbarHeight));
   ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
   const auto& iconBack = texManager.GetIconByPath(Filesystem::GetIconsPath() / "back-arrow.png");
 
-  /* Back button */
+  // Back button
   if (contentBrowser_right_navCurrentDir == Filesystem::GetAssetsPath())
   {
     ImGui::BeginDisabled();
@@ -64,7 +64,7 @@ static void ContentBrowser_RightCol_Navbar(f32 navbarHeight)
   ImGui::PopStyleColor();
   ImGui::EndChild();
   
-  /* Draw the border-bottom */
+  // Draw the border-bottom
   auto& colors = ImGui::GetStyle().Colors;
   auto color = colors[ImGuiCol_TableBorderLight];
   ImGui::PushStyleColor(ImGuiCol_Separator, color);
@@ -100,7 +100,7 @@ static void ContentBrowser_RightCol_Thumbnails(f32 contentHeight)
           const String entryPathString = entryPath.string();
           const fs::path filename = entryPath.filename();
           const String filenameString = filename.string();
-          TextureManager& texManager = TextureManager::Get();
+          TexturesManager& texManager = TexturesManager::Get();
 
           if (entry.is_directory())
           {
@@ -126,7 +126,7 @@ static void ContentBrowser_RightCol_Thumbnails(f32 contentHeight)
                 ImVec2(cellSize, cellSize)
               );
             }
-            /* Render generic file icon */
+            // Render generic file icon
             else
             {
               const auto& iconFile = texManager.GetIconByPath(Filesystem::GetIconsPath() / "file.png");
@@ -150,9 +150,9 @@ static void ContentBrowser_RightCol_Thumbnails(f32 contentHeight)
   ImGui::EndChild();
 }
 
-/* ------------------------------------------ */
-/*                    PUBLIC                  */
-/* ------------------------------------------ */
+// ------------------------------------------
+//                    PUBLIC                 
+// ------------------------------------------
 
 void GUI_RenderContentBrowser(bool& open)
 {
@@ -165,7 +165,7 @@ void GUI_RenderContentBrowser(bool& open)
     ImGui::TableSetupColumn("LeftCol", ImGuiTableColumnFlags_WidthFixed, 250.0f);
     ImGui::TableSetupColumn("RightCol", ImGuiTableColumnFlags_WidthStretch);
 
-    /* Left column */
+    // Left column 
     ImGui::TableNextColumn();
     ImGui::BeginChild("LeftCol_Child", ImVec2(ImGui::GetColumnWidth(), tableHeight));
     {
@@ -186,7 +186,7 @@ void GUI_RenderContentBrowser(bool& open)
       }
     }
     ImGui::EndChild();
-    /* End column */
+    // End column
 
 
 

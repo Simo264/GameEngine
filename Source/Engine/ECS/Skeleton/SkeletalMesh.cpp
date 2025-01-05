@@ -1,11 +1,11 @@
-#include "SkeletonMesh.hpp"
+#include "SkeletalMesh.hpp"
 
 #include "Core/GL.hpp"
 #include "Core/Log/Logger.hpp"
 #include "Engine/Graphics/Material.hpp"
 #include "Engine/Graphics/Vertex.hpp"
 #include "Engine/Graphics/Objects/Buffer.hpp"
-#include "Engine/Subsystems/TextureManager.hpp"
+#include "Engine/Subsystems/TexturesManager.hpp"
 #include "Engine/Filesystem/Filesystem.hpp"
 
 #include <assimp/Importer.hpp>
@@ -27,13 +27,13 @@ static mat4f AiMatrixToGLM(const aiMatrix4x4& matrix)
 //										PUBLIC													
 // ----------------------------------------------------
 
-SkeletonMesh::SkeletonMesh(const fs::path& skeletalPath) :
-	path{ skeletalPath },
+SkeletalMesh::SkeletalMesh(const fs::path& path) :
 	meshes{},
+	path{ path },
 	_boneMap{}
 {
 	CONSOLE_INFO("Loading skeleton mesh {}...", path.string());
-
+	
 	Assimp::Importer importer;
 	const aiScene* scene = importer.ReadFile(path.string().c_str(),
 		aiProcess_Triangulate |
@@ -65,7 +65,7 @@ SkeletonMesh::SkeletonMesh(const fs::path& skeletalPath) :
 	ProcessNode(scene->mRootNode, scene);
 	LoadBoneHierarchy(rootNode, scene->mRootNode);
 }
-void SkeletonMesh::Draw(i32 mode)
+void SkeletalMesh::Draw(i32 mode)
 {
 	for (const auto& mesh : meshes)
 	{
@@ -76,7 +76,7 @@ void SkeletonMesh::Draw(i32 mode)
 		mesh.Draw(mode);
 	}
 }
-std::pair<Bone*, i32> SkeletonMesh::FindBone(StringView boneName)
+std::pair<const Bone*, i32> SkeletalMesh::FindBone(StringView boneName) const
 {
 	auto it = _boneMap.find(boneName.data());
 	if (it != _boneMap.end())
@@ -86,7 +86,7 @@ std::pair<Bone*, i32> SkeletonMesh::FindBone(StringView boneName)
 	}
 	return { nullptr, -1 };
 }
-std::pair<Bone*, i32> SkeletonMesh::InsertBone(StringView boneName)
+std::pair<Bone*, i32> SkeletalMesh::InsertBone(StringView boneName)
 {
 	u32 boneIndex = bones.size();
 	auto [it, success] = _boneMap.insert({ boneName.data(), boneIndex });
@@ -99,13 +99,13 @@ std::pair<Bone*, i32> SkeletonMesh::InsertBone(StringView boneName)
 	CONSOLE_WARN("Can't insert bone '{}'", boneName.data());
 	return { nullptr, -1 };
 }
-u32 SkeletonMesh::TotalVertices() const
+u32 SkeletalMesh::TotalVertices() const
 {
 	return std::reduce(meshes.begin(), meshes.end(), 0, [](i32 acc, const Mesh& mesh) {
 		return acc + mesh.vao.numVertices;
 	});
 }
-u32 SkeletonMesh::TotalIndices() const
+u32 SkeletalMesh::TotalIndices() const
 {
 	return std::reduce(meshes.begin(), meshes.end(), 0, [](i32 acc, const Mesh& mesh) {
 		return acc + mesh.vao.numIndices;
@@ -116,7 +116,7 @@ u32 SkeletonMesh::TotalIndices() const
 //										PRIVATE													
 // ----------------------------------------------------
 
-void SkeletonMesh::ProcessNode(aiNode* node, const aiScene* scene)
+void SkeletalMesh::ProcessNode(aiNode* node, const aiScene* scene)
 {
 	// Process all the node's meshes
 	for (i32 i = 0; i < node->mNumMeshes; i++)
@@ -149,17 +149,17 @@ void SkeletonMesh::ProcessNode(aiNode* node, const aiScene* scene)
 			aiMaterial* material = scene->mMaterials[aimesh->mMaterialIndex];
 			if (material->GetTexture(aiTextureType_DIFFUSE, 0, &filename) == aiReturn_SUCCESS)
 			{
-				auto& diffuse = TextureManager::Get().GetTextureByPath(Filesystem::GetTexturesPath() / filename.C_Str());
+				auto& diffuse = TexturesManager::Get().GetTextureByPath(Filesystem::GetTexturesPath() / filename.C_Str());
 				mesh.material.diffuse = &diffuse;
 			}
 			if (material->GetTexture(aiTextureType_SPECULAR, 0, &filename) == aiReturn_SUCCESS)
 			{
-				auto& specular = TextureManager::Get().GetTextureByPath(Filesystem::GetTexturesPath() / filename.C_Str());
+				auto& specular = TexturesManager::Get().GetTextureByPath(Filesystem::GetTexturesPath() / filename.C_Str());
 				mesh.material.specular = &specular;
 			}
 			if (material->GetTexture(aiTextureType_NORMALS, 0, &filename) == aiReturn_SUCCESS)
 			{
-				auto& normal = TextureManager::Get().GetTextureByPath(Filesystem::GetTexturesPath() / filename.C_Str());
+				auto& normal = TexturesManager::Get().GetTextureByPath(Filesystem::GetTexturesPath() / filename.C_Str());
 				mesh.material.normal = &normal;
 			}
 		}
@@ -169,7 +169,7 @@ void SkeletonMesh::ProcessNode(aiNode* node, const aiScene* scene)
 	for (i32 i = 0; i < node->mNumChildren; i++)
 		ProcessNode(node->mChildren[i], scene);
 }
-Buffer SkeletonMesh::LoadVertices(aiMesh* aimesh)
+Buffer SkeletalMesh::LoadVertices(aiMesh* aimesh)
 {
 	Vector<Vertex_P_N_UV_T_B> vertices;
 	vertices.reserve(aimesh->mNumVertices);
@@ -194,7 +194,7 @@ Buffer SkeletonMesh::LoadVertices(aiMesh* aimesh)
 	Buffer buffer(vertices.size() * sizeof(Vertex_P_N_UV_T_B), vertices.data(), GL_STATIC_DRAW);
 	return buffer;
 }
-void SkeletonMesh::LoadBonesAndWeights(Vector<Vertex_P_N_UV_T_B>& vertices, const aiMesh* aimesh)
+void SkeletalMesh::LoadBonesAndWeights(Vector<Vertex_P_N_UV_T_B>& vertices, const aiMesh* aimesh)
 {
 	for (u32 i = 0; i < aimesh->mNumBones; i++)
 	{
@@ -221,7 +221,7 @@ void SkeletonMesh::LoadBonesAndWeights(Vector<Vertex_P_N_UV_T_B>& vertices, cons
 		}
 	}
 }
-Buffer SkeletonMesh::LoadIndices(aiMesh* aimesh)
+Buffer SkeletalMesh::LoadIndices(aiMesh* aimesh)
 {
 	u32 numIndices = aimesh->mNumFaces * 3;
 	u64 size = numIndices * sizeof(u32);
@@ -240,7 +240,7 @@ Buffer SkeletonMesh::LoadIndices(aiMesh* aimesh)
 	buffer.UnmapStorage();
 	return buffer;
 }
-void SkeletonMesh::LoadBoneHierarchy(BoneNode& dest, const aiNode* src)
+void SkeletalMesh::LoadBoneHierarchy(BoneNode& dest, const aiNode* src)
 {
 	if (std::strlen(src->mName.C_Str()) >= sizeof(dest.name))
 		CONSOLE_WARN("Bone name size >= sizeof(dest.name)");
@@ -256,11 +256,11 @@ void SkeletonMesh::LoadBoneHierarchy(BoneNode& dest, const aiNode* src)
 		LoadBoneHierarchy(child, src->mChildren[i]);
 	}
 }
-Texture2D* SkeletonMesh::GetMaterialTexture(aiMaterial* material, u32 textureType)
+Texture2D* SkeletalMesh::GetMaterialTexture(aiMaterial* material, u32 textureType)
 {
 	aiString fileName;
 	if (material->GetTexture(static_cast<aiTextureType>(textureType), 0, &fileName) == aiReturn_SUCCESS)
-		return &TextureManager::Get().GetTextureByPath(Filesystem::GetTexturesPath() / fileName.C_Str());
+		return &TexturesManager::Get().GetTextureByPath(Filesystem::GetTexturesPath() / fileName.C_Str());
 
 	return nullptr;
 }

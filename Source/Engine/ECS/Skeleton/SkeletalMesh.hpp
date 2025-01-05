@@ -16,17 +16,17 @@ struct aiMaterial;
  * @class SkeletonMesh
  * @brief Represents a skeletal mesh for rendering and manipulation of skeleton-based models.\
  */
-class SkeletonMesh
+class SkeletalMesh
 {
 public:
   /**
    * @brief Constructs a SkeletonMesh object by loading a skeletal model from the specified file path.
    * @param skeletalPath The file path to the skeletal model.
    */
-  SkeletonMesh(const fs::path& skeletalPath);
+  SkeletalMesh(const fs::path& path);
   
   /** @brief Default destructor for the SkeletonMesh class. */
-  ~SkeletonMesh() = default;
+  ~SkeletalMesh() = default;
 
   /**
    * @brief Draws the skeleton using the specified rendering mode.
@@ -39,7 +39,7 @@ public:
    * @param boneName The name of the bone to search for.
    * @return A pair containing a pointer to the bone and its index, or {nullptr, -1} if the bone is not found.
    */
-  std::pair<Bone*, i32> FindBone(StringView boneName);
+  std::pair<const Bone*, i32> FindBone(StringView boneName) const;
   
   /**
    * @brief Inserts a new bone with the specified name or retrieves it if it already exists.
@@ -54,9 +54,6 @@ public:
   /** @brief This method calculates and returns the total count of indices.  */
   u32 TotalIndices() const;
 
-  /** @brief The file path of the skeletal model. */
-  fs::path path;
-
   /** @brief A collection of meshes associated with the skeleton. */
   Vector<Mesh> meshes;
 
@@ -65,6 +62,8 @@ public:
 
   /** @brief The root node of the bone hierarchy. */
   BoneNode rootNode;
+
+  fs::path path;
   
 private:
   void ProcessNode(aiNode* node, const aiScene* scene);

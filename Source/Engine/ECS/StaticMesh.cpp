@@ -5,26 +5,25 @@
 #include "Engine/Graphics/Material.hpp"
 #include "Engine/Graphics/Vertex.hpp"
 #include "Engine/Graphics/Objects/Buffer.hpp"
-#include "Engine/Subsystems/TextureManager.hpp"
+#include "Engine/Subsystems/TexturesManager.hpp"
 #include "Engine/Filesystem/Filesystem.hpp"
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
-/* ---------------------------------------------------- */
-/*										PUBLIC														*/
-/* ---------------------------------------------------- */
+// ----------------------------------------------------
+//										PUBLIC													
+// ----------------------------------------------------
 
-StaticMesh::StaticMesh(const fs::path& modelPath)
-	: path{ modelPath },
-		meshes{}
+StaticMesh::StaticMesh(const fs::path& path) :
+	meshes{},
+	path{ path }
 {
-	String pathStr = path.string();
-	CONSOLE_TRACE("Loading static mesh {}...", pathStr);
+	CONSOLE_TRACE("Loading static mesh {}...", path.string());
 
 	Assimp::Importer importer;
-	const aiScene* scene = importer.ReadFile(pathStr.c_str(),
+	const aiScene* scene = importer.ReadFile(path.string().c_str(),
 		aiProcess_Triangulate |
 		aiProcess_GenUVCoords |
 		aiProcess_FlipUVs |
@@ -39,7 +38,7 @@ StaticMesh::StaticMesh(const fs::path& modelPath)
 		aiProcess_OptimizeMeshes
 	);
 
-	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
+	if (!scene || !scene->mRootNode || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE)
 	{
 		CONSOLE_ERROR("Assimp importer error: {}", importer.GetErrorString());
 		return;
@@ -72,13 +71,13 @@ u32 StaticMesh::TotalIndices() const
 		});
 }
 
-/* ---------------------------------------------------- */
-/*										PRIVATE														*/
-/* ---------------------------------------------------- */
+// ---------------------------------------------------- 
+//										PRIVATE														
+// ---------------------------------------------------- 
 
 void StaticMesh::ProcessNode(aiNode* node, const aiScene* scene)
 {
-	/* Process all the node's meshes */
+	// Process all the node's meshes
 	for (i32 i = 0; i < node->mNumMeshes; i++)
 	{
 		Mesh& mesh = meshes.emplace_back();
@@ -89,11 +88,11 @@ void StaticMesh::ProcessNode(aiNode* node, const aiScene* scene)
 
 		aiMesh* aimesh = scene->mMeshes[node->mMeshes[i]];
 
-		/* Load vertices */
+		// Load vertices
 		Buffer vbo = LoadVertices(aimesh);
 		mesh.vao.AttachVertexBuffer(0, vbo, 0, sizeof(Vertex_P_N_UV_T));
 		mesh.vao.numVertices = aimesh->mNumVertices;
-		/* Load indices */
+		// Load indices
 		Buffer ebo = LoadIndices(aimesh);
 		mesh.vao.AttachElementBuffer(ebo);
 		mesh.vao.numIndices = aimesh->mNumFaces * 3;
@@ -110,7 +109,7 @@ void StaticMesh::ProcessNode(aiNode* node, const aiScene* scene)
 		}
 	}
 
-	/* Then do the same for each of its children */
+	// Then do the same for each of its children
 	for (i32 i = 0; i < node->mNumChildren; i++)
 		ProcessNode(node->mChildren[i], scene);
 }
@@ -125,18 +124,18 @@ Buffer StaticMesh::LoadVertices(aiMesh* aimesh)
 	f32* ptr = static_cast<f32*>(buffer.MapStorage(GL_WRITE_ONLY));
 	for (u32 i = 0; i < aimesh->mNumVertices; i++)
 	{
-		/* Position */
+		// Position
 		*(ptr++) = static_cast<f32>(aimesh->mVertices[i].x);
 		*(ptr++) = static_cast<f32>(aimesh->mVertices[i].y);
 		*(ptr++) = static_cast<f32>(aimesh->mVertices[i].z);
-		/* Normal */
+		// Normal
 		*(ptr++) = static_cast<f32>(aimesh->mNormals[i].x);
 		*(ptr++) = static_cast<f32>(aimesh->mNormals[i].y);
 		*(ptr++) = static_cast<f32>(aimesh->mNormals[i].z);
-		/* Uv coordinates */
+		// Uv coordinates 
 		*(ptr++) = static_cast<f32>(aimesh->mTextureCoords[0][i].x);
 		*(ptr++) = static_cast<f32>(aimesh->mTextureCoords[0][i].y);
-		/* Tangent */
+		// Tangent 
 		*(ptr++) = static_cast<f32>(aimesh->mTangents[i].x);
 		*(ptr++) = static_cast<f32>(aimesh->mTangents[i].y);
 		*(ptr++) = static_cast<f32>(aimesh->mTangents[i].z);
@@ -167,7 +166,7 @@ Texture2D* StaticMesh::GetMaterialTexture(aiMaterial* material, u32 textureType)
 {
 	aiString fileName;
 	if (material->GetTexture(static_cast<aiTextureType>(textureType), 0, &fileName) == aiReturn_SUCCESS)
-		return &TextureManager::Get().GetTextureByPath(Filesystem::GetTexturesPath() / fileName.C_Str());
+		return &TexturesManager::Get().GetTextureByPath(Filesystem::GetTexturesPath() / fileName.C_Str());
 
 	return nullptr;
 }

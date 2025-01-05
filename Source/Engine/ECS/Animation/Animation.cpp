@@ -10,7 +10,7 @@
 // 									PUBLIC														
 // ---------------------------------------------------- 
 
-Animation::Animation(const fs::path& path, SkeletonMesh& skeleton) :
+Animation::Animation(const fs::path& path, const SkeletalMesh& skeleton) :
 	_path{ path },
 	_duration{ 0 },
 	_ticksPerSecond{ 0 },
@@ -46,7 +46,7 @@ Animation::Animation(const fs::path& path, SkeletonMesh& skeleton) :
 //										PRIVATE													
 // ----------------------------------------------------
 
-void Animation::LoadAnimation(const aiAnimation* animation, SkeletonMesh& skeleton)
+void Animation::LoadAnimation(const aiAnimation* animation, const SkeletalMesh& skeleton)
 {
 	for (i32 i = 0; i < animation->mNumChannels; i++)
 	{
@@ -56,10 +56,7 @@ void Animation::LoadAnimation(const aiAnimation* animation, SkeletonMesh& skelet
 		// Load skeleton bones
 		auto [bone, boneIndex] = skeleton.FindBone(boneName);
 		if (!bone)
-		{
-			CONSOLE_DEBUG("Ignore bone: '{}'", boneName);
 			continue;
-		}
 
 		// Load bone keys
 		AnimationKeys& keys = _boneKeys.emplace_back();

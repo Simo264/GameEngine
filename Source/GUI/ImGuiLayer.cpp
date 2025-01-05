@@ -3,7 +3,7 @@
 #include "Core/GL.hpp"
 
 #include "Engine/Subsystems/WindowManager.hpp"
-#include "Engine/Subsystems/FontManager.hpp"
+#include "Engine/Subsystems/FontsManager.hpp"
 #include "Engine/Graphics/Objects/Texture2D.hpp"
 #include "Engine/Scene.hpp"
 #include "Engine/Camera.hpp"
@@ -43,7 +43,7 @@ void ImGuiLayer::Initialize()
   config.ReadData();
   const String& fontFamily = config.GetValue("GUI", "font-family");
   fontSize = std::atoi(config.GetValue("GUI", "font-size").c_str());
-  auto recordIt = FontManager::Get().GetRecordByName(fontFamily.c_str());
+  auto recordIt = FontsManager::Get().GetRecordByName(fontFamily.c_str());
   currentFont = { recordIt->first.c_str(), &recordIt->second };
   SetFont(currentFont.second->string());
 }

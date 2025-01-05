@@ -1,7 +1,7 @@
 #include "Core/Core.hpp"
 
 #include "Core/Math/Base.hpp"
-#include "Engine/Subsystems/TextureManager.hpp"
+#include "Engine/Subsystems/TexturesManager.hpp"
 #include "Engine/Filesystem/Filesystem.hpp"
 
 #include <imgui/imgui.h>
@@ -9,7 +9,7 @@
 
 void GUI_RenderTransformToolBar(vec2i viewportPos, i32& gizmode)
 {
-  auto& texManager = TextureManager::Get();
+  auto& texManager = TexturesManager::Get();
   static const auto& expandIcon = texManager.GetIconByPath(Filesystem::GetIconsPath() / "expand-arrows-32.png");
   static const auto& rotateIcon = texManager.GetIconByPath(Filesystem::GetIconsPath() / "rotate-32.png");
   static const auto& scaleIcon = texManager.GetIconByPath(Filesystem::GetIconsPath() / "scale-32.png");

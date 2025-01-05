@@ -3,8 +3,8 @@
 #include "Engine/Scene.hpp"
 #include "Engine/ECS/ECS.hpp"
 #include "Engine/Utils.hpp"
-#include "Engine/Subsystems/TextureManager.hpp"
-#include "Engine/Subsystems/ShaderManager.hpp"
+#include "Engine/Subsystems/TexturesManager.hpp"
+#include "Engine/Subsystems/ShadersManager.hpp"
 #include "Engine/Filesystem/Filesystem.hpp"
 
 #include <imgui/imgui.h>
@@ -121,9 +121,9 @@ static void Insp_DirectLight(GameObject& object, DirectionalLight& light)
     object.RemoveComponent<Light>();
     object.RemoveComponent<DirectionalLight>();
 
-    ShaderManager& shaderManager = ShaderManager::Get();
-    auto& shaderScene = shaderManager.GetProgramByName("Scene");
-    auto& shaderSceneShadows = shaderManager.GetProgramByName("SceneShadows");
+    ShadersManager& shadersManager = ShadersManager::Get();
+    auto& shaderScene = shadersManager.GetProgramByName("Scene");
+    auto& shaderSceneShadows = shadersManager.GetProgramByName("SceneShadows");
     shaderScene.SetUniform1f("u_directionalLight.intensity", 0.f);
     shaderSceneShadows.SetUniform1f("u_directionalLight.intensity", 0.f);
   }
@@ -186,9 +186,9 @@ static void Insp_PointLight(GameObject& object, PointLight& light)
     object.RemoveComponent<Light>();
     object.RemoveComponent<PointLight>();
 
-    ShaderManager& shaderManager = ShaderManager::Get();
-    auto& shaderScene = shaderManager.GetProgramByName("Scene");
-    auto& shaderSceneShadows = shaderManager.GetProgramByName("SceneShadows");
+    ShadersManager& shadersManager = ShadersManager::Get();
+    auto& shaderScene = shadersManager.GetProgramByName("Scene");
+    auto& shaderSceneShadows = shadersManager.GetProgramByName("SceneShadows");
     shaderScene.SetUniform1f("u_pointLight.intensity", 0.f);
     shaderSceneShadows.SetUniform1f("u_pointLight.intensity", 0.f);
   }
@@ -273,9 +273,9 @@ static void Insp_SpotLight(GameObject& object, SpotLight& light)
     object.RemoveComponent<Light>();
     object.RemoveComponent<SpotLight>();
 
-    ShaderManager& shaderManager = ShaderManager::Get();
-    auto& shaderScene = shaderManager.GetProgramByName("Scene");
-    auto& shaderSceneShadows = shaderManager.GetProgramByName("SceneShadows");
+    ShadersManager& shadersManager = ShadersManager::Get();
+    auto& shaderScene = shadersManager.GetProgramByName("Scene");
+    auto& shaderSceneShadows = shadersManager.GetProgramByName("SceneShadows");
     shaderScene.SetUniform1f("u_spotLight.intensity", 0.f);
     shaderSceneShadows.SetUniform1f("u_spotLight.intensity", 0.f);
   }
@@ -371,7 +371,7 @@ static void Insp_Transform(GameObject& object, Transform& transform)
 }
 static void Insp_MaterialRow(StringView label, Texture2D*& matTexture, Texture2D& defaultTex)
 {
-  auto& texManager = TextureManager::Get();
+  auto& texManager = TexturesManager::Get();
   const bool noTexture = (matTexture->path.string().at(0) == '#');
   
   // First column: label
@@ -412,7 +412,6 @@ static void Insp_MaterialRow(StringView label, Texture2D*& matTexture, Texture2D
 }
 static void Insp_StaticMesh(GameObject& object, StaticMesh& staticMesh)
 {
-  ImGui::Text("Path: %s", staticMesh.path.string().c_str());
   ImGui::Text("Nr meshes: %d", staticMesh.meshes.size());
   ImGui::Text("Total vertices: %d", staticMesh.TotalVertices());
   ImGui::Text("Total indices: %d", staticMesh.TotalIndices());
@@ -424,7 +423,7 @@ static void Insp_StaticMesh(GameObject& object, StaticMesh& staticMesh)
     {
       auto& mesh = staticMesh.meshes.at(i);
       Material& material = mesh.material;
-      TextureManager& texManager = TextureManager::Get();
+      TexturesManager& texManager = TexturesManager::Get();
 
       char label[16]{};
       std::format_to_n(label, sizeof(label), "Mesh_{}", i+1);
@@ -476,9 +475,8 @@ static void Insp_SkeletonMesh_BoneTree(const BoneNode& bone)
     ImGui::TreePop();
   }
 }
-static void Insp_SkeletonMesh(GameObject& object, SkeletonMesh& skeleton)
+static void Insp_SkeletonMesh(GameObject& object, SkeletalMesh& skeleton)
 {
-  ImGui::Text("Path: %s", skeleton.path.string().c_str());
   ImGui::Text("Nr meshes: %d", skeleton.meshes.size());
   ImGui::Text("Total vertices: %d", skeleton.TotalVertices());
   ImGui::Text("Total indices: %d", skeleton.TotalIndices());
@@ -491,7 +489,7 @@ static void Insp_SkeletonMesh(GameObject& object, SkeletonMesh& skeleton)
     {
       auto& mesh = skeleton.meshes.at(i);
       Material& material = mesh.material;
-      TextureManager& texManager = TextureManager::Get();
+      TexturesManager& texManager = TexturesManager::Get();
 
       char label[16]{};
       std::format_to_n(label, sizeof(label), "Mesh_{}", i+1);
@@ -528,7 +526,7 @@ static void Insp_SkeletonMesh(GameObject& object, SkeletonMesh& skeleton)
   ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.45f, 0.f, 0.f, 0.5f));
   ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.45f, 0.f, 0.f, 0.5f));
   if (ImGui::Button("Remove component##model"))
-    object.RemoveComponent<SkeletonMesh>();
+    object.RemoveComponent<SkeletalMesh>();
   ImGui::PopStyleColor(3);
 }
 static void Insp_Animator(GameObject& object, Animator& animator)
@@ -562,9 +560,9 @@ static void Insp_Animator(GameObject& object, Animator& animator)
 
   if (animNameTarget)
   {
-    Texture2D& playIcon = TextureManager::Get().GetIconByPath(Filesystem::GetIconsPath() / "play-button-32.png");
-    Texture2D& pauseIcon = TextureManager::Get().GetIconByPath(Filesystem::GetIconsPath() / "pause-button-32.png");
-    Texture2D& restartIcon = TextureManager::Get().GetIconByPath(Filesystem::GetIconsPath() / "restart-button-32.png");
+    Texture2D& playIcon = TexturesManager::Get().GetIconByPath(Filesystem::GetIconsPath() / "play-button-32.png");
+    Texture2D& pauseIcon = TexturesManager::Get().GetIconByPath(Filesystem::GetIconsPath() / "pause-button-32.png");
+    Texture2D& restartIcon = TexturesManager::Get().GetIconByPath(Filesystem::GetIconsPath() / "restart-button-32.png");
 
     if (ImGui::ImageButton(reinterpret_cast<void*>(playIcon.id), ImVec2(16, 16)))
       animator.PlayAnimation();
@@ -663,7 +661,7 @@ static void Insp_AddSkeletonComponent(GameObject& object)
   {
     if (ImGui::Button("Ok"))
     {
-      object.AddComponent<SkeletonMesh>(path);
+      object.AddComponent<SkeletalMesh>(path);
       path.clear();
     }
   }
@@ -693,7 +691,7 @@ static void Insp_ListAllComponents(GameObject& object)
     if (ImGui::CollapsingHeader("StaticMesh"))
       Insp_StaticMesh(object, *staticMesh);
   }
-  if (SkeletonMesh* skeleton = object.GetComponent<SkeletonMesh>())
+  if (SkeletalMesh* skeleton = object.GetComponent<SkeletalMesh>())
   {
     if (ImGui::CollapsingHeader("SkeletonMesh"))
       Insp_SkeletonMesh(object, *skeleton);
@@ -770,7 +768,7 @@ static void Insp_NewComponentPopup(GameObject& object)
 
     // Add SkeletonMesh component
     // --------------------------------
-    if (object.HasComponent<SkeletonMesh>()) // Component already present, disabled
+    if (object.HasComponent<SkeletalMesh>()) // Component already present, disabled
       ImGui::Selectable("SkeletonMesh", false, ImGuiSelectableFlags_Disabled);
     else if (ImGui::BeginMenu("SkeletonMesh"))
     {
@@ -780,11 +778,11 @@ static void Insp_NewComponentPopup(GameObject& object)
 
     // Add Animator component
     // --------------------------------
-    if (object.HasComponent<Animator>() || !object.HasComponent<SkeletonMesh>()) // Component already present, disabled
+    if (object.HasComponent<Animator>() || !object.HasComponent<SkeletalMesh>()) // Component already present, disabled
       ImGui::Selectable("Animator", false, ImGuiSelectableFlags_Disabled);
     else if (ImGui::Selectable("Animator"))
     {
-      SkeletonMesh* skeleton = object.GetComponent<SkeletonMesh>();
+      SkeletalMesh* skeleton = object.GetComponent<SkeletalMesh>();
       object.AddComponent<Animator>(*skeleton);
     }
 

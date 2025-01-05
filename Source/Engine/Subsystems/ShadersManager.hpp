@@ -10,18 +10,18 @@
  * 
  * This class handles shader compilation, program linking, and cleanup.
  */
-class ShaderManager
+class ShadersManager
 {
 public:
 	/** @brief Deleted copy constructor to enforce singleton pattern. */
-	ShaderManager(const ShaderManager&) = delete;
+	ShadersManager(const ShadersManager&) = delete;
 	/** @brief Deleted assignment constructor to enforce singleton pattern. */
-	void operator=(const ShaderManager&) = delete;
+	void operator=(const ShadersManager&) = delete;
 
 	/** Get the singleton instance of ShaderManager. */
-	static ShaderManager& Get()
+	static ShadersManager& Get()
 	{
-		static ShaderManager shaderManager;
+		static ShadersManager shaderManager;
 		return shaderManager;
 	}
 
@@ -47,8 +47,8 @@ public:
 	const auto& GetPrograms() const { return _programs; }
 	
 private:
-	ShaderManager() = default;
-	~ShaderManager() = default;
+	ShadersManager() = default;
+	~ShadersManager() = default;
 
 	/** @brief Map storing shader objects by their filename. */
 	UnorderedMap<String, Shader> _shaders;

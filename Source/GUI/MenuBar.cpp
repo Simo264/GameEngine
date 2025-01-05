@@ -2,14 +2,14 @@
 #include "Core/Log/Logger.hpp"
 #include "Engine/Scene.hpp"
 #include "Engine/Utils.hpp"
-#include "Engine/Subsystems/ShaderManager.hpp"
+#include "Engine/Subsystems/ShadersManager.hpp"
 #include "Engine/Subsystems/WindowManager.hpp"
 
 #include <imgui/imgui.h>
 
 void GUI_RenderMenuBar(Scene& scene, bool& openPreferences)
 {
-  /* Render menu bar */
+  // Render menu bar
   if (ImGui::BeginMainMenuBar())
   {
     if (ImGui::BeginMenu("File"))
@@ -21,10 +21,10 @@ void GUI_RenderMenuBar(Scene& scene, bool& openPreferences)
         fs::path filePath = Utils::OpenFileDialog(1, filter, "Open scene", false);
         if (!filePath.empty())
         {
-          /* Unset all lights */
-          ShaderManager& shaderManager = ShaderManager::Get();
-          auto& shaderScene = shaderManager.GetProgramByName("Scene");
-          auto& shaderSceneShadows = shaderManager.GetProgramByName("SceneShadows");
+          // Unset all lights
+          ShadersManager& shadersManager = ShadersManager::Get();
+          auto& shaderScene = shadersManager.GetProgramByName("Scene");
+          auto& shaderSceneShadows = shadersManager.GetProgramByName("SceneShadows");
           shaderScene.SetUniform1f("u_directionalLight.intensity", 0.f);
           shaderScene.SetUniform1f("u_pointLight.intensity", 0.f);
           shaderScene.SetUniform1f("u_spotLight.intensity", 0.f);

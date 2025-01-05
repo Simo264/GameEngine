@@ -21,9 +21,9 @@
 #include "Engine/Graphics/Renderer.hpp"
 
 #include "Engine/Subsystems/WindowManager.hpp"
-#include "Engine/Subsystems/ShaderManager.hpp"
-#include "Engine/Subsystems/TextureManager.hpp"
-#include "Engine/Subsystems/FontManager.hpp"
+#include "Engine/Subsystems/ShadersManager.hpp"
+#include "Engine/Subsystems/TexturesManager.hpp"
+#include "Engine/Subsystems/FontsManager.hpp"
 
 #include "Engine/Filesystem/Filesystem.hpp"
 
@@ -160,7 +160,7 @@ static void RenderStaticMesh(Program& program, StaticMesh& staticMesh, Transform
   program.SetUniformMat4f("u_model", transform.GetTransformation());
   staticMesh.Draw(GL_TRIANGLES);
 }
-static void RenderSkeletonMesh(Program& program, SkeletonMesh& skeletonMesh, Transform& transform, const Vector<mat4f>& boneTransforms)
+static void RenderSkeletalMesh(Program& program, SkeletalMesh& skeletalMesh, Transform& transform, const Vector<mat4f>& boneTransforms)
 {
   for (u64 i = 0; i < boneTransforms.size(); i++)
   {
@@ -169,7 +169,7 @@ static void RenderSkeletonMesh(Program& program, SkeletonMesh& skeletonMesh, Tra
     program.SetUniformMat4f(uniform, boneTransforms[i]);
   }
   program.SetUniformMat4f("u_model", transform.GetTransformation());
-  skeletonMesh.Draw(GL_TRIANGLES);
+  skeletalMesh.Draw(GL_TRIANGLES);
 }
 
 static void CreateSkybox(Mesh& skybox, TextureCubemap& skyboxTexture)
@@ -224,14 +224,14 @@ static void CreateSkybox(Mesh& skybox, TextureCubemap& skyboxTexture)
   skybox.vao.AttachVertexBuffer(0, vbo, 0, sizeof(Vertex_P));
   skybox.vao.numVertices = 36;
 
-  TextureManager& textureManager = TextureManager::Get();
+  TexturesManager& texturesManager = TexturesManager::Get();
   Array<Texture2D*, 6> images = {
-    &textureManager.GetTextureByPath(Filesystem::GetTexturesPath() / "skybox/right.jpg"),
-    &textureManager.GetTextureByPath(Filesystem::GetTexturesPath() / "skybox/left.jpg"),
-    &textureManager.GetTextureByPath(Filesystem::GetTexturesPath() / "skybox/top.jpg"),
-    &textureManager.GetTextureByPath(Filesystem::GetTexturesPath() / "skybox/bottom.jpg"),
-    &textureManager.GetTextureByPath(Filesystem::GetTexturesPath() / "skybox/front.jpg"),
-    &textureManager.GetTextureByPath(Filesystem::GetTexturesPath() / "skybox/back.jpg"),
+    &texturesManager.GetTextureByPath(Filesystem::GetTexturesPath() / "skybox/right.jpg"),
+    &texturesManager.GetTextureByPath(Filesystem::GetTexturesPath() / "skybox/left.jpg"),
+    &texturesManager.GetTextureByPath(Filesystem::GetTexturesPath() / "skybox/top.jpg"),
+    &texturesManager.GetTextureByPath(Filesystem::GetTexturesPath() / "skybox/bottom.jpg"),
+    &texturesManager.GetTextureByPath(Filesystem::GetTexturesPath() / "skybox/front.jpg"),
+    &texturesManager.GetTextureByPath(Filesystem::GetTexturesPath() / "skybox/back.jpg"),
   };
   i32 cubemapInternalFormat = images.at(0)->internalFormat;
   i32 width = images.at(0)->width;
@@ -327,15 +327,15 @@ void Engine::Initialize()
 
   // Initialize font manager
   // --------------------------
-  FontManager::Get().Initialize();
+  FontsManager::Get().Initialize();
   
   // Initialize shader manager
   // -------------------------
-  ShaderManager::Get().Initialize();
+  ShadersManager::Get().Initialize();
 
   // Initialize texture manager
   // --------------------------
-  TextureManager::Get().Initialize();
+  TexturesManager::Get().Initialize();
 
   // Setup ImGui context
   // -------------------
@@ -383,7 +383,7 @@ void Engine::Run()
 
   // Create scene object
   Scene scene((Filesystem::GetRootPath() / "Scene.ini"));
-
+  
   // Create primary camera object
   Camera primaryCamera(vec3f(7.f, 4.f, 6), vec3f(-135.0f, -25.0f, 0.f));
   primaryCamera.frustum.zFar = 100.0f;
@@ -402,16 +402,16 @@ void Engine::Run()
   // ----------------------------------------------------------------------
   ImGuiLayer& gui = ImGuiLayer::Get();
   WindowManager& windowManager = WindowManager::Get();
-  TextureManager& textureManager = TextureManager::Get();
-  ShaderManager& shaderManager = ShaderManager::Get();
-  Program& skyboxProgram = shaderManager.GetProgramByName("Skybox");
-  Program& gridPlaneProgram = shaderManager.GetProgramByName("GridPlane");
-  Program& depthMapProgram = shaderManager.GetProgramByName("DepthMap");
-  Program& depthCubeMapProgram = shaderManager.GetProgramByName("DepthCubeMap");
-  Program& sceneProgram = shaderManager.GetProgramByName("Scene");
-  Program& sceneShadowsProgram = shaderManager.GetProgramByName("SceneShadows");
-  Program& skeletalAnimProgram = shaderManager.GetProgramByName("SkeletalAnim");
-  Program& skeletalAnimShadowsProgram = shaderManager.GetProgramByName("SkeletalAnimShadows");
+  TexturesManager& texturesManager = TexturesManager::Get();
+  ShadersManager& shadersManager = ShadersManager::Get();
+  Program& skyboxProgram = shadersManager.GetProgramByName("Skybox");
+  Program& gridPlaneProgram = shadersManager.GetProgramByName("GridPlane");
+  Program& depthMapProgram = shadersManager.GetProgramByName("DepthMap");
+  Program& depthCubeMapProgram = shadersManager.GetProgramByName("DepthCubeMap");
+  Program& sceneProgram = shadersManager.GetProgramByName("Scene");
+  Program& sceneShadowsProgram = shadersManager.GetProgramByName("SceneShadows");
+  Program& skeletalAnimProgram = shadersManager.GetProgramByName("SkeletalAnim");
+  Program& skeletalAnimShadowsProgram = shadersManager.GetProgramByName("SkeletalAnimShadows");
 
   constexpr bool renderTerrain = false;
   constexpr bool renderInfiniteGrid = true;
@@ -585,11 +585,11 @@ void Engine::Run()
         skeletalAnimProgram.Use();
         skeletalAnimProgram.SetUniform3f("u_viewPos", primaryCamera.position);
         skeletalAnimProgram.SetUniform1i("u_useNormalMap", normalMapMode);
-        scene.Reg().view<SkeletonMesh, Animator, Transform>().each(
-          [&](auto& skeletonMesh, auto& animator, auto& transform) {
+        scene.Reg().view<SkeletalMesh, Animator, Transform>().each(
+          [&](auto& skeletalMesh, auto& animator, auto& transform) {
             animator.UpdateAnimation(delta);
             auto& boneTransforms = animator.BoneTransforms();
-            RenderSkeletonMesh(skeletalAnimProgram, skeletonMesh, transform, boneTransforms);
+            RenderSkeletalMesh(skeletalAnimProgram, skeletalMesh, transform, boneTransforms);
           }
         );
       }
@@ -662,8 +662,8 @@ void Engine::CleanUp()
   _uboCamera.Delete();
 
   ImGuiLayer::Get().CleanUp();
-  ShaderManager::Get().CleanUp();
-  TextureManager::Get().CleanUp();
+  ShadersManager::Get().CleanUp();
+  TexturesManager::Get().CleanUp();
   WindowManager::Get().CleanUp(); /* !!Raise exception here */
 }
 

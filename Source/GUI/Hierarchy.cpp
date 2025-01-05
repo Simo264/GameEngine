@@ -2,17 +2,17 @@
 #include "Engine/Scene.hpp"
 #include "Engine/ECS/ECS.hpp"
 #include "Engine/Utils.hpp"
-#include "Engine/Subsystems/ShaderManager.hpp"
-#include "Engine/Subsystems/TextureManager.hpp"
+#include "Engine/Subsystems/ShadersManager.hpp"
+#include "Engine/Subsystems/TexturesManager.hpp"
 #include "Engine/Filesystem/Filesystem.hpp"
 
 #include "ImGuiLayer.hpp"
 
 #include <imgui/imgui.h>
 
-/* -------------------------- */
-/*          PRIVATE           */
-/* -------------------------- */
+// ----------------------------------------------------
+//          PRIVATE          
+// ----------------------------------------------------
 
 static bool ButtonCentered(const char* label, ImVec2 size)
 {
@@ -37,7 +37,7 @@ static void Hierarchy_ListObjects(Scene& scene, GameObject& objSelected)
     ImGui::BeginGroup();
     ImGui::SetCursorPosY(ImGui::GetCursorPosY() + (ImGui::GetTextLineHeight() - 16.f) / 2);
     
-    const auto& icon = TextureManager::Get().GetIconByPath(Filesystem::GetIconsPath() / "game-object-16.png");
+    const auto& icon = TexturesManager::Get().GetIconByPath(Filesystem::GetIconsPath() / "game-object-16.png");
     ImGui::Image(reinterpret_cast<void*>(icon.id), ImVec2(16.f, 16.f));
     ImGui::SameLine();
     
@@ -71,12 +71,12 @@ static void Hierarchy_ObjectMenuPopup(Scene& scene, GameObject& objSelected)
   {
     if (ImGui::MenuItem("Delete object"))
     {
-      /* Unset light component */
+      // Unset light component
       if (objSelected.HasComponent<Light>())
       {
-        ShaderManager& shaderManager = ShaderManager::Get();
-        auto& shaderScene = shaderManager.GetProgramByName("Scene");
-        auto& shaderSceneShadows = shaderManager.GetProgramByName("SceneShadows");
+        ShadersManager& shadersManager = ShadersManager::Get();
+        auto& shaderScene = shadersManager.GetProgramByName("Scene");
+        auto& shaderSceneShadows = shadersManager.GetProgramByName("SceneShadows");
 
         if (objSelected.HasComponent<DirectionalLight>())
         {
@@ -102,9 +102,9 @@ static void Hierarchy_ObjectMenuPopup(Scene& scene, GameObject& objSelected)
   }
 }
 
-/* -------------------------- */
-/*          PUBLIC            */
-/* -------------------------- */
+// ----------------------------------------------------
+//          PUBLIC           
+// ----------------------------------------------------
 
 void GUI_RenderHierarchy(bool& open, Scene& scene, GameObject& objSelected)
 {

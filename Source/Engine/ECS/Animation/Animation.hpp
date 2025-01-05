@@ -2,7 +2,7 @@
 
 #include "Core/Core.hpp"
 #include "Core/Math/Base.hpp"
-#include "Engine/ECS/Skeleton/SkeletonMesh.hpp"
+#include "Engine/ECS/Skeleton/SkeletalMesh.hpp"
 
 struct aiAnimation;
 struct aiNodeAnim;
@@ -43,7 +43,7 @@ public:
 	 * @param path The file path to the animation data.
 	 * @param skeleton The skeleton mesh associated with the animation.
 	 */
-	Animation(const fs::path& path, SkeletonMesh& skeleton);
+	Animation(const fs::path& path, const SkeletalMesh& skeleton);
 	
 	/** @brief Default destructor for the Animation class. */
 	~Animation() = default;
@@ -53,7 +53,7 @@ public:
 	const Vector<AnimationKeys>& BoneKeys() const { return _boneKeys; }
 	const fs::path& Path() const { return _path; }
 private:
-	void LoadAnimation(const aiAnimation* animation, SkeletonMesh& skeleton);
+	void LoadAnimation(const aiAnimation* animation, const SkeletalMesh& skeleton);
 	void LoadBoneKeys(AnimationKeys& keys, const aiNodeAnim* channel);
 
 	fs::path _path;

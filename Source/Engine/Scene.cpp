@@ -7,6 +7,7 @@
 #include "Engine/ECS/ECS.hpp"
 #include "Engine/IniFileHandler.hpp"
 #include "Engine/Graphics/Shader.hpp"
+#include "Engine/Subsystems/ModelsManager.hpp"
 
 // ----------------------------------- 
 //								PUBLIC							 
@@ -83,9 +84,9 @@ void Scene::SerializeScene(const fs::path& filePath)
 			String section = std::format("Entity{}:StaticMesh", objectID);
 			conf.Update(section, "path", staticMesh->path.string());
 		}
-		if (SkeletonMesh* skeleton = object.GetComponent<SkeletonMesh>())
+		if (SkeletalMesh* skeleton = object.GetComponent<SkeletalMesh>())
 		{
-			String section = std::format("Entity{}:SkeletonMesh", objectID);
+			String section = std::format("Entity{}:SkeletalMesh", objectID);
 			conf.Update(section, "path", skeleton->path.string());
 		}
 		if (Animator* animator = object.GetComponent<Animator>())
@@ -208,17 +209,31 @@ void Scene::DeserializeScene(const fs::path& filePath)
 		}
 		else if (component == "StaticMesh")
 		{
+			auto& manager = ModelsManager::Get();
+
 			const String& strPath = conf.GetValue(section, "path");
-			object.AddComponent<StaticMesh>(strPath.c_str());
+			if (auto* mesh = manager.FindStaticMesh(strPath))
+			{
+				auto& smComponent = object.AddComponent<StaticMesh>();
+				smComponent.path = strPath;
+				smComponent.meshes = mesh->meshes;
+			}
+			else
+			{
+				auto* newMesh = manager.InsertStaticMesh(strPath);
+				auto& smComponent = object.AddComponent<StaticMesh>();
+				smComponent.path = strPath;
+				smComponent.meshes = newMesh->meshes;
+			}
 		}
-		else if (component == "SkeletonMesh")
+		else if (component == "SkeletalMesh")
 		{
 			const String& strPath = conf.GetValue(section, "path");
-			object.AddComponent<SkeletonMesh>(strPath.c_str());
+			object.AddComponent<SkeletalMesh>(strPath.c_str());
 		}
 		else if (component == "Animator")
 		{
-			SkeletonMesh* skeleton = object.GetComponent<SkeletonMesh>();
+			SkeletalMesh* skeleton = object.GetComponent<SkeletalMesh>();
 			if (skeleton)
 			{
 				Animator& animator = object.AddComponent<Animator>(*skeleton);

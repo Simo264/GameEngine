@@ -1,4 +1,4 @@
-#include "TextureManager.hpp"
+#include "TexturesManager.hpp"
 
 #include "Core/GL.hpp"
 #include "Core/Log/Logger.hpp"
@@ -17,11 +17,11 @@ static void CreateDefaultTexture(Texture2D& texture, u8 r, u8 g, u8 b, StringVie
   texture.path = fs::path(defaultPath.data());
 }
 
-/* -----------------------------------------------------  */
-/*                    PUBLIC                              */
-/* -----------------------------------------------------  */
+// ----------------------------------------------------- 
+//                    PUBLIC                             
+// ----------------------------------------------------- 
 
-void TextureManager::Initialize()
+void TexturesManager::Initialize()
 {
   /* 1. Create and load defaults */
   Texture2D defDiffuse;
@@ -39,7 +39,7 @@ void TextureManager::Initialize()
   LoadTextures();
   LoadIcons();
 }
-void TextureManager::CleanUp()
+void TexturesManager::CleanUp()
 {
   u64 total = _textures.size() + _icons.size();
   
@@ -55,7 +55,7 @@ void TextureManager::CleanUp()
   glDeleteTextures(total, texIDs.data());
 }
 
-Texture2D& TextureManager::GetTextureByPath(const fs::path& path)
+Texture2D& TexturesManager::GetTextureByPath(const fs::path& path)
 {
   try
   {
@@ -66,7 +66,7 @@ Texture2D& TextureManager::GetTextureByPath(const fs::path& path)
     throw std::runtime_error(std::format("TextureManager::GetTextureByPath: texture '{}' does not exist", path.string()));
   }
 }
-Texture2D& TextureManager::GetIconByPath(const fs::path& path)
+Texture2D& TexturesManager::GetIconByPath(const fs::path& path)
 {
   try
   {
@@ -79,11 +79,11 @@ Texture2D& TextureManager::GetIconByPath(const fs::path& path)
 }
 
 
-/* -----------------------------------------------------  */
-/*                    PRIVATE                             */
-/* -----------------------------------------------------  */
+// ----------------------------------------------------- 
+//                    PRIVATE                            
+// ----------------------------------------------------- 
 
-void TextureManager::LoadTextures()
+void TexturesManager::LoadTextures()
 {
   for (auto& entry : fs::recursive_directory_iterator(Filesystem::GetTexturesPath()))
   {
@@ -98,11 +98,9 @@ void TextureManager::LoadTextures()
       gamma = true;
     
     CONSOLE_TRACE("{}", entryPathString);
-    auto emplaceResult = _textures.emplace(entryPathString.c_str(), Texture2D());
-    bool success = emplaceResult.second;
+    auto [it, success] = _textures.emplace(entryPathString.c_str(), Texture2D());
     if (success)
     {
-      auto& it = emplaceResult.first;
       Texture2D& texture = it->second;
       texture.Create(GL_TEXTURE_2D);
       texture.LoadImageData(entryPath, gamma);
@@ -111,7 +109,7 @@ void TextureManager::LoadTextures()
       CONSOLE_ERROR("Error on loading texture object");
   }
 }
-void TextureManager::LoadIcons()
+void TexturesManager::LoadIcons()
 {
   for (auto& entry : fs::recursive_directory_iterator(Filesystem::GetIconsPath()))
   {
@@ -122,11 +120,9 @@ void TextureManager::LoadIcons()
     String entryPathString = entryPath.string();
     
     CONSOLE_TRACE("{}", entryPathString);
-    auto emplaceResult = _icons.emplace(entryPathString.c_str(), Texture2D());
-    bool success = emplaceResult.second;
+    auto [it, success] = _icons.emplace(entryPathString.c_str(), Texture2D());
     if (success)
     {
-      auto& it = emplaceResult.first;
       Texture2D& texture = it->second;
       texture.Create(GL_TEXTURE_2D);
       texture.LoadImageData(entryPath, false);

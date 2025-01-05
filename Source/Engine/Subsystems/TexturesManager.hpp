@@ -11,18 +11,18 @@
  * This class implements the singleton pattern to ensure only one instance of TextureManager
  * exists throughout the application.
  */
-class TextureManager
+class TexturesManager
 {
 public:
 	/** @brief Deleted copy constructor to enforce singleton pattern. */
-	TextureManager(const TextureManager&) = delete;
+	TexturesManager(const TexturesManager&) = delete;
 	/** @brief Deleted assignment constructor to enforce singleton pattern. */
-	void operator=(const TextureManager&) = delete;
+	void operator=(const TexturesManager&) = delete;
 
 	/** @brief Retrieves the singleton instance of TextureManager. */
-	static TextureManager& Get()
+	static TexturesManager& Get()
 	{
-		static TextureManager textManager;
+		static TexturesManager textManager;
 		return textManager;
 	}
 
@@ -61,17 +61,12 @@ public:
 	const auto& GetTextures() const { return _textures; }
 
 private:
-	TextureManager() = default;
-	~TextureManager() = default;
+	TexturesManager() = default;
+	~TexturesManager() = default;
 
-	/**
-	 * @brief Stores textures by their file path.
-	 */
+	/** @brief Stores textures by their file path. */
 	UnorderedMap<fs::path, Texture2D> _textures;
-
-	/**
-	 * @brief Stores icons by their file path.
-	 */
+	/** @brief Stores icons by their file path. */
 	UnorderedMap<fs::path, Texture2D> _icons;
 
 	/** @brief Loads all textures from disk. */
