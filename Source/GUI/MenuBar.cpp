@@ -32,9 +32,8 @@ void GUI_RenderMenuBar(Scene& scene, bool& openPreferences)
           shaderSceneShadows.SetUniform1f("u_pointLight.intensity", 0.f);
           shaderSceneShadows.SetUniform1f("u_spotLight.intensity", 0.f);
 
-          scene.ClearScene();
-          scene.LoadScene(filePath);
-          CONSOLE_INFO("The scene has been loaded successfully");
+          scene.Clear();
+          scene.LoadFromFile(filePath);
         }
       }
       if (ImGui::MenuItem("Save as..."))
@@ -42,8 +41,7 @@ void GUI_RenderMenuBar(Scene& scene, bool& openPreferences)
         const char* filters[] = { "*.ini" };
         fs::path filepath = Utils::SaveFileDialog(1, filters, "Save as .ini");
         
-        scene.SaveScene(filepath);
-        CONSOLE_TRACE("The scene has been successfully saved");
+        scene.Save(filepath);
       }
 
       ImGui::Separator();

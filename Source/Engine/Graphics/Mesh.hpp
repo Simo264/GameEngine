@@ -1,10 +1,10 @@
 #pragma once
 
 #include "Core/Core.hpp"
+#include "Engine/Graphics/Vertex.hpp"
 #include "Engine/Graphics/Material.hpp"
 #include "Engine/Graphics/Containers/VertexArray.hpp"
-
-struct VertexFormat;
+#include "Engine/Graphics/Renderer.hpp"
 
 /**
  * @brief
@@ -22,13 +22,16 @@ class Mesh
 {
 public:
 	Mesh();
-	~Mesh();
+	~Mesh() = default;
+
+	void Create();
+	void Destroy();
+	
+	void Draw(RenderMode mode) const;
 
 	void SetupAttributeFloat(i32 attribindex, i32 bindingindex, VertexFormat format) const;
 	void SetupAttributeInteger(i32 attribindex, i32 bindingindex, VertexFormat format) const;
 	void SetupAttributeLong(i32 attribindex, i32 bindingindex, VertexFormat format) const;
-
-	void Draw(i32 mode) const;
 
 	VertexArray vao;
 	Material material;

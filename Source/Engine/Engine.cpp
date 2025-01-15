@@ -10,7 +10,6 @@
 #include "Engine/Scene.hpp"
 
 #include "Engine/ECS/ECS.hpp"
-#include "Engine/Graphics/Vertex.hpp"
 #include "Engine/Graphics/DepthTest.hpp"
 #include "Engine/Graphics/StencilTest.hpp"
 #include "Engine/Graphics/FaceCulling.hpp"
@@ -158,7 +157,7 @@ static void CalculatePerFrameTime()
 static void RenderStaticMesh(Program& program, StaticMesh& staticMesh, Transform& transform)
 {
   program.SetUniformMat4f("u_model", transform.GetTransformation());
-  staticMesh.Draw(GL_TRIANGLES);
+  staticMesh.Draw(RenderMode::Triangles);
 }
 static void RenderSkeletalMesh(Program& program, SkeletalMesh& skeletalMesh, Transform& transform, const Vector<mat4f>& boneTransforms)
 {
@@ -169,7 +168,7 @@ static void RenderSkeletalMesh(Program& program, SkeletalMesh& skeletalMesh, Tra
     program.SetUniformMat4f(uniform, boneTransforms[i]);
   }
   program.SetUniformMat4f("u_model", transform.GetTransformation());
-  skeletalMesh.Draw(GL_TRIANGLES);
+  skeletalMesh.Draw(RenderMode::Triangles);
 }
 
 static void CreateSkybox(Mesh& skybox, TextureCubemap& skyboxTexture)
@@ -219,10 +218,11 @@ static void CreateSkybox(Mesh& skybox, TextureCubemap& skyboxTexture)
      1.0f, -1.0f,  1.0f
   };
   Buffer vbo(sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-  skybox.SetupAttributeFloat(0, 0, VertexFormat(3, GL_FLOAT, false, 0));
+  
+  skybox.Create();
   skybox.vao.AttachVertexBuffer(0, vbo, 0, sizeof(Vertex_P));
   skybox.vao.numVertices = 36;
+  skybox.SetupAttributeFloat(0, 0, VertexFormat(3, GL_FLOAT, false, 0));
 
   TexturesManager& texturesManager = TexturesManager::Get();
   Array<Texture2D*, 6> images = {
@@ -265,7 +265,7 @@ static FrameBuffer CreateDepthMapFbo(i32 width, i32 height)
   // With the generated depth texture we can attach it as the framebuffer's depth buffer
   FrameBuffer fbo;
   fbo.Create();
-  fbo.AttachTexture(GL_DEPTH_ATTACHMENT, depthMap.id, 0);
+  fbo.AttachTexture(FramebufferAttachment::Depth, depthMap.id, 0);
   return fbo;
 }
 static FrameBuffer CreateDepthCubeMapFbo(i32 width, i32 height)
@@ -285,7 +285,7 @@ static FrameBuffer CreateDepthCubeMapFbo(i32 width, i32 height)
   texture.SetParameteri(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   texture.SetParameteri(GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
-  fbo.AttachTexture(GL_DEPTH_ATTACHMENT, texture.id, 0);
+  fbo.AttachTexture(FramebufferAttachment::Depth, texture.id, 0);
   return fbo;
 }
 static void CreateGridPlane(Mesh& grid)
@@ -300,6 +300,7 @@ static void CreateGridPlane(Mesh& grid)
   };
   Buffer gridVbo(sizeof(vertices), vertices, GL_STATIC_DRAW);
 
+  grid.Create();
   grid.SetupAttributeFloat(0, 0, VertexFormat(3, GL_FLOAT, false, 0));
   grid.vao.AttachVertexBuffer(0, gridVbo, 0, 3 * sizeof(f32));
   grid.vao.numVertices = 6;
@@ -336,6 +337,8 @@ void Engine::Initialize()
   // Initialize texture manager
   // --------------------------
   TexturesManager::Get().Initialize();
+
+  
 
   // Setup ImGui context
   // -------------------
@@ -431,7 +434,7 @@ void Engine::Run()
   // ------------------------------------------------------------------
   while (windowManager.IsOpen())
   {
-    /* Set new font before BeginFrame */
+    // Set new font before BeginFrame
     if (gui.changeFontFamilyFlag)
     {
       gui.SetFont(*gui.currentFont.second);
@@ -545,7 +548,7 @@ void Engine::Run()
 #endif
 
     /// Fill the framebuffer color texture
-    _fboMultisampled.Bind(GL_FRAMEBUFFER);
+    _fboMultisampled.Bind(FramebufferTarget::ReadDraw);
     { 
       glViewport(0, 0, _viewportSize.x, _viewportSize.y);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -585,20 +588,18 @@ void Engine::Run()
         skeletalAnimProgram.Use();
         skeletalAnimProgram.SetUniform3f("u_viewPos", primaryCamera.position);
         skeletalAnimProgram.SetUniform1i("u_useNormalMap", normalMapMode);
-        scene.Reg().view<SkeletalMesh, Animator, Transform>().each(
-          [&](auto& skeletalMesh, auto& animator, auto& transform) {
-            animator.UpdateAnimation(delta);
-            auto& boneTransforms = animator.BoneTransforms();
-            RenderSkeletalMesh(skeletalAnimProgram, skeletalMesh, transform, boneTransforms);
-          }
-        );
+        scene.Reg().view<SkeletalMesh, Animator, Transform>().each([&](auto& skeletalMesh, auto& animator, auto& transform) {
+          animator.UpdateAnimation(delta);
+          const Vector<mat4f>& boneTransforms = animator.GetBoneTransforms();
+          RenderSkeletalMesh(skeletalAnimProgram, skeletalMesh, transform, boneTransforms);
+        });
       }
 
       /// Render the infinite grid
       if(renderInfiniteGrid)
       {
         gridPlaneProgram.Use();
-        Renderer::DrawArrays(GL_TRIANGLES, gridPlane.vao);
+        Renderer::DrawArrays(RenderMode::Triangles, gridPlane.vao);
       }
 
       /// Draw skybox after the scene
@@ -609,7 +610,7 @@ void Engine::Run()
         skyboxProgram.SetUniformMat4f("u_view", mat4f(mat3f(cameraView)));
         skyboxTexture.BindTextureUnit(0);
         DepthTest::SetDepthFun(DepthFun::LEQUAL);
-        Renderer::DrawArrays(GL_TRIANGLES, skybox.vao);
+        Renderer::DrawArrays(RenderMode::Triangles, skybox.vao);
         DepthTest::SetDepthFun(DepthFun::LESS);
       }
 
@@ -617,10 +618,10 @@ void Engine::Run()
       _fboMultisampled.Blit(_fboIntermediate,
         0, 0, _viewportSize.x, _viewportSize.y,
         0, 0, _viewportSize.x, _viewportSize.y,
-        GL_COLOR_BUFFER_BIT,
-        GL_NEAREST);
+        BlitMask::ColorBuffer,
+        BlitFilter::Nearest);
     }
-    _fboMultisampled.Unbind(GL_FRAMEBUFFER);
+    _fboMultisampled.Unbind(FramebufferTarget::ReadDraw);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
@@ -652,7 +653,10 @@ void Engine::Run()
     windowManager.SwapWindowBuffers();
   }
  
-  scene.ClearScene();
+  gridPlane.Destroy();
+  skybox.Destroy();
+  
+  scene.Clear();
 }
 void Engine::CleanUp()
 {
@@ -664,7 +668,7 @@ void Engine::CleanUp()
   ImGuiLayer::Get().CleanUp();
   ShadersManager::Get().CleanUp();
   TexturesManager::Get().CleanUp();
-  WindowManager::Get().CleanUp(); /* !!Raise exception here */
+  WindowManager::Get().CleanUp(); // !!Raise exception here
 }
 
 // -----------------------------------------------------
@@ -683,8 +687,8 @@ void Engine::CreateFramebuffer(i32 samples, i32 width, i32 height)
   RenderBuffer depthStencMultAtt;
   depthStencMultAtt.Create();
   depthStencMultAtt.CreateStorageMulstisampled(GL_DEPTH24_STENCIL8, samples, width, height);
-  _fboMultisampled.AttachTexture(GL_COLOR_ATTACHMENT0, textColMultAtt.id, 0);
-  _fboMultisampled.AttachRenderBuffer(GL_DEPTH_STENCIL_ATTACHMENT, depthStencMultAtt.id);
+  _fboMultisampled.AttachTexture(FramebufferAttachment::Color0, textColMultAtt.id, 0);
+  _fboMultisampled.AttachRenderBuffer(FramebufferAttachment::DepthStencil, depthStencMultAtt);
   
   if (_fboMultisampled.CheckStatus() != GL_FRAMEBUFFER_COMPLETE)
     CONSOLE_WARN("Multisampled framebuffer is not complete!");
@@ -698,7 +702,7 @@ void Engine::CreateFramebuffer(i32 samples, i32 width, i32 height)
   textColAtt.CreateStorage(GL_RGB8, width, height);
   textColAtt.SetParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   textColAtt.SetParameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  _fboIntermediate.AttachTexture(GL_COLOR_ATTACHMENT0, textColAtt.id, 0);
+  _fboIntermediate.AttachTexture(FramebufferAttachment::Color0, textColAtt.id, 0);
 
   if (_fboIntermediate.CheckStatus() != GL_FRAMEBUFFER_COMPLETE)
     CONSOLE_WARN("Intermediate framebuffer is not complete!");

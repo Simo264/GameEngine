@@ -24,16 +24,13 @@ class StaticMesh
 public:
 	/** @brief Default constructor. */
 	StaticMesh() = default;
-	/** @brief Constructs a StaticMesh from a model file. */
-	StaticMesh(const fs::path& path);
 	/** @brief Default destructor. */
 	~StaticMesh() = default;
 
-	/**
-	 * @brief Renders the mesh using the specified drawing mode.
-	 * @param mode OpenGL drawing mode (e.g., GL_TRIANGLES).
-	 */
-	void Draw(i32 mode);
+	void CreateFromPath(const fs::path& path);
+	void Destroy();
+
+	void Draw(RenderMode mode);
 
 	/** @brief Returns the total number of vertices in the mesh. */
 	u32 TotalVertices() const;

@@ -5,6 +5,8 @@
 #include "Engine/Utils.hpp"
 #include "Engine/Subsystems/TexturesManager.hpp"
 #include "Engine/Subsystems/ShadersManager.hpp"
+#include "Engine/Subsystems/ModelsManager.hpp"
+#include "Engine/Subsystems/AnimationsManager.hpp"
 #include "Engine/Filesystem/Filesystem.hpp"
 
 #include <imgui/imgui.h>
@@ -464,24 +466,23 @@ static void Insp_StaticMesh(GameObject& object, StaticMesh& staticMesh)
     object.RemoveComponent<StaticMesh>();
   ImGui::PopStyleColor(3);
 }
-
-static void Insp_SkeletonMesh_BoneTree(const BoneNode& bone)
+static void Insp_SkeletalMesh_BoneTree(const BoneNode& bone)
 {
   if (ImGui::TreeNode(bone.name)) 
   {
     for (const BoneNode& child : bone.children)
-      Insp_SkeletonMesh_BoneTree(child);
+      Insp_SkeletalMesh_BoneTree(child);
 
     ImGui::TreePop();
   }
 }
-static void Insp_SkeletonMesh(GameObject& object, SkeletalMesh& skeleton)
+static void Insp_SkeletalMesh(GameObject& object, SkeletalMesh& skeleton)
 {
   ImGui::Text("Nr meshes: %d", skeleton.meshes.size());
   ImGui::Text("Total vertices: %d", skeleton.TotalVertices());
   ImGui::Text("Total indices: %d", skeleton.TotalIndices());
   ImGui::Text("Nr bones: %d", skeleton.bones.size());
-  Insp_SkeletonMesh_BoneTree(skeleton.rootNode);
+  Insp_SkeletalMesh_BoneTree(skeleton.rootNode);
 
   if (ImGui::TreeNode("Material"))
   {
@@ -525,40 +526,35 @@ static void Insp_SkeletonMesh(GameObject& object, SkeletalMesh& skeleton)
   ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.55f, 0.f, 0.f, 0.5f));
   ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.45f, 0.f, 0.f, 0.5f));
   ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.45f, 0.f, 0.f, 0.5f));
-  if (ImGui::Button("Remove component##model"))
+  if (ImGui::Button("Remove component##SkeletalMesh"))
+  {
     object.RemoveComponent<SkeletalMesh>();
+    object.RemoveComponent<Animator>();
+  }
   ImGui::PopStyleColor(3);
 }
 static void Insp_Animator(GameObject& object, Animator& animator)
 {
-  auto& animations = animator.AnimationsMap();
-  ImGui::Text("Nr animations: %d", animations.size());
+  SkeletalMesh* skeleton = object.GetComponent<SkeletalMesh>();
+  const auto* animations = animator.animations;
+  
+  ImGui::Text("Nr animations: %d", animations->size());
 
-  if (ImGui::Button("+Load new animation"))
+  const Animation* animAttached = animator.GetAttachedAnimation();
+  String animAttachedFilename = (!animAttached ? "" : animAttached->Path().string());
+  ImGui::Text("Current animation: %s", animAttachedFilename.c_str());
+  if (ImGui::BeginCombo("Animation list", (animAttachedFilename == "" ? "Select animation" : animAttachedFilename.c_str())))
   {
-    const char* filter[] = { "*.obj", "*.glb", "*.gltf", "*.fbx" };
-    u32 numFilters = sizeof(filter) / sizeof(filter[0]);
-    fs::path path = Utils::OpenFileDialog(numFilters, filter, "Static mesh file", false);
-    if (!path.empty())
+    for (const auto& animation : *animations)
     {
-      auto [name, anim] = animator.InsertAnimation(path);
-      if (!name)
-        CONSOLE_WARN("Error on loading new animation");
+      const auto path = animation.Path().string();
+      if (ImGui::Selectable(path.c_str(), animAttachedFilename == path))
+        animator.SetTargetAnimation(&animation);
     }
-  }
-
-  auto [animNameTarget, animTarget] = animator.AttachedAnimation();
-  ImGui::Text("Current animation: %s", (animNameTarget == nullptr ? "None" : animNameTarget));
-  if (ImGui::BeginCombo("Animation list", (animNameTarget == nullptr ? "Select animation" : animNameTarget)))
-  {
-    for (const auto& [name, anim] : animations)
-      if (ImGui::Selectable(name.c_str(), animNameTarget == name.c_str()))
-        animator.AttachAnimation(name);
-
     ImGui::EndCombo();
   }
 
-  if (animNameTarget)
+  if (animAttached)
   {
     Texture2D& playIcon = TexturesManager::Get().GetIconByPath(Filesystem::GetIconsPath() / "play-button-32.png");
     Texture2D& pauseIcon = TexturesManager::Get().GetIconByPath(Filesystem::GetIconsPath() / "pause-button-32.png");
@@ -580,9 +576,9 @@ static void Insp_Animator(GameObject& object, Animator& animator)
     ImGui::SameLine();
     
     if (ImGui::Button("Unbind animation"))
-      animator.DetachAnimation();
+      animator.SetTargetAnimation(nullptr);
 
-    f32 duration = animTarget->Duration();
+    f32 duration = animAttached->Duration();
     f32 currentTime = animator.CurrentTime();
     f32 progression = currentTime / duration;
     char label[8]{};
@@ -593,85 +589,140 @@ static void Insp_Animator(GameObject& object, Animator& animator)
   }
 }
 
+static void Insp_AddTransformComponent(GameObject& object) 
+{
+  if (object.HasComponent<Transform>())
+  {
+    ImGui::Selectable("Transform", false, ImGuiSelectableFlags_Disabled);
+  }
+  else if (ImGui::Selectable("Transform"))
+  {
+    object.AddComponent<Transform>();
+  }
+}
 static void Insp_AddLightComponent(GameObject& object)
 {
-  if (ImGui::MenuItem("Directional"))
+  if (object.HasComponent<Light>())
   {
-    object.AddComponent<Light>(LightType::DIRECTIONAL);
-    object.AddComponent<DirectionalLight>();
+    ImGui::Selectable("Light", false, ImGuiSelectableFlags_Disabled);
   }
-  if (ImGui::MenuItem("Point"))
+  else if (ImGui::BeginMenu("Light"))
   {
-    object.AddComponent<Light>(LightType::POINT);
-    object.AddComponent<PointLight>();
-  }
-  if (ImGui::MenuItem("Spot"))
-  {
-    object.AddComponent<Light>(LightType::SPOT);
-    object.AddComponent<SpotLight>();
+    if (ImGui::MenuItem("Directional"))
+    {
+      object.AddComponent<Light>(LightType::DIRECTIONAL);
+      object.AddComponent<DirectionalLight>();
+    }
+    if (ImGui::MenuItem("Point"))
+    {
+      object.AddComponent<Light>(LightType::POINT);
+      object.AddComponent<PointLight>();
+    }
+    if (ImGui::MenuItem("Spot"))
+    {
+      object.AddComponent<Light>(LightType::SPOT);
+      object.AddComponent<SpotLight>();
+    }
+    ImGui::EndMenu();
   }
 }
 static void Insp_AddStaticMeshComponent(GameObject& object)
 {
-  ImGui::BeginChild("StaticMesh_Child", ImVec2(300, 100));
-  static fs::path path{};
-  if (ImGui::Button("Open static mesh file"))
+  if (object.HasComponent<StaticMesh>())
   {
-    const char* filter[] = { "*.obj", "*.glb", "*.gltf", "*.fbx" };
-    u32 numFilters = sizeof(filter) / sizeof(filter[0]);
-    path = Utils::OpenFileDialog(numFilters, filter, "Static mesh file", false);
+    ImGui::Selectable("StaticMesh", false, ImGuiSelectableFlags_Disabled);
   }
-  String pathS = path.string();
-
-  ImGui::SameLine();
-  ImGui::InputText("##", pathS.data(), pathS.size(), ImGuiInputTextFlags_ReadOnly);
-
-  if (!path.empty())
+  else if (ImGui::BeginMenu("StaticMesh"))
   {
-    if (ImGui::Button("Ok"))
+    ImGui::BeginChild("StaticMesh_Child", ImVec2(300, 100));
+    static fs::path path{};
+    if (ImGui::Button("Open static mesh file"))
     {
-      object.AddComponent<StaticMesh>(path);
-      path.clear();
+      const char* filter[] = { "*.obj", "*.glb", "*.gltf", "*.fbx" };
+      u32 numFilters = sizeof(filter) / sizeof(filter[0]);
+      path = Utils::OpenFileDialog(numFilters, filter, "Static mesh file", false);
     }
+    String pathStr = path.string();
+
+    ImGui::SameLine();
+    ImGui::InputText("##", pathStr.data(), pathStr.size(), ImGuiInputTextFlags_ReadOnly);
+
+    if (!path.empty())
+    {
+      if (ImGui::Button("Ok"))
+      {
+        auto& manager = ModelsManager::Get();
+        const auto* sMesh = manager.FindStaticMesh(path);
+        if (!sMesh)
+          sMesh = manager.InsertStaticMesh(path);
+
+        auto& component = object.AddComponent<StaticMesh>();
+        component = *sMesh;
+
+        path.clear();
+      }
+    }
+    else
+    {
+      ImGui::BeginDisabled();
+      ImGui::Button("Ok");
+      ImGui::EndDisabled();
+    }
+    ImGui::EndChild();
+
+
+
+    ImGui::EndMenu();
   }
-  else
-  {
-    ImGui::BeginDisabled();
-    ImGui::Button("Ok");
-    ImGui::EndDisabled();
-  }
-  ImGui::EndChild();
 }
-static void Insp_AddSkeletonComponent(GameObject& object)
+static void Insp_AddSkeletalMeshComponent(GameObject& object)
 {
-  ImGui::BeginChild("SkeletonMesh_Child", ImVec2(300, 100));
-  static fs::path path{};
-  if (ImGui::Button("Open skeleton mesh file"))
+  if (object.HasComponent<SkeletalMesh>())
   {
-    const char* filter[] = { "*.obj", "*.glb", "*.gltf", "*.fbx" };
-    u32 numFilters = sizeof(filter) / sizeof(filter[0]);
-    path = Utils::OpenFileDialog(numFilters, filter, "Skeleton mesh file", false);
+    ImGui::Selectable("SkeletonMesh", false, ImGuiSelectableFlags_Disabled);
   }
-  String pathS = path.string();
-
-  ImGui::SameLine();
-  ImGui::InputText("##", pathS.data(), pathS.size(), ImGuiInputTextFlags_ReadOnly);
-
-  if (!path.empty())
+  else if (ImGui::BeginMenu("SkeletonMesh"))
   {
-    if (ImGui::Button("Ok"))
+    ImGui::BeginChild("SkeletonMesh_Child", ImVec2(300, 100));
+    static fs::path path{};
+    if (ImGui::Button("Open skeleton mesh file"))
     {
-      object.AddComponent<SkeletalMesh>(path);
-      path.clear();
+      const char* filter[] = { "*.obj", "*.glb", "*.gltf", "*.fbx" };
+      constexpr u32 numFilters = sizeof(filter) / sizeof(filter[0]);
+      path = Utils::OpenFileDialog(numFilters, filter, "Skeleton mesh file", false);
     }
+    String pathStr = path.string();
+
+    ImGui::SameLine();
+    ImGui::InputText("##", pathStr.data(), pathStr.size(), ImGuiInputTextFlags_ReadOnly);
+
+    if (!path.empty())
+    {
+      if (ImGui::Button("Ok"))
+      {
+        auto& manager = ModelsManager::Get();
+        const auto* skeleton = manager.FindSkeletalMesh(path);
+        if (!skeleton)
+          skeleton = manager.InsertSkeletalMesh(path);
+
+        auto& skComponent = object.AddComponent<SkeletalMesh>();
+        auto& anComponent = object.AddComponent<Animator>();
+        skComponent = *skeleton;
+        anComponent.SetTargetSkeleton(skComponent);
+
+        path.clear();
+      }
+    }
+    else
+    {
+      ImGui::BeginDisabled();
+      ImGui::Button("Ok");
+      ImGui::EndDisabled();
+    }
+    ImGui::EndChild();
+
+    ImGui::EndMenu();
   }
-  else
-  {
-    ImGui::BeginDisabled();
-    ImGui::Button("Ok");
-    ImGui::EndDisabled();
-  }
-  ImGui::EndChild();
 }
 
 static void Insp_ListAllComponents(GameObject& object)
@@ -694,7 +745,7 @@ static void Insp_ListAllComponents(GameObject& object)
   if (SkeletalMesh* skeleton = object.GetComponent<SkeletalMesh>())
   {
     if (ImGui::CollapsingHeader("SkeletonMesh"))
-      Insp_SkeletonMesh(object, *skeleton);
+      Insp_SkeletalMesh(object, *skeleton);
   }
   if (Animator* animator = object.GetComponent<Animator>())
   {
@@ -735,57 +786,26 @@ static void Insp_NewComponentPopup(GameObject& object)
   {
     // Add Transform component
     // --------------------------------
-    if (object.HasComponent<Transform>()) // Component already present, disabled
-      ImGui::Selectable("Transform", false, ImGuiSelectableFlags_Disabled);
-    else if (ImGui::Selectable("Transform"))
-      object.AddComponent<Transform>();
+    Insp_AddTransformComponent(object);
 
     ImGui::Spacing();
 
     // Add Light component
     // --------------------------------
-    if (object.HasComponent<Light>()) // Component already present, disabled
-      ImGui::Selectable("Light", false, ImGuiSelectableFlags_Disabled);
-    else if (ImGui::BeginMenu("Light"))
-    {
-      Insp_AddLightComponent(object);
-      ImGui::EndMenu();
-    }
+    Insp_AddLightComponent(object);
 
     ImGui::Spacing();
 
     // Add StaticMesh component
     // --------------------------------
-    if (object.HasComponent<StaticMesh>()) // Component already present, disabled
-      ImGui::Selectable("StaticMesh", false, ImGuiSelectableFlags_Disabled);
-    else if (ImGui::BeginMenu("StaticMesh"))
-    {
-      Insp_AddStaticMeshComponent(object);
-      ImGui::EndMenu();
-    }
+    Insp_AddStaticMeshComponent(object);
 
     ImGui::Spacing();
 
-    // Add SkeletonMesh component
+    // Add SkeletalMesh component
     // --------------------------------
-    if (object.HasComponent<SkeletalMesh>()) // Component already present, disabled
-      ImGui::Selectable("SkeletonMesh", false, ImGuiSelectableFlags_Disabled);
-    else if (ImGui::BeginMenu("SkeletonMesh"))
-    {
-      Insp_AddSkeletonComponent(object);
-      ImGui::EndMenu();
-    }
-
-    // Add Animator component
-    // --------------------------------
-    if (object.HasComponent<Animator>() || !object.HasComponent<SkeletalMesh>()) // Component already present, disabled
-      ImGui::Selectable("Animator", false, ImGuiSelectableFlags_Disabled);
-    else if (ImGui::Selectable("Animator"))
-    {
-      SkeletalMesh* skeleton = object.GetComponent<SkeletalMesh>();
-      object.AddComponent<Animator>(*skeleton);
-    }
-
+    //Insp_AddSkeletalMeshComponent(object);
+    
     ImGui::EndPopup();
   }
 }

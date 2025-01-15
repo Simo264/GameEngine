@@ -28,10 +28,7 @@ public:
   {}
   ~VertexArray() = default;
 
-  /**
-   * @brief
-   * Generate vertex array object
-   */
+  /** @brief Generate vertex array object. */
   void Create();
 
   /**
@@ -40,16 +37,10 @@ public:
    */
   void Delete();
 
-  /**
-   * @brief
-   * Bind vertex array object
-   */
+  /** @brief Bind vertex array object. */
   void Bind() const;
 
-  /**
-   * @brief
-   * Unbind vertex array object
-   */
+  /** @brief Unbind vertex array object. */
   void Unbind() const;
 
   /**
@@ -62,10 +53,7 @@ public:
    */
   void AttachVertexBuffer(i32 bindingindex, Buffer buffer, i32 offset, i32 stride);
 
-  /**
-   * @brief
-   * Configures element array buffer binding of a vertex array object
-   */
+  /** @brief Configures element array buffer binding of a vertex array object */
   void AttachElementBuffer(Buffer buffer);
 
   /**

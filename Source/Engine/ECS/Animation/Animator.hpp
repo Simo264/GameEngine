@@ -2,6 +2,7 @@
 
 #include "Core/Core.hpp"
 #include "Core/Math/Base.hpp"
+#include "Engine/ECS/Skeleton/SkeletalMesh.hpp"
 #include "Engine/ECS/Animation/Animation.hpp"
 
 /**
@@ -11,31 +12,31 @@
 class Animator
 {
 public:
-	Animator(SkeletalMesh& skeleton) :
+	Animator() :
+		animations{ nullptr },
 		_playAnimation{ false },
 		_currentTime{ 0.f },
-		_boneTransforms(100, mat4f(1.0f)),
-		_skeletonAttached{ &skeleton },
-		_animationAttached{ nullptr, nullptr }
+		_targetAnimation{ nullptr },
+		_boneTransforms{}
 	{}
 
 	/** @brief Default destructor for the Animator class. */
 	~Animator() = default;
 
-	std::pair<const char*, const Animation*> InsertAnimation(const fs::path& animationPath);
-	void AttachAnimation(StringView animationName);
-	void DetachAnimation();
+	void SetTargetSkeleton(SkeletalMesh& target);
+	void SetTargetAnimation(const Animation* target);
+
 	void UpdateAnimation(f32 dt);
 	void PlayAnimation();
 	void PauseAnimation();
 	void RestartAnimation();
 
-	std::pair<const char*, const Animation*> FindAnimation(StringView animationName);
-	std::pair<const char*, const Animation*> AttachedAnimation() const { return _animationAttached; }
 	f32 CurrentTime() const { return _currentTime; }
-	const Map<String, Animation>& AnimationsMap() const { return _animationsMap; }
-	const Vector<mat4f>& BoneTransforms() const { return _boneTransforms; }
-	const SkeletalMesh& AttachedSkeleton() const { return *_skeletonAttached; }
+	const Animation* GetAttachedAnimation() const { return _targetAnimation; }
+	const auto& GetBoneTransforms() const { return _boneTransforms; }
+
+	const Vector<Animation>* animations;
+
 private:
 	void CalculateBoneTransform(const BoneNode& node, mat4f parentTransform);
 	void InterpolateBone(Bone& bone, u32 boneIndex);
@@ -51,8 +52,7 @@ private:
 	bool _playAnimation;
 	f32 _currentTime;
 	Vector<mat4f> _boneTransforms;
-	Map<String, Animation> _animationsMap;
 	
-	SkeletalMesh* _skeletonAttached;
-	std::pair<const char*, const Animation*> _animationAttached;
+	SkeletalMesh* _targetSkeleton;
+	const Animation* _targetAnimation;
 };

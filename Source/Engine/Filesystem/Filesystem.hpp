@@ -37,7 +37,4 @@ namespace Filesystem
 	
 	/** @brief Retrieves the path to the skeletal models directory. */
 	const fs::path& GetSkeletalModelsPath();
-
-	/** @brief Retrieves the path to the skeletal animations directory. */
-	const fs::path& GetSkeletalAnimationsPath();
 }

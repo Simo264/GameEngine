@@ -27,13 +27,8 @@ static mat4f AiMatrixToGLM(const aiMatrix4x4& matrix)
 //										PUBLIC													
 // ----------------------------------------------------
 
-SkeletalMesh::SkeletalMesh(const fs::path& path) :
-	meshes{},
-	path{ path },
-	_boneMap{}
+void SkeletalMesh::CreateFromFile(const fs::path& path)
 {
-	CONSOLE_INFO("Loading skeleton mesh {}...", path.string());
-	
 	Assimp::Importer importer;
 	const aiScene* scene = importer.ReadFile(path.string().c_str(),
 		aiProcess_Triangulate |
@@ -56,16 +51,21 @@ SkeletalMesh::SkeletalMesh(const fs::path& path) :
 		return;
 	}
 
+	this->path = path;
 	meshes.reserve(scene->mNumMeshes);
 	u32 totalBones = std::accumulate(scene->mMeshes, scene->mMeshes + scene->mNumMeshes, 0, [](u32 sum, aiMesh* mesh) {
-			return sum + mesh->mNumBones;
-		});
+		return sum + mesh->mNumBones;
+	});
 	bones.reserve(totalBones);
-	
+
+	if (totalBones > 100)
+		CONSOLE_WARN("Bone number > 100");
+
 	ProcessNode(scene->mRootNode, scene);
 	LoadBoneHierarchy(rootNode, scene->mRootNode);
 }
-void SkeletalMesh::Draw(i32 mode)
+
+void SkeletalMesh::Draw(RenderMode mode)
 {
 	for (const auto& mesh : meshes)
 	{
@@ -78,8 +78,8 @@ void SkeletalMesh::Draw(i32 mode)
 }
 std::pair<const Bone*, i32> SkeletalMesh::FindBone(StringView boneName) const
 {
-	auto it = _boneMap.find(boneName.data());
-	if (it != _boneMap.end())
+	auto it = boneMap.find(boneName.data());
+	if (it != boneMap.end())
 	{
 		u32 boneIndex = it->second;
 		return { &bones.at(boneIndex), boneIndex };
@@ -89,7 +89,7 @@ std::pair<const Bone*, i32> SkeletalMesh::FindBone(StringView boneName) const
 std::pair<Bone*, i32> SkeletalMesh::InsertBone(StringView boneName)
 {
 	u32 boneIndex = bones.size();
-	auto [it, success] = _boneMap.insert({ boneName.data(), boneIndex });
+	auto [it, success] = boneMap.insert({ boneName.data(), boneIndex });
 	if (success)
 	{
 		Bone& bone = bones.emplace_back();
@@ -124,6 +124,7 @@ void SkeletalMesh::ProcessNode(aiNode* node, const aiScene* scene)
 		u32 MAX_BONES_INFLUENCE = Vertex_P_N_UV_T_B::MAX_BONES_INFLUENCE;
 
 		Mesh& mesh = meshes.emplace_back();
+		mesh.Create();
 		mesh.SetupAttributeFloat(0, 0, VertexFormat(3, GL_FLOAT, false, offsetof(Vertex_P_N_UV_T_B, position)));
 		mesh.SetupAttributeFloat(1, 0, VertexFormat(3, GL_FLOAT, false, offsetof(Vertex_P_N_UV_T_B, normal)));
 		mesh.SetupAttributeFloat(2, 0, VertexFormat(2, GL_FLOAT, false, offsetof(Vertex_P_N_UV_T_B, uv)));

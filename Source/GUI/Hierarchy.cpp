@@ -48,8 +48,8 @@ static void Hierarchy_ListObjects(Scene& scene, GameObject& objSelected)
     ImGui::PushStyleColor(ImGuiCol_HeaderHovered, colorHovered);
     ImGui::PushStyleColor(ImGuiCol_HeaderActive, colorSelected);
 
-    bool selected = ImGui::Selectable(selectableName, objSelected.IsEqual(o));
-    if (selected && !objSelected.IsEqual(o))
+    bool selected = ImGui::Selectable(selectableName, objSelected.Compare(o));
+    if (selected && !objSelected.Compare(o))
       objSelected = o;
     
     if (
@@ -96,7 +96,6 @@ static void Hierarchy_ObjectMenuPopup(Scene& scene, GameObject& objSelected)
       }
 
       scene.DestroyObject(objSelected);
-      objSelected.Invalidate();
     }
     ImGui::EndPopup();
   }

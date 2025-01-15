@@ -21,11 +21,11 @@ public:
 	~Scene() = default;
 
 	/** @brief Loads a scene from a file. */
-	void LoadScene(const fs::path& filePath);
+	void LoadFromFile(const fs::path& filePath);
 	/** @brief Saves the current scene to a file. */
-	void SaveScene(const fs::path& filePath);
+	void Save(const fs::path& filePath);
 	/** @brief Clears all objects and data from the current scene. */
-	void ClearScene();
+	void Clear();
 
 	/**
 	 * @brief Creates a new object in the scene.

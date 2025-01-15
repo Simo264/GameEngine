@@ -2,9 +2,22 @@
 
 #include "Core/Log/Logger.hpp"
 
+
 // ----------------------------------------------------
 //										PUBLIC													
 // ----------------------------------------------------
+
+void Animator::SetTargetSkeleton(SkeletalMesh& target)
+{
+	_targetSkeleton = &target;
+	_boneTransforms.resize(target.bones.size(), mat4f(1.0f));
+}
+void Animator::SetTargetAnimation(const Animation* target)
+{
+	_targetAnimation = target;
+	if (!target)
+		std::fill(_boneTransforms.begin(), _boneTransforms.end(), mat4f(1.0f));
+}
 
 void Animator::PlayAnimation()
 {
@@ -20,47 +33,12 @@ void Animator::RestartAnimation()
 }
 void Animator::UpdateAnimation(f32 dt)
 {
-	if (!_playAnimation || !_animationAttached.second)
+	if (!_playAnimation || !_targetSkeleton || !_targetAnimation)
 		return;
 
-	_currentTime += _animationAttached.second->TickPerSecond() * dt;
-	_currentTime = fmod(_currentTime, _animationAttached.second->Duration());
-	CalculateBoneTransform(_skeletonAttached->rootNode, mat4f(1.0f));
-}
-void Animator::AttachAnimation(StringView animationName)
-{ 
-	auto [name, anim] = FindAnimation(animationName);
-	if (name)
-		_animationAttached = { name, anim };
-	else
-		CONSOLE_WARN("Cannot bind animation '{}'", animationName.data());
-}
-void Animator::DetachAnimation()
-{
-	std::fill(_boneTransforms.begin(), _boneTransforms.end(), mat4f(1.0f));
-	_animationAttached = { nullptr, nullptr };
-	_currentTime = 0.0f;
-}
-std::pair<const char*, const Animation*> Animator::InsertAnimation(const fs::path& animationPath)
-{
-	String name = animationPath.stem().string();
-	auto [it, success] = _animationsMap.emplace(
-		std::piecewise_construct,
-		std::forward_as_tuple(name),
-		std::forward_as_tuple(animationPath, *_skeletonAttached)
-	);
-	if (success)
-		return { it->first.c_str(), &it->second };
-
-	return { nullptr, nullptr };
-}
-std::pair<const char*, const Animation*> Animator::FindAnimation(StringView animationName)
-{
-	auto it = _animationsMap.find(animationName.data());
-	if (it != _animationsMap.end())
-		return { it->first.c_str(), &it->second };
-	
-	return { nullptr, nullptr };
+	_currentTime += _targetAnimation->TickPerSecond() * dt;
+	_currentTime = fmod(_currentTime, _targetAnimation->Duration());
+	CalculateBoneTransform(_targetSkeleton->rootNode, mat4f(1.0f));
 }
 
 // ---------------------------------------------------- 
@@ -72,10 +50,10 @@ void Animator::CalculateBoneTransform(const BoneNode& node, mat4f parentTransfor
 	i32 boneIndex = node.boneIndex;
 	mat4f nodeTransform = node.bindPoseTransform;
 	mat4f globalTransformation = parentTransform * nodeTransform;
-
+	
 	if (boneIndex != -1)
 	{
-		Bone& bone = _skeletonAttached->bones.at(boneIndex);
+		Bone& bone = _targetSkeleton->bones.at(boneIndex);
 		InterpolateBone(bone, boneIndex);
 		nodeTransform = bone.localTransform;
 		globalTransformation = parentTransform * nodeTransform;
@@ -88,7 +66,7 @@ void Animator::CalculateBoneTransform(const BoneNode& node, mat4f parentTransfor
 }
 void Animator::InterpolateBone(Bone& bone, u32 boneIndex)
 {
-	auto& boneKeys = _animationAttached.second->BoneKeys();
+	const auto& boneKeys = _targetAnimation->BoneKeys();
 	auto keys = std::find_if(boneKeys.begin(), boneKeys.end(),
 		[&](const AnimationKeys& k){
 			return k.boneIndex == boneIndex;

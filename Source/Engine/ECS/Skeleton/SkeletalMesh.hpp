@@ -4,6 +4,7 @@
 #include "Core/Math/Base.hpp"
 #include "Engine/Graphics/Mesh.hpp"
 #include "Engine/ECS/Skeleton/Bone.hpp"
+#include "Engine/ECS/Animation/Animator.hpp"
 
 class Texture2D;
 struct Vertex_P_N_UV_T_B;
@@ -19,20 +20,20 @@ struct aiMaterial;
 class SkeletalMesh
 {
 public:
-  /**
-   * @brief Constructs a SkeletonMesh object by loading a skeletal model from the specified file path.
-   * @param skeletalPath The file path to the skeletal model.
-   */
-  SkeletalMesh(const fs::path& path);
-  
+  /** @brief Default constructor for the SkeletonMesh class. */
+  SkeletalMesh() = default;
+
   /** @brief Default destructor for the SkeletonMesh class. */
   ~SkeletalMesh() = default;
+
+  /** @brief Constructs a SkeletonMesh object by loading a skeletal model from the specified file path. */
+  void CreateFromFile(const fs::path& path);
 
   /**
    * @brief Draws the skeleton using the specified rendering mode.
    * @param mode The rendering mode
    */
-  void Draw(i32 mode);
+  void Draw(RenderMode mode);
   
   /**
    * @brief Searches for a bone by its name.
@@ -51,7 +52,7 @@ public:
   /** @brief This method calculates and returns the total count of vertices. */
   u32 TotalVertices() const;
 
-  /** @brief This method calculates and returns the total count of indices.  */
+  /** @brief This method calculates and returns the total count of indices. */
   u32 TotalIndices() const;
 
   /** @brief A collection of meshes associated with the skeleton. */
@@ -63,6 +64,8 @@ public:
   /** @brief The root node of the bone hierarchy. */
   BoneNode rootNode;
 
+  UnorderedMap<String, u32> boneMap; // BoneName - boneIndex
+
   fs::path path;
   
 private:
@@ -72,6 +75,4 @@ private:
   Texture2D* GetMaterialTexture(aiMaterial* material, u32 textureType);
   void LoadBonesAndWeights(Vector<Vertex_P_N_UV_T_B>& vertices, const aiMesh* aimesh);
   void LoadBoneHierarchy(BoneNode& dest, const aiNode* src);
-
-  UnorderedMap<String, u32> _boneMap; // BoneName - boneIndex
 };

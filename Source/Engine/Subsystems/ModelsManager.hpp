@@ -1,8 +1,8 @@
 #pragma once
 
 #include "Core/Core.hpp"
-
-class StaticMesh;
+#include "Engine/ECS/StaticMesh.hpp"
+#include "Engine/ECS/Skeleton/SkeletalMesh.hpp"
 
 class ModelsManager
 {
@@ -22,9 +22,14 @@ public:
 	const StaticMesh* FindStaticMesh(const fs::path& path) const;
 	const StaticMesh* InsertStaticMesh(const fs::path& path);
 
+	const SkeletalMesh* FindSkeletalMesh(const fs::path& path) const;
+	const SkeletalMesh* InsertSkeletalMesh(const fs::path& path);
+
+	void DestroyAll();
 private:
 	ModelsManager() = default;
 	~ModelsManager() = default;
 
 	UnorderedMap<fs::path, StaticMesh> _cacheStaticMesh;
+	UnorderedMap<fs::path, SkeletalMesh> _cacheSkeletalMesh;
 };

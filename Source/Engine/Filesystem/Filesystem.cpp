@@ -52,13 +52,7 @@ namespace Filesystem
 
 	const fs::path& GetSkeletalModelsPath()
 	{
-		static const fs::path SKELETAL_MODELS_PATH = (GetModelsPath() / "Skeletal/Models").lexically_normal();
+		static const fs::path SKELETAL_MODELS_PATH = (GetModelsPath() / "Skeletal").lexically_normal();
 		return SKELETAL_MODELS_PATH;
-	}
-
-	const fs::path& GetSkeletalAnimationsPath()
-	{
-		static const fs::path SKELETAL_ANIMATIONS_PATH = (GetModelsPath() / "Skeletal/Animations").lexically_normal();
-		return SKELETAL_ANIMATIONS_PATH;
 	}
 }

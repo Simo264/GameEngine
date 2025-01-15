@@ -9,6 +9,7 @@ void FrameBuffer::Create()
 
 void FrameBuffer::Delete()
 {
+	GL_COLOR_ATTACHMENT1;
 	u64 size = textAttachments.size();
 	if (size > 0)
 		glDeleteTextures(size, textAttachments.data());
@@ -23,14 +24,14 @@ void FrameBuffer::Delete()
 	rboAttachments.clear();
 }
 
-void FrameBuffer::Bind(i32 target) const
+void FrameBuffer::Bind(FramebufferTarget target) const
 {
-	glBindFramebuffer(target, id);
+	glBindFramebuffer(static_cast<u32>(target), id);
 }
 
-void FrameBuffer::Unbind(i32 target) const
+void FrameBuffer::Unbind(FramebufferTarget target) const
 {
-	glBindFramebuffer(target, 0);
+	glBindFramebuffer(static_cast<u32>(target), 0);
 }
 
 i32 FrameBuffer::CheckStatus() const
@@ -43,7 +44,7 @@ bool FrameBuffer::IsValid() const
 	return (id != 0) && (glIsFramebuffer(id) == GL_TRUE);
 }
 
-void FrameBuffer::AttachTexture(i32 attachment, u32 texture, i32 level)
+void FrameBuffer::AttachTexture(FramebufferAttachment attachment, u32 texture, i32 level)
 {
 	if (textAttachments.size() >= MAX_NUM_TEXTURE_ATTACHMENTS)
 	{
@@ -52,10 +53,10 @@ void FrameBuffer::AttachTexture(i32 attachment, u32 texture, i32 level)
 	}
 
 	textAttachments.push_back(texture);
-	glNamedFramebufferTexture(id, attachment, texture, level);
+	glNamedFramebufferTexture(id, static_cast<u32>(attachment), texture, level);
 }
 
-void FrameBuffer::AttachRenderBuffer(i32 attachment, u32 renderbuffer)
+void FrameBuffer::AttachRenderBuffer(FramebufferAttachment attachment, RenderBuffer renderbuffer)
 {
 	if (rboAttachments.size() >= MAX_NUM_RBO_ATTACHMENTS)
 	{
@@ -63,8 +64,8 @@ void FrameBuffer::AttachRenderBuffer(i32 attachment, u32 renderbuffer)
 		return;
 	}
 
-	rboAttachments.push_back(renderbuffer);
-	glNamedFramebufferRenderbuffer(id, attachment, GL_RENDERBUFFER, renderbuffer);
+	rboAttachments.push_back(renderbuffer.id);
+	glNamedFramebufferRenderbuffer(id, static_cast<u32>(attachment), GL_RENDERBUFFER, renderbuffer.id);
 }
 
 void FrameBuffer::Blit(
@@ -77,8 +78,8 @@ void FrameBuffer::Blit(
 	i32 destLowerY,
 	i32 destUpperX,
 	i32 destUpperY,
-	i32 mask,
-	i32 filter) const
+	BlitMask mask,
+	BlitFilter filter) const
 {
 	glBlitNamedFramebuffer(
 		id, dest.id, 
@@ -86,8 +87,8 @@ void FrameBuffer::Blit(
 		srcUpperX, srcUpperY, 
 		destLowerX, destLowerY, 
 		destUpperX, destUpperY, 
-		mask, 
-		filter);
+		static_cast<u32>(mask),
+		static_cast<u32>(filter));
 }
 
 void FrameBuffer::SetWritingColorComponents(bool r, bool g, bool b, bool a) const

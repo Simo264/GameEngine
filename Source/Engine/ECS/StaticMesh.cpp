@@ -16,11 +16,9 @@
 //										PUBLIC													
 // ----------------------------------------------------
 
-StaticMesh::StaticMesh(const fs::path& path) :
-	meshes{},
-	path{ path }
+void StaticMesh::CreateFromPath(const fs::path& path)
 {
-	CONSOLE_TRACE("Loading static mesh {}...", path.string());
+	this->path = path;
 
 	Assimp::Importer importer;
 	const aiScene* scene = importer.ReadFile(path.string().c_str(),
@@ -37,17 +35,23 @@ StaticMesh::StaticMesh(const fs::path& path) :
 		aiProcess_LimitBoneWeights |
 		aiProcess_OptimizeMeshes
 	);
-
+	
 	if (!scene || !scene->mRootNode || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE)
 	{
 		CONSOLE_ERROR("Assimp importer error: {}", importer.GetErrorString());
 		return;
 	}
-
+	
 	meshes.reserve(scene->mNumMeshes);
 	ProcessNode(scene->mRootNode, scene);
 }
-void StaticMesh::Draw(i32 mode)
+void StaticMesh::Destroy()
+{
+	for (auto& mesh : meshes)
+		mesh.Destroy();
+}
+
+void StaticMesh::Draw(RenderMode mode)
 {
 	for (const auto& mesh : meshes)
 	{
@@ -81,6 +85,7 @@ void StaticMesh::ProcessNode(aiNode* node, const aiScene* scene)
 	for (i32 i = 0; i < node->mNumMeshes; i++)
 	{
 		Mesh& mesh = meshes.emplace_back();
+		mesh.Create();
 		mesh.SetupAttributeFloat(0, 0, VertexFormat(3, GL_FLOAT, false, offsetof(Vertex_P_N_UV_T, position)));
 		mesh.SetupAttributeFloat(1, 0, VertexFormat(3, GL_FLOAT, false, offsetof(Vertex_P_N_UV_T, normal)));
 		mesh.SetupAttributeFloat(2, 0, VertexFormat(2, GL_FLOAT, false, offsetof(Vertex_P_N_UV_T, uv))); 

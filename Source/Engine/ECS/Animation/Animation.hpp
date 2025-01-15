@@ -2,7 +2,8 @@
 
 #include "Core/Core.hpp"
 #include "Core/Math/Base.hpp"
-#include "Engine/ECS/Skeleton/SkeletalMesh.hpp"
+
+class SkeletalMesh;
 
 struct aiAnimation;
 struct aiNodeAnim;
@@ -50,7 +51,7 @@ public:
 
 	f32 Duration() const { return _duration; }
 	f32 TickPerSecond() const { return _ticksPerSecond; }
-	const Vector<AnimationKeys>& BoneKeys() const { return _boneKeys; }
+	const auto& BoneKeys() const { return _boneKeys; }
 	const fs::path& Path() const { return _path; }
 private:
 	void LoadAnimation(const aiAnimation* animation, const SkeletalMesh& skeleton);

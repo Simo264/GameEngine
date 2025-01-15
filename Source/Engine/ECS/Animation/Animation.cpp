@@ -1,6 +1,7 @@
 #include "Animation.hpp"
 
 #include "Core/Log/Logger.hpp"
+#include "Engine/ECS/Skeleton/SkeletalMesh.hpp"
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -16,8 +17,6 @@ Animation::Animation(const fs::path& path, const SkeletalMesh& skeleton) :
 	_ticksPerSecond{ 0 },
 	_boneKeys{}
 {
-	CONSOLE_INFO("Loading animation '{}'", path.string());
-
 	Assimp::Importer importer;
 	const aiScene* scene = importer.ReadFile(path.string(), aiProcess_Triangulate);
 	if (!scene || !scene->mRootNode)

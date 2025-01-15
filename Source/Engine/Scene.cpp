@@ -8,6 +8,8 @@
 #include "Engine/IniFileHandler.hpp"
 #include "Engine/Graphics/Shader.hpp"
 #include "Engine/Subsystems/ModelsManager.hpp"
+#include "Engine/Subsystems/AnimationsManager.hpp"
+#include "Engine/Filesystem/Filesystem.hpp"
 
 // ----------------------------------- 
 //								PUBLIC							 
@@ -15,7 +17,7 @@
 
 Scene::Scene(const fs::path& filePath)
 {
-	LoadScene(filePath);
+	LoadFromFile(filePath);
 }
 GameObject Scene::CreateObject(StringView objName)
 {
@@ -35,23 +37,16 @@ void Scene::DestroyObject(GameObject& object)
 {
 	_registry.destroy(object.ID());
 }
-void Scene::ClearScene()
+void Scene::Clear()
 {
-	for (auto [entity, tagComp] : _registry.view<Tag>().each())
-	{
-		GameObject object{ entity, &_registry };
-		object.Invalidate();
-	}
-	
-	/* Clear scene */
 	_registry.clear();
 }
-void Scene::LoadScene(const fs::path& filePath)
+void Scene::LoadFromFile(const fs::path& filePath)
 {
 	CONSOLE_INFO("Loading scene {}...", filePath.string());
 	DeserializeScene(filePath);
 }
-void Scene::SaveScene(const fs::path& filePath)
+void Scene::Save(const fs::path& filePath)
 {
 	CONSOLE_INFO("Saving scene {}...", filePath.string());
 	SerializeScene(filePath);
@@ -88,23 +83,6 @@ void Scene::SerializeScene(const fs::path& filePath)
 		{
 			String section = std::format("Entity{}:SkeletalMesh", objectID);
 			conf.Update(section, "path", skeleton->path.string());
-		}
-		if (Animator* animator = object.GetComponent<Animator>())
-		{
-			String section = std::format("Entity{}:Animator", objectID);
-			auto& animMap = animator->AnimationsMap();
-			
-			char nrAnimations[4]{};
-			std::format_to_n(nrAnimations, sizeof(nrAnimations), "{}", animMap.size());
-			conf.Update(section, "animations", nrAnimations);
-
-			u32 i = 0;
-			for (const auto& [name, anim] : animMap)
-			{
-				char key[32]{};
-				std::format_to_n(key, sizeof(key), "anim_{}", i++);
-				conf.Update(section, key, anim.Path().string());
-			}
 		}
 		if (Light* light = object.GetComponent<Light>())
 		{
@@ -212,45 +190,48 @@ void Scene::DeserializeScene(const fs::path& filePath)
 			auto& manager = ModelsManager::Get();
 
 			const String& strPath = conf.GetValue(section, "path");
-			if (auto* mesh = manager.FindStaticMesh(strPath))
-			{
-				auto& smComponent = object.AddComponent<StaticMesh>();
-				smComponent.path = strPath;
-				smComponent.meshes = mesh->meshes;
-			}
-			else
-			{
-				auto* newMesh = manager.InsertStaticMesh(strPath);
-				auto& smComponent = object.AddComponent<StaticMesh>();
-				smComponent.path = strPath;
-				smComponent.meshes = newMesh->meshes;
-			}
+			const auto* sMesh = manager.FindStaticMesh(strPath);
+			if(!sMesh)
+				sMesh = manager.InsertStaticMesh(strPath);
+
+			auto& component = object.AddComponent<StaticMesh>();
+			component = *sMesh;
 		}
 		else if (component == "SkeletalMesh")
 		{
-			const String& strPath = conf.GetValue(section, "path");
-			object.AddComponent<SkeletalMesh>(strPath.c_str());
-		}
-		else if (component == "Animator")
-		{
-			SkeletalMesh* skeleton = object.GetComponent<SkeletalMesh>();
-			if (skeleton)
+			SkeletalMesh& skComponent = object.AddComponent<SkeletalMesh>();
+			Animator& animComponent = object.AddComponent<Animator>();
+
+			ModelsManager& modManager = ModelsManager::Get();
+			AnimationsManager& animManager = AnimationsManager::Get();
+
+			fs::path skeletonPath = conf.GetValue(section, "path");
+			const SkeletalMesh* skeleton = modManager.FindSkeletalMesh(skeletonPath);
+			if (!skeleton)
 			{
-				Animator& animator = object.AddComponent<Animator>(*skeleton);
+				skeleton = modManager.InsertSkeletalMesh(skeletonPath);
+				fs::path currentDir = skeletonPath.parent_path();
+				fs::path animlistFile = currentDir / "animlist.txt";
+				if (!fs::exists(animlistFile))
+					throw std::runtime_error(std::format("File {} does not exist", animlistFile.string()));
+				
+				Vector<fs::path> animations;
+				IStream file(animlistFile);
+				if (!file)
+					CONSOLE_ERROR("Erron on opening file {}", animlistFile.string());
 
-				const String& animations = conf.GetValue(section, "animations");
-				i32 nrAnimations = Utils::StringToI32(animations);
-				for (u32 i = 0; i < nrAnimations; i++)
-				{
-					char key[32]{};
-					std::format_to_n(key, sizeof(key), "anim_{}", i);
-
-					const String& animPath = conf.GetValue(section, key);
-					animator.InsertAnimation(animPath);
-				}
+				Vector<String> tmp{ std::istream_iterator<std::string>(file), std::istream_iterator<std::string>() };
+				animations.reserve(tmp.size());
+				for (const auto& p : tmp)
+					animations.push_back(currentDir / p);
+					
+				animComponent.animations = animManager.LoadSkeletonAnimations(skeletonPath, animations);
 			}
 			else
-				CONSOLE_WARN("Can't add Animator component");
+				animComponent.animations = animManager.GetSkeletonAnimations(skeletonPath);
+
+			skComponent = *skeleton;
+			animComponent.SetTargetSkeleton(skComponent);
 		}
 		else if (component == "Light")
 		{

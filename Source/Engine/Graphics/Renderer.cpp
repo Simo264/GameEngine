@@ -8,43 +8,43 @@
 
 namespace Renderer
 {
-	void DrawArrays(u32 mode, const VertexArray& vertexArray, i32 first)
+	void DrawArrays(RenderMode mode, const VertexArray& vertexArray, i32 first)
 	{
 		if (vertexArray.numVertices == 0)
 			CONSOLE_WARN("Invalid vertices number!");
 
 		vertexArray.Bind();
-		glDrawArrays(mode, first, vertexArray.numVertices);
+		glDrawArrays(static_cast<u32>(mode), first, vertexArray.numVertices);
 		g_drawCalls++;
 		vertexArray.Unbind();
 	}
-	void DrawArraysInstanced(u32 mode, const VertexArray& vertexArray, i32 nInstances, i32 first)
+	void DrawArraysInstanced(RenderMode mode, const VertexArray& vertexArray, i32 nInstances, i32 first)
 	{
 		if (vertexArray.numVertices == 0)
 			CONSOLE_WARN("Invalid vertices number!");
 
 		vertexArray.Bind();
-		glDrawArraysInstanced(mode, first, vertexArray.numVertices, nInstances);
+		glDrawArraysInstanced(static_cast<u32>(mode), first, vertexArray.numVertices, nInstances);
 		g_drawCalls++;
 		vertexArray.Unbind();
 	}
-	void DrawElements(u32 mode, const VertexArray& vertexArray, i32 offset)
+	void DrawElements(RenderMode mode, const VertexArray& vertexArray, i32 offset)
 	{
 		if (vertexArray.numIndices == 0)
 			CONSOLE_WARN("Invalid indices number!");
 
 		vertexArray.Bind();
-		glDrawElements(mode, vertexArray.numIndices, GL_UNSIGNED_INT, (void*)offset);
+		glDrawElements(static_cast<u32>(mode), vertexArray.numIndices, GL_UNSIGNED_INT, (void*)offset);
 		g_drawCalls++;
 		vertexArray.Unbind();
 	}
-	void DrawElementsInstanced(u32 mode, const VertexArray& vertexArray, i32 nInstances, i32 offset)
+	void DrawElementsInstanced(RenderMode mode, const VertexArray& vertexArray, i32 nInstances, i32 offset)
 	{
 		if (vertexArray.numIndices == 0)
 			CONSOLE_WARN("Invalid indices number!");
 
 		vertexArray.Bind();
-		glDrawElementsInstanced(mode, vertexArray.numIndices, GL_UNSIGNED_INT, (void*)offset, nInstances);
+		glDrawElementsInstanced(static_cast<u32>(mode), vertexArray.numIndices, GL_UNSIGNED_INT, (void*)offset, nInstances);
 		g_drawCalls++;
 		vertexArray.Unbind();
 	}
