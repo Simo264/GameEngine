@@ -31,46 +31,33 @@ public:
 	/** @brief Cleans up loaded textures and icons by deleting their OpenGL references. */
 	void CleanUp();
 	
-	/**
-	 * @brief Retrieves a texture by its file path.
-	 * 
-	 * @param path Path to the texture file.
-	 * @return Reference to the corresponding Texture2D object.
-	 * 
-	 * @throw std::runtime_error if the texture does not exist.
-	 */
-	Texture2D& GetTextureByPath(const fs::path& path);
+	const Texture2D* FindTexture(const fs::path& path) const;
+	const Texture2D* InsertTexture(const fs::path& path, bool gamma = false);
 	
-	/**
-	 * @brief Retrieves a icon by its file path.
-	 *
-	 * @param path Path to the icon file.
-	 * @return Reference to the corresponding Texture2D object.
-	 *
-	 * @throw std::runtime_error if the icon does not exist.
-	 */
-	Texture2D& GetIconByPath(const fs::path& path);
+	const Texture2D* FindTextureIcon(const fs::path& path) const;
+	const Texture2D* InsertTextureIcon(const fs::path& path);
 	
 	/** @brief Retrieves the default diffuse texture. */
-	Texture2D& GetDefaultDiffuse() { return _textures.at("#default_diffuse"); }
+	const Texture2D& GetDefaultDiffuse() const { return _textures.at(0); }
 	/** @brief Retrieves the default specular  texture. */
-	Texture2D& GetDefaultSpecular() { return _textures.at("#default_specular"); }
+	const Texture2D& GetDefaultSpecular() const { return _textures.at(1); }
 	/** @brief Retrieves the default normal  texture. */
-	Texture2D& GetDefaultNormal() { return _textures.at("#default_normal"); }
+	const Texture2D& GetDefaultNormal() const { return _textures.at(2); }
 	/** @brief Retrieves all loaded textures. */
-	const auto& GetTextures() const { return _textures; }
+	const auto& GetTextureVector() const { return _textures; }
+	const auto& GetTextureIconVector() const { return _textures; }
 
 private:
 	TexturesManager() = default;
 	~TexturesManager() = default;
 
-	/** @brief Stores textures by their file path. */
-	UnorderedMap<fs::path, Texture2D> _textures;
-	/** @brief Stores icons by their file path. */
-	UnorderedMap<fs::path, Texture2D> _icons;
+	Vector<Texture2D> _textures;
+	Vector<Texture2D> _icons;
 
-	/** @brief Loads all textures from disk. */
-	void LoadTextures();
-	/** @brief Loads all icons from disk. */
-	void LoadIcons();
+	// Map storing texture path and its index
+	UnorderedMap<fs::path, u32> _textureMap;
+	UnorderedMap<fs::path, u32> _iconMap;
+
+	void LoadAllTextures();
+	void LoadAllTextureIcons();
 };

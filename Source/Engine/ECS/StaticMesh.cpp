@@ -105,11 +105,11 @@ void StaticMesh::ProcessNode(aiNode* node, const aiScene* scene)
 		if (scene->HasMaterials())
 		{
 			aiMaterial* material = scene->mMaterials[aimesh->mMaterialIndex];
-			if (Texture2D* diffuse = GetMaterialTexture(material, static_cast<u32>(aiTextureType_DIFFUSE)))
+			if (const Texture2D* diffuse = GetMaterialTexture(material, static_cast<u32>(aiTextureType_DIFFUSE)))
 				mesh.material.diffuse = diffuse;
-			if (Texture2D* specular = GetMaterialTexture(material, static_cast<u32>(aiTextureType_SPECULAR)))
+			if (const Texture2D* specular = GetMaterialTexture(material, static_cast<u32>(aiTextureType_SPECULAR)))
 				mesh.material.specular = specular;
-			if (Texture2D* normal = GetMaterialTexture(material, static_cast<u32>(aiTextureType_NORMALS)))
+			if (const Texture2D* normal = GetMaterialTexture(material, static_cast<u32>(aiTextureType_NORMALS)))
 				mesh.material.normal = normal;
 		}
 	}
@@ -167,11 +167,11 @@ Buffer StaticMesh::LoadIndices(aiMesh* aimesh)
 	buffer.UnmapStorage();
 	return buffer;
 }
-Texture2D* StaticMesh::GetMaterialTexture(aiMaterial* material, u32 textureType)
+const Texture2D* StaticMesh::GetMaterialTexture(aiMaterial* material, u32 textureType)
 {
 	aiString fileName;
 	if (material->GetTexture(static_cast<aiTextureType>(textureType), 0, &fileName) == aiReturn_SUCCESS)
-		return &TexturesManager::Get().GetTextureByPath(Filesystem::GetTexturesPath() / fileName.C_Str());
+		return TexturesManager::Get().FindTexture(Filesystem::GetTexturesPath() / fileName.C_Str());
 
 	return nullptr;
 }

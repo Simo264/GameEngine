@@ -2,13 +2,13 @@
 
 #include "Core/GL.hpp"
 
-#include "Engine/Subsystems/WindowManager.hpp"
-#include "Engine/Subsystems/FontsManager.hpp"
-#include "Engine/Graphics/Objects/Texture2D.hpp"
+#include "Engine/Globals.hpp"
 #include "Engine/Scene.hpp"
 #include "Engine/Camera.hpp"
 #include "Engine/ECS/ECS.hpp"
 #include "Engine/IniFileHandler.hpp"
+#include "Engine/Graphics/Objects/Texture2D.hpp"
+#include "Engine/Subsystems/WindowManager.hpp"
 #include "Engine/Filesystem/Filesystem.hpp"
 
 #include <imgui/imgui.h>
@@ -18,7 +18,7 @@
 #include <imgui/ImGuizmo.h>
 
 extern void GUI_RenderMenuBar(Scene& scene, bool& openPreferences);
-extern void GUI_RenderPreferencesWindow(bool& open, i32 fontSize);
+extern void GUI_RenderPreferencesWindow(bool& open);
 extern void GUI_RenderHierarchy(bool& open, Scene& scene, GameObject& objSelected);
 extern void GUI_RenderViewport(bool& open, u32 texID, GameObject& objSelected, i32 gizmode, const mat4f& view, const mat4f& proj);
 extern void GUI_RenderInspector(bool& open, GameObject& object);
@@ -41,11 +41,12 @@ void ImGuiLayer::Initialize()
   // Load default font
   IniFileHandler config(Filesystem::GetRootPath() / "Configuration.ini");
   config.ReadData();
-  const String& fontFamily = config.GetValue("GUI", "font-family");
-  fontSize = std::atoi(config.GetValue("GUI", "font-size").c_str());
-  auto recordIt = FontsManager::Get().GetRecordByName(fontFamily.c_str());
-  currentFont = { recordIt->first.c_str(), &recordIt->second };
-  SetFont(currentFont.second->string());
+  if(config.HasKey("GUI", "font-family"))
+    g_fontFamily = config.GetValue("GUI", "font-family");
+  if (config.HasKey("GUI", "font-size"))
+    g_fontSize = std::atoi(config.GetValue("GUI", "font-size").c_str());
+
+  SetFont(Filesystem::GetFontsPath() / g_fontFamily, g_fontSize);
 }
 void ImGuiLayer::CleanUp()
 {
@@ -76,7 +77,7 @@ void ImGuiLayer::EndFrame()
     windowManager.MakeContextCurrent(backCurrentContext);
   }
 }
-void ImGuiLayer::SetFont(const fs::path& ttfFilePath) const
+void ImGuiLayer::SetFont(const fs::path& ttfFilePath, u32 fontSize) const
 {
   ImGuiIO& io = ImGui::GetIO();
   io.Fonts->Clear();
@@ -99,7 +100,7 @@ void ImGuiLayer::RenderMenuBar(Scene& scene) const
 
   // Render preferences window
   if (viewPrefWindow)
-    GUI_RenderPreferencesWindow(viewPrefWindow, fontSize);
+    GUI_RenderPreferencesWindow(viewPrefWindow);
 }
 void ImGuiLayer::RenderViewport(u32 texture, GameObject& objSelected, const mat4f& view, const mat4f& proj) const
 {

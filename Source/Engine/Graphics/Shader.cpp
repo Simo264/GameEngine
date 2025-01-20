@@ -4,26 +4,31 @@
 #include "Core/GL.hpp"
 
 
-/* ------------------------------
-      Shader
------------------------------- */
+// ------------------------------
+//      Shader
+// ------------------------------ 
 
-void Shader::Create(i32 shaderType)
+Shader::Shader(StringView shaderName) :
+  id{ 0 },
+  name{}
+{
+  std::fill_n(name, 0, sizeof(name));
+  std::strncpy(name, shaderName.data(), sizeof(name));
+}
+
+void Shader::Create(i32 shaderType, StringView source)
 {
   id = glCreateShader(shaderType);
+  
+  const char* ptr = source.data();
+  i32 size = source.size();
+  glShaderSource(id, 1, &ptr, &size);
 }
 
 void Shader::Delete()
 {
   glDeleteShader(id);
   id = 0;
-}
-
-void Shader::LoadSource(StringView source) const
-{
-  const char* ptr = source.data();
-  i32 size = source.size();
-  glShaderSource(id, 1, &ptr, &size);
 }
 
 bool Shader::Compile() const
@@ -49,15 +54,16 @@ const char* Shader::GetShaderInfo() const
   return log;
 }
 
-/* ------------------------------
-      Program
------------------------------- */
+// ------------------------------
+//      Program
+// ------------------------------
 
-Program::Program(StringView programName)
+Program::Program(StringView programName) :
+  id{ 0 },
+  name{}
 {
-  id = 0;
-  std::fill_n(name, sizeof(name), 0);
-  std::copy(programName.begin(), programName.end(), name);
+  std::fill_n(name, 0, sizeof(name));
+  std::strncpy(name, programName.data(), sizeof(name));
 }
 
 void Program::Create()

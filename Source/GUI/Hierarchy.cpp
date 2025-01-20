@@ -1,12 +1,11 @@
-#include "Core/Core.hpp"
+#include "ImGuiLayer.hpp"
+
 #include "Engine/Scene.hpp"
 #include "Engine/ECS/ECS.hpp"
 #include "Engine/Utils.hpp"
 #include "Engine/Subsystems/ShadersManager.hpp"
 #include "Engine/Subsystems/TexturesManager.hpp"
 #include "Engine/Filesystem/Filesystem.hpp"
-
-#include "ImGuiLayer.hpp"
 
 #include <imgui/imgui.h>
 
@@ -37,8 +36,8 @@ static void Hierarchy_ListObjects(Scene& scene, GameObject& objSelected)
     ImGui::BeginGroup();
     ImGui::SetCursorPosY(ImGui::GetCursorPosY() + (ImGui::GetTextLineHeight() - 16.f) / 2);
     
-    const auto& icon = TexturesManager::Get().GetIconByPath(Filesystem::GetIconsPath() / "game-object-16.png");
-    ImGui::Image(reinterpret_cast<void*>(icon.id), ImVec2(16.f, 16.f));
+    const auto* icon = TexturesManager::Get().FindTextureIcon(Filesystem::GetIconsPath() / "game-object-16.png");
+    ImGui::Image(reinterpret_cast<void*>(icon->id), ImVec2(16.f, 16.f));
     ImGui::SameLine();
     
     auto& colors = ImGui::GetStyle().Colors;
@@ -75,8 +74,8 @@ static void Hierarchy_ObjectMenuPopup(Scene& scene, GameObject& objSelected)
       if (objSelected.HasComponent<Light>())
       {
         ShadersManager& shadersManager = ShadersManager::Get();
-        auto& shaderScene = shadersManager.GetProgramByName("Scene");
-        auto& shaderSceneShadows = shadersManager.GetProgramByName("SceneShadows");
+        auto& shaderScene = shadersManager.GetProgram("Scene");
+        auto& shaderSceneShadows = shadersManager.GetProgram("SceneShadows");
 
         if (objSelected.HasComponent<DirectionalLight>())
         {

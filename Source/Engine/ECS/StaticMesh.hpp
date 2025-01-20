@@ -57,5 +57,5 @@ private:
 	 */
 	Buffer LoadIndices(aiMesh* aimesh);
 	/** @brief Retrieves the appropriate texture from a material. */
-	Texture2D* GetMaterialTexture(aiMaterial* material, u32 textureType);
+	const Texture2D* GetMaterialTexture(aiMaterial* material, u32 textureType);
 };

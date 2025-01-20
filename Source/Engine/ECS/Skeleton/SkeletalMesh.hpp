@@ -72,7 +72,7 @@ private:
   void ProcessNode(aiNode* node, const aiScene* scene);
   Buffer LoadVertices(aiMesh* aimesh);
   Buffer LoadIndices(aiMesh* aimesh);
-  Texture2D* GetMaterialTexture(aiMaterial* material, u32 textureType);
+  const Texture2D* GetMaterialTexture(aiMaterial* material, u32 textureType);
   void LoadBonesAndWeights(Vector<Vertex_P_N_UV_T_B>& vertices, const aiMesh* aimesh);
   void LoadBoneHierarchy(BoneNode& dest, const aiNode* src);
 };

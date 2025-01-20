@@ -77,7 +77,7 @@ public:
 	 * 
 	 * Call before BeginFrame()!!
 	 */
-	void SetFont(const fs::path& ttfFilePath) const;
+	void SetFont(const fs::path& ttfFilePath, u32 fontSize) const;
 	
 	
 	void RenderMenuBar(Scene& scene) const;
@@ -97,21 +97,17 @@ public:
 	vec2i viewportPos;
 	bool viewportFocused;
 
-	i32 fontSize;
 	i32 gizmode;
 	
 	bool changeFontFamilyFlag;
-	std::pair<const char*, const fs::path*> currentFont;
 	
 private:
 	ImGuiLayer() : 
 		viewportFocused{ false },
 		viewportSize{},
 		viewportPos{},
-		currentFont{},
 		changeFontFamilyFlag{ false },
-		gizmode{ -1 },
-		fontSize{ 0 }
+		gizmode{ -1 }
 	{}
 	~ImGuiLayer() = default;
 

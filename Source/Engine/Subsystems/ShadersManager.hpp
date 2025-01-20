@@ -3,6 +3,8 @@
 #include "Core/Core.hpp"
 #include "Engine/Graphics/Shader.hpp"
 
+class IniFileHandler;
+
 /**
  * @class ShaderManager.
  * 
@@ -30,39 +32,31 @@ public:
 	/** @brief Destroy all shader objects and program objects. */
 	void CleanUp();
 
-	/**
-	 * @brief Retrieve a shader by its filename.
-	 * @throw std::out_of_range If the shader is not found, throws an exception.
-	 */
-	Shader& GetShaderByName(StringView filename);
-	
-	/**
-	 * @brief Retrieve a program by its name.
-	 * @throw std::out_of_range If the program is not found, throws an exception.
-	 */
-	Program& GetProgramByName(StringView name);
-	/** @return A constant reference to the map of shaders. */
-	const auto& GetShaders() const { return _shaders; }
-	/** @return A constant reference to the map of programs. */
-	const auto& GetPrograms() const { return _programs; }
-	
+	/** @brief Retrieve a shader by its filename. */
+	Shader& GetShader(StringView shaderName);
+	Shader& GetOrInsertShader(StringView shaderName);
+	Shader& InsertShader(StringView shaderName);
+
+	/** @brief Retrieve a program by its name. */
+	Program& GetProgram(StringView programName);
+	Program& InsertProgram(StringView programName);
+
 private:
 	ShadersManager() = default;
 	~ShadersManager() = default;
 
-	/** @brief Map storing shader objects by their filename. */
-	UnorderedMap<String, Shader> _shaders;
-	/** @brief Map storing program objects by their name. */
-	UnorderedMap<String, Program> _programs;
+	Vector<Shader> _shaders;
+	Vector<Program> _programs;
 
-	/** @brief Load shaders from files. */
-	void LoadShaders();
-	/** @brief Compile loaded shaders. */
-	void CompileShaders();
-	/** @brief Load programs from configuration or files. */
-	void LoadPrograms();
-	/** @brief Link loaded shaders to create program objects. */
-	void LinkPrograms();
-	/** @brief Set the uniforms for shader programs. */
+	// Map storing shader filename and its index.
+	UnorderedMap<String, u32> _shaderMap;
+	// Map storing program name and its index.
+	UnorderedMap<String, u32> _programMap;
+
+	void ReadConfig(class IniFileHandler& conf);
+
+	// Return the shader type based on file extension
+	i32 ResolveShaderType(StringView ext);
+
 	void SetProgramsUniforms();
 };

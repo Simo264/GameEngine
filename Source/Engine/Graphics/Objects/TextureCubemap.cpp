@@ -65,7 +65,7 @@ void TextureCubemap::SetParameterfv(i32 name, f32* values) const
   glTextureParameterfv(id, name, values);
 }
 
-void TextureCubemap::LoadImages(const Array<Texture2D*, 6>& images) const
+void TextureCubemap::LoadImages(const Array<const Texture2D*, 6>& images) const
 {
   i32 nrChannels = images.at(0)->nChannels;
   i32 width = images.at(0)->width;
@@ -76,7 +76,7 @@ void TextureCubemap::LoadImages(const Array<Texture2D*, 6>& images) const
 
   for (i32 i = 0; i < 6; i++)
   {
-    auto* texture = images.at(i);
+    const auto* texture = images.at(i);
 
     pixels.clear();
     texture->GetTextureImage(0, GL_UNSIGNED_BYTE, bufsize, reinterpret_cast<void*>(pixels.data()));

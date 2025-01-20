@@ -150,18 +150,27 @@ void SkeletalMesh::ProcessNode(aiNode* node, const aiScene* scene)
 			aiMaterial* material = scene->mMaterials[aimesh->mMaterialIndex];
 			if (material->GetTexture(aiTextureType_DIFFUSE, 0, &filename) == aiReturn_SUCCESS)
 			{
-				auto& diffuse = TexturesManager::Get().GetTextureByPath(Filesystem::GetTexturesPath() / filename.C_Str());
-				mesh.material.diffuse = &diffuse;
+				auto* diffuse = TexturesManager::Get().FindTexture(Filesystem::GetTexturesPath() / filename.C_Str());
+				if (diffuse)
+					mesh.material.diffuse = diffuse;
+				else
+					CONSOLE_WARN("Error on retrieving texture '{}'", filename.C_Str());
 			}
 			if (material->GetTexture(aiTextureType_SPECULAR, 0, &filename) == aiReturn_SUCCESS)
 			{
-				auto& specular = TexturesManager::Get().GetTextureByPath(Filesystem::GetTexturesPath() / filename.C_Str());
-				mesh.material.specular = &specular;
+				auto* specular = TexturesManager::Get().FindTexture(Filesystem::GetTexturesPath() / filename.C_Str());
+				if (specular)
+					mesh.material.specular = specular;
+				else
+					CONSOLE_WARN("Error on retrieving texture '{}'", filename.C_Str());
 			}
 			if (material->GetTexture(aiTextureType_NORMALS, 0, &filename) == aiReturn_SUCCESS)
 			{
-				auto& normal = TexturesManager::Get().GetTextureByPath(Filesystem::GetTexturesPath() / filename.C_Str());
-				mesh.material.normal = &normal;
+				auto* normal = TexturesManager::Get().FindTexture(Filesystem::GetTexturesPath() / filename.C_Str());
+				if (normal)
+					mesh.material.normal = normal;
+				else
+					CONSOLE_WARN("Error on retrieving texture '{}'", filename.C_Str());
 			}
 		}
 	}
@@ -257,11 +266,11 @@ void SkeletalMesh::LoadBoneHierarchy(BoneNode& dest, const aiNode* src)
 		LoadBoneHierarchy(child, src->mChildren[i]);
 	}
 }
-Texture2D* SkeletalMesh::GetMaterialTexture(aiMaterial* material, u32 textureType)
+const Texture2D* SkeletalMesh::GetMaterialTexture(aiMaterial* material, u32 textureType)
 {
 	aiString fileName;
 	if (material->GetTexture(static_cast<aiTextureType>(textureType), 0, &fileName) == aiReturn_SUCCESS)
-		return &TexturesManager::Get().GetTextureByPath(Filesystem::GetTexturesPath() / fileName.C_Str());
+		return TexturesManager::Get().FindTexture(Filesystem::GetTexturesPath() / fileName.C_Str());
 
 	return nullptr;
 }

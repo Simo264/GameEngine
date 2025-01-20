@@ -27,6 +27,9 @@ void Texture2D::Create(i32 target)
 }
 void Texture2D::Delete() 
 { 
+  if (id == 0)
+    return;
+
   glDeleteTextures(1, &id); 
   id = 0;
 }

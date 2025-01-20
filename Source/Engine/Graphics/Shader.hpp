@@ -20,9 +20,7 @@
 class Shader
 {
 public:
-  Shader() : 
-    id{ 0 } 
-  {}
+  Shader(StringView shaderName);
   ~Shader() = default;
 
   /**
@@ -31,33 +29,15 @@ public:
    * A shader object is used to maintain the source code strings that define a shader.
    * See https://registry.khronos.org/OpenGL-Refpages/gl4/html/glCreateShader.xhtml
    */
-  void Create(i32 shaderType);
+  void Create(i32 shaderType, StringView source);
 
-  /**
-   * @brief
-   * Frees the memory and invalidates the name associated with the shader object
-   */
+  /** @brief Frees the memory and invalidates the name associated with the shader object */
   void Delete();
 
-  /**
-   * @brief
-   * Replaces the source code in a shader object.
-   * If shader previously had source code loaded into it, the existing source code is completely replaced.
-   * 
-   * @param source: specifies the source code to be loaded into the shader
-   */
-  void LoadSource(StringView source) const;
-
-  /**
-   * @brief
-   * Compiles the source code strings that have been stored in the shader object.
-   */
+  /** @brief Compiles the source code strings that have been stored in the shader object. */
   bool Compile() const;
 
-  /**
-   * @return
-   * A parameter from a shader object. See https://registry.khronos.org/OpenGL-Refpages/gl4/html/glGetShader.xhtml
-   */
+  /** @return A parameter from a shader object. See https://registry.khronos.org/OpenGL-Refpages/gl4/html/glGetShader.xhtml */
   i32 GetParameteri(i32 name) const;
 
   /**
@@ -67,7 +47,11 @@ public:
    */
   const char* GetShaderInfo() const;
 
+  bool IsValid() const { return id != 0; }
+
   u32 id;
+
+  char name[32]; // useful for log
 };
 
 /**
@@ -104,43 +88,25 @@ public:
    */
   void Create();
 
-  /**
-   * @brief
-   * Frees the memory and invalidates the name associated with the program object
-   */
+  /** @brief Frees the memory and invalidates the name associated with the program object */
   void Delete();
 
-  /**
-   * @brief
-   * Attaches a shader object to the program object
-   */
+  /** @brief Attaches a shader object to the program object */
   void AttachShader(const Shader& shader) const;
 
-  /**
-   * @brief
-   * Detaches the shader object specified from the program object
-   */
+  /** @brief Detaches the shader object specified from the program object */
   void DetachShader(const Shader& shader) const;
 
   /**
-   * @brief
-   * Links the program object specified.
-   * 
-   * @return
-   * The status of the link operation.
+   * @brief Links the program object specified.
+   * @return The status of the link operation.
    */
   bool Link() const;
     
-  /**
-   * @return
-   * A parameter from the program object. See https://registry.khronos.org/OpenGL-Refpages/gl4/html/glGetProgram.xhtml
-   */
+  /** @return A parameter from the program object. See https://registry.khronos.org/OpenGL-Refpages/gl4/html/glGetProgram.xhtml */
   i32 GetParameteri(i32 name) const;
 
-  /**
-   * @return 
-   * The information log for the program object
-   */
+  /** @return The information log for the program object */
   const char* GetProgramInfo() const;
 
   /**
@@ -151,28 +117,16 @@ public:
    */
   void Use() const;
 
-  /**
-   * @return
-   * The location of a uniform variable
-   */
+  /** @return The location of a uniform variable */
   i32 GetUniformLocation(StringView name) const;
 
-  /**
-   * @return
-   * The index of a named uniform block
-   */
+  /** @return The index of a named uniform block */
   i32 GetUniformBlockIndex(StringView name) const;
 
-  /**
-   * @brief
-   * Assign a binding poi32 to an active uniform block
-   */
+  /** @brief Assign a binding poi32 to an active uniform block */
   void SetUniformBlockBinding(StringView blockname, i32 uniformBlockBinding) const;
 
-  /**
-   * @brief
-   * Specify the value of a uniform variable for the program object
-   */
+  /** @brief Specify the value of a uniform variable for the program object */
   void SetUniform1i(StringView uniformname, i32 value) const;
   void SetUniform2i(StringView uniformname, const vec2i& value) const;
   void SetUniform3i(StringView uniformname, const vec3i& value) const;
@@ -185,7 +139,9 @@ public:
   void SetUniformMat3f(StringView uniformname, const mat3f& value, bool transpose = false) const;
   void SetUniformMat4f(StringView uniformname, const mat4f& value, bool transpose = false) const;
 
+  bool IsValid() const { return id != 0; }
+
   u32 id;
 
-  char name[64]; /* useful for log */
+  char name[32]; // useful for log
 };

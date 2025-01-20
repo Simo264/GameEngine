@@ -77,4 +77,6 @@ namespace Utils
 	 * @return A path containing the path of the file to be saved. Returns an empty String if the dialog is canceled.
 	 */
 	fs::path SaveFileDialog(i32 numFilters, const char* filter[], const char* filterDescription);
+
+	u32 CountFilesInDirectory(const fs::path& directoryPath, bool recursive = false);
 };

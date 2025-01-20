@@ -6,6 +6,7 @@
 #include "Engine/Globals.hpp"
 #include "Engine/IniFileHandler.hpp"
 #include "Engine/Filesystem/Filesystem.hpp"
+#include "Engine/Utils.hpp"
 
 constexpr char SM_FILE_CONFIG[] = "Shader_Manager.ini";
 
@@ -15,179 +16,199 @@ constexpr char SM_FILE_CONFIG[] = "Shader_Manager.ini";
 
 void ShadersManager::Initialize()
 {
-  // Load shader files
-  CONSOLE_INFO("Loading shader...");
-  LoadShaders();
-  CONSOLE_INFO("Compiling shader...");
-  CompileShaders();
+  CONSOLE_INFO("Loading shaders and programs...");
+  
+  IniFileHandler conf((Filesystem::GetRootPath() / SM_FILE_CONFIG));
+  conf.ReadData();
 
-  // Load and link programs and set uniforms
-  CONSOLE_INFO("Loading programs...");
-  LoadPrograms();
-  CONSOLE_INFO("Linking programs...");
-  LinkPrograms();
+  u32 nrShadersInDir = Utils::CountFilesInDirectory(Filesystem::GetShadersPath());
+  u32 nrPrograms = conf.GetData().size();
+  _shaders.reserve(nrShadersInDir);
+  _programs.reserve(nrPrograms);
+
+  ReadConfig(conf);
+  
   SetProgramsUniforms();
 }
 void ShadersManager::CleanUp()
 {
   // Destoy all program objects
-  for (auto& [key, program] : _programs)
+  for (auto& program : _programs)
     program.Delete();
 
   // Destoy all shaders objects 
-  for (auto& [key, shader]  : _shaders)
+  for (auto& shader : _shaders)
     shader.Delete();
 }
 
-Shader& ShadersManager::GetShaderByName(StringView filename)
+Shader& ShadersManager::GetShader(StringView shaderName)
 {
-  try 
-  {
-    return _shaders.at(filename.data());
-  }
-  catch (std::out_of_range& e)
-  {
-    throw std::out_of_range(std::format("ShaderManager::GetShaderByName: invalid shader name '{}'", filename.data()));
-  }
+  auto it = _shaderMap.find(shaderName.data());
+  if (it == _shaderMap.end())
+    throw std::runtime_error(std::format("Shader '{}' does not exist", shaderName.data()));
+  
+  u32 i = it->second;
+  return _shaders.at(i);
 }
-Program& ShadersManager::GetProgramByName(StringView name)
+Shader& ShadersManager::GetOrInsertShader(StringView shaderName)
 {
-  try
+  auto it = _shaderMap.find(shaderName.data());
+  if (it != _shaderMap.end())
   {
-    return _programs.at(name.data());
+    u32 i = it->second;
+    return _shaders.at(i);
   }
-  catch (std::out_of_range& e)
-  {
-    throw std::out_of_range(std::format("ShaderManager::GetProgramByName: invalid program name '{}'", name.data()));
-  }
+  return InsertShader(shaderName);
+}
+Shader& ShadersManager::InsertShader(StringView shaderName)
+{
+  const fs::path& shadersDir = Filesystem::GetShadersPath();
+  fs::path filePath = shadersDir / shaderName.data();
+  
+  if (!fs::exists(filePath) || !fs::is_regular_file(filePath))
+    throw std::runtime_error(std::format("Shader file '{}' does not exist", filePath.string()));
+
+  CONSOLE_TRACE("Loading shader '{}'", shaderName.data());
+
+  u32 shaderIdx = _shaderMap.size();
+  auto [it, success] = _shaderMap.emplace(
+    std::piecewise_construct, 
+    std::forward_as_tuple(shaderName.data()),
+    std::forward_as_tuple(shaderIdx)
+  );
+  if (!success)
+    throw std::runtime_error("Error on insert shader into the map");
+
+  StringView ext = shaderName.substr(shaderName.find_last_of('.') + 1);
+  i32 shaderType = ResolveShaderType(ext);
+
+  IStream file(filePath);
+  String shaderSrc{ std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>() };
+
+  Shader& shader = _shaders.emplace_back(shaderName);
+  shader.Create(shaderType, shaderSrc);
+  if (!shader.Compile())
+    CONSOLE_ERROR("Error on compiling shader: {}", shader.GetShaderInfo());
+
+  return shader;
+}
+
+Program& ShadersManager::GetProgram(StringView programName)
+{
+  auto it = _programMap.find(programName.data());
+  if (it == _programMap.end())
+    throw std::runtime_error(std::format("Program '{}' does not exist", programName.data()));
+  
+  u32 i = it->second;
+  return _programs.at(i);
+}
+Program& ShadersManager::InsertProgram(StringView programName)
+{
+  CONSOLE_TRACE("Loading new program '{}'", programName.data());
+  
+  u32 progIdx = _programMap.size();
+  auto [it, success] = _programMap.emplace(
+    std::piecewise_construct,
+    std::forward_as_tuple(programName.data()),
+    std::forward_as_tuple(progIdx)
+  );
+  if (!success)
+    throw std::runtime_error(std::format("Error on loading program into the map"));
+
+  Program& program = _programs.emplace_back(programName);
+  program.Create();
+  return program;
 }
 
 // --------------------------------------------
 //                  PRIVATE                    
 // --------------------------------------------
 
-void ShadersManager::LoadShaders()
+i32 ShadersManager::ResolveShaderType(StringView ext)
 {
-  for (auto& entry : fs::directory_iterator(Filesystem::GetShadersPath()))
-  {
-    if (fs::is_directory(entry))
-      continue;
+  // GL_VERTEX_SHADER
+  // GL_TESS_CONTROL_SHADER
+  // GL_TESS_EVALUATION_SHADER
+  // GL_GEOMETRY_SHADER 
+  // GL_FRAGMENT_SHADER
 
-    const fs::path& entryPath = entry.path();
-    String entryStr = entryPath.string();
-    fs::path filenamePath = entryPath.filename();
-    String filename = filenamePath.string(); /* <- the name of the shader */
-    String ext = filenamePath.extension().string();
-    CONSOLE_TRACE("{}", filename);
-
-    
-    // GL_VERTEX_SHADER
-    // GL_TESS_CONTROL_SHADER
-    // GL_TESS_EVALUATION_SHADER
-    // GL_GEOMETRY_SHADER 
-    // GL_FRAGMENT_SHADER
-    
-    i32 shaderType = 0;
-    if (ext == ".vert")
-      shaderType = GL_VERTEX_SHADER;
-    else if (ext == ".tesc")
-      shaderType = GL_TESS_CONTROL_SHADER;
-    else if (ext == ".tese")
-      shaderType = GL_TESS_EVALUATION_SHADER;
-    else if (ext == ".geom")
-      shaderType = GL_GEOMETRY_SHADER;
-    else if (ext == ".frag")
-      shaderType = GL_FRAGMENT_SHADER;
-    else
-      CONSOLE_WARN("Unknown file extension {}", ext);
-
-    IStream file(entryStr);
-    String source;
-    source.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
-
-    auto [it, success] = _shaders.emplace(filename, Shader());
-    if (success)
-    {
-      Shader& shader = it->second;
-      shader.Create(shaderType);
-      shader.LoadSource(source);
-    }
-    else
-      CONSOLE_ERROR("Error on loading shader object");
-  }
+  if (ext == "vert")
+    return GL_VERTEX_SHADER;
+  if (ext == "tesc")
+    return GL_TESS_CONTROL_SHADER;
+  if (ext == "tese")
+    return GL_TESS_EVALUATION_SHADER;
+  if (ext == "geom")
+    return GL_GEOMETRY_SHADER;
+  if (ext == "frag")
+    return GL_FRAGMENT_SHADER;
+  
+  CONSOLE_WARN("Unknown file extension {}", ext.data());
+  return 0;
 }
-void ShadersManager::CompileShaders()
+void ShadersManager::ReadConfig(IniFileHandler& conf)
 {
-  for (const auto& [key, shader] : _shaders)
-  {
-    CONSOLE_TRACE("{}", key);
-
-    bool result = shader.Compile();
-    if(!result)
-      CONSOLE_ERROR("Error on compiling shader");
-  }
-}
-void ShadersManager::LoadPrograms()
-{
-  IniFileHandler conf((Filesystem::GetRootPath() / SM_FILE_CONFIG));
-  conf.ReadData();
-
+  conf.GetData().size();
+  
   for (auto const& it : conf.GetData())
   {
-    const String& section = it.first; /* <- The program name */
+    const String& section = it.first; // The program name 
+    
+    Program& program = InsertProgram(section);
+    if (!program.IsValid())
+      continue;
+
     const String& vertex = conf.GetValue(section, "vertex");
     const String& tesc = conf.GetValue(section, "tess_control");
     const String& tese = conf.GetValue(section, "tess_eval");
     const String& geometry = conf.GetValue(section, "geometry");
     const String& fragment = conf.GetValue(section, "fragment");
-    CONSOLE_TRACE("{}", section);
+    if (!vertex.empty())
+    {
+      Shader& vertShader = GetOrInsertShader(vertex);
+      program.AttachShader(vertShader);
+    }
+    if (!tesc.empty())
+    {
+      Shader& tescShader = GetOrInsertShader(tesc);
+      program.AttachShader(tescShader);
+    }
+    if (!tese.empty())
+    {
+      Shader& teseShader = GetOrInsertShader(tese);
+      program.AttachShader(teseShader);
+    }
+    if (!geometry.empty())
+    {
+      Shader& geomShader = GetOrInsertShader(geometry);
+      program.AttachShader(geomShader);
+    }
+    if (!fragment.empty())
+    {
+      Shader& fragShader = GetOrInsertShader(fragment);
+      program.AttachShader(fragShader);
+    }
 
-    Shader* vertShader = vertex.empty()   ? nullptr : &GetShaderByName(vertex);
-    Shader* tescShader = tesc.empty()     ? nullptr : &GetShaderByName(tesc);
-    Shader* teseShader = tese.empty()     ? nullptr : &GetShaderByName(tese);
-    Shader* geomShader = geometry.empty() ? nullptr : &GetShaderByName(geometry);
-    Shader* fragShader = fragment.empty() ? nullptr : &GetShaderByName(fragment);
-    
-    Program program(section);
-    program.Create();
-    if (vertShader)  program.AttachShader(*vertShader);
-    if (tescShader)  program.AttachShader(*tescShader);
-    if (teseShader)  program.AttachShader(*teseShader);
-    if (geomShader)  program.AttachShader(*geomShader);
-    if (fragShader)  program.AttachShader(*fragShader);
-    
-    auto [it, success] = _programs.emplace(section, program);
-    if (!success)
-      CONSOLE_ERROR("Error on loading program");
-  }
-}
-void ShadersManager::LinkPrograms()
-{
-  for (const auto& [key, program] : _programs)
-  {
-    CONSOLE_TRACE("{}", key);
-
-    bool result = program.Link();
-    if(!result)
-      CONSOLE_ERROR("Error on linking program");
+    if(!program.Link())
+      CONSOLE_ERROR("Error on linking program '{}': {}", program.name, program.GetProgramInfo());
   }
 }
 void ShadersManager::SetProgramsUniforms()
 {
-  auto& skyboxProg = GetProgramByName("Skybox");
+  auto& skyboxProg = GetProgram("Skybox");
   skyboxProg.SetUniform1i("u_skyboxTexture", 0);
 
-  auto& framebufferProg = GetProgramByName("Framebuffer");
+  auto& framebufferProg = GetProgram("Framebuffer");
   framebufferProg.SetUniform1i("u_fboImageTexture", 0);
   framebufferProg.SetUniform1i("u_postProcessingType", 0);
 
-  auto& sceneProg = GetProgramByName("Scene");
+  auto& sceneProg = GetProgram("Scene");
   sceneProg.SetUniform1i("u_useNormalMap", 0);
   sceneProg.SetUniform1i("u_material.diffuseTexture", 0);
   sceneProg.SetUniform1i("u_material.specularTexture", 1);
   sceneProg.SetUniform1i("u_material.normalTexture", 2);
 
-  auto& sceneShadowsProg = GetProgramByName("SceneShadows");
+  auto& sceneShadowsProg = GetProgram("SceneShadows");
   sceneShadowsProg.SetUniform1i("u_useNormalMap", 0);
   sceneShadowsProg.SetUniform1i("u_material.diffuseTexture", 0);
   sceneShadowsProg.SetUniform1i("u_material.specularTexture", 1);
@@ -195,7 +216,7 @@ void ShadersManager::SetProgramsUniforms()
   sceneShadowsProg.SetUniform1i("u_depthMapTexture", 10);
   sceneShadowsProg.SetUniform1i("u_depthCubeMapTexture", 11);
   
-  auto& skeletalAnimProg = GetProgramByName("SkeletalAnim");
+  auto& skeletalAnimProg = GetProgram("SkeletalAnim");
   skeletalAnimProg.SetUniform1i("u_useNormalMap", 0);
   skeletalAnimProg.SetUniform1i("u_material.diffuseTexture", 0);
   skeletalAnimProg.SetUniform1i("u_material.specularTexture", 1);

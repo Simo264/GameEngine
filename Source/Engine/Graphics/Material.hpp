@@ -4,7 +4,7 @@ class Texture2D;
 
 struct Material
 {
-	Texture2D* diffuse;
-	Texture2D* specular;
-	Texture2D* normal;
+	const Texture2D* diffuse;
+	const Texture2D* specular;
+	const Texture2D* normal;
 };

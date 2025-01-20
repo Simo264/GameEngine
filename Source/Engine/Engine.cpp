@@ -18,12 +18,9 @@
 #include "Engine/Graphics/Objects/TextureCubemap.hpp"
 #include "Engine/Graphics/Shader.hpp"
 #include "Engine/Graphics/Renderer.hpp"
-
 #include "Engine/Subsystems/WindowManager.hpp"
 #include "Engine/Subsystems/ShadersManager.hpp"
 #include "Engine/Subsystems/TexturesManager.hpp"
-#include "Engine/Subsystems/FontsManager.hpp"
-
 #include "Engine/Filesystem/Filesystem.hpp"
 
 #include "GUI/ImGuiLayer.hpp"
@@ -225,13 +222,13 @@ static void CreateSkybox(Mesh& skybox, TextureCubemap& skyboxTexture)
   skybox.SetupAttributeFloat(0, 0, VertexFormat(3, GL_FLOAT, false, 0));
 
   TexturesManager& texturesManager = TexturesManager::Get();
-  Array<Texture2D*, 6> images = {
-    &texturesManager.GetTextureByPath(Filesystem::GetTexturesPath() / "skybox/right.jpg"),
-    &texturesManager.GetTextureByPath(Filesystem::GetTexturesPath() / "skybox/left.jpg"),
-    &texturesManager.GetTextureByPath(Filesystem::GetTexturesPath() / "skybox/top.jpg"),
-    &texturesManager.GetTextureByPath(Filesystem::GetTexturesPath() / "skybox/bottom.jpg"),
-    &texturesManager.GetTextureByPath(Filesystem::GetTexturesPath() / "skybox/front.jpg"),
-    &texturesManager.GetTextureByPath(Filesystem::GetTexturesPath() / "skybox/back.jpg"),
+  Array<const Texture2D*, 6> images = {
+    texturesManager.FindTexture(Filesystem::GetTexturesPath() / "skybox/right.jpg"),
+    texturesManager.FindTexture(Filesystem::GetTexturesPath() / "skybox/left.jpg"),
+    texturesManager.FindTexture(Filesystem::GetTexturesPath() / "skybox/top.jpg"),
+    texturesManager.FindTexture(Filesystem::GetTexturesPath() / "skybox/bottom.jpg"),
+    texturesManager.FindTexture(Filesystem::GetTexturesPath() / "skybox/front.jpg"),
+    texturesManager.FindTexture(Filesystem::GetTexturesPath() / "skybox/back.jpg"),
   };
   i32 cubemapInternalFormat = images.at(0)->internalFormat;
   i32 width = images.at(0)->width;
@@ -326,10 +323,6 @@ void Engine::Initialize()
     false                                 // window v-sync
   ));
 
-  // Initialize font manager
-  // --------------------------
-  FontsManager::Get().Initialize();
-  
   // Initialize shader manager
   // -------------------------
   ShadersManager::Get().Initialize();
@@ -337,8 +330,6 @@ void Engine::Initialize()
   // Initialize texture manager
   // --------------------------
   TexturesManager::Get().Initialize();
-
-  
 
   // Setup ImGui context
   // -------------------
@@ -407,14 +398,14 @@ void Engine::Run()
   WindowManager& windowManager = WindowManager::Get();
   TexturesManager& texturesManager = TexturesManager::Get();
   ShadersManager& shadersManager = ShadersManager::Get();
-  Program& skyboxProgram = shadersManager.GetProgramByName("Skybox");
-  Program& gridPlaneProgram = shadersManager.GetProgramByName("GridPlane");
-  Program& depthMapProgram = shadersManager.GetProgramByName("DepthMap");
-  Program& depthCubeMapProgram = shadersManager.GetProgramByName("DepthCubeMap");
-  Program& sceneProgram = shadersManager.GetProgramByName("Scene");
-  Program& sceneShadowsProgram = shadersManager.GetProgramByName("SceneShadows");
-  Program& skeletalAnimProgram = shadersManager.GetProgramByName("SkeletalAnim");
-  Program& skeletalAnimShadowsProgram = shadersManager.GetProgramByName("SkeletalAnimShadows");
+  Program& skyboxProgram = shadersManager.GetProgram("Skybox");
+  Program& gridPlaneProgram = shadersManager.GetProgram("GridPlane");
+  Program& depthMapProgram = shadersManager.GetProgram("DepthMap");
+  Program& depthCubeMapProgram = shadersManager.GetProgram("DepthCubeMap");
+  Program& sceneProgram = shadersManager.GetProgram("Scene");
+  Program& sceneShadowsProgram = shadersManager.GetProgram("SceneShadows");
+  Program& skeletalAnimProgram = shadersManager.GetProgram("SkeletalAnim");
+  Program& skeletalAnimShadowsProgram = shadersManager.GetProgram("SkeletalAnimShadows");
 
   constexpr bool renderTerrain = false;
   constexpr bool renderInfiniteGrid = true;
@@ -437,7 +428,7 @@ void Engine::Run()
     // Set new font before BeginFrame
     if (gui.changeFontFamilyFlag)
     {
-      gui.SetFont(*gui.currentFont.second);
+      gui.SetFont(Filesystem::GetFontsPath() / g_fontFamily, g_fontSize);
       gui.changeFontFamilyFlag = false;
     }
     gui.BeginFrame();
