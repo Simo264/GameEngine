@@ -26,6 +26,12 @@ public:
   /** @brief Default destructor for the SkeletonMesh class. */
   ~SkeletalMesh() = default;
 
+  static constexpr u32 GetMaxNumBones()
+  {
+    constexpr u32 SKELETAL_MESH_MAX_NUM_BONES = 100;
+    return SKELETAL_MESH_MAX_NUM_BONES;
+  }
+
   /** @brief Constructs a SkeletonMesh object by loading a skeletal model from the specified file path. */
   void CreateFromFile(const fs::path& path);
 
@@ -64,8 +70,6 @@ public:
   /** @brief The root node of the bone hierarchy. */
   BoneNode rootNode;
 
-  UnorderedMap<String, u32> boneMap; // BoneName - boneIndex
-
   fs::path path;
   
 private:
@@ -75,4 +79,6 @@ private:
   const Texture2D* GetMaterialTexture(aiMaterial* material, u32 textureType);
   void LoadBonesAndWeights(Vector<Vertex_P_N_UV_T_B>& vertices, const aiMesh* aimesh);
   void LoadBoneHierarchy(BoneNode& dest, const aiNode* src);
+
+  UnorderedMap<String, u32> _boneMap; // BoneName - boneIndex
 };

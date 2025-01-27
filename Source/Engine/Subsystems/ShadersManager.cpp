@@ -41,7 +41,7 @@ void ShadersManager::CleanUp()
     shader.Delete();
 }
 
-Shader& ShadersManager::GetShader(StringView shaderName)
+const Shader& ShadersManager::GetShader(StringView shaderName) const
 {
   auto it = _shaderMap.find(shaderName.data());
   if (it == _shaderMap.end())
@@ -50,7 +50,7 @@ Shader& ShadersManager::GetShader(StringView shaderName)
   u32 i = it->second;
   return _shaders.at(i);
 }
-Shader& ShadersManager::GetOrInsertShader(StringView shaderName)
+const Shader& ShadersManager::GetOrInsertShader(StringView shaderName)
 {
   auto it = _shaderMap.find(shaderName.data());
   if (it != _shaderMap.end())
@@ -60,7 +60,7 @@ Shader& ShadersManager::GetOrInsertShader(StringView shaderName)
   }
   return InsertShader(shaderName);
 }
-Shader& ShadersManager::InsertShader(StringView shaderName)
+const Shader& ShadersManager::InsertShader(StringView shaderName)
 {
   const fs::path& shadersDir = Filesystem::GetShadersPath();
   fs::path filePath = shadersDir / shaderName.data();
@@ -93,7 +93,7 @@ Shader& ShadersManager::InsertShader(StringView shaderName)
   return shader;
 }
 
-Program& ShadersManager::GetProgram(StringView programName)
+const Program& ShadersManager::GetProgram(StringView programName) const
 {
   auto it = _programMap.find(programName.data());
   if (it == _programMap.end())
@@ -102,7 +102,7 @@ Program& ShadersManager::GetProgram(StringView programName)
   u32 i = it->second;
   return _programs.at(i);
 }
-Program& ShadersManager::InsertProgram(StringView programName)
+const Program& ShadersManager::InsertProgram(StringView programName)
 {
   CONSOLE_TRACE("Loading new program '{}'", programName.data());
   
@@ -154,7 +154,7 @@ void ShadersManager::ReadConfig(IniFileHandler& conf)
   {
     const String& section = it.first; // The program name 
     
-    Program& program = InsertProgram(section);
+    const Program& program = InsertProgram(section);
     if (!program.IsValid())
       continue;
 
@@ -165,27 +165,27 @@ void ShadersManager::ReadConfig(IniFileHandler& conf)
     const String& fragment = conf.GetValue(section, "fragment");
     if (!vertex.empty())
     {
-      Shader& vertShader = GetOrInsertShader(vertex);
+      const Shader& vertShader = GetOrInsertShader(vertex);
       program.AttachShader(vertShader);
     }
     if (!tesc.empty())
     {
-      Shader& tescShader = GetOrInsertShader(tesc);
+      const Shader& tescShader = GetOrInsertShader(tesc);
       program.AttachShader(tescShader);
     }
     if (!tese.empty())
     {
-      Shader& teseShader = GetOrInsertShader(tese);
+      const Shader& teseShader = GetOrInsertShader(tese);
       program.AttachShader(teseShader);
     }
     if (!geometry.empty())
     {
-      Shader& geomShader = GetOrInsertShader(geometry);
+      const Shader& geomShader = GetOrInsertShader(geometry);
       program.AttachShader(geomShader);
     }
     if (!fragment.empty())
     {
-      Shader& fragShader = GetOrInsertShader(fragment);
+      const Shader& fragShader = GetOrInsertShader(fragment);
       program.AttachShader(fragShader);
     }
 
@@ -193,7 +193,7 @@ void ShadersManager::ReadConfig(IniFileHandler& conf)
       CONSOLE_ERROR("Error on linking program '{}': {}", program.name, program.GetProgramInfo());
   }
 }
-void ShadersManager::SetProgramsUniforms()
+void ShadersManager::SetProgramsUniforms() const
 {
   auto& skyboxProg = GetProgram("Skybox");
   skyboxProg.SetUniform1i("u_skyboxTexture", 0);

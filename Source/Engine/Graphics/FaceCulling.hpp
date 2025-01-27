@@ -1,20 +1,7 @@
 #pragma once
 
 #include "Core/Core.hpp"
-#include "Core/GL.hpp"
-
-enum class CullFace : i32
-{
-	FRONT				= GL_FRONT,
-	BACK				= GL_BACK,
-	FRONT_BACK	= GL_FRONT_AND_BACK
-};
-
-enum class FrontFace : i32
-{
-	CLOCKWISE					= GL_CW,
-	COUNTER_CLOCKWISE = GL_CCW
-};
+#include "Engine/Graphics/OpenGLEnums.hpp"
 
 /**
  * https://learnopengl.com/Advanced-OpenGL/Face-culling
@@ -40,41 +27,15 @@ enum class FrontFace : i32
  */
 namespace FaceCulling
 {
-	/**
-	 * @brief
-	 * Cull polygons based on their winding in window coordinates
-	 */
-	void EnableFaceCulling()
-	{
-		glEnable(GL_CULL_FACE);
-	}
+	/** @brief Cull polygons based on their winding in window coordinates */
+	void EnableFaceCulling();
 
-	/**
-	 * @brief
-	 * Disable face culling
-	 */
-	void DisableFaceCulling()
-	{
-		glDisable(GL_CULL_FACE);
-	}
+	/** @brief Disable face culling */
+	void DisableFaceCulling();
 
-	/**
-	 * @brief
-	 * Specify whether front- or back-facing facets can be culled. 
-	 * See https://registry.khronos.org/OpenGL-Refpages/gl4/html/glCullFace.xhtml
-	 */
-	void SetCullFace(CullFace mode)
-	{
-		glCullFace(static_cast<i32>(mode));
-	}
+	/** @brief Specify whether front- or back-facing facets can be culled. */
+	void SetCullFace(CullFaceMode mode);
 
-	/**
-	 * @brief
-	 * Specifies which of the clockwise and counterclockwise facets are front-facing and back-facing.
-	 * See https://registry.khronos.org/OpenGL-Refpages/gl4/html/glFrontFace.xhtml
-	 */
-	void SetFrontFacing(FrontFace mode)
-	{
-		glFrontFace(static_cast<i32>(mode));
-	}
+	/** @brief Specifies which of the clockwise and counterclockwise facets are front-facing and back-facing. */
+	void SetFrontFacing(FrontFaceMode mode);
 }

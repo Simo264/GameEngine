@@ -33,7 +33,7 @@ const Vector<Animation>* AnimationsManager::LoadSkeletonAnimations(const fs::pat
 	CONSOLE_WARN("Error on loading skeleton's animations '{}'", skeletonPath.string());
 	return nullptr;
 }
-const Vector<Animation>* AnimationsManager::GetSkeletonAnimations(const fs::path& skeletonPath)
+const Vector<Animation>* AnimationsManager::FindSkeletonAnimations(const fs::path& skeletonPath)
 {
 	auto it = _animationsMap.find(skeletonPath);
 	if (it != _animationsMap.end())

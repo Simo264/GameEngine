@@ -21,7 +21,7 @@ public:
 	}
 
 	const Vector<Animation>* LoadSkeletonAnimations(const fs::path& skeletonPath, const Vector<fs::path> animations);
-	const Vector<Animation>* GetSkeletonAnimations(const fs::path& skeletonPath);
+	const Vector<Animation>* FindSkeletonAnimations(const fs::path& skeletonPath);
 
 private:
 	AnimationsManager() = default;

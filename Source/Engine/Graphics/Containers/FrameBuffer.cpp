@@ -9,7 +9,6 @@ void FrameBuffer::Create()
 
 void FrameBuffer::Delete()
 {
-	GL_COLOR_ATTACHMENT1;
 	u64 size = textAttachments.size();
 	if (size > 0)
 		glDeleteTextures(size, textAttachments.data());
@@ -78,8 +77,8 @@ void FrameBuffer::Blit(
 	i32 destLowerY,
 	i32 destUpperX,
 	i32 destUpperY,
-	BlitMask mask,
-	BlitFilter filter) const
+	FramebufferBlitMask mask,
+	FramebufferBlitFilter filter) const
 {
 	glBlitNamedFramebuffer(
 		id, dest.id, 

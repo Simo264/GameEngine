@@ -4,41 +4,44 @@
 #include "Engine/Graphics/Objects/Texture2D.hpp"
 #include "Engine/Graphics/Objects/RenderBuffer.hpp"
 
-enum class FramebufferTarget : u32 
+enum class FramebufferTarget : u32
 {
-	Draw			= 0x8CA9, // GL_DRAW_FRAMEBUFFER
-	Read			= 0x8CA8, // GL_READ_FRAMEBUFFER
-	ReadDraw	= 0x8D40  // GL_FRAMEBUFFER
+	Draw = 0x8CA9, // GL_DRAW_FRAMEBUFFER
+	Read = 0x8CA8, // GL_READ_FRAMEBUFFER
+	ReadDraw = 0x8D40  // GL_FRAMEBUFFER
 };
-enum class FramebufferAttachment : u32 
+
+enum class FramebufferAttachment : u32
 {
-	Color0				= 0x8CE0, // GL_COLOR_ATTACHMENT0
-	Color1				= 0x8CE1, // GL_COLOR_ATTACHMENT1
-	Color2				= 0x8CE2, // GL_COLOR_ATTACHMENT2
-	Color3				= 0x8CE3, // GL_COLOR_ATTACHMENT3
-	Color4				= 0x8CE4, // GL_COLOR_ATTACHMENT4
-	Color5				= 0x8CE5, // GL_COLOR_ATTACHMENT5
-	Color6				= 0x8CE6, // GL_COLOR_ATTACHMENT6
-	Color7				= 0x8CE7, // GL_COLOR_ATTACHMENT7
-	Color8				= 0x8CE8, // GL_COLOR_ATTACHMENT8
-	Color9				= 0x8CE9, // GL_COLOR_ATTACHMENT9
+	Color0 = 0x8CE0, // GL_COLOR_ATTACHMENT0
+	Color1 = 0x8CE1, // GL_COLOR_ATTACHMENT1
+	Color2 = 0x8CE2, // GL_COLOR_ATTACHMENT2
+	Color3 = 0x8CE3, // GL_COLOR_ATTACHMENT3
+	Color4 = 0x8CE4, // GL_COLOR_ATTACHMENT4
+	Color5 = 0x8CE5, // GL_COLOR_ATTACHMENT5
+	Color6 = 0x8CE6, // GL_COLOR_ATTACHMENT6
+	Color7 = 0x8CE7, // GL_COLOR_ATTACHMENT7
+	Color8 = 0x8CE8, // GL_COLOR_ATTACHMENT8
+	Color9 = 0x8CE9, // GL_COLOR_ATTACHMENT9
 	// ...
 	// Color31		= GL_COLOR_ATTACHMENT31
-	Depth					= 0x8D00, // GL_DEPTH_ATTACHMENT
-	Stencil				= 0x8D20, // GL_STENCIL_ATTACHMENT
-	DepthStencil	= 0x821A  // GL_DEPTH_STENCIL_ATTACHMENT
+	Depth = 0x8D00, // GL_DEPTH_ATTACHMENT
+	Stencil = 0x8D20, // GL_STENCIL_ATTACHMENT
+	DepthStencil = 0x821A  // GL_DEPTH_STENCIL_ATTACHMENT
 };
-enum class BlitFilter : u32 
+
+enum class FramebufferBlitFilter : u32
 {
 	Nearest = 0x2600, // GL_NEAREST
-	Linear	= 0x2601  // GL_LINEAR
+	Linear = 0x2601  // GL_LINEAR
 };
-enum class BlitMask : u32 
+
+enum class FramebufferBlitMask : u32
 {
-	ColorBuffer		= 0x00004000, // GL_COLOR_BUFFER_BIT
-	DepthBuffer		= 0x00000100, // GL_DEPTH_BUFFER_BIT
+	ColorBuffer = 0x00004000, // GL_COLOR_BUFFER_BIT
+	DepthBuffer = 0x00000100, // GL_DEPTH_BUFFER_BIT
 	StencilBuffer = 0x00000400, // GL_STENCIL_BUFFER_BIT
-	All						= ColorBuffer | DepthBuffer | StencilBuffer
+	All = ColorBuffer | DepthBuffer | StencilBuffer
 };
 
 /**
@@ -119,25 +122,13 @@ public:
 	 */
 	i32 CheckStatus() const;
 
-	/**
-	 * @brief
-	 * Attach a level of a texture object as a logical buffer of the framebuffer object.
-	 * See https://registry.khronos.org/OpenGL-Refpages/gl4/html/glFramebufferTexture.xhtml
-	 */ 
+	/** @brief Attach a level of a texture object as a logical buffer of the framebuffer object. */ 
 	void AttachTexture(FramebufferAttachment attachment, u32 texture, i32 level);
 
-	/**
-	 * @brief
-	 * Attach a renderbuffer as a logical buffer of the framebuffer object.
-	 * See https://registry.khronos.org/OpenGL-Refpages/gl4/html/glFramebufferRenderbuffer.xhtml
-	 */
+	/** @brief Attach a renderbuffer as a logical buffer of the framebuffer object. */
 	void AttachRenderBuffer(FramebufferAttachment attachment, RenderBuffer renderbuffer);
 
-	/**
-	 * @brief
-	 * Copy a block of pixels from one framebuffer object to another.
-	 * See https://registry.khronos.org/OpenGL-Refpages/gl4/html/glBlitFramebuffer.xhtml
-	 */
+	/** @brief Copy a block of pixels from one framebuffer object to another. */
 	void Blit(const FrameBuffer& dest, 
 		i32 srcLowerX,
 		i32 srcLowerY,
@@ -147,8 +138,8 @@ public:
 		i32 destLowerY,
 		i32 destUpperX,
 		i32 destUpperY,
-		BlitMask mask,
-		BlitFilter filter
+		FramebufferBlitMask mask,
+		FramebufferBlitFilter filter
 	) const;
 
 	/**

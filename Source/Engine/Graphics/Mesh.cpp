@@ -1,7 +1,6 @@
 #include "Mesh.hpp"
 
 #include "Core/Log/Logger.hpp"
-#include "Engine/Graphics/Renderer.hpp"
 #include "Engine/Subsystems/TexturesManager.hpp"
 
 // --------------------------

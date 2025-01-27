@@ -33,13 +33,13 @@ public:
 	void CleanUp();
 
 	/** @brief Retrieve a shader by its filename. */
-	Shader& GetShader(StringView shaderName);
-	Shader& GetOrInsertShader(StringView shaderName);
-	Shader& InsertShader(StringView shaderName);
+	const Shader& GetShader(StringView shaderName) const;
+	const Shader& GetOrInsertShader(StringView shaderName);
+	const Shader& InsertShader(StringView shaderName);
 
 	/** @brief Retrieve a program by its name. */
-	Program& GetProgram(StringView programName);
-	Program& InsertProgram(StringView programName);
+	const Program& GetProgram(StringView programName) const;
+	const Program& InsertProgram(StringView programName);
 
 private:
 	ShadersManager() = default;
@@ -58,5 +58,5 @@ private:
 	// Return the shader type based on file extension
 	i32 ResolveShaderType(StringView ext);
 
-	void SetProgramsUniforms();
+	void SetProgramsUniforms() const;
 };

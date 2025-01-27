@@ -1,19 +1,7 @@
 #pragma once
 
 #include "Core/Core.hpp"
-#include "Core/GL.hpp"
-
-enum class DepthFun : i32
-{
-	ALWAYS		= GL_ALWAYS,
-	NEVER			= GL_NEVER,
-	LESS			= GL_LESS,
-	LEQUAL		= GL_LEQUAL,
-	GREATER		= GL_GREATER,
-	GEQUAL		= GL_GEQUAL,
-	EQUAL			= GL_EQUAL,
-	NOTEQUAL	= GL_NOTEQUAL
-};
+#include "Engine/Graphics/OpenGLEnums.hpp"
 
 /**
  * https://open.gl/depthstencils
@@ -42,49 +30,19 @@ enum class DepthFun : i32
  */
 namespace DepthTest 
 {
-	/**
-	 * @brief
-	 * Do depth comparisons and update the depth buffer
-	 */
-	void EnableTest()
-	{
-		glEnable(GL_DEPTH_TEST);
-	}
+	/** @brief Do depth comparisons and update the depth buffer */
+	void EnableTest();
 
-	/**
-	 * @brief
-	 * Disable depth comparisons
-	 */
-	void DisableTest()
-	{
-		glDisable(GL_DEPTH_TEST);
-	}
+	/** @brief Disable depth comparisons */
+	void DisableTest();
 
-	/**
-	 * @brief
-	 * Enable writing into the depth buffer. See https://registry.khronos.org/OpenGL-Refpages/gl4/html/glDepthMask.xhtml
-	 */
-	void EnableWritingBuffer()
-	{
-		glDepthMask(GL_TRUE);
-	}
+	/** @brief Enable writing into the depth buffer. */
+	void EnableWritingBuffer();
 
-	/**
-	 * @brief
-	 * Disable writing into the depth buffer. See https://registry.khronos.org/OpenGL-Refpages/gl4/html/glDepthMask.xhtml
-	 */
-	void DisableWritingBuffer()
-	{
-		glDepthMask(GL_FALSE);
-	}
+	/** @brief Disable writing into the depth buffer. */
+	void DisableWritingBuffer();
 
-	/**
-	 * @brief
-	 * Specify the value used for depth buffer comparisons. See https://registry.khronos.org/OpenGL-Refpages/gl4/html/glDepthFunc.xhtml
-	 */
-	void SetDepthFun(DepthFun fun)
-	{
-		glDepthFunc(static_cast<i32>(fun));
-	}
+	/** @brief Specify the value used for depth buffer comparisons. */
+	void SetDepthFun(CompareFunc fun);
 }
 

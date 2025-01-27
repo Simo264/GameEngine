@@ -15,7 +15,7 @@ out mat3 TBN;
 out vec3 TangentViewPos;
 out vec3 TangentFragPos;
 
-layout (std140, binding = 0) uniform cameraBlock
+layout (std140, binding = 0) uniform CameraBlock
 {
   mat4 u_view;
   mat4 u_projection;
@@ -25,7 +25,10 @@ uniform vec3 u_viewPos;
 
 const int MAX_BONES = 100;
 const int MAX_BONE_INFLUENCE = 4;
-uniform mat4 u_boneTransforms[MAX_BONES];
+layout (std140, binding = 2) uniform BoneBlock 
+{
+  mat4 u_boneTransforms[MAX_BONES];
+};
 
 void main()
 {

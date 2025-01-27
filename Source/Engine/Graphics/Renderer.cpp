@@ -3,8 +3,8 @@
 #include "Core/GL.hpp"
 #include "Core/Log/Logger.hpp"
 
-#include "Engine/Graphics/Containers/VertexArray.hpp"
 #include "Engine/Globals.hpp"
+#include "Engine/Graphics/Containers/VertexArray.hpp"
 
 namespace Renderer
 {

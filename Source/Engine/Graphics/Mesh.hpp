@@ -1,10 +1,10 @@
 #pragma once
 
 #include "Core/Core.hpp"
-#include "Engine/Graphics/Vertex.hpp"
+
+#include "Engine/Graphics/Renderer.hpp"
 #include "Engine/Graphics/Material.hpp"
 #include "Engine/Graphics/Containers/VertexArray.hpp"
-#include "Engine/Graphics/Renderer.hpp"
 
 /**
  * @brief

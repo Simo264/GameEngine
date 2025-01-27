@@ -61,9 +61,4 @@ void ModelsManager::DestroyAll()
 {
 	for (auto& [path, staticMesh] : _cacheStaticMesh)
 		staticMesh.Destroy();
-
-	//for (const auto& [path, skeletalMesh] : _cacheStaticMesh)
-	//{
-	//	
-	//}
 }

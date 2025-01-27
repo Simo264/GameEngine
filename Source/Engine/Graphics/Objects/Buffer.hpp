@@ -2,6 +2,34 @@
 
 #include "Core/Core.hpp"
 
+enum class BufferUsage : u32 
+{
+	StreamDraw	= 0x88E0, // GL_STREAM_DRAW
+	StreamRead	= 0x88E1, // GL_STREAM_READ
+	StreamCopy	= 0x88E2, // GL_STREAM_COPY
+	StaticDraw	= 0x88E4, // GL_STATIC_DRAW
+	StaticRead	= 0x88E5, // GL_STATIC_READ
+	StaticCopy	= 0x88E6, // GL_STATIC_COPY
+	DynamicDraw = 0x88E8, // GL_DYNAMIC_DRAW
+	DynamicRead = 0x88E9, // GL_DYNAMIC_READ
+	DynamicCopy = 0x88EA  // GL_DYNAMIC_COPY
+};
+
+enum class BufferAccess : u32 
+{
+	ReadOnly	= 0x88B8, // GL_READ_ONLY
+	WriteOnly = 0x88B9, // GL_WRITE_ONLY
+	ReadWrite = 0x88BA  // GL_READ_WRITE
+};
+
+enum class BufferTarget : u32 
+{
+	AtomicCounter			= 0x92C0, // GL_ATOMIC_COUNTER_BUFFER
+	ShaderStorage			= 0x90D2, // GL_SHADER_STORAGE_BUFFER
+	TransformFeedback = 0x8C8E, // GL_TRANSFORM_FEEDBACK_BUFFER
+	Uniform						= 0x8A11  // GL_UNIFORM_BUFFER
+};
+
 /**
  * @brief
  * https://www.khronos.org/opengl/wiki/Buffer_Object
@@ -14,19 +42,13 @@ class Buffer
 {
 public:
 	Buffer() : id{ 0 } {}
-	Buffer(u64 size, const void* data, i32 usage);
+	Buffer(u64 size, const void* data, BufferUsage usage);
 	~Buffer() = default;
 
-	/**
-	 * @brief
-	 * Create buffer object
-	 */
+	/** @brief Create buffer object */
 	void Create();
 
-	/**
-	 * @brief
-	 * Delete buffer object and invalidates the name associated with the buffer object 
-	 */
+	/** @brief Delete buffer object and invalidates the name associated with the buffer object */
 	void Delete();
 	
 	/**
@@ -34,9 +56,8 @@ public:
 	 * Create a new data store for the buffer object.
 	 * While creating the new storage, any pre-existing data store is deleted.
 	 * The new data store is created with the specified size in bytes and usage.
-	 * See https://registry.khronos.org/OpenGL-Refpages/gl4/html/glBufferData.xhtml
 	 */
-	void CreateStorage(u64 size, const void* data, i32 usage) const;
+	void CreateStorage(u64 size, const void* data, BufferUsage usage) const;
 
 	/**
 	 * @brief
@@ -60,33 +81,17 @@ public:
 	 */
 	void CopyStorage(Buffer writeBuffer, i32 readOffset, i32 writeOffset, u64 size) const;
 
-	/**
-	 * @brief
-	 * Map all of the buffer object's data store into the client's address space
-	 *
-	 * @param access: GL_READ_ONLY, GL_WRITE_ONLY, or GL_READ_WRITE
-	 */
-	void* MapStorage(i32 access) const;
+	/** @brief Map all of the buffer object's data store into the client's address space */
+	void* MapStorage(BufferAccess access) const;
 
-	/**
-	 * @brief
-	 * Release the mapping of the buffer object's data store into the client's address space
-	 */
+	/** @brief Release the mapping of the buffer object's data store into the client's address space */
 	bool UnmapStorage() const;
 
-	/**
-	 * @brief
-	 * Bind the buffer object to an indexed buffer target. 
-	 * See https://registry.khronos.org/OpenGL-Refpages/gl4/html/glBindBufferBase.xhtml
-	 */
-	void BindBase(i32 target, i32 bindingpoint) const;
+	/** @brief Bind the buffer object to an indexed buffer target. */
+	void BindBase(BufferTarget target, i32 bindingpoint) const;
 
-	/**
-	 * @brief
-	 * Bind a range within the buffer object to an indexed buffer target. 
-	 * See https://registry.khronos.org/OpenGL-Refpages/gl4/html/glBindBufferRange.xhtml
-	 */
-	void BindRange(i32 target, i32 bindingpoint, i32 offset, u64 size) const;
+	/** @brief Bind a range within the buffer object to an indexed buffer target. */
+	void BindRange(BufferTarget target, i32 bindingpoint, i32 offset, u64 size) const;
 
 	bool IsValid() const;
 

@@ -1,8 +1,7 @@
 #pragma once
 
 #include "Core/Core.hpp"
-
-class Texture2D;
+#include "Engine/Graphics/Objects/Texture2D.hpp"
 
 class TextureCubemap
 {
@@ -15,10 +14,10 @@ public:
 	/** @brief Create texture object */
 	void Create();
 
-  /** @brief Allocate the entire cubemap with a single call glTextureStorage2D. See https://registry.khronos.org/OpenGL-Refpages/gl4/html/glTexStorage2D.xhtml */
-  void CreateStorage(i32 internalFormat, i32 width, i32 height) const;
+  /** @brief Allocate the entire cubemap with a single call glTextureStorage2D. */
+  void CreateStorage(Texture2DInternalFormat internalFormat, i32 width, i32 height) const;
 
-  /** @brief Specify a three-dimensional texture subimage. See https://registry.khronos.org/OpenGL-Refpages/gl4/html/glTexSubImage3D.xhtml */
+  /** @brief Specify a three-dimensional texture subimage. */
   void SubImage3D(
     i32 level,
     i32 xoffset,
@@ -41,10 +40,7 @@ public:
   void BindTextureUnit(i32 unit) const;
 
   /** @brief Set texture parameters */
-  void SetParameteri(i32 name, i32 value) const;
-  void SetParameteriv(i32 name, i32* values) const;
-  void SetParameterf(i32 name, f32 value) const;
-  void SetParameterfv(i32 name, f32* values) const;
+  void SetParameteri(TextureParameteriName name, TextureParameteriParam value) const;
 
   void LoadImages(const Array<const Texture2D*, 6>& images) const;
 

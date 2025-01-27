@@ -63,13 +63,13 @@ struct SpotLight
 
 /* ---------- Uniforms ---------- */
 /* ------------------------------ */
-layout (std140, binding = 1) uniform lightBlock
+layout (std140, binding = 1) uniform LightBlock
 {
   DirectionalLight  u_directionalLight;
   PointLight        u_pointLight;
   SpotLight         u_spotLight;
 };
-uniform Material          u_material;
+uniform Material u_material;
 
 
 uniform int u_useNormalMap;

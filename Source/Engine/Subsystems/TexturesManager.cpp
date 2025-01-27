@@ -8,13 +8,13 @@
 static void CreateDefaultTexture(Texture2D& texture, u8 r, u8 g, u8 b)
 {
   texture.format = GL_RGB;
-  texture.Create(GL_TEXTURE_2D);
-  texture.CreateStorage(GL_RGB8, 1, 1);
+  texture.Create(Texture2DTarget::Texture2D);
+  texture.CreateStorage(Texture2DInternalFormat::RGB8, 1, 1);
   texture.UpdateStorage(0, 0, 0, GL_UNSIGNED_BYTE, Array<u8, 3>{ r,g,b }.data());
-  texture.SetParameteri(GL_TEXTURE_WRAP_S, GL_REPEAT);
-  texture.SetParameteri(GL_TEXTURE_WRAP_T, GL_REPEAT);
-  texture.SetParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  texture.SetParameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  texture.SetParameteri(TextureParameteriName::TextureWrapS, TextureParameteriParam::Repeat);
+  texture.SetParameteri(TextureParameteriName::TextureWrapT, TextureParameteriParam::Repeat);
+  texture.SetParameteri(TextureParameteriName::TextureMinFilter, TextureParameteriParam::Linear);
+  texture.SetParameteri(TextureParameteriName::TextureMagFilter, TextureParameteriParam::Linear);
 }
 
 // ----------------------------------------------------- 
@@ -81,7 +81,7 @@ const Texture2D* TexturesManager::InsertTexture(const fs::path& path, bool gamma
   }
 
   Texture2D& texture = _textures.emplace_back();
-  texture.Create(GL_TEXTURE_2D);
+  texture.Create(Texture2DTarget::Texture2D);
   texture.LoadImageData(path, gamma);
   return &texture;
 }
@@ -110,7 +110,7 @@ const Texture2D* TexturesManager::InsertTextureIcon(const fs::path& path)
   }
 
   Texture2D& icon = _icons.emplace_back();
-  icon.Create(GL_TEXTURE_2D);
+  icon.Create(Texture2DTarget::Texture2D);
   icon.LoadImageData(path, false);
   return &icon;
 }

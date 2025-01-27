@@ -12,9 +12,14 @@ void TextureCubemap::Create()
 	glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &id);
 }
 
-void TextureCubemap::CreateStorage(i32 internalFormat, i32 width, i32 height) const
+void TextureCubemap::CreateStorage(Texture2DInternalFormat internalFormat, i32 width, i32 height) const
 {
-  glTextureStorage2D(id, 1, internalFormat, width, height);
+  glTextureStorage2D(
+    id, 
+    1, 
+    static_cast<u32>(internalFormat),
+    width, 
+    height);
 }
 
 bool TextureCubemap::IsValid() const
@@ -48,21 +53,12 @@ void TextureCubemap::BindTextureUnit(i32 unit) const
   glBindTextureUnit(unit, id);
 }
 
-void TextureCubemap::SetParameteri(i32 name, i32 value) const
+void TextureCubemap::SetParameteri(TextureParameteriName name, TextureParameteriParam value) const
 {
-  glTextureParameteri(id, name, value);
-}
-void TextureCubemap::SetParameteriv(i32 name, i32* values) const
-{
-  glTextureParameteriv(id, name, values);
-}
-void TextureCubemap::SetParameterf(i32 name, f32 value) const
-{
-  glTextureParameterf(id, name, value);
-}
-void TextureCubemap::SetParameterfv(i32 name, f32* values) const
-{
-  glTextureParameterfv(id, name, values);
+  glTextureParameteri(
+    id,
+    static_cast<u32>(name),
+    static_cast<i32>(value));
 }
 
 void TextureCubemap::LoadImages(const Array<const Texture2D*, 6>& images) const

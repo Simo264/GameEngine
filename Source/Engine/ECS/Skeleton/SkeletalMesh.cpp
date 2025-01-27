@@ -7,6 +7,7 @@
 #include "Engine/Graphics/Objects/Buffer.hpp"
 #include "Engine/Subsystems/TexturesManager.hpp"
 #include "Engine/Filesystem/Filesystem.hpp"
+#include "Engine/Globals.hpp"
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -58,13 +59,12 @@ void SkeletalMesh::CreateFromFile(const fs::path& path)
 	});
 	bones.reserve(totalBones);
 
-	if (totalBones > 100)
-		CONSOLE_WARN("Bone number > 100");
+	if (totalBones > GetMaxNumBones())
+		CONSOLE_WARN("Bone number > {}", GetMaxNumBones());
 
 	ProcessNode(scene->mRootNode, scene);
 	LoadBoneHierarchy(rootNode, scene->mRootNode);
 }
-
 void SkeletalMesh::Draw(RenderMode mode)
 {
 	for (const auto& mesh : meshes)
@@ -78,8 +78,8 @@ void SkeletalMesh::Draw(RenderMode mode)
 }
 std::pair<const Bone*, i32> SkeletalMesh::FindBone(StringView boneName) const
 {
-	auto it = boneMap.find(boneName.data());
-	if (it != boneMap.end())
+	auto it = _boneMap.find(boneName.data());
+	if (it != _boneMap.end())
 	{
 		u32 boneIndex = it->second;
 		return { &bones.at(boneIndex), boneIndex };
@@ -89,7 +89,7 @@ std::pair<const Bone*, i32> SkeletalMesh::FindBone(StringView boneName) const
 std::pair<Bone*, i32> SkeletalMesh::InsertBone(StringView boneName)
 {
 	u32 boneIndex = bones.size();
-	auto [it, success] = boneMap.insert({ boneName.data(), boneIndex });
+	auto [it, success] = _boneMap.insert({ boneName.data(), boneIndex });
 	if (success)
 	{
 		Bone& bone = bones.emplace_back();
@@ -125,12 +125,12 @@ void SkeletalMesh::ProcessNode(aiNode* node, const aiScene* scene)
 
 		Mesh& mesh = meshes.emplace_back();
 		mesh.Create();
-		mesh.SetupAttributeFloat(0, 0, VertexFormat(3, GL_FLOAT, false, offsetof(Vertex_P_N_UV_T_B, position)));
-		mesh.SetupAttributeFloat(1, 0, VertexFormat(3, GL_FLOAT, false, offsetof(Vertex_P_N_UV_T_B, normal)));
-		mesh.SetupAttributeFloat(2, 0, VertexFormat(2, GL_FLOAT, false, offsetof(Vertex_P_N_UV_T_B, uv)));
-		mesh.SetupAttributeFloat(3, 0, VertexFormat(3, GL_FLOAT, false, offsetof(Vertex_P_N_UV_T_B, tangent)));
-		mesh.SetupAttributeInteger(4, 0, VertexFormat(MAX_BONES_INFLUENCE, GL_INT, false, offsetof(Vertex_P_N_UV_T_B, boneIds)));
-		mesh.SetupAttributeFloat(5, 0, VertexFormat(MAX_BONES_INFLUENCE, GL_FLOAT, false, offsetof(Vertex_P_N_UV_T_B, boneWeights)));
+		mesh.SetupAttributeFloat(0, 0, VertexFormat(3, VertexAttribType::Float, false, offsetof(Vertex_P_N_UV_T_B, position)));
+		mesh.SetupAttributeFloat(1, 0, VertexFormat(3, VertexAttribType::Float, false, offsetof(Vertex_P_N_UV_T_B, normal)));
+		mesh.SetupAttributeFloat(2, 0, VertexFormat(2, VertexAttribType::Float, false, offsetof(Vertex_P_N_UV_T_B, uv)));
+		mesh.SetupAttributeFloat(3, 0, VertexFormat(3, VertexAttribType::Float, false, offsetof(Vertex_P_N_UV_T_B, tangent)));
+		mesh.SetupAttributeInteger(4, 0, VertexFormat(MAX_BONES_INFLUENCE, VertexAttribType::Int, false, offsetof(Vertex_P_N_UV_T_B, boneIds)));
+		mesh.SetupAttributeFloat(5, 0, VertexFormat(MAX_BONES_INFLUENCE, VertexAttribType::Float, false, offsetof(Vertex_P_N_UV_T_B, boneWeights)));
 
 		aiMesh* aimesh = scene->mMeshes[node->mMeshes[i]];
 
@@ -201,7 +201,7 @@ Buffer SkeletalMesh::LoadVertices(aiMesh* aimesh)
 	}
 	LoadBonesAndWeights(vertices, aimesh);
 
-	Buffer buffer(vertices.size() * sizeof(Vertex_P_N_UV_T_B), vertices.data(), GL_STATIC_DRAW);
+	Buffer buffer(vertices.size() * sizeof(Vertex_P_N_UV_T_B), vertices.data(), BufferUsage::StaticDraw);
 	return buffer;
 }
 void SkeletalMesh::LoadBonesAndWeights(Vector<Vertex_P_N_UV_T_B>& vertices, const aiMesh* aimesh)
@@ -238,9 +238,9 @@ Buffer SkeletalMesh::LoadIndices(aiMesh* aimesh)
 
 	Buffer buffer;
 	buffer.Create();
-	buffer.CreateStorage(size, nullptr, GL_STATIC_DRAW);
+	buffer.CreateStorage(size, nullptr, BufferUsage::StaticDraw);
 
-	u32* ptr = static_cast<u32*>(buffer.MapStorage(GL_WRITE_ONLY));
+	u32* ptr = static_cast<u32*>(buffer.MapStorage(BufferAccess::WriteOnly));
 	for (u32 i = 0; i < aimesh->mNumFaces; i++)
 	{
 		const aiFace& face = aimesh->mFaces[i];

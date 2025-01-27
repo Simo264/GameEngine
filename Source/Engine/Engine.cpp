@@ -5,18 +5,16 @@
 #include "Core/Log/Logger.hpp"
 
 #include "Engine/Globals.hpp"
-
 #include "Engine/Camera.hpp"
 #include "Engine/Scene.hpp"
 
 #include "Engine/ECS/ECS.hpp"
+#include "Engine/Graphics/Vertex.hpp"
 #include "Engine/Graphics/DepthTest.hpp"
 #include "Engine/Graphics/StencilTest.hpp"
 #include "Engine/Graphics/FaceCulling.hpp"
 #include "Engine/Graphics/Objects/RenderBuffer.hpp"
-#include "Engine/Graphics/Objects/Texture2D.hpp"
 #include "Engine/Graphics/Objects/TextureCubemap.hpp"
-#include "Engine/Graphics/Shader.hpp"
 #include "Engine/Graphics/Renderer.hpp"
 #include "Engine/Subsystems/WindowManager.hpp"
 #include "Engine/Subsystems/ShadersManager.hpp"
@@ -41,7 +39,13 @@ static i32 frameRate = 0; // How many frames generated per seconds
 static f64 totalDeltasPerSecond = 0.0f;
 static f64 avgTime = 0.0f; // The average rendering time per seconds
 
-static void GLAPIENTRY MessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam)
+static void GLAPIENTRY MessageCallback(GLenum source, 
+                                       GLenum type, 
+                                       GLuint id, 
+                                       GLenum severity, 
+                                       GLsizei length, 
+                                       const GLchar* message, 
+                                       const void* userParam)
 {
   // Ignore non-significant error/warning codes
   if (id == 131169 || id == 131185 || id == 131218 || id == 131204) 
@@ -100,19 +104,19 @@ static void SetOpenGLStates()
   // ----------------
   DepthTest::EnableTest();
   DepthTest::EnableWritingBuffer();
-  DepthTest::SetDepthFun(DepthFun::LESS);
+  DepthTest::SetDepthFun(CompareFunc::Less);
 
   // Stencil testing OFF
   // -------------------
   StencilTest::DisableTest();
-  StencilTest::SetStencilFun(StencilFun::ALWAYS, 0, 0xFF);
-  StencilTest::SetStencilOp(StencilOp::KEEP, StencilOp::KEEP, StencilOp::KEEP);
+  StencilTest::SetStencilFun(CompareFunc::Always, 0, 0xFF);
+  StencilTest::SetStencilOp(StencilOpMode::Keep, StencilOpMode::Keep, StencilOpMode::Keep);
 
   // Culling OFF
   // -----------
   FaceCulling::DisableFaceCulling();
-  FaceCulling::SetCullFace(CullFace::BACK);
-  FaceCulling::SetFrontFacing(FrontFace::COUNTER_CLOCKWISE);
+  FaceCulling::SetCullFace(CullFaceMode::Back);
+  FaceCulling::SetFrontFacing(FrontFaceMode::CCW);
 
   // Blending OFF
   // ------------
@@ -151,23 +155,29 @@ static void CalculatePerFrameTime()
     totalDeltasPerSecond = 0;
   }
 }
-static void RenderStaticMesh(Program& program, StaticMesh& staticMesh, Transform& transform)
+static void RenderStaticMesh(const Program& program, 
+                             StaticMesh& staticMesh, 
+                             Transform& transform)
 {
   program.SetUniformMat4f("u_model", transform.GetTransformation());
   staticMesh.Draw(RenderMode::Triangles);
 }
-static void RenderSkeletalMesh(Program& program, SkeletalMesh& skeletalMesh, Transform& transform, const Vector<mat4f>& boneTransforms)
+static void RenderSkeletalMesh(const Program& program,
+                               SkeletalMesh& skeletalMesh,
+                               Animator& animator,
+                               Transform& transform,
+                               Buffer& uboBoneBlock)
 {
-  for (u64 i = 0; i < boneTransforms.size(); i++)
-  {
-    char uniform[32]{};
-    std::format_to_n(uniform, sizeof(uniform), "u_boneTransforms[{}]", i);
-    program.SetUniformMat4f(uniform, boneTransforms[i]);
-  }
+  animator.UpdateAnimation(delta);
+  const Vector<mat4f>& boneTransforms = animator.GetBoneTransforms();
+
+  uboBoneBlock.UpdateStorage(0, 
+    boneTransforms.size() * sizeof(mat4f), 
+    boneTransforms.data());
+
   program.SetUniformMat4f("u_model", transform.GetTransformation());
   skeletalMesh.Draw(RenderMode::Triangles);
 }
-
 static void CreateSkybox(Mesh& skybox, TextureCubemap& skyboxTexture)
 {
   constexpr f32 vertices[] = {
@@ -214,12 +224,12 @@ static void CreateSkybox(Mesh& skybox, TextureCubemap& skyboxTexture)
     -1.0f, -1.0f,  1.0f,
      1.0f, -1.0f,  1.0f
   };
-  Buffer vbo(sizeof(vertices), vertices, GL_STATIC_DRAW);
+  Buffer vbo(sizeof(vertices), vertices, BufferUsage::StaticDraw);
   
   skybox.Create();
   skybox.vao.AttachVertexBuffer(0, vbo, 0, sizeof(Vertex_P));
   skybox.vao.numVertices = 36;
-  skybox.SetupAttributeFloat(0, 0, VertexFormat(3, GL_FLOAT, false, 0));
+  skybox.SetupAttributeFloat(0, 0, VertexFormat(3, VertexAttribType::Float, false, 0));
 
   TexturesManager& texturesManager = TexturesManager::Get();
   Array<const Texture2D*, 6> images = {
@@ -230,34 +240,34 @@ static void CreateSkybox(Mesh& skybox, TextureCubemap& skyboxTexture)
     texturesManager.FindTexture(Filesystem::GetTexturesPath() / "skybox/front.jpg"),
     texturesManager.FindTexture(Filesystem::GetTexturesPath() / "skybox/back.jpg"),
   };
-  i32 cubemapInternalFormat = images.at(0)->internalFormat;
+  Texture2DInternalFormat cubemapInternalFormat = images.at(0)->internalFormat;
   i32 width = images.at(0)->width;
   i32 height = images.at(0)->height;
 
   skyboxTexture.Create();
   skyboxTexture.CreateStorage(cubemapInternalFormat, width, height);
   skyboxTexture.LoadImages(images);
-  skyboxTexture.SetParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  skyboxTexture.SetParameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  skyboxTexture.SetParameteri(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  skyboxTexture.SetParameteri(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  skyboxTexture.SetParameteri(GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+  skyboxTexture.SetParameteri(TextureParameteriName::TextureMagFilter, TextureParameteriParam::Linear);
+  skyboxTexture.SetParameteri(TextureParameteriName::TextureMinFilter, TextureParameteriParam::Linear);
+  skyboxTexture.SetParameteri(TextureParameteriName::TextureWrapS, TextureParameteriParam::ClampToEdge);
+  skyboxTexture.SetParameteri(TextureParameteriName::TextureWrapT, TextureParameteriParam::ClampToEdge);
+  skyboxTexture.SetParameteri(TextureParameteriName::TextureWrapR, TextureParameteriParam::ClampToEdge);
 }
 static FrameBuffer CreateDepthMapFbo(i32 width, i32 height)
 {
   // Create a 2D texture that we'll use as the framebuffer's depth buffer
   Texture2D depthMap;
-  depthMap.Create(GL_TEXTURE_2D);
-  depthMap.CreateStorage(GL_DEPTH_COMPONENT24, width, height);
-  depthMap.SetParameteri(GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
-  depthMap.SetParameteri(GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
-  depthMap.SetParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  depthMap.SetParameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  depthMap.Create(Texture2DTarget::Texture2D);
+  depthMap.CreateStorage(Texture2DInternalFormat::DepthComponent24, width, height);
+  depthMap.SetParameteri(TextureParameteriName::TextureCompareMode, TextureParameteriParam::CompareRefToTexture);
+  depthMap.SetCompareFunc(CompareFunc::LEqual);
+  depthMap.SetParameteri(TextureParameteriName::TextureMinFilter, TextureParameteriParam::Linear);
+  depthMap.SetParameteri(TextureParameteriName::TextureMagFilter, TextureParameteriParam::Linear);
 
   // Resolve the problem of over sampling
-  depthMap.SetParameteri(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-  depthMap.SetParameteri(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-  depthMap.SetParameterfv(GL_TEXTURE_BORDER_COLOR, Array<f32, 4>{ 1.0, 1.0, 1.0, 1.0 }.data());
+  depthMap.SetParameteri(TextureParameteriName::TextureWrapS, TextureParameteriParam::ClampToBorder);
+  depthMap.SetParameteri(TextureParameteriName::TextureWrapT, TextureParameteriParam::ClampToBorder);
+  depthMap.SetParameterfv(TextureParameteriName::TextureBorderColor, Array<f32, 4>{ 1.0, 1.0, 1.0, 1.0 }.data());
 
   // With the generated depth texture we can attach it as the framebuffer's depth buffer
   FrameBuffer fbo;
@@ -272,15 +282,15 @@ static FrameBuffer CreateDepthCubeMapFbo(i32 width, i32 height)
 
   TextureCubemap texture;
   texture.Create();
-  texture.CreateStorage(GL_DEPTH_COMPONENT24, width, height);
+  texture.CreateStorage(Texture2DInternalFormat::DepthComponent24, width, height);
   for (i32 i = 0; i < 6; i++)
     texture.SubImage3D(0, 0, 0, i, width, height, 1, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
 
-  texture.SetParameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  texture.SetParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  texture.SetParameteri(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  texture.SetParameteri(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  texture.SetParameteri(GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+  texture.SetParameteri(TextureParameteriName::TextureMagFilter, TextureParameteriParam::Linear);
+  texture.SetParameteri(TextureParameteriName::TextureMinFilter, TextureParameteriParam::Linear);
+  texture.SetParameteri(TextureParameteriName::TextureWrapS, TextureParameteriParam::ClampToEdge);
+  texture.SetParameteri(TextureParameteriName::TextureWrapT, TextureParameteriParam::ClampToEdge);
+  texture.SetParameteri(TextureParameteriName::TextureWrapR, TextureParameteriParam::ClampToEdge);
 
   fbo.AttachTexture(FramebufferAttachment::Depth, texture.id, 0);
   return fbo;
@@ -295,10 +305,10 @@ static void CreateGridPlane(Mesh& grid)
        1.f,  1.f, 0.f,
        1.f, -1.f, 0.f
   };
-  Buffer gridVbo(sizeof(vertices), vertices, GL_STATIC_DRAW);
+  Buffer gridVbo(sizeof(vertices), vertices, BufferUsage::StaticDraw);
 
   grid.Create();
-  grid.SetupAttributeFloat(0, 0, VertexFormat(3, GL_FLOAT, false, 0));
+  grid.SetupAttributeFloat(0, 0, VertexFormat(3, VertexAttribType::Float, false, 0));
   grid.vao.AttachVertexBuffer(0, gridVbo, 0, 3 * sizeof(f32));
   grid.vao.numVertices = 6;
 }
@@ -344,21 +354,43 @@ void Engine::Initialize()
 
   // Initialize uniform block objects
   // --------------------------------
-  // Reserve memory for both projection and view matrices
-  _uboCamera = Buffer(2 * sizeof(mat4f), nullptr, GL_STREAM_DRAW);
-  _uboCamera.BindBase(GL_UNIFORM_BUFFER, 0); // cameraBlock to bindingpoint 0
-
+  // Init UBO cameraBlock
   {
-    // Reserve memory for DirectionalLight, PointLight and SpotLight structures
+    _uboCameraBlock = Buffer(
+      2 * sizeof(mat4f),          // Reserve memory for both projection and view matrices
+      nullptr,                    // No data
+      BufferUsage::DynamicDraw    // Data store content will be modified repeatedly and used many times.
+    );
+    _uboCameraBlock.BindBase(BufferTarget::Uniform, 0); // "CameraBlock" to binding point 0
+  }
+  // Init UBO lightBlock
+  {
     DirectionalLight dl;
     PointLight pl;
     SpotLight sl;
-    _uboLight = Buffer(sizeof(dl) + sizeof(pl) + sizeof(sl), nullptr, GL_STREAM_DRAW);
-    _uboLight.UpdateStorage(0, sizeof(dl), reinterpret_cast<void*>(&dl));
-    _uboLight.UpdateStorage(sizeof(dl), sizeof(pl), reinterpret_cast<void*>(&pl));
-    _uboLight.UpdateStorage(sizeof(dl) + sizeof(pl), sizeof(sl), reinterpret_cast<void*>(&sl));
-    _uboLight.BindBase(GL_UNIFORM_BUFFER, 1); // lightBlock to bindingpoint 1
+    _uboLightBlock = Buffer(
+      sizeof(dl) + sizeof(pl) + sizeof(sl), // Reserve memory for DirectionalLight, PointLight and SpotLight structures
+      nullptr,                              // No data
+      BufferUsage::DynamicDraw              // Data store content will be modified repeatedly and used many times.
+    );
+    _uboLightBlock.UpdateStorage(0, sizeof(dl), reinterpret_cast<void*>(&dl));
+    _uboLightBlock.UpdateStorage(sizeof(dl), sizeof(pl), reinterpret_cast<void*>(&pl));
+    _uboLightBlock.UpdateStorage(sizeof(dl) + sizeof(pl), sizeof(sl), reinterpret_cast<void*>(&sl));
+    _uboLightBlock.BindBase(BufferTarget::Uniform, 1); // "LightBlock" to binding point 1
   }
+  // Init UBO BoneBlock
+  {
+    Array<mat4f, SkeletalMesh::GetMaxNumBones()> bones{};
+    std::fill(bones.begin(), bones.end(), mat4f(1.0f));
+
+    _uboBoneBlock = Buffer(
+      SkeletalMesh::GetMaxNumBones() * sizeof(mat4f), // Reserve memory for 100 mat4f
+      bones.data(),                                   // Fill with mat4f(1.0f)
+      BufferUsage::StreamDraw                         // Data store content will be modified repeatedly and used many times.
+    );
+    _uboBoneBlock.BindBase(BufferTarget::Uniform, 2); // "BoneBlock" to binding point 2
+  }
+
 
   // Set the initial OpenGL states
   // -----------------------------
@@ -398,14 +430,14 @@ void Engine::Run()
   WindowManager& windowManager = WindowManager::Get();
   TexturesManager& texturesManager = TexturesManager::Get();
   ShadersManager& shadersManager = ShadersManager::Get();
-  Program& skyboxProgram = shadersManager.GetProgram("Skybox");
-  Program& gridPlaneProgram = shadersManager.GetProgram("GridPlane");
-  Program& depthMapProgram = shadersManager.GetProgram("DepthMap");
-  Program& depthCubeMapProgram = shadersManager.GetProgram("DepthCubeMap");
-  Program& sceneProgram = shadersManager.GetProgram("Scene");
-  Program& sceneShadowsProgram = shadersManager.GetProgram("SceneShadows");
-  Program& skeletalAnimProgram = shadersManager.GetProgram("SkeletalAnim");
-  Program& skeletalAnimShadowsProgram = shadersManager.GetProgram("SkeletalAnimShadows");
+  const Program& skyboxProgram = shadersManager.GetProgram("Skybox");
+  const Program& gridPlaneProgram = shadersManager.GetProgram("GridPlane");
+  const Program& depthMapProgram = shadersManager.GetProgram("DepthMap");
+  const Program& depthCubeMapProgram = shadersManager.GetProgram("DepthCubeMap");
+  const Program& sceneProgram = shadersManager.GetProgram("Scene");
+  const Program& sceneShadowsProgram = shadersManager.GetProgram("SceneShadows");
+  const Program& skeletalAnimProgram = shadersManager.GetProgram("SkeletalAnim");
+  const Program& skeletalAnimShadowsProgram = shadersManager.GetProgram("SkeletalAnimShadows");
 
   constexpr bool renderTerrain = false;
   constexpr bool renderInfiniteGrid = true;
@@ -468,15 +500,15 @@ void Engine::Run()
     primaryCamera.UpdateOrientation();
     mat4f cameraView = primaryCamera.CalculateView(primaryCamera.position + primaryCamera.GetFrontVector());
     mat4f cameraProj = primaryCamera.CalculatePerspective(static_cast<f32>(_viewportSize.x) / static_cast<f32>(_viewportSize.y));
-    _uboCamera.UpdateStorage(0, sizeof(cameraView), reinterpret_cast<void*>(&cameraView[0]));
-    _uboCamera.UpdateStorage(sizeof(cameraView), sizeof(cameraProj), reinterpret_cast<void*>(&cameraProj[0]));
+    _uboCameraBlock.UpdateStorage(0, sizeof(cameraView), reinterpret_cast<void*>(&cameraView[0]));
+    _uboCameraBlock.UpdateStorage(sizeof(cameraView), sizeof(cameraProj), reinterpret_cast<void*>(&cameraProj[0]));
 
     directLightCamera.UpdateOrientation();
     mat4f directLightProjection = directLightCamera.CalculateOrtho();
     mat4f directLightView = directLightCamera.CalculateView(directionalLight.direction);
-    _uboLight.UpdateStorage(0, sizeof(DirectionalLight), reinterpret_cast<void*>(&directionalLight));
-    _uboLight.UpdateStorage(sizeof(DirectionalLight), sizeof(PointLight), reinterpret_cast<void*>(&pointLight));
-    _uboLight.UpdateStorage(sizeof(DirectionalLight) + sizeof(PointLight), sizeof(SpotLight), reinterpret_cast<void*>(&spotLight));
+    _uboLightBlock.UpdateStorage(0, sizeof(DirectionalLight), reinterpret_cast<void*>(&directionalLight));
+    _uboLightBlock.UpdateStorage(sizeof(DirectionalLight), sizeof(PointLight), reinterpret_cast<void*>(&pointLight));
+    _uboLightBlock.UpdateStorage(sizeof(DirectionalLight) + sizeof(PointLight), sizeof(SpotLight), reinterpret_cast<void*>(&spotLight));
 
     // -----------------------------------------------------------------------
     // -------------------------- Rendering section --------------------------
@@ -571,7 +603,8 @@ void Engine::Run()
         sceneProgram.Use();
         sceneProgram.SetUniform3f("u_viewPos", primaryCamera.position);
         sceneProgram.SetUniform1i("u_useNormalMap", normalMapMode);
-        scene.Reg().view<StaticMesh, Transform>().each([&](auto& staticMesh, auto& transform) {
+        scene.Reg().view<StaticMesh, Transform>().each([&](auto& staticMesh, auto& transform) 
+        {
           RenderStaticMesh(sceneProgram, staticMesh, transform);
         });
 
@@ -579,10 +612,13 @@ void Engine::Run()
         skeletalAnimProgram.Use();
         skeletalAnimProgram.SetUniform3f("u_viewPos", primaryCamera.position);
         skeletalAnimProgram.SetUniform1i("u_useNormalMap", normalMapMode);
-        scene.Reg().view<SkeletalMesh, Animator, Transform>().each([&](auto& skeletalMesh, auto& animator, auto& transform) {
-          animator.UpdateAnimation(delta);
-          const Vector<mat4f>& boneTransforms = animator.GetBoneTransforms();
-          RenderSkeletalMesh(skeletalAnimProgram, skeletalMesh, transform, boneTransforms);
+        scene.Reg().view<SkeletalMesh, Animator, Transform>().each([&](auto& skeletalMesh, auto& animator, auto& transform) 
+        {
+          RenderSkeletalMesh(skeletalAnimProgram, 
+            skeletalMesh, 
+            animator, 
+            transform, 
+            _uboBoneBlock);
         });
       }
 
@@ -600,17 +636,17 @@ void Engine::Run()
         skyboxProgram.SetUniformMat4f("u_projection", cameraProj);
         skyboxProgram.SetUniformMat4f("u_view", mat4f(mat3f(cameraView)));
         skyboxTexture.BindTextureUnit(0);
-        DepthTest::SetDepthFun(DepthFun::LEQUAL);
+        DepthTest::SetDepthFun(CompareFunc::LEqual);
         Renderer::DrawArrays(RenderMode::Triangles, skybox.vao);
-        DepthTest::SetDepthFun(DepthFun::LESS);
+        DepthTest::SetDepthFun(CompareFunc::Less);
       }
 
       // Blit multisampled buffer to normal color buffer of intermediate FBO
       _fboMultisampled.Blit(_fboIntermediate,
         0, 0, _viewportSize.x, _viewportSize.y,
         0, 0, _viewportSize.x, _viewportSize.y,
-        BlitMask::ColorBuffer,
-        BlitFilter::Nearest);
+        FramebufferBlitMask::ColorBuffer,
+        FramebufferBlitFilter::Nearest);
     }
     _fboMultisampled.Unbind(FramebufferTarget::ReadDraw);
 
@@ -654,7 +690,7 @@ void Engine::CleanUp()
   _fboIntermediate.Delete();
   _fboMultisampled.Delete();
   _screenSquare.Delete();
-  _uboCamera.Delete();
+  _uboCameraBlock.Delete();
 
   ImGuiLayer::Get().CleanUp();
   ShadersManager::Get().CleanUp();
@@ -670,14 +706,14 @@ void Engine::CreateFramebuffer(i32 samples, i32 width, i32 height)
 {
   _fboMultisampled.Create();
 
-  /* Create a multisampled color attachment texture */
+  // Create a multisampled color attachment texture 
   Texture2D textColMultAtt;
-  textColMultAtt.Create(GL_TEXTURE_2D_MULTISAMPLE);
-  textColMultAtt.CreateStorageMultisampled(GL_RGB8, samples, width, height);
-  /* Create a multisampled renderbuffer object for depth and stencil attachments */
+  textColMultAtt.Create(Texture2DTarget::Texture2DMultisample);
+  textColMultAtt.CreateStorageMultisampled(Texture2DInternalFormat::RGB8, samples, width, height);
+  // Create a multisampled renderbuffer object for depth and stencil attachments 
   RenderBuffer depthStencMultAtt;
   depthStencMultAtt.Create();
-  depthStencMultAtt.CreateStorageMulstisampled(GL_DEPTH24_STENCIL8, samples, width, height);
+  depthStencMultAtt.CreateStorageMulstisampled(RenderbufferInternalFormat::Depth24Stencil8, samples, width, height);
   _fboMultisampled.AttachTexture(FramebufferAttachment::Color0, textColMultAtt.id, 0);
   _fboMultisampled.AttachRenderBuffer(FramebufferAttachment::DepthStencil, depthStencMultAtt);
   
@@ -687,12 +723,12 @@ void Engine::CreateFramebuffer(i32 samples, i32 width, i32 height)
   /* Configure second post - processing framebuffer */
   _fboIntermediate.Create();
 
-  /* Create normal color attachment texture */
+  // Create normal color attachment texture
   Texture2D textColAtt;
-  textColAtt.Create(GL_TEXTURE_2D);
-  textColAtt.CreateStorage(GL_RGB8, width, height);
-  textColAtt.SetParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  textColAtt.SetParameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  textColAtt.Create(Texture2DTarget::Texture2D);
+  textColAtt.CreateStorage(Texture2DInternalFormat::RGB8, width, height);
+  textColAtt.SetParameteri(TextureParameteriName::TextureMinFilter, TextureParameteriParam::Linear);
+  textColAtt.SetParameteri(TextureParameteriName::TextureMagFilter, TextureParameteriParam::Linear);
   _fboIntermediate.AttachTexture(FramebufferAttachment::Color0, textColAtt.id, 0);
 
   if (_fboIntermediate.CheckStatus() != GL_FRAMEBUFFER_COMPLETE)
@@ -703,7 +739,7 @@ void Engine::CreateScreenSquare()
   _screenSquare.Create();
 
   constexpr f32 vertices[] = {
-    /* position    uv */
+    // position    uv 
     -1.0f,  1.0f,  0.0f, 1.0f,
     -1.0f, -1.0f,  0.0f, 0.0f,
      1.0f, -1.0f,  1.0f, 0.0f,
@@ -711,14 +747,14 @@ void Engine::CreateScreenSquare()
      1.0f, -1.0f,  1.0f, 0.0f,
      1.0f,  1.0f,  1.0f, 1.0f
   };
-  Buffer vbo(sizeof(vertices), vertices, GL_STATIC_DRAW);
+  Buffer vbo(sizeof(vertices), vertices, BufferUsage::StaticDraw);
   _screenSquare.AttachVertexBuffer(0, vbo, 0, 4 * sizeof(f32));
 
-  _screenSquare.SetAttribFormatFLoat(0, 2, GL_FLOAT, true, 0);
+  _screenSquare.SetAttribFormatFLoat(0, 2, VertexAttribType::Float, true, 0);
   _screenSquare.SetAttribBinding(0, 0);
   _screenSquare.EnableAttribute(0);
 
-  _screenSquare.SetAttribFormatFLoat(1, 2, GL_FLOAT, true, 2 * sizeof(f32));
+  _screenSquare.SetAttribFormatFLoat(1, 2, VertexAttribType::Float, true, 2 * sizeof(f32));
   _screenSquare.SetAttribBinding(1, 0);
   _screenSquare.EnableAttribute(1);
   

@@ -3,28 +3,6 @@
 #include "Core/Math/Base.hpp"
 
 /**
- * @struct VertexFormat
- * @brief Defines the structure of a vertex attribute in a vertex buffer.
- */
-struct VertexFormat
-{
-  /** @brief Number of components per vertex attribute. Must be 1, 2, 3, 4, or GL_BGRA.*/
-  i32 size{ 0 };
-
-  /** @brief Specifies the data type of the attribute. https://registry.khronos.org/OpenGL-Refpages/gl4/html/glVertexAttribFormat.xhtml */
-  i32 type{ 0 };
-
-  /**
-   * @brief Specifies if integer data should be normalized to [0, 1] or [-1, 1].
-   * If true, signed/unsigned integers are normalized. If false, data is converted directly to float.
-   */
-  bool normalized{ false };
-
-  /** @brief Offset of the attribute relative to the start of the vertex buffer. */
-  i32 relativeoffset{ 0 };
-};
-
-/**
  * @struct Vertex_P
  * @brief Vertex format containing only position.
  */

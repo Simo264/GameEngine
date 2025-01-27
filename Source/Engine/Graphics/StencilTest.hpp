@@ -1,32 +1,7 @@
 #pragma once
 
 #include "Core/Core.hpp"
-#include "Core/GL.hpp"
-
-
-enum class StencilFun : i32
-{
-	ALWAYS		= GL_ALWAYS,
-	NEVER			= GL_NEVER,
-	LESS			= GL_LESS,
-	LEQUAL		= GL_LEQUAL,
-	GREATER		= GL_GREATER,
-	GEQUAL		= GL_GEQUAL,
-	EQUAL			= GL_EQUAL,
-	NOTEQUAL	= GL_NOTEQUAL
-};
-
-enum class StencilOp : i32 
-{
-	KEEP			= GL_KEEP,
-	INVERT		= GL_INVERT,
-	ZERO			= GL_ZERO,
-	REPLACE		= GL_REPLACE,
-	INCR			= GL_INCR,
-	INCR_WRAP = GL_INCR_WRAP,
-	DECR			= GL_DECR,
-	DECR_WRAP = GL_DECR_WRAP
-};
+#include "Engine/Graphics/OpenGLEnums.hpp"
 
 /**
  * https://open.gl/depthstencils
@@ -52,53 +27,21 @@ enum class StencilOp : i32
 namespace StencilTest
 {
 	/** @brief Enable stencil testing and update the stencil buffer */
-	void EnableTest()
-	{
-		glEnable(GL_STENCIL_TEST);
-	}
+	void EnableTest();
 
 	/** @brief Disable stencil testing */
-	void DisableTest()
-	{
-		glDisable(GL_STENCIL_TEST);
-	}
+	void DisableTest();
 
-	/**
-	 * @brief Specifies the conditions under which a fragment passes the stencil test.
-	 * See https://registry.khronos.org/OpenGL-Refpages/gl4/html/glStencilFunc.xhtml
-	 */
-	void SetStencilFun(StencilFun fun, i32 ref, i32 mask)
-	{
-		glStencilFunc(static_cast<i32>(fun), ref, mask);
-	}
+	/** @brief Specifies the conditions under which a fragment passes the stencil test. */
+	void SetStencilFun(CompareFunc fun, i32 ref, i32 mask);
 
-	/**
-	 * @brief
-	 * Specifies what should happen to stencil values depending on the outcome of the stencil and depth tests.
-	 * See https://registry.khronos.org/OpenGL-Refpages/gl4/html/glStencilOp.xhtml
-	 */
-	void SetStencilOp(StencilOp sfail, StencilOp dpfail, StencilOp dppass)
-	{
-		glStencilOp(static_cast<i32>(sfail), static_cast<i32>(dpfail), static_cast<i32>(dppass));
-	}
+	/** @brief Specifies what should happen to stencil values depending on the outcome of the stencil and depth tests. */
+	void SetStencilOp(StencilOpMode sfail, StencilOpMode dpfail, StencilOpMode dppass);
 
-	/**
-	 * @brief Specifies a bit mask to enable and disable writing of individual bits in the stencil planes.
-	 * See https://registry.khronos.org/OpenGL-Refpages/gl4/html/glStencilMask.xhtml
-	 */
-	void SetStencilMask(i32 mask)
-	{
-		glStencilMask(mask);
-	}
+	/** @brief Specifies a bit mask to enable and disable writing of individual bits in the stencil planes. */
+	void SetStencilMask(i32 mask);
 
-	void EnableWritingBuffer()
-	{
-		SetStencilMask(0xFF);
-	}
+	void EnableWritingBuffer();
 
-	void DisableWritingBuffer()
-	{
-		SetStencilMask(0x00);
-	}
+	void DisableWritingBuffer();
 }
-

@@ -228,7 +228,7 @@ void Scene::DeserializeScene(const fs::path& filePath)
 				animComponent.animations = animManager.LoadSkeletonAnimations(skeletonPath, animations);
 			}
 			else
-				animComponent.animations = animManager.GetSkeletonAnimations(skeletonPath);
+				animComponent.animations = animManager.FindSkeletonAnimations(skeletonPath);
 
 			skComponent = *skeleton;
 			animComponent.SetTargetSkeleton(skComponent);
