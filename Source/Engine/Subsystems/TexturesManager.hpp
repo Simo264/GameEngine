@@ -31,21 +31,60 @@ public:
 	/** @brief Cleans up loaded textures and icons by deleting their OpenGL references. */
 	void CleanUp();
 	
-	const Texture2D* FindTexture(const fs::path& path) const;
-	const Texture2D* InsertTexture(const fs::path& path, bool gamma = false);
+	/**
+	 * @brief Search for a texture in the collection of loaded textures.
+	 *
+	 * @param relativePath Relative path of the texture to search.
+	 * Example: "Character/Ch44_1001_Diffuse.png".
+	 * @return Pointer to the texture if found, otherwise nullptr.
+	 *
+	 * @note The relative path must refer to the 'Assets/Textures/' directory
+	 * and must include any subdirectories.
+	 */
+	const Texture2D* FindTexture(const fs::path& relativePath) const;
 	
-	const Texture2D* FindTextureIcon(const fs::path& path) const;
-	const Texture2D* InsertTextureIcon(const fs::path& path);
+	/**
+	 * @brief Inserts a new texture into the collection, if not already present.
+	 *
+	 * @param relativePath Relative path of the texture to be loaded.
+	 * Example: "Character/Ch44_1001_Diffuse.png".
+	 * @param gamma Specifies whether to apply gamma correction.
+	 * @return Pointer to the loaded or existing texture.
+	 *
+	 * @notes The relative path must refer to the 'Assets/Textures/' directory
+	 * and must include any subdirectories.
+	 */
+	const Texture2D* InsertTexture(const fs::path& relativePath, bool gamma = false);
 	
-	/** @brief Retrieves the default diffuse texture. */
+	/**
+	 * @brief Search for an icon in the loaded icon collection.
+	 *
+	 * @param relativePath File name of the icon to be searched.
+	 * Example: "back-arrow.png".
+	 * @return Pointer to the icon if found, otherwise nullptr.
+	 *
+	 * @notes The relative path must refer to the 'Assets/Icons/' directory 
+	 * and must include any subdirectories.
+	 */
+	const Texture2D* FindTextureIcon(const fs::path& relativePath) const;
+
+	/**
+	 * @brief Inserts a new icon into the collection, if not already present.
+	 *
+	 * @param relativePath File name of the icon to be loaded.
+	 * Example: "back-arrow.png".
+	 * @return Pointer to the loaded or existing icon.
+	 *
+	 * @notes The relative path must refer to the 'Assets/Icons/' directory
+	 * and must include any subdirectories.
+	 */
+	const Texture2D* InsertTextureIcon(const fs::path& relativePath);
+	
 	const Texture2D& GetDefaultDiffuse() const { return _textures.at(0); }
-	/** @brief Retrieves the default specular  texture. */
 	const Texture2D& GetDefaultSpecular() const { return _textures.at(1); }
-	/** @brief Retrieves the default normal  texture. */
 	const Texture2D& GetDefaultNormal() const { return _textures.at(2); }
-	/** @brief Retrieves all loaded textures. */
 	const auto& GetTextureVector() const { return _textures; }
-	const auto& GetTextureIconVector() const { return _textures; }
+	const auto& GetTextureIconVector() const { return _icons; }
 
 private:
 	TexturesManager() = default;
@@ -54,7 +93,7 @@ private:
 	Vector<Texture2D> _textures;
 	Vector<Texture2D> _icons;
 
-	// Map storing texture path and its index
+	// Map storing texture's relative path and its index
 	UnorderedMap<fs::path, u32> _textureMap;
 	UnorderedMap<fs::path, u32> _iconMap;
 

@@ -374,7 +374,7 @@ static void Insp_Transform(GameObject& object, Transform& transform)
 static void Insp_MaterialRow(StringView label, const Texture2D*& matTexture, const Texture2D& defaultTex)
 {
   auto& texManager = TexturesManager::Get();
-  const bool noTexture = (matTexture->path.string().at(0) == '#');
+  const bool noTexture = (matTexture->relativePath.string().at(0) == '#');
   
   // First column: label
   ImGui::TableNextColumn();
@@ -387,14 +387,14 @@ static void Insp_MaterialRow(StringView label, const Texture2D*& matTexture, con
   char comboId[32]{}; // "##Diffuse"
   std::format_to_n(comboId, sizeof(comboId), "##{}", label.data());
 
-  if (ImGui::BeginCombo(comboId, (noTexture ? "Select texture" : matTexture->path.string().c_str())))
+  if (ImGui::BeginCombo(comboId, (noTexture ? "Select texture" : matTexture->relativePath.string().c_str())))
   {
     for (const auto& texture : texManager.GetTextureVector())
     {
-      if (texture.path.empty())
+      if (texture.relativePath.empty())
         continue;
 
-      String strPath = texture.path.string();
+      String strPath = texture.relativePath.string();
       if (ImGui::Selectable(strPath.c_str(), texture.Compare(*matTexture)))
       {
         matTexture = &texture;
@@ -411,7 +411,7 @@ static void Insp_MaterialRow(StringView label, const Texture2D*& matTexture, con
     char buttonID[32]{}; // "Reset##Diffuse"
     std::format_to_n(buttonID, sizeof(buttonID), "Reset##{}", label.data());
 
-    const auto* resetIcon = texManager.FindTextureIcon(Filesystem::GetIconsPath() / "reset-arrow-16.png");
+    const auto* resetIcon = texManager.FindTextureIcon("reset-arrow-16.png");
     ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.f,0.f,0.f,0.f });
     if (ImGui::ImageButton(buttonID, reinterpret_cast<void*>(resetIcon->id), ImVec2(16.f, 16.f)))
       matTexture = &defaultTex;
@@ -562,9 +562,9 @@ static void Insp_Animator(GameObject& object, Animator& animator)
 
   if (animAttached)
   {
-    const Texture2D* playIcon = TexturesManager::Get().FindTextureIcon(Filesystem::GetIconsPath() / "play-button-32.png");
-    const Texture2D* pauseIcon = TexturesManager::Get().FindTextureIcon(Filesystem::GetIconsPath() / "pause-button-32.png");
-    const Texture2D* restartIcon = TexturesManager::Get().FindTextureIcon(Filesystem::GetIconsPath() / "restart-button-32.png");
+    const Texture2D* playIcon = TexturesManager::Get().FindTextureIcon("play-button-32.png");
+    const Texture2D* pauseIcon = TexturesManager::Get().FindTextureIcon("pause-button-32.png");
+    const Texture2D* restartIcon = TexturesManager::Get().FindTextureIcon("restart-button-32.png");
 
     if (ImGui::ImageButton(reinterpret_cast<void*>(playIcon->id), ImVec2(16, 16)))
       animator.PlayAnimation();

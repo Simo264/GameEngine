@@ -150,7 +150,7 @@ void SkeletalMesh::ProcessNode(aiNode* node, const aiScene* scene)
 			aiMaterial* material = scene->mMaterials[aimesh->mMaterialIndex];
 			if (material->GetTexture(aiTextureType_DIFFUSE, 0, &filename) == aiReturn_SUCCESS)
 			{
-				auto* diffuse = TexturesManager::Get().FindTexture(Filesystem::GetTexturesPath() / filename.C_Str());
+				auto* diffuse = TexturesManager::Get().FindTexture(filename.C_Str());
 				if (diffuse)
 					mesh.material.diffuse = diffuse;
 				else
@@ -158,7 +158,7 @@ void SkeletalMesh::ProcessNode(aiNode* node, const aiScene* scene)
 			}
 			if (material->GetTexture(aiTextureType_SPECULAR, 0, &filename) == aiReturn_SUCCESS)
 			{
-				auto* specular = TexturesManager::Get().FindTexture(Filesystem::GetTexturesPath() / filename.C_Str());
+				auto* specular = TexturesManager::Get().FindTexture(filename.C_Str());
 				if (specular)
 					mesh.material.specular = specular;
 				else
@@ -166,7 +166,7 @@ void SkeletalMesh::ProcessNode(aiNode* node, const aiScene* scene)
 			}
 			if (material->GetTexture(aiTextureType_NORMALS, 0, &filename) == aiReturn_SUCCESS)
 			{
-				auto* normal = TexturesManager::Get().FindTexture(Filesystem::GetTexturesPath() / filename.C_Str());
+				auto* normal = TexturesManager::Get().FindTexture(filename.C_Str());
 				if (normal)
 					mesh.material.normal = normal;
 				else
@@ -270,7 +270,7 @@ const Texture2D* SkeletalMesh::GetMaterialTexture(aiMaterial* material, u32 text
 {
 	aiString fileName;
 	if (material->GetTexture(static_cast<aiTextureType>(textureType), 0, &fileName) == aiReturn_SUCCESS)
-		return TexturesManager::Get().FindTexture(Filesystem::GetTexturesPath() / fileName.C_Str());
+		return TexturesManager::Get().FindTexture(fileName.C_Str());
 
 	return nullptr;
 }

@@ -200,7 +200,7 @@ void ShadersManager::SetProgramsUniforms() const
 
   auto& framebufferProg = GetProgram("Framebuffer");
   framebufferProg.SetUniform1i("u_fboImageTexture", 0);
-  framebufferProg.SetUniform1i("u_postProcessingType", 0);
+  //framebufferProg.SetUniform1i("u_postProcessingType", 0);
 
   auto& sceneProg = GetProgram("Scene");
   sceneProg.SetUniform1i("u_useNormalMap", 0);
@@ -221,10 +221,4 @@ void ShadersManager::SetProgramsUniforms() const
   skeletalAnimProg.SetUniform1i("u_material.diffuseTexture", 0);
   skeletalAnimProg.SetUniform1i("u_material.specularTexture", 1);
   skeletalAnimProg.SetUniform1i("u_material.normalTexture", 2);
-  for (u32 i = 0; i < 100; i++)
-  {
-    char uniform[32]{};
-    std::format_to_n(uniform, sizeof(uniform), "u_boneTransforms[{}]", i);
-    skeletalAnimProg.SetUniformMat4f(uniform, mat4f(1.0f));
-  }
 }

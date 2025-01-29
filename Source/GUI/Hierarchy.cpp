@@ -36,7 +36,7 @@ static void Hierarchy_ListObjects(Scene& scene, GameObject& objSelected)
     ImGui::BeginGroup();
     ImGui::SetCursorPosY(ImGui::GetCursorPosY() + (ImGui::GetTextLineHeight() - 16.f) / 2);
     
-    const auto* icon = TexturesManager::Get().FindTextureIcon(Filesystem::GetIconsPath() / "game-object-16.png");
+    const auto* icon = TexturesManager::Get().FindTextureIcon("game-object-16.png");
     ImGui::Image(reinterpret_cast<void*>(icon->id), ImVec2(16.f, 16.f));
     ImGui::SameLine();
     

@@ -233,12 +233,12 @@ static void CreateSkybox(Mesh& skybox, TextureCubemap& skyboxTexture)
 
   TexturesManager& texturesManager = TexturesManager::Get();
   Array<const Texture2D*, 6> images = {
-    texturesManager.FindTexture(Filesystem::GetTexturesPath() / "skybox/right.jpg"),
-    texturesManager.FindTexture(Filesystem::GetTexturesPath() / "skybox/left.jpg"),
-    texturesManager.FindTexture(Filesystem::GetTexturesPath() / "skybox/top.jpg"),
-    texturesManager.FindTexture(Filesystem::GetTexturesPath() / "skybox/bottom.jpg"),
-    texturesManager.FindTexture(Filesystem::GetTexturesPath() / "skybox/front.jpg"),
-    texturesManager.FindTexture(Filesystem::GetTexturesPath() / "skybox/back.jpg"),
+    texturesManager.FindTexture("skybox/right.jpg"),
+    texturesManager.FindTexture("skybox/left.jpg"),
+    texturesManager.FindTexture("skybox/top.jpg"),
+    texturesManager.FindTexture("skybox/bottom.jpg"),
+    texturesManager.FindTexture("skybox/front.jpg"),
+    texturesManager.FindTexture("skybox/back.jpg"),
   };
   Texture2DInternalFormat cubemapInternalFormat = images.at(0)->internalFormat;
   i32 width = images.at(0)->width;
@@ -657,12 +657,12 @@ void Engine::Run()
     gui.RenderInspector(objSelected);
     u32 fboTexture = _fboIntermediate.textAttachments.at(0);
     gui.RenderViewport(fboTexture, objSelected, cameraView, cameraProj);
-    gui.RenderContentBrowser();
-    gui.RenderGizmoToolBar(objSelected);
+    //gui.RenderContentBrowser();
+    //gui.RenderGizmoToolBar(objSelected);
     gui.RenderTimeInfo(delta, avgTime, frameRate);
-    gui.RenderGraphicsInfo();
-    gui.RenderDemo();
-    gui.RenderDebug(shadowMode, normalMapMode, wireframeMode);
+    //gui.RenderGraphicsInfo();
+    //gui.RenderDemo();
+    //gui.RenderDebug(shadowMode, normalMapMode, wireframeMode);
     gui.EndFrame();
 
     // Checking viewport size

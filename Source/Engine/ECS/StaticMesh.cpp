@@ -171,7 +171,7 @@ const Texture2D* StaticMesh::GetMaterialTexture(aiMaterial* material, u32 textur
 {
 	aiString fileName;
 	if (material->GetTexture(static_cast<aiTextureType>(textureType), 0, &fileName) == aiReturn_SUCCESS)
-		return TexturesManager::Get().FindTexture(Filesystem::GetTexturesPath() / fileName.C_Str());
+		return TexturesManager::Get().FindTexture(fileName.C_Str());
 
 	return nullptr;
 }

@@ -11,30 +11,14 @@
  */
 namespace Filesystem
 {
-	/** @brief Retrieves the root path of the project directory. */
+	/** @brief Retrieves the absolute path to directory of the project. */
 	const fs::path& GetRootPath();
-
-	/** @brief Retrieves the path to the assets directory. */
 	const fs::path& GetAssetsPath();
-
-	/** @brief Retrieves the path to the shaders directory. */
 	const fs::path& GetShadersPath();
-
-	/** @brief Retrieves the path to the textures directory. */
 	const fs::path& GetTexturesPath();
-
-	/** @brief Retrieves the path to the icons directory. */
 	const fs::path& GetIconsPath();
-
-	/** @brief Retrieves the path to the fonts directory. */
 	const fs::path& GetFontsPath();
-
-	/** @brief Retrieves the path to the models directory. */
 	const fs::path& GetModelsPath();
-
-	/** @brief Retrieves the path to the static models directory. */
 	const fs::path& GetStaticModelsPath();
-	
-	/** @brief Retrieves the path to the skeletal models directory. */
 	const fs::path& GetSkeletalModelsPath();
 }

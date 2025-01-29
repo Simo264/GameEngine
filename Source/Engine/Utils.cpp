@@ -105,9 +105,9 @@ namespace Utils
 		return (str == "1" || str == "true");
 	}
 
-	u8* LoadImageData(const fs::path& imagePath, i32& width, i32& height, i32& nChannels)
+	u8* LoadImageData(const fs::path& absolutePath, i32& width, i32& height, i32& nChannels)
 	{
-		u8* data = stbi_load(imagePath.string().c_str(), &width, &height, &nChannels, 0);
+		u8* data = stbi_load(absolutePath.string().c_str(), &width, &height, &nChannels, 0);
 		return data;
 	}
 

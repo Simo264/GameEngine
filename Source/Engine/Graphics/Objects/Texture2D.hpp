@@ -11,7 +11,6 @@ enum class Texture2DTarget : u32
   Texture2DMultisample = 0x9100, // GL_TEXTURE_2D_MULTISAMPLE
   Texture2DMultisampleArray = 0x9102  // GL_TEXTURE_2D_MULTISAMPLE_ARRAY
 };
-
 enum class Texture2DInternalFormat : u32
 {
   R8 = 0x8229, // GL_R8
@@ -33,7 +32,6 @@ enum class Texture2DInternalFormat : u32
   Depth32FStencil8 = 0x8CAD, // GL_DEPTH32F_STENCIL8
   StencilIndex8 = 0x8D48  // GL_STENCIL_INDEX8
 };
-
 enum class TextureParameteriName : u32 
 {
   TextureMinFilter    = 0x2801, // GL_TEXTURE_MIN_FILTER
@@ -65,6 +63,11 @@ enum class TextureParameteriParam : i32
   MirroredRepeat        = 0x8370, // GL_MIRRORED_REPEAT
   CompareRefToTexture   = 0x884E, // GL_COMPARE_REF_TO_TEXTURE
   CompareRToTexture     = 0x884E  // GL_COMPARE_R_TO_TEXTURE (simile)
+};
+enum class TextureType : u32
+{
+  MeshTexture,
+  Icon
 };
 
 /**
@@ -103,19 +106,17 @@ public:
     nChannels{ 0 },
     width{ 0 },
     height{ 0 },
-    path{}
+    relativePath{}
   {}
 
-  Texture2D(Texture2DTarget target, const fs::path& imagePath, bool gammaCorrection);
+  /** @brief Constructor which initialises a Texture2D object by loading data from an image file. */
+  Texture2D(Texture2DTarget target, const fs::path& absolutePath, bool gammaCorrection);
   ~Texture2D() = default;
 
-  /** @brief Load data from an image file */
-  void LoadImageData(const fs::path& imagePath, bool gammaCorrection);
+  /** @brief Loads image data from file and stores it in the texture. */
+  void LoadImageData(const fs::path& absolutePath, bool gammaCorrection);
 
-  /**
-   * @brief Create texture object
-   * @param target: GL_TEXTURE_2D or GL_TEXTURE_2D_MULTISAMPLE
-   */
+  /** @brief Create texture object */
   void Create(Texture2DTarget target);
 
   /** @brief Delete texture object and invalidates the name associated with the texture object */
@@ -160,5 +161,5 @@ public:
 
   i32 nChannels;
   
-  fs::path path;
+  fs::path relativePath;
 };

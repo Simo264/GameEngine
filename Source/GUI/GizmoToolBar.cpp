@@ -10,9 +10,9 @@
 void GUI_RenderTransformToolBar(vec2i viewportPos, i32& gizmode)
 {
   auto& texManager = TexturesManager::Get();
-  static const auto* expandIcon = texManager.FindTextureIcon(Filesystem::GetIconsPath() / "expand-arrows-32.png");
-  static const auto* rotateIcon = texManager.FindTextureIcon(Filesystem::GetIconsPath() / "rotate-32.png");
-  static const auto* scaleIcon = texManager.FindTextureIcon(Filesystem::GetIconsPath() / "scale-32.png");
+  static const auto* expandIcon = texManager.FindTextureIcon("expand-arrows-32.png");
+  static const auto* rotateIcon = texManager.FindTextureIcon("rotate-32.png");
+  static const auto* scaleIcon = texManager.FindTextureIcon("scale-32.png");
 
   ImGuiStyle& style = ImGui::GetStyle();
   ImVec2 windowPos = ImVec2(viewportPos.x + 4.f, viewportPos.y + 24.f);

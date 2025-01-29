@@ -215,12 +215,12 @@ void Scene::DeserializeScene(const fs::path& filePath)
 				if (!fs::exists(animlistFile))
 					throw std::runtime_error(std::format("File {} does not exist", animlistFile.string()));
 				
-				Vector<fs::path> animations;
 				IStream file(animlistFile);
 				if (!file)
 					CONSOLE_ERROR("Erron on opening file {}", animlistFile.string());
 
 				Vector<String> tmp{ std::istream_iterator<std::string>(file), std::istream_iterator<std::string>() };
+				Vector<fs::path> animations;
 				animations.reserve(tmp.size());
 				for (const auto& p : tmp)
 					animations.push_back(currentDir / p);

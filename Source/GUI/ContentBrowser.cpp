@@ -47,7 +47,7 @@ static void ContentBrowser_RightCol_Navbar(f32 navbarHeight)
 
   ImGui::BeginChild("RightCol_Child_NavBar", ImVec2(ImGui::GetColumnWidth(), navbarHeight));
   ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
-  const auto* iconBack = texManager.FindTextureIcon(Filesystem::GetIconsPath() / "back-arrow.png");
+  const auto* iconBack = texManager.FindTextureIcon("back-arrow.png");
 
   // Back button
   if (contentBrowser_right_navCurrentDir == Filesystem::GetAssetsPath())
@@ -96,30 +96,30 @@ static void ContentBrowser_RightCol_Thumbnails(f32 contentHeight)
           ImGui::TableSetColumnIndex(j);
 
           const fs::directory_entry& entry = *entryIt;
-          const fs::path& entryPath = entry.path();
-          const String entryPathString = entryPath.string();
-          const fs::path filename = entryPath.filename();
+          const fs::path& absolutePath = entry.path();
+          const fs::path relativePath = fs::relative(absolutePath, Filesystem::GetIconsPath());
+          const fs::path filename = relativePath.filename();
           const String filenameString = filename.string();
-          TexturesManager& texManager = TexturesManager::Get();
+          auto& manager = TexturesManager::Get();
 
           if (entry.is_directory())
           {
-            const auto* iconFolder = texManager.FindTextureIcon(Filesystem::GetIconsPath() / "open-folder.png");
+            const auto* iconFolder = manager.FindTextureIcon("open-folder.png");
             if (ImGui::ImageButton(filenameString.c_str(), reinterpret_cast<void*>(iconFolder->id), ImVec2(cellSize, cellSize)))
               contentBrowser_right_navCurrentDir /= entry;
           }
           else
           {
-            const fs::path entryFilenameExt = filename.extension();
+            const fs::path ext = filename.extension();
 
-            /* Render image texture */
-            if (entryFilenameExt == ".png" || entryFilenameExt == ".jpg")
+            // Render image texture
+            if (ext == ".png" || ext == ".jpg")
             {
               const Texture2D* texture = nullptr;
               if (contentBrowser_right_navCurrentDir == Filesystem::GetIconsPath())
-                texture = texManager.FindTextureIcon(entryPathString);
+                texture = manager.FindTextureIcon(relativePath);
               else
-                texture = texManager.FindTexture(entryPathString);
+                texture = manager.FindTexture(relativePath);
 
               ImGui::ImageButton(filenameString.c_str(), 
                 reinterpret_cast<void*>(texture->id), 
@@ -129,7 +129,7 @@ static void ContentBrowser_RightCol_Thumbnails(f32 contentHeight)
             // Render generic file icon
             else
             {
-              const auto& iconFile = texManager.FindTextureIcon(Filesystem::GetIconsPath() / "file.png");
+              const auto& iconFile = manager.FindTextureIcon("file.png");
               
               ImGui::ImageButton(filenameString.c_str(), 
                 reinterpret_cast<void*>(iconFile->id), 
@@ -139,7 +139,7 @@ static void ContentBrowser_RightCol_Thumbnails(f32 contentHeight)
           }
 
           if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-            ImGui::SetTooltip("%s", entryPathString.c_str());
+            ImGui::SetTooltip("%s", absolutePath.relative_path().string().c_str());
           ImGui::TextWrapped("%s", filenameString.c_str());
         }
       }

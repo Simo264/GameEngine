@@ -4,18 +4,19 @@
 #include "Core/Log/Logger.hpp"
 
 #include "Engine/Utils.hpp"
+#include "Engine/Filesystem/Filesystem.hpp"
 
-Texture2D::Texture2D(Texture2DTarget target, const fs::path& imagePath, bool gammaCorrection)
+Texture2D::Texture2D(Texture2DTarget target, const fs::path& absolutePath, bool gammaCorrection)
   : id{ 0 },
     internalFormat{ 0 },
     format{ 0 },
     nChannels{ 0 },
     width{ 0 },
     height{ 0 },
-    path{}
+    relativePath{}
 {
   Create(target);
-  LoadImageData(imagePath, gammaCorrection);
+  LoadImageData(absolutePath, gammaCorrection);
 }
 
 void Texture2D::Create(Texture2DTarget target)
@@ -27,7 +28,6 @@ void Texture2D::Delete()
   glDeleteTextures(1, &id); 
   id = 0;
 }
-
 bool Texture2D::IsValid() const
 {
   return (id != 0) && (glIsTexture(id) == GL_TRUE);
@@ -79,11 +79,13 @@ void Texture2D::ClearStorage(i32 level, i32 type, const void* data) const
   glClearTexImage(id, level, format, type, data);
 }
 
-void Texture2D::LoadImageData(const fs::path& imagePath, bool gammaCorrection)
+void Texture2D::LoadImageData(const fs::path& absolutePath, bool gammaCorrection)
 {
+  this->relativePath = fs::relative(absolutePath, Filesystem::GetAssetsPath());
+
   i32 width, height, nChannels;
   Texture2DInternalFormat internalFormat = Texture2DInternalFormat::RGB8;
-  u8* data = Utils::LoadImageData(imagePath, width, height, nChannels);
+  u8* data = Utils::LoadImageData(absolutePath, width, height, nChannels);
   if (data)
   {
     // From https://registry.khronos.org/OpenGL-Refpages/gl4/html/glTexStorage2D.xhtml
@@ -114,7 +116,6 @@ void Texture2D::LoadImageData(const fs::path& imagePath, bool gammaCorrection)
     }
 
     this->nChannels = nChannels;
-    this->path = imagePath;
 
     SetParameteri(TextureParameteriName::TextureWrapS, TextureParameteriParam::Repeat);
     SetParameteri(TextureParameteriName::TextureWrapT, TextureParameteriParam::Repeat);
@@ -126,7 +127,7 @@ void Texture2D::LoadImageData(const fs::path& imagePath, bool gammaCorrection)
     GenerateMipmap();
   }
   else
-    CONSOLE_ERROR("Failed to load image data {}", imagePath.string());
+    CONSOLE_ERROR("Failed to load image data {}", absolutePath.string());
 
   Utils::FreeImageData(data);
 }
@@ -135,7 +136,6 @@ void Texture2D::GetTextureImage(i32 level, i32 type, i32 buffSize, void* pixels)
 {
   glGetTextureImage(id, level, format, type, buffSize, pixels);
 }
-
 void Texture2D::SetParameteri(TextureParameteriName name, TextureParameteriParam value) const
 {
   glTextureParameteri(
@@ -143,7 +143,6 @@ void Texture2D::SetParameteri(TextureParameteriName name, TextureParameteriParam
     static_cast<u32>(name),
     static_cast<i32>(value));
 }
-
 void Texture2D::SetParameterfv(TextureParameteriName name, f32* values) const
 {
   glTextureParameterfv(
@@ -151,7 +150,6 @@ void Texture2D::SetParameterfv(TextureParameteriName name, f32* values) const
     static_cast<u32>(name),
     values);
 }
-
 void Texture2D::SetCompareFunc(CompareFunc func) const
 {
   glTextureParameteri(
