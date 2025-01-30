@@ -6,7 +6,6 @@
 #include <imgui/imgui.h>
 
 static Vector<fs::path> fontVector;
-
 static void LoadFontVector()
 {
   fontVector.clear();

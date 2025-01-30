@@ -5,69 +5,108 @@
 
 enum class Texture2DTarget : u32
 {
-  Texture2D = 0x0DE1, // GL_TEXTURE_2D
-  Texture2DArray = 0x8C1A, // GL_TEXTURE_2D_ARRAY
-  TextureRectangle = 0x84F5, // GL_TEXTURE_RECTANGLE
-  Texture2DMultisample = 0x9100, // GL_TEXTURE_2D_MULTISAMPLE
-  Texture2DMultisampleArray = 0x9102  // GL_TEXTURE_2D_MULTISAMPLE_ARRAY
+  TEXTURE_2D = 0x0DE1, // GL_TEXTURE_2D
+  TEXTURE_2D_ARRAY = 0x8C1A, // GL_TEXTURE_2D_ARRAY
+  TEXTURE_RECTANGLE = 0x84F5, // GL_TEXTURE_RECTANGLE
+  TEXTURE_2D_MULTISAMPLE = 0x9100, // GL_TEXTURE_2D_MULTISAMPLE
+  TEXTURE_2D_MULTISAMPLE_ARRAY = 0x9102  // GL_TEXTURE_2D_MULTISAMPLE_ARRAY
+};
+enum class Texture2DFormat : u32
+{
+  RED = 0x1903, // GL_RED
+  RG = 0x8227, // GL_RG
+  RGB = 0x1907, // GL_RGB
+  BGR = 0x80E0, // GL_BGR
+  RGBA = 0x1908, // GL_RGBA
+  BGRA = 0x80E1, // GL_BGRA
+  STENCIL_INDEX = 0x1901, // GL_STENCIL_INDEX
+  DEPTH_COMPONENT = 0x1902, // GL_DEPTH_COMPONENT
+  DEPTH_STENCIL = 0x84F9, // GL_DEPTH_STENCIL
+  RED_INTEGER = 0x8D94, // GL_RED_INTEGER
+  RG_INTEGER = 0x8228, // GL_RG_INTEGER
+  RGB_INTEGER = 0x8D98, // GL_RGB_INTEGER
+  BGR_INTEGER = 0x8D9A, // GL_BGR_INTEGER
+  RGBA_INTEGER = 0x8D99, // GL_RGBA_INTEGER
+  BGRA_INTEGER = 0x8D9B  // GL_BGRA_INTEGER
 };
 enum class Texture2DInternalFormat : u32
 {
   R8 = 0x8229, // GL_R8
+  R8_SNORM = 0x8F94, // GL_R8_SNORM
+  R16 = 0x822A, // GL_R16
+  R16_SNORM = 0x8F98, // GL_R16_SNORM
   RG8 = 0x822B, // GL_RG8
+  RG8_SNORM = 0x8F95, // GL_RG8_SNORM
+  RG16 = 0x822C, // GL_RG16
+  RG16_SNORM = 0x8F99, // GL_RG16_SNORM
   RGB8 = 0x8051, // GL_RGB8
+  RGB8_SNORM = 0x8F96, // GL_RGB8_SNORM
+  RGB16 = 0x8054, // GL_RGB16
+  RGB16_SNORM = 0x8F9A, // GL_RGB16_SNORM
   RGBA8 = 0x8058, // GL_RGBA8
-  RGB10_A2 = 0x8059, // GL_RGB10_A2
-  RGBA16F = 0x881A, // GL_RGBA16F
-  RGB16F = 0x881B, // GL_RGB16F
-  RGBA32F = 0x8814, // GL_RGBA32F
-  RGB32F = 0x8815, // GL_RGB32F
+  RGBA8_SNORM = 0x8F97, // GL_RGBA8_SNORM
+  RGBA16 = 0x805B, // GL_RGBA16
+  RGBA16_SNORM = 0x8F9B, // GL_RGBA16_SNORM
   SRGB8 = 0x8C41, // GL_SRGB8
   SRGB8_ALPHA8 = 0x8C43, // GL_SRGB8_ALPHA8
-
-  DepthComponent16 = 0x81A5, // GL_DEPTH_COMPONENT16
-  DepthComponent24 = 0x81A6, // GL_DEPTH_COMPONENT24
-  DepthComponent32F = 0x8CAC, // GL_DEPTH_COMPONENT32F
-  Depth24Stencil8 = 0x88F0, // GL_DEPTH24_STENCIL8
-  Depth32FStencil8 = 0x8CAD, // GL_DEPTH32F_STENCIL8
-  StencilIndex8 = 0x8D48  // GL_STENCIL_INDEX8
+  R16F = 0x822D, // GL_R16F
+  RG16F = 0x822F, // GL_RG16F
+  RGB16F = 0x881B, // GL_RGB16F
+  RGBA16F = 0x881A, // GL_RGBA16F
+  R32F = 0x822E, // GL_R32F
+  RG32F = 0x8230, // GL_RG32F
+  RGB32F = 0x8815, // GL_RGB32F
+  RGBA32F = 0x8814, // GL_RGBA32F
+  R11F_G11F_B10F = 0x8C3A, // GL_R11F_G11F_B10F
+  RGB9_E5 = 0x8C3D, // GL_RGB9_E5
+  DEPTH_COMPONENT16 = 0x81A5, // GL_DEPTH_COMPONENT16
+  DEPTH_COMPONENT24 = 0x81A6, // GL_DEPTH_COMPONENT24
+  DEPTH_COMPONENT32F = 0x8CAC, // GL_DEPTH_COMPONENT32F
+  DEPTH24_STENCIL8 = 0x88F0, // GL_DEPTH24_STENCIL8
+  DEPTH32F_STENCIL8 = 0x8CAD  // GL_DEPTH32F_STENCIL8
 };
-enum class TextureParameteriName : u32 
+enum class Texture2DSubImageType : u32
 {
-  TextureMinFilter    = 0x2801, // GL_TEXTURE_MIN_FILTER
-  TextureMagFilter    = 0x2800, // GL_TEXTURE_MAG_FILTER
-  TextureWrapS        = 0x2802, // GL_TEXTURE_WRAP_S
-  TextureWrapT        = 0x2803, // GL_TEXTURE_WRAP_T
-  TextureWrapR        = 0x8072, // GL_TEXTURE_WRAP_R
-  TextureBaseLevel    = 0x813C, // GL_TEXTURE_BASE_LEVEL
-  TextureMaxLevel     = 0x813D, // GL_TEXTURE_MAX_LEVEL
-  TextureCompareMode  = 0x884C, // GL_TEXTURE_COMPARE_MODE
-  TextureCompareFunc  = 0x884D, // GL_TEXTURE_COMPARE_FUNC
-  TextureSwizzleR     = 0x8E42, // GL_TEXTURE_SWIZZLE_R
-  TextureSwizzleG     = 0x8E43, // GL_TEXTURE_SWIZZLE_G
-  TextureSwizzleB     = 0x8E44, // GL_TEXTURE_SWIZZLE_B
-  TextureSwizzleA     = 0x8E45, // GL_TEXTURE_SWIZZLE_A
-  TextureBorderColor  = 0x1004  // GL_TEXTURE_BORDER_COLOR
+  UNSIGNED_BYTE = 0x1401, // GL_UNSIGNED_BYTE
+  BYTE = 0x1400, // GL_BYTE
+  UNSIGNED_SHORT = 0x1403, // GL_UNSIGNED_SHORT
+  SHORT = 0x1402, // GL_SHORT
+  UNSIGNED_INT = 0x1405, // GL_UNSIGNED_INT
+  INT = 0x1404, // GL_INT
+  FLOAT = 0x1406, // GL_FLOAT
+  UNSIGNED_BYTE_3_3_2 = 0x8032, // GL_UNSIGNED_BYTE_3_3_2
+  UNSIGNED_BYTE_2_3_3_REV = 0x8362, // GL_UNSIGNED_BYTE_2_3_3_REV
+  UNSIGNED_SHORT_5_6_5 = 0x8363, // GL_UNSIGNED_SHORT_5_6_5
+  UNSIGNED_SHORT_5_6_5_REV = 0x8364, // GL_UNSIGNED_SHORT_5_6_5_REV
+  UNSIGNED_SHORT_4_4_4_4 = 0x8033, // GL_UNSIGNED_SHORT_4_4_4_4
+  UNSIGNED_SHORT_5_5_5_1 = 0x8034  // GL_UNSIGNED_SHORT_5_5_5_1
 };
-enum class TextureParameteriParam : i32 
+enum class Texture2DClearImageType : u32
 {
-  Nearest               = 0x2600, // GL_NEAREST
-  Linear                = 0x2601, // GL_LINEAR
-  NearestMipmapNearest  = 0x2700, // GL_NEAREST_MIPMAP_NEAREST
-  LinearMipmapNearest   = 0x2701, // GL_LINEAR_MIPMAP_NEAREST
-  NearestMipmapLinear   = 0x2702, // GL_NEAREST_MIPMAP_LINEAR
-  LinearMipmapLinear    = 0x2703, // GL_LINEAR_MIPMAP_LINEAR
-  Repeat                = 0x2901, // GL_REPEAT
-  ClampToEdge           = 0x812F, // GL_CLAMP_TO_EDGE
-  ClampToBorder         = 0x812D, // GL_CLAMP_TO_BORDER
-  MirroredRepeat        = 0x8370, // GL_MIRRORED_REPEAT
-  CompareRefToTexture   = 0x884E, // GL_COMPARE_REF_TO_TEXTURE
-  CompareRToTexture     = 0x884E  // GL_COMPARE_R_TO_TEXTURE (simile)
+  UNSIGNED_BYTE = 0x1401, // GL_UNSIGNED_BYTE
+  BYTE = 0x1400, // GL_BYTE
+  UNSIGNED_SHORT = 0x1403, // GL_UNSIGNED_SHORT
+  SHORT = 0x1402, // GL_SHORT
+  UNSIGNED_INT = 0x1405, // GL_UNSIGNED_INT
+  INT = 0x1404, // GL_INT
+  FLOAT = 0x1406, // GL_FLOAT
+  UNSIGNED_INT_10F_11F_11F_REV = 0x8C3B, // GL_UNSIGNED_INT_10F_11F_11F_REV
+  UNSIGNED_INT_5_9_9_9_REV = 0x8C3E, // GL_UNSIGNED_INT_5_9_9_9_REV
+  UNSIGNED_INT_2_10_10_10_REV = 0x8368  // GL_UNSIGNED_INT_2_10_10_10_REV
 };
-enum class TextureType : u32
+enum class Texture2DGetImageType : u32
 {
-  MeshTexture,
-  Icon
+  UNSIGNED_BYTE = 0x1401, // GL_UNSIGNED_BYTE
+  BYTE = 0x1400, // GL_BYTE
+  UNSIGNED_SHORT = 0x1403, // GL_UNSIGNED_SHORT
+  SHORT = 0x1402, // GL_SHORT
+  UNSIGNED_INT = 0x1405, // GL_UNSIGNED_INT
+  INT = 0x1404, // GL_INT
+  FLOAT = 0x1406, // GL_FLOAT
+  HALF_FLOAT = 0x140B, // GL_HALF_FLOAT
+  UNSIGNED_INT_10F_11F_11F_REV = 0x8C3B, // GL_UNSIGNED_INT_10F_11F_11F_REV
+  UNSIGNED_INT_5_9_9_9_REV = 0x8C3E, // GL_UNSIGNED_INT_5_9_9_9_REV
+  UNSIGNED_INT_2_10_10_10_REV = 0x8368  // GL_UNSIGNED_INT_2_10_10_10_REV
 };
 
 /**
@@ -101,16 +140,14 @@ class Texture2D
 public:
   Texture2D() : 
     id{ 0 },
-    internalFormat{ 0 },
-    format{ 0 },
-    nChannels{ 0 },
-    width{ 0 },
-    height{ 0 },
-    relativePath{}
+    path{}
   {}
 
   /** @brief Constructor which initialises a Texture2D object by loading data from an image file. */
-  Texture2D(Texture2DTarget target, const fs::path& absolutePath, bool gammaCorrection);
+  Texture2D(Texture2DTarget target, 
+            const fs::path& absolutePath, 
+            bool gammaCorrection);
+  
   ~Texture2D() = default;
 
   /** @brief Loads image data from file and stores it in the texture. */
@@ -126,40 +163,60 @@ public:
   void BindTextureUnit(i32 unit) const;
 
   /** @brief Set texture parameters */
-  void SetParameteri(TextureParameteriName name, TextureParameteriParam value) const;
+  void SetParameteri(TextureParameteriName name, 
+                     TextureParameteriParam value) const;
+  
   void SetParameterfv(TextureParameteriName name, f32* values) const;
+  
   void SetCompareFunc(CompareFunc func) const;
 
   /** @brief Generate mipmaps for the texture object */
   void GenerateMipmap() const;
 
   /** @brief The storage is created here, but the contents of that storage is undefined. */
-  void CreateStorage(Texture2DInternalFormat internalFormat, i32 width, i32 height);
+  void CreateStorage(Texture2DInternalFormat internalFormat, 
+                     i32 width, 
+                     i32 height) const;
 
   /** @brief Specify storage for multisample texture. */
-  void CreateStorageMultisampled(Texture2DInternalFormat internalFormat, i32 samples, i32 width, i32 height);
+  void CreateStorageMultisampled(Texture2DInternalFormat internalFormat, 
+                                 i32 samples, 
+                                 i32 width, 
+                                 i32 height) const;
 
   /** @brief Specify a two-dimensional texture subimage. */
-  void UpdateStorage(i32 level, i32 xoffset, i32 yoffset, i32 type, const void* pixels) const;
+  void UpdateStorage(i32 level,
+                     i32 width,
+                     i32 height,
+                     Texture2DFormat format,
+                     Texture2DSubImageType type, 
+                     const void* pixels,
+                     i32 xoffset = 0,
+                     i32 yoffset = 0
+                     ) const;
 
   /** @brief Fills all the texture image with a constant value. */
-  void ClearStorage(i32 level, i32 type, const void* data) const;
+  void ClearStorage(i32 level,
+                    Texture2DFormat format,
+                    Texture2DClearImageType type,
+                    const void* data) const;
   
   /** @return A texture image into pixels. */
-  void GetTextureImage(i32 level, i32 type, i32 buffSize, void* pixels) const;
+  void GetTextureImage(i32 level,
+                       Texture2DFormat format,
+                       Texture2DGetImageType type, 
+                       i32 buffSize, 
+                       void* pixels) const;
+
+  i32 GetWidth() const;
+  i32 GetHeight() const;
+  Texture2DInternalFormat GetInternalFormat() const;
+  Texture2DFormat GetFormat(Texture2DInternalFormat internalFormat) const;
+  i32 GetNumChannels(Texture2DInternalFormat internalFormat) const;
 
   bool Compare(const Texture2D& other) const { return id == other.id; }
   bool IsValid() const;
   
   u32 id;
-
-  i32 format;
-  Texture2DInternalFormat internalFormat;
-
-  i32 width;
-  i32 height;
-
-  i32 nChannels;
-  
-  fs::path relativePath;
+  fs::path path; // relative path to "Assets/"
 };

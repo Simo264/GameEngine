@@ -104,18 +104,18 @@ static void SetOpenGLStates()
   // ----------------
   DepthTest::EnableTest();
   DepthTest::EnableWritingBuffer();
-  DepthTest::SetDepthFun(CompareFunc::Less);
+  DepthTest::SetDepthFun(CompareFunc::LESS);
 
   // Stencil testing OFF
   // -------------------
   StencilTest::DisableTest();
-  StencilTest::SetStencilFun(CompareFunc::Always, 0, 0xFF);
-  StencilTest::SetStencilOp(StencilOpMode::Keep, StencilOpMode::Keep, StencilOpMode::Keep);
+  StencilTest::SetStencilFun(CompareFunc::ALWAYS, 0, 0xFF);
+  StencilTest::SetStencilOp(StencilOpMode::KEEP, StencilOpMode::KEEP, StencilOpMode::KEEP);
 
   // Culling OFF
   // -----------
   FaceCulling::DisableFaceCulling();
-  FaceCulling::SetCullFace(CullFaceMode::Back);
+  FaceCulling::SetCullFace(CullFaceMode::BACK);
   FaceCulling::SetFrontFacing(FrontFaceMode::CCW);
 
   // Blending OFF
@@ -224,12 +224,12 @@ static void CreateSkybox(Mesh& skybox, TextureCubemap& skyboxTexture)
     -1.0f, -1.0f,  1.0f,
      1.0f, -1.0f,  1.0f
   };
-  Buffer vbo(sizeof(vertices), vertices, BufferUsage::StaticDraw);
+  Buffer vbo(sizeof(vertices), vertices, BufferUsage::STATIC_DRAW);
   
   skybox.Create();
   skybox.vao.AttachVertexBuffer(0, vbo, 0, sizeof(Vertex_P));
   skybox.vao.numVertices = 36;
-  skybox.SetupAttributeFloat(0, 0, VertexFormat(3, VertexAttribType::Float, false, 0));
+  skybox.SetupAttributeFloat(0, 0, VertexFormat(3, VertexAttribType::FLOAT, false, 0));
 
   TexturesManager& texturesManager = TexturesManager::Get();
   Array<const Texture2D*, 6> images = {
@@ -240,39 +240,39 @@ static void CreateSkybox(Mesh& skybox, TextureCubemap& skyboxTexture)
     texturesManager.FindTexture("skybox/front.jpg"),
     texturesManager.FindTexture("skybox/back.jpg"),
   };
-  Texture2DInternalFormat cubemapInternalFormat = images.at(0)->internalFormat;
-  i32 width = images.at(0)->width;
-  i32 height = images.at(0)->height;
+  Texture2DInternalFormat cubemapInternalFormat = images.at(0)->GetInternalFormat();
+  i32 width = images.at(0)->GetWidth();
+  i32 height = images.at(0)->GetHeight();
 
   skyboxTexture.Create();
   skyboxTexture.CreateStorage(cubemapInternalFormat, width, height);
   skyboxTexture.LoadImages(images);
-  skyboxTexture.SetParameteri(TextureParameteriName::TextureMagFilter, TextureParameteriParam::Linear);
-  skyboxTexture.SetParameteri(TextureParameteriName::TextureMinFilter, TextureParameteriParam::Linear);
-  skyboxTexture.SetParameteri(TextureParameteriName::TextureWrapS, TextureParameteriParam::ClampToEdge);
-  skyboxTexture.SetParameteri(TextureParameteriName::TextureWrapT, TextureParameteriParam::ClampToEdge);
-  skyboxTexture.SetParameteri(TextureParameteriName::TextureWrapR, TextureParameteriParam::ClampToEdge);
+  skyboxTexture.SetParameteri(TextureParameteriName::MAG_FILTER, TextureParameteriParam::LINEAR);
+  skyboxTexture.SetParameteri(TextureParameteriName::MIN_FILTER, TextureParameteriParam::LINEAR);
+  skyboxTexture.SetParameteri(TextureParameteriName::WRAP_S, TextureParameteriParam::CLAMP_TO_EDGE);
+  skyboxTexture.SetParameteri(TextureParameteriName::WRAP_T, TextureParameteriParam::CLAMP_TO_EDGE);
+  skyboxTexture.SetParameteri(TextureParameteriName::WRAP_R, TextureParameteriParam::CLAMP_TO_EDGE);
 }
 static FrameBuffer CreateDepthMapFbo(i32 width, i32 height)
 {
   // Create a 2D texture that we'll use as the framebuffer's depth buffer
   Texture2D depthMap;
-  depthMap.Create(Texture2DTarget::Texture2D);
-  depthMap.CreateStorage(Texture2DInternalFormat::DepthComponent24, width, height);
-  depthMap.SetParameteri(TextureParameteriName::TextureCompareMode, TextureParameteriParam::CompareRefToTexture);
-  depthMap.SetCompareFunc(CompareFunc::LEqual);
-  depthMap.SetParameteri(TextureParameteriName::TextureMinFilter, TextureParameteriParam::Linear);
-  depthMap.SetParameteri(TextureParameteriName::TextureMagFilter, TextureParameteriParam::Linear);
+  depthMap.Create(Texture2DTarget::TEXTURE_2D);
+  depthMap.CreateStorage(Texture2DInternalFormat::DEPTH_COMPONENT24, width, height);
+  depthMap.SetParameteri(TextureParameteriName::COMPARE_MODE, TextureParameteriParam::COMPARE_REF_TO_TEXTURE);
+  depthMap.SetCompareFunc(CompareFunc::LEQUAL);
+  depthMap.SetParameteri(TextureParameteriName::MIN_FILTER, TextureParameteriParam::LINEAR);
+  depthMap.SetParameteri(TextureParameteriName::MAG_FILTER, TextureParameteriParam::LINEAR);
 
   // Resolve the problem of over sampling
-  depthMap.SetParameteri(TextureParameteriName::TextureWrapS, TextureParameteriParam::ClampToBorder);
-  depthMap.SetParameteri(TextureParameteriName::TextureWrapT, TextureParameteriParam::ClampToBorder);
-  depthMap.SetParameterfv(TextureParameteriName::TextureBorderColor, Array<f32, 4>{ 1.0, 1.0, 1.0, 1.0 }.data());
+  depthMap.SetParameteri(TextureParameteriName::WRAP_S, TextureParameteriParam::CLAMP_TO_BORDER);
+  depthMap.SetParameteri(TextureParameteriName::WRAP_T, TextureParameteriParam::CLAMP_TO_BORDER);
+  depthMap.SetParameterfv(TextureParameteriName::BORDER_COLOR, Array<f32, 4>{ 1.0, 1.0, 1.0, 1.0 }.data());
 
   // With the generated depth texture we can attach it as the framebuffer's depth buffer
   FrameBuffer fbo;
   fbo.Create();
-  fbo.AttachTexture(FramebufferAttachment::Depth, depthMap.id, 0);
+  fbo.AttachTexture(FramebufferAttachment::DEPTH, depthMap.id, 0);
   return fbo;
 }
 static FrameBuffer CreateDepthCubeMapFbo(i32 width, i32 height)
@@ -282,17 +282,17 @@ static FrameBuffer CreateDepthCubeMapFbo(i32 width, i32 height)
 
   TextureCubemap texture;
   texture.Create();
-  texture.CreateStorage(Texture2DInternalFormat::DepthComponent24, width, height);
+  texture.CreateStorage(Texture2DInternalFormat::DEPTH_COMPONENT24, width, height);
   for (i32 i = 0; i < 6; i++)
-    texture.SubImage3D(0, 0, 0, i, width, height, 1, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+    texture.SubImage3D(0, 0, 0, i, width, height, 1, Texture3DFormat::DEPTH_COMPONENT, Texture3DType::FLOAT, nullptr);
 
-  texture.SetParameteri(TextureParameteriName::TextureMagFilter, TextureParameteriParam::Linear);
-  texture.SetParameteri(TextureParameteriName::TextureMinFilter, TextureParameteriParam::Linear);
-  texture.SetParameteri(TextureParameteriName::TextureWrapS, TextureParameteriParam::ClampToEdge);
-  texture.SetParameteri(TextureParameteriName::TextureWrapT, TextureParameteriParam::ClampToEdge);
-  texture.SetParameteri(TextureParameteriName::TextureWrapR, TextureParameteriParam::ClampToEdge);
+  texture.SetParameteri(TextureParameteriName::MAG_FILTER, TextureParameteriParam::LINEAR);
+  texture.SetParameteri(TextureParameteriName::MIN_FILTER, TextureParameteriParam::LINEAR);
+  texture.SetParameteri(TextureParameteriName::WRAP_S, TextureParameteriParam::CLAMP_TO_EDGE);
+  texture.SetParameteri(TextureParameteriName::WRAP_T, TextureParameteriParam::CLAMP_TO_EDGE);
+  texture.SetParameteri(TextureParameteriName::WRAP_R, TextureParameteriParam::CLAMP_TO_EDGE);
 
-  fbo.AttachTexture(FramebufferAttachment::Depth, texture.id, 0);
+  fbo.AttachTexture(FramebufferAttachment::DEPTH, texture.id, 0);
   return fbo;
 }
 static void CreateGridPlane(Mesh& grid)
@@ -305,10 +305,10 @@ static void CreateGridPlane(Mesh& grid)
        1.f,  1.f, 0.f,
        1.f, -1.f, 0.f
   };
-  Buffer gridVbo(sizeof(vertices), vertices, BufferUsage::StaticDraw);
+  Buffer gridVbo(sizeof(vertices), vertices, BufferUsage::STATIC_DRAW);
 
   grid.Create();
-  grid.SetupAttributeFloat(0, 0, VertexFormat(3, VertexAttribType::Float, false, 0));
+  grid.SetupAttributeFloat(0, 0, VertexFormat(3, VertexAttribType::FLOAT, false, 0));
   grid.vao.AttachVertexBuffer(0, gridVbo, 0, 3 * sizeof(f32));
   grid.vao.numVertices = 6;
 }
@@ -359,9 +359,9 @@ void Engine::Initialize()
     _uboCameraBlock = Buffer(
       2 * sizeof(mat4f),          // Reserve memory for both projection and view matrices
       nullptr,                    // No data
-      BufferUsage::DynamicDraw    // Data store content will be modified repeatedly and used many times.
+      BufferUsage::DYNAMIC_DRAW    // Data store content will be modified repeatedly and used many times.
     );
-    _uboCameraBlock.BindBase(BufferTarget::Uniform, 0); // "CameraBlock" to binding point 0
+    _uboCameraBlock.BindBase(BufferTarget::UNIFORM, 0); // "CameraBlock" to binding point 0
   }
   // Init UBO lightBlock
   {
@@ -371,12 +371,12 @@ void Engine::Initialize()
     _uboLightBlock = Buffer(
       sizeof(dl) + sizeof(pl) + sizeof(sl), // Reserve memory for DirectionalLight, PointLight and SpotLight structures
       nullptr,                              // No data
-      BufferUsage::DynamicDraw              // Data store content will be modified repeatedly and used many times.
+      BufferUsage::DYNAMIC_DRAW              // Data store content will be modified repeatedly and used many times.
     );
     _uboLightBlock.UpdateStorage(0, sizeof(dl), reinterpret_cast<void*>(&dl));
     _uboLightBlock.UpdateStorage(sizeof(dl), sizeof(pl), reinterpret_cast<void*>(&pl));
     _uboLightBlock.UpdateStorage(sizeof(dl) + sizeof(pl), sizeof(sl), reinterpret_cast<void*>(&sl));
-    _uboLightBlock.BindBase(BufferTarget::Uniform, 1); // "LightBlock" to binding point 1
+    _uboLightBlock.BindBase(BufferTarget::UNIFORM, 1); // "LightBlock" to binding point 1
   }
   // Init UBO BoneBlock
   {
@@ -386,9 +386,9 @@ void Engine::Initialize()
     _uboBoneBlock = Buffer(
       SkeletalMesh::GetMaxNumBones() * sizeof(mat4f), // Reserve memory for 100 mat4f
       bones.data(),                                   // Fill with mat4f(1.0f)
-      BufferUsage::StreamDraw                         // Data store content will be modified repeatedly and used many times.
+      BufferUsage::STREAM_DRAW                         // Data store content will be modified repeatedly and used many times.
     );
-    _uboBoneBlock.BindBase(BufferTarget::Uniform, 2); // "BoneBlock" to binding point 2
+    _uboBoneBlock.BindBase(BufferTarget::UNIFORM, 2); // "BoneBlock" to binding point 2
   }
 
 
@@ -571,7 +571,7 @@ void Engine::Run()
 #endif
 
     /// Fill the framebuffer color texture
-    _fboMultisampled.Bind(FramebufferTarget::ReadDraw);
+    _fboMultisampled.Bind(FramebufferTarget::READ_DRAW);
     { 
       glViewport(0, 0, _viewportSize.x, _viewportSize.y);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -636,19 +636,19 @@ void Engine::Run()
         skyboxProgram.SetUniformMat4f("u_projection", cameraProj);
         skyboxProgram.SetUniformMat4f("u_view", mat4f(mat3f(cameraView)));
         skyboxTexture.BindTextureUnit(0);
-        DepthTest::SetDepthFun(CompareFunc::LEqual);
+        DepthTest::SetDepthFun(CompareFunc::LEQUAL);
         Renderer::DrawArrays(RenderMode::Triangles, skybox.vao);
-        DepthTest::SetDepthFun(CompareFunc::Less);
+        DepthTest::SetDepthFun(CompareFunc::LESS);
       }
 
       // Blit multisampled buffer to normal color buffer of intermediate FBO
       _fboMultisampled.Blit(_fboIntermediate,
         0, 0, _viewportSize.x, _viewportSize.y,
         0, 0, _viewportSize.x, _viewportSize.y,
-        FramebufferBlitMask::ColorBuffer,
-        FramebufferBlitFilter::Nearest);
+        FramebufferBlitMask::COLOR_BUFFER,
+        FramebufferBlitFilter::NEAREST);
     }
-    _fboMultisampled.Unbind(FramebufferTarget::ReadDraw);
+    _fboMultisampled.Unbind(FramebufferTarget::READ_DRAW);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
@@ -708,14 +708,14 @@ void Engine::CreateFramebuffer(i32 samples, i32 width, i32 height)
 
   // Create a multisampled color attachment texture 
   Texture2D textColMultAtt;
-  textColMultAtt.Create(Texture2DTarget::Texture2DMultisample);
+  textColMultAtt.Create(Texture2DTarget::TEXTURE_2D_MULTISAMPLE);
   textColMultAtt.CreateStorageMultisampled(Texture2DInternalFormat::RGB8, samples, width, height);
   // Create a multisampled renderbuffer object for depth and stencil attachments 
   RenderBuffer depthStencMultAtt;
   depthStencMultAtt.Create();
-  depthStencMultAtt.CreateStorageMulstisampled(RenderbufferInternalFormat::Depth24Stencil8, samples, width, height);
-  _fboMultisampled.AttachTexture(FramebufferAttachment::Color0, textColMultAtt.id, 0);
-  _fboMultisampled.AttachRenderBuffer(FramebufferAttachment::DepthStencil, depthStencMultAtt);
+  depthStencMultAtt.CreateStorageMulstisampled(RenderbufferInternalFormat::DEPTH24_STENCIL8, samples, width, height);
+  _fboMultisampled.AttachTexture(FramebufferAttachment::COLOR_0, textColMultAtt.id, 0);
+  _fboMultisampled.AttachRenderBuffer(FramebufferAttachment::DEPTH_STENCIL, depthStencMultAtt);
   
   if (_fboMultisampled.CheckStatus() != GL_FRAMEBUFFER_COMPLETE)
     CONSOLE_WARN("Multisampled framebuffer is not complete!");
@@ -725,11 +725,11 @@ void Engine::CreateFramebuffer(i32 samples, i32 width, i32 height)
 
   // Create normal color attachment texture
   Texture2D textColAtt;
-  textColAtt.Create(Texture2DTarget::Texture2D);
+  textColAtt.Create(Texture2DTarget::TEXTURE_2D);
   textColAtt.CreateStorage(Texture2DInternalFormat::RGB8, width, height);
-  textColAtt.SetParameteri(TextureParameteriName::TextureMinFilter, TextureParameteriParam::Linear);
-  textColAtt.SetParameteri(TextureParameteriName::TextureMagFilter, TextureParameteriParam::Linear);
-  _fboIntermediate.AttachTexture(FramebufferAttachment::Color0, textColAtt.id, 0);
+  textColAtt.SetParameteri(TextureParameteriName::MIN_FILTER, TextureParameteriParam::LINEAR);
+  textColAtt.SetParameteri(TextureParameteriName::MAG_FILTER, TextureParameteriParam::LINEAR);
+  _fboIntermediate.AttachTexture(FramebufferAttachment::COLOR_0, textColAtt.id, 0);
 
   if (_fboIntermediate.CheckStatus() != GL_FRAMEBUFFER_COMPLETE)
     CONSOLE_WARN("Intermediate framebuffer is not complete!");
@@ -747,14 +747,14 @@ void Engine::CreateScreenSquare()
      1.0f, -1.0f,  1.0f, 0.0f,
      1.0f,  1.0f,  1.0f, 1.0f
   };
-  Buffer vbo(sizeof(vertices), vertices, BufferUsage::StaticDraw);
+  Buffer vbo(sizeof(vertices), vertices, BufferUsage::STATIC_DRAW);
   _screenSquare.AttachVertexBuffer(0, vbo, 0, 4 * sizeof(f32));
 
-  _screenSquare.SetAttribFormatFLoat(0, 2, VertexAttribType::Float, true, 0);
+  _screenSquare.SetAttribFormatFLoat(0, 2, VertexAttribType::FLOAT, true, 0);
   _screenSquare.SetAttribBinding(0, 0);
   _screenSquare.EnableAttribute(0);
 
-  _screenSquare.SetAttribFormatFLoat(1, 2, VertexAttribType::Float, true, 2 * sizeof(f32));
+  _screenSquare.SetAttribFormatFLoat(1, 2, VertexAttribType::FLOAT, true, 2 * sizeof(f32));
   _screenSquare.SetAttribBinding(1, 0);
   _screenSquare.EnableAttribute(1);
   

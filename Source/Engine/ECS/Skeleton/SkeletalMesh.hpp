@@ -22,7 +22,6 @@ class SkeletalMesh
 public:
   /** @brief Default constructor for the SkeletonMesh class. */
   SkeletalMesh() = default;
-
   /** @brief Default destructor for the SkeletonMesh class. */
   ~SkeletalMesh() = default;
 
@@ -33,7 +32,7 @@ public:
   }
 
   /** @brief Constructs a SkeletonMesh object by loading a skeletal model from the specified file path. */
-  void CreateFromFile(const fs::path& path);
+  void CreateFromFile(const fs::path& relativePath);
 
   /**
    * @brief Draws the skeleton using the specified rendering mode.
@@ -70,7 +69,7 @@ public:
   /** @brief The root node of the bone hierarchy. */
   BoneNode rootNode;
 
-  fs::path path;
+  fs::path path; // relative path to "Assets/Models/Skeletal"
   
 private:
   void ProcessNode(aiNode* node, const aiScene* scene);

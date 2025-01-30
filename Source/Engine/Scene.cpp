@@ -43,12 +43,12 @@ void Scene::Clear()
 }
 void Scene::LoadFromFile(const fs::path& filePath)
 {
-	CONSOLE_INFO("Loading scene {}...", filePath.string());
+	CONSOLE_INFO("Loading scene {}...", filePath.relative_path().string());
 	DeserializeScene(filePath);
 }
 void Scene::Save(const fs::path& filePath)
 {
-	CONSOLE_INFO("Saving scene {}...", filePath.string());
+	CONSOLE_INFO("Saving scene {}...", filePath.relative_path().string());
 	SerializeScene(filePath);
 }
 
@@ -217,7 +217,7 @@ void Scene::DeserializeScene(const fs::path& filePath)
 				
 				IStream file(animlistFile);
 				if (!file)
-					CONSOLE_ERROR("Erron on opening file {}", animlistFile.string());
+					throw std::runtime_error(std::format("Erron on opening file {}", animlistFile.string()));
 
 				Vector<String> tmp{ std::istream_iterator<std::string>(file), std::istream_iterator<std::string>() };
 				Vector<fs::path> animations;
@@ -293,7 +293,7 @@ void Scene::DeserializeScene(const fs::path& filePath)
 			}
 
 			default:
-				CONSOLE_ERROR("Invalid LightType!");
+				throw std::runtime_error("error on loading scene: invalid LightType");
 			}
 		}
 	}

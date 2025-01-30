@@ -86,10 +86,10 @@ void StaticMesh::ProcessNode(aiNode* node, const aiScene* scene)
 	{
 		Mesh& mesh = meshes.emplace_back();
 		mesh.Create();
-		mesh.SetupAttributeFloat(0, 0, VertexFormat(3, VertexAttribType::Float, false, offsetof(Vertex_P_N_UV_T, position)));
-		mesh.SetupAttributeFloat(1, 0, VertexFormat(3, VertexAttribType::Float, false, offsetof(Vertex_P_N_UV_T, normal)));
-		mesh.SetupAttributeFloat(2, 0, VertexFormat(2, VertexAttribType::Float, false, offsetof(Vertex_P_N_UV_T, uv))); 
-		mesh.SetupAttributeFloat(3, 0, VertexFormat(3, VertexAttribType::Float, false, offsetof(Vertex_P_N_UV_T, tangent)));
+		mesh.SetupAttributeFloat(0, 0, VertexFormat(3, VertexAttribType::FLOAT, false, offsetof(Vertex_P_N_UV_T, position)));
+		mesh.SetupAttributeFloat(1, 0, VertexFormat(3, VertexAttribType::FLOAT, false, offsetof(Vertex_P_N_UV_T, normal)));
+		mesh.SetupAttributeFloat(2, 0, VertexFormat(2, VertexAttribType::FLOAT, false, offsetof(Vertex_P_N_UV_T, uv))); 
+		mesh.SetupAttributeFloat(3, 0, VertexFormat(3, VertexAttribType::FLOAT, false, offsetof(Vertex_P_N_UV_T, tangent)));
 
 		aiMesh* aimesh = scene->mMeshes[node->mMeshes[i]];
 
@@ -124,9 +124,9 @@ Buffer StaticMesh::LoadVertices(aiMesh* aimesh)
 
 	Buffer buffer;
 	buffer.Create();
-	buffer.CreateStorage(size, nullptr, BufferUsage::StaticDraw);
+	buffer.CreateStorage(size, nullptr, BufferUsage::STATIC_DRAW);
 
-	f32* ptr = static_cast<f32*>(buffer.MapStorage(BufferAccess::WriteOnly));
+	f32* ptr = static_cast<f32*>(buffer.MapStorage(BufferAccess::WRITE_ONLY));
 	for (u32 i = 0; i < aimesh->mNumVertices; i++)
 	{
 		// Position
@@ -155,9 +155,9 @@ Buffer StaticMesh::LoadIndices(aiMesh* aimesh)
 
 	Buffer buffer;
 	buffer.Create();
-	buffer.CreateStorage(size, nullptr, BufferUsage::StaticDraw);
+	buffer.CreateStorage(size, nullptr, BufferUsage::STATIC_DRAW);
 
-	u32* ptr = static_cast<u32*>(buffer.MapStorage(BufferAccess::WriteOnly));
+	u32* ptr = static_cast<u32*>(buffer.MapStorage(BufferAccess::WRITE_ONLY));
 	for (u32 i = 0; i < aimesh->mNumFaces; i++)
 	{
 		const aiFace& face = aimesh->mFaces[i];

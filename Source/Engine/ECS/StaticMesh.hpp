@@ -41,7 +41,7 @@ public:
 	/** @brief List of meshes contained in the model. */
 	Vector<Mesh> meshes;
 
-	fs::path path;
+	fs::path path; // relative path to "Assets/Models/Static"
 
 private:
 	/** @brief Processes a node in the model's scene graph. */

@@ -41,10 +41,8 @@ void ImGuiLayer::Initialize()
   // Load default font
   IniFileHandler config(Filesystem::GetRootPath() / "Configuration.ini");
   config.ReadData();
-  if(config.HasKey("GUI", "font-family"))
-    g_fontFamily = config.GetValue("GUI", "font-family");
-  if (config.HasKey("GUI", "font-size"))
-    g_fontSize = std::atoi(config.GetValue("GUI", "font-size").c_str());
+  g_fontFamily = config.GetValue("GUI", "font-family");
+  g_fontSize = std::atoi(config.GetValue("GUI", "font-size").c_str());
 
   SetFont(Filesystem::GetFontsPath() / g_fontFamily, g_fontSize);
 }

@@ -25,6 +25,9 @@ static bool ButtonCentered(const char* label, ImVec2 size)
 
 static void Hierarchy_ListObjects(Scene& scene, GameObject& objSelected)
 {
+  auto& texManager = TexturesManager::Get();
+  static const auto* icon = texManager.FindTextureIcon("game-object-16.png");
+
   char selectableName[64]{};
   for (auto [entity, tag] : scene.Reg().view<Tag>().each())
   {
@@ -36,7 +39,6 @@ static void Hierarchy_ListObjects(Scene& scene, GameObject& objSelected)
     ImGui::BeginGroup();
     ImGui::SetCursorPosY(ImGui::GetCursorPosY() + (ImGui::GetTextLineHeight() - 16.f) / 2);
     
-    const auto* icon = TexturesManager::Get().FindTextureIcon("game-object-16.png");
     ImGui::Image(reinterpret_cast<void*>(icon->id), ImVec2(16.f, 16.f));
     ImGui::SameLine();
     

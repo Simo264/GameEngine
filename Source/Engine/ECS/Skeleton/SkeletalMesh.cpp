@@ -28,10 +28,12 @@ static mat4f AiMatrixToGLM(const aiMatrix4x4& matrix)
 //										PUBLIC													
 // ----------------------------------------------------
 
-void SkeletalMesh::CreateFromFile(const fs::path& path)
+void SkeletalMesh::CreateFromFile(const fs::path& relativePath)
 {
+	fs::path absolutePath = Filesystem::GetSkeletalModelsPath() / relativePath;
+
 	Assimp::Importer importer;
-	const aiScene* scene = importer.ReadFile(path.string().c_str(),
+	const aiScene* scene = importer.ReadFile(absolutePath.string().c_str(),
 		aiProcess_Triangulate |
 		aiProcess_GenUVCoords |
 		aiProcess_FlipUVs |
@@ -52,16 +54,20 @@ void SkeletalMesh::CreateFromFile(const fs::path& path)
 		return;
 	}
 
-	this->path = path;
+	path = relativePath;
 	meshes.reserve(scene->mNumMeshes);
-	u32 totalBones = std::accumulate(scene->mMeshes, scene->mMeshes + scene->mNumMeshes, 0, [](u32 sum, aiMesh* mesh) {
+	u32 totalBones = std::reduce(scene->mMeshes, scene->mMeshes + scene->mNumMeshes, 0, [](u32 sum, aiMesh* mesh) {
 		return sum + mesh->mNumBones;
 	});
-	bones.reserve(totalBones);
 
 	if (totalBones > GetMaxNumBones())
+	{
 		CONSOLE_WARN("Bone number > {}", GetMaxNumBones());
-
+		return;
+	}
+	
+	bones.reserve(totalBones);
+	
 	ProcessNode(scene->mRootNode, scene);
 	LoadBoneHierarchy(rootNode, scene->mRootNode);
 }
@@ -125,12 +131,12 @@ void SkeletalMesh::ProcessNode(aiNode* node, const aiScene* scene)
 
 		Mesh& mesh = meshes.emplace_back();
 		mesh.Create();
-		mesh.SetupAttributeFloat(0, 0, VertexFormat(3, VertexAttribType::Float, false, offsetof(Vertex_P_N_UV_T_B, position)));
-		mesh.SetupAttributeFloat(1, 0, VertexFormat(3, VertexAttribType::Float, false, offsetof(Vertex_P_N_UV_T_B, normal)));
-		mesh.SetupAttributeFloat(2, 0, VertexFormat(2, VertexAttribType::Float, false, offsetof(Vertex_P_N_UV_T_B, uv)));
-		mesh.SetupAttributeFloat(3, 0, VertexFormat(3, VertexAttribType::Float, false, offsetof(Vertex_P_N_UV_T_B, tangent)));
-		mesh.SetupAttributeInteger(4, 0, VertexFormat(MAX_BONES_INFLUENCE, VertexAttribType::Int, false, offsetof(Vertex_P_N_UV_T_B, boneIds)));
-		mesh.SetupAttributeFloat(5, 0, VertexFormat(MAX_BONES_INFLUENCE, VertexAttribType::Float, false, offsetof(Vertex_P_N_UV_T_B, boneWeights)));
+		mesh.SetupAttributeFloat(0, 0, VertexFormat(3, VertexAttribType::FLOAT, false, offsetof(Vertex_P_N_UV_T_B, position)));
+		mesh.SetupAttributeFloat(1, 0, VertexFormat(3, VertexAttribType::FLOAT, false, offsetof(Vertex_P_N_UV_T_B, normal)));
+		mesh.SetupAttributeFloat(2, 0, VertexFormat(2, VertexAttribType::FLOAT, false, offsetof(Vertex_P_N_UV_T_B, uv)));
+		mesh.SetupAttributeFloat(3, 0, VertexFormat(3, VertexAttribType::FLOAT, false, offsetof(Vertex_P_N_UV_T_B, tangent)));
+		mesh.SetupAttributeInteger(4, 0, VertexFormat(MAX_BONES_INFLUENCE, VertexAttribType::INT, false, offsetof(Vertex_P_N_UV_T_B, boneIds)));
+		mesh.SetupAttributeFloat(5, 0, VertexFormat(MAX_BONES_INFLUENCE, VertexAttribType::FLOAT, false, offsetof(Vertex_P_N_UV_T_B, boneWeights)));
 
 		aiMesh* aimesh = scene->mMeshes[node->mMeshes[i]];
 
@@ -201,7 +207,7 @@ Buffer SkeletalMesh::LoadVertices(aiMesh* aimesh)
 	}
 	LoadBonesAndWeights(vertices, aimesh);
 
-	Buffer buffer(vertices.size() * sizeof(Vertex_P_N_UV_T_B), vertices.data(), BufferUsage::StaticDraw);
+	Buffer buffer(vertices.size() * sizeof(Vertex_P_N_UV_T_B), vertices.data(), BufferUsage::STATIC_DRAW);
 	return buffer;
 }
 void SkeletalMesh::LoadBonesAndWeights(Vector<Vertex_P_N_UV_T_B>& vertices, const aiMesh* aimesh)
@@ -238,9 +244,9 @@ Buffer SkeletalMesh::LoadIndices(aiMesh* aimesh)
 
 	Buffer buffer;
 	buffer.Create();
-	buffer.CreateStorage(size, nullptr, BufferUsage::StaticDraw);
+	buffer.CreateStorage(size, nullptr, BufferUsage::STATIC_DRAW);
 
-	u32* ptr = static_cast<u32*>(buffer.MapStorage(BufferAccess::WriteOnly));
+	u32* ptr = static_cast<u32*>(buffer.MapStorage(BufferAccess::WRITE_ONLY));
 	for (u32 i = 0; i < aimesh->mNumFaces; i++)
 	{
 		const aiFace& face = aimesh->mFaces[i];

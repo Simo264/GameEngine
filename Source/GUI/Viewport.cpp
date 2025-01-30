@@ -8,9 +8,9 @@
 #include <imgui/imgui.h>
 #include <imgui/ImGuizmo.h>
 
-/* ------------------------------------------ */
-/*                  PRIVATE                   */
-/* ------------------------------------------ */
+// ------------------------------------------
+//                  PRIVATE                  
+// ------------------------------------------
 
 static void GizmoWorldTranslation(Transform& transform, const mat4f& view, const mat4f& proj)
 {
@@ -89,9 +89,9 @@ static void GizmoWorldScaling(Transform& transform, const mat4f& view, const mat
 }
 
 
-/* ------------------------------------------ */
-/*                    PUBLIC                  */
-/* ------------------------------------------ */
+// ------------------------------------------
+//                    PUBLIC                 
+// ------------------------------------------
 
 void GUI_RenderViewport(bool& open, u32 texID, GameObject& objSelected, i32 gizmode, const mat4f& view, const mat4f& proj)
 {
@@ -99,7 +99,7 @@ void GUI_RenderViewport(bool& open, u32 texID, GameObject& objSelected, i32 gizm
   const ImVec2 paddingTmp = style.WindowPadding;
   style.WindowPadding = { 0.0f, 0.0f };
 
-  /* Begin main viewport */
+  // Begin main viewport
   ImGui::Begin("Viewport", &open);
   const ImVec2 winSize = ImGui::GetWindowSize();
   const ImVec2 winPos = ImGui::GetWindowPos();
@@ -108,7 +108,7 @@ void GUI_RenderViewport(bool& open, u32 texID, GameObject& objSelected, i32 gizm
   guiLayer.viewportPos = { winPos.x, winPos.y };
   guiLayer.viewportFocused = ImGui::IsWindowFocused();
 
-  /* Being child viewport */
+  // Being child viewport
   ImGui::BeginChild("Viewport_Child");
   guiLayer.viewportFocused |= ImGui::IsWindowFocused();
 

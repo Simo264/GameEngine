@@ -54,8 +54,15 @@ public:
 	 * @notes The relative path must refer to the 'Assets/Textures/' directory
 	 * and must include any subdirectories.
 	 */
-	const Texture2D* InsertTexture(const fs::path& relativePath, bool gamma = false);
+	const Texture2D* LoadTexture(const fs::path& relativePath, bool gamma = false);
 	
+	/**
+	 * @brief Retrieves an existing texture or loads it if not found.
+	 * This method attempts to find a texture with the specified relative path.
+	 * If the texture is not already loaded, it will be loaded and then returned.
+	 */
+	const Texture2D* GetOrLoadTexture(const fs::path& relativePath, bool gamma = false);
+
 	/**
 	 * @brief Search for an icon in the loaded icon collection.
 	 *
@@ -78,7 +85,14 @@ public:
 	 * @notes The relative path must refer to the 'Assets/Icons/' directory
 	 * and must include any subdirectories.
 	 */
-	const Texture2D* InsertTextureIcon(const fs::path& relativePath);
+	const Texture2D* LoadTextureIcon(const fs::path& relativePath);
+
+	/**
+	 * @brief Retrieves an existing texture or loads it if not found.
+	 * This method attempts to find a texture with the specified relative path.
+	 * If the texture is not already loaded, it will be loaded and then returned.
+	 */
+	const Texture2D* GetOrLoadTextureIcon(const fs::path& relativePath, bool gamma = false);
 	
 	const Texture2D& GetDefaultDiffuse() const { return _textures.at(0); }
 	const Texture2D& GetDefaultSpecular() const { return _textures.at(1); }
@@ -98,5 +112,5 @@ private:
 	UnorderedMap<fs::path, u32> _iconMap;
 
 	void LoadAllTextures();
-	void LoadAllTextureIcons();
+	void LoadAllIcons();
 };

@@ -371,10 +371,12 @@ static void Insp_Transform(GameObject& object, Transform& transform)
     object.RemoveComponent<Transform>();
   ImGui::PopStyleColor(3);
 }
-static void Insp_MaterialRow(StringView label, const Texture2D*& matTexture, const Texture2D& defaultTex)
+static void Insp_MaterialRow(StringView label, const Texture2D*& meshTexture, const Texture2D& defaultTex)
 {
   auto& texManager = TexturesManager::Get();
-  const bool noTexture = (matTexture->relativePath.string().at(0) == '#');
+  static const auto* resetIcon = texManager.FindTextureIcon("reset-arrow-16.png");
+
+  const bool noTexture = (meshTexture->path.empty());
   
   // First column: label
   ImGui::TableNextColumn();
@@ -387,18 +389,15 @@ static void Insp_MaterialRow(StringView label, const Texture2D*& matTexture, con
   char comboId[32]{}; // "##Diffuse"
   std::format_to_n(comboId, sizeof(comboId), "##{}", label.data());
 
-  if (ImGui::BeginCombo(comboId, (noTexture ? "Select texture" : matTexture->relativePath.string().c_str())))
+  if (ImGui::BeginCombo(comboId, (noTexture ? "Select texture" : meshTexture->path.string().c_str())))
   {
     for (const auto& texture : texManager.GetTextureVector())
     {
-      if (texture.relativePath.empty())
+      if (texture.path.empty())
         continue;
 
-      String strPath = texture.relativePath.string();
-      if (ImGui::Selectable(strPath.c_str(), texture.Compare(*matTexture)))
-      {
-        matTexture = &texture;
-      }
+      if (ImGui::Selectable(texture.path.string().c_str(), texture.Compare(*meshTexture)))
+        meshTexture = &texture;
     }
     
     ImGui::EndCombo();
@@ -410,11 +409,10 @@ static void Insp_MaterialRow(StringView label, const Texture2D*& matTexture, con
   {
     char buttonID[32]{}; // "Reset##Diffuse"
     std::format_to_n(buttonID, sizeof(buttonID), "Reset##{}", label.data());
-
-    const auto* resetIcon = texManager.FindTextureIcon("reset-arrow-16.png");
+    
     ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.f,0.f,0.f,0.f });
     if (ImGui::ImageButton(buttonID, reinterpret_cast<void*>(resetIcon->id), ImVec2(16.f, 16.f)))
-      matTexture = &defaultTex;
+      meshTexture = &defaultTex;
     ImGui::PopStyleColor();
   }
 }
@@ -492,14 +490,17 @@ static void Insp_SkeletalMesh(GameObject& object, SkeletalMesh& skeleton)
 
   if (ImGui::TreeNode("Material"))
   {
+    TexturesManager& texManager = TexturesManager::Get();
+    char label[16]{};
+
     for (i32 i = 0; i < skeleton.meshes.size(); i++)
     {
       auto& mesh = skeleton.meshes.at(i);
       Material& material = mesh.material;
-      TexturesManager& texManager = TexturesManager::Get();
 
-      char label[16]{};
-      std::format_to_n(label, sizeof(label), "Mesh_{}", i+1);
+      std::fill_n(label, sizeof(label), 0);
+      std::format_to_n(label, sizeof(label), "Mesh_{}", i + 1);
+
       if (ImGui::TreeNode(label))
       {
         if (ImGui::BeginTable("TextureTable", 3, ImGuiTableFlags_SizingFixedFit))
@@ -508,15 +509,15 @@ static void Insp_SkeletalMesh(GameObject& object, SkeletalMesh& skeleton)
           ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthStretch);
           ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthFixed, 24.0f);
 
-          //* Diffuse row
+          // Diffuse row
           ImGui::TableNextRow();
           Insp_MaterialRow("Diffuse", material.diffuse, texManager.GetDefaultDiffuse());
 
-          //* Specular row
+          // Specular row
           ImGui::TableNextRow();
           Insp_MaterialRow("Specular", material.specular, texManager.GetDefaultSpecular());
 
-          // Normal row 
+          // Normal row
           ImGui::TableNextRow();
           Insp_MaterialRow("Normal", material.normal, texManager.GetDefaultNormal());
 
@@ -547,13 +548,16 @@ static void Insp_Animator(GameObject& object, Animator& animator)
   ImGui::Text("Nr animations: %d", animations->size());
 
   const Animation* animAttached = animator.GetAttachedAnimation();
-  String animAttachedFilename = (!animAttached ? "" : animAttached->Path().string());
+  String animAttachedFilename; 
+  if (animAttached)
+    animAttachedFilename = animAttached->Path().string();
+  
   ImGui::Text("Current animation: %s", animAttachedFilename.c_str());
-  if (ImGui::BeginCombo("Animation list", (animAttachedFilename == "" ? "Select animation" : animAttachedFilename.c_str())))
+  if (ImGui::BeginCombo("Animation list", (animAttachedFilename.empty() ? "Select animation" : animAttachedFilename.c_str())))
   {
     for (const auto& animation : *animations)
     {
-      const auto path = animation.Path().string();
+      const auto path = animation.Path().relative_path().string();
       if (ImGui::Selectable(path.c_str(), animAttachedFilename == path))
         animator.SetTargetAnimation(&animation);
     }
@@ -562,9 +566,10 @@ static void Insp_Animator(GameObject& object, Animator& animator)
 
   if (animAttached)
   {
-    const Texture2D* playIcon = TexturesManager::Get().FindTextureIcon("play-button-32.png");
-    const Texture2D* pauseIcon = TexturesManager::Get().FindTextureIcon("pause-button-32.png");
-    const Texture2D* restartIcon = TexturesManager::Get().FindTextureIcon("restart-button-32.png");
+    auto& texManager = TexturesManager::Get();
+    static const Texture2D* playIcon = texManager.FindTextureIcon("play-button-32.png");
+    static const Texture2D* pauseIcon = texManager.FindTextureIcon("pause-button-32.png");
+    static const Texture2D* restartIcon = texManager.FindTextureIcon("restart-button-32.png");
 
     if (ImGui::ImageButton(reinterpret_cast<void*>(playIcon->id), ImVec2(16, 16)))
       animator.PlayAnimation();
@@ -827,7 +832,7 @@ void GUI_RenderInspector(bool& open, GameObject& object)
   ImGui::Begin("Inspector", &open);
   if (object.IsValid())
   {
-    /* "+New component" button */
+    // "+New component" button
     f32 btnWidth = ImGui::GetContentRegionAvail().x - 32.f;
     if (ButtonCentered("+Add component", ImVec2(btnWidth, 26.f)))
       ImGui::OpenPopup("NewComponent_Popup");
@@ -836,11 +841,11 @@ void GUI_RenderInspector(bool& open, GameObject& object)
     ImGui::Separator();
     ImGui::Spacing();
 
-    /* List all components */
+    // List all components
     Insp_ListAllComponents(object);
   }
 
-  /* Open popup on click to "+New component" button */
+  // Open popup on click to "+New component" button 
   Insp_NewComponentPopup(object);
 
   ImGui::End();
