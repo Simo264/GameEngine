@@ -1,6 +1,7 @@
 #include "Animation.hpp"
 
 #include "Core/Log/Logger.hpp"
+#include "Engine/Filesystem/Filesystem.hpp"
 #include "Engine/ECS/Skeleton/SkeletalMesh.hpp"
 
 #include <assimp/Importer.hpp>
@@ -12,13 +13,15 @@
 // ---------------------------------------------------- 
 
 Animation::Animation(const fs::path& path, const SkeletalMesh& skeleton) :
-	_path{ path },
-	_duration{ 0 },
-	_ticksPerSecond{ 0 },
+	path{ path },
+	duration{ 0 },
+	ticksPerSecond{ 0 },
 	_boneKeys{}
 {
+	fs::path absolutePath = Filesystem::GetSkeletalModelsPath() / path;
+	
 	Assimp::Importer importer;
-	const aiScene* scene = importer.ReadFile(path.string(), aiProcess_Triangulate);
+	const aiScene* scene = importer.ReadFile(absolutePath.string(), aiProcess_Triangulate);
 	if (!scene || !scene->mRootNode)
 	{
 		CONSOLE_ERROR("Assimp importer error: {}", importer.GetErrorString());
@@ -31,8 +34,8 @@ Animation::Animation(const fs::path& path, const SkeletalMesh& skeleton) :
 	}
 
 	aiAnimation* animation = scene->mAnimations[0];
-	_duration = animation->mDuration;
-	_ticksPerSecond = animation->mTicksPerSecond;
+	duration = animation->mDuration;
+	ticksPerSecond = animation->mTicksPerSecond;
 	_boneKeys.reserve(animation->mNumChannels);
 	LoadAnimation(animation, skeleton);
 

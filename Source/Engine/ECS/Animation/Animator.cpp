@@ -15,8 +15,7 @@ void Animator::SetTargetSkeleton(SkeletalMesh& target)
 void Animator::SetTargetAnimation(const Animation* target)
 {
 	_targetAnimation = target;
-	if (!target)
-		std::fill(_boneTransforms.begin(), _boneTransforms.end(), mat4f(1.0f));
+	_boneTransforms.clear();
 }
 
 void Animator::PlayAnimation()
@@ -36,8 +35,8 @@ void Animator::UpdateAnimation(f32 dt)
 	if (!_playAnimation || !_targetSkeleton || !_targetAnimation)
 		return;
 
-	_currentTime += _targetAnimation->TickPerSecond() * dt;
-	_currentTime = fmod(_currentTime, _targetAnimation->Duration());
+	_currentTime += _targetAnimation->ticksPerSecond * dt;
+	_currentTime = fmod(_currentTime, _targetAnimation->duration);
 	CalculateBoneTransform(_targetSkeleton->rootNode, mat4f(1.0f));
 }
 

@@ -18,10 +18,10 @@
 
 void StaticMesh::CreateFromPath(const fs::path& path)
 {
-	this->path = path;
+	fs::path absolutePath = Filesystem::GetStaticModelsPath() / path;
 
 	Assimp::Importer importer;
-	const aiScene* scene = importer.ReadFile(path.string().c_str(),
+	const aiScene* scene = importer.ReadFile(absolutePath.string().c_str(),
 		aiProcess_Triangulate |
 		aiProcess_GenUVCoords |
 		aiProcess_FlipUVs |
@@ -42,9 +42,11 @@ void StaticMesh::CreateFromPath(const fs::path& path)
 		return;
 	}
 	
+	this->path = path;
 	meshes.reserve(scene->mNumMeshes);
 	ProcessNode(scene->mRootNode, scene);
 }
+
 void StaticMesh::Destroy()
 {
 	for (auto& mesh : meshes)
@@ -62,12 +64,14 @@ void StaticMesh::Draw(RenderMode mode)
 		mesh.Draw(mode);
 	}	
 }
+
 u32 StaticMesh::TotalVertices() const
 {
 	return std::reduce(meshes.begin(), meshes.end(), 0, [](i32 acc, const Mesh& mesh) {
 		return acc + mesh.vao.numVertices;
 	});
 }
+
 u32 StaticMesh::TotalIndices() const
 {
 	return std::reduce(meshes.begin(), meshes.end(), 0, [](i32 acc, const Mesh& mesh) {
@@ -81,7 +85,6 @@ u32 StaticMesh::TotalIndices() const
 
 void StaticMesh::ProcessNode(aiNode* node, const aiScene* scene)
 {
-	// Process all the node's meshes
 	for (i32 i = 0; i < node->mNumMeshes; i++)
 	{
 		Mesh& mesh = meshes.emplace_back();
@@ -104,13 +107,15 @@ void StaticMesh::ProcessNode(aiNode* node, const aiScene* scene)
 
 		if (scene->HasMaterials())
 		{
+			aiString fileName;
 			aiMaterial* material = scene->mMaterials[aimesh->mMaterialIndex];
-			if (const Texture2D* diffuse = GetMaterialTexture(material, static_cast<u32>(aiTextureType_DIFFUSE)))
-				mesh.material.diffuse = diffuse;
-			if (const Texture2D* specular = GetMaterialTexture(material, static_cast<u32>(aiTextureType_SPECULAR)))
-				mesh.material.specular = specular;
-			if (const Texture2D* normal = GetMaterialTexture(material, static_cast<u32>(aiTextureType_NORMALS)))
-				mesh.material.normal = normal;
+			auto& manager = TexturesManager::Get();
+			if (material->GetTexture(aiTextureType_DIFFUSE, 0, &fileName) == aiReturn_SUCCESS)
+				mesh.material.diffuse = manager.GetOrCreateTexture(fileName.C_Str());
+			if (material->GetTexture(aiTextureType_SPECULAR, 0, &fileName) == aiReturn_SUCCESS)
+				mesh.material.specular = manager.GetOrCreateTexture(fileName.C_Str());
+			if (material->GetTexture(aiTextureType_NORMALS, 0, &fileName) == aiReturn_SUCCESS)
+				mesh.material.normal = manager.GetOrCreateTexture(fileName.C_Str());
 		}
 	}
 
@@ -118,6 +123,7 @@ void StaticMesh::ProcessNode(aiNode* node, const aiScene* scene)
 	for (i32 i = 0; i < node->mNumChildren; i++)
 		ProcessNode(node->mChildren[i], scene);
 }
+
 Buffer StaticMesh::LoadVertices(aiMesh* aimesh)
 {
 	u64 size = aimesh->mNumVertices * sizeof(Vertex_P_N_UV_T);
@@ -148,6 +154,7 @@ Buffer StaticMesh::LoadVertices(aiMesh* aimesh)
 	buffer.UnmapStorage();
 	return buffer;
 }
+
 Buffer StaticMesh::LoadIndices(aiMesh* aimesh)
 {
 	u32 numIndices = aimesh->mNumFaces * 3;
@@ -167,6 +174,7 @@ Buffer StaticMesh::LoadIndices(aiMesh* aimesh)
 	buffer.UnmapStorage();
 	return buffer;
 }
+
 const Texture2D* StaticMesh::GetMaterialTexture(aiMaterial* material, u32 textureType)
 {
 	aiString fileName;

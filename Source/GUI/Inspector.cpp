@@ -374,7 +374,7 @@ static void Insp_Transform(GameObject& object, Transform& transform)
 static void Insp_MaterialRow(StringView label, const Texture2D*& meshTexture, const Texture2D& defaultTex)
 {
   auto& texManager = TexturesManager::Get();
-  static const auto* resetIcon = texManager.FindTextureIcon("reset-arrow-16.png");
+  static const auto* resetIcon = texManager.FindIcon("reset-arrow-16.png");
 
   const bool noTexture = (meshTexture->path.empty());
   
@@ -550,14 +550,14 @@ static void Insp_Animator(GameObject& object, Animator& animator)
   const Animation* animAttached = animator.GetAttachedAnimation();
   String animAttachedFilename; 
   if (animAttached)
-    animAttachedFilename = animAttached->Path().string();
+    animAttachedFilename = animAttached->path.string();
   
   ImGui::Text("Current animation: %s", animAttachedFilename.c_str());
   if (ImGui::BeginCombo("Animation list", (animAttachedFilename.empty() ? "Select animation" : animAttachedFilename.c_str())))
   {
     for (const auto& animation : *animations)
     {
-      const auto path = animation.Path().relative_path().string();
+      const auto path = animation.path.relative_path().string();
       if (ImGui::Selectable(path.c_str(), animAttachedFilename == path))
         animator.SetTargetAnimation(&animation);
     }
@@ -567,9 +567,9 @@ static void Insp_Animator(GameObject& object, Animator& animator)
   if (animAttached)
   {
     auto& texManager = TexturesManager::Get();
-    static const Texture2D* playIcon = texManager.FindTextureIcon("play-button-32.png");
-    static const Texture2D* pauseIcon = texManager.FindTextureIcon("pause-button-32.png");
-    static const Texture2D* restartIcon = texManager.FindTextureIcon("restart-button-32.png");
+    static const Texture2D* playIcon = texManager.FindIcon("play-button-32.png");
+    static const Texture2D* pauseIcon = texManager.FindIcon("pause-button-32.png");
+    static const Texture2D* restartIcon = texManager.FindIcon("restart-button-32.png");
 
     if (ImGui::ImageButton(reinterpret_cast<void*>(playIcon->id), ImVec2(16, 16)))
       animator.PlayAnimation();
@@ -589,7 +589,7 @@ static void Insp_Animator(GameObject& object, Animator& animator)
     if (ImGui::Button("Unbind animation"))
       animator.SetTargetAnimation(nullptr);
 
-    f32 duration = animAttached->Duration();
+    f32 duration = animAttached->duration;
     f32 currentTime = animator.CurrentTime();
     f32 progression = currentTime / duration;
     char label[8]{};
@@ -665,7 +665,7 @@ static void Insp_AddStaticMeshComponent(GameObject& object)
         auto& manager = ModelsManager::Get();
         const auto* sMesh = manager.FindStaticMesh(path);
         if (!sMesh)
-          sMesh = manager.InsertStaticMesh(path);
+          sMesh = manager.CreateStaticMesh(path);
 
         auto& component = object.AddComponent<StaticMesh>();
         component = *sMesh;
@@ -714,7 +714,7 @@ static void Insp_AddSkeletalMeshComponent(GameObject& object)
         auto& manager = ModelsManager::Get();
         const auto* skeleton = manager.FindSkeletalMesh(path);
         if (!skeleton)
-          skeleton = manager.InsertSkeletalMesh(path);
+          skeleton = manager.CreateSkeletalMesh(path);
 
         auto& skComponent = object.AddComponent<SkeletalMesh>();
         auto& anComponent = object.AddComponent<Animator>();

@@ -11,22 +11,22 @@ const StaticMesh* ModelsManager::FindStaticMesh(const fs::path& path) const
 
 	return nullptr;
 }
-const StaticMesh* ModelsManager::InsertStaticMesh(const fs::path& path)
+const StaticMesh* ModelsManager::CreateStaticMesh(const fs::path& path)
 {
-	CONSOLE_INFO("Loading static mesh object '{}'...", path.string());
+	CONSOLE_TRACE("Loading static mesh: '{}'...", path.string());
 	auto [it, success] = _cacheStaticMesh.emplace(
 		std::piecewise_construct,
-		std::forward_as_tuple(path),	// Insert key
-		std::forward_as_tuple()				// Insert empty StaticMesh object
+		std::forward_as_tuple(path.lexically_normal()),	// Insert key
+		std::forward_as_tuple()													// Insert empty StaticMesh object
 	);
 	if (success)
 	{
 		StaticMesh& mesh = it->second;
-		mesh.CreateFromPath(path);
+		mesh.CreateFromPath(path.lexically_normal());
 		return &mesh;
 	}
 	
-	CONSOLE_WARN("Error on loading StaticMesh object: '{}'", path.string());
+	CONSOLE_ERROR("Error on loading static mesh object");
 	return nullptr;
 }
 
@@ -38,18 +38,18 @@ const SkeletalMesh* ModelsManager::FindSkeletalMesh(const fs::path& path) const
 
 	return nullptr;
 }
-const SkeletalMesh* ModelsManager::InsertSkeletalMesh(const fs::path& path)
+const SkeletalMesh* ModelsManager::CreateSkeletalMesh(const fs::path& path)
 {
-	CONSOLE_INFO("Loading skeletal mesh object '{}'...", path.string());
+	CONSOLE_TRACE("Loading skeletal mesh: '{}'...", path.string());
 	auto [it, success] = _cacheSkeletalMesh.emplace(
 		std::piecewise_construct,
-		std::forward_as_tuple(path),	// Insert key
-		std::forward_as_tuple()				// construct empty SkeletalMesh object
+		std::forward_as_tuple(path.lexically_normal()),	// Insert key
+		std::forward_as_tuple()													// construct empty SkeletalMesh object
 	);
 	if (success)
 	{
 		SkeletalMesh& skeleton = it->second;
-		skeleton.CreateFromFile(path);
+		skeleton.CreateFromFile(path.lexically_normal());
 		return &skeleton;
 	}
 
@@ -61,4 +61,6 @@ void ModelsManager::DestroyAll()
 {
 	for (auto& [path, staticMesh] : _cacheStaticMesh)
 		staticMesh.Destroy();
+	for (auto& [path, skeletalMesh] : _cacheSkeletalMesh)
+		skeletalMesh.Destroy();
 }

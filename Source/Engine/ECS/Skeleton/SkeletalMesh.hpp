@@ -31,8 +31,10 @@ public:
     return SKELETAL_MESH_MAX_NUM_BONES;
   }
 
-  /** @brief Constructs a SkeletonMesh object by loading a skeletal model from the specified file path. */
-  void CreateFromFile(const fs::path& relativePath);
+  // <path> realative path to "Assets/Models/Skeletal"
+  void CreateFromFile(const fs::path& path);
+
+  void Destroy();
 
   /**
    * @brief Draws the skeleton using the specified rendering mode.

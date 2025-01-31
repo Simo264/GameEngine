@@ -50,7 +50,7 @@ const Shader& ShadersManager::GetShader(StringView shaderName) const
   u32 i = it->second;
   return _shaders.at(i);
 }
-const Shader& ShadersManager::GetOrInsertShader(StringView shaderName)
+const Shader& ShadersManager::GetOrCreateShader(StringView shaderName)
 {
   auto it = _shaderMap.find(shaderName.data());
   if (it != _shaderMap.end())
@@ -58,9 +58,9 @@ const Shader& ShadersManager::GetOrInsertShader(StringView shaderName)
     u32 i = it->second;
     return _shaders.at(i);
   }
-  return InsertShader(shaderName);
+  return CreateShader(shaderName);
 }
-const Shader& ShadersManager::InsertShader(StringView shaderName)
+const Shader& ShadersManager::CreateShader(StringView shaderName)
 {
   const fs::path& shadersDir = Filesystem::GetShadersPath();
   fs::path filePath = shadersDir / shaderName.data();
@@ -68,7 +68,7 @@ const Shader& ShadersManager::InsertShader(StringView shaderName)
   if (!fs::exists(filePath) || !fs::is_regular_file(filePath))
     throw std::runtime_error(std::format("Shader file '{}' does not exist", filePath.string()));
 
-  CONSOLE_TRACE("Loading shader '{}'", shaderName.data());
+  CONSOLE_TRACE("Create shader '{}'", shaderName.data());
 
   u32 shaderIdx = _shaderMap.size();
   auto [it, success] = _shaderMap.emplace(
@@ -102,9 +102,9 @@ const Program& ShadersManager::GetProgram(StringView programName) const
   u32 i = it->second;
   return _programs.at(i);
 }
-const Program& ShadersManager::InsertProgram(StringView programName)
+const Program& ShadersManager::CreateProgram(StringView programName)
 {
-  CONSOLE_TRACE("Loading new program '{}'", programName.data());
+  CONSOLE_TRACE("Create program '{}'", programName.data());
   
   u32 progIdx = _programMap.size();
   auto [it, success] = _programMap.emplace(
@@ -154,7 +154,7 @@ void ShadersManager::ReadConfig(IniFileHandler& conf)
   {
     const String& section = it.first; // The program name 
     
-    const Program& program = InsertProgram(section);
+    const Program& program = CreateProgram(section);
     if (!program.IsValid())
       continue;
 
@@ -165,27 +165,27 @@ void ShadersManager::ReadConfig(IniFileHandler& conf)
     const String& fragment = conf.GetValue(section, "fragment");
     if (!vertex.empty())
     {
-      const Shader& vertShader = GetOrInsertShader(vertex);
+      const Shader& vertShader = GetOrCreateShader(vertex);
       program.AttachShader(vertShader);
     }
     if (!tesc.empty())
     {
-      const Shader& tescShader = GetOrInsertShader(tesc);
+      const Shader& tescShader = GetOrCreateShader(tesc);
       program.AttachShader(tescShader);
     }
     if (!tese.empty())
     {
-      const Shader& teseShader = GetOrInsertShader(tese);
+      const Shader& teseShader = GetOrCreateShader(tese);
       program.AttachShader(teseShader);
     }
     if (!geometry.empty())
     {
-      const Shader& geomShader = GetOrInsertShader(geometry);
+      const Shader& geomShader = GetOrCreateShader(geometry);
       program.AttachShader(geomShader);
     }
     if (!fragment.empty())
     {
-      const Shader& fragShader = GetOrInsertShader(fragment);
+      const Shader& fragShader = GetOrCreateShader(fragment);
       program.AttachShader(fragShader);
     }
 

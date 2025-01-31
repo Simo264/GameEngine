@@ -27,7 +27,9 @@ public:
 	/** @brief Default destructor. */
 	~StaticMesh() = default;
 
+	// <path> relative path to "Assets/Models/Static"
 	void CreateFromPath(const fs::path& path);
+	
 	void Destroy();
 
 	void Draw(RenderMode mode);
@@ -45,17 +47,20 @@ public:
 
 private:
 	/** @brief Processes a node in the model's scene graph. */
+	
 	void ProcessNode(aiNode* node, const aiScene* scene);
 	/**
 	 * @brief Loads vertex data from an Assimp mesh..
 	 * @return Buffer containing vertex data.
 	 */
 	Buffer LoadVertices(aiMesh* aimesh);
+
 	/**
 	 * @brief Loads index data from an Assimp mesh.
 	 * @return Buffer containing index data.
 	 */
 	Buffer LoadIndices(aiMesh* aimesh);
+
 	/** @brief Retrieves the appropriate texture from a material. */
 	const Texture2D* GetMaterialTexture(aiMaterial* material, u32 textureType);
 };

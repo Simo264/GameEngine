@@ -31,68 +31,23 @@ public:
 	/** @brief Cleans up loaded textures and icons by deleting their OpenGL references. */
 	void CleanUp();
 	
-	/**
-	 * @brief Search for a texture in the collection of loaded textures.
-	 *
-	 * @param relativePath Relative path of the texture to search.
-	 * Example: "Character/Ch44_1001_Diffuse.png".
-	 * @return Pointer to the texture if found, otherwise nullptr.
-	 *
-	 * @note The relative path must refer to the 'Assets/Textures/' directory
-	 * and must include any subdirectories.
-	 */
-	const Texture2D* FindTexture(const fs::path& relativePath) const;
+	// <path> relative path to "Assets/Textures"
+	const Texture2D* FindTexture(const fs::path& path) const;
 	
-	/**
-	 * @brief Inserts a new texture into the collection, if not already present.
-	 *
-	 * @param relativePath Relative path of the texture to be loaded.
-	 * Example: "Character/Ch44_1001_Diffuse.png".
-	 * @param gamma Specifies whether to apply gamma correction.
-	 * @return Pointer to the loaded or existing texture.
-	 *
-	 * @notes The relative path must refer to the 'Assets/Textures/' directory
-	 * and must include any subdirectories.
-	 */
-	const Texture2D* LoadTexture(const fs::path& relativePath, bool gamma = false);
+	// <path> relative path to "Assets/Textures"
+	const Texture2D* CreateTexture(const fs::path& path);
 	
-	/**
-	 * @brief Retrieves an existing texture or loads it if not found.
-	 * This method attempts to find a texture with the specified relative path.
-	 * If the texture is not already loaded, it will be loaded and then returned.
-	 */
-	const Texture2D* GetOrLoadTexture(const fs::path& relativePath, bool gamma = false);
+	// <path> relative path to "Assets/Icons"
+	const Texture2D* GetOrCreateTexture(const fs::path& path);
 
-	/**
-	 * @brief Search for an icon in the loaded icon collection.
-	 *
-	 * @param relativePath File name of the icon to be searched.
-	 * Example: "back-arrow.png".
-	 * @return Pointer to the icon if found, otherwise nullptr.
-	 *
-	 * @notes The relative path must refer to the 'Assets/Icons/' directory 
-	 * and must include any subdirectories.
-	 */
-	const Texture2D* FindTextureIcon(const fs::path& relativePath) const;
+	// <path> relative path to "Assets/Icons"
+	const Texture2D* FindIcon(const fs::path& path) const;
 
-	/**
-	 * @brief Inserts a new icon into the collection, if not already present.
-	 *
-	 * @param relativePath File name of the icon to be loaded.
-	 * Example: "back-arrow.png".
-	 * @return Pointer to the loaded or existing icon.
-	 *
-	 * @notes The relative path must refer to the 'Assets/Icons/' directory
-	 * and must include any subdirectories.
-	 */
-	const Texture2D* LoadTextureIcon(const fs::path& relativePath);
-
-	/**
-	 * @brief Retrieves an existing texture or loads it if not found.
-	 * This method attempts to find a texture with the specified relative path.
-	 * If the texture is not already loaded, it will be loaded and then returned.
-	 */
-	const Texture2D* GetOrLoadTextureIcon(const fs::path& relativePath, bool gamma = false);
+	// <path> relative path to "Assets/Icons"
+	const Texture2D* CreateIcon(const fs::path& path);
+	
+	// <path> relative path to "Assets/Icons"
+	const Texture2D* GetOrCreateIcon(const fs::path& path);
 	
 	const Texture2D& GetDefaultDiffuse() const { return _textures.at(0); }
 	const Texture2D& GetDefaultSpecular() const { return _textures.at(1); }

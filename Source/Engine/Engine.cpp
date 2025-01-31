@@ -233,12 +233,12 @@ static void CreateSkybox(Mesh& skybox, TextureCubemap& skyboxTexture)
 
   TexturesManager& texturesManager = TexturesManager::Get();
   Array<const Texture2D*, 6> images = {
-    texturesManager.FindTexture("skybox/right.jpg"),
-    texturesManager.FindTexture("skybox/left.jpg"),
-    texturesManager.FindTexture("skybox/top.jpg"),
-    texturesManager.FindTexture("skybox/bottom.jpg"),
-    texturesManager.FindTexture("skybox/front.jpg"),
-    texturesManager.FindTexture("skybox/back.jpg"),
+    texturesManager.GetOrCreateTexture("skybox/right.jpg"),
+    texturesManager.GetOrCreateTexture("skybox/left.jpg"),
+    texturesManager.GetOrCreateTexture("skybox/top.jpg"),
+    texturesManager.GetOrCreateTexture("skybox/bottom.jpg"),
+    texturesManager.GetOrCreateTexture("skybox/front.jpg"),
+    texturesManager.GetOrCreateTexture("skybox/back.jpg"),
   };
   Texture2DInternalFormat cubemapInternalFormat = images.at(0)->GetInternalFormat();
   i32 width = images.at(0)->GetWidth();
@@ -398,6 +398,9 @@ void Engine::Initialize()
 }
 void Engine::Run()
 {
+  // Create scene
+  Scene scene((Filesystem::GetRootPath() / "Scene.ini"));
+
   // Create grid plane
   Mesh gridPlane; 
   CreateGridPlane(gridPlane);
@@ -407,9 +410,6 @@ void Engine::Run()
   Mesh skybox; 
   CreateSkybox(skybox, skyboxTexture);
 
-  // Create scene object
-  Scene scene((Filesystem::GetRootPath() / "Scene.ini"));
-  
   // Create primary camera object
   Camera primaryCamera(vec3f(7.f, 4.f, 6), vec3f(-135.0f, -25.0f, 0.f));
   primaryCamera.frustum.zFar = 100.0f;

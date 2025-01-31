@@ -34,12 +34,12 @@ public:
 
 	/** @brief Retrieve a shader by its filename. */
 	const Shader& GetShader(StringView shaderName) const;
-	const Shader& GetOrInsertShader(StringView shaderName);
-	const Shader& InsertShader(StringView shaderName);
+	const Shader& GetOrCreateShader(StringView shaderName);
+	const Shader& CreateShader(StringView shaderName);
 
 	/** @brief Retrieve a program by its name. */
 	const Program& GetProgram(StringView programName) const;
-	const Program& InsertProgram(StringView programName);
+	const Program& CreateProgram(StringView programName);
 
 private:
 	ShadersManager() = default;

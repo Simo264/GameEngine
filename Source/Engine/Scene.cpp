@@ -192,26 +192,31 @@ void Scene::DeserializeScene(const fs::path& filePath)
 			const String& strPath = conf.GetValue(section, "path");
 			const auto* sMesh = manager.FindStaticMesh(strPath);
 			if(!sMesh)
-				sMesh = manager.InsertStaticMesh(strPath);
+				sMesh = manager.CreateStaticMesh(strPath);
 
 			auto& component = object.AddComponent<StaticMesh>();
-			component = *sMesh;
+			component = *sMesh; // copy
 		}
 		else if (component == "SkeletalMesh")
 		{
-			SkeletalMesh& skComponent = object.AddComponent<SkeletalMesh>();
-			Animator& animComponent = object.AddComponent<Animator>();
+			SkeletalMesh& skmeshComponent = object.AddComponent<SkeletalMesh>();
+			Animator& animatorComponent = object.AddComponent<Animator>();
 
 			ModelsManager& modManager = ModelsManager::Get();
 			AnimationsManager& animManager = AnimationsManager::Get();
 
+			// "Mutant\\Mutant.gltf"
 			fs::path skeletonPath = conf.GetValue(section, "path");
 			const SkeletalMesh* skeleton = modManager.FindSkeletalMesh(skeletonPath);
 			if (!skeleton)
 			{
-				skeleton = modManager.InsertSkeletalMesh(skeletonPath);
-				fs::path currentDir = skeletonPath.parent_path();
-				fs::path animlistFile = currentDir / "animlist.txt";
+				skeleton = modManager.CreateSkeletalMesh(skeletonPath);
+
+				// "D:\\GameEngine\\Assets\\Models\\Skeletal\\Mutant\\animlist.txt"
+				fs::path animlistFile = Filesystem::GetSkeletalModelsPath() / 
+					(skeletonPath.parent_path()) /
+					"animlist.txt";
+				
 				if (!fs::exists(animlistFile))
 					throw std::runtime_error(std::format("File {} does not exist", animlistFile.string()));
 				
@@ -219,19 +224,22 @@ void Scene::DeserializeScene(const fs::path& filePath)
 				if (!file)
 					throw std::runtime_error(std::format("Erron on opening file {}", animlistFile.string()));
 
-				Vector<String> tmp{ std::istream_iterator<std::string>(file), std::istream_iterator<std::string>() };
-				Vector<fs::path> animations;
-				animations.reserve(tmp.size());
-				for (const auto& p : tmp)
-					animations.push_back(currentDir / p);
-					
-				animComponent.animations = animManager.LoadSkeletonAnimations(skeletonPath, animations);
+				Vector<fs::path> animations{ std::istream_iterator<fs::path>(file), std::istream_iterator<fs::path>() };
+				for (auto& p : animations)
+					p = (skeletonPath.parent_path()) / p;
+
+				// animations = { 
+				//	"Mutant\\Drunk_Walk\\Anim_Mutant_Drunk_Walk.gltf", 
+				//	"Mutant\\Silly_Dancing\\Anim_Mutant_Silly_Dancing.gltf" 
+				// }
+
+				animatorComponent.animations = animManager.LoadSkeletonAnimations(skeletonPath, animations);
 			}
 			else
-				animComponent.animations = animManager.FindSkeletonAnimations(skeletonPath);
-
-			skComponent = *skeleton;
-			animComponent.SetTargetSkeleton(skComponent);
+				animatorComponent.animations = animManager.FindSkeletonAnimations(skeletonPath);
+			
+			skmeshComponent = *skeleton; // copy
+			animatorComponent.SetTargetSkeleton(skmeshComponent);
 		}
 		else if (component == "Light")
 		{

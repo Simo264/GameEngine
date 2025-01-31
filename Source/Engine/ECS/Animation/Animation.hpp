@@ -39,26 +39,22 @@ struct AnimationKeys
 class Animation
 {
 public:
-	/**
-	 * @brief Constructs an Animation object by loading animation data from the specified file path.
-	 * @param path The file path to the animation data.
-	 * @param skeleton The skeleton mesh associated with the animation.
-	 */
-	Animation(const fs::path& path, const SkeletalMesh& skeleton);
+	// <path> relative path to "Assets/Models/Skeletal/"
+	Animation(const fs::path& path,
+						const SkeletalMesh& skeleton);
 	
 	/** @brief Default destructor for the Animation class. */
 	~Animation() = default;
 
-	f32 Duration() const { return _duration; }
-	f32 TickPerSecond() const { return _ticksPerSecond; }
 	const auto& BoneKeys() const { return _boneKeys; }
-	const fs::path& Path() const { return _path; }
+
+	fs::path path;
+	f32 duration;
+	f32 ticksPerSecond;
+
 private:
 	void LoadAnimation(const aiAnimation* animation, const SkeletalMesh& skeleton);
 	void LoadBoneKeys(AnimationKeys& keys, const aiNodeAnim* channel);
 
-	fs::path _path;
-	f32 _duration;
-	f32 _ticksPerSecond;
 	Vector<AnimationKeys> _boneKeys;
 };

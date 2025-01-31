@@ -40,7 +40,7 @@ void TexturesManager::Initialize()
 
 
   // Load all from Textures/ and Icons/
-  CONSOLE_INFO("Loading textures and icons...");
+  //CONSOLE_INFO("Loading textures and icons...");
   //LoadAllTextures();
   LoadAllIcons();
 }
@@ -59,21 +59,23 @@ void TexturesManager::CleanUp()
   glDeleteTextures(totalTextures, texIDs.data());
 }
 
-const Texture2D* TexturesManager::FindTexture(const fs::path& relativePath) const
+const Texture2D* TexturesManager::FindTexture(const fs::path& path) const
 {
-  auto it = _textureMap.find(relativePath.lexically_normal());
+  auto it = _textureMap.find(path);
   if (it == _textureMap.end())
     return nullptr;
 
   u32 index = it->second;
   return &_textures.at(index);
 }
-const Texture2D* TexturesManager::LoadTexture(const fs::path& relativePath, bool gamma)
+const Texture2D* TexturesManager::CreateTexture(const fs::path& path)
 {
+  CONSOLE_TRACE("Create texture: {}", path.string());
+
   u32 newIndex = _textures.size();
   auto [it, success] = _textureMap.emplace(
     std::piecewise_construct,
-    std::forward_as_tuple(relativePath.lexically_normal()),
+    std::forward_as_tuple(path.lexically_normal()),
     std::forward_as_tuple(newIndex)
   );
   if (!success)
@@ -82,35 +84,43 @@ const Texture2D* TexturesManager::LoadTexture(const fs::path& relativePath, bool
     return nullptr;
   }
   
-  fs::path absolutePath = (Filesystem::GetTexturesPath() / relativePath).lexically_normal();
+  //fs::path relativePath = (Filesystem::GetTexturesPath() / path).lexically_normal();
+  fs::path relativePath = fs::relative(
+    Filesystem::GetTexturesPath() / path,
+    Filesystem::GetAssetsPath()
+  );
+  CONSOLE_DEBUG("relativePath={}", relativePath.string());
+
   Texture2D& texture = _textures.emplace_back();
   texture.Create(Texture2DTarget::TEXTURE_2D);
-  texture.LoadImageData(absolutePath, gamma);
+  texture.LoadImageData(relativePath);
   return &texture;
 }
-const Texture2D* TexturesManager::GetOrLoadTexture(const fs::path& relativePath, bool gamma)
+const Texture2D* TexturesManager::GetOrCreateTexture(const fs::path& path)
 {
-  const auto* t = FindTexture(relativePath);
+  const auto* t = FindTexture(path);
   if (!t)
-    t = LoadTexture(relativePath);
+    t = CreateTexture(path);
   return t;
 }
 
-const Texture2D* TexturesManager::FindTextureIcon(const fs::path& relativePath) const
+const Texture2D* TexturesManager::FindIcon(const fs::path& path) const
 {
-  auto it = _iconMap.find(relativePath.lexically_normal());
+  auto it = _iconMap.find(path);
   if (it == _iconMap.end())
     return nullptr;
 
   u32 index = it->second;
   return &_icons.at(index);
 }
-const Texture2D* TexturesManager::LoadTextureIcon(const fs::path& relativePath)
+const Texture2D* TexturesManager::CreateIcon(const fs::path& path)
 {
+  CONSOLE_TRACE("Create icon: {}", path.string());
+
   u32 newIndex = _icons.size();
   auto [it, success] = _iconMap.emplace(
     std::piecewise_construct,
-    std::forward_as_tuple(relativePath.lexically_normal()),
+    std::forward_as_tuple(path.lexically_normal()),
     std::forward_as_tuple(newIndex)
   );
   if (!success)
@@ -119,17 +129,17 @@ const Texture2D* TexturesManager::LoadTextureIcon(const fs::path& relativePath)
     return nullptr;
   }
 
-  fs::path absolutePath = (Filesystem::GetIconsPath() / relativePath).lexically_normal();
+  fs::path absolutePath = (Filesystem::GetIconsPath() / path).lexically_normal();
   Texture2D& icon = _icons.emplace_back();
   icon.Create(Texture2DTarget::TEXTURE_2D);
-  icon.LoadImageData(absolutePath, false);
+  icon.LoadImageData(absolutePath);
   return &icon;
 }
-const Texture2D* TexturesManager::GetOrLoadTextureIcon(const fs::path& relativePath, bool gamma)
+const Texture2D* TexturesManager::GetOrCreateIcon(const fs::path& path)
 {
-  const auto* t = FindTextureIcon(relativePath);
+  const auto* t = FindIcon(path);
   if (!t)
-    t = LoadTextureIcon(relativePath);
+    t = CreateIcon(path);
   return t;
 }
 
@@ -154,12 +164,8 @@ void TexturesManager::LoadAllTextures()
       ::tolower
     );
 
-    bool gamma = false;
-    if (filename.find("diff") != String::npos)
-      gamma = true;
-
     CONSOLE_TRACE("{}", absolutePath.relative_path().string());
-    const Texture2D* texture = LoadTexture(relativePath, gamma);
+    const Texture2D* texture = CreateTexture(relativePath);
     if (!texture)
       CONSOLE_ERROR("Error on loading texture object");
   }
@@ -173,9 +179,7 @@ void TexturesManager::LoadAllIcons()
 
     const auto& absolutePath = entry.path();
     const auto relativePath = fs::relative(absolutePath, Filesystem::GetIconsPath());
-    CONSOLE_TRACE("{}", absolutePath.relative_path().string());
-
-    const Texture2D* icon = LoadTextureIcon(relativePath);
+    const Texture2D* icon = CreateIcon(relativePath);
     if (!icon)
       CONSOLE_ERROR("Error on loading texture icon object");
   }

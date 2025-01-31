@@ -19,11 +19,13 @@ public:
 		return modelsManager;
 	}
 
+	// <path> relative path to "Assets/Models/Static"
 	const StaticMesh* FindStaticMesh(const fs::path& path) const;
-	const StaticMesh* InsertStaticMesh(const fs::path& path);
+	const StaticMesh* CreateStaticMesh(const fs::path& path);
 
+	// <path> relative path to "Assets/Models/Skeletal"
 	const SkeletalMesh* FindSkeletalMesh(const fs::path& path) const;
-	const SkeletalMesh* InsertSkeletalMesh(const fs::path& path);
+	const SkeletalMesh* CreateSkeletalMesh(const fs::path& path);
 
 	void DestroyAll();
 private:

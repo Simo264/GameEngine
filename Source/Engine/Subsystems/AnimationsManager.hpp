@@ -20,7 +20,12 @@ public:
 		return manager;
 	}
 
-	const Vector<Animation>* LoadSkeletonAnimations(const fs::path& skeletonPath, const Vector<fs::path> animations);
+	// <skeletonPath> relative path to "Assets/Models/Skeletal"
+	// <animationPaths> relative path to "Assets/Models/Skeletal/"
+	const Vector<Animation>* LoadSkeletonAnimations(const fs::path& skeletonPath,
+																									const Vector<fs::path> animationPaths);
+	
+	// skeletonPath relative to "Assets/Models/Skeletal"
 	const Vector<Animation>* FindSkeletonAnimations(const fs::path& skeletonPath);
 
 private:

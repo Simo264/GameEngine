@@ -28,9 +28,9 @@ static mat4f AiMatrixToGLM(const aiMatrix4x4& matrix)
 //										PUBLIC													
 // ----------------------------------------------------
 
-void SkeletalMesh::CreateFromFile(const fs::path& relativePath)
+void SkeletalMesh::CreateFromFile(const fs::path& path)
 {
-	fs::path absolutePath = Filesystem::GetSkeletalModelsPath() / relativePath;
+	fs::path absolutePath = Filesystem::GetSkeletalModelsPath() / path;
 
 	Assimp::Importer importer;
 	const aiScene* scene = importer.ReadFile(absolutePath.string().c_str(),
@@ -54,23 +54,24 @@ void SkeletalMesh::CreateFromFile(const fs::path& relativePath)
 		return;
 	}
 
-	path = relativePath;
+	this->path = path;
 	meshes.reserve(scene->mNumMeshes);
-	u32 totalBones = std::reduce(scene->mMeshes, scene->mMeshes + scene->mNumMeshes, 0, [](u32 sum, aiMesh* mesh) {
+	u32 totalBones = std::accumulate(scene->mMeshes, scene->mMeshes + scene->mNumMeshes, 0, [](u32 sum, aiMesh* mesh) {
 		return sum + mesh->mNumBones;
 	});
-
-	if (totalBones > GetMaxNumBones())
-	{
-		CONSOLE_WARN("Bone number > {}", GetMaxNumBones());
-		return;
-	}
+	assert(totalBones <= GetMaxNumBones());
 	
 	bones.reserve(totalBones);
-	
 	ProcessNode(scene->mRootNode, scene);
 	LoadBoneHierarchy(rootNode, scene->mRootNode);
 }
+
+void SkeletalMesh::Destroy()
+{
+	for (auto& mesh : meshes)
+		mesh.Destroy();
+}
+
 void SkeletalMesh::Draw(RenderMode mode)
 {
 	for (const auto& mesh : meshes)
@@ -82,6 +83,7 @@ void SkeletalMesh::Draw(RenderMode mode)
 		mesh.Draw(mode);
 	}
 }
+
 std::pair<const Bone*, i32> SkeletalMesh::FindBone(StringView boneName) const
 {
 	auto it = _boneMap.find(boneName.data());
@@ -92,6 +94,7 @@ std::pair<const Bone*, i32> SkeletalMesh::FindBone(StringView boneName) const
 	}
 	return { nullptr, -1 };
 }
+
 std::pair<Bone*, i32> SkeletalMesh::InsertBone(StringView boneName)
 {
 	u32 boneIndex = bones.size();
@@ -105,12 +108,14 @@ std::pair<Bone*, i32> SkeletalMesh::InsertBone(StringView boneName)
 	CONSOLE_WARN("Can't insert bone '{}'", boneName.data());
 	return { nullptr, -1 };
 }
+
 u32 SkeletalMesh::TotalVertices() const
 {
 	return std::reduce(meshes.begin(), meshes.end(), 0, [](i32 acc, const Mesh& mesh) {
 		return acc + mesh.vao.numVertices;
 	});
 }
+
 u32 SkeletalMesh::TotalIndices() const
 {
 	return std::reduce(meshes.begin(), meshes.end(), 0, [](i32 acc, const Mesh& mesh) {
@@ -124,7 +129,6 @@ u32 SkeletalMesh::TotalIndices() const
 
 void SkeletalMesh::ProcessNode(aiNode* node, const aiScene* scene)
 {
-	// Process all the node's meshes
 	for (i32 i = 0; i < node->mNumMeshes; i++)
 	{
 		u32 MAX_BONES_INFLUENCE = Vertex_P_N_UV_T_B::MAX_BONES_INFLUENCE;
@@ -154,30 +158,13 @@ void SkeletalMesh::ProcessNode(aiNode* node, const aiScene* scene)
 		{
 			aiString filename;
 			aiMaterial* material = scene->mMaterials[aimesh->mMaterialIndex];
+			auto& texManager = TexturesManager::Get();
 			if (material->GetTexture(aiTextureType_DIFFUSE, 0, &filename) == aiReturn_SUCCESS)
-			{
-				auto* diffuse = TexturesManager::Get().FindTexture(filename.C_Str());
-				if (diffuse)
-					mesh.material.diffuse = diffuse;
-				else
-					CONSOLE_WARN("Error on retrieving texture '{}'", filename.C_Str());
-			}
+				mesh.material.diffuse = texManager.GetOrCreateTexture(filename.C_Str());
 			if (material->GetTexture(aiTextureType_SPECULAR, 0, &filename) == aiReturn_SUCCESS)
-			{
-				auto* specular = TexturesManager::Get().FindTexture(filename.C_Str());
-				if (specular)
-					mesh.material.specular = specular;
-				else
-					CONSOLE_WARN("Error on retrieving texture '{}'", filename.C_Str());
-			}
+				mesh.material.specular = texManager.GetOrCreateTexture(filename.C_Str());
 			if (material->GetTexture(aiTextureType_NORMALS, 0, &filename) == aiReturn_SUCCESS)
-			{
-				auto* normal = TexturesManager::Get().FindTexture(filename.C_Str());
-				if (normal)
-					mesh.material.normal = normal;
-				else
-					CONSOLE_WARN("Error on retrieving texture '{}'", filename.C_Str());
-			}
+				mesh.material.normal = texManager.GetOrCreateTexture(filename.C_Str());
 		}
 	}
 
@@ -185,6 +172,7 @@ void SkeletalMesh::ProcessNode(aiNode* node, const aiScene* scene)
 	for (i32 i = 0; i < node->mNumChildren; i++)
 		ProcessNode(node->mChildren[i], scene);
 }
+
 Buffer SkeletalMesh::LoadVertices(aiMesh* aimesh)
 {
 	Vector<Vertex_P_N_UV_T_B> vertices;
@@ -210,6 +198,7 @@ Buffer SkeletalMesh::LoadVertices(aiMesh* aimesh)
 	Buffer buffer(vertices.size() * sizeof(Vertex_P_N_UV_T_B), vertices.data(), BufferUsage::STATIC_DRAW);
 	return buffer;
 }
+
 void SkeletalMesh::LoadBonesAndWeights(Vector<Vertex_P_N_UV_T_B>& vertices, const aiMesh* aimesh)
 {
 	for (u32 i = 0; i < aimesh->mNumBones; i++)
@@ -237,6 +226,7 @@ void SkeletalMesh::LoadBonesAndWeights(Vector<Vertex_P_N_UV_T_B>& vertices, cons
 		}
 	}
 }
+
 Buffer SkeletalMesh::LoadIndices(aiMesh* aimesh)
 {
 	u32 numIndices = aimesh->mNumFaces * 3;
@@ -256,6 +246,7 @@ Buffer SkeletalMesh::LoadIndices(aiMesh* aimesh)
 	buffer.UnmapStorage();
 	return buffer;
 }
+
 void SkeletalMesh::LoadBoneHierarchy(BoneNode& dest, const aiNode* src)
 {
 	if (std::strlen(src->mName.C_Str()) >= sizeof(dest.name))
@@ -272,6 +263,7 @@ void SkeletalMesh::LoadBoneHierarchy(BoneNode& dest, const aiNode* src)
 		LoadBoneHierarchy(child, src->mChildren[i]);
 	}
 }
+
 const Texture2D* SkeletalMesh::GetMaterialTexture(aiMaterial* material, u32 textureType)
 {
 	aiString fileName;

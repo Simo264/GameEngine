@@ -16,6 +16,7 @@ public:
 		animations{ nullptr },
 		_playAnimation{ false },
 		_currentTime{ 0.f },
+		_targetSkeleton{ nullptr },
 		_targetAnimation{ nullptr },
 		_boneTransforms{}
 	{}

@@ -47,7 +47,7 @@ static void ContentBrowser_RightCol_Navbar(f32 navbarHeight)
 
   ImGui::BeginChild("RightCol_Child_NavBar", ImVec2(ImGui::GetColumnWidth(), navbarHeight));
   ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
-  const auto* iconBack = texManager.FindTextureIcon("back-arrow.png");
+  const auto* iconBack = texManager.FindIcon("back-arrow.png");
 
   // Back button
   if (contentBrowser_right_navCurrentDir == Filesystem::GetAssetsPath())
@@ -104,7 +104,7 @@ static void ContentBrowser_RightCol_Thumbnails(f32 contentHeight)
 
           if (entry.is_directory())
           {
-            const auto* iconFolder = manager.FindTextureIcon("open-folder.png");
+            const auto* iconFolder = manager.FindIcon("open-folder.png");
             if (ImGui::ImageButton(filenameString.c_str(), reinterpret_cast<void*>(iconFolder->id), ImVec2(cellSize, cellSize)))
               contentBrowser_right_navCurrentDir /= entry;
           }
@@ -117,7 +117,7 @@ static void ContentBrowser_RightCol_Thumbnails(f32 contentHeight)
             {
               const Texture2D* texture = nullptr;
               if (contentBrowser_right_navCurrentDir == Filesystem::GetIconsPath())
-                texture = manager.FindTextureIcon(relativePath);
+                texture = manager.FindIcon(relativePath);
               else
                 texture = manager.FindTexture(relativePath);
 
@@ -129,7 +129,7 @@ static void ContentBrowser_RightCol_Thumbnails(f32 contentHeight)
             // Render generic file icon
             else
             {
-              const auto& iconFile = manager.FindTextureIcon("file.png");
+              const auto& iconFile = manager.FindIcon("file.png");
               
               ImGui::ImageButton(filenameString.c_str(), 
                 reinterpret_cast<void*>(iconFile->id), 

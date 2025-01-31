@@ -143,15 +143,14 @@ public:
     path{}
   {}
 
-  /** @brief Constructor which initialises a Texture2D object by loading data from an image file. */
+  // <path> relative path to "Assets/"
   Texture2D(Texture2DTarget target, 
-            const fs::path& absolutePath, 
-            bool gammaCorrection);
+            const fs::path& path);
   
   ~Texture2D() = default;
 
-  /** @brief Loads image data from file and stores it in the texture. */
-  void LoadImageData(const fs::path& absolutePath, bool gammaCorrection);
+  // <path> relative path to "Assets/"
+  void LoadImageData(const fs::path& path);
 
   /** @brief Create texture object */
   void Create(Texture2DTarget target);
