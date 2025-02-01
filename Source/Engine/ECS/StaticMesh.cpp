@@ -18,10 +18,8 @@
 
 void StaticMesh::CreateFromPath(const fs::path& path)
 {
-	fs::path absolutePath = Filesystem::GetStaticModelsPath() / path;
-
 	Assimp::Importer importer;
-	const aiScene* scene = importer.ReadFile(absolutePath.string().c_str(),
+	const aiScene* scene = importer.ReadFile(path.string().c_str(),
 		aiProcess_Triangulate |
 		aiProcess_GenUVCoords |
 		aiProcess_FlipUVs |
@@ -173,13 +171,4 @@ Buffer StaticMesh::LoadIndices(aiMesh* aimesh)
 	}
 	buffer.UnmapStorage();
 	return buffer;
-}
-
-const Texture2D* StaticMesh::GetMaterialTexture(aiMaterial* material, u32 textureType)
-{
-	aiString fileName;
-	if (material->GetTexture(static_cast<aiTextureType>(textureType), 0, &fileName) == aiReturn_SUCCESS)
-		return TexturesManager::Get().FindTexture(fileName.C_Str());
-
-	return nullptr;
 }

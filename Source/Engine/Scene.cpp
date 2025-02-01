@@ -205,38 +205,33 @@ void Scene::DeserializeScene(const fs::path& filePath)
 			ModelsManager& modManager = ModelsManager::Get();
 			AnimationsManager& animManager = AnimationsManager::Get();
 
-			// "Mutant\\Mutant.gltf"
+			// The relative path to "Assets/Models/Skeletal" e.g. "Mutant/Mutant.gltf"
 			fs::path skeletonPath = conf.GetValue(section, "path");
+			fs::path parent = skeletonPath.parent_path();
 			const SkeletalMesh* skeleton = modManager.FindSkeletalMesh(skeletonPath);
 			if (!skeleton)
 			{
 				skeleton = modManager.CreateSkeletalMesh(skeletonPath);
 
-				// "D:\\GameEngine\\Assets\\Models\\Skeletal\\Mutant\\animlist.txt"
-				fs::path animlistFile = Filesystem::GetSkeletalModelsPath() / 
-					(skeletonPath.parent_path()) /
+				// G.g "D:\GameEngine\Assets\Models\Skeletal\Mutant\animlist.txt"
+				fs::path animlistFile = Filesystem::GetSkeletalModelsPath() /
+					parent /
 					"animlist.txt";
 				
 				if (!fs::exists(animlistFile))
 					throw std::runtime_error(std::format("File {} does not exist", animlistFile.string()));
 				
 				IStream file(animlistFile);
-				if (!file)
-					throw std::runtime_error(std::format("Erron on opening file {}", animlistFile.string()));
-
-				Vector<fs::path> animations{ std::istream_iterator<fs::path>(file), std::istream_iterator<fs::path>() };
-				for (auto& p : animations)
-					p = (skeletonPath.parent_path()) / p;
-
+				
 				// animations = { 
-				//	"Mutant\\Drunk_Walk\\Anim_Mutant_Drunk_Walk.gltf", 
-				//	"Mutant\\Silly_Dancing\\Anim_Mutant_Silly_Dancing.gltf" 
+				//	"Drunk_Walk/<filename>.gltf", 
+				//	"Silly_Dancing/<filename>.gltf" 
 				// }
-
-				animatorComponent.animations = animManager.LoadSkeletonAnimations(skeletonPath, animations);
+				Vector<fs::path> animPaths{ std::istream_iterator<fs::path>(file), std::istream_iterator<fs::path>() };
+				animatorComponent.animationsRef = animManager.LoadAnimations(*skeleton, animPaths);
 			}
 			else
-				animatorComponent.animations = animManager.FindSkeletonAnimations(skeletonPath);
+				animatorComponent.animationsRef = animManager.GetAnimationsVector(*skeleton);
 			
 			skmeshComponent = *skeleton; // copy
 			animatorComponent.SetTargetSkeleton(skmeshComponent);

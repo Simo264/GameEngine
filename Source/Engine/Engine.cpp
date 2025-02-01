@@ -325,6 +325,7 @@ void Engine::Initialize()
 
   // Initialize window manager
   // -------------------------
+  CONSOLE_INFO("Initializing WindowManager...");
   WindowManager::Get().Initialize(WindowProps(
     vec2i{ WINDOW_WIDTH, WINDOW_HEIGHT }, // window size
     vec2i{ 50, 50 },                      // window pos
@@ -335,16 +336,18 @@ void Engine::Initialize()
 
   // Initialize shader manager
   // -------------------------
+  CONSOLE_INFO("Initializing ShadersManager...");
   ShadersManager::Get().Initialize();
 
   // Initialize texture manager
   // --------------------------
+  CONSOLE_INFO("Initializing TexturesManager...");
   TexturesManager::Get().Initialize();
 
   // Setup ImGui context
   // -------------------
+  CONSOLE_INFO("Initializing ImGui...");
   ImGuiLayer::Get().Initialize();
-  CONSOLE_INFO("ImGui layer initialized");
 
   // Create Framebuffer object
   // -------------------------

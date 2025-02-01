@@ -43,7 +43,7 @@ public:
 	/** @brief List of meshes contained in the model. */
 	Vector<Mesh> meshes;
 
-	fs::path path; // relative path to "Assets/Models/Static"
+	fs::path path;
 
 private:
 	/** @brief Processes a node in the model's scene graph. */
@@ -60,7 +60,4 @@ private:
 	 * @return Buffer containing index data.
 	 */
 	Buffer LoadIndices(aiMesh* aimesh);
-
-	/** @brief Retrieves the appropriate texture from a material. */
-	const Texture2D* GetMaterialTexture(aiMaterial* material, u32 textureType);
 };

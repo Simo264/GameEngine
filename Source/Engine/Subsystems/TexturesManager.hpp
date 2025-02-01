@@ -33,19 +33,15 @@ public:
 	
 	// <path> relative path to "Assets/Textures"
 	const Texture2D* FindTexture(const fs::path& path) const;
-	
 	// <path> relative path to "Assets/Textures"
 	const Texture2D* CreateTexture(const fs::path& path);
-	
-	// <path> relative path to "Assets/Icons"
+	// <path> relative path to "Assets/Textures"
 	const Texture2D* GetOrCreateTexture(const fs::path& path);
 
 	// <path> relative path to "Assets/Icons"
 	const Texture2D* FindIcon(const fs::path& path) const;
-
 	// <path> relative path to "Assets/Icons"
 	const Texture2D* CreateIcon(const fs::path& path);
-	
 	// <path> relative path to "Assets/Icons"
 	const Texture2D* GetOrCreateIcon(const fs::path& path);
 	
@@ -65,7 +61,4 @@ private:
 	// Map storing texture's relative path and its index
 	UnorderedMap<fs::path, u32> _textureMap;
 	UnorderedMap<fs::path, u32> _iconMap;
-
-	void LoadAllTextures();
-	void LoadAllIcons();
 };

@@ -374,7 +374,7 @@ static void Insp_Transform(GameObject& object, Transform& transform)
 static void Insp_MaterialRow(StringView label, const Texture2D*& meshTexture, const Texture2D& defaultTex)
 {
   auto& texManager = TexturesManager::Get();
-  static const auto* resetIcon = texManager.FindIcon("reset-arrow-16.png");
+  static const auto* resetIcon = texManager.GetOrCreateIcon("reset-arrow-16.png");
 
   const bool noTexture = (meshTexture->path.empty());
   
@@ -543,7 +543,7 @@ static void Insp_SkeletalMesh(GameObject& object, SkeletalMesh& skeleton)
 static void Insp_Animator(GameObject& object, Animator& animator)
 {
   SkeletalMesh* skeleton = object.GetComponent<SkeletalMesh>();
-  const auto* animations = animator.animations;
+  const auto* animations = animator.animationsRef;
   
   ImGui::Text("Nr animations: %d", animations->size());
 
@@ -567,9 +567,9 @@ static void Insp_Animator(GameObject& object, Animator& animator)
   if (animAttached)
   {
     auto& texManager = TexturesManager::Get();
-    static const Texture2D* playIcon = texManager.FindIcon("play-button-32.png");
-    static const Texture2D* pauseIcon = texManager.FindIcon("pause-button-32.png");
-    static const Texture2D* restartIcon = texManager.FindIcon("restart-button-32.png");
+    static const Texture2D* playIcon = texManager.GetOrCreateIcon("play-button-32.png");
+    static const Texture2D* pauseIcon = texManager.GetOrCreateIcon("pause-button-32.png");
+    static const Texture2D* restartIcon = texManager.GetOrCreateIcon("restart-button-32.png");
 
     if (ImGui::ImageButton(reinterpret_cast<void*>(playIcon->id), ImVec2(16, 16)))
       animator.PlayAnimation();

@@ -19,12 +19,14 @@ public:
 		return modelsManager;
 	}
 
-	// <path> relative path to "Assets/Models/Static"
+	// <path> the relative path to the static mesh object "Models/Static"
 	const StaticMesh* FindStaticMesh(const fs::path& path) const;
+	// <path> the relative path to the static mesh object "Models/Static"
 	const StaticMesh* CreateStaticMesh(const fs::path& path);
 
-	// <path> relative path to "Assets/Models/Skeletal"
+	// <path> the relative path to the skeletal mesh object "Models/Skeletal"
 	const SkeletalMesh* FindSkeletalMesh(const fs::path& path) const;
+	// <path> the relative path to the skeletal mesh object "Models/Skeletal"
 	const SkeletalMesh* CreateSkeletalMesh(const fs::path& path);
 
 	void DestroyAll();

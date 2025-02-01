@@ -31,7 +31,7 @@ public:
     return SKELETAL_MESH_MAX_NUM_BONES;
   }
 
-  // <path> realative path to "Assets/Models/Skeletal"
+  // <path> absolute path to skeletal mesh object
   void CreateFromFile(const fs::path& path);
 
   void Destroy();
@@ -71,13 +71,12 @@ public:
   /** @brief The root node of the bone hierarchy. */
   BoneNode rootNode;
 
-  fs::path path; // relative path to "Assets/Models/Skeletal"
+  fs::path path;
   
 private:
   void ProcessNode(aiNode* node, const aiScene* scene);
   Buffer LoadVertices(aiMesh* aimesh);
   Buffer LoadIndices(aiMesh* aimesh);
-  const Texture2D* GetMaterialTexture(aiMaterial* material, u32 textureType);
   void LoadBonesAndWeights(Vector<Vertex_P_N_UV_T_B>& vertices, const aiMesh* aimesh);
   void LoadBoneHierarchy(BoneNode& dest, const aiNode* src);
 

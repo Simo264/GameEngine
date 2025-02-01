@@ -20,17 +20,23 @@ public:
 		return manager;
 	}
 
-	// <skeletonPath> relative path to "Assets/Models/Skeletal"
-	// <animationPaths> relative path to "Assets/Models/Skeletal/"
-	const Vector<Animation>* LoadSkeletonAnimations(const fs::path& skeletonPath,
-																									const Vector<fs::path> animationPaths);
+	// <animationPaths> list of relative paths to "Assets/Models/Skeletal/<name>"
+	// E.g:
+	// Skeleton.path = "GameEngine/Assets/Models/Skeletal/Mutant/Mutant.gltf" 
+	// animationPaths = { 
+	//	"Drunk_Walk/anim.gltf", 
+	//	"Silly_Dancing/anim.gltf" 
+	// }
+	const Vector<Animation>* LoadAnimations(const SkeletalMesh& skeleton,
+																					const Vector<fs::path> animationPaths);
 	
-	// skeletonPath relative to "Assets/Models/Skeletal"
-	const Vector<Animation>* FindSkeletonAnimations(const fs::path& skeletonPath);
+	const Vector<Animation>* GetAnimationsVector(const SkeletalMesh& skeleton);
 
 private:
 	AnimationsManager() = default;
 	~AnimationsManager() = default;
-
-	UnorderedMap<fs::path, Vector<Animation>> _animationsMap; // skeleton - animations
+	
+	// skeleton's relative path - animations
+	// E.g "Mutant/" - Vector{ "Drunk_Walk", "Silly_Dancing" }
+	UnorderedMap<fs::path, Vector<Animation>> _animationsMap; 
 };

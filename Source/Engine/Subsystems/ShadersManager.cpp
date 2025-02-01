@@ -16,14 +16,12 @@ constexpr char SM_FILE_CONFIG[] = "Shader_Manager.ini";
 
 void ShadersManager::Initialize()
 {
-  CONSOLE_INFO("Loading shaders and programs...");
-  
   IniFileHandler conf((Filesystem::GetRootPath() / SM_FILE_CONFIG));
   conf.ReadData();
 
-  u32 nrShadersInDir = Utils::CountFilesInDirectory(Filesystem::GetShadersPath());
+  u32 nrShaders = Utils::CountFilesInDirectory(Filesystem::GetShadersPath());
   u32 nrPrograms = conf.GetData().size();
-  _shaders.reserve(nrShadersInDir);
+  _shaders.reserve(nrShaders);
   _programs.reserve(nrPrograms);
 
   ReadConfig(conf);
@@ -62,13 +60,9 @@ const Shader& ShadersManager::GetOrCreateShader(StringView shaderName)
 }
 const Shader& ShadersManager::CreateShader(StringView shaderName)
 {
-  const fs::path& shadersDir = Filesystem::GetShadersPath();
-  fs::path filePath = shadersDir / shaderName.data();
-  
-  if (!fs::exists(filePath) || !fs::is_regular_file(filePath))
+  fs::path filePath = Filesystem::GetShadersPath() / shaderName.data();
+  if (!fs::exists(filePath))
     throw std::runtime_error(std::format("Shader file '{}' does not exist", filePath.string()));
-
-  CONSOLE_TRACE("Create shader '{}'", shaderName.data());
 
   u32 shaderIdx = _shaderMap.size();
   auto [it, success] = _shaderMap.emplace(
@@ -77,7 +71,7 @@ const Shader& ShadersManager::CreateShader(StringView shaderName)
     std::forward_as_tuple(shaderIdx)
   );
   if (!success)
-    throw std::runtime_error("Error on insert shader into the map");
+    throw std::runtime_error(std::format("Error on insert shader {} into the map", shaderName.data()));
 
   StringView ext = shaderName.substr(shaderName.find_last_of('.') + 1);
   i32 shaderType = ResolveShaderType(ext);
@@ -85,10 +79,11 @@ const Shader& ShadersManager::CreateShader(StringView shaderName)
   IStream file(filePath);
   String shaderSrc{ std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>() };
 
+  CONSOLE_TRACE("Create shader {}", shaderName.data());
   Shader& shader = _shaders.emplace_back(shaderName);
   shader.Create(shaderType, shaderSrc);
   if (!shader.Compile())
-    CONSOLE_ERROR("Error on compiling shader: {}", shader.GetShaderInfo());
+    CONSOLE_ERROR("Error on compiling shader {}: {}", shader.name, shader.GetShaderInfo());
 
   return shader;
 }
@@ -104,8 +99,6 @@ const Program& ShadersManager::GetProgram(StringView programName) const
 }
 const Program& ShadersManager::CreateProgram(StringView programName)
 {
-  CONSOLE_TRACE("Create program '{}'", programName.data());
-  
   u32 progIdx = _programMap.size();
   auto [it, success] = _programMap.emplace(
     std::piecewise_construct,
@@ -113,8 +106,9 @@ const Program& ShadersManager::CreateProgram(StringView programName)
     std::forward_as_tuple(progIdx)
   );
   if (!success)
-    throw std::runtime_error(std::format("Error on loading program into the map"));
+    throw std::runtime_error(std::format("Error on loading program {} into the map", programName.data()));
 
+  CONSOLE_TRACE("Create program {}", programName.data());
   Program& program = _programs.emplace_back(programName);
   program.Create();
   return program;
@@ -126,12 +120,6 @@ const Program& ShadersManager::CreateProgram(StringView programName)
 
 i32 ShadersManager::ResolveShaderType(StringView ext)
 {
-  // GL_VERTEX_SHADER
-  // GL_TESS_CONTROL_SHADER
-  // GL_TESS_EVALUATION_SHADER
-  // GL_GEOMETRY_SHADER 
-  // GL_FRAGMENT_SHADER
-
   if (ext == "vert")
     return GL_VERTEX_SHADER;
   if (ext == "tesc")
@@ -143,17 +131,13 @@ i32 ShadersManager::ResolveShaderType(StringView ext)
   if (ext == "frag")
     return GL_FRAGMENT_SHADER;
   
-  CONSOLE_WARN("Unknown file extension {}", ext.data());
-  return 0;
+  throw std::runtime_error(std::format("Unknown file extension {}", ext.data()));
 }
 void ShadersManager::ReadConfig(IniFileHandler& conf)
 {
-  conf.GetData().size();
-  
   for (auto const& it : conf.GetData())
   {
     const String& section = it.first; // The program name 
-    
     const Program& program = CreateProgram(section);
     if (!program.IsValid())
       continue;
@@ -189,6 +173,7 @@ void ShadersManager::ReadConfig(IniFileHandler& conf)
       program.AttachShader(fragShader);
     }
 
+    CONSOLE_TRACE("Link program {}", program.name);
     if(!program.Link())
       CONSOLE_ERROR("Error on linking program '{}': {}", program.name, program.GetProgramInfo());
   }
@@ -200,7 +185,6 @@ void ShadersManager::SetProgramsUniforms() const
 
   auto& framebufferProg = GetProgram("Framebuffer");
   framebufferProg.SetUniform1i("u_fboImageTexture", 0);
-  //framebufferProg.SetUniform1i("u_postProcessingType", 0);
 
   auto& sceneProg = GetProgram("Scene");
   sceneProg.SetUniform1i("u_useNormalMap", 0);

@@ -12,16 +12,20 @@
 // 									PUBLIC														
 // ---------------------------------------------------- 
 
-Animation::Animation(const fs::path& path, const SkeletalMesh& skeleton) :
-	path{ path },
+Animation::Animation(const SkeletalMesh& skeleton, const fs::path& path) :
 	duration{ 0 },
 	ticksPerSecond{ 0 },
 	_boneKeys{}
 {
-	fs::path absolutePath = Filesystem::GetSkeletalModelsPath() / path;
-	
+	// "GameEngine/Assets/Models/Skeletal/Mutant/Mutant.gltf" 
+	const fs::path& absolute = skeleton.path;
+	// "GameEngine/Assets/Models/Skeletal/Mutant/" 
+	fs::path parent = absolute.parent_path();
+	// "GameEngine/Assets/Models/Skeletal/Mutant/Drunk_Walk/anim.gltf" 
+	fs::path filePath = parent / path;
+
 	Assimp::Importer importer;
-	const aiScene* scene = importer.ReadFile(absolutePath.string(), aiProcess_Triangulate);
+	const aiScene* scene = importer.ReadFile(filePath.string(), aiProcess_Triangulate);
 	if (!scene || !scene->mRootNode)
 	{
 		CONSOLE_ERROR("Assimp importer error: {}", importer.GetErrorString());
@@ -32,6 +36,8 @@ Animation::Animation(const fs::path& path, const SkeletalMesh& skeleton) :
 		CONSOLE_ERROR("Error: '{}' !scene->HasAnimations() ", path.string());
 		return;
 	}
+
+	this->path = path;
 
 	aiAnimation* animation = scene->mAnimations[0];
 	duration = animation->mDuration;

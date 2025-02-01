@@ -143,13 +143,13 @@ public:
     path{}
   {}
 
-  // <path> relative path to "Assets/"
+  // <path> absolute path to image
   Texture2D(Texture2DTarget target, 
             const fs::path& path);
   
   ~Texture2D() = default;
 
-  // <path> relative path to "Assets/"
+  // <path> absolute path to image
   void LoadImageData(const fs::path& path);
 
   /** @brief Create texture object */
@@ -217,5 +217,5 @@ public:
   bool IsValid() const;
   
   u32 id;
-  fs::path path; // relative path to "Assets/"
+  fs::path path;
 };

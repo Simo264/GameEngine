@@ -30,10 +30,8 @@ static mat4f AiMatrixToGLM(const aiMatrix4x4& matrix)
 
 void SkeletalMesh::CreateFromFile(const fs::path& path)
 {
-	fs::path absolutePath = Filesystem::GetSkeletalModelsPath() / path;
-
 	Assimp::Importer importer;
-	const aiScene* scene = importer.ReadFile(absolutePath.string().c_str(),
+	const aiScene* scene = importer.ReadFile(path.string().c_str(),
 		aiProcess_Triangulate |
 		aiProcess_GenUVCoords |
 		aiProcess_FlipUVs |
@@ -262,13 +260,4 @@ void SkeletalMesh::LoadBoneHierarchy(BoneNode& dest, const aiNode* src)
 		BoneNode& child = dest.children.emplace_back();
 		LoadBoneHierarchy(child, src->mChildren[i]);
 	}
-}
-
-const Texture2D* SkeletalMesh::GetMaterialTexture(aiMaterial* material, u32 textureType)
-{
-	aiString fileName;
-	if (material->GetTexture(static_cast<aiTextureType>(textureType), 0, &fileName) == aiReturn_SUCCESS)
-		return TexturesManager::Get().FindTexture(fileName.C_Str());
-
-	return nullptr;
 }

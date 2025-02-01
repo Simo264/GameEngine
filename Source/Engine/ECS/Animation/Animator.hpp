@@ -13,7 +13,7 @@ class Animator
 {
 public:
 	Animator() :
-		animations{ nullptr },
+		animationsRef{ nullptr },
 		_playAnimation{ false },
 		_currentTime{ 0.f },
 		_targetSkeleton{ nullptr },
@@ -36,7 +36,8 @@ public:
 	const Animation* GetAttachedAnimation() const { return _targetAnimation; }
 	const auto& GetBoneTransforms() const { return _boneTransforms; }
 
-	const Vector<Animation>* animations;
+	// Reference to the animations vector in AnimationsManager
+	const Vector<Animation>* animationsRef; 
 
 private:
 	void CalculateBoneTransform(const BoneNode& node, mat4f parentTransform);

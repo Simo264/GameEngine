@@ -39,9 +39,11 @@ struct AnimationKeys
 class Animation
 {
 public:
-	// <path> relative path to "Assets/Models/Skeletal/"
-	Animation(const fs::path& path,
-						const SkeletalMesh& skeleton);
+	// The relative paths to "Assets/Models/Skeletal/<name>"
+	// E.g. 
+	// skeleton.path = "GameEngine/Assets/Models/Skeletal/Mutant/Mutant.gltf"
+	// animation.path = "Drunk_Walk/anim.gltf"
+	Animation(const SkeletalMesh& skeleton, const fs::path& path);
 	
 	/** @brief Default destructor for the Animation class. */
 	~Animation() = default;

@@ -100,7 +100,7 @@ void Texture2D::ClearStorage(i32 level,
 
 void Texture2D::LoadImageData(const fs::path& path)
 {
-  this->path = path;
+  this->path = fs::relative(path, Filesystem::GetAssetsPath());
 
   // When to Apply Gamma Correction to Textures?
   // Gamma correction is only applied to colour diffuse(albedo) textures because the colours 
@@ -111,14 +111,10 @@ void Texture2D::LoadImageData(const fs::path& path)
   String filename = path.filename().string();
   std::transform(filename.begin(), filename.end(), filename.begin(), ::tolower);
 
-  if (filename.find("diffuse") != std::string::npos ||
-      filename.find("albedo") != std::string::npos ||
-      filename.find("basecolor") != std::string::npos)
+  if (filename.find("diffuse") != String::npos ||
+      filename.find("albedo") != String::npos ||
+      filename.find("basecolor") != String::npos)
     gammaCorrection = true;
-
-
-  fs::path absolutePath = Filesystem::GetAssetsPath() / path;
-  CONSOLE_DEBUG("Load image {}", absolutePath.string());
 
   i32 width, height, nChannels;
   Texture2DFormat format = Texture2DFormat::RGB;
@@ -163,7 +159,7 @@ void Texture2D::LoadImageData(const fs::path& path)
     GenerateMipmap();
   }
   else
-    CONSOLE_ERROR("Failed to load image data {}", path.string());
+    CONSOLE_ERROR("Failed to load image {}", path.string());
 
   Utils::FreeImageData(data);
 }
