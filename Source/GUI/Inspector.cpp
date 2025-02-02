@@ -543,7 +543,12 @@ static void Insp_SkeletalMesh(GameObject& object, SkeletalMesh& skeleton)
 static void Insp_Animator(GameObject& object, Animator& animator)
 {
   SkeletalMesh* skeleton = object.GetComponent<SkeletalMesh>();
-  const auto* animations = animator.animationsRef;
+  const auto* animations = animator.animationsPtr;
+  if (!animations)
+  {
+    ImGui::Text("No animations");
+    return;
+  }
   
   ImGui::Text("Nr animations: %d", animations->size());
 

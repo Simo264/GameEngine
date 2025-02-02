@@ -7,12 +7,12 @@
 #include "Engine/Filesystem/Filesystem.hpp"
 
 Texture2D::Texture2D(Texture2DTarget target, 
-                     const fs::path& path)
+                     const fs::path& absolute)
   : id{ 0 },
     path{}
 {
   Create(target);
-  LoadImageData(path);
+  LoadImageData(absolute);
 }
 
 void Texture2D::Create(Texture2DTarget target)
@@ -98,9 +98,15 @@ void Texture2D::ClearStorage(i32 level,
 }
 
 
-void Texture2D::LoadImageData(const fs::path& path)
+void Texture2D::LoadImageData(const fs::path& absolute)
 {
-  this->path = fs::relative(path, Filesystem::GetAssetsPath());
+  if (!fs::exists(absolute))
+  {
+    CONSOLE_ERROR("Image file does not exist {}", absolute.string());
+    return;
+  }
+
+  path = absolute.relative_path();
 
   // When to Apply Gamma Correction to Textures?
   // Gamma correction is only applied to colour diffuse(albedo) textures because the colours 
@@ -119,11 +125,10 @@ void Texture2D::LoadImageData(const fs::path& path)
   i32 width, height, nChannels;
   Texture2DFormat format = Texture2DFormat::RGB;
   Texture2DInternalFormat internalFormat = Texture2DInternalFormat::RGB8;
-  u8* data = Utils::LoadImageData(path, width, height, nChannels);
+  u8* data = Utils::LoadImageData(absolute, width, height, nChannels);
   if (data)
   {
     // From https://registry.khronos.org/OpenGL-Refpages/gl4/html/glTexStorage2D.xhtml
-    //
     // GL_RGB:         gamma correction: no;   alpha component: no
     // GL_RGBA:        gamma correction: no;   alpha component: yes
     // GL_SRGB:        gamma correction: yes;  alpha component: no
@@ -159,7 +164,7 @@ void Texture2D::LoadImageData(const fs::path& path)
     GenerateMipmap();
   }
   else
-    CONSOLE_ERROR("Failed to load image {}", path.string());
+    CONSOLE_ERROR("Failed to load image {}", absolute.string());
 
   Utils::FreeImageData(data);
 }

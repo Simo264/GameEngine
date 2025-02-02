@@ -31,8 +31,8 @@ public:
     return SKELETAL_MESH_MAX_NUM_BONES;
   }
 
-  // <path> absolute path to skeletal mesh object
-  void CreateFromFile(const fs::path& path);
+  // <path> the absolute path to skeletal mesh object
+  void CreateFromFile(const fs::path& absolute);
 
   void Destroy();
 

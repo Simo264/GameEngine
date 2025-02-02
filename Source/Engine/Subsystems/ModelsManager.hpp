@@ -20,14 +20,18 @@ public:
 	}
 
 	// <path> the relative path to the static mesh object "Models/Static"
-	const StaticMesh* FindStaticMesh(const fs::path& path) const;
+	// E.g. "Cube/cube.obj"
+	const StaticMesh* FindStaticMesh(const fs::path& relative) const;
 	// <path> the relative path to the static mesh object "Models/Static"
-	const StaticMesh* CreateStaticMesh(const fs::path& path);
+	// E.g. "Cube/cube.obj"
+	const StaticMesh* CreateStaticMesh(const fs::path& relative);
 
 	// <path> the relative path to the skeletal mesh object "Models/Skeletal"
-	const SkeletalMesh* FindSkeletalMesh(const fs::path& path) const;
+	// E.g. "Character/Character.gltf"
+	const SkeletalMesh* FindSkeletalMesh(const fs::path& relative) const;
 	// <path> the relative path to the skeletal mesh object "Models/Skeletal"
-	const SkeletalMesh* CreateSkeletalMesh(const fs::path& path);
+	// E.g. "Character/Character.gltf"
+	const SkeletalMesh* CreateSkeletalMesh(const fs::path& relative);
 
 	void DestroyAll();
 private:

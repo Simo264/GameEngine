@@ -77,12 +77,14 @@ void Scene::SerializeScene(const fs::path& filePath)
 		if (StaticMesh* staticMesh = object.GetComponent<StaticMesh>())
 		{
 			String section = std::format("Entity{}:StaticMesh", objectID);
-			conf.Update(section, "path", staticMesh->path.string());
+			fs::path relative = fs::relative(staticMesh->path, Filesystem::GetStaticModelsPath());
+			conf.Update(section, "path", relative.string());
 		}
 		if (SkeletalMesh* skeleton = object.GetComponent<SkeletalMesh>())
 		{
 			String section = std::format("Entity{}:SkeletalMesh", objectID);
-			conf.Update(section, "path", skeleton->path.string());
+			fs::path relative = fs::relative(skeleton->path, Filesystem::GetSkeletalModelsPath());
+			conf.Update(section, "path", relative.string());
 		}
 		if (Light* light = object.GetComponent<Light>())
 		{
@@ -205,33 +207,32 @@ void Scene::DeserializeScene(const fs::path& filePath)
 			ModelsManager& modManager = ModelsManager::Get();
 			AnimationsManager& animManager = AnimationsManager::Get();
 
-			// The relative path to "Assets/Models/Skeletal" e.g. "Mutant/Mutant.gltf"
-			fs::path skeletonPath = conf.GetValue(section, "path");
-			fs::path parent = skeletonPath.parent_path();
-			const SkeletalMesh* skeleton = modManager.FindSkeletalMesh(skeletonPath);
+			// The relative path to "Assets/Models/Skeletal" 
+			// E.g. "Mutant/Mutant.gltf"
+			fs::path relative = conf.GetValue(section, "path");
+			const SkeletalMesh* skeleton = modManager.FindSkeletalMesh(relative);
 			if (!skeleton)
 			{
-				skeleton = modManager.CreateSkeletalMesh(skeletonPath);
-
-				// G.g "D:\GameEngine\Assets\Models\Skeletal\Mutant\animlist.txt"
-				fs::path animlistFile = Filesystem::GetSkeletalModelsPath() /
-					parent /
-					"animlist.txt";
+				skeleton = modManager.CreateSkeletalMesh(relative);
+				// E.g. skeleton->path = "D:\GameEngine\Assets\Models\Skeletal\Mutant\Mutant.gltf"
+				fs::path animlistFile = skeleton->path.parent_path() / "animlist.txt";
 				
 				if (!fs::exists(animlistFile))
 					throw std::runtime_error(std::format("File {} does not exist", animlistFile.string()));
 				
 				IStream file(animlistFile);
 				
-				// animations = { 
+				// E.g. relativeAnims = [ 
 				//	"Drunk_Walk/<filename>.gltf", 
 				//	"Silly_Dancing/<filename>.gltf" 
-				// }
-				Vector<fs::path> animPaths{ std::istream_iterator<fs::path>(file), std::istream_iterator<fs::path>() };
-				animatorComponent.animationsRef = animManager.LoadAnimations(*skeleton, animPaths);
+				// ]
+				Vector<fs::path> relativeAnims{ std::istream_iterator<fs::path>(file), std::istream_iterator<fs::path>() };
+				animatorComponent.animationsPtr = animManager.LoadAnimations(*skeleton, relative, relativeAnims);
 			}
 			else
-				animatorComponent.animationsRef = animManager.GetAnimationsVector(*skeleton);
+			{
+				animatorComponent.animationsPtr = animManager.GetAnimationsVector(relative);
+			}
 			
 			skmeshComponent = *skeleton; // copy
 			animatorComponent.SetTargetSkeleton(skmeshComponent);

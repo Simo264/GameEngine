@@ -5,19 +5,14 @@
 #include "Engine/Filesystem/Filesystem.hpp"
 
 const Vector<Animation>* AnimationsManager::LoadAnimations(const SkeletalMesh& skeleton,
-																													 const Vector<fs::path> animationPaths)
+																													 const fs::path& relativeSkeleton,
+																													 const Vector<fs::path> relativeAnims)
 {
-	// GameEngine/Assets/Models/Skeletal/Mutant/Mutant.gltf
-	const fs::path& absolute = skeleton.path;
-	// Mutant/Mutant.gltf
-	fs::path relative = fs::relative(absolute, Filesystem::GetSkeletalModelsPath());
-	// Mutant/
-	fs::path parent = relative.parent_path();
-	CONSOLE_DEBUG("Loading animations for {}", parent.string());
+	CONSOLE_TRACE("Loading animations for {}", relativeSkeleton.string());
 
 	auto [it, success] = _animationsMap.emplace(
 		std::piecewise_construct,
-		std::forward_as_tuple(parent),
+		std::forward_as_tuple(relativeSkeleton),
 		std::forward_as_tuple()
 	);
 	if (!success)
@@ -26,33 +21,22 @@ const Vector<Animation>* AnimationsManager::LoadAnimations(const SkeletalMesh& s
 		return nullptr;
 	}
 	
-	if (animationPaths.empty())
+	if (relativeAnims.empty())
 	{
 		CONSOLE_WARN("Current skeleton does not have animations");
 		return &it->second;
 	}
 
-	// animationPaths = { 
-	//	"Drunk_Walk/<filename>.gltf", 
-	//	"Silly_Dancing/<filename>.gltf" 
-	// }
 	Vector<Animation>& animVector = it->second;
-	animVector.reserve(animationPaths.size());
-	for (const auto& p : animationPaths)
+	animVector.reserve(relativeAnims.size());
+	for (const auto& p : relativeAnims)
 		animVector.emplace_back(skeleton, p);
 	return &animVector;
 }
 
-const Vector<Animation>* AnimationsManager::GetAnimationsVector(const SkeletalMesh& skeleton)
+const Vector<Animation>* AnimationsManager::GetAnimationsVector(const fs::path& relative)
 {
-	// GameEngine/Assets/Models/Skeletal/Mutant/Mutant.gltf
-	const fs::path& absolute = skeleton.path; 
-	// Mutant/Mutant.gltf
-	fs::path relative = fs::relative(absolute, Filesystem::GetSkeletalModelsPath());
-	// Mutant/
-	fs::path parent = relative.parent_path();
-
-	auto it = _animationsMap.find(parent);
+	auto it = _animationsMap.find(relative);
 	if (it != _animationsMap.end())
 		return &it->second;
 	

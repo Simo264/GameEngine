@@ -32,18 +32,24 @@ public:
 	void CleanUp();
 	
 	// <path> relative path to "Assets/Textures"
-	const Texture2D* FindTexture(const fs::path& path) const;
+	// E.g. "skybox/front.jpg"
+	const Texture2D* FindTexture(const fs::path& relative) const;
 	// <path> relative path to "Assets/Textures"
-	const Texture2D* CreateTexture(const fs::path& path);
+	// E.g. "skybox/front.jpg"
+	const Texture2D* CreateTexture(const fs::path& relative);
 	// <path> relative path to "Assets/Textures"
-	const Texture2D* GetOrCreateTexture(const fs::path& path);
+	// E.g. "skybox/front.jpg"
+	const Texture2D* GetOrCreateTexture(const fs::path& relative);
 
 	// <path> relative path to "Assets/Icons"
-	const Texture2D* FindIcon(const fs::path& path) const;
+	// E.g. "back-arrow.png"
+	const Texture2D* FindIcon(const fs::path& relative) const;
 	// <path> relative path to "Assets/Icons"
-	const Texture2D* CreateIcon(const fs::path& path);
+	// E.g. "back-arrow.png"
+	const Texture2D* CreateIcon(const fs::path& relative);
 	// <path> relative path to "Assets/Icons"
-	const Texture2D* GetOrCreateIcon(const fs::path& path);
+	// E.g. "back-arrow.png"
+	const Texture2D* GetOrCreateIcon(const fs::path& relative);
 	
 	const Texture2D& GetDefaultDiffuse() const { return _textures.at(0); }
 	const Texture2D& GetDefaultSpecular() const { return _textures.at(1); }

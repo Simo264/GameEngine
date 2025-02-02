@@ -12,17 +12,17 @@
 // 									PUBLIC														
 // ---------------------------------------------------- 
 
-Animation::Animation(const SkeletalMesh& skeleton, const fs::path& path) :
+Animation::Animation(const SkeletalMesh& skeleton, const fs::path& relative) :
 	duration{ 0 },
 	ticksPerSecond{ 0 },
 	_boneKeys{}
 {
-	// "GameEngine/Assets/Models/Skeletal/Mutant/Mutant.gltf" 
+	// E.g. "D:GameEngine/Assets/Models/Skeletal/Mutant/Mutant.gltf"
 	const fs::path& absolute = skeleton.path;
-	// "GameEngine/Assets/Models/Skeletal/Mutant/" 
+	// E.g. "D:GameEngine/Assets/Models/Skeletal/Mutant/" 
 	fs::path parent = absolute.parent_path();
-	// "GameEngine/Assets/Models/Skeletal/Mutant/Drunk_Walk/anim.gltf" 
-	fs::path filePath = parent / path;
+	// E.g. "D:GameEngine/Assets/Models/Skeletal/Mutant/Drunk_Walk/anim.gltf" 
+	fs::path filePath = parent / relative;
 
 	Assimp::Importer importer;
 	const aiScene* scene = importer.ReadFile(filePath.string(), aiProcess_Triangulate);
@@ -37,7 +37,7 @@ Animation::Animation(const SkeletalMesh& skeleton, const fs::path& path) :
 		return;
 	}
 
-	this->path = path;
+	path = filePath;
 
 	aiAnimation* animation = scene->mAnimations[0];
 	duration = animation->mDuration;

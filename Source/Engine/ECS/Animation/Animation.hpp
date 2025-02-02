@@ -42,8 +42,8 @@ public:
 	// The relative paths to "Assets/Models/Skeletal/<name>"
 	// E.g. 
 	// skeleton.path = "GameEngine/Assets/Models/Skeletal/Mutant/Mutant.gltf"
-	// animation.path = "Drunk_Walk/anim.gltf"
-	Animation(const SkeletalMesh& skeleton, const fs::path& path);
+	// relative = "Drunk_Walk/anim.gltf"
+	Animation(const SkeletalMesh& skeleton, const fs::path& relative);
 	
 	/** @brief Default destructor for the Animation class. */
 	~Animation() = default;

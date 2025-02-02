@@ -27,8 +27,8 @@ public:
 	/** @brief Default destructor. */
 	~StaticMesh() = default;
 
-	// <path> relative path to "Assets/Models/Static"
-	void CreateFromPath(const fs::path& path);
+	// <path> the absolute path to skeletal mesh object
+	void CreateFromPath(const fs::path& absolute);
 	
 	void Destroy();
 

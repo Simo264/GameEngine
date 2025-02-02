@@ -28,10 +28,10 @@ static mat4f AiMatrixToGLM(const aiMatrix4x4& matrix)
 //										PUBLIC													
 // ----------------------------------------------------
 
-void SkeletalMesh::CreateFromFile(const fs::path& path)
+void SkeletalMesh::CreateFromFile(const fs::path& absolute)
 {
 	Assimp::Importer importer;
-	const aiScene* scene = importer.ReadFile(path.string().c_str(),
+	const aiScene* scene = importer.ReadFile(absolute.string().c_str(),
 		aiProcess_Triangulate |
 		aiProcess_GenUVCoords |
 		aiProcess_FlipUVs |
@@ -52,7 +52,7 @@ void SkeletalMesh::CreateFromFile(const fs::path& path)
 		return;
 	}
 
-	this->path = path;
+	path = absolute;
 	meshes.reserve(scene->mNumMeshes);
 	u32 totalBones = std::accumulate(scene->mMeshes, scene->mMeshes + scene->mNumMeshes, 0, [](u32 sum, aiMesh* mesh) {
 		return sum + mesh->mNumBones;

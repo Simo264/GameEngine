@@ -16,10 +16,10 @@
 //										PUBLIC													
 // ----------------------------------------------------
 
-void StaticMesh::CreateFromPath(const fs::path& path)
+void StaticMesh::CreateFromPath(const fs::path& absolute)
 {
 	Assimp::Importer importer;
-	const aiScene* scene = importer.ReadFile(path.string().c_str(),
+	const aiScene* scene = importer.ReadFile(absolute.string().c_str(),
 		aiProcess_Triangulate |
 		aiProcess_GenUVCoords |
 		aiProcess_FlipUVs |
@@ -40,7 +40,7 @@ void StaticMesh::CreateFromPath(const fs::path& path)
 		return;
 	}
 	
-	this->path = path;
+	path = absolute;
 	meshes.reserve(scene->mNumMeshes);
 	ProcessNode(scene->mRootNode, scene);
 }

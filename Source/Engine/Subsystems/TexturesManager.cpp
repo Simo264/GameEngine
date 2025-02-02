@@ -53,22 +53,22 @@ void TexturesManager::CleanUp()
   glDeleteTextures(totalTextures, texIDs.data());
 }
 
-const Texture2D* TexturesManager::FindTexture(const fs::path& path) const
+const Texture2D* TexturesManager::FindTexture(const fs::path& relative) const
 {
-  auto it = _textureMap.find(path);
+  auto it = _textureMap.find(relative);
   if (it == _textureMap.end())
     return nullptr;
 
   u32 index = it->second;
   return &_textures.at(index);
 }
-const Texture2D* TexturesManager::CreateTexture(const fs::path& path)
+const Texture2D* TexturesManager::CreateTexture(const fs::path& relative)
 {
-  CONSOLE_TRACE("Insert new texture: {}", path.lexically_normal().string());
+  CONSOLE_TRACE("Insert new texture: {}", relative.lexically_normal().string());
   u32 newIndex = _textures.size();
   auto [it, success] = _textureMap.emplace(
     std::piecewise_construct,
-    std::forward_as_tuple(path.lexically_normal()),
+    std::forward_as_tuple(relative.lexically_normal()),
     std::forward_as_tuple(newIndex)
   );
   if (!success)
@@ -77,38 +77,38 @@ const Texture2D* TexturesManager::CreateTexture(const fs::path& path)
     return nullptr;
   }
   
-  fs::path absolute = (Filesystem::GetTexturesPath() / path).lexically_normal();
-  CONSOLE_TRACE("Create new texture: {}", absolute.string());
+  fs::path absolute = (Filesystem::GetTexturesPath() / relative).lexically_normal();
+  CONSOLE_INFO("Create new texture: {}", absolute.string());
 
   Texture2D& texture = _textures.emplace_back();
   texture.Create(Texture2DTarget::TEXTURE_2D);
   texture.LoadImageData(absolute);
   return &texture;
 }
-const Texture2D* TexturesManager::GetOrCreateTexture(const fs::path& path)
+const Texture2D* TexturesManager::GetOrCreateTexture(const fs::path& relative)
 {
-  const auto* t = FindTexture(path);
+  const auto* t = FindTexture(relative);
   if (!t)
-    t = CreateTexture(path);
+    t = CreateTexture(relative);
   return t;
 }
 
-const Texture2D* TexturesManager::FindIcon(const fs::path& path) const
+const Texture2D* TexturesManager::FindIcon(const fs::path& relative) const
 {
-  auto it = _iconMap.find(path);
+  auto it = _iconMap.find(relative);
   if (it == _iconMap.end())
     return nullptr;
 
   u32 index = it->second;
   return &_icons.at(index);
 }
-const Texture2D* TexturesManager::CreateIcon(const fs::path& path)
+const Texture2D* TexturesManager::CreateIcon(const fs::path& relative)
 {
-  CONSOLE_TRACE("Insert new icon: {}", path.lexically_normal().string());
+  CONSOLE_TRACE("Insert new icon: {}", relative.lexically_normal().string());
   u32 newIndex = _icons.size();
   auto [it, success] = _iconMap.emplace(
     std::piecewise_construct,
-    std::forward_as_tuple(path.lexically_normal()),
+    std::forward_as_tuple(relative.lexically_normal()),
     std::forward_as_tuple(newIndex)
   );
   if (!success)
@@ -117,19 +117,19 @@ const Texture2D* TexturesManager::CreateIcon(const fs::path& path)
     return nullptr;
   }
 
-  fs::path absolutePath = (Filesystem::GetIconsPath() / path).lexically_normal();
-  CONSOLE_TRACE("Create new icon: {}", absolutePath.string());
+  fs::path absolutePath = (Filesystem::GetIconsPath() / relative).lexically_normal();
+  CONSOLE_INFO("Create new icon: {}", absolutePath.string());
 
   Texture2D& icon = _icons.emplace_back();
   icon.Create(Texture2DTarget::TEXTURE_2D);
   icon.LoadImageData(absolutePath);
   return &icon;
 }
-const Texture2D* TexturesManager::GetOrCreateIcon(const fs::path& path)
+const Texture2D* TexturesManager::GetOrCreateIcon(const fs::path& relative)
 {
-  const auto* t = FindIcon(path);
+  const auto* t = FindIcon(relative);
   if (!t)
-    t = CreateIcon(path);
+    t = CreateIcon(relative);
   return t;
 }
 

@@ -143,14 +143,14 @@ public:
     path{}
   {}
 
-  // <path> absolute path to image
+  // <path> the absolute path to the image file
   Texture2D(Texture2DTarget target, 
-            const fs::path& path);
+            const fs::path& absolute);
   
   ~Texture2D() = default;
 
-  // <path> absolute path to image
-  void LoadImageData(const fs::path& path);
+  // <path> the absolute path to the image file
+  void LoadImageData(const fs::path& absolute);
 
   /** @brief Create texture object */
   void Create(Texture2DTarget target);

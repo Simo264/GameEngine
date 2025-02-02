@@ -10,12 +10,12 @@
 void Animator::SetTargetSkeleton(SkeletalMesh& target)
 {
 	_targetSkeleton = &target;
-	_boneTransforms.resize(target.bones.size(), mat4f(1.0f));
+	_boneTransforms.assign(target.bones.size(), mat4f(1.0f));
 }
 void Animator::SetTargetAnimation(const Animation* target)
 {
 	_targetAnimation = target;
-	_boneTransforms.clear();
+	std::fill(_boneTransforms.begin(), _boneTransforms.end(), mat4f(1.0f));
 }
 
 void Animator::PlayAnimation()
