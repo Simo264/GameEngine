@@ -64,6 +64,15 @@ void SkeletalMesh::CreateFromFile(const fs::path& absolute)
 	LoadBoneHierarchy(rootNode, scene->mRootNode);
 }
 
+void SkeletalMesh::Clone(SkeletalMesh& other) const
+{
+	other.bones = this->bones;
+	other.meshes = this->meshes;
+	other.rootNode = this->rootNode;
+	other.boneMap = this->boneMap;
+	other.path = this->path;
+}
+
 void SkeletalMesh::Destroy()
 {
 	for (auto& mesh : meshes)
@@ -84,8 +93,8 @@ void SkeletalMesh::Draw(RenderMode mode)
 
 std::pair<const Bone*, i32> SkeletalMesh::FindBone(StringView boneName) const
 {
-	auto it = _boneMap.find(boneName.data());
-	if (it != _boneMap.end())
+	auto it = boneMap.find(boneName.data());
+	if (it != boneMap.end())
 	{
 		u32 boneIndex = it->second;
 		return { &bones.at(boneIndex), boneIndex };
@@ -96,7 +105,7 @@ std::pair<const Bone*, i32> SkeletalMesh::FindBone(StringView boneName) const
 std::pair<Bone*, i32> SkeletalMesh::InsertBone(StringView boneName)
 {
 	u32 boneIndex = bones.size();
-	auto [it, success] = _boneMap.insert({ boneName.data(), boneIndex });
+	auto [it, success] = boneMap.insert({ boneName.data(), boneIndex });
 	if (success)
 	{
 		Bone& bone = bones.emplace_back();

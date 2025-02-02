@@ -2,6 +2,8 @@
 
 #include "Core/Log/Logger.hpp"
 
+#include <stack>
+
 
 // ----------------------------------------------------
 //										PUBLIC													
@@ -37,14 +39,16 @@ void Animator::UpdateAnimation(f32 dt)
 
 	_currentTime += _targetAnimation->ticksPerSecond * dt;
 	_currentTime = fmod(_currentTime, _targetAnimation->duration);
-	CalculateBoneTransform(_targetSkeleton->rootNode, mat4f(1.0f));
+	
+	//CalculateBoneTransformRecursive(_targetSkeleton->rootNode, mat4f(1.0f));
+	CalculateBoneTransformIterative(_targetSkeleton->rootNode, mat4f(1.0f));
 }
 
 // ---------------------------------------------------- 
 //										PRIVATE														
 // ---------------------------------------------------- 
 
-void Animator::CalculateBoneTransform(const BoneNode& node, mat4f parentTransform)
+void Animator::CalculateBoneTransformRecursive(const BoneNode& node, const mat4f& parentTransform)
 {
 	i32 boneIndex = node.boneIndex;
 	mat4f nodeTransform = node.bindPoseTransform;
@@ -61,8 +65,38 @@ void Animator::CalculateBoneTransform(const BoneNode& node, mat4f parentTransfor
 	}
 
 	for (auto& child : node.children)
-		CalculateBoneTransform(child, globalTransformation);
+		CalculateBoneTransformRecursive(child, globalTransformation);
 }
+void Animator::CalculateBoneTransformIterative(const BoneNode& node, const mat4f& parentTransform)
+{
+	std::stack<std::pair<const BoneNode*, mat4f>> nodeStack;
+	nodeStack.push({ &_targetSkeleton->rootNode, mat4f(1.0f) });
+
+	while (!nodeStack.empty())
+	{
+		auto& [node, parentTransform] = nodeStack.top();
+		nodeStack.pop();
+
+		mat4f nodeTransform = node->bindPoseTransform;
+		mat4f globalTransformation = parentTransform * nodeTransform;
+
+		if (node->boneIndex != -1)
+		{
+			Bone& bone = _targetSkeleton->bones[node->boneIndex];
+			InterpolateBone(bone, node->boneIndex);
+			nodeTransform = bone.localTransform;
+			globalTransformation = parentTransform * nodeTransform;
+			_boneTransforms[node->boneIndex] = globalTransformation * bone.offset;
+		}
+
+		// Itera attraverso i figli senza utilizzare rbegin/rend
+		for (auto& child : node->children)
+		{
+			nodeStack.push({ &child, globalTransformation });
+		}
+	}
+}
+
 void Animator::InterpolateBone(Bone& bone, u32 boneIndex)
 {
 	const auto& boneKeys = _targetAnimation->BoneKeys();

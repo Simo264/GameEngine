@@ -19,18 +19,48 @@ public:
 		return modelsManager;
 	}
 
-	// <path> the relative path to the static mesh object "Models/Static"
-	// E.g. "Cube/cube.obj"
+	/**
+	 * @brief Finds an existing static mesh by its relative path.
+	 * This method searches for a previously loaded static mesh using the given relative path.
+	 *
+	 * @param relative The relative path to the static mesh inside "Models/Static".
+	 * Example: "Cube/cube.obj".
+	 * 
+	 * @return Pointer to the found StaticMesh, or nullptr if not found.
+	 */
 	const StaticMesh* FindStaticMesh(const fs::path& relative) const;
-	// <path> the relative path to the static mesh object "Models/Static"
-	// E.g. "Cube/cube.obj"
+
+	/**
+	 * @brief Creates and loads a new static mesh from the given relative path.
+	 * If the static mesh does not exist, it is loaded and stored for future use.
+	 *
+	 * @param relative The relative path to the static mesh inside "Models/Static".
+	 * Example: "Cube/cube.obj".
+	 * 
+	 * @return Pointer to the newly created StaticMesh.
+	 */
 	const StaticMesh* CreateStaticMesh(const fs::path& relative);
 
-	// <path> the relative path to the skeletal mesh object "Models/Skeletal"
-	// E.g. "Character/Character.gltf"
+	/**
+	 * @brief Finds an existing skeletal mesh by its relative path.
+	 * This method searches for a previously loaded skeletal mesh using the given relative path.
+	 *
+	 * @param relative The relative path to the skeletal mesh inside "Models/Skeletal".
+	 * Example: "Character/Character.gltf".
+	 * 
+	 * @return Pointer to the found SkeletalMesh, or nullptr if not found.
+	 */
 	const SkeletalMesh* FindSkeletalMesh(const fs::path& relative) const;
-	// <path> the relative path to the skeletal mesh object "Models/Skeletal"
-	// E.g. "Character/Character.gltf"
+
+	/**
+	 * @brief Creates and loads a new skeletal mesh from the given relative path.
+	 * If the skeletal mesh does not exist, it is loaded and stored for future use.
+	 *
+	 * @param relative The relative path to the skeletal mesh inside "Models/Skeletal".
+	 * Example: "Character/Character.gltf".
+	 * 
+	 * @return Pointer to the newly created SkeletalMesh.
+	 */
 	const SkeletalMesh* CreateSkeletalMesh(const fs::path& relative);
 
 	void DestroyAll();

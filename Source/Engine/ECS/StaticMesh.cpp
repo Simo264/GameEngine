@@ -45,6 +45,12 @@ void StaticMesh::CreateFromPath(const fs::path& absolute)
 	ProcessNode(scene->mRootNode, scene);
 }
 
+void StaticMesh::Clone(StaticMesh& other) const
+{
+	other.meshes = this->meshes;
+	other.path = this->path;
+}
+
 void StaticMesh::Destroy()
 {
 	for (auto& mesh : meshes)

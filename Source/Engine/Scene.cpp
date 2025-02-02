@@ -192,12 +192,12 @@ void Scene::DeserializeScene(const fs::path& filePath)
 			auto& manager = ModelsManager::Get();
 
 			const String& strPath = conf.GetValue(section, "path");
-			const auto* sMesh = manager.FindStaticMesh(strPath);
-			if(!sMesh)
-				sMesh = manager.CreateStaticMesh(strPath);
+			const auto* staticMesh = manager.FindStaticMesh(strPath);
+			if(!staticMesh)
+				staticMesh = manager.CreateStaticMesh(strPath);
 
 			auto& component = object.AddComponent<StaticMesh>();
-			component = *sMesh; // copy
+			staticMesh->Clone(component);
 		}
 		else if (component == "SkeletalMesh")
 		{
@@ -234,7 +234,7 @@ void Scene::DeserializeScene(const fs::path& filePath)
 				animatorComponent.animationsPtr = animManager.GetAnimationsVector(relative);
 			}
 			
-			skmeshComponent = *skeleton; // copy
+			skeleton->Clone(skmeshComponent);
 			animatorComponent.SetTargetSkeleton(skmeshComponent);
 		}
 		else if (component == "Light")

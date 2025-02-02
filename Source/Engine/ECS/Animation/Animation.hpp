@@ -39,10 +39,17 @@ struct AnimationKeys
 class Animation
 {
 public:
-	// The relative paths to "Assets/Models/Skeletal/<name>"
-	// E.g. 
-	// skeleton.path = "GameEngine/Assets/Models/Skeletal/Mutant/Mutant.gltf"
-	// relative = "Drunk_Walk/anim.gltf"
+	/**
+	 * @brief Constructs an animation for a given skeletal mesh.
+	 *
+	 * This constructor initializes an animation by associating it with a specific skeletal mesh
+	 * and loading the animation data from the given relative path.
+	 *
+	 * @param skeleton The skeletal mesh to which this animation belongs.
+	 * 
+	 * @param relative The relative path to the animation file inside the skeletal model directory.
+	 * Example: "Drunk_Walk/anim.gltf".
+	 */
 	Animation(const SkeletalMesh& skeleton, const fs::path& relative);
 	
 	/** @brief Default destructor for the Animation class. */

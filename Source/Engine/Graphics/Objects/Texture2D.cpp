@@ -106,7 +106,7 @@ void Texture2D::LoadImageData(const fs::path& absolute)
     return;
   }
 
-  path = absolute.relative_path();
+  path = absolute;
 
   // When to Apply Gamma Correction to Textures?
   // Gamma correction is only applied to colour diffuse(albedo) textures because the colours 

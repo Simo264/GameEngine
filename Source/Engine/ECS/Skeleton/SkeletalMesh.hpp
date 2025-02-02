@@ -31,10 +31,18 @@ public:
     return SKELETAL_MESH_MAX_NUM_BONES;
   }
 
-  // <path> the absolute path to skeletal mesh object
+  /**
+   * @brief Creates a skeletal mesh from the specified file path.
+   * This method loads and initializes a skeletal mesh object using the given absolute path.
+   * It reads mesh and skeleton data from the file and prepares it for rendering and animation.
+   *
+   * @param absolute The absolute path to the skeletal mesh file.
+   */
   void CreateFromFile(const fs::path& absolute);
 
   void Destroy();
+
+  void Clone(SkeletalMesh& other) const;
 
   /**
    * @brief Draws the skeleton using the specified rendering mode.
@@ -68,6 +76,9 @@ public:
   /** @brief A collection of bones defining the skeleton. */
   Vector<Bone> bones;
 
+  /**  Map storing the BoneName - boneIndex */
+  UnorderedMap<String, u32> boneMap; 
+
   /** @brief The root node of the bone hierarchy. */
   BoneNode rootNode;
 
@@ -79,6 +90,4 @@ private:
   Buffer LoadIndices(aiMesh* aimesh);
   void LoadBonesAndWeights(Vector<Vertex_P_N_UV_T_B>& vertices, const aiMesh* aimesh);
   void LoadBoneHierarchy(BoneNode& dest, const aiNode* src);
-
-  UnorderedMap<String, u32> _boneMap; // BoneName - boneIndex
 };

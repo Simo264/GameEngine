@@ -143,13 +143,18 @@ public:
     path{}
   {}
 
-  // <path> the absolute path to the image file
   Texture2D(Texture2DTarget target, 
             const fs::path& absolute);
   
   ~Texture2D() = default;
 
-  // <path> the absolute path to the image file
+  /**
+   * @brief Loads image data from the specified file.
+   * This method reads the image file from the given absolute path and loads its data into memory.
+   * It is used to initialize or update the texture with the content of the image file.
+   *
+   * @param absolute The absolute path to the image file.
+   */
   void LoadImageData(const fs::path& absolute);
 
   /** @brief Create texture object */

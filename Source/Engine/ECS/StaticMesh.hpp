@@ -27,9 +27,17 @@ public:
 	/** @brief Default destructor. */
 	~StaticMesh() = default;
 
-	// <path> the absolute path to skeletal mesh object
+	/**
+	 * @brief Creates a static mesh from the specified file path.
+	 * This method loads and initializes a static mesh object using the given absolute path.
+	 * It is responsible for reading mesh data from the file and preparing it for rendering.
+	 *
+	 * @param absolute The absolute path to the static mesh file.
+	 */
 	void CreateFromPath(const fs::path& absolute);
 	
+	void Clone(StaticMesh& other) const;
+
 	void Destroy();
 
 	void Draw(RenderMode mode);
