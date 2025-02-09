@@ -371,13 +371,13 @@ static void Insp_Transform(GameObject& object, Transform& transform)
     object.RemoveComponent<Transform>();
   ImGui::PopStyleColor(3);
 }
-static void Insp_MaterialRow(StringView label, const Texture2D*& meshTexture, const Texture2D& defaultTex)
+static void Insp_ShowTextureSelector(StringView label, const Texture2D*& meshTexture, const Texture2D& defaultTex)
 {
   auto& texManager = TexturesManager::Get();
   static const auto* resetIcon = texManager.GetOrCreateIcon("reset-arrow-16.png");
 
-  const bool noTexture = (meshTexture->path.empty());
-  
+  bool isMeshTextureValid = meshTexture->GetWidth() != 1;
+
   // First column: label
   ImGui::TableNextColumn();
   ImGui::Text(label.data());
@@ -385,31 +385,23 @@ static void Insp_MaterialRow(StringView label, const Texture2D*& meshTexture, co
   // Second column: combo
   ImGui::TableNextColumn();
   ImGui::SetNextItemWidth(ImGui::GetColumnWidth());
-
-  char comboId[32]{}; // "##Diffuse"
-  std::format_to_n(comboId, sizeof(comboId), "##{}", label.data());
-
-  if (ImGui::BeginCombo(comboId, (noTexture ? "Select texture" : meshTexture->path.string().c_str())))
+  if (isMeshTextureValid)
   {
-    for (const auto& texture : texManager.GetTextureVector())
-    {
-      if (texture.path.empty())
-        continue;
-
-      if (ImGui::Selectable(texture.path.string().c_str(), texture.Compare(*meshTexture)))
-        meshTexture = &texture;
-    }
-    
-    ImGui::EndCombo();
+    const fs::path* texturePath = texManager.GetTexturePath(meshTexture->id);
+    ImGui::Selectable(texturePath->string().c_str(), false);
   }
-
+  else
+  {
+    ImGui::Selectable("No texture", false);
+  }
+  
   // Third column: reset button
   ImGui::TableNextColumn();
-  if (!noTexture)
+  if (isMeshTextureValid)
   {
     char buttonID[32]{}; // "Reset##Diffuse"
     std::format_to_n(buttonID, sizeof(buttonID), "Reset##{}", label.data());
-    
+
     ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.f,0.f,0.f,0.f });
     if (ImGui::ImageButton(buttonID, reinterpret_cast<void*>(resetIcon->id), ImVec2(16.f, 16.f)))
       meshTexture = &defaultTex;
@@ -418,16 +410,16 @@ static void Insp_MaterialRow(StringView label, const Texture2D*& meshTexture, co
 }
 static void Insp_StaticMesh(GameObject& object, StaticMesh& staticMesh)
 {
-  ImGui::Text("Nr meshes: %d", staticMesh.meshes.size());
+  ImGui::Text("Nr meshes: %d", staticMesh.nrMeshes);
   ImGui::Text("Total vertices: %d", staticMesh.TotalVertices());
   ImGui::Text("Total indices: %d", staticMesh.TotalIndices());
 
   // View meshes with a tree
   if (ImGui::TreeNode("Material"))
   {
-    for (i32 i = 0; i < staticMesh.meshes.size(); i++)
+    for (i32 i = 0; i < staticMesh.nrMeshes; i++)
     {
-      auto& mesh = staticMesh.meshes.at(i);
+      auto& mesh = staticMesh.meshes[i];
       Material& material = mesh.material;
       TexturesManager& texManager = TexturesManager::Get();
 
@@ -443,15 +435,15 @@ static void Insp_StaticMesh(GameObject& object, StaticMesh& staticMesh)
 
           // Diffuse row
           ImGui::TableNextRow();
-          Insp_MaterialRow("Diffuse", material.diffuse, texManager.GetDefaultDiffuse());
+          Insp_ShowTextureSelector("Diffuse", material.diffuse, texManager.GetDefaultDiffuse());
           
           // Specular row
           ImGui::TableNextRow();
-          Insp_MaterialRow("Specular", material.specular, texManager.GetDefaultSpecular());
+          Insp_ShowTextureSelector("Specular", material.specular, texManager.GetDefaultSpecular());
           
           // Normal row
           ImGui::TableNextRow();
-          Insp_MaterialRow("Normal", material.normal, texManager.GetDefaultNormal());
+          Insp_ShowTextureSelector("Normal", material.normal, texManager.GetDefaultNormal());
 
           ImGui::EndTable();
         }
@@ -482,10 +474,10 @@ static void Insp_SkeletalMesh_BoneTree(const BoneNode& bone)
 }
 static void Insp_SkeletalMesh(GameObject& object, SkeletalMesh& skeleton)
 {
-  ImGui::Text("Nr meshes: %d", skeleton.meshes.size());
+  ImGui::Text("Nr meshes: %d", skeleton.nrMeshes);
   ImGui::Text("Total vertices: %d", skeleton.TotalVertices());
   ImGui::Text("Total indices: %d", skeleton.TotalIndices());
-  ImGui::Text("Nr bones: %d", skeleton.bones.size());
+  ImGui::Text("Nr bones: %d", skeleton.nrBones);
   Insp_SkeletalMesh_BoneTree(skeleton.rootNode);
 
   if (ImGui::TreeNode("Material"))
@@ -493,9 +485,9 @@ static void Insp_SkeletalMesh(GameObject& object, SkeletalMesh& skeleton)
     TexturesManager& texManager = TexturesManager::Get();
     char label[16]{};
 
-    for (i32 i = 0; i < skeleton.meshes.size(); i++)
+    for (i32 i = 0; i < skeleton.nrMeshes; i++)
     {
-      auto& mesh = skeleton.meshes.at(i);
+      auto& mesh = skeleton.meshes[i];
       Material& material = mesh.material;
 
       std::fill_n(label, sizeof(label), 0);
@@ -511,15 +503,15 @@ static void Insp_SkeletalMesh(GameObject& object, SkeletalMesh& skeleton)
 
           // Diffuse row
           ImGui::TableNextRow();
-          Insp_MaterialRow("Diffuse", material.diffuse, texManager.GetDefaultDiffuse());
+          Insp_ShowTextureSelector("Diffuse", material.diffuse, texManager.GetDefaultDiffuse());
 
           // Specular row
           ImGui::TableNextRow();
-          Insp_MaterialRow("Specular", material.specular, texManager.GetDefaultSpecular());
+          Insp_ShowTextureSelector("Specular", material.specular, texManager.GetDefaultSpecular());
 
           // Normal row
           ImGui::TableNextRow();
-          Insp_MaterialRow("Normal", material.normal, texManager.GetDefaultNormal());
+          Insp_ShowTextureSelector("Normal", material.normal, texManager.GetDefaultNormal());
 
           ImGui::EndTable();
         }

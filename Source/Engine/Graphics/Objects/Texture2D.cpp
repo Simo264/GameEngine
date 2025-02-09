@@ -8,8 +8,7 @@
 
 Texture2D::Texture2D(Texture2DTarget target, 
                      const fs::path& absolute)
-  : id{ 0 },
-    path{}
+  : id{ 0 }
 {
   Create(target);
   LoadImageData(absolute);
@@ -106,15 +105,13 @@ void Texture2D::LoadImageData(const fs::path& absolute)
     return;
   }
 
-  path = absolute;
-
   // When to Apply Gamma Correction to Textures?
   // Gamma correction is only applied to colour diffuse(albedo) textures because the colours 
   // must be interpreted in gamma space(sRGB).
   // Other textures, such as normal, specular, metallic, roughness, are linear data and should not 
   // undergo gamma correction.
   bool gammaCorrection = false;
-  String filename = path.filename().string();
+  String filename = absolute.filename().string();
   std::transform(filename.begin(), filename.end(), filename.begin(), ::tolower);
 
   if (filename.find("diffuse") != String::npos ||

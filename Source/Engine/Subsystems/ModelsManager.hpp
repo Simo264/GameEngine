@@ -63,11 +63,23 @@ public:
 	 */
 	const SkeletalMesh* CreateSkeletalMesh(const fs::path& relative);
 
+	const fs::path* GetStaticMeshPath(u32 id) const;
+
+	const fs::path* GetSkeletalMeshPath(u32 id) const;
+
 	void DestroyAll();
+
 private:
 	ModelsManager() = default;
 	~ModelsManager() = default;
 
-	UnorderedMap<fs::path, StaticMesh> _cacheStaticMesh;
-	UnorderedMap<fs::path, SkeletalMesh> _cacheSkeletalMesh;
+	// Static mesh id, static mesh object
+	Map<u32, StaticMesh> _staticMeshObjects;
+	// Static mesh id, static mesh (relative) path
+	Vector<std::pair<u32, fs::path>> _staticMeshPaths;
+
+	// Skeletal mesh id, skeletal mesh object
+	Map<u32, SkeletalMesh> _skeletalMeshObjects;
+	// Skeletal mesh id, skeletal mesh (relative) path
+	Vector<std::pair<u32, fs::path>> _skeletalMeshPaths;
 };

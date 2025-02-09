@@ -62,8 +62,7 @@ public:
     id{ 0 },
     numIndices{ 0 },
     numVertices{ 0 },
-    eboAttachment{},
-    vboAttachments{}
+    vbos{}
   {}
   ~VertexArray() = default;
 
@@ -93,7 +92,7 @@ public:
   void AttachVertexBuffer(i32 bindingindex, Buffer buffer, i32 offset, i32 stride);
 
   /** @brief Configures element array buffer binding of a vertex array object */
-  void AttachElementBuffer(Buffer buffer);
+  void AttachElementBuffer(Buffer buffer) const;
 
   /**
    * @brief
@@ -150,19 +149,12 @@ public:
    */
   void SetBindingDivisor(i32 bindingindex, i32 divisor) const;
 
+  Buffer GetElementBufferObject() const;
+  
   bool IsValid() const;
 
   u32 id;
   u32 numVertices;
   u32 numIndices;
-
-  /** @brief A VAO can only have one index buffer associated with it at any given time */
-  Buffer eboAttachment;
-
-  /**
-   * brief A VAO can have several vertex buffers associated with it at the same time (MAX 16).
-   * This is handled via the mechanism of attribute binding points.
-   */
-  inline static constexpr i32 MAX_NUM_VBO_ATTACHMENTS = 16;
-  Vector<Buffer> vboAttachments;
+  Vector<Buffer> vbos;
 };

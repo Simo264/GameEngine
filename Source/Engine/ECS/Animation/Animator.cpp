@@ -12,7 +12,7 @@
 void Animator::SetTargetSkeleton(SkeletalMesh& target)
 {
 	_targetSkeleton = &target;
-	_boneTransforms.assign(target.bones.size(), mat4f(1.0f));
+	_boneTransforms.assign(target.nrBones, mat4f(1.0f));
 }
 void Animator::SetTargetAnimation(const Animation* target)
 {
@@ -56,7 +56,7 @@ void Animator::CalculateBoneTransformRecursive(const BoneNode& node, const mat4f
 	
 	if (boneIndex != -1)
 	{
-		Bone& bone = _targetSkeleton->bones.at(boneIndex);
+		Bone& bone = _targetSkeleton->bones[boneIndex];
 		InterpolateBone(bone, boneIndex);
 		nodeTransform = bone.localTransform;
 		globalTransformation = parentTransform * nodeTransform;

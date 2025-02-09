@@ -40,45 +40,51 @@ void StaticMesh::CreateFromPath(const fs::path& absolute)
 		return;
 	}
 	
-	path = absolute;
-	meshes.reserve(scene->mNumMeshes);
+	meshes = new Mesh[scene->mNumMeshes];
+	nrMeshes = 0;
 	ProcessNode(scene->mRootNode, scene);
 }
 
 void StaticMesh::Clone(StaticMesh& other) const
 {
-	other.meshes = this->meshes;
-	other.path = this->path;
+	other.meshes = new Mesh[nrMeshes];
+	other.nrMeshes = nrMeshes;
+	for (u32 i = 0; i < nrMeshes; i++)
+		other.meshes[i] = meshes[i];
+
+	other.id = id;
 }
 
 void StaticMesh::Destroy()
 {
-	for (auto& mesh : meshes)
-		mesh.Destroy();
+	for (u32 i = 0; i < nrMeshes; i++)
+		meshes[i].Destroy();
+
+	delete[] meshes;
 }
 
 void StaticMesh::Draw(RenderMode mode)
 {
-	for (const auto& mesh : meshes)
+	for (u32 i = 0; i < nrMeshes; i++ )
 	{
-		auto& material = mesh.material;
-		material.diffuse->BindTextureUnit(0);
-		material.specular->BindTextureUnit(1);
-		material.normal->BindTextureUnit(2);
+		auto& mesh = meshes[i];
+		mesh.material.diffuse->BindTextureUnit(0);
+		mesh.material.specular->BindTextureUnit(1);
+		mesh.material.normal->BindTextureUnit(2);
 		mesh.Draw(mode);
 	}	
 }
 
 u32 StaticMesh::TotalVertices() const
 {
-	return std::reduce(meshes.begin(), meshes.end(), 0, [](i32 acc, const Mesh& mesh) {
+	return std::reduce(meshes, meshes + nrMeshes, 0, [](i32 acc, const Mesh& mesh) {
 		return acc + mesh.vao.numVertices;
 	});
 }
 
 u32 StaticMesh::TotalIndices() const
 {
-	return std::reduce(meshes.begin(), meshes.end(), 0, [](i32 acc, const Mesh& mesh) {
+	return std::reduce(meshes, meshes + nrMeshes, 0, [](i32 acc, const Mesh& mesh) {
 		return acc + mesh.vao.numIndices;
 		});
 }
@@ -91,7 +97,7 @@ void StaticMesh::ProcessNode(aiNode* node, const aiScene* scene)
 {
 	for (i32 i = 0; i < node->mNumMeshes; i++)
 	{
-		Mesh& mesh = meshes.emplace_back();
+		Mesh& mesh = meshes[nrMeshes++];
 		mesh.Create();
 		mesh.SetupAttributeFloat(0, 0, VertexFormat(3, VertexAttribType::FLOAT, false, offsetof(Vertex_P_N_UV_T, position)));
 		mesh.SetupAttributeFloat(1, 0, VertexFormat(3, VertexAttribType::FLOAT, false, offsetof(Vertex_P_N_UV_T, normal)));

@@ -23,7 +23,11 @@ class StaticMesh
 {
 public:
 	/** @brief Default constructor. */
-	StaticMesh() = default;
+	StaticMesh() : 
+		meshes{ nullptr },
+		nrMeshes{ 0 },
+		id{ 0 }
+	{}
 	/** @brief Default destructor. */
 	~StaticMesh() = default;
 
@@ -49,23 +53,16 @@ public:
 	u32 TotalIndices() const;
 
 	/** @brief List of meshes contained in the model. */
-	Vector<Mesh> meshes;
+	Mesh* meshes;
 
-	fs::path path;
+	u32 nrMeshes;
+
+	u32 id;
 
 private:
-	/** @brief Processes a node in the model's scene graph. */
-	
 	void ProcessNode(aiNode* node, const aiScene* scene);
-	/**
-	 * @brief Loads vertex data from an Assimp mesh..
-	 * @return Buffer containing vertex data.
-	 */
+	
 	Buffer LoadVertices(aiMesh* aimesh);
 
-	/**
-	 * @brief Loads index data from an Assimp mesh.
-	 * @return Buffer containing index data.
-	 */
 	Buffer LoadIndices(aiMesh* aimesh);
 };

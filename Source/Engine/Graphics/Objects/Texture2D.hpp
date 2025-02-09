@@ -139,8 +139,7 @@ class Texture2D
 {
 public:
   Texture2D() : 
-    id{ 0 },
-    path{}
+    id{ 0 }
   {}
 
   Texture2D(Texture2DTarget target, 
@@ -222,5 +221,4 @@ public:
   bool IsValid() const;
   
   u32 id;
-  fs::path path;
 };

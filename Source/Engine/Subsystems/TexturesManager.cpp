@@ -64,11 +64,12 @@ const Texture2D* TexturesManager::FindTexture(const fs::path& relative) const
 }
 const Texture2D* TexturesManager::CreateTexture(const fs::path& relative)
 {
-  CONSOLE_TRACE("Insert new texture: {}", relative.lexically_normal().string());
+  fs::path lexNormal = relative.lexically_normal();
+  CONSOLE_TRACE("Insert new texture: {}", lexNormal.string());
   u32 newIndex = _textures.size();
   auto [it, success] = _textureMap.emplace(
     std::piecewise_construct,
-    std::forward_as_tuple(relative.lexically_normal()),
+    std::forward_as_tuple(lexNormal),
     std::forward_as_tuple(newIndex)
   );
   if (!success)
@@ -83,6 +84,7 @@ const Texture2D* TexturesManager::CreateTexture(const fs::path& relative)
   Texture2D& texture = _textures.emplace_back();
   texture.Create(Texture2DTarget::TEXTURE_2D);
   texture.LoadImageData(absolute);
+
   return &texture;
 }
 const Texture2D* TexturesManager::GetOrCreateTexture(const fs::path& relative)
@@ -104,11 +106,12 @@ const Texture2D* TexturesManager::FindIcon(const fs::path& relative) const
 }
 const Texture2D* TexturesManager::CreateIcon(const fs::path& relative)
 {
-  CONSOLE_TRACE("Insert new icon: {}", relative.lexically_normal().string());
+  fs::path lexNormal = relative.lexically_normal();
+  CONSOLE_TRACE("Insert new icon: {}", lexNormal.string());
   u32 newIndex = _icons.size();
   auto [it, success] = _iconMap.emplace(
     std::piecewise_construct,
-    std::forward_as_tuple(relative.lexically_normal()),
+    std::forward_as_tuple(lexNormal),
     std::forward_as_tuple(newIndex)
   );
   if (!success)
@@ -123,6 +126,7 @@ const Texture2D* TexturesManager::CreateIcon(const fs::path& relative)
   Texture2D& icon = _icons.emplace_back();
   icon.Create(Texture2DTarget::TEXTURE_2D);
   icon.LoadImageData(absolutePath);
+
   return &icon;
 }
 const Texture2D* TexturesManager::GetOrCreateIcon(const fs::path& relative)
@@ -131,6 +135,15 @@ const Texture2D* TexturesManager::GetOrCreateIcon(const fs::path& relative)
   if (!t)
     t = CreateIcon(relative);
   return t;
+}
+
+const const fs::path* TexturesManager::GetTexturePath(u32 textureID) const
+{
+  for (const auto& [path, i] : _textureMap)
+    if (_textures.at(i).id == textureID)
+      return &path;
+
+  return nullptr;
 }
 
 // ----------------------------------------------------- 

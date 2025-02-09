@@ -21,7 +21,15 @@ class SkeletalMesh
 {
 public:
   /** @brief Default constructor for the SkeletonMesh class. */
-  SkeletalMesh() = default;
+  SkeletalMesh() :
+    meshes{ nullptr },
+    nrMeshes{ 0 },
+    bones{ nullptr },
+    nrBones{ 0 },
+    id{ 0 },
+    boneMap{},
+    rootNode{}
+  {}
   /** @brief Default destructor for the SkeletonMesh class. */
   ~SkeletalMesh() = default;
 
@@ -71,19 +79,21 @@ public:
   u32 TotalIndices() const;
 
   /** @brief A collection of meshes associated with the skeleton. */
-  Vector<Mesh> meshes;
+  Mesh* meshes;
+  u32 nrMeshes;
 
   /** @brief A collection of bones defining the skeleton. */
-  Vector<Bone> bones;
+  Bone* bones;
+  u32 nrBones;
 
   /**  Map storing the BoneName - boneIndex */
-  UnorderedMap<String, u32> boneMap; 
+  UnorderedMap<String, u32> boneMap;
 
   /** @brief The root node of the bone hierarchy. */
   BoneNode rootNode;
 
-  fs::path path;
-  
+  u32 id;
+
 private:
   void ProcessNode(aiNode* node, const aiScene* scene);
   Buffer LoadVertices(aiMesh* aimesh);

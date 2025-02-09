@@ -52,41 +52,49 @@ void SkeletalMesh::CreateFromFile(const fs::path& absolute)
 		return;
 	}
 
-	path = absolute;
-	meshes.reserve(scene->mNumMeshes);
+	meshes = new Mesh[scene->mNumMeshes];
+
 	u32 totalBones = std::accumulate(scene->mMeshes, scene->mMeshes + scene->mNumMeshes, 0, [](u32 sum, aiMesh* mesh) {
 		return sum + mesh->mNumBones;
 	});
 	assert(totalBones <= GetMaxNumBones());
 	
-	bones.reserve(totalBones);
+	bones = new Bone[totalBones];
 	ProcessNode(scene->mRootNode, scene);
 	LoadBoneHierarchy(rootNode, scene->mRootNode);
 }
 
 void SkeletalMesh::Clone(SkeletalMesh& other) const
 {
-	other.bones = this->bones;
-	other.meshes = this->meshes;
-	other.rootNode = this->rootNode;
-	other.boneMap = this->boneMap;
-	other.path = this->path;
+	other.id = id;
+	other.nrBones = nrBones;
+	other.bones = new Bone[nrBones];
+	for (u32 i = 0; i < nrBones; i++)
+		other.bones[i] = bones[i];
+
+	other.nrMeshes = nrMeshes;
+	other.meshes = new Mesh[nrMeshes];
+	for (u32 i = 0; i < nrMeshes; i++)
+		other.meshes[i] = meshes[i];
+	
+	other.rootNode = rootNode;
+	other.boneMap = boneMap;
 }
 
 void SkeletalMesh::Destroy()
 {
-	for (auto& mesh : meshes)
-		mesh.Destroy();
+	for (u32 i = 0; i < nrMeshes; i++)
+		meshes[i].Destroy();
 }
 
 void SkeletalMesh::Draw(RenderMode mode)
 {
-	for (const auto& mesh : meshes)
+	for (u32 i = 0; i < nrMeshes; i++)
 	{
-		auto& material = mesh.material;
-		material.diffuse->BindTextureUnit(0);
-		material.specular->BindTextureUnit(1);
-		material.normal->BindTextureUnit(2);
+		auto& mesh = meshes[i];
+		mesh.material.diffuse->BindTextureUnit(0);
+		mesh.material.specular->BindTextureUnit(1);
+		mesh.material.normal->BindTextureUnit(2);
 		mesh.Draw(mode);
 	}
 }
@@ -97,18 +105,19 @@ std::pair<const Bone*, i32> SkeletalMesh::FindBone(StringView boneName) const
 	if (it != boneMap.end())
 	{
 		u32 boneIndex = it->second;
-		return { &bones.at(boneIndex), boneIndex };
+		return { &bones[boneIndex], boneIndex};
 	}
 	return { nullptr, -1 };
 }
 
 std::pair<Bone*, i32> SkeletalMesh::InsertBone(StringView boneName)
 {
-	u32 boneIndex = bones.size();
+	u32 boneIndex = nrBones;
 	auto [it, success] = boneMap.insert({ boneName.data(), boneIndex });
 	if (success)
 	{
-		Bone& bone = bones.emplace_back();
+		Bone& bone = bones[boneIndex];
+		nrBones++;
 		return { &bone, boneIndex };
 	}
 
@@ -118,14 +127,14 @@ std::pair<Bone*, i32> SkeletalMesh::InsertBone(StringView boneName)
 
 u32 SkeletalMesh::TotalVertices() const
 {
-	return std::reduce(meshes.begin(), meshes.end(), 0, [](i32 acc, const Mesh& mesh) {
+	return std::reduce(meshes, meshes + nrMeshes, 0, [](i32 acc, const Mesh& mesh) {
 		return acc + mesh.vao.numVertices;
 	});
 }
 
 u32 SkeletalMesh::TotalIndices() const
 {
-	return std::reduce(meshes.begin(), meshes.end(), 0, [](i32 acc, const Mesh& mesh) {
+	return std::reduce(meshes, meshes + nrMeshes, 0, [](i32 acc, const Mesh& mesh) {
 		return acc + mesh.vao.numIndices;
 	});
 }
@@ -140,7 +149,7 @@ void SkeletalMesh::ProcessNode(aiNode* node, const aiScene* scene)
 	{
 		u32 MAX_BONES_INFLUENCE = Vertex_P_N_UV_T_B::MAX_BONES_INFLUENCE;
 
-		Mesh& mesh = meshes.emplace_back();
+		Mesh& mesh = meshes[nrMeshes++];
 		mesh.Create();
 		mesh.SetupAttributeFloat(0, 0, VertexFormat(3, VertexAttribType::FLOAT, false, offsetof(Vertex_P_N_UV_T_B, position)));
 		mesh.SetupAttributeFloat(1, 0, VertexFormat(3, VertexAttribType::FLOAT, false, offsetof(Vertex_P_N_UV_T_B, normal)));

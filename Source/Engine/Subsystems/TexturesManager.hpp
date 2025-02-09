@@ -96,6 +96,8 @@ public:
 	 * @return Pointer to the existing or newly created Texture2D.
 	 */
 	const Texture2D* GetOrCreateIcon(const fs::path& relative);
+
+	const fs::path* GetTexturePath(u32 textureID) const;
 	
 	const Texture2D& GetDefaultDiffuse() const { return _textures.at(0); }
 	const Texture2D& GetDefaultSpecular() const { return _textures.at(1); }

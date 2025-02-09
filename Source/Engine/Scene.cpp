@@ -76,15 +76,17 @@ void Scene::SerializeScene(const fs::path& filePath)
 		}
 		if (StaticMesh* staticMesh = object.GetComponent<StaticMesh>())
 		{
+			auto& manager = ModelsManager::Get();
 			String section = std::format("Entity{}:StaticMesh", objectID);
-			fs::path relative = fs::relative(staticMesh->path, Filesystem::GetStaticModelsPath());
-			conf.Update(section, "path", relative.string());
+			const fs::path* path = manager.GetStaticMeshPath(staticMesh->id);
+			conf.Update(section, "path", path->string());
 		}
 		if (SkeletalMesh* skeleton = object.GetComponent<SkeletalMesh>())
 		{
+			auto& manager = ModelsManager::Get();
 			String section = std::format("Entity{}:SkeletalMesh", objectID);
-			fs::path relative = fs::relative(skeleton->path, Filesystem::GetSkeletalModelsPath());
-			conf.Update(section, "path", relative.string());
+			const fs::path* path = manager.GetSkeletalMeshPath(skeleton->id);
+			conf.Update(section, "path", path->string());
 		}
 		if (Light* light = object.GetComponent<Light>())
 		{
@@ -190,10 +192,9 @@ void Scene::DeserializeScene(const fs::path& filePath)
 		else if (component == "StaticMesh")
 		{
 			auto& manager = ModelsManager::Get();
-
 			const String& strPath = conf.GetValue(section, "path");
 			const auto* staticMesh = manager.FindStaticMesh(strPath);
-			if(!staticMesh)
+			if (!staticMesh)
 				staticMesh = manager.CreateStaticMesh(strPath);
 
 			auto& component = object.AddComponent<StaticMesh>();
@@ -214,9 +215,13 @@ void Scene::DeserializeScene(const fs::path& filePath)
 			if (!skeleton)
 			{
 				skeleton = modManager.CreateSkeletalMesh(relative);
-				// E.g. skeleton->path = "D:\GameEngine\Assets\Models\Skeletal\Mutant\Mutant.gltf"
-				fs::path animlistFile = skeleton->path.parent_path() / "animlist.txt";
 				
+				// E.g. skeletonPath = "Mutant/"
+				fs::path parent = relative.parent_path();
+				// E.g. skeletonPath = "D:\GameEngine\Assets\Models\Skeletal\Mutant"
+				fs::path absolute = (Filesystem::GetSkeletalModelsPath() / parent);
+				// E.g. skeletonPath = "D:\GameEngine\Assets\Models\Skeletal\animlist.txt"
+				fs::path animlistFile = absolute / "animlist.txt";
 				if (!fs::exists(animlistFile))
 					throw std::runtime_error(std::format("File {} does not exist", animlistFile.string()));
 				

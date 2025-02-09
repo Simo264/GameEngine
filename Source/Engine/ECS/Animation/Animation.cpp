@@ -3,6 +3,7 @@
 #include "Core/Log/Logger.hpp"
 #include "Engine/Filesystem/Filesystem.hpp"
 #include "Engine/ECS/Skeleton/SkeletalMesh.hpp"
+#include "Engine/Subsystems/ModelsManager.hpp"
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -17,12 +18,16 @@ Animation::Animation(const SkeletalMesh& skeleton, const fs::path& relative) :
 	ticksPerSecond{ 0 },
 	_boneKeys{}
 {
-	// E.g. "D:GameEngine/Assets/Models/Skeletal/Mutant/Mutant.gltf"
-	const fs::path& absolute = skeleton.path;
-	// E.g. "D:GameEngine/Assets/Models/Skeletal/Mutant/" 
-	fs::path parent = absolute.parent_path();
+	auto& manager = ModelsManager::Get();
+	
+	// E.g. "Mutant/Mutant.gltf"
+	const fs::path* skeletonPath = manager.GetSkeletalMeshPath(skeleton.id);
+	// E.g. "Mutant/"
+	fs::path parent = skeletonPath->parent_path();
+	// E.g. "D:GameEngine/Assets/Models/Skeletal/Mutant/"
+	fs::path absolute = (Filesystem::GetSkeletalModelsPath() / parent);
 	// E.g. "D:GameEngine/Assets/Models/Skeletal/Mutant/Drunk_Walk/anim.gltf" 
-	fs::path filePath = parent / relative;
+	fs::path filePath = absolute / relative;
 
 	Assimp::Importer importer;
 	const aiScene* scene = importer.ReadFile(filePath.string(), aiProcess_Triangulate);

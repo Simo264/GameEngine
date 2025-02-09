@@ -52,16 +52,14 @@ public:
 	void Delete();
 	
 	/**
-	 * @brief
-	 * Create a new data store for the buffer object.
+	 * @brief Create a new data store for the buffer object.
 	 * While creating the new storage, any pre-existing data store is deleted.
 	 * The new data store is created with the specified size in bytes and usage.
 	 */
 	void CreateStorage(u64 size, const void* data, BufferUsage usage) const;
 
 	/**
-	 * @brief
-	 * Updates a subset of the buffer object's data store.
+	 * @brief Updates a subset of the buffer object's data store.
 	 * 
 	 * @param offset: specifies the offset (in bytes) into the buffer object's data store where data replacement will begin
 	 * @param size:		specifies the size in bytes of the data store region being replaced
@@ -69,8 +67,7 @@ public:
 	void UpdateStorage(i32 offset, u32 size, const void* data) const;
 
 	/**
-	 * @brief
-	 * Copy all or part of the data store of the buffer object to the data store of another buffer object
+	 * @brief Copy all or part of the data store of the buffer object to the data store of another buffer object
 	 *
 	 * @param size:				specifies the size of the data to be copied from the source buffer object
 	 *										to the destination buffer object.
