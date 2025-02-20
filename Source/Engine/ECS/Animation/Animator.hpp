@@ -40,7 +40,7 @@ public:
 	const Vector<Animation>* animationsPtr;
 
 private:
-	void CalculateBoneTransformRecursive(const BoneNode& node, const mat4f& parentTransform);
+	void UpdateBoneTransform(const BoneNode& node, const mat4f& parentTransform);
 
 	void InterpolateBone(Bone& bone, u32 boneIndex);
 	mat4f InterpolateBonePosition(const AnimationKeys& keys);
@@ -58,5 +58,4 @@ private:
 	
 	f32 _currentTime;
 	bool _playAnimation;
-	
 };

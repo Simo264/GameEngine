@@ -51,7 +51,7 @@ public:
 	
 	~Animation() = default;
 	
-	void Destroy();
+	void Destroy() const;
 
 	AnimationKeys* boneKeys;
 	u32 nrKeys;

@@ -41,17 +41,15 @@ void Animator::UpdateAnimation(f32 dt)
 
 	_currentTime += _targetAnimation->ticksPerSecond * dt;
 	_currentTime = fmod(_currentTime, _targetAnimation->duration);
-	
-	CalculateBoneTransformRecursive(_targetSkeleton->rootNode, mat4f(1.0f));
+	UpdateBoneTransform(_targetSkeleton->rootNode, mat4f(1.0f));
 }
 
 // ---------------------------------------------------- 
 //										PRIVATE														
 // ---------------------------------------------------- 
 
-void Animator::CalculateBoneTransformRecursive(const BoneNode& node, const mat4f& parentTransform)
+void Animator::UpdateBoneTransform(const BoneNode& node, const mat4f& parentTransform)
 {
-#if 0
 	std::stack<std::pair<const BoneNode*, mat4f>> stack;
 	stack.push(std::make_pair(&node, parentTransform));
 
@@ -66,10 +64,10 @@ void Animator::CalculateBoneTransformRecursive(const BoneNode& node, const mat4f
 		{
 			// WARN: This piece of code collapses the performance
 			Bone& bone = _targetSkeleton->bones[boneIndex];
-			//InterpolateBone(bone, boneIndex);
-			//globalTransformation = currentTransform * bone.localTransform;
-			//const mat4f& offset = bone.offset;
-			//_boneTransforms[boneIndex] = globalTransformation * offset;
+			InterpolateBone(bone, boneIndex);
+			globalTransformation = currentTransform * bone.localTransform;
+			const mat4f& offset = bone.offset;
+			_boneTransforms[boneIndex] = globalTransformation * offset;
 		}
 
 		for (const auto& child : currentNode->children)
@@ -77,24 +75,6 @@ void Animator::CalculateBoneTransformRecursive(const BoneNode& node, const mat4f
 			stack.push(std::make_pair(&child, globalTransformation));
 		}
 	}
-#endif
-
-#if 1
-	i32 boneIndex = node.index;
-	mat4f globalTransformation = parentTransform * node.bindPoseTransform;
-	if (boneIndex != -1)
-	{
-		// WARN: This piece of code collapses the performance
-		Bone& bone = _targetSkeleton->bones[boneIndex];
-		InterpolateBone(bone, boneIndex);
-		globalTransformation = parentTransform * bone.localTransform;
-		const mat4f& offset = bone.offset;
-		_boneTransforms[boneIndex] = globalTransformation * offset;
-	}
-
-	for (auto& child : node.children)
-		CalculateBoneTransformRecursive(child, globalTransformation);
-#endif
 }
 
 void Animator::InterpolateBone(Bone& bone, u32 boneIndex)

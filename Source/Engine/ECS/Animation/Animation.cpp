@@ -42,7 +42,6 @@ Animation::Animation(const SkeletalMesh& skeleton, const fs::path& relative) :
 	ticksPerSecond = animation->mTicksPerSecond;
 	boneKeys = new AnimationKeys[animation->mNumChannels];
 	
-	//boneKeys.reserve(animation->mNumChannels);
 	LoadAnimation(animation, skeleton);
 
 	std::sort(boneKeys, boneKeys + nrKeys, [](const AnimationKeys& a, const AnimationKeys& b) {
@@ -50,13 +49,9 @@ Animation::Animation(const SkeletalMesh& skeleton, const fs::path& relative) :
 	});
 }
 
-void Animation::Destroy()
+void Animation::Destroy() const
 {
-	if (boneKeys)
-	{
-		delete[] boneKeys;
-		boneKeys = nullptr;
-	}
+	delete[] boneKeys;
 }
 
 // ----------------------------------------------------
