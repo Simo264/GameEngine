@@ -39,7 +39,7 @@ public:
 	 * 
 	 * @return Pointer to the newly created StaticMesh.
 	 */
-	const StaticMesh* CreateStaticMesh(const fs::path& relative);
+	const StaticMesh& CreateStaticMesh(const fs::path& relative);
 
 	/**
 	 * @brief Finds an existing skeletal mesh by its relative path.
@@ -63,9 +63,9 @@ public:
 	 */
 	const SkeletalMesh* CreateSkeletalMesh(const fs::path& relative);
 
-	const fs::path* GetStaticMeshPath(u32 id) const;
+	const fs::path* GetStaticMeshPath(u32 staticMeshId) const;
 
-	const fs::path* GetSkeletalMeshPath(u32 id) const;
+	const fs::path* GetSkeletalMeshPath(u32 skeletalMeshId) const;
 
 	void DestroyAll();
 
@@ -73,9 +73,8 @@ private:
 	ModelsManager() = default;
 	~ModelsManager() = default;
 
-	// Static mesh id, static mesh object
-	Map<u32, StaticMesh> _staticMeshObjects;
-	// Static mesh id, static mesh (relative) path
+	Vector<StaticMesh> _staticMeshObjects;
+	// Map storing the static mesh index and it's relative path
 	Vector<std::pair<u32, fs::path>> _staticMeshPaths;
 
 	// Skeletal mesh id, skeletal mesh object

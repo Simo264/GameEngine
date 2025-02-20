@@ -44,7 +44,7 @@ public:
 
 	void Destroy();
 
-	void Draw(RenderMode mode);
+	void Draw(RenderMode mode) const;
 
 	/** @brief Returns the total number of vertices in the mesh. */
 	u32 TotalVertices() const;
@@ -54,15 +54,12 @@ public:
 
 	/** @brief List of meshes contained in the model. */
 	Mesh* meshes;
-
 	u32 nrMeshes;
 
 	u32 id;
 
 private:
 	void ProcessNode(aiNode* node, const aiScene* scene);
-	
 	Buffer LoadVertices(aiMesh* aimesh);
-
 	Buffer LoadIndices(aiMesh* aimesh);
 };

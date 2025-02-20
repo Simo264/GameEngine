@@ -1,4 +1,4 @@
-#include "ShadersManager.hpp"
+  #include "ShadersManager.hpp"
 
 #include "Core/GL.hpp"
 #include "Core/Log/Logger.hpp"
@@ -41,22 +41,25 @@ void ShadersManager::CleanUp()
 
 const Shader& ShadersManager::GetShader(StringView shaderName) const
 {
-  auto it = _shaderMap.find(shaderName.data());
-  if (it == _shaderMap.end())
+  auto it = std::find_if(_shaderNames.begin(), _shaderNames.end(), [&](const std::pair<u32, String>& pair) {
+    return pair.second == shaderName;
+  });
+  if (it == _shaderNames.end())
     throw std::runtime_error(std::format("Shader '{}' does not exist", shaderName.data()));
-  
-  u32 i = it->second;
-  return _shaders.at(i);
+
+  u32 index = it->first;
+  return _shaders.at(index);
 }
 const Shader& ShadersManager::GetOrCreateShader(StringView shaderName)
 {
-  auto it = _shaderMap.find(shaderName.data());
-  if (it != _shaderMap.end())
-  {
-    u32 i = it->second;
-    return _shaders.at(i);
-  }
-  return CreateShader(shaderName);
+  auto it = std::find_if(_shaderNames.begin(), _shaderNames.end(), [&](const std::pair<u32, String>& pair) {
+    return pair.second == shaderName;
+  });
+  if (it == _shaderNames.end())
+    return CreateShader(shaderName);
+  
+  u32 i = it->first;
+  return _shaders.at(i);
 }
 const Shader& ShadersManager::CreateShader(StringView shaderName)
 {
@@ -64,53 +67,40 @@ const Shader& ShadersManager::CreateShader(StringView shaderName)
   if (!fs::exists(filePath))
     throw std::runtime_error(std::format("Shader file '{}' does not exist", filePath.string()));
 
-  u32 shaderIdx = _shaderMap.size();
-  auto [it, success] = _shaderMap.emplace(
-    std::piecewise_construct, 
-    std::forward_as_tuple(shaderName.data()),
-    std::forward_as_tuple(shaderIdx)
-  );
-  if (!success)
-    throw std::runtime_error(std::format("Error on insert shader {} into the map", shaderName.data()));
-
-  StringView ext = shaderName.substr(shaderName.find_last_of('.') + 1);
-  i32 shaderType = ResolveShaderType(ext);
-
   IStream file(filePath);
   String shaderSrc{ std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>() };
-
+  StringView ext = shaderName.substr(shaderName.find_last_of('.') + 1);
+  i32 shaderType = ResolveShaderType(ext);
+  
   CONSOLE_TRACE("Create shader {}", shaderName.data());
-  Shader& shader = _shaders.emplace_back(shaderName);
+  Shader& shader = _shaders.emplace_back();
   shader.Create(shaderType, shaderSrc);
   if (!shader.Compile())
-    CONSOLE_ERROR("Error on compiling shader {}: {}", shader.name, shader.GetShaderInfo());
+    CONSOLE_ERROR("Error on compiling shader {}: {}", shaderName.data(), shader.GetShaderInfo());
+
+  _shaderNames.emplace_back(_shaders.size() - 1, shaderName.data());
 
   return shader;
 }
 
 const Program& ShadersManager::GetProgram(StringView programName) const
 {
-  auto it = _programMap.find(programName.data());
-  if (it == _programMap.end())
+  auto it = std::find_if(_programNames.begin(), _programNames.end(), [&](const std::pair<u32, String>& pair) {
+    return pair.second == programName;
+  });
+  if (it == _programNames.end())
     throw std::runtime_error(std::format("Program '{}' does not exist", programName.data()));
-  
-  u32 i = it->second;
-  return _programs.at(i);
+
+  u32 index = it->first;
+  return _programs.at(index);
 }
 const Program& ShadersManager::CreateProgram(StringView programName)
 {
-  u32 progIdx = _programMap.size();
-  auto [it, success] = _programMap.emplace(
-    std::piecewise_construct,
-    std::forward_as_tuple(programName.data()),
-    std::forward_as_tuple(progIdx)
-  );
-  if (!success)
-    throw std::runtime_error(std::format("Error on loading program {} into the map", programName.data()));
-
   CONSOLE_TRACE("Create program {}", programName.data());
-  Program& program = _programs.emplace_back(programName);
+  Program& program = _programs.emplace_back();
   program.Create();
+
+  _programNames.emplace_back(_programs.size() - 1, programName.data());
   return program;
 }
 
@@ -173,9 +163,9 @@ void ShadersManager::ReadConfig(IniFileHandler& conf)
       program.AttachShader(fragShader);
     }
 
-    CONSOLE_TRACE("Link program {}", program.name);
+    CONSOLE_TRACE("Link program {}", section);
     if(!program.Link())
-      CONSOLE_ERROR("Error on linking program '{}': {}", program.name, program.GetProgramInfo());
+      CONSOLE_ERROR("Error on linking program '{}': {}", section, program.GetProgramInfo());
   }
 }
 void ShadersManager::SetProgramsUniforms() const

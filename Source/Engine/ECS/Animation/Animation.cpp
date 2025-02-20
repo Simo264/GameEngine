@@ -14,23 +14,18 @@
 // ---------------------------------------------------- 
 
 Animation::Animation(const SkeletalMesh& skeleton, const fs::path& relative) :
+	boneKeys{ nullptr },
+	nrKeys{ 0 },
 	duration{ 0 },
 	ticksPerSecond{ 0 },
-	_boneKeys{}
+	id{}
 {
-	auto& manager = ModelsManager::Get();
-	
-	// E.g. "Mutant/Mutant.gltf"
-	const fs::path* skeletonPath = manager.GetSkeletalMeshPath(skeleton.id);
-	// E.g. "Mutant/"
-	fs::path parent = skeletonPath->parent_path();
-	// E.g. "D:GameEngine/Assets/Models/Skeletal/Mutant/"
-	fs::path absolute = (Filesystem::GetSkeletalModelsPath() / parent);
-	// E.g. "D:GameEngine/Assets/Models/Skeletal/Mutant/Drunk_Walk/anim.gltf" 
-	fs::path filePath = absolute / relative;
+	// E.g. relative = "Mutant/Drunk_Walk/anim.gltf"
+	// E.g. absolute = "D:GameEngine/Assets/Models/Skeletal/Mutant/Drunk_Walk/anim.gltf"
+	fs::path absolute = (Filesystem::GetSkeletalModelsPath() / relative);
 
 	Assimp::Importer importer;
-	const aiScene* scene = importer.ReadFile(filePath.string(), aiProcess_Triangulate);
+	const aiScene* scene = importer.ReadFile(absolute.string(), aiProcess_Triangulate);
 	if (!scene || !scene->mRootNode)
 	{
 		CONSOLE_ERROR("Assimp importer error: {}", importer.GetErrorString());
@@ -38,21 +33,30 @@ Animation::Animation(const SkeletalMesh& skeleton, const fs::path& relative) :
 	}
 	if (!scene->HasAnimations())
 	{
-		CONSOLE_ERROR("Error: '{}' !scene->HasAnimations() ", path.string());
+		CONSOLE_ERROR("Error: '{}' !scene->HasAnimations() ", absolute.string());
 		return;
 	}
-
-	path = filePath;
 
 	aiAnimation* animation = scene->mAnimations[0];
 	duration = animation->mDuration;
 	ticksPerSecond = animation->mTicksPerSecond;
-	_boneKeys.reserve(animation->mNumChannels);
+	boneKeys = new AnimationKeys[animation->mNumChannels];
+	
+	//boneKeys.reserve(animation->mNumChannels);
 	LoadAnimation(animation, skeleton);
 
-	std::sort(_boneKeys.begin(), _boneKeys.end(), [](const AnimationKeys& a, const AnimationKeys& b) {
+	std::sort(boneKeys, boneKeys + nrKeys, [](const AnimationKeys& a, const AnimationKeys& b) {
 		return a.boneIndex < b.boneIndex;
 	});
+}
+
+void Animation::Destroy()
+{
+	if (boneKeys)
+	{
+		delete[] boneKeys;
+		boneKeys = nullptr;
+	}
 }
 
 // ----------------------------------------------------
@@ -67,12 +71,13 @@ void Animation::LoadAnimation(const aiAnimation* animation, const SkeletalMesh& 
 		const char* boneName = channel->mNodeName.data;
 
 		// Load skeleton bones
-		auto [bone, boneIndex] = skeleton.FindBone(boneName);
+		auto [boneIndex, bone] = skeleton.FindBone(boneName);
 		if (!bone)
 			continue;
 
 		// Load bone keys
-		AnimationKeys& keys = _boneKeys.emplace_back();
+		AnimationKeys& keys = boneKeys[nrKeys++];
+
 		keys.boneIndex = boneIndex;
 		keys.positionKeys.reserve(channel->mNumPositionKeys);
 		keys.rotationKeys.reserve(channel->mNumRotationKeys);

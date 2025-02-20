@@ -12,7 +12,9 @@
 void Animator::SetTargetSkeleton(SkeletalMesh& target)
 {
 	_targetSkeleton = &target;
-	_boneTransforms.assign(target.nrBones, mat4f(1.0f));
+	_boneTransforms.reserve(target.nrBones);
+	for (u32 i = 0; i < target.nrBones; i++)
+		_boneTransforms.push_back(mat4f(1.0f));
 }
 void Animator::SetTargetAnimation(const Animation* target)
 {
@@ -40,8 +42,7 @@ void Animator::UpdateAnimation(f32 dt)
 	_currentTime += _targetAnimation->ticksPerSecond * dt;
 	_currentTime = fmod(_currentTime, _targetAnimation->duration);
 	
-	//CalculateBoneTransformRecursive(_targetSkeleton->rootNode, mat4f(1.0f));
-	CalculateBoneTransformIterative(_targetSkeleton->rootNode, mat4f(1.0f));
+	CalculateBoneTransformRecursive(_targetSkeleton->rootNode, mat4f(1.0f));
 }
 
 // ---------------------------------------------------- 
@@ -50,57 +51,57 @@ void Animator::UpdateAnimation(f32 dt)
 
 void Animator::CalculateBoneTransformRecursive(const BoneNode& node, const mat4f& parentTransform)
 {
-	i32 boneIndex = node.boneIndex;
-	mat4f nodeTransform = node.bindPoseTransform;
-	mat4f globalTransformation = parentTransform * nodeTransform;
-	
+#if 0
+	std::stack<std::pair<const BoneNode*, mat4f>> stack;
+	stack.push(std::make_pair(&node, parentTransform));
+
+	while (!stack.empty())
+	{
+		auto& [currentNode, currentTransform] = stack.top();
+		stack.pop();
+
+		i32 boneIndex = currentNode->index;
+		mat4f globalTransformation = currentTransform * currentNode->bindPoseTransform;
+		if (boneIndex != -1)
+		{
+			// WARN: This piece of code collapses the performance
+			Bone& bone = _targetSkeleton->bones[boneIndex];
+			//InterpolateBone(bone, boneIndex);
+			//globalTransformation = currentTransform * bone.localTransform;
+			//const mat4f& offset = bone.offset;
+			//_boneTransforms[boneIndex] = globalTransformation * offset;
+		}
+
+		for (const auto& child : currentNode->children)
+		{
+			stack.push(std::make_pair(&child, globalTransformation));
+		}
+	}
+#endif
+
+#if 1
+	i32 boneIndex = node.index;
+	mat4f globalTransformation = parentTransform * node.bindPoseTransform;
 	if (boneIndex != -1)
 	{
+		// WARN: This piece of code collapses the performance
 		Bone& bone = _targetSkeleton->bones[boneIndex];
 		InterpolateBone(bone, boneIndex);
-		nodeTransform = bone.localTransform;
-		globalTransformation = parentTransform * nodeTransform;
+		globalTransformation = parentTransform * bone.localTransform;
 		const mat4f& offset = bone.offset;
 		_boneTransforms[boneIndex] = globalTransformation * offset;
 	}
 
 	for (auto& child : node.children)
 		CalculateBoneTransformRecursive(child, globalTransformation);
-}
-void Animator::CalculateBoneTransformIterative(const BoneNode& node, const mat4f& parentTransform)
-{
-	std::stack<std::pair<const BoneNode*, mat4f>> nodeStack;
-	nodeStack.push({ &_targetSkeleton->rootNode, mat4f(1.0f) });
-
-	while (!nodeStack.empty())
-	{
-		auto& [node, parentTransform] = nodeStack.top();
-		nodeStack.pop();
-
-		mat4f nodeTransform = node->bindPoseTransform;
-		mat4f globalTransformation = parentTransform * nodeTransform;
-
-		if (node->boneIndex != -1)
-		{
-			Bone& bone = _targetSkeleton->bones[node->boneIndex];
-			InterpolateBone(bone, node->boneIndex);
-			nodeTransform = bone.localTransform;
-			globalTransformation = parentTransform * nodeTransform;
-			_boneTransforms[node->boneIndex] = globalTransformation * bone.offset;
-		}
-
-		// Itera attraverso i figli senza utilizzare rbegin/rend
-		for (auto& child : node->children)
-		{
-			nodeStack.push({ &child, globalTransformation });
-		}
-	}
+#endif
 }
 
 void Animator::InterpolateBone(Bone& bone, u32 boneIndex)
 {
-	const auto& boneKeys = _targetAnimation->BoneKeys();
-	auto keys = std::find_if(boneKeys.begin(), boneKeys.end(),
+	const auto& boneKeys = _targetAnimation->boneKeys;
+	const auto& nrKeys = _targetAnimation->nrKeys;
+	auto keys = std::find_if(boneKeys, boneKeys + nrKeys,
 		[&](const AnimationKeys& k){
 			return k.boneIndex == boneIndex;
 	});

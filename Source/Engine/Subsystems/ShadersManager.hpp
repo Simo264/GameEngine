@@ -44,19 +44,15 @@ public:
 private:
 	ShadersManager() = default;
 	~ShadersManager() = default;
+	
+	void ReadConfig(class IniFileHandler& conf);
+	i32 ResolveShaderType(StringView ext);
+	void SetProgramsUniforms() const;
 
 	Vector<Shader> _shaders;
 	Vector<Program> _programs;
 
-	// Map storing shader filename and its index.
-	UnorderedMap<String, u32> _shaderMap;
-	// Map storing program name and its index.
-	UnorderedMap<String, u32> _programMap;
-
-	void ReadConfig(class IniFileHandler& conf);
-
-	// Return the shader type based on file extension
-	i32 ResolveShaderType(StringView ext);
-
-	void SetProgramsUniforms() const;
+	// Map storing shader index and shader name
+	Vector<std::pair<u32, String>> _shaderNames;
+	Vector<std::pair<u32, String>> _programNames;
 };

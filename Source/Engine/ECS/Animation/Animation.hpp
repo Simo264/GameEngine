@@ -32,10 +32,7 @@ struct AnimationKeys
 	Vector<KeyScale>		scaleKeys{};
 };
 
-/**
- * @class Animation
- * @brief Represents an animation associated with a skeleton mesh.
- */
+/** @brief Represents an animation associated with a skeleton mesh. */
 class Animation
 {
 public:
@@ -48,22 +45,22 @@ public:
 	 * @param skeleton The skeletal mesh to which this animation belongs.
 	 * 
 	 * @param relative The relative path to the animation file inside the skeletal model directory.
-	 * Example: "Drunk_Walk/anim.gltf".
+	 * Example: "Mutant/Drunk_Walk/anim.gltf".
 	 */
 	Animation(const SkeletalMesh& skeleton, const fs::path& relative);
 	
-	/** @brief Default destructor for the Animation class. */
 	~Animation() = default;
+	
+	void Destroy();
 
-	const auto& BoneKeys() const { return _boneKeys; }
+	AnimationKeys* boneKeys;
+	u32 nrKeys;
 
-	fs::path path;
 	f32 duration;
 	f32 ticksPerSecond;
-
+	u32 id;
+	
 private:
 	void LoadAnimation(const aiAnimation* animation, const SkeletalMesh& skeleton);
 	void LoadBoneKeys(AnimationKeys& keys, const aiNodeAnim* channel);
-
-	Vector<AnimationKeys> _boneKeys;
 };

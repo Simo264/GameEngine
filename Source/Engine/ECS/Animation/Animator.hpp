@@ -41,8 +41,6 @@ public:
 
 private:
 	void CalculateBoneTransformRecursive(const BoneNode& node, const mat4f& parentTransform);
-	void CalculateBoneTransformIterative(const BoneNode& node, const mat4f& parentTransform);
-
 
 	void InterpolateBone(Bone& bone, u32 boneIndex);
 	mat4f InterpolateBonePosition(const AnimationKeys& keys);
@@ -54,10 +52,11 @@ private:
 	std::pair<const KeyRotation*, const KeyRotation*> FindCurrentRotationKey(const AnimationKeys& keys) const;
 	std::pair<const KeyScale*,		const KeyScale*>		FindCurrentScaleKey(const AnimationKeys& keys) const;
 	
-	bool _playAnimation;
-	f32 _currentTime;
 	Vector<mat4f> _boneTransforms;
-	
 	SkeletalMesh* _targetSkeleton;
 	const Animation* _targetAnimation;
+	
+	f32 _currentTime;
+	bool _playAnimation;
+	
 };

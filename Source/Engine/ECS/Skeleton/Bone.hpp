@@ -6,9 +6,6 @@
 /** @brief Represents a single node in a skeleton hierarchy. */
 struct BoneNode
 {
-	/** @brief Name of the bone. */
-	char name[32]{};
-
 	/**
 	 * @brief Initial bind pose transformation.
 	 * This matrix represents the bone's transformation in the initial bind pose (rest position).
@@ -16,12 +13,10 @@ struct BoneNode
 	 * accurate blending between animations or returning to the default pose.
 	 */
 	mat4f bindPoseTransform{};
-	
-	/** @brief Index of the bone. */
-	i32 boneIndex{ -1 };
-	
-	/** @brief List of child nodes. */
-	Vector<BoneNode> children{};
+
+	Vector<BoneNode> children;
+
+	i32 index{ -1 };
 };
 
 /**

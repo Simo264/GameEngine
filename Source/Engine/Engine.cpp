@@ -160,7 +160,7 @@ static void RenderStaticMesh(const Program& program,
                              Transform& transform)
 {
   program.SetUniformMat4f("u_model", transform.GetTransformation());
-  staticMesh.Draw(RenderMode::Triangles);
+  staticMesh.Draw(RenderMode::TRIANGLES);
 }
 static void RenderSkeletalMesh(const Program& program,
                                SkeletalMesh& skeletalMesh,
@@ -176,7 +176,7 @@ static void RenderSkeletalMesh(const Program& program,
     boneTransforms.data());
 
   program.SetUniformMat4f("u_model", transform.GetTransformation());
-  skeletalMesh.Draw(RenderMode::Triangles);
+  skeletalMesh.Draw(RenderMode::TRIANGLES);
 }
 static void CreateSkybox(Mesh& skybox, TextureCubemap& skyboxTexture)
 {
@@ -389,7 +389,7 @@ void Engine::Initialize()
     _uboBoneBlock = Buffer(
       SkeletalMesh::GetMaxNumBones() * sizeof(mat4f), // Reserve memory for 100 mat4f
       bones.data(),                                   // Fill with mat4f(1.0f)
-      BufferUsage::STREAM_DRAW                         // Data store content will be modified repeatedly and used many times.
+      BufferUsage::STREAM_DRAW                        // Data store content will be modified repeatedly and used many times.
     );
     _uboBoneBlock.BindBase(BufferTarget::UNIFORM, 2); // "BoneBlock" to binding point 2
   }
@@ -629,7 +629,7 @@ void Engine::Run()
       if(renderInfiniteGrid)
       {
         gridPlaneProgram.Use();
-        Renderer::DrawArrays(RenderMode::Triangles, gridPlane.vao);
+        Renderer::DrawArrays(RenderMode::TRIANGLES, gridPlane.vao);
       }
 
       /// Draw skybox after the scene
@@ -640,7 +640,7 @@ void Engine::Run()
         skyboxProgram.SetUniformMat4f("u_view", mat4f(mat3f(cameraView)));
         skyboxTexture.BindTextureUnit(0);
         DepthTest::SetDepthFun(CompareFunc::LEQUAL);
-        Renderer::DrawArrays(RenderMode::Triangles, skybox.vao);
+        Renderer::DrawArrays(RenderMode::TRIANGLES, skybox.vao);
         DepthTest::SetDepthFun(CompareFunc::LESS);
       }
 

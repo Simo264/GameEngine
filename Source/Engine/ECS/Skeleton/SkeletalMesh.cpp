@@ -52,42 +52,52 @@ void SkeletalMesh::CreateFromFile(const fs::path& absolute)
 		return;
 	}
 
-	meshes = new Mesh[scene->mNumMeshes];
-
 	u32 totalBones = std::accumulate(scene->mMeshes, scene->mMeshes + scene->mNumMeshes, 0, [](u32 sum, aiMesh* mesh) {
 		return sum + mesh->mNumBones;
 	});
 	assert(totalBones <= GetMaxNumBones());
 	
+
+	meshes = new Mesh[scene->mNumMeshes];
 	bones = new Bone[totalBones];
+	boneNames = new BoneName[totalBones];
+
 	ProcessNode(scene->mRootNode, scene);
 	LoadBoneHierarchy(rootNode, scene->mRootNode);
 }
 
 void SkeletalMesh::Clone(SkeletalMesh& other) const
 {
-	other.id = id;
-	other.nrBones = nrBones;
-	other.bones = new Bone[nrBones];
-	for (u32 i = 0; i < nrBones; i++)
-		other.bones[i] = bones[i];
-
 	other.nrMeshes = nrMeshes;
 	other.meshes = new Mesh[nrMeshes];
 	for (u32 i = 0; i < nrMeshes; i++)
 		other.meshes[i] = meshes[i];
-	
+
+	other.nrBones = nrBones;
+	other.bones = new Bone[nrBones];
+	other.boneNames = new BoneName[nrBones];
+	for (u32 i = 0; i < nrBones; i++)
+	{
+		other.bones[i] = bones[i];
+		other.boneNames[i] = boneNames[i];
+	}
+
 	other.rootNode = rootNode;
-	other.boneMap = boneMap;
+
+	other.id = id;
 }
 
 void SkeletalMesh::Destroy()
 {
 	for (u32 i = 0; i < nrMeshes; i++)
 		meshes[i].Destroy();
+
+	delete[] meshes;
+	delete[] bones;
+	delete[] boneNames;
 }
 
-void SkeletalMesh::Draw(RenderMode mode)
+void SkeletalMesh::Draw(RenderMode mode) const
 {
 	for (u32 i = 0; i < nrMeshes; i++)
 	{
@@ -99,30 +109,13 @@ void SkeletalMesh::Draw(RenderMode mode)
 	}
 }
 
-std::pair<const Bone*, i32> SkeletalMesh::FindBone(StringView boneName) const
+std::pair<i32, Bone*> SkeletalMesh::FindBone(StringView boneName) const
 {
-	auto it = boneMap.find(boneName.data());
-	if (it != boneMap.end())
-	{
-		u32 boneIndex = it->second;
-		return { &bones[boneIndex], boneIndex};
-	}
-	return { nullptr, -1 };
-}
+	for (u32 i = 0; i < nrBones; i++)
+		if (boneName == boneNames[i].name)
+			return { i, &bones[i] };
 
-std::pair<Bone*, i32> SkeletalMesh::InsertBone(StringView boneName)
-{
-	u32 boneIndex = nrBones;
-	auto [it, success] = boneMap.insert({ boneName.data(), boneIndex });
-	if (success)
-	{
-		Bone& bone = bones[boneIndex];
-		nrBones++;
-		return { &bone, boneIndex };
-	}
-
-	CONSOLE_WARN("Can't insert bone '{}'", boneName.data());
-	return { nullptr, -1 };
+	return { -1, nullptr };
 }
 
 u32 SkeletalMesh::TotalVertices() const
@@ -215,34 +208,6 @@ Buffer SkeletalMesh::LoadVertices(aiMesh* aimesh)
 	return buffer;
 }
 
-void SkeletalMesh::LoadBonesAndWeights(Vector<Vertex_P_N_UV_T_B>& vertices, const aiMesh* aimesh)
-{
-	for (u32 i = 0; i < aimesh->mNumBones; i++)
-	{
-		aiBone* aibone = aimesh->mBones[i];
-		const char* boneName = aibone->mName.C_Str();
-
-		i32 boneIndex = -1;
-		auto [bone, index] = FindBone(boneName);
-		if (!bone)
-		{
-			auto [newBone, newIndex] = InsertBone(boneName);
-			newBone->offset = AiMatrixToGLM(aibone->mOffsetMatrix);
-			boneIndex = newIndex;
-		}
-		else
-			boneIndex = index;
-
-		for (u32 weightIndex = 0; weightIndex < aibone->mNumWeights; weightIndex++)
-		{
-			u32 vertexId = aibone->mWeights[weightIndex].mVertexId;
-			f32 weight = aibone->mWeights[weightIndex].mWeight;
-			Vertex_P_N_UV_T_B& vertex = vertices.at(vertexId);
-			vertex.AddBone(boneIndex, weight);
-		}
-	}
-}
-
 Buffer SkeletalMesh::LoadIndices(aiMesh* aimesh)
 {
 	u32 numIndices = aimesh->mNumFaces * 3;
@@ -263,15 +228,47 @@ Buffer SkeletalMesh::LoadIndices(aiMesh* aimesh)
 	return buffer;
 }
 
+void SkeletalMesh::LoadBonesAndWeights(Vector<Vertex_P_N_UV_T_B>& vertices, const aiMesh* aimesh)
+{
+	for (u32 i = 0; i < aimesh->mNumBones; i++)
+	{
+		aiBone* aibone = aimesh->mBones[i];
+		const char* aiboneName = aibone->mName.C_Str();
+
+		i32 boneIndex{};
+		
+		auto [boneIdx, bone] = FindBone(aiboneName);
+		if (!bone)
+		{
+			auto& bone = bones[nrBones];
+			bone.offset = AiMatrixToGLM(aibone->mOffsetMatrix);
+			BoneName& boneName = boneNames[nrBones];
+			
+			assert(std::strlen(aiboneName) <= sizeof(boneName.name));
+			std::strncpy(boneName.name, aiboneName, sizeof(boneName.name));
+			boneIndex = nrBones;
+			nrBones++;
+		}
+		else
+			boneIndex = boneIdx;
+
+		for (u32 weightIndex = 0; weightIndex < aibone->mNumWeights; weightIndex++)
+		{
+			u32 vertexId = aibone->mWeights[weightIndex].mVertexId;
+			f32 weight = aibone->mWeights[weightIndex].mWeight;
+			Vertex_P_N_UV_T_B& vertex = vertices.at(vertexId);
+			vertex.AddBone(boneIndex, weight);
+		}
+	}
+}
+
 void SkeletalMesh::LoadBoneHierarchy(BoneNode& dest, const aiNode* src)
 {
-	if (std::strlen(src->mName.C_Str()) >= sizeof(dest.name))
-		CONSOLE_WARN("Bone name size >= sizeof(dest.name)");
-
-	auto [bone, index] = FindBone(src->mName.data);
-	std::strncpy(dest.name, src->mName.C_Str(), sizeof(dest.name));
-	dest.boneIndex = index;
+	const char* aiboneName = src->mName.data;
+	auto [index, bone] = FindBone(aiboneName);
+	
 	dest.bindPoseTransform = AiMatrixToGLM(src->mTransformation);
+	dest.index = index;
 	dest.children.reserve(src->mNumChildren);
 	for (u32 i = 0; i < src->mNumChildren; i++)
 	{

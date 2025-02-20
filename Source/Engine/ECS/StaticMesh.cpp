@@ -63,7 +63,7 @@ void StaticMesh::Destroy()
 	delete[] meshes;
 }
 
-void StaticMesh::Draw(RenderMode mode)
+void StaticMesh::Draw(RenderMode mode) const
 {
 	for (u32 i = 0; i < nrMeshes; i++ )
 	{

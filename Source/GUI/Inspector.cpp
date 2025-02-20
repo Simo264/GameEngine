@@ -462,23 +462,12 @@ static void Insp_StaticMesh(GameObject& object, StaticMesh& staticMesh)
     object.RemoveComponent<StaticMesh>();
   ImGui::PopStyleColor(3);
 }
-static void Insp_SkeletalMesh_BoneTree(const BoneNode& bone)
-{
-  if (ImGui::TreeNode(bone.name)) 
-  {
-    for (const BoneNode& child : bone.children)
-      Insp_SkeletalMesh_BoneTree(child);
-
-    ImGui::TreePop();
-  }
-}
 static void Insp_SkeletalMesh(GameObject& object, SkeletalMesh& skeleton)
 {
   ImGui::Text("Nr meshes: %d", skeleton.nrMeshes);
   ImGui::Text("Total vertices: %d", skeleton.TotalVertices());
   ImGui::Text("Total indices: %d", skeleton.TotalIndices());
   ImGui::Text("Nr bones: %d", skeleton.nrBones);
-  Insp_SkeletalMesh_BoneTree(skeleton.rootNode);
 
   if (ImGui::TreeNode("Material"))
   {
@@ -534,6 +523,8 @@ static void Insp_SkeletalMesh(GameObject& object, SkeletalMesh& skeleton)
 }
 static void Insp_Animator(GameObject& object, Animator& animator)
 {
+  AnimationsManager& animManager = AnimationsManager::Get();
+
   SkeletalMesh* skeleton = object.GetComponent<SkeletalMesh>();
   const auto* animations = animator.animationsPtr;
   if (!animations)
@@ -545,17 +536,23 @@ static void Insp_Animator(GameObject& object, Animator& animator)
   ImGui::Text("Nr animations: %d", animations->size());
 
   const Animation* animAttached = animator.GetAttachedAnimation();
-  String animAttachedFilename; 
-  if (animAttached)
-    animAttachedFilename = animAttached->path.string();
-  
-  ImGui::Text("Current animation: %s", animAttachedFilename.c_str());
-  if (ImGui::BeginCombo("Animation list", (animAttachedFilename.empty() ? "Select animation" : animAttachedFilename.c_str())))
+  const fs::path* animAttachedPath = nullptr;
+  if(animAttached)
+  {
+    animAttachedPath = animManager.GetAnimationPath(animAttached->id);
+    ImGui::Text("Current animation: %s", animAttachedPath->string().c_str());
+  }
+  else
+  {
+    ImGui::Text("Current animation: none");
+  }
+
+  if (ImGui::BeginCombo("Animation list", (animAttachedPath == nullptr ? "Select animation" : animAttachedPath->string().c_str())))
   {
     for (const auto& animation : *animations)
     {
-      const auto path = animation.path.relative_path().string();
-      if (ImGui::Selectable(path.c_str(), animAttachedFilename == path))
+      const auto* path = animManager.GetAnimationPath(animation.id);
+      if (ImGui::Selectable(path->string().c_str(), animAttachedPath == path))
         animator.SetTargetAnimation(&animation);
     }
     ImGui::EndCombo();
@@ -649,6 +646,7 @@ static void Insp_AddStaticMeshComponent(GameObject& object)
       const char* filter[] = { "*.obj", "*.glb", "*.gltf", "*.fbx" };
       u32 numFilters = sizeof(filter) / sizeof(filter[0]);
       path = Utils::OpenFileDialog(numFilters, filter, "Static mesh file", false);
+      path = fs::relative(path, Filesystem::GetStaticModelsPath());
     }
     String pathStr = path.string();
 
@@ -662,11 +660,10 @@ static void Insp_AddStaticMeshComponent(GameObject& object)
         auto& manager = ModelsManager::Get();
         const auto* sMesh = manager.FindStaticMesh(path);
         if (!sMesh)
-          sMesh = manager.CreateStaticMesh(path);
+          sMesh = &manager.CreateStaticMesh(path);
 
         auto& component = object.AddComponent<StaticMesh>();
-        component = *sMesh;
-
+        sMesh->Clone(component);
         path.clear();
       }
     }

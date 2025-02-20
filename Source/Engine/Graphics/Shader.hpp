@@ -20,7 +20,7 @@
 class Shader
 {
 public:
-  Shader(StringView shaderName);
+  Shader();
   ~Shader() = default;
 
   /**
@@ -50,8 +50,6 @@ public:
   bool IsValid() const { return id != 0; }
 
   u32 id;
-
-  char name[32]; // useful for log
 };
 
 /**
@@ -78,7 +76,7 @@ public:
 class Program
 {
 public:
-  Program(StringView programName);
+  Program();
   ~Program() = default;
 
   /**
@@ -142,6 +140,4 @@ public:
   bool IsValid() const { return id != 0; }
 
   u32 id;
-
-  char name[32]; // useful for log
 };

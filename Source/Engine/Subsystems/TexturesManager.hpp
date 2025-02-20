@@ -112,7 +112,7 @@ private:
 	Vector<Texture2D> _textures;
 	Vector<Texture2D> _icons;
 
-	// Map storing texture's relative path and its index
-	UnorderedMap<fs::path, u32> _textureMap;
-	UnorderedMap<fs::path, u32> _iconMap;
+	// Map storing the texture's index and texture's path
+	Vector<std::pair<u32, fs::path>> _texturePaths;
+	Vector<std::pair<u32, fs::path>> _iconPaths;
 };

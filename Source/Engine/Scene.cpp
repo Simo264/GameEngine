@@ -195,7 +195,7 @@ void Scene::DeserializeScene(const fs::path& filePath)
 			const String& strPath = conf.GetValue(section, "path");
 			const auto* staticMesh = manager.FindStaticMesh(strPath);
 			if (!staticMesh)
-				staticMesh = manager.CreateStaticMesh(strPath);
+				staticMesh = &manager.CreateStaticMesh(strPath);
 
 			auto& component = object.AddComponent<StaticMesh>();
 			staticMesh->Clone(component);
@@ -232,11 +232,19 @@ void Scene::DeserializeScene(const fs::path& filePath)
 				//	"Silly_Dancing/<filename>.gltf" 
 				// ]
 				Vector<fs::path> relativeAnims{ std::istream_iterator<fs::path>(file), std::istream_iterator<fs::path>() };
-				animatorComponent.animationsPtr = animManager.LoadAnimations(*skeleton, relative, relativeAnims);
+				
+				// E.g. relativeAnims = [ 
+				//	"Mutant/Drunk_Walk/<filename>.gltf", 
+				//	"Mutant/Silly_Dancing/<filename>.gltf" 
+				// ]
+				for (auto& p : relativeAnims)
+					p = parent / p;
+
+				animatorComponent.animationsPtr = animManager.LoadAnimations(*skeleton, relativeAnims);
 			}
 			else
 			{
-				animatorComponent.animationsPtr = animManager.GetAnimationsVector(relative);
+				animatorComponent.animationsPtr = animManager.GetAnimationsVector(skeleton->id);
 			}
 			
 			skeleton->Clone(skmeshComponent);

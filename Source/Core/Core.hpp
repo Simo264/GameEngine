@@ -48,6 +48,8 @@ template<typename Type>
 using UniquePtr = std::unique_ptr<Type>;
 template<typename Type>
 using SharedPtr = std::shared_ptr<Type>;
+template<typename Type>
+using WeakPtr = std::weak_ptr<Type>;
 
 
 /************** Data types **************/

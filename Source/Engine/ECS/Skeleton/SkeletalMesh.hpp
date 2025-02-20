@@ -22,12 +22,12 @@ class SkeletalMesh
 public:
   /** @brief Default constructor for the SkeletonMesh class. */
   SkeletalMesh() :
-    meshes{ nullptr },
     nrMeshes{ 0 },
-    bones{ nullptr },
+    meshes{ nullptr },
     nrBones{ 0 },
+    bones{ nullptr },
+    boneNames{ nullptr },
     id{ 0 },
-    boneMap{},
     rootNode{}
   {}
   /** @brief Default destructor for the SkeletonMesh class. */
@@ -52,31 +52,21 @@ public:
 
   void Clone(SkeletalMesh& other) const;
 
-  /**
-   * @brief Draws the skeleton using the specified rendering mode.
-   * @param mode The rendering mode
-   */
-  void Draw(RenderMode mode);
+  void Draw(RenderMode mode) const;
   
   /**
    * @brief Searches for a bone by its name.
-   * @param boneName The name of the bone to search for.
    * @return A pair containing a pointer to the bone and its index, or {nullptr, -1} if the bone is not found.
    */
-  std::pair<const Bone*, i32> FindBone(StringView boneName) const;
+  std::pair<i32, Bone*> FindBone(StringView boneName) const;
   
-  /**
-   * @brief Inserts a new bone with the specified name or retrieves it if it already exists.
-   * @param boneName The name of the bone to insert or retrieve.
-   * @return A pair containing a pointer to the bone and its index.
-   */
-  std::pair<Bone*, i32> InsertBone(StringView boneName);
-
   /** @brief This method calculates and returns the total count of vertices. */
   u32 TotalVertices() const;
 
   /** @brief This method calculates and returns the total count of indices. */
   u32 TotalIndices() const;
+
+  u32 id;
 
   /** @brief A collection of meshes associated with the skeleton. */
   Mesh* meshes;
@@ -86,13 +76,15 @@ public:
   Bone* bones;
   u32 nrBones;
 
-  /**  Map storing the BoneName - boneIndex */
-  UnorderedMap<String, u32> boneMap;
+  /** @brief Map storing the bone index with the name */
+  struct BoneName
+  {
+    char name[32]{};
+  };
+  BoneName* boneNames;
 
   /** @brief The root node of the bone hierarchy. */
   BoneNode rootNode;
-
-  u32 id;
 
 private:
   void ProcessNode(aiNode* node, const aiScene* scene);
