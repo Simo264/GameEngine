@@ -24,13 +24,19 @@ struct KeyScale
 	f32 timeStamp{};
 	vec3f scale{};
 };
-struct AnimationKeys
+
+struct BoneAnimationKeys
 {
-	i32 boneIndex{};
-	Vector<KeyPosition> positionKeys{};
-	Vector<KeyRotation> rotationKeys{};
-	Vector<KeyScale>		scaleKeys{};
+	KeyPosition* posKeys;
+	u32 nrPosKeys;
+
+	KeyRotation* rotKeys;
+	u32 nrRotKeys;
+
+	KeyScale* scaleKeys;
+	u32 nrScaleKeys;
 };
+
 
 /** @brief Represents an animation associated with a skeleton mesh. */
 class Animation
@@ -51,9 +57,10 @@ public:
 	
 	~Animation() = default;
 	
+	/** @brief Frees memory allocated for bone animation keyframes. */
 	void Destroy() const;
 
-	AnimationKeys* boneKeys;
+	BoneAnimationKeys* bonesAnimKeys;
 	u32 nrKeys;
 
 	f32 duration;
@@ -61,6 +68,5 @@ public:
 	u32 id;
 	
 private:
-	void LoadAnimation(const aiAnimation* animation, const SkeletalMesh& skeleton);
-	void LoadBoneKeys(AnimationKeys& keys, const aiNodeAnim* channel);
+	void LoadBoneKeys(BoneAnimationKeys& boneKeys, const aiNodeAnim* channel);
 };

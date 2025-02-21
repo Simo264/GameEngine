@@ -28,6 +28,16 @@ static mat4f AiMatrixToGLM(const aiMatrix4x4& matrix)
 //										PUBLIC													
 // ----------------------------------------------------
 
+SkeletalMesh::SkeletalMesh() :
+	rootNode{},
+	meshes{},
+	bones{},
+	boneNames{},
+	nrBones{ 0 },
+	nrMeshes{ 0 },
+	id{ 0 }
+{}
+
 void SkeletalMesh::CreateFromFile(const fs::path& absolute)
 {
 	Assimp::Importer importer;
@@ -57,44 +67,41 @@ void SkeletalMesh::CreateFromFile(const fs::path& absolute)
 	});
 	assert(totalBones <= GetMaxNumBones());
 	
-
-	meshes = new Mesh[scene->mNumMeshes];
-	bones = new Bone[totalBones];
-	boneNames = new BoneName[totalBones];
+	meshes = std::make_unique<Mesh[]>(scene->mNumMeshes);
+	bones = std::make_unique<Bone[]>(totalBones);
+	boneNames = std::make_unique<BoneName[]>(totalBones);
+	rootNode = std::make_unique<BoneNode>();
 
 	ProcessNode(scene->mRootNode, scene);
-	LoadBoneHierarchy(rootNode, scene->mRootNode);
+	LoadBoneHierarchy(*rootNode, scene->mRootNode);
 }
 
 void SkeletalMesh::Clone(SkeletalMesh& other) const
 {
 	other.nrMeshes = nrMeshes;
-	other.meshes = new Mesh[nrMeshes];
+	other.meshes = std::make_unique<Mesh[]>(nrMeshes);
 	for (u32 i = 0; i < nrMeshes; i++)
 		other.meshes[i] = meshes[i];
 
 	other.nrBones = nrBones;
-	other.bones = new Bone[nrBones];
-	other.boneNames = new BoneName[nrBones];
+	other.bones = std::make_unique<Bone[]>(nrBones);
+	other.boneNames = std::make_unique<BoneName[]>(nrBones);
 	for (u32 i = 0; i < nrBones; i++)
 	{
 		other.bones[i] = bones[i];
 		other.boneNames[i] = boneNames[i];
 	}
 
-	other.rootNode = rootNode;
+	other.rootNode = std::make_unique<BoneNode>();
+	*other.rootNode = *rootNode;
 
 	other.id = id;
 }
 
-void SkeletalMesh::Destroy()
+void SkeletalMesh::Destroy() const
 {
 	for (u32 i = 0; i < nrMeshes; i++)
 		meshes[i].Destroy();
-
-	delete[] meshes;
-	delete[] bones;
-	delete[] boneNames;
 }
 
 void SkeletalMesh::Draw(RenderMode mode) const
@@ -120,14 +127,14 @@ std::pair<i32, Bone*> SkeletalMesh::FindBone(StringView boneName) const
 
 u32 SkeletalMesh::TotalVertices() const
 {
-	return std::reduce(meshes, meshes + nrMeshes, 0, [](i32 acc, const Mesh& mesh) {
+	return std::reduce(meshes.get(), meshes.get() + nrMeshes, 0, [](i32 acc, const Mesh& mesh) {
 		return acc + mesh.vao.numVertices;
 	});
 }
 
 u32 SkeletalMesh::TotalIndices() const
 {
-	return std::reduce(meshes, meshes + nrMeshes, 0, [](i32 acc, const Mesh& mesh) {
+	return std::reduce(meshes.get(), meshes.get() + nrMeshes, 0, [](i32 acc, const Mesh& mesh) {
 		return acc + mesh.vao.numIndices;
 	});
 }

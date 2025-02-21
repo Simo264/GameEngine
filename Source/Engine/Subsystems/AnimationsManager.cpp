@@ -14,7 +14,7 @@ const Vector<Animation>* AnimationsManager::LoadAnimations(const SkeletalMesh& s
 	//	"Mutant/Silly_Dancing/anim.gltf" 
 	// ]
 
-	CONSOLE_TRACE("Loading animations for skeleton id {}", skeleton.id);
+	CONSOLE_INFO("Loading animations for skeleton {}", skeleton.id);
 
 	auto [it, success] = _skeletonAnimations.emplace(
 		std::piecewise_construct,
@@ -41,7 +41,7 @@ const Vector<Animation>* AnimationsManager::LoadAnimations(const SkeletalMesh& s
 	return &animVector;
 }
 
-const Vector<Animation>* AnimationsManager::GetAnimationsVector(u32 skeletonID)
+const Vector<Animation>* AnimationsManager::GetSkeletonAnimations(u32 skeletonID)
 {
 	auto it = _skeletonAnimations.find(skeletonID);
 	if (it != _skeletonAnimations.end())

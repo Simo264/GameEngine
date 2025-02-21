@@ -17,19 +17,16 @@ public:
 	
 	void UpdateValue(StringView newValue)
 	{
-		std::fill_n(value, sizeof(value), 0);
+		std::memset(value, 0, sizeof(value));
 
 		if (newValue.empty())
 			return;
 		
-		if (newValue.size() >= 64)
-		{
-			CONSOLE_WARN("newValue.size() >= 64");
-			return;
-		}
+		if (newValue.size() >= sizeof(value))
+			CONSOLE_WARN("newValue.size() >= {}", sizeof(value));
 
-		std::copy_n(newValue.data(), newValue.size(), value);
+		std::strncpy(value, newValue.data(), sizeof(value));
 	}
 
-	char value[64]{};
+	char value[32]{};
 };

@@ -96,7 +96,7 @@ static void Hierarchy_ObjectMenuPopup(Scene& scene, GameObject& objSelected)
         }
       }
 
-      scene.DestroyObject(objSelected);
+      scene.DestroyObject(objSelected.id);
     }
     ImGui::EndPopup();
   }

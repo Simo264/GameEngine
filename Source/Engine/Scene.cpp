@@ -21,21 +21,24 @@ Scene::Scene(const fs::path& filePath)
 }
 GameObject Scene::CreateObject(StringView objName)
 {
-	auto id = _registry.create();
+	entt::entity id = _registry.create();
 	
-	char defaultTag[64]{};
-	if(objName.empty())
+	char defaultTag[32]{};
+	if (objName.empty())
 		std::format_to_n(defaultTag, sizeof(defaultTag), "Object_{}", static_cast<u32>(id));
 	else
-		std::format_to_n(defaultTag, sizeof(defaultTag), "{}", objName.data());
+		std::strncpy(defaultTag, objName.data(), sizeof(defaultTag));
 
-	GameObject object = GameObject{ id, &_registry };
+	GameObject object{ id, &_registry };
 	object.AddComponent<Tag>(defaultTag);
 	return object;
 }
-void Scene::DestroyObject(GameObject& object)
+void Scene::DestroyObject(entt::entity id)
 {
-	_registry.destroy(object.ID());
+	if (_registry.valid(id))
+		_registry.destroy(id);
+	else
+		CONSOLE_WARN("Entity id {} is not a valid object", static_cast<u32>(id));
 }
 void Scene::Clear()
 {
@@ -62,7 +65,7 @@ void Scene::SerializeScene(const fs::path& filePath)
 	for (auto [entity, tag] : Reg().view<Tag>().each())
 	{
 		GameObject object{ entity, &Reg() };
-		const u32 objectID = static_cast<u32>(object.ID());
+		const u32 objectID = static_cast<u32>(object.id);
 
 		String section = std::format("Entity{}:Tag", objectID);
 		conf.Update(section, "value", tag.value);
@@ -222,29 +225,31 @@ void Scene::DeserializeScene(const fs::path& filePath)
 				fs::path absolute = (Filesystem::GetSkeletalModelsPath() / parent);
 				// E.g. skeletonPath = "D:\GameEngine\Assets\Models\Skeletal\animlist.txt"
 				fs::path animlistFile = absolute / "animlist.txt";
-				if (!fs::exists(animlistFile))
-					throw std::runtime_error(std::format("File {} does not exist", animlistFile.string()));
-				
-				IStream file(animlistFile);
-				
-				// E.g. relativeAnims = [ 
-				//	"Drunk_Walk/<filename>.gltf", 
-				//	"Silly_Dancing/<filename>.gltf" 
-				// ]
-				Vector<fs::path> relativeAnims{ std::istream_iterator<fs::path>(file), std::istream_iterator<fs::path>() };
-				
-				// E.g. relativeAnims = [ 
-				//	"Mutant/Drunk_Walk/<filename>.gltf", 
-				//	"Mutant/Silly_Dancing/<filename>.gltf" 
-				// ]
-				for (auto& p : relativeAnims)
-					p = parent / p;
 
-				animatorComponent.animationsPtr = animManager.LoadAnimations(*skeleton, relativeAnims);
-			}
-			else
-			{
-				animatorComponent.animationsPtr = animManager.GetAnimationsVector(skeleton->id);
+				Vector<fs::path> relativeAnims{};
+				if (!fs::exists(animlistFile))
+				{
+					CONSOLE_WARN("{} file does not exist");
+				}
+				else
+				{
+					IStream file(animlistFile);
+
+					// E.g. relativeAnims = [ 
+					//	"Drunk_Walk/<filename>.gltf", 
+					//	"Silly_Dancing/<filename>.gltf" 
+					// ]
+					relativeAnims.assign(std::istream_iterator<fs::path>(file), std::istream_iterator<fs::path>());
+
+					// E.g. relativeAnims = [ 
+					//	"Mutant/Drunk_Walk/<filename>.gltf", 
+					//	"Mutant/Silly_Dancing/<filename>.gltf" 
+					// ]
+					for (auto& p : relativeAnims)
+						p = parent / p;
+				}
+
+				animManager.LoadAnimations(*skeleton, relativeAnims);
 			}
 			
 			skeleton->Clone(skmeshComponent);

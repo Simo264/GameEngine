@@ -3,6 +3,9 @@
 #include "Core/Log/Logger.hpp"
 #include "Engine/Filesystem/Filesystem.hpp"
 
+static u32 staticMeshId = 0;
+static u32 skeletonId = 0;
+
 const StaticMesh* ModelsManager::FindStaticMesh(const fs::path& relative) const
 {
 	fs::path normalized = relative.lexically_normal();
@@ -20,14 +23,15 @@ const StaticMesh& ModelsManager::CreateStaticMesh(const fs::path& relative)
 	fs::path normalized = relative.lexically_normal();
 	fs::path absolute = (Filesystem::GetStaticModelsPath() / relative).lexically_normal();
 
-	CONSOLE_TRACE("Create new static mesh: '{}'", absolute.string());
+	//CONSOLE_INFO("Create new static mesh {}: '{}'", staticMeshId, absolute.string());
 	auto& newMesh = _staticMeshObjects.emplace_back();
 	newMesh.CreateFromPath(absolute);
-	newMesh.id = _staticMeshObjects.size();
+	newMesh.id = staticMeshId;
 
-	CONSOLE_TRACE("Insert new static mesh: '{}'", normalized.string());
-	_staticMeshPaths.emplace_back(_staticMeshObjects.size() - 1, normalized);
-
+	_staticMeshPaths.emplace_back(staticMeshId, normalized);
+	
+	staticMeshId++;
+	
 	return newMesh;
 }
 
@@ -48,25 +52,26 @@ const SkeletalMesh* ModelsManager::CreateSkeletalMesh(const fs::path& relative)
 	fs::path pathNormal = relative.lexically_normal();
 	fs::path absolute = (Filesystem::GetSkeletalModelsPath() / pathNormal).lexically_normal();
 
-	CONSOLE_TRACE("Insert new skeletal mesh: '{}'", pathNormal.string());
-	u32 skeletonId = _skeletalMeshObjects.size();
 	auto [it, success] = _skeletalMeshObjects.emplace(
 		std::piecewise_construct,
 		std::forward_as_tuple(skeletonId),// Insert key
-		std::forward_as_tuple()				// construct empty SkeletalMesh object
+		std::forward_as_tuple()						// construct empty SkeletalMesh object
 	);
 	if (!success)
 	{
-		CONSOLE_WARN("Error on loading SkeletalMesh object");
+		CONSOLE_ERROR("Error on loading SkeletalMesh object");
 		return nullptr;
 	}
 	
 	auto& [newID, newPath] = _skeletalMeshPaths.emplace_back(skeletonId, pathNormal);
 	
-	CONSOLE_INFO("Create new skeletal mesh: '{}'", absolute.string());
+	CONSOLE_INFO("Create new skeletal mesh {}: '{}'", skeletonId, absolute.string());
 	SkeletalMesh& skeleton = it->second;
 	skeleton.CreateFromFile(absolute);
 	skeleton.id = skeletonId;
+
+	skeletonId++;
+	
 	return &skeleton;
 }
 
@@ -91,7 +96,7 @@ const fs::path* ModelsManager::GetSkeletalMeshPath(u32 skeletalMeshId) const
 	return nullptr;
 }
 
-void ModelsManager::DestroyAll()
+void ModelsManager::CleanUp()
 {
 	for (auto& staticMesh : _staticMeshObjects)
 		staticMesh.Destroy();

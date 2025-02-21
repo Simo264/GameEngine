@@ -22,14 +22,27 @@ struct aiMaterial;
 class StaticMesh
 {
 public:
-	/** @brief Default constructor. */
-	StaticMesh() : 
-		meshes{ nullptr },
-		nrMeshes{ 0 },
-		id{ 0 }
-	{}
-	/** @brief Default destructor. */
+	StaticMesh();
+
+	/**
+	 * @brief Releases CPU-side memory used by the static mesh.
+	 *
+	 * This destructor frees the allocated memory for the `meshes` array. It does not
+	 * affect GPU resources, as those must be explicitly released using `Destroy()`
+	 * before deleting the object.
+	 *
+	 * @note The destructor is called when a `StaticMesh` component is removed from an
+	 *       object or when the original instance is destroyed by `ModelsManager`.
+	 */
 	~StaticMesh() = default;
+
+	/** @brief Move constructor */
+	StaticMesh(StaticMesh&&) noexcept = default;
+	StaticMesh& operator=(StaticMesh&&) noexcept = default;
+
+	/** @brief Delete copy constructor */
+	StaticMesh(const StaticMesh&) = delete;
+	StaticMesh& operator=(const StaticMesh&) = delete;
 
 	/**
 	 * @brief Creates a static mesh from the specified file path.
@@ -40,20 +53,38 @@ public:
 	 */
 	void CreateFromPath(const fs::path& absolute);
 	
+	/**
+	 * @brief Creates a copy of the current static mesh with shared VAOs but unique materials.
+	 *
+	 * This method allocates new memory for the `Mesh` array in `other`,
+	 * ensuring that each copy has its own independent materials.
+	 * However, the VAOs (vertex array objects) remain shared between all copies.
+	 *
+	 * @note Since VAOs are shared, changes to the mesh geometry will affect all copies.
+	 *       However, materials can be modified independently.
+	 */
 	void Clone(StaticMesh& other) const;
 
-	void Destroy();
+	/**
+	 * @brief Frees GPU memory by destroying OpenGL buffers and VAOs.
+	 *
+	 * This method releases all OpenGL-related resources, including vertex array objects (VAOs)
+	 * and associated buffers. It should only be called on the original instance to avoid
+	 * affecting shared meshes.
+	 *
+	 * @note Since VAOs and buffers are shared across copies, calling `Destroy()` on a copy
+	 *       would result in invalid references. Ensure that only the original instance calls this method.
+	 */
+	void Destroy() const;
 
 	void Draw(RenderMode mode) const;
 
-	/** @brief Returns the total number of vertices in the mesh. */
 	u32 TotalVertices() const;
 	
-	/** @brief Returns the total number of indices in the mesh. */
 	u32 TotalIndices() const;
 
 	/** @brief List of meshes contained in the model. */
-	Mesh* meshes;
+	UniquePtr<Mesh[]> meshes;
 	u32 nrMeshes;
 
 	u32 id;

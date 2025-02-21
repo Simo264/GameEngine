@@ -526,15 +526,10 @@ static void Insp_Animator(GameObject& object, Animator& animator)
   AnimationsManager& animManager = AnimationsManager::Get();
 
   SkeletalMesh* skeleton = object.GetComponent<SkeletalMesh>();
-  const auto* animations = animator.animationsPtr;
-  if (!animations)
-  {
-    ImGui::Text("No animations");
-    return;
-  }
-  
-  ImGui::Text("Nr animations: %d", animations->size());
+  assert(skeleton != nullptr);
 
+  const auto* skeletonAnimations = animManager.GetSkeletonAnimations(skeleton->id);
+  
   const Animation* animAttached = animator.GetAttachedAnimation();
   const fs::path* animAttachedPath = nullptr;
   if(animAttached)
@@ -547,9 +542,9 @@ static void Insp_Animator(GameObject& object, Animator& animator)
     ImGui::Text("Current animation: none");
   }
 
-  if (ImGui::BeginCombo("Animation list", (animAttachedPath == nullptr ? "Select animation" : animAttachedPath->string().c_str())))
+  if (ImGui::BeginCombo("Animation list", (!animAttached ? "Select animation" : animAttachedPath->string().c_str())))
   {
-    for (const auto& animation : *animations)
+    for (const auto& animation : *skeletonAnimations)
     {
       const auto* path = animManager.GetAnimationPath(animation.id);
       if (ImGui::Selectable(path->string().c_str(), animAttachedPath == path))
@@ -584,7 +579,7 @@ static void Insp_Animator(GameObject& object, Animator& animator)
       animator.SetTargetAnimation(nullptr);
 
     f32 duration = animAttached->duration;
-    f32 currentTime = animator.CurrentTime();
+    f32 currentTime = animator.currentTime;
     f32 progression = currentTime / duration;
     char label[8]{};
     std::format_to_n(label, sizeof(label), "{}%", static_cast<u32>(progression*100));
@@ -695,6 +690,7 @@ static void Insp_AddSkeletalMeshComponent(GameObject& object)
       const char* filter[] = { "*.obj", "*.glb", "*.gltf", "*.fbx" };
       constexpr u32 numFilters = sizeof(filter) / sizeof(filter[0]);
       path = Utils::OpenFileDialog(numFilters, filter, "Skeleton mesh file", false);
+      path = fs::relative(path, Filesystem::GetSkeletalModelsPath());
     }
     String pathStr = path.string();
 
@@ -712,7 +708,7 @@ static void Insp_AddSkeletalMeshComponent(GameObject& object)
 
         auto& skComponent = object.AddComponent<SkeletalMesh>();
         auto& anComponent = object.AddComponent<Animator>();
-        skComponent = *skeleton;
+        skeleton->Clone(skComponent);
         anComponent.SetTargetSkeleton(skComponent);
 
         path.clear();
@@ -809,7 +805,7 @@ static void Insp_NewComponentPopup(GameObject& object)
 
     // Add SkeletalMesh component
     // --------------------------------
-    //Insp_AddSkeletalMeshComponent(object);
+    Insp_AddSkeletalMeshComponent(object);
     
     ImGui::EndPopup();
   }

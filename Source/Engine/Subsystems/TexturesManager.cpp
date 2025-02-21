@@ -73,7 +73,6 @@ const Texture2D* TexturesManager::CreateTexture(const fs::path& relative)
   texture.LoadImageData(absolute);
 
   fs::path normalized = relative.lexically_normal();
-  CONSOLE_TRACE("Insert new texture: {}", normalized.string());
   _texturePaths.emplace_back(_textures.size() - 1, normalized);
 
   return &texture;
@@ -106,7 +105,6 @@ const Texture2D* TexturesManager::CreateIcon(const fs::path& relative)
   icon.LoadImageData(absolute);
 
   fs::path normalized = relative.lexically_normal();
-  CONSOLE_TRACE("Insert new icon: {}", normalized.string());
   _iconPaths.emplace_back(_icons.size() - 1, normalized);
   return &icon;
 }

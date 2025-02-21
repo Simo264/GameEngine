@@ -37,7 +37,7 @@ public:
 	 *
 	 * @return Pointer to a vector of Animation objects, or nullptr if no animations are found.
 	 */
-	const Vector<Animation>* GetAnimationsVector(u32 skeletonID);
+	const Vector<Animation>* GetSkeletonAnimations(u32 skeletonID);
 
 	const fs::path* GetAnimationPath(u32 animationID) const;
 

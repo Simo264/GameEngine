@@ -19,6 +19,9 @@ public:
 		return modelsManager;
 	}
 
+	/** @brief Cleans up all loaded models by freeing their allocated resources. */
+	void CleanUp();
+
 	/**
 	 * @brief Finds an existing static mesh by its relative path.
 	 * This method searches for a previously loaded static mesh using the given relative path.
@@ -66,8 +69,6 @@ public:
 	const fs::path* GetStaticMeshPath(u32 staticMeshId) const;
 
 	const fs::path* GetSkeletalMeshPath(u32 skeletalMeshId) const;
-
-	void DestroyAll();
 
 private:
 	ModelsManager() = default;

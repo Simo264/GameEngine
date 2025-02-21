@@ -13,31 +13,36 @@ class GameObject;
 class Scene
 {
 public:
-	/** @brief Default constructor for Scene. */
 	Scene() = default;
-	/** @brief Constructs a Scene by loading from a file. */
 	Scene(const fs::path& filePath);
-	/** @brief Default destructor for Scene. */
 	~Scene() = default;
 
 	/** @brief Loads a scene from a file. */
 	void LoadFromFile(const fs::path& filePath);
 	/** @brief Saves the current scene to a file. */
 	void Save(const fs::path& filePath);
-	/** @brief Clears all objects and data from the current scene. */
+	
+	/**
+	 * @brief Destroys all objects in the scene and clears the registry.
+	 *
+	 * This method removes all entities from the registry and calls the destructors
+	 * of all associated components. After this operation, the scene will be empty.
+	 *
+	 * @note This does not free the memory used by component pools, but it resets them.
+	 */
 	void Clear();
 
-	/**
-	 * @brief Creates a new object in the scene.
-	 * 
-	 * @param objName Optional name for the object.
-	 * 
-	 * @return The created GameObject.
-	 */
-	GameObject CreateObject(StringView objName = "");
+	GameObject CreateObject(StringView objName = "object");
 	
-	/** @brief Destroys an object in the scene. */
-	void DestroyObject(GameObject& object);
+	/**
+	 * @brief Destroys a specific game object and removes all its components.
+	 *
+	 * This method unregisters the given object from the scene by destroying its associated
+	 * entity in the registry. The destructors of all its components will be called automatically.
+	 *
+	 * @param object The game object to be destroyed.
+	 */
+	void DestroyObject(entt::entity id);
 
 	/** @brief Provides access to the internal entity registry. */
 	entt::registry& Reg() { return _registry; }

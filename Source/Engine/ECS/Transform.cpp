@@ -1,6 +1,7 @@
 #include "Transform.hpp"
 
 #include "Core/Math/Ext.hpp"
+#include "Core/Log/Logger.hpp"
 
 Transform::Transform()
 	: position{ 0.0f, 0.0f, 0.0f },

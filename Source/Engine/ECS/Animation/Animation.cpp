@@ -9,12 +9,14 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
+
+
 // ---------------------------------------------------- 
 // 									PUBLIC														
 // ---------------------------------------------------- 
 
 Animation::Animation(const SkeletalMesh& skeleton, const fs::path& relative) :
-	boneKeys{ nullptr },
+	bonesAnimKeys{ nullptr },
 	nrKeys{ 0 },
 	duration{ 0 },
 	ticksPerSecond{ 0 },
@@ -25,7 +27,10 @@ Animation::Animation(const SkeletalMesh& skeleton, const fs::path& relative) :
 	fs::path absolute = (Filesystem::GetSkeletalModelsPath() / relative);
 
 	Assimp::Importer importer;
-	const aiScene* scene = importer.ReadFile(absolute.string(), aiProcess_Triangulate);
+	const aiScene* scene = importer.ReadFile(absolute.string(), 
+																					 aiProcess_Triangulate |
+																					 aiProcess_LimitBoneWeights |
+																					 aiProcess_JoinIdenticalVertices);
 	if (!scene || !scene->mRootNode)
 	{
 		CONSOLE_ERROR("Assimp importer error: {}", importer.GetErrorString());
@@ -40,83 +45,65 @@ Animation::Animation(const SkeletalMesh& skeleton, const fs::path& relative) :
 	aiAnimation* animation = scene->mAnimations[0];
 	duration = animation->mDuration;
 	ticksPerSecond = animation->mTicksPerSecond;
-	boneKeys = new AnimationKeys[animation->mNumChannels];
-	
-	LoadAnimation(animation, skeleton);
 
-	std::sort(boneKeys, boneKeys + nrKeys, [](const AnimationKeys& a, const AnimationKeys& b) {
-		return a.boneIndex < b.boneIndex;
-	});
+	bonesAnimKeys = new BoneAnimationKeys[skeleton.nrBones];
+	nrKeys = skeleton.nrBones;
+	
+	for (u32 i = 0; i < animation->mNumChannels; i++)
+	{
+		aiNodeAnim* channel = animation->mChannels[i];
+		const char* channelName = channel->mNodeName.C_Str();
+
+		auto [index, bone] = skeleton.FindBone(channelName);
+		if (!bone)
+			continue;
+
+		auto& boneKeys = bonesAnimKeys[index];
+		LoadBoneKeys(boneKeys, channel);
+	}
 }
 
 void Animation::Destroy() const
 {
-	delete[] boneKeys;
+	for (u32 i = 0; i < nrKeys; i++)
+	{
+		delete[] bonesAnimKeys[i].posKeys;
+		delete[] bonesAnimKeys[i].rotKeys;
+		delete[] bonesAnimKeys[i].scaleKeys;
+	}
+	delete[] bonesAnimKeys;
 }
 
 // ----------------------------------------------------
 //										PRIVATE													
 // ----------------------------------------------------
 
-void Animation::LoadAnimation(const aiAnimation* animation, const SkeletalMesh& skeleton)
+void Animation::LoadBoneKeys(BoneAnimationKeys& boneKeys, const aiNodeAnim* channel)
 {
-	for (i32 i = 0; i < animation->mNumChannels; i++)
-	{
-		aiNodeAnim* channel = animation->mChannels[i];
-		const char* boneName = channel->mNodeName.data;
-
-		// Load skeleton bones
-		auto [boneIndex, bone] = skeleton.FindBone(boneName);
-		if (!bone)
-			continue;
-
-		// Load bone keys
-		AnimationKeys& keys = boneKeys[nrKeys++];
-
-		keys.boneIndex = boneIndex;
-		keys.positionKeys.reserve(channel->mNumPositionKeys);
-		keys.rotationKeys.reserve(channel->mNumRotationKeys);
-		keys.scaleKeys.reserve(channel->mNumScalingKeys);
-		LoadBoneKeys(keys, channel);
-	}
-}
-void Animation::LoadBoneKeys(AnimationKeys& keys, const aiNodeAnim* channel)
-{
+	boneKeys.posKeys = new KeyPosition[channel->mNumPositionKeys];
+	boneKeys.nrPosKeys = channel->mNumPositionKeys;
 	for (u32 i = 0; i < channel->mNumPositionKeys; i++)
 	{
-		f32 timestamp = channel->mPositionKeys[i].mTime;
-		vec3f position = vec3f(
-			channel->mPositionKeys[i].mValue.x,
-			channel->mPositionKeys[i].mValue.y,
-			channel->mPositionKeys[i].mValue.z
-		);
-		auto& key = keys.positionKeys.emplace_back();
-		key.timeStamp = timestamp;
-		key.position = position;
+		aiVectorKey& tmp = channel->mPositionKeys[i];
+		boneKeys.posKeys[i].timeStamp = tmp.mTime;
+		boneKeys.posKeys[i].position = vec3f(tmp.mValue.x, tmp.mValue.y, tmp.mValue.z);
 	}
+
+	boneKeys.rotKeys = new KeyRotation[channel->mNumRotationKeys];
+	boneKeys.nrRotKeys = channel->mNumRotationKeys;
 	for (u32 i = 0; i < channel->mNumRotationKeys; i++)
 	{
-		f32 timestamp = channel->mRotationKeys[i].mTime;
-		quat orientation = quat(
-			channel->mRotationKeys[i].mValue.w,
-			channel->mRotationKeys[i].mValue.x,
-			channel->mRotationKeys[i].mValue.y,
-			channel->mRotationKeys[i].mValue.z
-		);
-		auto& key = keys.rotationKeys.emplace_back();
-		key.timeStamp = timestamp;
-		key.orientation = orientation;
+		aiQuatKey& tmp = channel->mRotationKeys[i];
+		boneKeys.rotKeys[i].timeStamp = tmp.mTime;
+		boneKeys.rotKeys[i].orientation = quat(tmp.mValue.w, tmp.mValue.x, tmp.mValue.y, tmp.mValue.z);
 	}
+
+	boneKeys.scaleKeys = new KeyScale[channel->mNumScalingKeys];
+	boneKeys.nrScaleKeys = channel->mNumScalingKeys;
 	for (u32 i = 0; i < channel->mNumScalingKeys; i++)
 	{
-		f32 timestamp = channel->mScalingKeys[i].mTime;
-		vec3f scale = vec3f(
-			channel->mScalingKeys[i].mValue.x,
-			channel->mScalingKeys[i].mValue.y,
-			channel->mScalingKeys[i].mValue.z
-		);
-		auto& key = keys.scaleKeys.emplace_back();
-		key.timeStamp = timestamp;
-		key.scale = scale;
+		aiVectorKey& tmp = channel->mScalingKeys[i];
+		boneKeys.scaleKeys[i].timeStamp = tmp.mTime;
+		boneKeys.scaleKeys[i].scale = vec3f(tmp.mValue.x, tmp.mValue.y, tmp.mValue.z);
 	}
 }

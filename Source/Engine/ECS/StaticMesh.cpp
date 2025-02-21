@@ -16,6 +16,13 @@
 //										PUBLIC													
 // ----------------------------------------------------
 
+StaticMesh::StaticMesh() :
+	meshes{},
+	nrMeshes{ 0 },
+	id{ 0 }
+{
+}
+
 void StaticMesh::CreateFromPath(const fs::path& absolute)
 {
 	Assimp::Importer importer;
@@ -40,14 +47,14 @@ void StaticMesh::CreateFromPath(const fs::path& absolute)
 		return;
 	}
 	
-	meshes = new Mesh[scene->mNumMeshes];
+	meshes = std::make_unique<Mesh[]>(scene->mNumMeshes);
 	nrMeshes = 0;
 	ProcessNode(scene->mRootNode, scene);
 }
 
 void StaticMesh::Clone(StaticMesh& other) const
 {
-	other.meshes = new Mesh[nrMeshes];
+	other.meshes = std::make_unique<Mesh[]>(nrMeshes);
 	other.nrMeshes = nrMeshes;
 	for (u32 i = 0; i < nrMeshes; i++)
 		other.meshes[i] = meshes[i];
@@ -55,12 +62,10 @@ void StaticMesh::Clone(StaticMesh& other) const
 	other.id = id;
 }
 
-void StaticMesh::Destroy()
+void StaticMesh::Destroy() const
 {
 	for (u32 i = 0; i < nrMeshes; i++)
 		meshes[i].Destroy();
-
-	delete[] meshes;
 }
 
 void StaticMesh::Draw(RenderMode mode) const
@@ -77,14 +82,14 @@ void StaticMesh::Draw(RenderMode mode) const
 
 u32 StaticMesh::TotalVertices() const
 {
-	return std::reduce(meshes, meshes + nrMeshes, 0, [](i32 acc, const Mesh& mesh) {
+	return std::reduce(meshes.get(), meshes.get() + nrMeshes, 0, [](i32 acc, const Mesh& mesh) {
 		return acc + mesh.vao.numVertices;
 	});
 }
 
 u32 StaticMesh::TotalIndices() const
 {
-	return std::reduce(meshes, meshes + nrMeshes, 0, [](i32 acc, const Mesh& mesh) {
+	return std::reduce(meshes.get(), meshes.get() + nrMeshes, 0, [](i32 acc, const Mesh& mesh) {
 		return acc + mesh.vao.numIndices;
 		});
 }

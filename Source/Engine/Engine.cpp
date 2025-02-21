@@ -19,6 +19,8 @@
 #include "Engine/Subsystems/WindowManager.hpp"
 #include "Engine/Subsystems/ShadersManager.hpp"
 #include "Engine/Subsystems/TexturesManager.hpp"
+#include "Engine/Subsystems/ModelsManager.hpp"
+#include "Engine/Subsystems/AnimationsManager.hpp"
 #include "Engine/Filesystem/Filesystem.hpp"
 
 #include "GUI/ImGuiLayer.hpp"
@@ -154,29 +156,6 @@ static void CalculatePerFrameTime()
     frames = 0;
     totalDeltasPerSecond = 0;
   }
-}
-static void RenderStaticMesh(const Program& program, 
-                             StaticMesh& staticMesh, 
-                             Transform& transform)
-{
-  program.SetUniformMat4f("u_model", transform.GetTransformation());
-  staticMesh.Draw(RenderMode::TRIANGLES);
-}
-static void RenderSkeletalMesh(const Program& program,
-                               SkeletalMesh& skeletalMesh,
-                               Animator& animator,
-                               Transform& transform,
-                               Buffer& uboBoneBlock)
-{
-  animator.UpdateAnimation(delta);
-  const Vector<mat4f>& boneTransforms = animator.GetBoneTransforms();
-
-  uboBoneBlock.UpdateStorage(0, 
-    boneTransforms.size() * sizeof(mat4f), 
-    boneTransforms.data());
-
-  program.SetUniformMat4f("u_model", transform.GetTransformation());
-  skeletalMesh.Draw(RenderMode::TRIANGLES);
 }
 static void CreateSkybox(Mesh& skybox, TextureCubemap& skyboxTexture)
 {
@@ -602,26 +581,29 @@ void Engine::Run()
       /// Render scene with no shadows
       else
       {
-        // Render all static meshes
         sceneProgram.Use();
         sceneProgram.SetUniform3f("u_viewPos", primaryCamera.position);
         sceneProgram.SetUniform1i("u_useNormalMap", normalMapMode);
         scene.Reg().view<StaticMesh, Transform>().each([&](auto& staticMesh, auto& transform) 
         {
-          RenderStaticMesh(sceneProgram, staticMesh, transform);
+          sceneProgram.SetUniformMat4f("u_model", transform.GetTransformation());
+          staticMesh.Draw(RenderMode::TRIANGLES);
         });
 
-        // Render all skeleton meshes
         skeletalAnimProgram.Use();
         skeletalAnimProgram.SetUniform3f("u_viewPos", primaryCamera.position);
         skeletalAnimProgram.SetUniform1i("u_useNormalMap", normalMapMode);
         scene.Reg().view<SkeletalMesh, Animator, Transform>().each([&](auto& skeletalMesh, auto& animator, auto& transform) 
         {
-          RenderSkeletalMesh(skeletalAnimProgram, 
-            skeletalMesh, 
-            animator, 
-            transform, 
-            _uboBoneBlock);
+          animator.UpdateAnimation(delta);
+          const auto& boneTransforms = animator.boneTransforms;
+
+          _uboBoneBlock.UpdateStorage(0,
+                                      animator.nrBoneTransforms * sizeof(mat4f),
+                                      boneTransforms.get());
+
+          skeletalAnimProgram.SetUniformMat4f("u_model", transform.GetTransformation());
+          skeletalMesh.Draw(RenderMode::TRIANGLES);
         });
       }
 
@@ -682,11 +664,11 @@ void Engine::Run()
     // ------------------------------------------------------------------
     windowManager.SwapWindowBuffers();
   }
+
+  scene.Clear();
  
   gridPlane.Destroy();
   skybox.Destroy();
-  
-  scene.Clear();
 }
 void Engine::CleanUp()
 {
@@ -694,10 +676,14 @@ void Engine::CleanUp()
   _fboMultisampled.Delete();
   _screenSquare.Delete();
   _uboCameraBlock.Delete();
+  _uboLightBlock.Delete();
+  _uboBoneBlock.Delete();
 
   ImGuiLayer::Get().CleanUp();
   ShadersManager::Get().CleanUp();
   TexturesManager::Get().CleanUp();
+  ModelsManager::Get().CleanUp();
+  AnimationsManager::Get().CleanUp();
   WindowManager::Get().CleanUp(); // !!Raise exception here
 }
 
