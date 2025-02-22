@@ -17,7 +17,15 @@ struct aiMaterial;
 class SkeletalMesh
 {
 public:
-  SkeletalMesh();
+  SkeletalMesh() :
+    rootNode{},
+    meshes{},
+    bones{},
+    boneNames{},
+    nrBones{ 0 },
+    nrMeshes{ 0 },
+    id{ 0 }
+  {}
 
   /**
    * @brief Releases CPU-side memory used by the skeletal mesh.

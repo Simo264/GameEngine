@@ -1,10 +1,10 @@
 #pragma once
 
-class Texture2D;
+#include "Engine/Graphics/Objects/Texture2D.hpp"
 
 struct Material
 {
-	const Texture2D* diffuse;
-	const Texture2D* specular;
-	const Texture2D* normal;
+	Texture2D diffuse;
+	Texture2D specular;
+	Texture2D normal;
 };

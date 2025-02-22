@@ -124,8 +124,8 @@ static void Insp_DirectLight(GameObject& object, DirectionalLight& light)
     object.RemoveComponent<DirectionalLight>();
 
     ShadersManager& shadersManager = ShadersManager::Get();
-    auto& shaderScene = shadersManager.GetProgram("Scene");
-    auto& shaderSceneShadows = shadersManager.GetProgram("SceneShadows");
+    Program shaderScene = shadersManager.GetProgram("Scene");
+    Program shaderSceneShadows = shadersManager.GetProgram("SceneShadows");
     shaderScene.SetUniform1f("u_directionalLight.intensity", 0.f);
     shaderSceneShadows.SetUniform1f("u_directionalLight.intensity", 0.f);
   }
@@ -189,8 +189,8 @@ static void Insp_PointLight(GameObject& object, PointLight& light)
     object.RemoveComponent<PointLight>();
 
     ShadersManager& shadersManager = ShadersManager::Get();
-    auto& shaderScene = shadersManager.GetProgram("Scene");
-    auto& shaderSceneShadows = shadersManager.GetProgram("SceneShadows");
+    Program shaderScene = shadersManager.GetProgram("Scene");
+    Program shaderSceneShadows = shadersManager.GetProgram("SceneShadows");
     shaderScene.SetUniform1f("u_pointLight.intensity", 0.f);
     shaderSceneShadows.SetUniform1f("u_pointLight.intensity", 0.f);
   }
@@ -276,8 +276,8 @@ static void Insp_SpotLight(GameObject& object, SpotLight& light)
     object.RemoveComponent<SpotLight>();
 
     ShadersManager& shadersManager = ShadersManager::Get();
-    auto& shaderScene = shadersManager.GetProgram("Scene");
-    auto& shaderSceneShadows = shadersManager.GetProgram("SceneShadows");
+    Program shaderScene = shadersManager.GetProgram("Scene");
+    Program shaderSceneShadows = shadersManager.GetProgram("SceneShadows");
     shaderScene.SetUniform1f("u_spotLight.intensity", 0.f);
     shaderSceneShadows.SetUniform1f("u_spotLight.intensity", 0.f);
   }
@@ -371,12 +371,12 @@ static void Insp_Transform(GameObject& object, Transform& transform)
     object.RemoveComponent<Transform>();
   ImGui::PopStyleColor(3);
 }
-static void Insp_ShowTextureSelector(StringView label, const Texture2D*& meshTexture, const Texture2D& defaultTex)
+static void Insp_ShowTextureSelector(StringView label, Texture2D& meshTexture, Texture2D defaultTex)
 {
   auto& texManager = TexturesManager::Get();
-  static const auto* resetIcon = texManager.GetOrCreateIcon("reset-arrow-16.png");
+  static Texture2D resetIcon = texManager.GetOrCreateIcon("reset-arrow-16.png");
 
-  bool isMeshTextureValid = meshTexture->GetWidth() != 1;
+  bool isMeshTextureValid = meshTexture.GetWidth() != 1;
 
   // First column: label
   ImGui::TableNextColumn();
@@ -387,7 +387,7 @@ static void Insp_ShowTextureSelector(StringView label, const Texture2D*& meshTex
   ImGui::SetNextItemWidth(ImGui::GetColumnWidth());
   if (isMeshTextureValid)
   {
-    const fs::path* texturePath = texManager.GetTexturePath(meshTexture->id);
+    const fs::path* texturePath = texManager.GetTexturePath(meshTexture.id);
     ImGui::Selectable(texturePath->string().c_str(), false);
   }
   else
@@ -403,8 +403,8 @@ static void Insp_ShowTextureSelector(StringView label, const Texture2D*& meshTex
     std::format_to_n(buttonID, sizeof(buttonID), "Reset##{}", label.data());
 
     ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.f,0.f,0.f,0.f });
-    if (ImGui::ImageButton(buttonID, reinterpret_cast<void*>(resetIcon->id), ImVec2(16.f, 16.f)))
-      meshTexture = &defaultTex;
+    if (ImGui::ImageButton(buttonID, reinterpret_cast<void*>(resetIcon.id), ImVec2(16.f, 16.f)))
+      meshTexture = defaultTex;
     ImGui::PopStyleColor();
   }
 }
@@ -556,21 +556,21 @@ static void Insp_Animator(GameObject& object, Animator& animator)
   if (animAttached)
   {
     auto& texManager = TexturesManager::Get();
-    static const Texture2D* playIcon = texManager.GetOrCreateIcon("play-button-32.png");
-    static const Texture2D* pauseIcon = texManager.GetOrCreateIcon("pause-button-32.png");
-    static const Texture2D* restartIcon = texManager.GetOrCreateIcon("restart-button-32.png");
+    static Texture2D playIcon = texManager.GetOrCreateIcon("play-button-32.png");
+    static Texture2D pauseIcon = texManager.GetOrCreateIcon("pause-button-32.png");
+    static Texture2D restartIcon = texManager.GetOrCreateIcon("restart-button-32.png");
 
-    if (ImGui::ImageButton(reinterpret_cast<void*>(playIcon->id), ImVec2(16, 16)))
+    if (ImGui::ImageButton(reinterpret_cast<void*>(playIcon.id), ImVec2(16, 16)))
       animator.PlayAnimation();
     
     ImGui::SameLine();
     
-    if (ImGui::ImageButton(reinterpret_cast<void*>(pauseIcon->id), ImVec2(16, 16)))
+    if (ImGui::ImageButton(reinterpret_cast<void*>(pauseIcon.id), ImVec2(16, 16)))
       animator.PauseAnimation();
     
     ImGui::SameLine();
 
-    if (ImGui::ImageButton(reinterpret_cast<void*>(restartIcon->id), ImVec2(16, 16)))
+    if (ImGui::ImageButton(reinterpret_cast<void*>(restartIcon.id), ImVec2(16, 16)))
       animator.RestartAnimation();
     
     ImGui::SameLine();
@@ -704,7 +704,7 @@ static void Insp_AddSkeletalMeshComponent(GameObject& object)
         auto& manager = ModelsManager::Get();
         const auto* skeleton = manager.FindSkeletalMesh(path);
         if (!skeleton)
-          skeleton = manager.CreateSkeletalMesh(path);
+          skeleton = &manager.CreateSkeletalMesh(path);
 
         auto& skComponent = object.AddComponent<SkeletalMesh>();
         auto& anComponent = object.AddComponent<Animator>();

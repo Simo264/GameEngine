@@ -39,35 +39,33 @@ void ShadersManager::CleanUp()
     shader.Delete();
 }
 
-const Shader& ShadersManager::GetShader(StringView shaderName) const
+Shader ShadersManager::GetShader(StringView shaderName) const
 {
-  auto it = std::find_if(_shaderNames.begin(), _shaderNames.end(), [&](const std::pair<u32, String>& pair) {
-    return pair.second == shaderName;
-  });
-  if (it == _shaderNames.end())
-    throw std::runtime_error(std::format("Shader '{}' does not exist", shaderName.data()));
-
-  u32 index = it->first;
-  return _shaders.at(index);
-}
-const Shader& ShadersManager::GetOrCreateShader(StringView shaderName)
-{
-  auto it = std::find_if(_shaderNames.begin(), _shaderNames.end(), [&](const std::pair<u32, String>& pair) {
-    return pair.second == shaderName;
-  });
-  if (it == _shaderNames.end())
-    return CreateShader(shaderName);
+	assert(shaderName.size() < 32);
   
-  u32 i = it->first;
-  return _shaders.at(i);
-}
-const Shader& ShadersManager::CreateShader(StringView shaderName)
-{
-  fs::path filePath = Filesystem::GetShadersPath() / shaderName.data();
-  if (!fs::exists(filePath))
-    throw std::runtime_error(std::format("Shader file '{}' does not exist", filePath.string()));
+	for (u32 i = 0; i < _shaderNames.size(); ++i)
+		if (strcmp(_shaderNames[i].data(), shaderName.data()) == 0)
+			return _shaders.at(i);
 
-  IStream file(filePath);
+  return Shader{};
+}
+Shader ShadersManager::GetOrCreateShader(StringView shaderName)
+{
+	Shader s = GetShader(shaderName);
+  if (!s.IsValid())
+		s = CreateShader(shaderName);
+  
+  return s;
+}
+Shader ShadersManager::CreateShader(StringView shaderName)
+{
+	assert(shaderName.size() < 32);
+
+  fs::path absolute = Filesystem::GetShadersPath() / shaderName.data();
+  if (!fs::exists(absolute))
+    throw std::runtime_error(std::format("Shader file '{}' does not exist", absolute.string()));
+
+  IStream file(absolute);
   String shaderSrc{ std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>() };
   StringView ext = shaderName.substr(shaderName.find_last_of('.') + 1);
   i32 shaderType = ResolveShaderType(ext);
@@ -78,29 +76,34 @@ const Shader& ShadersManager::CreateShader(StringView shaderName)
   if (!shader.Compile())
     CONSOLE_ERROR("Error on compiling shader {}: {}", shaderName.data(), shader.GetShaderInfo());
 
-  _shaderNames.emplace_back(_shaders.size() - 1, shaderName.data());
+  auto& name = _shaderNames.emplace_back();
+	std::memset(name.data(), 0, name.size());
+	std::strncpy(name.data(), shaderName.data(), shaderName.size());
 
   return shader;
 }
 
-const Program& ShadersManager::GetProgram(StringView programName) const
+Program ShadersManager::GetProgram(StringView programName) const
 {
-  auto it = std::find_if(_programNames.begin(), _programNames.end(), [&](const std::pair<u32, String>& pair) {
-    return pair.second == programName;
-  });
-  if (it == _programNames.end())
-    throw std::runtime_error(std::format("Program '{}' does not exist", programName.data()));
+	assert(programName.size() < 32);
 
-  u32 index = it->first;
-  return _programs.at(index);
+	for (u32 i = 0; i < _programNames.size(); ++i)
+		if (strcmp(_programNames[i].data(), programName.data()) == 0)
+			return _programs.at(i); 
+	
+  return Program{};
 }
-const Program& ShadersManager::CreateProgram(StringView programName)
+Program ShadersManager::CreateProgram(StringView programName)
 {
+	assert(programName.size() < 32);
+  
   CONSOLE_TRACE("Create program {}", programName.data());
   Program& program = _programs.emplace_back();
   program.Create();
 
-  _programNames.emplace_back(_programs.size() - 1, programName.data());
+  auto& name = _programNames.emplace_back();
+  std::memset(name.data(), 0, name.size());
+  std::strncpy(name.data(), programName.data(), programName.size());
   return program;
 }
 
@@ -170,19 +173,19 @@ void ShadersManager::ReadConfig(IniFileHandler& conf)
 }
 void ShadersManager::SetProgramsUniforms() const
 {
-  auto& skyboxProg = GetProgram("Skybox");
+  Program skyboxProg = GetProgram("Skybox");
   skyboxProg.SetUniform1i("u_skyboxTexture", 0);
 
-  auto& framebufferProg = GetProgram("Framebuffer");
+  Program framebufferProg = GetProgram("Framebuffer");
   framebufferProg.SetUniform1i("u_fboImageTexture", 0);
 
-  auto& sceneProg = GetProgram("Scene");
+  Program sceneProg = GetProgram("Scene");
   sceneProg.SetUniform1i("u_useNormalMap", 0);
   sceneProg.SetUniform1i("u_material.diffuseTexture", 0);
   sceneProg.SetUniform1i("u_material.specularTexture", 1);
   sceneProg.SetUniform1i("u_material.normalTexture", 2);
 
-  auto& sceneShadowsProg = GetProgram("SceneShadows");
+  Program sceneShadowsProg = GetProgram("SceneShadows");
   sceneShadowsProg.SetUniform1i("u_useNormalMap", 0);
   sceneShadowsProg.SetUniform1i("u_material.diffuseTexture", 0);
   sceneShadowsProg.SetUniform1i("u_material.specularTexture", 1);
@@ -190,7 +193,7 @@ void ShadersManager::SetProgramsUniforms() const
   sceneShadowsProg.SetUniform1i("u_depthMapTexture", 10);
   sceneShadowsProg.SetUniform1i("u_depthCubeMapTexture", 11);
   
-  auto& skeletalAnimProg = GetProgram("SkeletalAnim");
+  Program skeletalAnimProg = GetProgram("SkeletalAnim");
   skeletalAnimProg.SetUniform1i("u_useNormalMap", 0);
   skeletalAnimProg.SetUniform1i("u_material.diffuseTexture", 0);
   skeletalAnimProg.SetUniform1i("u_material.specularTexture", 1);

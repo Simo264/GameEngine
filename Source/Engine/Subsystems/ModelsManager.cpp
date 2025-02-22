@@ -3,104 +3,75 @@
 #include "Core/Log/Logger.hpp"
 #include "Engine/Filesystem/Filesystem.hpp"
 
-static u32 staticMeshId = 0;
-static u32 skeletonId = 0;
+void ModelsManager::CleanUp()
+{
+	for (auto& staticMesh : _staticMeshObjects)
+		staticMesh.Destroy();
+
+	for (auto& skeletalMesh : _skeletalMeshObjects)
+		skeletalMesh.Destroy();
+}
 
 const StaticMesh* ModelsManager::FindStaticMesh(const fs::path& relative) const
 {
 	fs::path normalized = relative.lexically_normal();
-	auto it = std::find_if(_staticMeshPaths.begin(), _staticMeshPaths.end(), [&](const std::pair<u32, fs::path>& pair) {
-		return pair.second == normalized;
-	});
-	if (it == _staticMeshPaths.end())
-		return nullptr;
-
-	u32 index = it->first;
-	return &_staticMeshObjects.at(index);
+	for (u32 i = 0; i < _staticMeshPaths.size(); i++)
+		if (_staticMeshPaths.at(i) == normalized)
+			return &_staticMeshObjects.at(i);
+	return nullptr;
 }
 const StaticMesh& ModelsManager::CreateStaticMesh(const fs::path& relative)
 {
-	fs::path normalized = relative.lexically_normal();
-	fs::path absolute = (Filesystem::GetStaticModelsPath() / relative).lexically_normal();
-
+	u32 currentId = _staticMeshObjects.size();
+	
 	//CONSOLE_INFO("Create new static mesh {}: '{}'", staticMeshId, absolute.string());
+	fs::path absolute = (Filesystem::GetStaticModelsPath() / relative).lexically_normal();
 	auto& newMesh = _staticMeshObjects.emplace_back();
 	newMesh.CreateFromPath(absolute);
-	newMesh.id = staticMeshId;
+	newMesh.id = currentId;
 
-	_staticMeshPaths.emplace_back(staticMeshId, normalized);
-	
-	staticMeshId++;
+	fs::path normalized = relative.lexically_normal();
+	_staticMeshPaths.emplace_back(normalized);
 	
 	return newMesh;
 }
 
 const SkeletalMesh* ModelsManager::FindSkeletalMesh(const fs::path& relative) const
 {
-	auto itPath = std::find_if(_skeletalMeshPaths.begin(), _skeletalMeshPaths.end(), [&](const std::pair<u32, fs::path>& pair) {
-		return pair.second == relative;
-	});
-	if (itPath == _skeletalMeshPaths.end())
-		return nullptr;
-
-	u32 meshId = itPath->first;
-	auto itObj = _skeletalMeshObjects.find(meshId);
-	return &itObj->second;
+	fs::path normalized = relative.lexically_normal();
+	for (u32 i = 0; i < _skeletalMeshPaths.size(); i++)
+		if (_skeletalMeshPaths.at(i) == normalized)
+			return &_skeletalMeshObjects.at(i);
+	return nullptr;
 }
-const SkeletalMesh* ModelsManager::CreateSkeletalMesh(const fs::path& relative)
+const SkeletalMesh& ModelsManager::CreateSkeletalMesh(const fs::path& relative)
 {
-	fs::path pathNormal = relative.lexically_normal();
-	fs::path absolute = (Filesystem::GetSkeletalModelsPath() / pathNormal).lexically_normal();
+	u32 currentId = _skeletalMeshObjects.size();
 
-	auto [it, success] = _skeletalMeshObjects.emplace(
-		std::piecewise_construct,
-		std::forward_as_tuple(skeletonId),// Insert key
-		std::forward_as_tuple()						// construct empty SkeletalMesh object
-	);
-	if (!success)
-	{
-		CONSOLE_ERROR("Error on loading SkeletalMesh object");
-		return nullptr;
-	}
-	
-	auto& [newID, newPath] = _skeletalMeshPaths.emplace_back(skeletonId, pathNormal);
-	
-	CONSOLE_INFO("Create new skeletal mesh {}: '{}'", skeletonId, absolute.string());
-	SkeletalMesh& skeleton = it->second;
+	//CONSOLE_INFO("Create new skeletal mesh {}: '{}'", skeletonId, absolute.string());
+	fs::path absolute = (Filesystem::GetSkeletalModelsPath() / relative).lexically_normal();
+	SkeletalMesh& skeleton = _skeletalMeshObjects.emplace_back();
 	skeleton.CreateFromFile(absolute);
-	skeleton.id = skeletonId;
+	skeleton.id = currentId;
 
-	skeletonId++;
-	
-	return &skeleton;
+	fs::path normalized = relative.lexically_normal();
+	_skeletalMeshPaths.emplace_back(normalized);
+
+	return skeleton;
 }
 
 const fs::path* ModelsManager::GetStaticMeshPath(u32 staticMeshId) const
 {
-	auto it = std::find_if(_staticMeshPaths.begin(), _staticMeshPaths.end(), [&](const std::pair<u32, fs::path>& pair) {
-		return _staticMeshObjects.at(pair.first).id == staticMeshId;
-	});
-	if (it == _staticMeshPaths.end())
-		return nullptr;
-
-	return &it->second;
-}
-const fs::path* ModelsManager::GetSkeletalMeshPath(u32 skeletalMeshId) const
-{
-	auto it = std::find_if(_skeletalMeshPaths.begin(), _skeletalMeshPaths.end(), [&](const std::pair<u32, fs::path>& pair) {
-		return pair.first == skeletalMeshId;
-	});
-	if (it != _skeletalMeshPaths.end())
-		return &it->second;
-
+	for (u32 i = 0; i < _staticMeshObjects.size(); i++)
+		if (_staticMeshObjects.at(i).id == staticMeshId)
+			return &_staticMeshPaths.at(i);
 	return nullptr;
 }
 
-void ModelsManager::CleanUp()
+const fs::path* ModelsManager::GetSkeletalMeshPath(u32 skeletalMeshId) const
 {
-	for (auto& staticMesh : _staticMeshObjects)
-		staticMesh.Destroy();
-
-	for (auto& [id, skeletalMesh] : _skeletalMeshObjects)
-		skeletalMesh.Destroy();
+	for (u32 i = 0; i < _skeletalMeshObjects.size(); i++)
+		if (_skeletalMeshObjects.at(i).id == skeletalMeshId)
+			return &_skeletalMeshPaths.at(i);
+	return nullptr;
 }

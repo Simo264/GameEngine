@@ -51,7 +51,7 @@ public:
   void CleanUp() const;
   /** @brief Processes all pending events in the GLFW event queue. */
   void PoolEvents() const;
-  /** @brief Retrieves the current window context. */
+  
   Context GetCurrentContext() const { return _context; }
 
   void Close() const;

@@ -28,15 +28,7 @@ static mat4f AiMatrixToGLM(const aiMatrix4x4& matrix)
 //										PUBLIC													
 // ----------------------------------------------------
 
-SkeletalMesh::SkeletalMesh() :
-	rootNode{},
-	meshes{},
-	bones{},
-	boneNames{},
-	nrBones{ 0 },
-	nrMeshes{ 0 },
-	id{ 0 }
-{}
+
 
 void SkeletalMesh::CreateFromFile(const fs::path& absolute)
 {
@@ -109,9 +101,9 @@ void SkeletalMesh::Draw(RenderMode mode) const
 	for (u32 i = 0; i < nrMeshes; i++)
 	{
 		auto& mesh = meshes[i];
-		mesh.material.diffuse->BindTextureUnit(0);
-		mesh.material.specular->BindTextureUnit(1);
-		mesh.material.normal->BindTextureUnit(2);
+		mesh.material.diffuse.BindTextureUnit(0);
+		mesh.material.specular.BindTextureUnit(1);
+		mesh.material.normal.BindTextureUnit(2);
 		mesh.Draw(mode);
 	}
 }

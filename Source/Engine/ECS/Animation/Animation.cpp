@@ -16,7 +16,7 @@
 // ---------------------------------------------------- 
 
 Animation::Animation(const SkeletalMesh& skeleton, const fs::path& relative) :
-	bonesAnimKeys{ nullptr },
+	bonesAnimKeys{},
 	nrKeys{ 0 },
 	duration{ 0 },
 	ticksPerSecond{ 0 },
@@ -46,7 +46,7 @@ Animation::Animation(const SkeletalMesh& skeleton, const fs::path& relative) :
 	duration = animation->mDuration;
 	ticksPerSecond = animation->mTicksPerSecond;
 
-	bonesAnimKeys = new BoneAnimationKeys[skeleton.nrBones];
+	bonesAnimKeys = std::make_unique<BoneAnimationKeys[]>(skeleton.nrBones);
 	nrKeys = skeleton.nrBones;
 	
 	for (u32 i = 0; i < animation->mNumChannels; i++)
@@ -63,24 +63,13 @@ Animation::Animation(const SkeletalMesh& skeleton, const fs::path& relative) :
 	}
 }
 
-void Animation::Destroy() const
-{
-	for (u32 i = 0; i < nrKeys; i++)
-	{
-		delete[] bonesAnimKeys[i].posKeys;
-		delete[] bonesAnimKeys[i].rotKeys;
-		delete[] bonesAnimKeys[i].scaleKeys;
-	}
-	delete[] bonesAnimKeys;
-}
-
 // ----------------------------------------------------
 //										PRIVATE													
 // ----------------------------------------------------
 
 void Animation::LoadBoneKeys(BoneAnimationKeys& boneKeys, const aiNodeAnim* channel)
 {
-	boneKeys.posKeys = new KeyPosition[channel->mNumPositionKeys];
+	boneKeys.posKeys = std::make_unique<KeyPosition[]>(channel->mNumPositionKeys);
 	boneKeys.nrPosKeys = channel->mNumPositionKeys;
 	for (u32 i = 0; i < channel->mNumPositionKeys; i++)
 	{
@@ -89,7 +78,7 @@ void Animation::LoadBoneKeys(BoneAnimationKeys& boneKeys, const aiNodeAnim* chan
 		boneKeys.posKeys[i].position = vec3f(tmp.mValue.x, tmp.mValue.y, tmp.mValue.z);
 	}
 
-	boneKeys.rotKeys = new KeyRotation[channel->mNumRotationKeys];
+	boneKeys.rotKeys = std::make_unique<KeyRotation[]>(channel->mNumRotationKeys);
 	boneKeys.nrRotKeys = channel->mNumRotationKeys;
 	for (u32 i = 0; i < channel->mNumRotationKeys; i++)
 	{
@@ -98,7 +87,7 @@ void Animation::LoadBoneKeys(BoneAnimationKeys& boneKeys, const aiNodeAnim* chan
 		boneKeys.rotKeys[i].orientation = quat(tmp.mValue.w, tmp.mValue.x, tmp.mValue.y, tmp.mValue.z);
 	}
 
-	boneKeys.scaleKeys = new KeyScale[channel->mNumScalingKeys];
+	boneKeys.scaleKeys = std::make_unique<KeyScale[]>(channel->mNumScalingKeys);
 	boneKeys.nrScaleKeys = channel->mNumScalingKeys;
 	for (u32 i = 0; i < channel->mNumScalingKeys; i++)
 	{

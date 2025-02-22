@@ -26,7 +26,7 @@ static bool ButtonCentered(const char* label, ImVec2 size)
 static void Hierarchy_ListObjects(Scene& scene, GameObject& objSelected)
 {
   auto& texManager = TexturesManager::Get();
-  static const auto* icon = texManager.GetOrCreateIcon("game-object-16.png");
+  static Texture2D icon = texManager.GetOrCreateIcon("game-object-16.png");
 
   char selectableName[64]{};
   for (auto [entity, tag] : scene.Reg().view<Tag>().each())
@@ -39,7 +39,7 @@ static void Hierarchy_ListObjects(Scene& scene, GameObject& objSelected)
     ImGui::BeginGroup();
     ImGui::SetCursorPosY(ImGui::GetCursorPosY() + (ImGui::GetTextLineHeight() - 16.f) / 2);
     
-    ImGui::Image(reinterpret_cast<void*>(icon->id), ImVec2(16.f, 16.f));
+    ImGui::Image(reinterpret_cast<void*>(icon.id), ImVec2(16.f, 16.f));
     ImGui::SameLine();
     
     auto& colors = ImGui::GetStyle().Colors;
@@ -76,8 +76,8 @@ static void Hierarchy_ObjectMenuPopup(Scene& scene, GameObject& objSelected)
       if (objSelected.HasComponent<Light>())
       {
         ShadersManager& shadersManager = ShadersManager::Get();
-        auto& shaderScene = shadersManager.GetProgram("Scene");
-        auto& shaderSceneShadows = shadersManager.GetProgram("SceneShadows");
+        Program shaderScene = shadersManager.GetProgram("Scene");
+        Program shaderSceneShadows = shadersManager.GetProgram("SceneShadows");
 
         if (objSelected.HasComponent<DirectionalLight>())
         {

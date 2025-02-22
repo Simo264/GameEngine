@@ -27,13 +27,13 @@ struct KeyScale
 
 struct BoneAnimationKeys
 {
-	KeyPosition* posKeys;
+	UniquePtr<KeyPosition[]> posKeys;
 	u32 nrPosKeys;
 
-	KeyRotation* rotKeys;
+	UniquePtr<KeyRotation[]> rotKeys;
 	u32 nrRotKeys;
 
-	KeyScale* scaleKeys;
+	UniquePtr<KeyScale[]> scaleKeys;
 	u32 nrScaleKeys;
 };
 
@@ -54,13 +54,17 @@ public:
 	 * Example: "Mutant/Drunk_Walk/anim.gltf".
 	 */
 	Animation(const SkeletalMesh& skeleton, const fs::path& relative);
-	
 	~Animation() = default;
-	
-	/** @brief Frees memory allocated for bone animation keyframes. */
-	void Destroy() const;
 
-	BoneAnimationKeys* bonesAnimKeys;
+	/** @brief Move constructor */
+	Animation(Animation&&) noexcept = default;
+	Animation& operator=(Animation&&) noexcept = default;
+
+	/** @brief Delete copy constructor */
+	Animation(const Animation&) = delete;
+	Animation& operator=(const Animation&) = delete;
+	
+	UniquePtr<BoneAnimationKeys[]> bonesAnimKeys;
 	u32 nrKeys;
 
 	f32 duration;

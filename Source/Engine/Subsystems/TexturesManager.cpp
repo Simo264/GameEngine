@@ -5,12 +5,13 @@
 #include "Engine/Filesystem/Filesystem.hpp"
 #include "Engine/Utils.hpp"
 
-static void CreateDefaultTexture(Texture2D& texture, u8 r, u8 g, u8 b)
+static Texture2D CreateDefaultTexture(u8 r, u8 g, u8 b)
 {
   constexpr i32 width = 1;
   constexpr i32 height = 1;
-  
-  auto data = Array<u8, 3>{ r,g,b }.data();
+  const u8* data = Array<u8, 3>{ r,g,b }.data();
+	
+  Texture2D texture;
   texture.Create(Texture2DTarget::TEXTURE_2D);
   texture.CreateStorage(Texture2DInternalFormat::RGB8, width, height);
   texture.UpdateStorage(0, width, height, Texture2DFormat::RGB, Texture2DSubImageType::UNSIGNED_BYTE, data);
@@ -18,6 +19,7 @@ static void CreateDefaultTexture(Texture2D& texture, u8 r, u8 g, u8 b)
   texture.SetParameteri(TextureParameteriName::WRAP_T, TextureParameteriParam::REPEAT);
   texture.SetParameteri(TextureParameteriName::MIN_FILTER, TextureParameteriParam::LINEAR);
   texture.SetParameteri(TextureParameteriName::MAG_FILTER, TextureParameteriParam::LINEAR);
+	return texture;
 }
 
 // ----------------------------------------------------- 
@@ -26,24 +28,20 @@ static void CreateDefaultTexture(Texture2D& texture, u8 r, u8 g, u8 b)
 
 void TexturesManager::Initialize()
 {
-  u32 nrTextures = Utils::CountFilesInDirectory(Filesystem::GetTexturesPath(), true);
-  u32 nrIcons = Utils::CountFilesInDirectory(Filesystem::GetIconsPath(), true);
-  _textures.reserve(nrTextures + 3);
-  _icons.reserve(nrIcons);
-
-  Texture2D& diffuse = _textures.emplace_back();
-  CreateDefaultTexture(diffuse, 128, 128, 255);
-  Texture2D& specular = _textures.emplace_back();
-  CreateDefaultTexture(specular, 0, 0, 0);
-  Texture2D& normal = _textures.emplace_back();
-  CreateDefaultTexture(normal, 0, 0, 0);
+	_defaultDiffuse = CreateDefaultTexture(128, 128, 255);
+  _defaultSpecular = CreateDefaultTexture(0, 0, 0);
+  _defaultNormal = CreateDefaultTexture(0, 0, 0);
 }
 void TexturesManager::CleanUp()
 {
   u32 totalTextures = _textures.size() + _icons.size();
 
   Vector<u32> texIDs;
-  texIDs.reserve(totalTextures);
+  texIDs.reserve(totalTextures + 3);
+
+	texIDs.push_back(_defaultDiffuse.id);
+  texIDs.push_back(_defaultSpecular.id);
+  texIDs.push_back(_defaultNormal.id);
 
   for(const auto& texture : _textures)
     texIDs.push_back(texture.id);
@@ -53,18 +51,15 @@ void TexturesManager::CleanUp()
   glDeleteTextures(totalTextures, texIDs.data());
 }
 
-const Texture2D* TexturesManager::FindTexture(const fs::path& relative) const
+Texture2D TexturesManager::FindTexture(const fs::path& relative) const
 {
-  auto it = std::find_if(_texturePaths.begin(), _texturePaths.end(), [&](const std::pair<u32, fs::path>& pair) {
-    return pair.second == relative;
-  });
-  if (it == _texturePaths.end())
-    return nullptr;
-
-  u32 index = it->first;
-  return &_textures.at(index);
+  for (u32 i = 0; i < _texturePaths.size(); i++)
+    if (_texturePaths.at(i) == relative)
+      return _textures.at(i);
+  
+  return Texture2D{};
 }
-const Texture2D* TexturesManager::CreateTexture(const fs::path& relative)
+Texture2D TexturesManager::CreateTexture(const fs::path& relative)
 {
   fs::path absolute = (Filesystem::GetTexturesPath() / relative).lexically_normal();
   CONSOLE_INFO("Create new texture: {}", absolute.string());
@@ -73,30 +68,26 @@ const Texture2D* TexturesManager::CreateTexture(const fs::path& relative)
   texture.LoadImageData(absolute);
 
   fs::path normalized = relative.lexically_normal();
-  _texturePaths.emplace_back(_textures.size() - 1, normalized);
+  _texturePaths.emplace_back(normalized);
 
-  return &texture;
+  return texture;
 }
-const Texture2D* TexturesManager::GetOrCreateTexture(const fs::path& relative)
+Texture2D TexturesManager::GetOrCreateTexture(const fs::path& relative)
 {
-  const auto* t = FindTexture(relative);
-  if (!t)
+  Texture2D t = FindTexture(relative);
+  if (!t.IsValid())
     t = CreateTexture(relative);
   return t;
 }
 
-const Texture2D* TexturesManager::FindIcon(const fs::path& relative) const
+Texture2D TexturesManager::FindIcon(const fs::path& relative) const
 {
-  auto it = std::find_if(_iconPaths.begin(), _iconPaths.end(), [&](const std::pair<u32, fs::path>& pair) {
-    return pair.second == relative;
-  });
-  if (it == _iconPaths.end())
-    return nullptr;
-
-  u32 index = it->first;
-  return &_textures.at(index);
+  for (u32 i = 0; i < _iconPaths.size(); i++)
+    if (_iconPaths.at(i) == relative)
+      return _icons.at(i);
+  return Texture2D{};
 }
-const Texture2D* TexturesManager::CreateIcon(const fs::path& relative)
+Texture2D TexturesManager::CreateIcon(const fs::path& relative)
 {
   fs::path absolute = (Filesystem::GetIconsPath() / relative).lexically_normal();
   CONSOLE_INFO("Create new icon: {}", absolute.string());
@@ -105,21 +96,21 @@ const Texture2D* TexturesManager::CreateIcon(const fs::path& relative)
   icon.LoadImageData(absolute);
 
   fs::path normalized = relative.lexically_normal();
-  _iconPaths.emplace_back(_icons.size() - 1, normalized);
-  return &icon;
+  _iconPaths.emplace_back(normalized);
+  return icon;
 }
-const Texture2D* TexturesManager::GetOrCreateIcon(const fs::path& relative)
+Texture2D TexturesManager::GetOrCreateIcon(const fs::path& relative)
 {
-  const auto* t = FindIcon(relative);
-  if (!t)
+  Texture2D t = FindIcon(relative);
+  if (!t.IsValid())
     t = CreateIcon(relative);
   return t;
 }
 
 const const fs::path* TexturesManager::GetTexturePath(u32 textureID) const
 {
-  for (const auto& [index, path] : _texturePaths)
-    if (_textures.at(index).id == textureID)
-      return &path;
-  return nullptr;
+  for (u32 i = 0; i < _textures.size(); i++)
+    if(_textures.at(i).id == textureID)
+			return &_texturePaths.at(i);
+	return nullptr;
 }

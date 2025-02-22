@@ -40,7 +40,7 @@ public:
 	 * @param relative The relative path to the static mesh inside "Models/Static".
 	 * Example: "Cube/cube.obj".
 	 * 
-	 * @return Pointer to the newly created StaticMesh.
+	 * @return Reference to the newly created StaticMesh.
 	 */
 	const StaticMesh& CreateStaticMesh(const fs::path& relative);
 
@@ -62,24 +62,26 @@ public:
 	 * @param relative The relative path to the skeletal mesh inside "Models/Skeletal".
 	 * Example: "Character/Character.gltf".
 	 * 
-	 * @return Pointer to the newly created SkeletalMesh.
+	 * @return Reference to the newly created SkeletalMesh.
 	 */
-	const SkeletalMesh* CreateSkeletalMesh(const fs::path& relative);
+	const SkeletalMesh& CreateSkeletalMesh(const fs::path& relative);
 
 	const fs::path* GetStaticMeshPath(u32 staticMeshId) const;
-
 	const fs::path* GetSkeletalMeshPath(u32 skeletalMeshId) const;
 
 private:
 	ModelsManager() = default;
 	~ModelsManager() = default;
 
+	// Stores all loaded static mesh objects.
+	// Each index in this vector corresponds to the same index in `_staticMeshPaths`,
+	// ensuring that `_staticMeshObjects[i]` represents the mesh loaded from `_staticMeshPaths[i]`.
 	Vector<StaticMesh> _staticMeshObjects;
-	// Map storing the static mesh index and it's relative path
-	Vector<std::pair<u32, fs::path>> _staticMeshPaths;
+	Vector<fs::path> _staticMeshPaths;
 
-	// Skeletal mesh id, skeletal mesh object
-	Map<u32, SkeletalMesh> _skeletalMeshObjects;
-	// Skeletal mesh id, skeletal mesh (relative) path
-	Vector<std::pair<u32, fs::path>> _skeletalMeshPaths;
+	// Stores all loaded skeletal mesh objects.
+	// Each index in this vector corresponds to the same index in `_skeletalMeshPaths`,
+	// ensuring that `_skeletalMeshObjects[i]` represents the mesh loaded from `_skeletalMeshPaths[i]`.
+	Vector<SkeletalMesh> _skeletalMeshObjects;
+	Vector<fs::path> _skeletalMeshPaths;
 };

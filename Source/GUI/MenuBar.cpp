@@ -23,8 +23,8 @@ void GUI_RenderMenuBar(Scene& scene, bool& openPreferences)
         {
           // Unset all lights
           ShadersManager& shadersManager = ShadersManager::Get();
-          auto& shaderScene = shadersManager.GetProgram("Scene");
-          auto& shaderSceneShadows = shadersManager.GetProgram("SceneShadows");
+          Program shaderScene = shadersManager.GetProgram("Scene");
+          Program shaderSceneShadows = shadersManager.GetProgram("SceneShadows");
           shaderScene.SetUniform1f("u_directionalLight.intensity", 0.f);
           shaderScene.SetUniform1f("u_pointLight.intensity", 0.f);
           shaderScene.SetUniform1f("u_spotLight.intensity", 0.f);

@@ -73,9 +73,9 @@ void StaticMesh::Draw(RenderMode mode) const
 	for (u32 i = 0; i < nrMeshes; i++ )
 	{
 		auto& mesh = meshes[i];
-		mesh.material.diffuse->BindTextureUnit(0);
-		mesh.material.specular->BindTextureUnit(1);
-		mesh.material.normal->BindTextureUnit(2);
+		mesh.material.diffuse.BindTextureUnit(0);
+		mesh.material.specular.BindTextureUnit(1);
+		mesh.material.normal.BindTextureUnit(2);
 		mesh.Draw(mode);
 	}	
 }

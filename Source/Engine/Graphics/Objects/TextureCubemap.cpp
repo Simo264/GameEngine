@@ -102,23 +102,23 @@ void TextureCubemap::SetParameteri(TextureParameteriName name,
     static_cast<i32>(value));
 }
 
-void TextureCubemap::LoadImages(const Array<const Texture2D*, 6>& images) const
+void TextureCubemap::LoadImages(const Array<Texture2D, 6>& images) const
 {
-  i32 width = images.at(0)->GetWidth();
-  i32 height = images.at(0)->GetHeight();
-  Texture2DInternalFormat internalFormat = images.at(0)->GetInternalFormat();
-  Texture2DFormat format2d = images.at(0)->GetFormat(internalFormat);
+  i32 width = images.at(0).GetWidth();
+  i32 height = images.at(0).GetHeight();
+  Texture2DInternalFormat internalFormat = images.at(0).GetInternalFormat();
+  Texture2DFormat format2d = images.at(0).GetFormat(internalFormat);
   Texture3DFormat format3d = ConvertToTexture3DFormat(format2d);
 
-  i32 nrChannels = images.at(0)->GetNumChannels(internalFormat);
+  i32 nrChannels = images.at(0).GetNumChannels(internalFormat);
   i32 bufsize = width * height * nrChannels;
   Vector<u8> pixels(bufsize);
   for (i32 i = 0; i < 6; i++)
   {
-    const auto* texture = images.at(i);
+    Texture2D texture = images.at(i);
     pixels.clear();
     
-    texture->GetTextureImage(0,
+    texture.GetTextureImage(0,
       format2d,
       Texture2DGetImageType::UNSIGNED_BYTE, 
       bufsize, 

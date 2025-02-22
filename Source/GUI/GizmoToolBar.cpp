@@ -10,9 +10,9 @@
 void GUI_RenderTransformToolBar(vec2i viewportPos, i32& gizmode)
 {
   auto& texManager = TexturesManager::Get();
-  static const auto* expandIcon = texManager.GetOrCreateIcon("expand-arrows-32.png");
-  static const auto* rotateIcon = texManager.GetOrCreateIcon("rotate-32.png");
-  static const auto* scaleIcon = texManager.GetOrCreateIcon("scale-32.png");
+  static Texture2D expandIcon = texManager.GetOrCreateIcon("expand-arrows-32.png");
+  static Texture2D rotateIcon = texManager.GetOrCreateIcon("rotate-32.png");
+  static Texture2D scaleIcon = texManager.GetOrCreateIcon("scale-32.png");
 
   ImGuiStyle& style = ImGui::GetStyle();
   ImVec2 windowPos = ImVec2(viewportPos.x + 4.f, viewportPos.y + 24.f);
@@ -46,11 +46,11 @@ void GUI_RenderTransformToolBar(vec2i viewportPos, i32& gizmode)
     ImGui::PushStyleColor(ImGuiCol_Button, btnColor);
     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, btnColorHovered);
     ImGui::PushStyleColor(ImGuiCol_ButtonActive, btnColorActive);
-    if (ImGui::ImageButton("Gizmo_Translate", reinterpret_cast<void*>(expandIcon->id), btnSize))
+    if (ImGui::ImageButton("Gizmo_Translate", reinterpret_cast<void*>(expandIcon.id), btnSize))
       gizmode = ImGuizmo::OPERATION::TRANSLATE;
     ImGui::PopStyleColor(3);
   }
-  else if (ImGui::ImageButton("Gizmo_Translate", reinterpret_cast<void*>(expandIcon->id), btnSize))
+  else if (ImGui::ImageButton("Gizmo_Translate", reinterpret_cast<void*>(expandIcon.id), btnSize))
     gizmode = ImGuizmo::OPERATION::TRANSLATE;
   if (ImGui::IsItemHovered())
     ImGui::SetTooltip("Gizmo_Translate");
@@ -62,11 +62,11 @@ void GUI_RenderTransformToolBar(vec2i viewportPos, i32& gizmode)
     ImGui::PushStyleColor(ImGuiCol_Button, btnColor);
     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, btnColorHovered);
     ImGui::PushStyleColor(ImGuiCol_ButtonActive, btnColorActive);
-    if (ImGui::ImageButton("Gizmo_Rotate", reinterpret_cast<void*>(rotateIcon->id), btnSize))
+    if (ImGui::ImageButton("Gizmo_Rotate", reinterpret_cast<void*>(rotateIcon.id), btnSize))
       gizmode = ImGuizmo::OPERATION::ROTATE;
     ImGui::PopStyleColor(3);
   }
-  else if (ImGui::ImageButton("Gizmo_Rotate", reinterpret_cast<void*>(rotateIcon->id), btnSize))
+  else if (ImGui::ImageButton("Gizmo_Rotate", reinterpret_cast<void*>(rotateIcon.id), btnSize))
     gizmode = ImGuizmo::OPERATION::ROTATE;
   if (ImGui::IsItemHovered())
     ImGui::SetTooltip("Gizmo_Rotate");
@@ -76,11 +76,11 @@ void GUI_RenderTransformToolBar(vec2i viewportPos, i32& gizmode)
     ImGui::PushStyleColor(ImGuiCol_Button, btnColor);
     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, btnColorHovered);
     ImGui::PushStyleColor(ImGuiCol_ButtonActive, btnColorActive);
-    if (ImGui::ImageButton("Gizmo_Scale", reinterpret_cast<void*>(scaleIcon->id), btnSize))
+    if (ImGui::ImageButton("Gizmo_Scale", reinterpret_cast<void*>(scaleIcon.id), btnSize))
       gizmode = ImGuizmo::OPERATION::SCALE;
     ImGui::PopStyleColor(3);
   }
-  else if (ImGui::ImageButton("Gizmo_Scale", reinterpret_cast<void*>(scaleIcon->id), btnSize))
+  else if (ImGui::ImageButton("Gizmo_Scale", reinterpret_cast<void*>(scaleIcon.id), btnSize))
     gizmode = ImGuizmo::OPERATION::SCALE;
   if (ImGui::IsItemHovered())
     ImGui::SetTooltip("Gizmo_Scale");

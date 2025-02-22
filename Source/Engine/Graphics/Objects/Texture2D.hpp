@@ -211,10 +211,46 @@ public:
                        i32 buffSize, 
                        void* pixels) const;
 
+  /**
+   * @brief Retrieves the width of the texture.
+   * This function queries OpenGL to get the width of the texture at mip level 0.
+   * If the texture is invalid or not initialized, the returned value may be undefined.
+   */
   i32 GetWidth() const;
+
+  /**
+   * @brief Retrieves the height of the texture.
+   * This function queries OpenGL to get the width of the texture at mip level 0.
+   * If the texture is invalid or not initialized, the returned value may be undefined.
+   */
   i32 GetHeight() const;
+  
+  /**
+   * @brief Retrieves the internal format of the texture.
+   * This function queries OpenGL to determine the internal format of the texture at mip level 0.
+   * If the texture is invalid or not initialized, the returned value may be undefined.
+   */
   Texture2DInternalFormat GetInternalFormat() const;
+  
+  /**
+   * @brief Maps an internal texture format to its corresponding external format.
+   *
+   * @return The corresponding `Texture2DFormat`, which represents how the texture data is stored.
+   *
+   * This function converts an internal OpenGL texture format (e.g., `RGB8`, `RGBA16F`)
+   * into a more general format like `RGB`, `RGBA`, or `DEPTH_COMPONENT`.
+   * If the internal format is unknown, a warning is issued, and `Texture2DFormat::RED` is returned as a fallback.
+   */
   Texture2DFormat GetFormat(Texture2DInternalFormat internalFormat) const;
+  
+  /**
+   * @brief Retrieves the number of color channels based on the internal texture format.
+   *
+   * @return The number of channels (e.g., 1 for grayscale, 3 for RGB, 4 for RGBA).
+   *
+   * This function determines how many color components a given internal texture format contains.
+   * If the internal format is unknown, a warning is issued, and 1 is returned as a default value.
+   */
   i32 GetNumChannels(Texture2DInternalFormat internalFormat) const;
 
   bool Compare(const Texture2D& other) const { return id == other.id; }

@@ -217,7 +217,7 @@ void Scene::DeserializeScene(const fs::path& filePath)
 			const SkeletalMesh* skeleton = modManager.FindSkeletalMesh(relative);
 			if (!skeleton)
 			{
-				skeleton = modManager.CreateSkeletalMesh(relative);
+				skeleton = &modManager.CreateSkeletalMesh(relative);
 				
 				// E.g. skeletonPath = "Mutant/"
 				fs::path parent = relative.parent_path();

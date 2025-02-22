@@ -10,9 +10,9 @@
 Mesh::Mesh()
 {
 	TexturesManager& texturesManager = TexturesManager::Get();
-	material.diffuse = &texturesManager.GetDefaultDiffuse();
-	material.specular = &texturesManager.GetDefaultSpecular();
-	material.normal = &texturesManager.GetDefaultNormal();
+	material.diffuse = texturesManager.GetDefaultDiffuse();
+	material.specular = texturesManager.GetDefaultSpecular();
+	material.normal = texturesManager.GetDefaultNormal();
 }
 void Mesh::Create()
 {

@@ -211,7 +211,7 @@ static void CreateSkybox(Mesh& skybox, TextureCubemap& skyboxTexture)
   skybox.SetupAttributeFloat(0, 0, VertexFormat(3, VertexAttribType::FLOAT, false, 0));
 
   TexturesManager& texturesManager = TexturesManager::Get();
-  Array<const Texture2D*, 6> images = {
+  Array<Texture2D, 6> images = {
     texturesManager.GetOrCreateTexture("skybox/right.jpg"),
     texturesManager.GetOrCreateTexture("skybox/left.jpg"),
     texturesManager.GetOrCreateTexture("skybox/top.jpg"),
@@ -219,9 +219,9 @@ static void CreateSkybox(Mesh& skybox, TextureCubemap& skyboxTexture)
     texturesManager.GetOrCreateTexture("skybox/front.jpg"),
     texturesManager.GetOrCreateTexture("skybox/back.jpg"),
   };
-  Texture2DInternalFormat cubemapInternalFormat = images.at(0)->GetInternalFormat();
-  i32 width = images.at(0)->GetWidth();
-  i32 height = images.at(0)->GetHeight();
+  Texture2DInternalFormat cubemapInternalFormat = images.at(0).GetInternalFormat();
+  i32 width = images.at(0).GetWidth();
+  i32 height = images.at(0).GetHeight();
 
   skyboxTexture.Create();
   skyboxTexture.CreateStorage(cubemapInternalFormat, width, height);
@@ -412,14 +412,14 @@ void Engine::Run()
   WindowManager& windowManager = WindowManager::Get();
   TexturesManager& texturesManager = TexturesManager::Get();
   ShadersManager& shadersManager = ShadersManager::Get();
-  const Program& skyboxProgram = shadersManager.GetProgram("Skybox");
-  const Program& gridPlaneProgram = shadersManager.GetProgram("GridPlane");
-  const Program& depthMapProgram = shadersManager.GetProgram("DepthMap");
-  const Program& depthCubeMapProgram = shadersManager.GetProgram("DepthCubeMap");
-  const Program& sceneProgram = shadersManager.GetProgram("Scene");
-  const Program& sceneShadowsProgram = shadersManager.GetProgram("SceneShadows");
-  const Program& skeletalAnimProgram = shadersManager.GetProgram("SkeletalAnim");
-  const Program& skeletalAnimShadowsProgram = shadersManager.GetProgram("SkeletalAnimShadows");
+  Program skyboxProgram = shadersManager.GetProgram("Skybox");
+  Program gridPlaneProgram = shadersManager.GetProgram("GridPlane");
+  Program depthMapProgram = shadersManager.GetProgram("DepthMap");
+  Program depthCubeMapProgram = shadersManager.GetProgram("DepthCubeMap");
+  Program sceneProgram = shadersManager.GetProgram("Scene");
+  Program sceneShadowsProgram = shadersManager.GetProgram("SceneShadows");
+  Program skeletalAnimProgram = shadersManager.GetProgram("SkeletalAnim");
+  Program skeletalAnimShadowsProgram = shadersManager.GetProgram("SkeletalAnimShadows");
 
   constexpr bool renderTerrain = false;
   constexpr bool renderInfiniteGrid = true;
@@ -683,7 +683,6 @@ void Engine::CleanUp()
   ShadersManager::Get().CleanUp();
   TexturesManager::Get().CleanUp();
   ModelsManager::Get().CleanUp();
-  AnimationsManager::Get().CleanUp();
   WindowManager::Get().CleanUp(); // !!Raise exception here
 }
 

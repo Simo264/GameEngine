@@ -71,7 +71,7 @@ public:
   void SetParameteri(TextureParameteriName name, 
                      TextureParameteriParam value) const;
 
-  void LoadImages(const Array<const Texture2D*, 6>& images) const;
+  void LoadImages(const Array<Texture2D, 6>& images) const;
 
   bool IsValid() const;
 

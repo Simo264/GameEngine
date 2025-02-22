@@ -16,7 +16,7 @@ public:
 		static AnimationsManager manager;
 		return manager;
 	}
-
+	
 	/**
 	 * @brief Loads animations for a given skeletal mesh.
 	 * This method loads multiple animations associated with a specific skeletal mesh,
@@ -28,7 +28,7 @@ public:
 	 * 
 	 * @return Pointer to a vector of loaded Animation objects.
 	 */
-	const Vector<Animation>* LoadAnimations(const SkeletalMesh& skeleton,
+	const Vector<Animation>& LoadAnimations(const SkeletalMesh& skeleton,
 																					const Vector<fs::path> relativeAnims);
 
 	/**
@@ -41,15 +41,13 @@ public:
 
 	const fs::path* GetAnimationPath(u32 animationID) const;
 
-	void CleanUp();
-
 private:
 	AnimationsManager() = default;
 	~AnimationsManager() = default;
 	
-	// Skeleton id + list of animations
+	// Map storing the pair (skeleton id, animations)
 	Map<u32, Vector<Animation>> _skeletonAnimations;
 
-	// Animation id + it's path
-	Vector<std::pair<u32, fs::path>> _animationPaths;
+	// Map storing the pair (animation id, animation path)
+	Map<u32, fs::path> _animationPaths;
 };
