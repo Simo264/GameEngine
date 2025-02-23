@@ -157,7 +157,7 @@ static void CalculatePerFrameTime()
     totalDeltasPerSecond = 0;
   }
 }
-static void CreateSkybox(Mesh& skybox, TextureCubemap& skyboxTexture)
+static VertexArray CreateSkybox(TextureCubemap& skyboxTexture)
 {
   constexpr f32 vertices[] = {
     /* Position */
@@ -205,11 +205,17 @@ static void CreateSkybox(Mesh& skybox, TextureCubemap& skyboxTexture)
   };
   Buffer vbo(sizeof(vertices), vertices, BufferUsage::STATIC_DRAW);
   
+	VertexArray skybox;
   skybox.Create();
-  skybox.vao.AttachVertexBuffer(0, vbo, 0, sizeof(Vertex_P));
-  skybox.vao.numVertices = 36;
-  skybox.SetupAttributeFloat(0, 0, VertexFormat(3, VertexAttribType::FLOAT, false, 0));
-
+	
+  skybox.EnableAttribute(0);
+  skybox.SetAttribBinding(0, 0);
+  skybox.SetAttribFormatFLoat(0, 3, VertexAttribType::FLOAT, false, 0);
+  
+  skybox.AttachVertexBuffer(0, vbo, 0, sizeof(Vertex_P));
+  skybox.numVertices = 36;
+  skybox.numIndices = 0;
+  
   TexturesManager& texturesManager = TexturesManager::Get();
   Array<Texture2D, 6> images = {
     texturesManager.GetOrCreateTexture("skybox/right.jpg"),
@@ -231,6 +237,30 @@ static void CreateSkybox(Mesh& skybox, TextureCubemap& skyboxTexture)
   skyboxTexture.SetParameteri(TextureParameteriName::WRAP_S, TextureParameteriParam::CLAMP_TO_EDGE);
   skyboxTexture.SetParameteri(TextureParameteriName::WRAP_T, TextureParameteriParam::CLAMP_TO_EDGE);
   skyboxTexture.SetParameteri(TextureParameteriName::WRAP_R, TextureParameteriParam::CLAMP_TO_EDGE);
+	return skybox;
+}
+static VertexArray CreateGridPlane()
+{
+  constexpr f32 vertices[] = {
+       1.f,  1.f, 0.f,
+      -1.f, -1.f, 0.f,
+      -1.f,  1.f, 0.f,
+      -1.f, -1.f, 0.f,
+       1.f,  1.f, 0.f,
+       1.f, -1.f, 0.f
+  };
+  Buffer gridVbo(sizeof(vertices), vertices, BufferUsage::STATIC_DRAW);
+
+	VertexArray grid; 
+  grid.Create();
+
+  grid.EnableAttribute(0);
+  grid.SetAttribBinding(0, 0);
+  grid.SetAttribFormatFLoat(0, 3, VertexAttribType::FLOAT, false, 0);
+  grid.AttachVertexBuffer(0, gridVbo, 0, 3 * sizeof(f32));
+  grid.numVertices = 6;
+  grid.numIndices = 0;
+	return grid;  
 }
 static FrameBuffer CreateDepthMapFbo(i32 width, i32 height)
 {
@@ -273,23 +303,6 @@ static FrameBuffer CreateDepthCubeMapFbo(i32 width, i32 height)
 
   fbo.AttachTexture(FramebufferAttachment::DEPTH, texture.id, 0);
   return fbo;
-}
-static void CreateGridPlane(Mesh& grid)
-{
-  constexpr f32 vertices[] = {
-       1.f,  1.f, 0.f,
-      -1.f, -1.f, 0.f,
-      -1.f,  1.f, 0.f,
-      -1.f, -1.f, 0.f,
-       1.f,  1.f, 0.f,
-       1.f, -1.f, 0.f
-  };
-  Buffer gridVbo(sizeof(vertices), vertices, BufferUsage::STATIC_DRAW);
-
-  grid.Create();
-  grid.SetupAttributeFloat(0, 0, VertexFormat(3, VertexAttribType::FLOAT, false, 0));
-  grid.vao.AttachVertexBuffer(0, gridVbo, 0, 3 * sizeof(f32));
-  grid.vao.numVertices = 6;
 }
 
 // -----------------------------------------------------
@@ -380,17 +393,12 @@ void Engine::Initialize()
 }
 void Engine::Run()
 {
-  // Create scene
-  Scene scene((Filesystem::GetRootPath() / "Scene.ini"));
-
   // Create grid plane
-  Mesh gridPlane; 
-  CreateGridPlane(gridPlane);
+  VertexArray gridPlane = CreateGridPlane();
 
   // Create skybox object
   TextureCubemap skyboxTexture;
-  Mesh skybox; 
-  CreateSkybox(skybox, skyboxTexture);
+  VertexArray skybox = CreateSkybox(skyboxTexture);
 
   // Create primary camera object
   Camera primaryCamera(vec3f(7.f, 4.f, 6), vec3f(-135.0f, -25.0f, 0.f));
@@ -401,9 +409,12 @@ void Engine::Run()
   directLightCamera.frustum.zFar = 30.0f;
 
   // Setting up the directional shadow mapping
-  FrameBuffer fboDepthMap = CreateDepthMapFbo(1024, 1024);
+  //FrameBuffer fboDepthMap = CreateDepthMapFbo(1024, 1024);
   // Setting up the omnidirectional shadow mapping
-  FrameBuffer fboDepthCubeMap = CreateDepthCubeMapFbo(1024, 1024);
+  //FrameBuffer fboDepthCubeMap = CreateDepthCubeMapFbo(1024, 1024);
+
+  // Create scene
+  Scene scene((Filesystem::GetRootPath() / "Scene.ini"));
 
   // ----------------------------------------------------------------------
   // -------------------------- Pre-loop section --------------------------
@@ -611,7 +622,7 @@ void Engine::Run()
       if(renderInfiniteGrid)
       {
         gridPlaneProgram.Use();
-        Renderer::DrawArrays(RenderMode::TRIANGLES, gridPlane.vao);
+        Renderer::DrawArrays(RenderMode::TRIANGLES, gridPlane);
       }
 
       /// Draw skybox after the scene
@@ -622,7 +633,7 @@ void Engine::Run()
         skyboxProgram.SetUniformMat4f("u_view", mat4f(mat3f(cameraView)));
         skyboxTexture.BindTextureUnit(0);
         DepthTest::SetDepthFun(CompareFunc::LEQUAL);
-        Renderer::DrawArrays(RenderMode::TRIANGLES, skybox.vao);
+        Renderer::DrawArrays(RenderMode::TRIANGLES, skybox);
         DepthTest::SetDepthFun(CompareFunc::LESS);
       }
 
@@ -667,8 +678,10 @@ void Engine::Run()
 
   scene.Clear();
  
-  gridPlane.Destroy();
-  skybox.Destroy();
+  gridPlane.Delete();
+  skybox.Delete();
+	//fboDepthMap.Delete();
+	//fboDepthCubeMap.Delete();
 }
 void Engine::CleanUp()
 {

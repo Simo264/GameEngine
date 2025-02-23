@@ -7,7 +7,9 @@
 //          PUBLIC           
 // --------------------------
 
-Mesh::Mesh()
+Mesh::Mesh() : 
+	vao{ nullptr },
+	material{}
 {
 	TexturesManager& texturesManager = TexturesManager::Get();
 	material.diffuse = texturesManager.GetDefaultDiffuse();
@@ -16,36 +18,36 @@ Mesh::Mesh()
 }
 void Mesh::Create()
 {
-	vao.Create();
+	vao = std::make_shared<VertexArray>();
+	vao->Create();
 }
-void Mesh::Destroy()
+void Mesh::Destroy() const
 {
-	if(vao.IsValid())
-		vao.Delete();
+	vao->Delete();
 }
 
 void Mesh::SetupAttributeFloat(i32 attribindex, i32 bindingindex, VertexFormat format) const
 {
-	vao.EnableAttribute(attribindex);
-	vao.SetAttribBinding(attribindex, bindingindex);
-	vao.SetAttribFormatFLoat(attribindex, format.size, format.type, format.normalized, format.relativeoffset);
+	vao->EnableAttribute(attribindex);
+	vao->SetAttribBinding(attribindex, bindingindex);
+	vao->SetAttribFormatFLoat(attribindex, format.size, format.type, format.normalized, format.relativeoffset);
 }
 void Mesh::SetupAttributeInteger(i32 attribindex, i32 bindingindex, VertexFormat format) const
 {
-	vao.EnableAttribute(attribindex);
-	vao.SetAttribBinding(attribindex, bindingindex);
-	vao.SetAttribFormatInteger(attribindex, format.size, format.type, format.relativeoffset);
+	vao->EnableAttribute(attribindex);
+	vao->SetAttribBinding(attribindex, bindingindex);
+	vao->SetAttribFormatInteger(attribindex, format.size, format.type, format.relativeoffset);
 }
 void Mesh::SetupAttributeLong(i32 attribindex, i32 bindingindex, VertexFormat format) const
 {
-	vao.EnableAttribute(attribindex);
-	vao.SetAttribBinding(attribindex, bindingindex);
-	vao.SetAttribFormatLong(attribindex, format.size, format.relativeoffset);
+	vao->EnableAttribute(attribindex);
+	vao->SetAttribBinding(attribindex, bindingindex);
+	vao->SetAttribFormatLong(attribindex, format.size, format.relativeoffset);
 }
 void Mesh::Draw(RenderMode mode) const
 {
-	if (vao.numIndices == 0)
-		Renderer::DrawArrays(mode, vao);
+	if (vao->numIndices == 0)
+		Renderer::DrawArrays(mode, *vao);
 	else
-		Renderer::DrawElements(mode, vao);
+		Renderer::DrawElements(mode, *vao);
 }

@@ -66,12 +66,22 @@ public:
   {}
   ~VertexArray() = default;
 
-  /** @brief Generate vertex array object. */
+  /**
+   * @brief Creates a new OpenGL Vertex Array Object (VAO).
+   * This method generates a new VAO using `glCreateVertexArrays()`,
+   * which is required for managing vertex attribute state and
+   * binding vertex buffers for rendering.
+   *
+   * The generated VAO ID is stored in `id` and is used for subsequent
+   * operations like attaching buffers and rendering.
+   */
   void Create();
 
   /**
-   * @brief
-   * Delete vertex array object and all attachments and invalidates the name associated with the vertex array object 
+   * @brief Deletes the Vertex Array Object (VAO) and its associated buffers.
+   * This method releases all GPU resources linked to the VAO, including:
+   * - The index buffer (EBO), if present.
+   * - All attached vertex buffers (VBOs).
    */
   void Delete();
 
@@ -149,6 +159,15 @@ public:
    */
   void SetBindingDivisor(i32 bindingindex, i32 divisor) const;
 
+  /**
+   * @brief Retrieves the Element Buffer Object (EBO) currently bound to the VertexArray.
+   * This method queries the OpenGL state to fetch the ID of the Element Array Buffer (EBO)
+   * that is currently bound to the Vertex Array Object (VAO).
+   * The EBO is used to define the index data for rendering elements of the mesh.
+   *
+   * @return A `Buffer` object containing the ID of the bound EBO. If no EBO is bound,
+   *         the returned `Buffer` will have an ID of 0.
+   */
   Buffer GetElementBufferObject() const;
   
   bool IsValid() const;

@@ -28,8 +28,6 @@ static mat4f AiMatrixToGLM(const aiMatrix4x4& matrix)
 //										PUBLIC													
 // ----------------------------------------------------
 
-
-
 void SkeletalMesh::CreateFromFile(const fs::path& absolute)
 {
 	Assimp::Importer importer;
@@ -60,9 +58,9 @@ void SkeletalMesh::CreateFromFile(const fs::path& absolute)
 	assert(totalBones <= GetMaxNumBones());
 	
 	meshes = std::make_unique<Mesh[]>(scene->mNumMeshes);
-	bones = std::make_unique<Bone[]>(totalBones);
-	boneNames = std::make_unique<BoneName[]>(totalBones);
-	rootNode = std::make_unique<BoneNode>();
+	bones = std::make_shared<Bone[]>(totalBones);
+	boneNames = std::make_shared<Array<char, 32>[]>(totalBones);
+	rootNode = std::make_shared<BoneNode>();
 
 	ProcessNode(scene->mRootNode, scene);
 	LoadBoneHierarchy(*rootNode, scene->mRootNode);
@@ -75,17 +73,10 @@ void SkeletalMesh::Clone(SkeletalMesh& other) const
 	for (u32 i = 0; i < nrMeshes; i++)
 		other.meshes[i] = meshes[i];
 
+	other.bones = bones;	
+	other.boneNames = boneNames;
+	other.rootNode = rootNode;	
 	other.nrBones = nrBones;
-	other.bones = std::make_unique<Bone[]>(nrBones);
-	other.boneNames = std::make_unique<BoneName[]>(nrBones);
-	for (u32 i = 0; i < nrBones; i++)
-	{
-		other.bones[i] = bones[i];
-		other.boneNames[i] = boneNames[i];
-	}
-
-	other.rootNode = std::make_unique<BoneNode>();
-	*other.rootNode = *rootNode;
 
 	other.id = id;
 }
@@ -108,26 +99,28 @@ void SkeletalMesh::Draw(RenderMode mode) const
 	}
 }
 
-std::pair<i32, Bone*> SkeletalMesh::FindBone(StringView boneName) const
+i32 SkeletalMesh::FindBone(StringView boneName) const
 {
-	for (u32 i = 0; i < nrBones; i++)
-		if (boneName == boneNames[i].name)
-			return { i, &bones[i] };
+	assert(boneName.size() <= 32);
 
-	return { -1, nullptr };
+	for (i32 i = 0; i < nrBones; i++)
+		if (boneName == boneNames[i].data())
+			return i;
+
+	return -1;
 }
 
 u32 SkeletalMesh::TotalVertices() const
 {
 	return std::reduce(meshes.get(), meshes.get() + nrMeshes, 0, [](i32 acc, const Mesh& mesh) {
-		return acc + mesh.vao.numVertices;
+		return acc + mesh.vao->numVertices;
 	});
 }
 
 u32 SkeletalMesh::TotalIndices() const
 {
 	return std::reduce(meshes.get(), meshes.get() + nrMeshes, 0, [](i32 acc, const Mesh& mesh) {
-		return acc + mesh.vao.numIndices;
+		return acc + mesh.vao->numIndices;
 	});
 }
 
@@ -154,13 +147,13 @@ void SkeletalMesh::ProcessNode(aiNode* node, const aiScene* scene)
 
 		// 1) Load vertex data
 		Buffer vbo = LoadVertices(aimesh);
-		mesh.vao.AttachVertexBuffer(0, vbo, 0, sizeof(Vertex_P_N_UV_T_B));
-		mesh.vao.numVertices = aimesh->mNumVertices;
+		mesh.vao->AttachVertexBuffer(0, vbo, 0, sizeof(Vertex_P_N_UV_T_B));
+		mesh.vao->numVertices = aimesh->mNumVertices;
 
 		// 2) Load indices
 		Buffer ebo = LoadIndices(aimesh);
-		mesh.vao.AttachElementBuffer(ebo);
-		mesh.vao.numIndices = aimesh->mNumFaces * 3;
+		mesh.vao->AttachElementBuffer(ebo);
+		mesh.vao->numIndices = aimesh->mNumFaces * 3;
 
 		if (scene->HasMaterials())
 		{
@@ -232,19 +225,19 @@ void SkeletalMesh::LoadBonesAndWeights(Vector<Vertex_P_N_UV_T_B>& vertices, cons
 	for (u32 i = 0; i < aimesh->mNumBones; i++)
 	{
 		aiBone* aibone = aimesh->mBones[i];
-		const char* aiboneName = aibone->mName.C_Str();
+		StringView aiboneName = aibone->mName.C_Str();
+		assert(aiboneName.size() < 32);
 
 		i32 boneIndex{};
 		
-		auto [boneIdx, bone] = FindBone(aiboneName);
-		if (!bone)
+		i32 boneIdx = FindBone(aiboneName);
+		if (boneIdx == -1)
 		{
-			auto& bone = bones[nrBones];
+			Bone& bone = bones[nrBones];
 			bone.offset = AiMatrixToGLM(aibone->mOffsetMatrix);
-			BoneName& boneName = boneNames[nrBones];
-			
-			assert(std::strlen(aiboneName) <= sizeof(boneName.name));
-			std::strncpy(boneName.name, aiboneName, sizeof(boneName.name));
+			Array<char, 32>& boneName = boneNames[nrBones];
+			boneName.fill(0);	
+			std::strncpy(boneName.data(), aiboneName.data(), aiboneName.size());
 			boneIndex = nrBones;
 			nrBones++;
 		}
@@ -263,11 +256,11 @@ void SkeletalMesh::LoadBonesAndWeights(Vector<Vertex_P_N_UV_T_B>& vertices, cons
 
 void SkeletalMesh::LoadBoneHierarchy(BoneNode& dest, const aiNode* src)
 {
-	const char* aiboneName = src->mName.data;
-	auto [index, bone] = FindBone(aiboneName);
+	StringView aiboneName = src->mName.data;
+	i32 boneIndex = FindBone(aiboneName);
 	
 	dest.bindPoseTransform = AiMatrixToGLM(src->mTransformation);
-	dest.index = index;
+	dest.index = boneIndex;
 	dest.children.reserve(src->mNumChildren);
 	for (u32 i = 0; i < src->mNumChildren; i++)
 	{

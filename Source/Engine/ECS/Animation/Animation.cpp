@@ -54,11 +54,11 @@ Animation::Animation(const SkeletalMesh& skeleton, const fs::path& relative) :
 		aiNodeAnim* channel = animation->mChannels[i];
 		const char* channelName = channel->mNodeName.C_Str();
 
-		auto [index, bone] = skeleton.FindBone(channelName);
-		if (!bone)
+		i32 boneIndex = skeleton.FindBone(channelName);
+		if (boneIndex == -1)
 			continue;
 
-		auto& boneKeys = bonesAnimKeys[index];
+		auto& boneKeys = bonesAnimKeys[boneIndex];
 		LoadBoneKeys(boneKeys, channel);
 	}
 }

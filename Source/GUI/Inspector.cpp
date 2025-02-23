@@ -42,13 +42,14 @@ static void Insp_Tag(Tag& tag)
 
     // First column: input
     ImGui::TableNextColumn();
-    char buffer[64]{};
-    std::format_to_n(buffer, sizeof(buffer), "{}", tag.value);
+		Array<char, 64> buffer{};
+    std::format_to_n(buffer.data(), buffer.size(), "{}", tag.value.data());
 
-    if (ImGui::InputText("##Value", buffer, sizeof(buffer), ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_EnterReturnsTrue))
+    if (ImGui::InputText("##Value", buffer.data(), buffer.size(), ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_EnterReturnsTrue))
     {
-      if (std::strlen(buffer) > 0)
-        tag.UpdateValue(buffer);
+			StringView value{ buffer.data() };
+      if (value.size() > 0)
+        tag.UpdateValue(value);
     }
 
     ImGui::EndTable();
@@ -528,7 +529,7 @@ static void Insp_Animator(GameObject& object, Animator& animator)
   SkeletalMesh* skeleton = object.GetComponent<SkeletalMesh>();
   assert(skeleton != nullptr);
 
-  const auto* skeletonAnimations = animManager.GetSkeletonAnimations(skeleton->id);
+  const auto* animationsVector = animManager.GetSkeletonAnimations(skeleton->id);
   
   const Animation* animAttached = animator.GetAttachedAnimation();
   const fs::path* animAttachedPath = nullptr;
@@ -544,9 +545,9 @@ static void Insp_Animator(GameObject& object, Animator& animator)
 
   if (ImGui::BeginCombo("Animation list", (!animAttached ? "Select animation" : animAttachedPath->string().c_str())))
   {
-    for (const auto& animation : *skeletonAnimations)
+    for (const Animation& animation : *animationsVector)
     {
-      const auto* path = animManager.GetAnimationPath(animation.id);
+      const fs::path* path = animManager.GetAnimationPath(animation.id);
       if (ImGui::Selectable(path->string().c_str(), animAttachedPath == path))
         animator.SetTargetAnimation(&animation);
     }
@@ -581,11 +582,11 @@ static void Insp_Animator(GameObject& object, Animator& animator)
     f32 duration = animAttached->duration;
     f32 currentTime = animator.currentTime;
     f32 progression = currentTime / duration;
-    char label[8]{};
-    std::format_to_n(label, sizeof(label), "{}%", static_cast<u32>(progression*100));
+		Array<char, 8> label{};
+		std::format_to_n(label.data(), label.size(), "{}%", static_cast<u32>(progression * 100));
 
     ImGui::Text("Animation progress:");
-    ImGui::ProgressBar(progression, ImVec2(-1, 0), label);
+    ImGui::ProgressBar(progression, ImVec2(-1, 0), label.data());
   }
 }
 

@@ -77,9 +77,8 @@ Shader ShadersManager::CreateShader(StringView shaderName)
     CONSOLE_ERROR("Error on compiling shader {}: {}", shaderName.data(), shader.GetShaderInfo());
 
   auto& name = _shaderNames.emplace_back();
-	std::memset(name.data(), 0, name.size());
-	std::strncpy(name.data(), shaderName.data(), shaderName.size());
-
+	name.fill(0);
+  std::strncpy(name.data(), shaderName.data(), shaderName.size());
   return shader;
 }
 
@@ -102,7 +101,7 @@ Program ShadersManager::CreateProgram(StringView programName)
   program.Create();
 
   auto& name = _programNames.emplace_back();
-  std::memset(name.data(), 0, name.size());
+	name.fill(0);
   std::strncpy(name.data(), programName.data(), programName.size());
   return program;
 }

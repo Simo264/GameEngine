@@ -54,11 +54,21 @@ public:
   }
 
   /**
-   * @brief Creates a skeletal mesh from the specified file path.
-   * This method loads and initializes a skeletal mesh object using the given absolute path.
-   * It reads mesh and skeleton data from the file and prepares it for rendering and animation.
+   * @brief Creates a SkeletalMesh from a file located at the given path and allocates GPU resources.
+   * This method imports a 3D model containing skeletal information from the specified file using the Assimp library.
    *
-   * @param absolute The absolute path to the skeletal mesh file.
+   * The method allocates memory for the meshes and bones, and it creates GPU resources (VAO, vertex buffers,
+   * element buffers) for each mesh. The bone data is loaded and stored in a hierarchy structure.
+   *
+   * - Allocates memory for the meshes (each mesh having its own VAO and buffers for vertices and indices).
+   * - Allocates memory for the bones and their names.
+   * - Creates GPU resources for each mesh, including vertex and element buffers.
+   * - Builds the bone hierarchy by recursively processing the nodes in the model.
+   *
+   * Additionally, if the model has associated textures (e.g., diffuse, specular, normal maps), these
+   * textures are loaded and assigned to the corresponding materials.
+   *
+   * @param absolute The absolute path to the 3D model file to load.
    */
   void CreateFromFile(const fs::path& absolute);
 
@@ -89,33 +99,66 @@ public:
   void Draw(RenderMode mode) const;
   
   /**
-   * @brief Searches for a bone by its name.
-   * @return A pair containing a pointer to the bone and its index, or {nullptr, -1} if the bone is not found.
+   * @brief Finds the index of a bone given its name.
+   * This method searches for a bone in the mesh's bone list by comparing the provided name with the stored bone names.
+   * If a match is found, the index of the bone in the bone list is returned. If no bone with the specified name is found,
+   * the method returns -1.
+   *
+   * The bone names are stored in an array with a maximum length of 32 characters. This ensures that the bone names
+   * do not exceed the specified size.
+   *
+   * @return The index of the bone if found, otherwise -1.
    */
-  std::pair<i32, Bone*> FindBone(StringView boneName) const;
+  i32 FindBone(StringView boneName) const;
   
   u32 TotalVertices() const;
 
   u32 TotalIndices() const;
 
-  /** @brief The root node of the bone hierarchy. */
-  UniquePtr<BoneNode> rootNode;
+  /**
+   * @brief The root bone node of the bone hierarchy.
+   *
+   * This shared pointer ensures that all instances of the same skeletal
+   * mesh share the same bone hierarchy, optimizing memory usage by
+   * preventing the creation of redundant bone hierarchies for the same
+   * skeleton.
+   */
+  SharedPtr<BoneNode> rootNode;
+  
+  /**
+   * @brief Array of bones associated with the skeletal mesh.
+   *
+   * This array holds all the bones that influence the skeletal mesh,
+   * where each bone corresponds to a specific part of the mesh. The array
+   * is shared across all instances of the skeletal mesh, ensuring that
+   * the same set of bones is used.
+   */
+  SharedPtr<Bone[]> bones;
+  
+  /**
+   * @brief Array of bone names, corresponding to the bones in the 'bones' array.
+   *
+   * This array stores the names of each bone. It is parallel to the 'bones'
+   * array, meaning that each element in 'boneNames' corresponds to the
+   * bone at the same index in the 'bones' array. 
+   * The array is shared across all instances of the skeletal mesh, ensuring that
+   * the same set of boneNames is used.
+   */
+  SharedPtr<Array<char, 32>[]> boneNames;
 
-  /** @brief List of meshes associated with the skeleton. */
+  /**
+   * @brief Array of meshes that compose this skeletal mesh.
+   * This is a unique pointer because each mesh can have different materials and must
+   * be treated as a distinct entity. Each `Mesh` within this array is unique to the
+   * skeletal mesh instance.
+   */
   UniquePtr<Mesh[]> meshes;
+  
   u32 nrMeshes;
 
-  /** @brief A collection of bones defining the skeleton. */
-  UniquePtr<Bone[]> bones;
   u32 nrBones;
 
-  /** @brief Map storing the bone index with the name */
-  struct BoneName
-  {
-    char name[32]{};
-  };
-  UniquePtr<BoneName[]> boneNames;
-
+  /** @brief Unique identifier referencing the original SkeletalMesh stored in ModelsManager. */
   u32 id;
 
 private:

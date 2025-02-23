@@ -45,11 +45,25 @@ public:
 	StaticMesh& operator=(const StaticMesh&) = delete;
 
 	/**
-	 * @brief Creates a static mesh from the specified file path.
-	 * This method loads and initializes a static mesh object using the given absolute path.
-	 * It is responsible for reading mesh data from the file and preparing it for rendering.
+	 * @brief Creates a StaticMesh from a file located at the given path and allocates GPU resources.
 	 *
-	 * @param absolute The absolute path to the static mesh file.
+	 * This method imports a 3D model from the specified file using the Assimp library. It processes the
+	 * model by applying several Assimp post-processing steps, such as triangulation, UV coordinate generation,
+	 * tangent space calculation, and others. It handles multiple meshes within the model.
+	 *
+	 * The method allocates memory on the GPU for the meshes by creating Vertex Array Objects (VAO) and
+	 * attaching buffers for vertex and index data. For each mesh, it loads the vertex and index data into
+	 * separate buffers (VBOs for vertices and EBO for indices), and links them to the VAO for rendering.
+	 *
+	 * - Allocates VAO for each mesh.
+	 * - Creates and attaches Vertex Buffer Objects (VBOs) for vertex data.
+	 * - Creates and attaches Element Buffer Object (EBO) for index data.
+	 * - Allocates GPU resources only once per mesh, preventing multiple allocations for identical meshes.
+	 *
+	 * Additionally, if the model has associated textures (e.g., diffuse, specular, normal maps), these
+	 * textures are loaded and assigned to the corresponding materials.
+	 *
+	 * @param absolute The absolute path to the 3D model file to load.
 	 */
 	void CreateFromPath(const fs::path& absolute);
 	
@@ -87,6 +101,7 @@ public:
 	UniquePtr<Mesh[]> meshes;
 	u32 nrMeshes;
 
+	/** @brief Unique identifier referencing the original StaticMesh stored in ModelsManager. */
 	u32 id;
 
 private:

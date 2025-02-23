@@ -45,8 +45,8 @@ const Vector<Animation>* AnimationsManager::GetSkeletonAnimations(u32 skeletonID
 
 const fs::path* AnimationsManager::GetAnimationPath(u32 animationID) const
 {
-	auto it = _skeletonAnimations.find(animationID);
-	if(it != _skeletonAnimations.end())
+	auto it = _animationPaths.find(animationID);
+	if(it != _animationPaths.end())
 		return &_animationPaths.at(animationID);
 	return nullptr;
 }

@@ -84,40 +84,22 @@ public:
 	{}
 	~FrameBuffer() = default;
 
-	/**
-	 * @brief
-	 * Create framebuffer object
-	 */
+	/** @brief Create framebuffer object */
 	void Create();
 
-	/**
-	 * @brief
-	 * Delete framebuffer object and all attachments and invalidates the name associated with the frame buffer object 
-	 */
+	/** @brief Delete framebuffer object and all attachments and invalidates the name associated with the frame buffer object */
 	void Delete();
 
-	/**
-	 * @brief
-	 * Bind the framebuffer to a framebuffer target
-	 * 
-	 * @param target: GL_DRAW_FRAMEBUFFER, GL_READ_FRAMEBUFFER or GL_FRAMEBUFFER
-	 */
+	/** @brief Bind the framebuffer to a framebuffer target */
 	void Bind(FramebufferTarget target) const;
 
-	/**
-	 * @brief
-	 * Bind the framebuffer to a framebuffer target
-	 *
-	 * @param target: GL_DRAW_FRAMEBUFFER, GL_READ_FRAMEBUFFER or GL_FRAMEBUFFER
-	 */
+	/** @brief Bind the framebuffer to a framebuffer target */
 	void Unbind(FramebufferTarget target) const;
 
 	/**
-	 * @brief
-	 * Check the completeness status of the framebuffer.
+	 * @brief Check the completeness status of the framebuffer.
 	 * 
-	 * @return
-	 * GL_FRAMEBUFFER_COMPLETE if the FBO can be used. If it is something else, then there is a problem.
+	 * @return GL_FRAMEBUFFER_COMPLETE if the FBO can be used. If it is something else, then there is a problem.
 	 */
 	i32 CheckStatus() const;
 
@@ -142,8 +124,7 @@ public:
 	) const;
 
 	/**
-	 * @brief
-	 * specify whether the individual color components in the frame buffer can or cannot be written.
+	 * @brief Specify whether the individual color components in the frame buffer can or cannot be written.
 	 * If red is GL_FALSE, for example, no change is made to the red component of any pixel in any of the color buffers, 
 	 * regardless of the drawing operation attempted.
 	 * See https://registry.khronos.org/OpenGL-Refpages/gl4/html/glColorMask.xhtml
@@ -151,8 +132,6 @@ public:
 	void SetWritingColorComponents(bool r, bool g, bool b, bool a) const;
 
 	bool IsValid() const;
-
-	u32 id;
 
 	/**
 	 * @brief
@@ -171,4 +150,6 @@ public:
 	 */
 	inline static constexpr i32 MAX_NUM_RBO_ATTACHMENTS = 18;
 	Vector<u32> rboAttachments;
+
+	u32 id;
 };

@@ -78,7 +78,6 @@ void Animator::UpdateBoneTransform(const BoneNode& node, const mat4f& parentTran
 		mat4f globalTransformation = currentTransform * currentNode->bindPoseTransform;
 		if (boneIndex != -1)
 		{
-			// WARN: This piece of code collapses the performance
 			Bone& bone = _targetSkeleton->bones[boneIndex];
 			InterpolateBone(boneIndex);
 			globalTransformation = currentTransform * bone.localTransform;

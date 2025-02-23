@@ -24,7 +24,6 @@ struct KeyScale
 	f32 timeStamp{};
 	vec3f scale{};
 };
-
 struct BoneAnimationKeys
 {
 	UniquePtr<KeyPosition[]> posKeys;

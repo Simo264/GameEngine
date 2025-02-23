@@ -28,13 +28,13 @@ static void Hierarchy_ListObjects(Scene& scene, GameObject& objSelected)
   auto& texManager = TexturesManager::Get();
   static Texture2D icon = texManager.GetOrCreateIcon("game-object-16.png");
 
-  char selectableName[64]{};
+	Array<char, 64> selectableName{};
   for (auto [entity, tag] : scene.Reg().view<Tag>().each())
   {
     GameObject o{ entity, &scene.Reg() };
     
-    std::fill_n(selectableName, sizeof(selectableName), 0);
-    std::format_to_n(selectableName, sizeof(selectableName), "{}##{}", tag.value, static_cast<u32>(entity));
+		selectableName.fill(0);
+    std::format_to_n(selectableName.data(), selectableName.size(), "{}##{}", tag.value.data(), static_cast<u32>(entity));
 
     ImGui::BeginGroup();
     ImGui::SetCursorPosY(ImGui::GetCursorPosY() + (ImGui::GetTextLineHeight() - 16.f) / 2);
@@ -49,7 +49,7 @@ static void Hierarchy_ListObjects(Scene& scene, GameObject& objSelected)
     ImGui::PushStyleColor(ImGuiCol_HeaderHovered, colorHovered);
     ImGui::PushStyleColor(ImGuiCol_HeaderActive, colorSelected);
 
-    bool selected = ImGui::Selectable(selectableName, objSelected.Compare(o));
+    bool selected = ImGui::Selectable(selectableName.data(), objSelected.Compare(o));
     if (selected && !objSelected.Compare(o))
       objSelected = o;
     

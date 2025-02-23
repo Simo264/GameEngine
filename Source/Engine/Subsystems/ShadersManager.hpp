@@ -32,8 +32,8 @@ public:
 
 	/** @brief Retrieve a shader by its filename. */
 	Shader GetShader(StringView shaderName) const;
-	Shader GetOrCreateShader(StringView shaderName);
 	Shader CreateShader(StringView shaderName);
+	Shader GetOrCreateShader(StringView shaderName);
 
 	/** @brief Retrieve a program by its name. */
 	Program GetProgram(StringView programName) const;

@@ -68,7 +68,7 @@ void Scene::SerializeScene(const fs::path& filePath)
 		const u32 objectID = static_cast<u32>(object.id);
 
 		String section = std::format("Entity{}:Tag", objectID);
-		conf.Update(section, "value", tag.value);
+		conf.Update(section, "value", tag.value.data());
 
 		if (Transform* transform = object.GetComponent<Transform>())
 		{
@@ -196,11 +196,11 @@ void Scene::DeserializeScene(const fs::path& filePath)
 		{
 			auto& manager = ModelsManager::Get();
 			const String& strPath = conf.GetValue(section, "path");
-			const auto* staticMesh = manager.FindStaticMesh(strPath);
+			const StaticMesh* staticMesh = manager.FindStaticMesh(strPath);
 			if (!staticMesh)
 				staticMesh = &manager.CreateStaticMesh(strPath);
 
-			auto& component = object.AddComponent<StaticMesh>();
+			StaticMesh& component = object.AddComponent<StaticMesh>();
 			staticMesh->Clone(component);
 		}
 		else if (component == "SkeletalMesh")

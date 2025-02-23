@@ -67,7 +67,6 @@ const fs::path* ModelsManager::GetStaticMeshPath(u32 staticMeshId) const
 			return &_staticMeshPaths.at(i);
 	return nullptr;
 }
-
 const fs::path* ModelsManager::GetSkeletalMeshPath(u32 skeletalMeshId) const
 {
 	for (u32 i = 0; i < _skeletalMeshObjects.size(); i++)

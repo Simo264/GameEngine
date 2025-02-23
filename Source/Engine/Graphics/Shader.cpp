@@ -45,10 +45,11 @@ i32 Shader::GetParameteri(i32 name) const
 
 const char* Shader::GetShaderInfo() const
 {
-  static char log[1024];
-  std::memset(log, 0, sizeof(log));
-  glGetShaderInfoLog(id, sizeof(log), nullptr, log);
-  return log;
+  static Array<char, 1024> log;
+  log.fill(0);
+
+  glGetShaderInfoLog(id, log.size(), nullptr, log.data());
+  return log.data();
 }
 
 // ------------------------------
@@ -103,10 +104,11 @@ i32 Program::GetParameteri(i32 name) const
 
 const char* Program::GetProgramInfo() const
 {
-  static char log[1024];
-  std::memset(log, 0, sizeof(log));
-  glGetProgramInfoLog(id, sizeof(log), nullptr, log);
-  return log;
+  static Array<char , 1024> log;
+	log.fill(0);
+
+  glGetProgramInfoLog(id, log.size(), nullptr, log.data());
+  return log.data();
 }
 
 i32 Program::GetUniformLocation(StringView name) const 

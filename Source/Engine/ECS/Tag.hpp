@@ -17,16 +17,11 @@ public:
 	
 	void UpdateValue(StringView newValue)
 	{
-		std::memset(value, 0, sizeof(value));
+		assert(newValue.size() < 32);
 
-		if (newValue.empty())
-			return;
-		
-		if (newValue.size() >= sizeof(value))
-			CONSOLE_WARN("newValue.size() >= {}", sizeof(value));
-
-		std::strncpy(value, newValue.data(), sizeof(value));
+		value.fill(0);
+		std::strncpy(value.data(), newValue.data(), newValue.size());
 	}
 
-	char value[32]{};
+	Array<char, 32> value;
 };

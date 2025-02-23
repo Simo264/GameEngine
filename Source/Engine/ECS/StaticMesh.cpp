@@ -83,14 +83,14 @@ void StaticMesh::Draw(RenderMode mode) const
 u32 StaticMesh::TotalVertices() const
 {
 	return std::reduce(meshes.get(), meshes.get() + nrMeshes, 0, [](i32 acc, const Mesh& mesh) {
-		return acc + mesh.vao.numVertices;
+		return acc + mesh.vao->numVertices;
 	});
 }
 
 u32 StaticMesh::TotalIndices() const
 {
 	return std::reduce(meshes.get(), meshes.get() + nrMeshes, 0, [](i32 acc, const Mesh& mesh) {
-		return acc + mesh.vao.numIndices;
+		return acc + mesh.vao->numIndices;
 		});
 }
 
@@ -113,12 +113,12 @@ void StaticMesh::ProcessNode(aiNode* node, const aiScene* scene)
 
 		// Load vertices
 		Buffer vbo = LoadVertices(aimesh);
-		mesh.vao.AttachVertexBuffer(0, vbo, 0, sizeof(Vertex_P_N_UV_T));
-		mesh.vao.numVertices = aimesh->mNumVertices;
+		mesh.vao->AttachVertexBuffer(0, vbo, 0, sizeof(Vertex_P_N_UV_T));
+		mesh.vao->numVertices = aimesh->mNumVertices;
 		// Load indices
 		Buffer ebo = LoadIndices(aimesh);
-		mesh.vao.AttachElementBuffer(ebo);
-		mesh.vao.numIndices = aimesh->mNumFaces * 3;
+		mesh.vao->AttachElementBuffer(ebo);
+		mesh.vao->numIndices = aimesh->mNumFaces * 3;
 
 		if (scene->HasMaterials())
 		{
