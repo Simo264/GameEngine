@@ -41,7 +41,7 @@ public:
 	 * 
 	 * @return Pointer to the found StaticMesh, or nullptr if not found.
 	 */
-	const StaticMesh* FindStaticMesh(const fs::path& relative) const;
+	 const StaticMesh* FindStaticMesh(const fs::path& relative) const;
 
 	 /**
 		* @brief Creates and loads a new static mesh from the given relative path.
