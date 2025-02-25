@@ -1,25 +1,18 @@
 #include "Core/Core.hpp"
 
-#include "Core/Math/Math.hpp"
-#include "Engine/Subsystems/TextureManager.hpp"
+#include "Core/Math/Base.hpp"
+#include "Engine/Subsystems/TexturesManager.hpp"
+#include "Engine/Filesystem/Filesystem.hpp"
 
 #include <imgui/imgui.h>
 #include <imgui/ImGuizmo.h>
 
-/* ------------------------------------------ */
-/*                  PRIVATE                   */
-/* ------------------------------------------ */
-
-/* ------------------------------------------ */
-/*                    PUBLIC                  */
-/* ------------------------------------------ */
-
-void GUI_RenderTransformToolBar(vec2i32 viewportPos, i32& gizmode)
+void GUI_RenderTransformToolBar(vec2i viewportPos, i32& gizmode)
 {
-  auto& texManager = TextureManager::Get();
-  static const auto& expandIcon = texManager.GetIconByPath(GetIconsPath() / "expand-arrows-32.png");
-  static const auto& rotateIcon = texManager.GetIconByPath(GetIconsPath() / "rotate-32.png");
-  static const auto& scaleIcon = texManager.GetIconByPath(GetIconsPath() / "scale-32.png");
+  auto& texManager = TexturesManager::Get();
+  static Texture2D expandIcon = texManager.GetOrCreateIcon("expand-arrows-32.png");
+  static Texture2D rotateIcon = texManager.GetOrCreateIcon("rotate-32.png");
+  static Texture2D scaleIcon = texManager.GetOrCreateIcon("scale-32.png");
 
   ImGuiStyle& style = ImGui::GetStyle();
   ImVec2 windowPos = ImVec2(viewportPos.x + 4.f, viewportPos.y + 24.f);

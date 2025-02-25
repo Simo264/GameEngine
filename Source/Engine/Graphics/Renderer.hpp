@@ -4,57 +4,33 @@
 
 class VertexArray;
 
+enum class RenderMode : u32
+{
+	POINTS = 0x0000, // GL_POINTS
+	LINE_STRIP = 0x0003, // GL_LINE_STRIP
+	LINE_LOOP = 0x0002, // GL_LINE_LOOP
+	LINES = 0x0001, // GL_LINES
+	LINE_STRIP_ADJACENCY = 0x000B, // GL_LINE_STRIP_ADJACENCY
+	LINES_ADJACENCY = 0x000A, // GL_LINES_ADJACENCY
+	TRIANGLE_STRIP = 0x0005, // GL_TRIANGLE_STRIP
+	TRIANGLE_FAN = 0x0006, // GL_TRIANGLE_FAN
+	TRIANGLES = 0x0004, // GL_TRIANGLES
+	TRIANGLE_STRIP_ADJACENCY = 0x000D, // GL_TRIANGLE_STRIP_ADJACENCY
+	TRIANGLES_ADJACENCY = 0x000C, // GL_TRIANGLES_ADJACENCY
+	PATCHES = 0x000E  // GL_PATCHES
+};
+
 namespace Renderer
 {
-	/**
-	* Render primitives from array data
-	*
-	* @param mode: specifies what kind of primitives to render. Symbolic constants
-	*							GL_POINTS, GL_LINE_STRIP, GL_LINE_LOOP, GL_LINES, GL_LINE_STRIP_ADJACENCY, GL_LINES_ADJACENCY,
-	*							GL_TRIANGLE_STRIP, GL_TRIANGLE_FAN, GL_TRIANGLES, GL_TRIANGLE_STRIP_ADJACENCY,
-	*							GL_TRIANGLES_ADJACENCY and GL_PATCHES
-	* 
-	* @param first: specifies the starting index in the enabled arrays
-	*/
-	void DrawArrays(uint32_t mode, VertexArray& vertexArray, i32 first = 0);
+	/** @brief Render primitives from array data. */
+	void DrawArrays(RenderMode mode, const VertexArray& vertexArray, i32 first = 0);
 
-	/**
-		* Draw multiple instances of a range of elements.
-		*
-		* @param mode: specifies what kind of primitives to render. Symbolic constants
-		*							GL_POINTS, GL_LINE_STRIP, GL_LINE_LOOP, GL_LINES, GL_LINE_STRIP_ADJACENCY, GL_LINES_ADJACENCY,
-		*							GL_TRIANGLE_STRIP, GL_TRIANGLE_FAN, GL_TRIANGLES, GL_TRIANGLE_STRIP_ADJACENCY,
-		*							GL_TRIANGLES_ADJACENCY and GL_PATCHES
-		*
-		* @param nInstances: specifies the number of instances of the specified range of indices to be rendered.
-		* @param first: specifies the starting index in the enabled arrays
-		*/
-	void DrawArraysInstanced(uint32_t mode, VertexArray& vertexArray, i32 nInstances, i32 first = 0);
+	/** @brief Draw multiple instances of a range of elements. */
+	void DrawArraysInstanced(RenderMode mode, const VertexArray& vertexArray, i32 nInstances, i32 first = 0);
 
+	/** @brief Render primitives from array data. */
+	void DrawElements(RenderMode mode, const VertexArray& vertexArray, i32 offset = 0);
 
-	/**
-		* Render primitives from array data.
-		*
-		* @param mode: specifies what kind of primitives to render. Symbolic constants
-		*							GL_POINTS, GL_LINE_STRIP, GL_LINE_LOOP, GL_LINES, GL_LINE_STRIP_ADJACENCY, GL_LINES_ADJACENCY,
-		*							GL_TRIANGLE_STRIP, GL_TRIANGLE_FAN, GL_TRIANGLES, GL_TRIANGLE_STRIP_ADJACENCY,
-		*							GL_TRIANGLES_ADJACENCY and GL_PATCHES
-		* 
-		* @param indices: specifies a pointer to the location where the indices are stored
-		* @param offset: the offset in bytes from the start of the index buffer to the location of the first index to scan
-		*/
-	void DrawElements(u32 mode, VertexArray& vertexArray, i32 offset = 0);
-
-	/**
-		* Draw multiple instances of a set of elements.
-		*
-		* @param mode: specifies what kind of primitives to render. Symbolic constants
-		*							GL_POINTS, GL_LINE_STRIP, GL_LINE_LOOP, GL_LINES, GL_LINE_STRIP_ADJACENCY, GL_LINES_ADJACENCY,
-		*							GL_TRIANGLE_STRIP, GL_TRIANGLE_FAN, GL_TRIANGLES, GL_TRIANGLE_STRIP_ADJACENCY,
-		*							GL_TRIANGLES_ADJACENCY and GL_PATCHES
-		*
-		* @param nInstances: specifies the number of instances of the specified range of indices to be rendered
-		* @param offset: the offset in bytes from the start of the index buffer to the location of the first index to scan
-		*/
-	void DrawElementsInstanced(uint32_t mode, VertexArray& vertexArray, i32 nInstances, i32 offset = 0);
+	/** @brief Draw multiple instances of a set of elements. */
+	void DrawElementsInstanced(RenderMode mode, const VertexArray& vertexArray, i32 nInstances, i32 offset = 0);
 }

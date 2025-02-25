@@ -14,7 +14,7 @@ out mat3 TBN;
 out vec3 TangentViewPos;
 out vec3 TangentFragPos;
 
-layout (std140, binding = 0) uniform cameraBlock
+layout (std140, binding = 0) uniform CameraBlock
 {
   mat4 u_view;
   mat4 u_projection;

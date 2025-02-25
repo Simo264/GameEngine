@@ -5,18 +5,14 @@
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
 #include <spdlog/spdlog.h>
 
-/* ----------------------------------------- 
-			Static class Logger
-	----------------------------------------- */
 class Logger
 {
 public:
 	Logger()	= delete;
 	~Logger() = delete;
 
-	static const SharedPtr<spdlog::logger>& GetLogger() { return _logger; }
-
 	static void Initialize();
+	static const SharedPtr<spdlog::logger>& GetLogger() { return _logger; }
 
 private:
 	static SharedPtr<spdlog::logger> _logger;

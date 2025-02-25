@@ -4,6 +4,7 @@
 #include "Core/Log/Logger.hpp"
 
 /**
+ * @brief
  * Tags provide a way of marking and identifying types of GameObject in your scene
  */
 class Tag
@@ -16,20 +17,11 @@ public:
 	
 	void UpdateValue(StringView newValue)
 	{
-		if (newValue.empty())
-		{
-			std::fill_n(value, sizeof(value), 0);
-			return;
-		}
-		if (newValue.size() >= 64)
-		{
-			CONSOLE_WARN("Label.size() >= 64");
-			return;
-		}
+		assert(newValue.size() < 32);
 
-		std::fill_n(value, sizeof(value), 0);
-		std::copy_n(newValue.data(), newValue.size(), value);
+		value.fill(0);
+		std::strncpy(value.data(), newValue.data(), newValue.size());
 	}
 
-	char value[64]{};
+	Array<char, 32> value;
 };

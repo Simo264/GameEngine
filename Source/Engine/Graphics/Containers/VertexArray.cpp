@@ -3,13 +3,7 @@
 #include "Core/GL.hpp"
 #include "Core/Log/Logger.hpp"
 
-VertexArray::VertexArray()
-  : id{ 0 },
-    numIndices{ 0 },
-    numVertices{ 0 },
-    eboAttachmentID{ 0 },
-    vboAttachmentIDs{}
-{}
+inline static constexpr u32 MAX_NUM_VBO_ATTACHMENTS = 16;
 
 void VertexArray::Create()
 {
@@ -18,20 +12,23 @@ void VertexArray::Create()
 
 void VertexArray::Delete()
 {
-  if (vboAttachmentIDs.size() > 0 || eboAttachmentID != 0)
-  {
-    if (eboAttachmentID != 0)
-      vboAttachmentIDs.push_back(eboAttachmentID);
-    
-    glDeleteBuffers(vboAttachmentIDs.size(), vboAttachmentIDs.data());
-  }
+  u32 bufferIDs[MAX_NUM_VBO_ATTACHMENTS + 1]{};
+  u32 size = 0;
   
-  /* Destroy Vector */
-  Vector<u32>().swap(vboAttachmentIDs);
-  eboAttachmentID = 0;
+  Buffer ebo = GetElementBufferObject();
+  if(ebo.IsValid())
+    bufferIDs[size++] = ebo.id;
 
+  for (const Buffer& buffer : vbos)
+    if (buffer.IsValid())
+      bufferIDs[size++] = buffer.id;
+    
+  glDeleteBuffers(size, bufferIDs);
   glDeleteVertexArrays(1, &id);
+
   id = 0;
+  numVertices = 0;
+  numIndices = 0;
 }
 
 void VertexArray::Bind() const
@@ -44,6 +41,11 @@ void VertexArray::Unbind() const
   glBindVertexArray(0);
 }
 
+bool VertexArray::IsValid() const
+{
+  return (id != 0) && (glIsVertexArray(id) == GL_TRUE);
+}
+
 void VertexArray::EnableAttribute(i32 attribindex) const
 {
   glEnableVertexArrayAttrib(id, attribindex);
@@ -54,21 +56,41 @@ void VertexArray::DisableAttribute(i32 attribindex) const
   glDisableVertexArrayAttrib(id, attribindex);
 }
 
-void VertexArray::AttachVertexBuffer(i32 bindingindex, u32 bufferID, i32 offset, i32 stride)
+void VertexArray::AttachVertexBuffer(i32 bindingindex, Buffer buffer, i32 offset, i32 stride)
 {
-  vboAttachmentIDs.push_back(bufferID);
-  glVertexArrayVertexBuffer(id, bindingindex, bufferID, offset, stride);
+  vbos.push_back(buffer);
+  glVertexArrayVertexBuffer(id, bindingindex, buffer.id, offset, stride);
 }
 
-void VertexArray::AttachElementBuffer(u32 bufferID)
+void VertexArray::AttachElementBuffer(Buffer buffer) const
 {
-  eboAttachmentID = bufferID;
-  glVertexArrayElementBuffer(id, bufferID);
+  glVertexArrayElementBuffer(id, buffer.id);
 }
 
-void VertexArray::SetAttribFormat(i32 attribindex, i32 size, i32 type, bool normalize, i32 relativeoffset) const
+void VertexArray::SetAttribFormatFLoat(i32 attribindex, i32 size, VertexAttribType type, bool normalize, i32 relativeoffset) const
 {
-  glVertexArrayAttribFormat(id, attribindex, size, type, normalize, relativeoffset);
+  glVertexArrayAttribFormat(
+    id, 
+    attribindex, 
+    size, 
+    static_cast<u32>(type),
+    normalize, 
+    relativeoffset);
+}
+
+void VertexArray::SetAttribFormatInteger(i32 attribindex, i32 size, VertexAttribType type, i32 relativeoffset) const
+{
+  glVertexArrayAttribIFormat(
+    id, 
+    attribindex, 
+    size, 
+    static_cast<u32>(type),
+    relativeoffset);
+}
+
+void VertexArray::SetAttribFormatLong(i32 attribindex, i32 size, i32 relativeoffset) const
+{
+  glVertexArrayAttribLFormat(id, attribindex, size, GL_DOUBLE, relativeoffset);
 }
 
 void VertexArray::SetAttribBinding(i32 attribindex, i32 bindingindex) const
@@ -81,9 +103,12 @@ void VertexArray::SetBindingDivisor(i32 bindingindex, i32 divisor) const
   glVertexArrayBindingDivisor(id, bindingindex, divisor);
 }
 
-void VertexArray::SetVertexSpecifications(const VertexSpecifications& specs) const
+Buffer VertexArray::GetElementBufferObject() const
 {
-  SetAttribFormat(specs.attrindex, specs.components, specs.type, specs.normalized, specs.relativeoffset);
-  SetAttribBinding(specs.attrindex, specs.bindingindex);
-  EnableAttribute(specs.attrindex);
+  i32 bufferId = 0;
+  glGetVertexArrayiv(id, GL_ELEMENT_ARRAY_BUFFER_BINDING, &bufferId);
+
+  Buffer buffer{};
+  buffer.id = bufferId;
+  return buffer;
 }

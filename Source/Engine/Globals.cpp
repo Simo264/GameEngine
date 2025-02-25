@@ -1,6 +1,7 @@
-#include "Core/Math/Math.hpp"
+#include "Core/Core.hpp"
 
-u32 g_drawCalls = 0;
+constexpr const char* DEFAULT_FONT = "OpenSans/OpenSans-Regular.ttf";
 
-f32 g_ambientIntensity = 0.0f;
-vec3f g_ambientColor = vec3f(1.0f, 1.0f, 1.0f);
+u32 g_drawCalls;
+fs::path g_fontFamily = DEFAULT_FONT;
+i32 g_fontSize = 12;

@@ -1,16 +1,16 @@
-#include "Core/Core.hpp"
-
 #include "ImGuiLayer.hpp"
 
-#include "Core/Math/Extensions.hpp"
+#include "Core/Math/Base.hpp"
+#include "Core/Math/Ext.hpp"
+
 #include "Engine/ECS/ECS.hpp"
 
 #include <imgui/imgui.h>
 #include <imgui/ImGuizmo.h>
 
-/* ------------------------------------------ */
-/*                  PRIVATE                   */
-/* ------------------------------------------ */
+// ------------------------------------------
+//                  PRIVATE                  
+// ------------------------------------------
 
 static void GizmoWorldTranslation(Transform& transform, const mat4f& view, const mat4f& proj)
 {
@@ -24,10 +24,12 @@ static void GizmoWorldTranslation(Transform& transform, const mat4f& view, const
 
   if (ImGuizmo::IsUsing())
   {
-    vec3f translation;
-    vec3f scale;
-    quat  rotation;
-    Math::Decompose(model, translation, rotation, scale);
+    vec3f translation{};
+    vec3f scale{};
+    quat  rotation{};
+    vec3f skew{};
+    vec4f perspective{};
+    glm::decompose(model, translation, rotation, scale, skew, perspective);
 
     transform.position = translation;
     transform.UpdateTransformation();
@@ -45,15 +47,17 @@ static void GizmoWorldRotation(Transform& transform, const mat4f& view, const ma
 
   if (ImGuizmo::IsUsing())
   {
-    vec3f translation;
-    vec3f scale;
-    quat  rotation;
-    Math::Decompose(model, translation, rotation, scale);
+    vec3f translation{};
+    vec3f scale{};
+    quat  rotation{};
+    vec3f skew{};
+    vec4f perspective{};
+    glm::decompose(model, translation, rotation, scale, skew, perspective);
 
-    vec3f rotationDegrees = Math::EulerAngles(rotation);  /* Get vector rotation in radians */
-    rotationDegrees.x = Math::Degrees(rotationDegrees.x); /* Convert it in degrees */
-    rotationDegrees.y = Math::Degrees(rotationDegrees.y);
-    rotationDegrees.z = Math::Degrees(rotationDegrees.z);
+    vec3f rotationDegrees = glm::eulerAngles(rotation);  /* Get vector rotation in radians */
+    rotationDegrees.x = glm::degrees(rotationDegrees.x); /* Convert it in degrees */
+    rotationDegrees.y = glm::degrees(rotationDegrees.y);
+    rotationDegrees.z = glm::degrees(rotationDegrees.z);
     const vec3f deltaRotation = rotationDegrees - transform.rotation;
 
     transform.rotation += deltaRotation;
@@ -72,10 +76,12 @@ static void GizmoWorldScaling(Transform& transform, const mat4f& view, const mat
 
   if (ImGuizmo::IsUsing())
   {
-    vec3f translation;
-    vec3f scale;
-    quat  rotation;
-    Math::Decompose(model, translation, rotation, scale);
+    vec3f translation{};
+    vec3f scale{};
+    quat  rotation{};
+    vec3f skew{};
+    vec4f perspective{};
+    glm::decompose(model, translation, rotation, scale, skew, perspective);
 
     transform.scale = scale;
     transform.UpdateTransformation();
@@ -83,9 +89,9 @@ static void GizmoWorldScaling(Transform& transform, const mat4f& view, const mat
 }
 
 
-/* ------------------------------------------ */
-/*                    PUBLIC                  */
-/* ------------------------------------------ */
+// ------------------------------------------
+//                    PUBLIC                 
+// ------------------------------------------
 
 void GUI_RenderViewport(bool& open, u32 texID, GameObject& objSelected, i32 gizmode, const mat4f& view, const mat4f& proj)
 {
@@ -93,21 +99,21 @@ void GUI_RenderViewport(bool& open, u32 texID, GameObject& objSelected, i32 gizm
   const ImVec2 paddingTmp = style.WindowPadding;
   style.WindowPadding = { 0.0f, 0.0f };
 
-  /* Begin main viewport */
+  // Begin main viewport
   ImGui::Begin("Viewport", &open);
-  const ImVec2 viewportWinSize = ImGui::GetWindowSize();
-  const ImVec2 viewportWinPos = ImGui::GetWindowPos();
+  const ImVec2 winSize = ImGui::GetWindowSize();
+  const ImVec2 winPos = ImGui::GetWindowPos();
   auto& guiLayer = ImGuiLayer::Get();
-  guiLayer.viewportSize = { viewportWinSize.x, viewportWinSize.y };
-  guiLayer.viewportPos = { viewportWinPos.x, viewportWinPos.y };
+  guiLayer.viewportSize = { winSize.x, winSize.y };
+  guiLayer.viewportPos = { winPos.x, winPos.y };
   guiLayer.viewportFocused = ImGui::IsWindowFocused();
 
-  /* Being child viewport */
+  // Being child viewport
   ImGui::BeginChild("Viewport_Child");
   guiLayer.viewportFocused |= ImGui::IsWindowFocused();
 
-  const ImVec2 viewportChildWinSize = ImGui::GetWindowSize();
-  ImGui::Image(reinterpret_cast<void*>(texID), viewportChildWinSize, ImVec2(0, 1), ImVec2(1, 0));
+  const ImVec2 winChildSize = ImGui::GetWindowSize();
+  ImGui::Image(reinterpret_cast<void*>(texID), winChildSize, ImVec2(0, 1), ImVec2(1, 0));
   if (objSelected.IsValid())
   {
     auto* transform = objSelected.GetComponent<Transform>();

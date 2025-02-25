@@ -6,6 +6,8 @@
 /* Include all components */
 #include "Tag.hpp"
 #include "Transform.hpp"
-#include "Mesh.hpp"
-#include "Model.hpp"
 #include "Light.hpp"
+#include "StaticMesh.hpp"
+#include "Skeleton/SkeletalMesh.hpp"
+#include "Animation/Animation.hpp"
+#include "Animation/Animator.hpp"

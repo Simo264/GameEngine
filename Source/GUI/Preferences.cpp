@@ -1,10 +1,26 @@
-#include "Core/Core.hpp"
 #include "ImGuiLayer.hpp"
-#include "Engine/Subsystems/FontManager.hpp"
+
+#include "Engine/Filesystem/Filesystem.hpp"
+#include "Engine/Globals.hpp"
 
 #include <imgui/imgui.h>
 
-void GUI_RenderPreferencesWindow(bool& open, i32 fontSize)
+static Vector<fs::path> fontVector;
+static void LoadFontVector()
+{
+  fontVector.clear();
+  for (const auto& entry : fs::recursive_directory_iterator(Filesystem::GetFontsPath())) 
+  {
+    if (!fs::is_regular_file(entry.path()))
+      continue;
+
+    fs::path relativePath = fs::relative(entry.path(), Filesystem::GetFontsPath());
+    fontVector.emplace_back(relativePath);
+  }
+}
+
+
+void GUI_RenderPreferencesWindow(bool& open)
 {
   ImGui::Begin("Preferences", &open);
   static constexpr const char* leftItemList[] = {
@@ -13,7 +29,7 @@ void GUI_RenderPreferencesWindow(bool& open, i32 fontSize)
   };
   static i32 selected = 0;
 
-  /* Left panel */
+  // Left panel
   {
     ImGui::BeginChild("Left", ImVec2(200.0f, 0.0f), ImGuiChildFlags_Border | ImGuiChildFlags_ResizeX);
     for (i32 i = 0; i < std::size(leftItemList); i++)
@@ -23,11 +39,11 @@ void GUI_RenderPreferencesWindow(bool& open, i32 fontSize)
     }
     ImGui::EndChild();
   }
-  /* End panel */
+  // End panel 
 
   ImGui::SameLine();
 
-  /* Right panel */
+  // Right panel
   {
     ImGuiLayer& guiLayer = ImGuiLayer::Get();
 
@@ -35,17 +51,20 @@ void GUI_RenderPreferencesWindow(bool& open, i32 fontSize)
     ImGui::BeginChild("Item_View", ImVec2(0, -ImGui::GetFrameHeightWithSpacing()));
     switch (selected)
     {
-    case 0: /* Font properties */
+    case 0: // Font properties
       ImGui::SeparatorText("Font properties");
-      ImGui::TextWrapped("Font size: %dpx", fontSize);
-      if (ImGui::BeginCombo("Font family", guiLayer.selectedFont.first->c_str()))
+      ImGui::TextWrapped("Current font: %s", g_fontFamily.string().c_str());
+      
+      LoadFontVector();
+
+      if (ImGui::BeginCombo("Font family", g_fontFamily.string().c_str()))
       {
-        for (const auto& [key, font] : FontManager::Get().GetFonts())
+        for (const auto& font : fontVector)
         {
-          if (ImGui::Selectable(key.c_str(), guiLayer.selectedFont.first == &key) && guiLayer.selectedFont.first != &key)
+          if (ImGui::Selectable(font.string().c_str(), font == g_fontFamily))
           {
-            guiLayer.selectedFont = std::make_pair(const_cast<String*>(&key), const_cast<fs::path*>(&font));
-            guiLayer.changeFontFamily = true;
+            g_fontFamily = font;
+            guiLayer.changeFontFamilyFlag = true;
           }
         }
         ImGui::EndCombo();
@@ -59,7 +78,7 @@ void GUI_RenderPreferencesWindow(bool& open, i32 fontSize)
     ImGui::EndChild();
     ImGui::EndGroup();
   }
-  /* End panel */
+  // End panel 
 
   ImGui::End();
 }

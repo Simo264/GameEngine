@@ -1,15 +1,15 @@
 #include "Core/Core.hpp"
 #include "Core/Log/Logger.hpp"
 #include "Engine/Scene.hpp"
-#include "Engine/Subsystems/ShaderManager.hpp"
+#include "Engine/Utils.hpp"
+#include "Engine/Subsystems/ShadersManager.hpp"
 #include "Engine/Subsystems/WindowManager.hpp"
-#include "Engine/Filesystem/Dialog.hpp"
 
 #include <imgui/imgui.h>
 
 void GUI_RenderMenuBar(Scene& scene, bool& openPreferences)
 {
-  /* Render menu bar */
+  // Render menu bar
   if (ImGui::BeginMainMenuBar())
   {
     if (ImGui::BeginMenu("File"))
@@ -18,29 +18,30 @@ void GUI_RenderMenuBar(Scene& scene, bool& openPreferences)
       {
         static const char* filter[] = { "*.ini" };
 
-        String filePath = OpenFileDialog(1, filter, "Open scene", false);
+        fs::path filePath = Utils::OpenFileDialog(1, filter, "Open scene", false);
         if (!filePath.empty())
         {
-          ShaderManager& shaderManager = ShaderManager::Get();
+          // Unset all lights
+          ShadersManager& shadersManager = ShadersManager::Get();
+          Program shaderScene = shadersManager.GetProgram("Scene");
+          Program shaderSceneShadows = shadersManager.GetProgram("SceneShadows");
+          shaderScene.SetUniform1f("u_directionalLight.intensity", 0.f);
+          shaderScene.SetUniform1f("u_pointLight.intensity", 0.f);
+          shaderScene.SetUniform1f("u_spotLight.intensity", 0.f);
+          shaderSceneShadows.SetUniform1f("u_directionalLight.intensity", 0.f);
+          shaderSceneShadows.SetUniform1f("u_pointLight.intensity", 0.f);
+          shaderSceneShadows.SetUniform1f("u_spotLight.intensity", 0.f);
 
-          /* !IMPORTANT: before loading new scene it needed to relink all the programs to see changes */
-          for (const auto& [key, program] : shaderManager.GetPrograms())
-            program.Link();
-
-          shaderManager.ResetProgramsUniforms();
-
-          scene.ClearScene();
-          scene.LoadScene(filePath);
-          CONSOLE_INFO("The scene has been loaded successfully");
+          scene.Clear();
+          scene.LoadFromFile(filePath);
         }
       }
       if (ImGui::MenuItem("Save as..."))
       {
         const char* filters[] = { "*.ini" };
-        String filepath = SaveFileDialog(1, filters, "Save as .ini");
+        fs::path filepath = Utils::SaveFileDialog(1, filters, "Save as .ini");
         
-        scene.SaveScene(filepath);
-        CONSOLE_TRACE("The scene has been successfully saved");
+        scene.Save(filepath);
       }
 
       ImGui::Separator();

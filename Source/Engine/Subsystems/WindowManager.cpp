@@ -9,20 +9,19 @@
 
 void WindowManager::Initialize(WindowProps props)
 {
+  CONSOLE_TRACE("Init GLFW");
   i32 success = glfwInit();
   assert(success == GLFW_TRUE && "Failed to initialize GLFW library");
-  CONSOLE_INFO("GLFW initialized");
 
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
-  glfwWindowHint(GLFW_SAMPLES, 4);  /* Enable 4x MSAA on GLFW frame buffer */
+  glfwWindowHint(GLFW_SAMPLES, 4);  // Enable 4x MSAA on GLFW frame buffer
   glfwWindowHint(GLFW_DEPTH_BITS, 24);
 
   _context = glfwCreateWindow(props.size.x, props.size.y, props.title.data(), nullptr, nullptr);
   assert(_context && "Failed to create window");
-  CONSOLE_INFO("Window created");
 
   glfwMakeContextCurrent(_context);
   glfwSetWindowPos(_context, props.position.x, props.position.y);
@@ -33,10 +32,11 @@ void WindowManager::Initialize(WindowProps props)
     glfwSetWindowSize(window, width, height);
   });
 
-  /* Load OpenGL functions, gladLoadGL returns the loaded version, 0 on error. */
+  // Load OpenGL functions, gladLoadGL returns the loaded version, 0 on error.
+  CONSOLE_TRACE("Init OpenGL");
   i32 version = gladLoadGL(glfwGetProcAddress);
   assert(version != 0 && "Failed to load OpenGL APIs");
-  CONSOLE_INFO("OpenGL loaded");
+  
 }
 
 void WindowManager::CleanUp() const
@@ -75,9 +75,9 @@ void WindowManager::SwapWindowBuffers() const
   glfwSwapBuffers(_context); 
 }
 
-vec2i32 WindowManager::GetWindowSize() const
+vec2i WindowManager::GetWindowSize() const
 {
-  vec2i32 res{};
+  vec2i res{};
   glfwGetWindowSize(_context, &res.x, &res.y);
   return res;
 }
@@ -87,9 +87,9 @@ void WindowManager::SetWindowSize(i32 w, i32 h) const
   glfwSetWindowSize(_context, w, h);
 }
 
-vec2i32 WindowManager::GetFramebufferSize() const
+vec2i WindowManager::GetFramebufferSize() const
 {
-  vec2i32 res{};
+  vec2i res{};
   glfwGetFramebufferSize(_context, &res.x, &res.y);
   return res;
 }
@@ -137,9 +137,9 @@ const char* WindowManager::GetVersion() const
   return glfwGetVersionString();
 }
 
-vec2i32 WindowManager::GetWindowPos() const
+vec2i WindowManager::GetWindowPos() const
 {
-  vec2i32 res{};
+  vec2i res{};
   glfwGetWindowPos(_context, &res.x, &res.y);
   return res;
 }

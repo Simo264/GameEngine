@@ -1,48 +1,56 @@
 #pragma once
 
 #include "Core/Core.hpp"
-#include <entt/entt.hpp> /* Entity component system */
+#include <entt/entt.hpp> // Entity component system
+
+class GameObject;
 
 /**
- * Scenes are where you work with content. They are assets that contain all or part of a game or application. 
- * For example, you might build a simple game in a single scene, while for a more complex game, 
- * you might use one scene per level, each with its own environments, characters, obstacles, decorations, and UI.
+ * @class Scene
+ * 
+ * @brief Represents and manages a 3D scene, including loading, saving, and manipulating objects.
  */
 class Scene
 {
 public:
 	Scene() = default;
-	Scene(StringView filePath);
+	Scene(const fs::path& filePath);
 	~Scene() = default;
 
-	void LoadScene(StringView filePath);
-
-	void SaveScene(StringView filePath);
-
+	/** @brief Loads a scene from a file. */
+	void LoadFromFile(const fs::path& filePath);
+	/** @brief Saves the current scene to a file. */
+	void Save(const fs::path& filePath);
+	
 	/**
-	 * Remove all objects from scene
+	 * @brief Destroys all objects in the scene and clears the registry.
+	 *
+	 * This method removes all entities from the registry and calls the destructors
+	 * of all associated components. After this operation, the scene will be empty.
+	 *
+	 * @note This does not free the memory used by component pools, but it resets them.
 	 */
-	void ClearScene();
+	void Clear();
 
+	GameObject CreateObject(StringView objName = "object");
+	
 	/**
-	 * Create object in scene
+	 * @brief Destroys a specific game object and removes all its components.
+	 *
+	 * This method unregisters the given object from the scene by destroying its associated
+	 * entity in the registry. The destructors of all its components will be called automatically.
+	 *
+	 * @param object The game object to be destroyed.
 	 */
-	class GameObject CreateObject();
+	void DestroyObject(entt::entity id);
 
-	/**
-	 * Destroy an entity and releases its identifier
-	 */
-	void DestroyObject(class GameObject& object);
-
-	/**
-	 * Return the reference of registry
-	 */
+	/** @brief Provides access to the internal entity registry. */
 	entt::registry& Reg() { return _registry; }
 
 private:
-	/* We can create a entt::registry to store our entities */
+	// We can create a entt::registry to store our entities
 	entt::registry _registry;
 
-	void SerializeScene(StringView filePath);
-	void DeserializeScene(StringView filePath);
+	void SerializeScene(const fs::path& filePath);
+	void DeserializeScene(const fs::path& filePath);
 };

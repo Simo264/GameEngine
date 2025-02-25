@@ -1,175 +1,260 @@
 ﻿#pragma once
 
 #include "Core/Core.hpp"
+#include "Engine/Graphics/OpenGLEnums.hpp"
+
+enum class Texture2DTarget : u32
+{
+  TEXTURE_2D = 0x0DE1, // GL_TEXTURE_2D
+  TEXTURE_2D_ARRAY = 0x8C1A, // GL_TEXTURE_2D_ARRAY
+  TEXTURE_RECTANGLE = 0x84F5, // GL_TEXTURE_RECTANGLE
+  TEXTURE_2D_MULTISAMPLE = 0x9100, // GL_TEXTURE_2D_MULTISAMPLE
+  TEXTURE_2D_MULTISAMPLE_ARRAY = 0x9102  // GL_TEXTURE_2D_MULTISAMPLE_ARRAY
+};
+enum class Texture2DFormat : u32
+{
+  RED = 0x1903, // GL_RED
+  RG = 0x8227, // GL_RG
+  RGB = 0x1907, // GL_RGB
+  BGR = 0x80E0, // GL_BGR
+  RGBA = 0x1908, // GL_RGBA
+  BGRA = 0x80E1, // GL_BGRA
+  STENCIL_INDEX = 0x1901, // GL_STENCIL_INDEX
+  DEPTH_COMPONENT = 0x1902, // GL_DEPTH_COMPONENT
+  DEPTH_STENCIL = 0x84F9, // GL_DEPTH_STENCIL
+  RED_INTEGER = 0x8D94, // GL_RED_INTEGER
+  RG_INTEGER = 0x8228, // GL_RG_INTEGER
+  RGB_INTEGER = 0x8D98, // GL_RGB_INTEGER
+  BGR_INTEGER = 0x8D9A, // GL_BGR_INTEGER
+  RGBA_INTEGER = 0x8D99, // GL_RGBA_INTEGER
+  BGRA_INTEGER = 0x8D9B  // GL_BGRA_INTEGER
+};
+enum class Texture2DInternalFormat : u32
+{
+  R8 = 0x8229, // GL_R8
+  R8_SNORM = 0x8F94, // GL_R8_SNORM
+  R16 = 0x822A, // GL_R16
+  R16_SNORM = 0x8F98, // GL_R16_SNORM
+  RG8 = 0x822B, // GL_RG8
+  RG8_SNORM = 0x8F95, // GL_RG8_SNORM
+  RG16 = 0x822C, // GL_RG16
+  RG16_SNORM = 0x8F99, // GL_RG16_SNORM
+  RGB8 = 0x8051, // GL_RGB8
+  RGB8_SNORM = 0x8F96, // GL_RGB8_SNORM
+  RGB16 = 0x8054, // GL_RGB16
+  RGB16_SNORM = 0x8F9A, // GL_RGB16_SNORM
+  RGBA8 = 0x8058, // GL_RGBA8
+  RGBA8_SNORM = 0x8F97, // GL_RGBA8_SNORM
+  RGBA16 = 0x805B, // GL_RGBA16
+  RGBA16_SNORM = 0x8F9B, // GL_RGBA16_SNORM
+  SRGB8 = 0x8C41, // GL_SRGB8
+  SRGB8_ALPHA8 = 0x8C43, // GL_SRGB8_ALPHA8
+  R16F = 0x822D, // GL_R16F
+  RG16F = 0x822F, // GL_RG16F
+  RGB16F = 0x881B, // GL_RGB16F
+  RGBA16F = 0x881A, // GL_RGBA16F
+  R32F = 0x822E, // GL_R32F
+  RG32F = 0x8230, // GL_RG32F
+  RGB32F = 0x8815, // GL_RGB32F
+  RGBA32F = 0x8814, // GL_RGBA32F
+  R11F_G11F_B10F = 0x8C3A, // GL_R11F_G11F_B10F
+  RGB9_E5 = 0x8C3D, // GL_RGB9_E5
+  DEPTH_COMPONENT16 = 0x81A5, // GL_DEPTH_COMPONENT16
+  DEPTH_COMPONENT24 = 0x81A6, // GL_DEPTH_COMPONENT24
+  DEPTH_COMPONENT32F = 0x8CAC, // GL_DEPTH_COMPONENT32F
+  DEPTH24_STENCIL8 = 0x88F0, // GL_DEPTH24_STENCIL8
+  DEPTH32F_STENCIL8 = 0x8CAD  // GL_DEPTH32F_STENCIL8
+};
+enum class Texture2DSubImageType : u32
+{
+  UNSIGNED_BYTE = 0x1401, // GL_UNSIGNED_BYTE
+  BYTE = 0x1400, // GL_BYTE
+  UNSIGNED_SHORT = 0x1403, // GL_UNSIGNED_SHORT
+  SHORT = 0x1402, // GL_SHORT
+  UNSIGNED_INT = 0x1405, // GL_UNSIGNED_INT
+  INT = 0x1404, // GL_INT
+  FLOAT = 0x1406, // GL_FLOAT
+  UNSIGNED_BYTE_3_3_2 = 0x8032, // GL_UNSIGNED_BYTE_3_3_2
+  UNSIGNED_BYTE_2_3_3_REV = 0x8362, // GL_UNSIGNED_BYTE_2_3_3_REV
+  UNSIGNED_SHORT_5_6_5 = 0x8363, // GL_UNSIGNED_SHORT_5_6_5
+  UNSIGNED_SHORT_5_6_5_REV = 0x8364, // GL_UNSIGNED_SHORT_5_6_5_REV
+  UNSIGNED_SHORT_4_4_4_4 = 0x8033, // GL_UNSIGNED_SHORT_4_4_4_4
+  UNSIGNED_SHORT_5_5_5_1 = 0x8034  // GL_UNSIGNED_SHORT_5_5_5_1
+};
+enum class Texture2DClearImageType : u32
+{
+  UNSIGNED_BYTE = 0x1401, // GL_UNSIGNED_BYTE
+  BYTE = 0x1400, // GL_BYTE
+  UNSIGNED_SHORT = 0x1403, // GL_UNSIGNED_SHORT
+  SHORT = 0x1402, // GL_SHORT
+  UNSIGNED_INT = 0x1405, // GL_UNSIGNED_INT
+  INT = 0x1404, // GL_INT
+  FLOAT = 0x1406, // GL_FLOAT
+  UNSIGNED_INT_10F_11F_11F_REV = 0x8C3B, // GL_UNSIGNED_INT_10F_11F_11F_REV
+  UNSIGNED_INT_5_9_9_9_REV = 0x8C3E, // GL_UNSIGNED_INT_5_9_9_9_REV
+  UNSIGNED_INT_2_10_10_10_REV = 0x8368  // GL_UNSIGNED_INT_2_10_10_10_REV
+};
+enum class Texture2DGetImageType : u32
+{
+  UNSIGNED_BYTE = 0x1401, // GL_UNSIGNED_BYTE
+  BYTE = 0x1400, // GL_BYTE
+  UNSIGNED_SHORT = 0x1403, // GL_UNSIGNED_SHORT
+  SHORT = 0x1402, // GL_SHORT
+  UNSIGNED_INT = 0x1405, // GL_UNSIGNED_INT
+  INT = 0x1404, // GL_INT
+  FLOAT = 0x1406, // GL_FLOAT
+  HALF_FLOAT = 0x140B, // GL_HALF_FLOAT
+  UNSIGNED_INT_10F_11F_11F_REV = 0x8C3B, // GL_UNSIGNED_INT_10F_11F_11F_REV
+  UNSIGNED_INT_5_9_9_9_REV = 0x8C3E, // GL_UNSIGNED_INT_5_9_9_9_REV
+  UNSIGNED_INT_2_10_10_10_REV = 0x8368  // GL_UNSIGNED_INT_2_10_10_10_REV
+};
 
 /**
- *  https://www.khronos.org/opengl/wiki/Texture
+ * @brief 
+ * https://www.khronos.org/opengl/wiki/Texture
  * 
- *  An image is defined as a single array of pixels of a certain dimensionality (1D, 2D, or 3D), 
- *  with a particular size, and a specific format.
+ * An image is defined as a single array of pixels of a certain dimensionality (1D, 2D, or 3D), 
+ * with a particular size, and a specific format.
  * 
- *  A texture is a container of one or more images. 
- *  But textures do not store arbitrary images; a texture has specific constraints on the images it can contain. 
- *  There are three defining characteristics of a texture, each of them defining part of those constraints: 
- *    1. the texture type: defines the arrangement of images within the texture
- *    2. thw texture size: defines the size of the images in the texture
- *    3. the image format: used for images in the texture, defines the format that all of these images share.
+ * A texture is a container of one or more images. 
+ * But textures do not store arbitrary images; a texture has specific constraints on the images it can contain. 
+ * There are three defining characteristics of a texture, each of them defining part of those constraints: 
+ *   1. the texture type: defines the arrangement of images within the texture
+ *   2. the texture size: defines the size of the images in the texture
+ *   3. the image format: used for images in the texture, defines the format that all of these images share.
  * 
- *  --- Mip maps ---
- *  When a texture is directly applied to a surface, how many pixels of that texture (commonly called "texels") 
- *  are used depends on the angle at which that surface is rendered. 
- *  A texture mapped to a plane that is almost edge-on with the camera will only use a fraction of the pixels of the texture. 
- *  Similarly, looking directly down on the texture from far away will show fewer texels than an up-close version.
+ * --- Mip maps ---
+ * When a texture is directly applied to a surface, how many pixels of that texture (commonly called "texels") 
+ * are used depends on the angle at which that surface is rendered. 
+ * A texture mapped to a plane that is almost edge-on with the camera will only use a fraction of the pixels of the texture. 
+ * Similarly, looking directly down on the texture from far away will show fewer texels than an up-close version.
  * 
- *  Mip maps are pre-shrunk versions of the full-sized image. 
- *  Each mipmap is half the size (rounded down) of the previous one in the chain, continuing until all dimensions are 1. 
- *  So a 64x16 2D texture can have 6 mip-maps: 32x8, 16x4, 8x2, 4x1, 2x1, and 1x1. 
- *  OpenGL does not require that the entire mipmap chain is complete; 
- *  you can specify what range of mipmaps in a texture are available.
+ * Mip maps are pre-shrunk versions of the full-sized image. 
+ * Each mipmap is half the size (rounded down) of the previous one in the chain, continuing until all dimensions are 1. 
+ * So a 64x16 2D texture can have 6 mip-maps: 32x8, 16x4, 8x2, 4x1, 2x1, and 1x1. 
+ * OpenGL does not require that the entire mipmap chain is complete; 
+ * you can specify what range of mipmaps in a texture are available.
  */
 class Texture2D
 {
 public:
-  /**
-   * @param target: must be GL_TEXTURE_2D or GL_TEXTURE_2D_MULTISAMPLE
-   */
-  Texture2D(i32 target);
-  Texture2D(i32 target, StringView strPath, bool gammaCorrection);
+  Texture2D() : 
+    id{ 0 }
+  {}
+
+  Texture2D(Texture2DTarget target, 
+            const fs::path& absolute);
+  
   ~Texture2D() = default;
 
   /**
-   * Load data from an image file
+   * @brief Loads image data from the specified file.
+   * This method reads the image file from the given absolute path and loads its data into memory.
+   * It is used to initialize or update the texture with the content of the image file.
+   *
+   * @param absolute The absolute path to the image file.
    */
-  void LoadImageData(StringView strPath, bool gammaCorrection);
+  void LoadImageData(const fs::path& absolute);
 
-  /**
-   * Create texture object
-   */
-  void Create();
+  /** @brief Create texture object */
+  void Create(Texture2DTarget target);
 
-  /**
-   * Delete texture object and invalidates the name associated with the texture object 
-   */
+  /** @brief Delete texture object and invalidates the name associated with the texture object */
   void Delete();
 
-  /**
-   * Bind texture object
-   */
-  void Bind() const;
-
-  /**
-   * Unbind texture object
-   */
-  void Unbind() const;
-
-  /**
-   * Bind the texture object to the specified texture unit
-   *
-   * @param unit: specifies the texture unit, to which the texture object should be bound to
-   */
+  /** @brief Bind the texture object to the specified texture unit. */
   void BindTextureUnit(i32 unit) const;
 
-  /**
-   * Set texture parameters
-   */
-  void SetParameteri(i32 name, i32 value) const;
-  void SetParameteriv(i32 name, i32* values) const;
-  void SetParameterf(i32 name, f32 value) const;
-  void SetParameterfv(i32 name, f32* values) const;
+  /** @brief Set texture parameters */
+  void SetParameteri(TextureParameteriName name, 
+                     TextureParameteriParam value) const;
+  
+  void SetParameterfv(TextureParameteriName name, f32* values) const;
+  
+  void SetCompareFunc(CompareFunc func) const;
 
-  /**
-   * Generate mipmaps for the texture object
-   */
+  /** @brief Generate mipmaps for the texture object */
   void GenerateMipmap() const;
 
-  /**
-   * The storage is created here, but the contents of that storage is undefined
-   * 
-   * @param width:  specifies the width of the texture, in texels
-   * @param height: specifies the height of the texture, in texels
-   */
-  void CreateStorage(i32 internalFormat, i32 width, i32 height);
+  /** @brief The storage is created here, but the contents of that storage is undefined. */
+  void CreateStorage(Texture2DInternalFormat internalFormat, 
+                     i32 width, 
+                     i32 height) const;
+
+  /** @brief Specify storage for multisample texture. */
+  void CreateStorageMultisampled(Texture2DInternalFormat internalFormat, 
+                                 i32 samples, 
+                                 i32 width, 
+                                 i32 height) const;
+
+  /** @brief Specify a two-dimensional texture subimage. */
+  void UpdateStorage(i32 level,
+                     i32 width,
+                     i32 height,
+                     Texture2DFormat format,
+                     Texture2DSubImageType type, 
+                     const void* pixels,
+                     i32 xoffset = 0,
+                     i32 yoffset = 0
+                     ) const;
+
+  /** @brief Fills all the texture image with a constant value. */
+  void ClearStorage(i32 level,
+                    Texture2DFormat format,
+                    Texture2DClearImageType type,
+                    const void* data) const;
+  
+  /** @return A texture image into pixels. */
+  void GetTextureImage(i32 level,
+                       Texture2DFormat format,
+                       Texture2DGetImageType type, 
+                       i32 buffSize, 
+                       void* pixels) const;
 
   /**
-   * Specify storage for multisample texture
-   * 
-   * @param samples:              specify the number of samples in the texture
-   * @param width:                specifies the width of the texture, in texels
-   * @param height:               specifies the height of the texture, in texels
-   * @param fixedsamplelocations: specifies whether the image will use identical sample locations and the same number 
-   *                              of samples for all texels in the image
+   * @brief Retrieves the width of the texture.
+   * This function queries OpenGL to get the width of the texture at mip level 0.
+   * If the texture is invalid or not initialized, the returned value may be undefined.
    */
-  void CreateStorageMultisampled(i32 internalFormat, i32 samples, i32 width, i32 height);
+  i32 GetWidth() const;
 
   /**
-   * Specify a two-dimensional texture subimage
-   * 
-   * @param level:    specifies the level-of-detail number. Level 0 is the base image level
-   * @param xoffset:  specifies a texel offset in the x direction within the texture array.
-   * @param yoffset:  specifies a texel offset in the y direction within the texture array
-   * 
-   * @param type:     specifies the data type of the pixel data.
-   *                  The following symbolic values are accepted: GL_UNSIGNED_BYTE, GL_BYTE, GL_UNSIGNED_SHORT, ...
-   *                  https://registry.khronos.org/OpenGL-Refpages/gl4/html/glTexSubImage2D.xhtml
-   * 
-   * @param pixels:   specifies a pointer to the image data in memory
+   * @brief Retrieves the height of the texture.
+   * This function queries OpenGL to get the width of the texture at mip level 0.
+   * If the texture is invalid or not initialized, the returned value may be undefined.
    */
-  void UpdateStorage(i32 level, i32 xoffset, i32 yoffset, i32 type, const void* pixels) const;
-
-  /**
-   * Fills all the texture image with a constant value
-   * 
-   * @param level:  the level of texture containing the region to be cleared. Level 0 is the base image level
-   * 
-   * @param type:   the type of the data whose address in memory is given by data.
-   *                https://registry.khronos.org/OpenGL-Refpages/gl4/html/glClearTexImage.xhtml
-   * 
-   * @param data:   the address in memory of the data to be used to clear the specified region
-   */
-  void ClearStorage(i32 level, i32 type, const void* data) const;
+  i32 GetHeight() const;
   
   /**
-   * Return a texture image into pixels
-   * 
-   * @param level: specifies the level-of-detail number of the desired image. Level 0 is the base image level. Level n is the nth mipmap reduction image
-   * @param type: specifies a pixel type for the returned data. The supported types are GL_UNSIGNED_BYTE, GL_BYTE, ...
-   * @param bufSize: specifies the size of the buffer pixels for glGetnTexImage and glGetTextureImage functions
-   * @param pixels: returns the texture image. Should be a pointer to an array of the type specified by type
+   * @brief Retrieves the internal format of the texture.
+   * This function queries OpenGL to determine the internal format of the texture at mip level 0.
+   * If the texture is invalid or not initialized, the returned value may be undefined.
    */
-  void GetTextureImage(i32 level, i32 type, i32 bufSize, void* pixels) const;
-
+  Texture2DInternalFormat GetInternalFormat() const;
+  
   /**
-   * Return the internal format of the texture
+   * @brief Maps an internal texture format to its corresponding external format.
+   *
+   * @return The corresponding `Texture2DFormat`, which represents how the texture data is stored.
+   *
+   * This function converts an internal OpenGL texture format (e.g., `RGB8`, `RGBA16F`)
+   * into a more general format like `RGB`, `RGBA`, or `DEPTH_COMPONENT`.
+   * If the internal format is unknown, a warning is issued, and `Texture2DFormat::RED` is returned as a fallback.
    */
-  constexpr i32 GetInternal() const { return _internalFormat; }
+  Texture2DFormat GetFormat(Texture2DInternalFormat internalFormat) const;
+  
+  /**
+   * @brief Retrieves the number of color channels based on the internal texture format.
+   *
+   * @return The number of channels (e.g., 1 for grayscale, 3 for RGB, 4 for RGBA).
+   *
+   * This function determines how many color components a given internal texture format contains.
+   * If the internal format is unknown, a warning is issued, and 1 is returned as a default value.
+   */
+  i32 GetNumChannels(Texture2DInternalFormat internalFormat) const;
 
-  constexpr bool Compare(const Texture2D& other) const { return id == other.id; }
-  constexpr bool IsValid() const { return id != 0; }
+  bool Compare(const Texture2D& other) const { return id == other.id; }
+  bool IsValid() const;
   
   u32 id;
-
-  const i32 target;
-
-  /**
-   * Specifies the format of the pixel data.
-   * The following symbolic values are accepted:
-   * GL_RED, GL_RG, GL_RGB, GL_BGR, GL_RGBA, GL_BGRA, GL_DEPTH_COMPONENT, and GL_STENCIL_INDEX.
-   */
-  i32 format;
-
-  i32 width;
-
-  i32 height;
-
-  i32 nChannels;
-  
-  String strPath;
-
-private:
-  /**
-   * Specifies the sized internal format to be used to store texture image data.
-   * Must be one of the sized internal formats given in Table 1 below:
-   * https://registry.khronos.org/OpenGL-Refpages/gl4/html/glTexStorage2D.xhtml
-   */
-  i32 _internalFormat;
 };

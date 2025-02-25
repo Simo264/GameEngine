@@ -5,89 +5,93 @@
 
 #include "Engine/Utils.hpp"
 #include "Engine/ECS/ECS.hpp"
-#include "Engine/Filesystem/ConfigFile.hpp"
+#include "Engine/IniFileHandler.hpp"
 #include "Engine/Graphics/Shader.hpp"
+#include "Engine/Subsystems/ModelsManager.hpp"
+#include "Engine/Subsystems/AnimationsManager.hpp"
+#include "Engine/Filesystem/Filesystem.hpp"
 
-/* ----------------------------------- */
-/*								PUBLIC							 */
-/* ------------------------------------*/
+// ----------------------------------- 
+//								PUBLIC							 
+// -----------------------------------
 
-Scene::Scene(StringView filePath)
+Scene::Scene(const fs::path& filePath)
 {
-	LoadScene(filePath);
+	LoadFromFile(filePath);
 }
-GameObject Scene::CreateObject()
+GameObject Scene::CreateObject(StringView objName)
 {
-	auto id = _registry.create();
+	entt::entity id = _registry.create();
 	
-	char defaultTag[64]{};
-	std::format_to_n(defaultTag, sizeof(defaultTag), "Object_{}", static_cast<u32>(id));
+	char defaultTag[32]{};
+	if (objName.empty())
+		std::format_to_n(defaultTag, sizeof(defaultTag), "Object_{}", static_cast<u32>(id));
+	else
+		std::strncpy(defaultTag, objName.data(), sizeof(defaultTag));
 
-	GameObject object = GameObject{ id, &_registry };
+	GameObject object{ id, &_registry };
 	object.AddComponent<Tag>(defaultTag);
 	return object;
 }
-void Scene::DestroyObject(GameObject& object)
+void Scene::DestroyObject(entt::entity id)
 {
-	_registry.destroy(object.ID());
+	if (_registry.valid(id))
+		_registry.destroy(id);
+	else
+		CONSOLE_WARN("Entity id {} is not a valid object", static_cast<u32>(id));
 }
-void Scene::ClearScene()
+void Scene::Clear()
 {
-	for (auto [entity, lComp] : _registry.view<Tag>().each())
-	{
-		GameObject object{ entity, &_registry };
-		
-		/* Free GPU memory */
-		if(auto* model = object.GetComponent<Model>())
-			model->DestroyModel();
-		if (auto* mesh = object.GetComponent<Mesh>())
-			mesh->DestroyMesh();
-
-		object.Invalidate();
-	}
-	
-	/* Clear scene */
 	_registry.clear();
 }
-void Scene::LoadScene(StringView filePath)
+void Scene::LoadFromFile(const fs::path& filePath)
 {
-	CONSOLE_INFO("Loading scene {}...", filePath);
+	CONSOLE_INFO("Loading scene {}...", filePath.relative_path().string());
 	DeserializeScene(filePath);
 }
-void Scene::SaveScene(StringView filePath)
+void Scene::Save(const fs::path& filePath)
 {
-	CONSOLE_INFO("Saving scene {}...", filePath);
+	CONSOLE_INFO("Saving scene {}...", filePath.relative_path().string());
 	SerializeScene(filePath);
 }
 
-/* ----------------------------------- */
-/*								PRIVATE							 */
-/* ------------------------------------*/
+// -----------------------------------
+//								PRIVATE							
+// -----------------------------------
 
-void Scene::SerializeScene(StringView filePath)
+void Scene::SerializeScene(const fs::path& filePath)
 {
-	ConfigFile conf(filePath);
+	IniFileHandler conf(filePath);
 	for (auto [entity, tag] : Reg().view<Tag>().each())
 	{
 		GameObject object{ entity, &Reg() };
-		const u32 objectID = static_cast<u32>(object.ID());
+		const u32 objectID = static_cast<u32>(object.id);
 
 		String section = std::format("Entity{}:Tag", objectID);
-		conf.Update(section, "value", tag.value);
+		conf.Update(section, "value", tag.value.data());
 
-		if (auto* transform = object.GetComponent<Transform>())
+		if (Transform* transform = object.GetComponent<Transform>())
 		{
 			String section = std::format("Entity{}:Transform", objectID);
 			conf.Update(section, "position", std::format("{},{},{}", transform->position.x, transform->position.y, transform->position.z));
 			conf.Update(section, "scale", std::format("{},{},{}", transform->scale.x, transform->scale.y, transform->scale.z));
 			conf.Update(section, "rotation", std::format("{},{},{}", transform->rotation.x, transform->rotation.y, transform->rotation.z));
 		}
-		if (auto* model = object.GetComponent<Model>())
+		if (StaticMesh* staticMesh = object.GetComponent<StaticMesh>())
 		{
-			String section = std::format("Entity{}:Model", objectID);
-			conf.Update(section, "path", model->strPath);
+			auto& manager = ModelsManager::Get();
+			String section = std::format("Entity{}:StaticMesh", objectID);
+			const fs::path* path = manager.GetStaticMeshPath(staticMesh->id);
+			conf.Update(section, "path", path->string());
 		}
-		if (auto* light = object.GetComponent<Light>())
+		if (SkeletalMesh* skeleton = object.GetComponent<SkeletalMesh>())
+		{
+			auto& manager = ModelsManager::Get();
+			String section = std::format("Entity{}:SkeletalMesh", objectID);
+			const fs::path* path = manager.GetSkeletalMeshPath(skeleton->id);
+			conf.Update(section, "path", path->string());
+		}
+		if (Light* light = object.GetComponent<Light>())
 		{
 			String section = std::format("Entity{}:Light", objectID);
 			String type = std::to_string(static_cast<i32>(light->type));
@@ -98,12 +102,10 @@ void Scene::SerializeScene(StringView filePath)
 			{
 				auto* dirLight = object.GetComponent<DirectionalLight>();
 				String color = std::format("{},{},{}", dirLight->color.x, dirLight->color.y, dirLight->color.z);
-				String diffuseIntensity = std::to_string(dirLight->diffuseIntensity);
-				String specularIntensity = std::to_string(dirLight->specularIntensity);
+				String intensity = std::to_string(dirLight->intensity);
 				String direction = std::format("{},{},{}", dirLight->direction.x, dirLight->direction.y, dirLight->direction.z);
 				conf.Update(section, "color", color);
-				conf.Update(section, "diffuseIntensity", diffuseIntensity);
-				conf.Update(section, "specularIntensity", specularIntensity);
+				conf.Update(section, "intensity", intensity);
 				conf.Update(section, "direction", direction);
 				break;
 			}
@@ -111,15 +113,13 @@ void Scene::SerializeScene(StringView filePath)
 			{
 				auto* pointLight = object.GetComponent<PointLight>();
 				String color = std::format("{},{},{}", pointLight->color.x, pointLight->color.y, pointLight->color.z);
-				String diffuseIntensity = std::to_string(pointLight->diffuseIntensity);
-				String specularIntensity = std::to_string(pointLight->specularIntensity);
+				String intensity = std::to_string(pointLight->intensity);
 				String position = std::format("{},{},{}", pointLight->position.x, pointLight->position.y, pointLight->position.z);
 				String range = std::to_string(pointLight->attenuation.range);
 				String kl = std::to_string(pointLight->attenuation.kl);
 				String kq = std::to_string(pointLight->attenuation.kq);
 				conf.Update(section, "color", color);
-				conf.Update(section, "diffuseIntensity", diffuseIntensity);
-				conf.Update(section, "specularIntensity", specularIntensity);
+				conf.Update(section, "intensity", intensity);
 				conf.Update(section, "position", position);
 				conf.Update(section, "attenuation.range", range);
 				conf.Update(section, "attenuation.kl", kl);
@@ -130,8 +130,7 @@ void Scene::SerializeScene(StringView filePath)
 			{
 				auto* spotLight = object.GetComponent<SpotLight>();
 				String color = std::format("{},{},{}", spotLight->color.x, spotLight->color.y, spotLight->color.z);
-				String diffuseIntensity = std::to_string(spotLight->diffuseIntensity);
-				String specularIntensity = std::to_string(spotLight->specularIntensity);
+				String intensity = std::to_string(spotLight->intensity);
 				String direction = std::format("{},{},{}", spotLight->direction.x, spotLight->direction.y, spotLight->direction.z);
 				String position = std::format("{},{},{}", spotLight->position.x, spotLight->position.y, spotLight->position.z);
 				String cutOff = std::to_string(spotLight->cutOff);
@@ -140,8 +139,7 @@ void Scene::SerializeScene(StringView filePath)
 				String kl = std::to_string(spotLight->attenuation.kl);
 				String kq = std::to_string(spotLight->attenuation.kq);
 				conf.Update(section, "color", color);
-				conf.Update(section, "diffuseIntensity", diffuseIntensity);
-				conf.Update(section, "specularIntensity", specularIntensity);
+				conf.Update(section, "intensity", intensity);
 				conf.Update(section, "direction", direction);
 				conf.Update(section, "position", position);
 				conf.Update(section, "attenuation.range", range);
@@ -154,11 +152,11 @@ void Scene::SerializeScene(StringView filePath)
 			}
 		}
 	}
-	conf.Generate(true);
+	conf.Generate(false);
 }
-void Scene::DeserializeScene(StringView filePath)
+void Scene::DeserializeScene(const fs::path& filePath)
 {
-	ConfigFile conf(filePath);
+	IniFileHandler conf(filePath);
 	conf.ReadData();
 
 	GameObject object;
@@ -167,7 +165,7 @@ void Scene::DeserializeScene(StringView filePath)
 	{
 		const String& section = it.first;
 		StringView view{ section };
-		i32 dots = view.find_first_of(':');
+		u32 dots = view.find_first_of(':');
 		u32 objectId = std::strtoul(view.substr(6, (dots - 6)).data(), nullptr, 10);
 		StringView component = view.substr(dots + 1);
 
@@ -194,10 +192,68 @@ void Scene::DeserializeScene(StringView filePath)
 			transform.scale = Utils::StringToVec3f(scale);
 			transform.UpdateTransformation();
 		}
-		else if (component == "Model")
+		else if (component == "StaticMesh")
 		{
+			auto& manager = ModelsManager::Get();
 			const String& strPath = conf.GetValue(section, "path");
-			object.AddComponent<Model>(strPath);
+			const StaticMesh* staticMesh = manager.FindStaticMesh(strPath);
+			if (!staticMesh)
+				staticMesh = &manager.CreateStaticMesh(strPath);
+
+			StaticMesh& component = object.AddComponent<StaticMesh>();
+			staticMesh->Clone(component);
+		}
+		else if (component == "SkeletalMesh")
+		{
+			SkeletalMesh& skmeshComponent = object.AddComponent<SkeletalMesh>();
+			Animator& animatorComponent = object.AddComponent<Animator>();
+
+			ModelsManager& modManager = ModelsManager::Get();
+			AnimationsManager& animManager = AnimationsManager::Get();
+
+			// The relative path to "Assets/Models/Skeletal" 
+			// E.g. "Mutant/Mutant.gltf"
+			fs::path relative = conf.GetValue(section, "path");
+			const SkeletalMesh* skeleton = modManager.FindSkeletalMesh(relative);
+			if (!skeleton)
+			{
+				skeleton = &modManager.CreateSkeletalMesh(relative);
+				
+				// E.g. skeletonPath = "Mutant/"
+				fs::path parent = relative.parent_path();
+				// E.g. skeletonPath = "D:\GameEngine\Assets\Models\Skeletal\Mutant"
+				fs::path absolute = (Filesystem::GetSkeletalModelsPath() / parent);
+				// E.g. skeletonPath = "D:\GameEngine\Assets\Models\Skeletal\animlist.txt"
+				fs::path animlistFile = absolute / "animlist.txt";
+
+				Vector<fs::path> relativeAnims{};
+				if (!fs::exists(animlistFile))
+				{
+					CONSOLE_WARN("{} file does not exist");
+				}
+				else
+				{
+					IStream file(animlistFile);
+
+					// E.g. relativeAnims = [ 
+					//	"Drunk_Walk/<filename>.gltf", 
+					//	"Silly_Dancing/<filename>.gltf" 
+					// ]
+					relativeAnims.assign(std::istream_iterator<fs::path>(file), std::istream_iterator<fs::path>());
+
+					// E.g. relativeAnims = [ 
+					//	"Mutant/Drunk_Walk/<filename>.gltf", 
+					//	"Mutant/Silly_Dancing/<filename>.gltf" 
+					// ]
+					for (auto& p : relativeAnims)
+						p = parent / p;
+				}
+
+				animManager.LoadAnimations(*skeleton, relativeAnims);
+			}
+			
+			skeleton->Clone(skmeshComponent);
+			animatorComponent.SetTargetSkeleton(skmeshComponent);
 		}
 		else if (component == "Light")
 		{
@@ -209,29 +265,25 @@ void Scene::DeserializeScene(StringView filePath)
 			case LightType::DIRECTIONAL:
 			{
 				const String& color = conf.GetValue(section, "color");
-				const String& diffuseIntensity = conf.GetValue(section, "diffuseIntensity");
-				const String& specularIntensity = conf.GetValue(section, "specularIntensity");
+				const String& intensity = conf.GetValue(section, "intensity");
 				const String& direction = conf.GetValue(section, "direction");
 				auto& light = object.AddComponent<DirectionalLight>();
 				light.color = Utils::StringToVec3f(color);
-				light.diffuseIntensity = Utils::StringToF32(diffuseIntensity);
-				light.specularIntensity = Utils::StringToF32(specularIntensity);
+				light.intensity = Utils::StringToF32(intensity);
 				light.direction = Utils::StringToVec3f(direction);
 				break;
 			}
 			case LightType::POINT:
 			{
 				const String& color = conf.GetValue(section, "color");
-				const String& diffuseIntensity = conf.GetValue(section, "diffuseIntensity");
-				const String& specularIntensity = conf.GetValue(section, "specularIntensity");
+				const String& intensity = conf.GetValue(section, "intensity");
 				const String& position = conf.GetValue(section, "position");
 				const String& range = conf.GetValue(section, "attenuation.range");
 				const String& kl = conf.GetValue(section, "attenuation.kl");
 				const String& kq = conf.GetValue(section, "attenuation.kq");
 				auto& light = object.AddComponent<PointLight>();
 				light.color = Utils::StringToVec3f(color);
-				light.diffuseIntensity = Utils::StringToF32(diffuseIntensity);
-				light.specularIntensity = Utils::StringToF32(specularIntensity);
+				light.intensity = Utils::StringToF32(intensity);
 				light.position = Utils::StringToVec3f(position);
 				light.attenuation.range = Utils::StringToI32(range);
 				light.attenuation.kl = Utils::StringToF32(kl);
@@ -241,8 +293,7 @@ void Scene::DeserializeScene(StringView filePath)
 			case LightType::SPOT:
 			{
 				const String& color = conf.GetValue(section, "color");
-				const String& diffuseIntensity = conf.GetValue(section, "diffuseIntensity");
-				const String& specularIntensity = conf.GetValue(section, "specularIntensity");
+				const String& intensity = conf.GetValue(section, "intensity");
 				const String& position = conf.GetValue(section, "position");
 				const String& direction = conf.GetValue(section, "direction");
 				const String& range = conf.GetValue(section, "attenuation.range");
@@ -252,8 +303,7 @@ void Scene::DeserializeScene(StringView filePath)
 				const String& outerCutOff = conf.GetValue(section, "outerCutOff");
 				auto& light = object.AddComponent<SpotLight>();
 				light.color = Utils::StringToVec3f(color);
-				light.diffuseIntensity = Utils::StringToF32(diffuseIntensity);
-				light.specularIntensity = Utils::StringToF32(specularIntensity);
+				light.intensity = Utils::StringToF32(intensity);
 				light.position = Utils::StringToVec3f(position);
 				light.direction = Utils::StringToVec3f(direction);
 				light.attenuation.range = Utils::StringToI32(range);
@@ -265,7 +315,7 @@ void Scene::DeserializeScene(StringView filePath)
 			}
 
 			default:
-				throw std::runtime_error("Invalid LightType!");
+				throw std::runtime_error("error on loading scene: invalid LightType");
 			}
 		}
 	}

@@ -3,18 +3,23 @@
 
 int main()
 {
-  Engine engine = Engine();
-  engine.Initialize();
+  Engine engine;
   try
   {
+    engine.Initialize();
     engine.Run();
+    engine.CleanUp();
   }
-  catch (const std::exception& err)
+  catch(std::runtime_error& e)
   {
-    CONSOLE_CRITICAL(err.what());
-    return EXIT_FAILURE;
+    CONSOLE_CRITICAL("runtime_error exception: {}", e.what());
+    return 1;
   }
-  engine.CleanUp();
+  catch (std::out_of_range& e)
+  {
+    CONSOLE_CRITICAL("out_of_range exception: {}", e.what());
+    return 1;
+  }
   
-  return EXIT_SUCCESS;
+  return 0;
 }

@@ -1,4 +1,7 @@
-﻿# Build project
+﻿I am developing this project in a windows environment using 
+Visual Studio Community 2022 as IDE and MSVC as C++ compiler
+
+# Build project
 - cd ./GameEngine
 - mkdir Build
 - cmake -S . -B Build

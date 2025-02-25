@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Core/Core.hpp"
-#include "Core/Math/Math.hpp"
+#include "Core/Math/Base.hpp"
 
 enum class LightType : i32
 {
@@ -18,7 +18,7 @@ struct Attenuation
 	f32 kq{ 0.032f }; /* Quadratic attenuation factor */
 };
 
-static constexpr const Attenuation ATTENUATION_RANGES[] = {
+static constexpr Attenuation ATTENUATION_RANGES[] = {
 	Attenuation{ 7, 0.7f, 1.8f },
 	Attenuation{ 13, 0.35f, 0.44f },
 	Attenuation{ 20, 0.22f, 0.20f },
@@ -39,6 +39,7 @@ struct Light
 };
 
 /**
+ * @brief
  * When a light source is modeled to be infinitely far away it is called a
  * directional light since all its light rays have the same direction;
  * it is independent of the location of the light source.
@@ -49,14 +50,15 @@ struct Light
 struct DirectionalLight
 {
 	vec3f color{ 1.0f,1.0f,1.0f };
-	f32 diffuseIntensity{ 0.5f };
-	f32 specularIntensity{ 0.5f };
-
+	f32 intensity{ 0.0f };
 	vec3f direction{ 0.0f, -1.0f, 0.0f };
+private:
+	f32 __padding{ 0.f }; /* Needed for std140 alignment */ 
 };
 
 
 /**
+ * @brief
  * A point light is a light source with a given position somewhere in a world
  * that illuminates in all directions, where the light rays fade out over distance.
  * Think of light bulbs and torches as light casters that act as a point light.
@@ -64,15 +66,18 @@ struct DirectionalLight
 struct PointLight
 {
 	vec3f color{ 1.0f,1.0f,1.0f };
-	f32 diffuseIntensity{ 0.5f };
-	f32 specularIntensity{ 0.5f };
-
+	f32 intensity{ 0.0f };
 	vec3f position{ 0.0f, 0.0f, 0.0f };
-
+private:
+	f32 __padding_1{ 0.f }; /* Needed for std140 alignment */
+public:
 	Attenuation attenuation;
+private:
+	f32 __padding_2{ 0.f }; /* Needed for std140 alignment */
 };
 
 /**
+ * @brief
  * A spotlight is a light source that is located somewhere in the environment
  * that,instead of shooting light rays in all directions, only shoots them in
  * a specific direction.
@@ -80,16 +85,20 @@ struct PointLight
  */
 struct SpotLight
 {
-	vec3f color{ 1.0f,1.0f,1.0f };
-	f32 diffuseIntensity{ 0.5f };
-	f32 specularIntensity{ 0.5f };
-
-	vec3f direction{ 0.0f, -1.0f, 0.0f };
-	vec3f position{ 0.0f, 0.0f, 0.0f };
-
-	Attenuation attenuation;
-
-	/* Spotlight's radius */
+	vec3f  color{ 1.0f,1.0f,1.0f };
+	f32 intensity{ 0.0f };
+	vec3f  position{ 0.0f, 0.0f, 0.0f };
+private:
+	f32 __padding_1;  /* Needed for std140 alignment */
+public:
+	vec3f  direction{ 0.0f, -1.0f, 0.0f };
+private:
+	f32 __padding_2;  /* Needed for std140 alignment */
+public:
 	f32 cutOff{ 12.5f };
-	f32 outerCutOff{ 17.5f };
+	f32 outerCutOff{ 17.5f }; /* smoother edges */
+private:
+	f32 __padding_3[2];  /* Needed for std140 alignment */
+public:
+	Attenuation attenuation;
 };

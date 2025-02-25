@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Core/Core.hpp"
+#include "Core/Math/Base.hpp"
 
 #include "Engine/Graphics/Objects/Buffer.hpp"
 #include "Engine/Graphics/Containers/VertexArray.hpp"
@@ -23,8 +24,10 @@ private:
 	FrameBuffer _fboMultisampled;
 	FrameBuffer _fboIntermediate;
 
-	Buffer _uboCamera; /* Uniform cameraBlock object */
+	Buffer _uboCameraBlock;	// UBO "CameraBlock"
+	Buffer _uboLightBlock;	// UBO "LightBlock"
+	Buffer _uboBoneBlock;		// UBO "BoneBlock"
 
 	VertexArray _screenSquare;
-	vec2i32 _viewportSize;
+	vec2i _viewportSize;
 };

@@ -1,17 +1,17 @@
-#include "Core/Core.hpp"
+#include "ImGuiLayer.hpp"
+
 #include "Engine/Scene.hpp"
 #include "Engine/ECS/ECS.hpp"
-#include "Engine/Subsystems/ShaderManager.hpp"
-#include "Engine/Subsystems/TextureManager.hpp"
-#include "Engine/Filesystem/Dialog.hpp"
-
-#include "ImGuiLayer.hpp"
+#include "Engine/Utils.hpp"
+#include "Engine/Subsystems/ShadersManager.hpp"
+#include "Engine/Subsystems/TexturesManager.hpp"
+#include "Engine/Filesystem/Filesystem.hpp"
 
 #include <imgui/imgui.h>
 
-/* -------------------------- */
-/*          PRIVATE           */
-/* -------------------------- */
+// ----------------------------------------------------
+//          PRIVATE          
+// ----------------------------------------------------
 
 static bool ButtonCentered(const char* label, ImVec2 size)
 {
@@ -25,18 +25,20 @@ static bool ButtonCentered(const char* label, ImVec2 size)
 
 static void Hierarchy_ListObjects(Scene& scene, GameObject& objSelected)
 {
-  char selectableName[64]{};
+  auto& texManager = TexturesManager::Get();
+  static Texture2D icon = texManager.GetOrCreateIcon("game-object-16.png");
+
+	Array<char, 64> selectableName{};
   for (auto [entity, tag] : scene.Reg().view<Tag>().each())
   {
     GameObject o{ entity, &scene.Reg() };
     
-    std::fill_n(selectableName, sizeof(selectableName), 0);
-    std::format_to_n(selectableName, sizeof(selectableName), "{}##{}", tag.value, static_cast<u32>(entity));
+		selectableName.fill(0);
+    std::format_to_n(selectableName.data(), selectableName.size(), "{}##{}", tag.value.data(), static_cast<u32>(entity));
 
     ImGui::BeginGroup();
     ImGui::SetCursorPosY(ImGui::GetCursorPosY() + (ImGui::GetTextLineHeight() - 16.f) / 2);
     
-    const auto& icon = TextureManager::Get().GetIconByPath(GetIconsPath() / "game-object-16.png");
     ImGui::Image(reinterpret_cast<void*>(icon.id), ImVec2(16.f, 16.f));
     ImGui::SameLine();
     
@@ -47,8 +49,8 @@ static void Hierarchy_ListObjects(Scene& scene, GameObject& objSelected)
     ImGui::PushStyleColor(ImGuiCol_HeaderHovered, colorHovered);
     ImGui::PushStyleColor(ImGuiCol_HeaderActive, colorSelected);
 
-    bool selected = ImGui::Selectable(selectableName, objSelected.IsEqual(o));
-    if (selected && !objSelected.IsEqual(o))
+    bool selected = ImGui::Selectable(selectableName.data(), objSelected.Compare(o));
+    if (selected && !objSelected.Compare(o))
       objSelected = o;
     
     if (
@@ -70,26 +72,45 @@ static void Hierarchy_ObjectMenuPopup(Scene& scene, GameObject& objSelected)
   {
     if (ImGui::MenuItem("Delete object"))
     {
-      scene.DestroyObject(objSelected);
-      objSelected.Invalidate();
+      // Unset light component
+      if (objSelected.HasComponent<Light>())
+      {
+        ShadersManager& shadersManager = ShadersManager::Get();
+        Program shaderScene = shadersManager.GetProgram("Scene");
+        Program shaderSceneShadows = shadersManager.GetProgram("SceneShadows");
 
-      ShaderManager::Get().GetProgramByName("Scene").Link();
-      ShaderManager::Get().GetProgramByName("SceneShadows").Link();
-      ShaderManager::Get().ResetProgramsUniforms();
+        if (objSelected.HasComponent<DirectionalLight>())
+        {
+          shaderScene.SetUniform1f("u_directionalLight.intensity", 0.f);
+          shaderSceneShadows.SetUniform1f("u_directionalLight.intensity", 0.f);
+        }
+        else if (objSelected.HasComponent<PointLight>())
+        {
+          shaderScene.SetUniform1f("u_pointLight.intensity", 0.f);
+          shaderSceneShadows.SetUniform1f("u_pointLight.intensity", 0.f);
+        }
+        else if (objSelected.HasComponent<SpotLight>())
+        {
+          shaderScene.SetUniform1f("u_spotLight.intensity", 0.f);
+          shaderSceneShadows.SetUniform1f("u_spotLight.intensity", 0.f);
+        }
+      }
+
+      scene.DestroyObject(objSelected.id);
     }
     ImGui::EndPopup();
   }
 }
 
-/* -------------------------- */
-/*          PUBLIC            */
-/* -------------------------- */
+// ----------------------------------------------------
+//          PUBLIC           
+// ----------------------------------------------------
 
 void GUI_RenderHierarchy(bool& open, Scene& scene, GameObject& objSelected)
 {
   static bool createNewObject = false;
 
-  ImGui::Begin("Outliner", &open);
+  ImGui::Begin("Hierarchy", &open);
 
   /* "+New object" button */
   f32 btnWidth = ImGui::GetContentRegionAvail().x - 32.f;

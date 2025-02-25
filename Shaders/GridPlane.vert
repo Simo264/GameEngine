@@ -2,7 +2,7 @@
 
 layout(location = 0) in vec3 aPos;
 
-layout (std140, binding = 0) uniform cameraBlock
+layout (std140, binding = 0) uniform CameraBlock
 {
   mat4 u_view;
   mat4 u_projection;

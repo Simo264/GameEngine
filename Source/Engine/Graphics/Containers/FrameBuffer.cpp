@@ -1,13 +1,6 @@
 #include "FrameBuffer.hpp"
-
 #include "Core/GL.hpp"
 #include "Core/Log/Logger.hpp"
-
-FrameBuffer::FrameBuffer()
-	: id{ 0 },
-		_textAttachmentIDs{},
-		_rboAttachmentIDs{}
-{}
 
 void FrameBuffer::Create()
 {
@@ -16,29 +9,28 @@ void FrameBuffer::Create()
 
 void FrameBuffer::Delete()
 {
-	u64 numTextures = _textAttachmentIDs.size();
-	if (numTextures > 0)
-		glDeleteTextures(numTextures, _textAttachmentIDs.data());
-	
-	u64 numRBOs = _rboAttachmentIDs.size();
-	if (numRBOs > 0)
-		glDeleteRenderbuffers(numRBOs, _rboAttachmentIDs.data());
+	u64 size = textAttachments.size();
+	if (size > 0)
+		glDeleteTextures(size, textAttachments.data());
 
-	Vector<u32>().swap(_textAttachmentIDs);
-	Vector<u32>().swap(_rboAttachmentIDs);
+	size = rboAttachments.size();
+	if (size > 0)
+		glDeleteRenderbuffers(size, rboAttachments.data());
 
 	glDeleteFramebuffers(1, &id);
 	id = 0;
+	textAttachments.clear();
+	rboAttachments.clear();
 }
 
-void FrameBuffer::Bind(i32 target) const
+void FrameBuffer::Bind(FramebufferTarget target) const
 {
-	glBindFramebuffer(target, id);
+	glBindFramebuffer(static_cast<u32>(target), id);
 }
 
-void FrameBuffer::Unbind(i32 target) const
+void FrameBuffer::Unbind(FramebufferTarget target) const
 {
-	glBindFramebuffer(target, 0);
+	glBindFramebuffer(static_cast<u32>(target), 0);
 }
 
 i32 FrameBuffer::CheckStatus() const
@@ -46,16 +38,33 @@ i32 FrameBuffer::CheckStatus() const
 	return glCheckNamedFramebufferStatus(id, GL_FRAMEBUFFER);
 }
 
-void FrameBuffer::AttachTexture(i32 attachment, u32 textureID, i32 level)
+bool FrameBuffer::IsValid() const
 {
-	glNamedFramebufferTexture(id, attachment, textureID, level);
-	_textAttachmentIDs.push_back(textureID);
+	return (id != 0) && (glIsFramebuffer(id) == GL_TRUE);
 }
 
-void FrameBuffer::AttachRenderBuffer(i32 attachment, u32 renderbufferID)
+void FrameBuffer::AttachTexture(FramebufferAttachment attachment, u32 texture, i32 level)
 {
-	glNamedFramebufferRenderbuffer(id, attachment, GL_RENDERBUFFER, renderbufferID);
-	_rboAttachmentIDs.push_back(renderbufferID);
+	if (textAttachments.size() >= MAX_NUM_TEXTURE_ATTACHMENTS)
+	{
+		CONSOLE_WARN("Cannot add more texture attachments. Maximum limit of {} reached.", MAX_NUM_TEXTURE_ATTACHMENTS);
+		return;
+	}
+
+	textAttachments.push_back(texture);
+	glNamedFramebufferTexture(id, static_cast<u32>(attachment), texture, level);
+}
+
+void FrameBuffer::AttachRenderBuffer(FramebufferAttachment attachment, RenderBuffer renderbuffer)
+{
+	if (rboAttachments.size() >= MAX_NUM_RBO_ATTACHMENTS)
+	{
+		CONSOLE_WARN("Cannot add more renderbuffer attachments. Maximum limit of {} reached.", MAX_NUM_RBO_ATTACHMENTS);
+		return;
+	}
+
+	rboAttachments.push_back(renderbuffer.id);
+	glNamedFramebufferRenderbuffer(id, static_cast<u32>(attachment), GL_RENDERBUFFER, renderbuffer.id);
 }
 
 void FrameBuffer::Blit(
@@ -68,8 +77,8 @@ void FrameBuffer::Blit(
 	i32 destLowerY,
 	i32 destUpperX,
 	i32 destUpperY,
-	i32 mask,
-	i32 filter) const
+	FramebufferBlitMask mask,
+	FramebufferBlitFilter filter) const
 {
 	glBlitNamedFramebuffer(
 		id, dest.id, 
@@ -77,8 +86,8 @@ void FrameBuffer::Blit(
 		srcUpperX, srcUpperY, 
 		destLowerX, destLowerY, 
 		destUpperX, destUpperY, 
-		mask, 
-		filter);
+		static_cast<u32>(mask),
+		static_cast<u32>(filter));
 }
 
 void FrameBuffer::SetWritingColorComponents(bool r, bool g, bool b, bool a) const

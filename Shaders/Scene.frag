@@ -17,52 +17,60 @@ out vec4 FragColor;
 
 /* ---------- Structs ---------- */
 /* ----------------------------- */
-struct Attenuation{
-  float kl; /* linear attenuation factor */
-  float kq; /* quadratic attenuation factor */
-};
-struct Material {
+struct Material 
+{
   sampler2D diffuseTexture;
   sampler2D specularTexture;
   sampler2D normalTexture;
-  sampler2D heightTexture;
 };
-struct DirectionalLight {
+struct DirectionalLight 
+{
   vec3  color;
-  float diffuseIntensity;
-  float specularIntensity;
+  float intensity;
   vec3  direction;
+  float __padding;  /* Needed for std140 alignment */ 
 };
-struct PointLight {
+
+struct Attenuation
+{
+	int range;  /* If an objects distance is greater than the range, the light has no effect on the object */
+	float kl;	  /* Linear attenuation factor */
+	float kq;   /* Quadratic attenuation factor */
+};
+struct PointLight 
+{
   vec3  color;
-  float diffuseIntensity;
-  float specularIntensity;
+  float intensity;
   vec3  position;
-  
+  float __padding_1;  /* Needed for std140 alignment */ 
   Attenuation attenuation;
+  float __padding_2;  /* Needed for std140 alignment */ 
 };
-struct SpotLight {
+struct SpotLight 
+{
   vec3  color;
-  float diffuseIntensity;
-  float specularIntensity;
+  float intensity;
   vec3  position;
+  float __padding_1;  /* Needed for std140 alignment */ 
   vec3  direction;
+  float __padding_2;  /* Needed for std140 alignment */ 
   float cutOff;
   float outerCutOff; /* smoother edges */
-
+  float __padding_3[2];  /* Needed for std140 alignment */ 
   Attenuation attenuation;
 };
 
 
 /* ---------- Uniforms ---------- */
 /* ------------------------------ */
-uniform Material          u_material;
-uniform DirectionalLight  u_directionalLight;
-uniform PointLight        u_pointLight[4];
-uniform SpotLight         u_spotLight;
+layout (std140, binding = 1) uniform LightBlock
+{
+  DirectionalLight  u_directionalLight;
+  PointLight        u_pointLight;
+  SpotLight         u_spotLight;
+};
+uniform Material u_material;
 
-uniform vec3  u_ambientLightColor;
-uniform float u_ambientLightIntensity;
 
 uniform int u_useNormalMap;
 
@@ -93,6 +101,9 @@ vec3 CalculateSpotLight(SpotLight light, vec3 normal, vec3 viewDir);
 
 void main() 
 {
+  // FragColor = vec4(1.f, 0.f, 0.f, 1.0f);
+  // return;
+
   g_normalTexSize = textureSize(u_material.normalTexture, 0);
 
   const vec3 viewDir = CalculateViewDirVector();
@@ -101,7 +112,6 @@ void main()
   g_diffuseColor  = texture(u_material.diffuseTexture, TexCoord);
   g_specularColor = texture(u_material.specularTexture, TexCoord);
 
-  const vec3 ambientLight = (u_ambientLightColor * u_ambientLightIntensity) * g_diffuseColor.rgb;
   vec3 result = vec3(0.0f);
 
   /* =========================== */
@@ -115,7 +125,7 @@ void main()
   /* ===================== */
   //for(int i = 0; i < 4; i++)
   //  result += CalculateBlinnPhongLight(u_pointLight[i], normal, viewDir);
-  result += CalculateBlinnPhongLight(u_pointLight[0], normal, viewDir);
+  //result += CalculateBlinnPhongLight(u_pointLight, normal, viewDir);
 
 
   /* ==================== */
@@ -146,7 +156,7 @@ bool HasNormalTexture()
 
 vec3 CalculateNormalVector(vec2 textureCoord) 
 {
-  if(HasNormalTexture() && IsNormalMapActive())
+  if(IsNormalMapActive() && HasNormalTexture())
   {
     /* Obtain normal from normal map in range [0,1] */
     vec3 N = texture(u_material.normalTexture, textureCoord).rgb;
@@ -173,21 +183,27 @@ float CalculateAttenuation(float d, float kl, float kq)
 
 vec3 CalculateDirectionalLight(DirectionalLight light, vec3 normal, vec3 viewDir)
 {
+  if(light.intensity == 0.0f)
+    return vec3(0.f);
+
   const vec3 lightDir = normalize(-light.direction);
     
   /* Diffuse shading */ 
   const float diffFactor = max(dot(lightDir, normal), 0.0);
-  const vec3 diffuse = (light.color * light.diffuseIntensity) * diffFactor * g_diffuseColor.rgb;
+  const vec3 diffuse = (light.color * light.intensity) * diffFactor * g_diffuseColor.rgb;
 
   /* Specular shading */ 
   const vec3 halfwayDir = normalize(lightDir + viewDir);
   const float specFactor = pow(max(dot(normal, halfwayDir), 0.0), g_shininess);
-  const vec3 specular = (light.color * light.specularIntensity) * specFactor * g_specularColor.rgb;
+  const vec3 specular = (light.color * light.intensity) * specFactor * g_specularColor.rgb;
 
   return diffuse + specular;
 }
 vec3 CalculateBlinnPhongLight(PointLight light, vec3 normal, vec3 viewDir) 
 {
+  if(light.intensity == 0.f)
+    return vec3(0.f);
+
   const vec3 tangentLightPosition = TBN * light.position;
   
   /* Light direction */
@@ -199,12 +215,12 @@ vec3 CalculateBlinnPhongLight(PointLight light, vec3 normal, vec3 viewDir)
    
   /* Diffuse shading */
   const float diffFactor = max(dot(normal, lightDir), 0.0);
-  vec3 diffuse = (light.color * light.diffuseIntensity) * diffFactor * g_diffuseColor.rgb;
+  vec3 diffuse = (light.color * light.intensity) * diffFactor * g_diffuseColor.rgb;
    
   /* Specular shading */
   const vec3 halfwayDir = normalize(lightDir + viewDir);  
   const float specFactor = pow(max(dot(normal, halfwayDir), 0.0), g_shininess);
-  vec3 specular = (light.color * light.specularIntensity) * specFactor * g_specularColor.rgb;
+  vec3 specular = (light.color * light.intensity) * specFactor * g_specularColor.rgb;
 
   /* Attenuation */
   const float lightDist = length(light.position - FragPos);
@@ -216,6 +232,9 @@ vec3 CalculateBlinnPhongLight(PointLight light, vec3 normal, vec3 viewDir)
 }
 vec3 CalculateSpotLight(SpotLight light, vec3 normal, vec3 viewDir)
 {
+  if(light.intensity == 0.f)
+    return vec3(0.f);
+
   const vec3 tangentLightPosition = TBN * light.position;
 
   /* Light direction */
@@ -227,12 +246,12 @@ vec3 CalculateSpotLight(SpotLight light, vec3 normal, vec3 viewDir)
 
   /* Diffuse */
   const float diffFactor = max(dot(normal, lightDir), 0.0f);
-  vec3 diffuse = (light.color * light.diffuseIntensity) * diffFactor * g_diffuseColor.rgb;
+  vec3 diffuse = (light.color * light.intensity) * diffFactor * g_diffuseColor.rgb;
 
   /* Specular */
   const vec3 halfwayDir = normalize(lightDir + viewDir);
   const float specFactor = pow(max(dot(normal, halfwayDir), 0.0f), g_shininess);
-  vec3 specular = (light.color * light.specularIntensity) * specFactor * g_specularColor.rgb;
+  vec3 specular = (light.color * light.intensity) * specFactor * g_specularColor.rgb;
 
   /* Soft edges + intensity */
   const float cutoff = cos(radians(light.cutOff));

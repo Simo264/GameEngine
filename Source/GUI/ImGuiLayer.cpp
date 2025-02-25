@@ -2,9 +2,14 @@
 
 #include "Core/GL.hpp"
 
+#include "Engine/Globals.hpp"
+#include "Engine/Scene.hpp"
+#include "Engine/Camera.hpp"
+#include "Engine/ECS/ECS.hpp"
+#include "Engine/IniFileHandler.hpp"
+#include "Engine/Graphics/Objects/Texture2D.hpp"
 #include "Engine/Subsystems/WindowManager.hpp"
-#include "Engine/Subsystems/FontManager.hpp"
-#include "Engine/Filesystem/ConfigFile.hpp"
+#include "Engine/Filesystem/Filesystem.hpp"
 
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_glfw.h>
@@ -13,34 +18,33 @@
 #include <imgui/ImGuizmo.h>
 
 extern void GUI_RenderMenuBar(Scene& scene, bool& openPreferences);
-extern void GUI_RenderPreferencesWindow(bool& open, i32 fontSize);
+extern void GUI_RenderPreferencesWindow(bool& open);
 extern void GUI_RenderHierarchy(bool& open, Scene& scene, GameObject& objSelected);
 extern void GUI_RenderViewport(bool& open, u32 texID, GameObject& objSelected, i32 gizmode, const mat4f& view, const mat4f& proj);
 extern void GUI_RenderInspector(bool& open, GameObject& object);
 extern void GUI_RenderContentBrowser(bool& open);
-extern void GUI_RenderTransformToolBar(vec2i32 viewportPos, i32& gizmode);
+extern void GUI_RenderTransformToolBar(vec2i viewportPos, i32& gizmode);
 //extern void GUI_RenderCameraProperties(bool& open, Camera& camera);
 
-/* -------------------------- */
-/*          PUBLIC            */
-/* -------------------------- */
+// --------------------------
+//          PUBLIC           
+// --------------------------
 
 void ImGuiLayer::Initialize()
 {
-  /* Setup ImGui context */
+  // Setup ImGui context
   SetupContext();
   
-  /* Custom styling */
+  // Custom styling
   Styling();
 
-  /* Load default font */
-  ConfigFile config((GetRootPath() / "Configuration.ini").string());
+  // Load default font
+  IniFileHandler config(Filesystem::GetRootPath() / "Configuration.ini");
   config.ReadData();
-  const String& fontFamily = config.GetValue("GUI", "font-family");
-  fontSize = std::atoi(config.GetValue("GUI", "font-size").c_str());
-  auto record = FontManager::Get().GetRecordByName(fontFamily.c_str());
-  selectedFont = std::make_pair(const_cast<String*>(&record->first), const_cast<fs::path*>(&record->second));
-  SetFont(selectedFont.second->string());
+  g_fontFamily = config.GetValue("GUI", "font-family");
+  g_fontSize = std::atoi(config.GetValue("GUI", "font-size").c_str());
+
+  SetFont(Filesystem::GetFontsPath() / g_fontFamily, g_fontSize);
 }
 void ImGuiLayer::CleanUp()
 {
@@ -71,38 +75,38 @@ void ImGuiLayer::EndFrame()
     windowManager.MakeContextCurrent(backCurrentContext);
   }
 }
-void ImGuiLayer::SetFont(StringView fontPath) const
+void ImGuiLayer::SetFont(const fs::path& ttfFilePath, u32 fontSize) const
 {
   ImGuiIO& io = ImGui::GetIO();
   io.Fonts->Clear();
-  io.Fonts->AddFontFromFileTTF(fontPath.data(), fontSize);
+  io.Fonts->AddFontFromFileTTF(ttfFilePath.string().c_str(), fontSize);
   io.Fonts->Build();
   
   ImGui_ImplOpenGL3_DestroyDeviceObjects();
   ImGui_ImplOpenGL3_CreateDeviceObjects();
 }
-void ImGuiLayer::Demo()
+void ImGuiLayer::RenderDemo()
 {
   static bool open = true;
   if(open)
     ImGui::ShowDemoWindow(&open);
 }
-void ImGuiLayer::MenuBar(Scene& scene) const
+void ImGuiLayer::RenderMenuBar(Scene& scene) const
 {
   static bool viewPrefWindow = false;
   GUI_RenderMenuBar(scene, viewPrefWindow);
 
-  /* Render preferences window */
+  // Render preferences window
   if (viewPrefWindow)
-    GUI_RenderPreferencesWindow(viewPrefWindow, fontSize);
+    GUI_RenderPreferencesWindow(viewPrefWindow);
 }
-void ImGuiLayer::Viewport(u32 textureID, GameObject& objSelected, const mat4f& view, const mat4f& proj) const
+void ImGuiLayer::RenderViewport(u32 texture, GameObject& objSelected, const mat4f& view, const mat4f& proj) const
 {
   static bool open = true;
   if (open)
-    GUI_RenderViewport(open, textureID, objSelected, gizmode, view, proj);
+    GUI_RenderViewport(open, texture, objSelected, gizmode, view, proj);
 }
-GameObject& ImGuiLayer::Hierarchy(Scene& scene)
+GameObject& ImGuiLayer::RenderHierarchy(Scene& scene)
 {
   static bool open = true;
   static GameObject object;
@@ -112,41 +116,26 @@ GameObject& ImGuiLayer::Hierarchy(Scene& scene)
   
   return object;
 }
-void ImGuiLayer::Inspector(GameObject& object)
+void ImGuiLayer::RenderInspector(GameObject& object)
 {
   static bool open = true;
   if (open)
     GUI_RenderInspector(open, object);
 }
-void ImGuiLayer::ContentBrowser()
+void ImGuiLayer::RenderContentBrowser()
 {
   static bool open = true;
   if (open)
     GUI_RenderContentBrowser(open);
 }
-void ImGuiLayer::GizmoToolBar(GameObject& objSelected)
+void ImGuiLayer::RenderGizmoToolBar(GameObject& objSelected)
 {
   GUI_RenderTransformToolBar(viewportPos, gizmode);
 }
-
-void ImGuiLayer::CameraProps(Camera& camera)
+void ImGuiLayer::RenderGraphicsInfo()
 {
-  //static bool open = true;
-  //if (open)
-  //  GUI_RenderCameraProperties(open, camera);
-}
-void ImGuiLayer::DebugInfo(f64 delta, f64 avg, i32 frameRate, bool shadowMode, bool normalMode, bool wireframeMode)
-{
-  static constexpr const ImGuiWindowFlags flags = ImGuiWindowFlags_NoDocking;
-    //ImGuiWindowFlags_NoBackground |
-    //ImGuiWindowFlags_NoResize |
-    //ImGuiWindowFlags_NoCollapse |
-    //ImGuiWindowFlags_NoTitleBar;
-
-  ImGui::SetNextWindowPos(ImVec2(viewportPos.x, viewportPos.y + 20));
-  ImGui::SetNextWindowSize(ImVec2(300.0f, 250.0f));
-  ImGui::SetNextWindowBgAlpha(0.0f);
-  ImGui::Begin("Info", nullptr, flags);
+  static bool open = true;
+  ImGui::Begin("Graphics info", &open);
 
   auto& winManager = WindowManager::Get();
   static const char* glRender = reinterpret_cast<const char*>(glGetString(GL_RENDERER));
@@ -161,23 +150,44 @@ void ImGuiLayer::DebugInfo(f64 delta, f64 avg, i32 frameRate, bool shadowMode, b
     glsl
   );
 
-  ImGui::Separator();
+  ImGui::End();
+}
+void ImGuiLayer::RenderTimeInfo(f64 delta, f64 avg, i32 frameRate)
+{
+  constexpr i32 flags = ImGuiWindowFlags_NoDocking |
+    ImGuiWindowFlags_NoTitleBar |
+    ImGuiWindowFlags_NoResize |
+    ImGuiWindowFlags_NoCollapse |
+    ImGuiWindowFlags_NoBackground;
+
+  constexpr ImVec2 windowSize{ 160.f, 100.f };
+  ImVec2 windowPos = ImVec2((viewportPos.x + viewportSize.x) - windowSize.x, viewportPos.y + 25);
+  ImGui::SetNextWindowPos(windowPos);
+  ImGui::SetNextWindowSize(windowSize);
+  ImGui::SetNextWindowBgAlpha(0.0f);
+  ImGui::Begin("Info", nullptr, flags);
 
   ImGui::TextWrapped("Time (ms): %f", delta * 1000.0f);
   ImGui::TextWrapped("Average (ms): %f", avg * 1000.0f);
   ImGui::TextWrapped("Frame rate: %d", frameRate);
 
-  ImGui::Separator();
+  ImGui::End();
+}
+void ImGuiLayer::RenderDebug(bool shadowMode, bool normalMode, bool wireframeMode)
+{
+  ImGui::Begin("Debug", nullptr);
   ImGui::TextWrapped("Shadow mode (F1 on/F2 off): %d", shadowMode);
   ImGui::TextWrapped("Normal mapping (F5 on/F6 off): %d", normalMode);
   ImGui::TextWrapped("Wireframe mode (F9 on/F10 off): %d", wireframeMode);
-
   ImGui::End();
 }
-
-
-
-void ImGuiLayer::DebugDepthMap(u32 tetxureID)
+void ImGuiLayer::RenderCameraProps(Camera& camera)
+{
+  //static bool open = true;
+  //if (open)
+  //  GUI_RenderCameraProperties(open, camera);
+}
+void ImGuiLayer::RenderDebugDepthMap(u32 texture)
 {
   ImGuiStyle& style = ImGui::GetStyle();
   const ImVec2 paddingTmp = style.WindowPadding;
@@ -186,33 +196,18 @@ void ImGuiLayer::DebugDepthMap(u32 tetxureID)
   ImGui::Begin("Depth map", nullptr);
   ImGui::BeginChild("Map");
 
-  ImGui::Image(reinterpret_cast<void*>(tetxureID), { 1024,1024 }, ImVec2(0, 1), ImVec2(1, 0));
+  ImGui::Image(reinterpret_cast<void*>(texture), { 1024,1024 }, ImVec2(0, 1), ImVec2(1, 0));
 
   ImGui::EndChild();
   ImGui::End();
 
   style.WindowPadding = paddingTmp;
 }
-void ImGuiLayer::Test()
-{
-  ImGui::Begin("Test", nullptr);
 
-  ImGui::End();
-}
+// --------------------------
+//          PRIVATE          
+// --------------------------
 
-/* -------------------------- */
-/*          PRIVATE           */
-/* -------------------------- */
-
-ImGuiLayer::ImGuiLayer()
-  : viewportFocused{ false },
-    viewportSize{},
-    viewportPos{},
-    selectedFont{},
-    changeFontFamily{ false },
-    gizmode{ -1 },
-    fontSize{ 0 }
-{}
 void ImGuiLayer::SetupContext()
 {
   IMGUI_CHECKVERSION();
@@ -305,7 +300,7 @@ void ImGuiLayer::Styling()
 }
 void ImGuiLayer::Docking()
 {
-  ImGuiWindowFlags windowFlags = 
+  constexpr ImGuiWindowFlags windowFlags = 
     ImGuiWindowFlags_NoDocking |
     ImGuiWindowFlags_NoBackground |
     ImGuiWindowFlags_NoTitleBar |

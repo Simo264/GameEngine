@@ -2,7 +2,36 @@
 
 #include "Core/Core.hpp"
 
+enum class BufferUsage : u32 
+{
+	STREAM_DRAW	= 0x88E0, // GL_STREAM_DRAW
+	STREAM_READ	= 0x88E1, // GL_STREAM_READ
+	STREAM_COPY	= 0x88E2, // GL_STREAM_COPY
+	STATIC_DRAW	= 0x88E4, // GL_STATIC_DRAW
+	STATIC_READ	= 0x88E5, // GL_STATIC_READ
+	STATIC_COPY	= 0x88E6, // GL_STATIC_COPY
+	DYNAMIC_DRAW = 0x88E8, // GL_DYNAMIC_DRAW
+	DYNAMIC_READ = 0x88E9, // GL_DYNAMIC_READ
+	DYNAMIC_COPY = 0x88EA  // GL_DYNAMIC_COPY
+};
+
+enum class BufferAccess : u32 
+{
+	READ_ONLY	= 0x88B8, // GL_READ_ONLY
+	WRITE_ONLY = 0x88B9, // GL_WRITE_ONLY
+	READ_WRITE = 0x88BA  // GL_READ_WRITE
+};
+
+enum class BufferTarget : u32 
+{
+	ATOMIC_COUNTER = 0x92C0, // GL_ATOMIC_COUNTER_BUFFER
+	SHADER_STORAGE = 0x90D2, // GL_SHADER_STORAGE_BUFFER
+	TRANSFORM_FEEDBACK = 0x8C8E, // GL_TRANSFORM_FEEDBACK_BUFFER
+	UNIFORM	= 0x8A11  // GL_UNIFORM_BUFFER
+};
+
 /**
+ * @brief
  * https://www.khronos.org/opengl/wiki/Buffer_Object
  * 
  * Buffer Objects are OpenGL Objects that store an array of unformatted memory allocated by the OpenGL context.
@@ -12,99 +41,56 @@
 class Buffer
 {
 public:
-	Buffer();
-	Buffer(i32 target, u64 size, const void* data, i32 usage);
+	Buffer() : id{ 0 } {}
+	Buffer(u64 size, const void* data, BufferUsage usage);
 	~Buffer() = default;
 
-	/**
-	 * Create buffer object
-	 */
+	/** @brief Create buffer object */
 	void Create();
 
-	/**
-	 * Delete buffer object and invalidates the name associated with the buffer object 
-	 */
+	/** @brief Delete buffer object and invalidates the name associated with the buffer object */
 	void Delete();
 	
 	/**
-	 * Create a new data store for the buffer object.
+	 * @brief Create a new data store for the buffer object.
 	 * While creating the new storage, any pre-existing data store is deleted.
-	 * The new data store is created with the specified size in bytes and usage
-	 *
-	 * @param usage:	the symbolic constant must be 
-	 *								GL_STREAM_DRAW, GL_STREAM_READ, GL_STREAM_COPY, GL_STATIC_DRAW,
-	 *								GL_STATIC_READ, GL_STATIC_COPY, GL_DYNAMIC_DRAW, GL_DYNAMIC_READ, or GL_DYNAMIC_COPY
+	 * The new data store is created with the specified size in bytes and usage.
 	 */
-	void CreateStorage(u64 size, const void* data, i32 usage) const;
+	void CreateStorage(u64 size, const void* data, BufferUsage usage) const;
 
 	/**
-	 * Updates a subset of the buffer object's data store
-	 *
+	 * @brief Updates a subset of the buffer object's data store.
+	 * 
 	 * @param offset: specifies the offset (in bytes) into the buffer object's data store where data replacement will begin
-	 * @param size:   specifies the size in bytes of the data store region being replaced
+	 * @param size:		specifies the size in bytes of the data store region being replaced
 	 */
 	void UpdateStorage(i32 offset, u32 size, const void* data) const;
 
 	/**
-	 * Copy all or part of the data store of the buffer object to the data store of another buffer object
+	 * @brief Copy all or part of the data store of the buffer object to the data store of another buffer object
 	 *
-	 * @param size:       specifies the size of the data to be copied from the source buffer object
-	 *                    to the destination buffer object.
-	 * 
+	 * @param size:				specifies the size of the data to be copied from the source buffer object
+	 *										to the destination buffer object.
 	 * @param readOffset: specifies the offset within the data store of the source buffer at which
 	 *                    data will be read
-	 * 
 	 * @para writeOffset: specifies the offset within the data store of the destination buffer
-	 *                     at which data will be written.
+	 *                    at which data will be written.
 	 */
-	void CopyStorage(const Buffer& writeBuffer, i32 readOffset, i32 writeOffset, u64 size) const;
+	void CopyStorage(Buffer writeBuffer, i32 readOffset, i32 writeOffset, u64 size) const;
 
-	/**
-	 * Map all of the buffer object's data store into the client's address space
-	 *
-	 * @param access: indicating whether it will be possible to read from, write to,
-	 *								or both read from and write to the buffer object's mapped data store.
-	 *								The symbolic constant must be GL_READ_ONLY, GL_WRITE_ONLY, or GL_READ_WRITE
-	 */
-	void* MapStorage(i32 access) const;
+	/** @brief Map all of the buffer object's data store into the client's address space */
+	void* MapStorage(BufferAccess access) const;
 
-	/**
-	 * Release the mapping of the buffer object's data store into the client's address space
-	 */
+	/** @brief Release the mapping of the buffer object's data store into the client's address space */
 	bool UnmapStorage() const;
 
-	/**
-	 * Bind the buffer object
-	 */
-	void Bind() const;
+	/** @brief Bind the buffer object to an indexed buffer target. */
+	void BindBase(BufferTarget target, i32 bindingpoint) const;
 
-	/**
-	 * Bind the buffer object to an indexed buffer target. With glBindBufferBase target must be one of 
-	 * GL_ATOMIC_COUNTER_BUFFER, GL_TRANSFORM_FEEDBACK_BUFFER, GL_UNIFORM_BUFFER or GL_SHADER_STORAGE_BUFFER.
-	 * 
-	 * @param bindingpoint: specify the index of the binding poi32 within the array specified by target.
-	 */
-	void BindBase(i32 bindingpoint) const;
+	/** @brief Bind a range within the buffer object to an indexed buffer target. */
+	void BindRange(BufferTarget target, i32 bindingpoint, i32 offset, u64 size) const;
 
-	/**
-	 * Bind a range within the buffer object to an indexed buffer target. With glBindBufferRange target must be one of 
-	 * GL_ATOMIC_COUNTER_BUFFER, GL_TRANSFORM_FEEDBACK_BUFFER, GL_UNIFORM_BUFFER, or GL_SHADER_STORAGE_BUFFER.
-	 * 
-	 * @param bindingpoint: specify the index of the binding poi32 
-	 * @param offset: the starting offset in bytes into the buffer object buffer
-	 * @param size: the amount of data in bytes that can be read from the buffer
-	 */
-	void BindRange(i32 bindingpoint, i32 offset, u64 size) const;
-
-	/**
-	 * Unbind the buffer object
-	 */
-	void Unbind() const;
+	bool IsValid() const;
 
 	u32 id;
-	
-	/**
-	 * https://registry.khronos.org/OpenGL-Refpages/gl4/html/glBindBuffer.xhtml
-	 */
-	i32 target;
 };
