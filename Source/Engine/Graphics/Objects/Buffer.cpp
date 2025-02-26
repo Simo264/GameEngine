@@ -27,21 +27,43 @@ bool Buffer::IsValid() const
 
 void Buffer::CopyStorage(Buffer writeBuffer, i32 readOffset, i32 writeOffset, u64 size) const
 {
-	glCopyNamedBufferSubData(id, writeBuffer.id, readOffset, writeOffset, size);
+	glCopyNamedBufferSubData(id, 
+													 writeBuffer.id, 
+													 readOffset, 
+													 writeOffset, 
+													 size);
 }
 
 void Buffer::CreateStorage(u64 size, const void* data, BufferUsage usage) const
 {
-	glNamedBufferData(
-		id, 
-		size, 
-		data, 
-		static_cast<u32>(usage));
+	glNamedBufferData(id, 
+										size, 
+										data, 
+										static_cast<u32>(usage));
 }
 
 void Buffer::UpdateStorage(i32 offset, u32 size, const void* data) const
 {
-	glNamedBufferSubData(id, offset, size, data);
+	glNamedBufferSubData(id, 
+											 offset, 
+											 size, 
+											 data);
+}
+
+void Buffer::ClearStorage(BufferInternalFormat internalformat, 
+													i32 offset,
+													i32 size,
+													BufferFormat format,
+													BufferDataType type,
+													void* data) const
+{
+	glClearNamedBufferSubData(id,
+														static_cast<u32>(internalformat),
+														offset,
+														size,
+														static_cast<u32>(format),
+														static_cast<u32>(type),
+														data);
 }
 
 void* Buffer::MapStorage(BufferAccess access) const
@@ -56,18 +78,16 @@ bool Buffer::UnmapStorage() const
 
 void Buffer::BindBase(BufferTarget target, i32 bindingpoint) const
 {
-	glBindBufferBase(
-		static_cast<u32>(target),
-		bindingpoint, 
-		id);
+	glBindBufferBase(static_cast<u32>(target),
+									 bindingpoint, 
+									 id);
 }
 
 void Buffer::BindRange(BufferTarget target, i32 bindingpoint, i32 offset, u64 size) const
 {
-	glBindBufferRange(
-		static_cast<u32>(target),
-		bindingpoint,
-		id,
-		offset,
-		size);
+	glBindBufferRange(static_cast<u32>(target),
+										bindingpoint,
+										id,
+										offset,
+										size);
 }
