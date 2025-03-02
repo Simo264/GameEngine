@@ -373,13 +373,9 @@ void Engine::Initialize()
                             nullptr,
                             BufferUsage::DYNAMIC_DRAW // Data store content will be modified repeatedly and used many times.
     );
-    _uboLightBlock.ClearStorage(BufferInternalFormat::RGBA32F,
-                                0,
-                                size,
-                                BufferFormat::RGBA,
-                                BufferDataType::FLOAT,
-																nullptr // Fill buffer with zeros
-    );
+
+		constexpr Array<char, sizeof(DirectionalLight)> zeros{};
+		_uboLightBlock.UpdateStorage(0, sizeof(DirectionalLight), zeros.data()); // Init with zeros
 
     _uboLightBlock.BindBase(BufferTarget::UNIFORM, 1); // "LightBlock" to binding point 1
   }
@@ -469,21 +465,21 @@ void Engine::Run()
                                   reinterpret_cast<void*>(&cameraProj[0]));
 		// Update light block
     {
+			static bool flag = false;
+
       auto view = scene.Reg().view<DirectionalLight>();
       if (!view.empty())
       {
         GameObject object{ *view.begin(), &scene.Reg() };
         DirectionalLight* light = object.GetComponent<DirectionalLight>();
         _uboLightBlock.UpdateStorage(0, sizeof(DirectionalLight), reinterpret_cast<void*>(light));
+				flag = true;
       }
-      else
+      else if(view.empty() && flag)
       {
-        _uboLightBlock.ClearStorage(BufferInternalFormat::RGBA32F,
-                                    0,
-                                    sizeof(DirectionalLight),
-                                    BufferFormat::RGBA,
-                                    BufferDataType::FLOAT,
-                                    nullptr);
+        constexpr Array<char, sizeof(DirectionalLight)> zeros{};
+        _uboLightBlock.UpdateStorage(0, sizeof(DirectionalLight), zeros.data()); // Init with zeros
+        flag = false;
       }
     }
 

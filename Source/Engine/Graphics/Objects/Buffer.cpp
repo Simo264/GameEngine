@@ -25,15 +25,6 @@ bool Buffer::IsValid() const
 	return (id != 0) && (glIsBuffer(id) == GL_TRUE);
 }
 
-void Buffer::CopyStorage(Buffer writeBuffer, i32 readOffset, i32 writeOffset, u64 size) const
-{
-	glCopyNamedBufferSubData(id, 
-													 writeBuffer.id, 
-													 readOffset, 
-													 writeOffset, 
-													 size);
-}
-
 void Buffer::CreateStorage(u64 size, const void* data, BufferUsage usage) const
 {
 	glNamedBufferData(id, 
@@ -48,22 +39,6 @@ void Buffer::UpdateStorage(i32 offset, u32 size, const void* data) const
 											 offset, 
 											 size, 
 											 data);
-}
-
-void Buffer::ClearStorage(BufferInternalFormat internalformat, 
-													i32 offset,
-													i32 size,
-													BufferFormat format,
-													BufferDataType type,
-													void* data) const
-{
-	glClearNamedBufferSubData(id,
-														static_cast<u32>(internalformat),
-														offset,
-														size,
-														static_cast<u32>(format),
-														static_cast<u32>(type),
-														data);
 }
 
 void* Buffer::MapStorage(BufferAccess access) const

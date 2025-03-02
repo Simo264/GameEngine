@@ -4,7 +4,6 @@
 #include "Engine/ECS/ECS.hpp"
 #include "Engine/Utils.hpp"
 #include "Engine/Subsystems/TexturesManager.hpp"
-#include "Engine/Subsystems/ShadersManager.hpp"
 #include "Engine/Subsystems/ModelsManager.hpp"
 #include "Engine/Subsystems/AnimationsManager.hpp"
 #include "Engine/Filesystem/Filesystem.hpp"
@@ -123,12 +122,6 @@ static void Insp_DirectLight(GameObject& object, DirectionalLight& light)
   {
     object.RemoveComponent<Light>();
     object.RemoveComponent<DirectionalLight>();
-
-    ShadersManager& shadersManager = ShadersManager::Get();
-    Program shaderScene = shadersManager.GetProgram("Scene");
-    Program shaderSceneShadows = shadersManager.GetProgram("SceneShadows");
-    shaderScene.SetUniform1f("u_directionalLight.intensity", 0.f);
-    shaderSceneShadows.SetUniform1f("u_directionalLight.intensity", 0.f);
   }
   ImGui::PopStyleColor(3);
 }
@@ -188,12 +181,6 @@ static void Insp_PointLight(GameObject& object, PointLight& light)
   {
     object.RemoveComponent<Light>();
     object.RemoveComponent<PointLight>();
-
-    ShadersManager& shadersManager = ShadersManager::Get();
-    Program shaderScene = shadersManager.GetProgram("Scene");
-    Program shaderSceneShadows = shadersManager.GetProgram("SceneShadows");
-    shaderScene.SetUniform1f("u_pointLight.intensity", 0.f);
-    shaderSceneShadows.SetUniform1f("u_pointLight.intensity", 0.f);
   }
   ImGui::PopStyleColor(3);
 }
@@ -275,12 +262,6 @@ static void Insp_SpotLight(GameObject& object, SpotLight& light)
   {
     object.RemoveComponent<Light>();
     object.RemoveComponent<SpotLight>();
-
-    ShadersManager& shadersManager = ShadersManager::Get();
-    Program shaderScene = shadersManager.GetProgram("Scene");
-    Program shaderSceneShadows = shadersManager.GetProgram("SceneShadows");
-    shaderScene.SetUniform1f("u_spotLight.intensity", 0.f);
-    shaderSceneShadows.SetUniform1f("u_spotLight.intensity", 0.f);
   }
   ImGui::PopStyleColor(3);
 }
