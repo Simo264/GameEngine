@@ -34,8 +34,6 @@ template<typename Type, size_t size>
 using Array = std::array<Type, size>;
 template<typename Type>
 using Vector = std::vector<Type>;
-template<typename Type>
-using List = std::list<Type>;
 template<typename TypeName, typename TypeVal>
 using Map = std::map<TypeName, TypeVal>;
 template<typename TypeName, typename TypeVal>
@@ -48,8 +46,6 @@ template<typename Type>
 using UniquePtr = std::unique_ptr<Type>;
 template<typename Type>
 using SharedPtr = std::shared_ptr<Type>;
-template<typename Type>
-using WeakPtr = std::weak_ptr<Type>;
 
 
 /************** Data types **************/

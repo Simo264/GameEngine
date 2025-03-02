@@ -1,10 +1,9 @@
-#include "Core/Core.hpp"
+ï»¿#include "Core/Core.hpp"
 
 #include "Engine/Scene.hpp"
 #include "Engine/ECS/ECS.hpp"
 #include "Engine/Utils.hpp"
 #include "Engine/Subsystems/TexturesManager.hpp"
-#include "Engine/Subsystems/ShadersManager.hpp"
 #include "Engine/Subsystems/ModelsManager.hpp"
 #include "Engine/Subsystems/AnimationsManager.hpp"
 #include "Engine/Filesystem/Filesystem.hpp"
@@ -42,12 +41,12 @@ static void Insp_Tag(Tag& tag)
 
     // First column: input
     ImGui::TableNextColumn();
-		Array<char, 64> buffer{};
+    Array<char, 64> buffer{};
     std::format_to_n(buffer.data(), buffer.size(), "{}", tag.value.data());
 
     if (ImGui::InputText("##Value", buffer.data(), buffer.size(), ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_EnterReturnsTrue))
     {
-			StringView value{ buffer.data() };
+      StringView value{ buffer.data() };
       if (value.size() > 0)
         tag.UpdateValue(value);
     }
@@ -81,7 +80,7 @@ static void Insp_DirectLight(GameObject& object, DirectionalLight& light)
     ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthFixed, 80.f);
     ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthStretch);
 
-    // 1° Row: view light type
+    // 1ï¿½ Row: view light type
     ImGui::TableNextRow();
     ImGui::TableNextColumn(); // First column: label
     ImGui::Text("Type");
@@ -91,21 +90,21 @@ static void Insp_DirectLight(GameObject& object, DirectionalLight& light)
       ImGui::EndCombo();
     ImGui::EndDisabled();
 
-    // 2° Row: color input
+    // 2ï¿½ Row: color input
     ImGui::TableNextRow();
     ImGui::TableNextColumn(); // First column: label
     ImGui::Text("Color");
     ImGui::TableNextColumn(); // Second column: input
     ImGui::ColorEdit3("##Color", reinterpret_cast<f32*>(&light.color));
-    
-    // 3° Row: intensity input
+
+    // 3ï¿½ Row: intensity input
     ImGui::TableNextRow();
     ImGui::TableNextColumn(); // First column: label
     ImGui::Text("Intensity");
     ImGui::TableNextColumn(); // Second column: input
     ImGui::SliderFloat("##Intensity", &light.intensity, 0.0f, 1.0f);
 
-    // 4° Row: direction input
+    // 4ï¿½ Row: direction input
     ImGui::TableNextRow();
     ImGui::TableNextColumn(); // First column: label
     ImGui::Text("Direction");
@@ -123,12 +122,6 @@ static void Insp_DirectLight(GameObject& object, DirectionalLight& light)
   {
     object.RemoveComponent<Light>();
     object.RemoveComponent<DirectionalLight>();
-
-    ShadersManager& shadersManager = ShadersManager::Get();
-    Program shaderScene = shadersManager.GetProgram("Scene");
-    Program shaderSceneShadows = shadersManager.GetProgram("SceneShadows");
-    shaderScene.SetUniform1f("u_directionalLight.intensity", 0.f);
-    shaderSceneShadows.SetUniform1f("u_directionalLight.intensity", 0.f);
   }
   ImGui::PopStyleColor(3);
 }
@@ -140,7 +133,7 @@ static void Insp_PointLight(GameObject& object, PointLight& light)
     ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthFixed, 80.f);
     ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthStretch);
 
-    // 1° Row: view light type
+    // 1ï¿½ Row: view light type
     ImGui::TableNextRow();
     ImGui::TableNextColumn(); // First column: label
     ImGui::Text("Type");
@@ -149,29 +142,29 @@ static void Insp_PointLight(GameObject& object, PointLight& light)
     if (ImGui::BeginCombo("##Type", "Point"))
       ImGui::EndCombo();
     ImGui::EndDisabled();
-    
-    // 2° Row: color input
+
+    // 2ï¿½ Row: color input
     ImGui::TableNextRow();
     ImGui::TableNextColumn(); // First column: label
     ImGui::Text("Color");
     ImGui::TableNextColumn(); // Second column: input
     ImGui::ColorEdit3("##Color", reinterpret_cast<f32*>(&light.color));
 
-    // 3° Row: diffuse input
+    // 3ï¿½ Row: diffuse input
     ImGui::TableNextRow();
     ImGui::TableNextColumn(); // First column: label
     ImGui::Text("Intensity");
     ImGui::TableNextColumn(); // Second column: input
     ImGui::SliderFloat("##Intensity", &light.intensity, 0.0f, 1.0f);
 
-    // 4° Row: position input
+    // 4ï¿½ Row: position input
     ImGui::TableNextRow();
     ImGui::TableNextColumn(); // First column: label
     ImGui::Text("Position");
     ImGui::TableNextColumn(); // Second column: input
     ImGui::DragFloat3("##Position", reinterpret_cast<f32*>(&light.position), 0.1f, -FLT_MAX, FLT_MAX);
 
-    // 5° Row: attenuation combo
+    // 5ï¿½ Row: attenuation combo
     ImGui::TableNextRow();
     ImGui::TableNextColumn(); // First column: label
     ImGui::TextWrapped("Attenuation range");
@@ -188,12 +181,6 @@ static void Insp_PointLight(GameObject& object, PointLight& light)
   {
     object.RemoveComponent<Light>();
     object.RemoveComponent<PointLight>();
-
-    ShadersManager& shadersManager = ShadersManager::Get();
-    Program shaderScene = shadersManager.GetProgram("Scene");
-    Program shaderSceneShadows = shadersManager.GetProgram("SceneShadows");
-    shaderScene.SetUniform1f("u_pointLight.intensity", 0.f);
-    shaderSceneShadows.SetUniform1f("u_pointLight.intensity", 0.f);
   }
   ImGui::PopStyleColor(3);
 }
@@ -205,7 +192,7 @@ static void Insp_SpotLight(GameObject& object, SpotLight& light)
     ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthFixed, 80.f);
     ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthStretch);
 
-    // 1° Row: view light type
+    // 1ï¿½ Row: view light type
     ImGui::TableNextRow();
     ImGui::TableNextColumn(); // First column: label
     ImGui::Text("Type");
@@ -215,49 +202,49 @@ static void Insp_SpotLight(GameObject& object, SpotLight& light)
       ImGui::EndCombo();
     ImGui::EndDisabled();
 
-    // 2° Row: color input
+    // 2ï¿½ Row: color input
     ImGui::TableNextRow();
     ImGui::TableNextColumn(); // First column: label
     ImGui::Text("Color");
     ImGui::TableNextColumn(); // Second column: input
     ImGui::ColorEdit3("##Color", reinterpret_cast<f32*>(&light.color));
 
-    // 3° Row: diffuse input
+    // 3ï¿½ Row: diffuse input
     ImGui::TableNextRow();
     ImGui::TableNextColumn(); // First column: label
     ImGui::Text("Intensity");
     ImGui::TableNextColumn(); // Second column: input
     ImGui::SliderFloat("##Intensity", &light.intensity, 0.0f, 1.0f);
 
-    // 4° Row: direction input
+    // 4ï¿½ Row: direction input
     ImGui::TableNextRow();
     ImGui::TableNextColumn(); // First column: label
     ImGui::Text("Direction");
     ImGui::TableNextColumn(); // Second column: input
     ImGui::DragFloat3("##Direction", reinterpret_cast<f32*>(&light.direction), 0.1f, -FLT_MAX, FLT_MAX);
 
-    // 5° Row: position input
+    // 5ï¿½ Row: position input
     ImGui::TableNextRow();
     ImGui::TableNextColumn(); // First column: label
     ImGui::Text("Position");
     ImGui::TableNextColumn(); // Second column: input
     ImGui::DragFloat3("##Position", reinterpret_cast<f32*>(&light.position), 0.1f, -FLT_MAX, FLT_MAX);
 
-    // 6° Row: attenuation combo
+    // 6ï¿½ Row: attenuation combo
     ImGui::TableNextRow();
     ImGui::TableNextColumn(); // First column: label
     ImGui::TextWrapped("Attenuation range");
     ImGui::TableNextColumn(); // Second column: input
     Insp_Light_ComboAttenuation(light.attenuation);
 
-    // 7° Row: inner cutoff input
+    // 7ï¿½ Row: inner cutoff input
     ImGui::TableNextRow();
     ImGui::TableNextColumn(); // First column: label
     ImGui::Text("Inner cutoff");
     ImGui::TableNextColumn(); // Second column: input
     ImGui::SliderFloat("##Inner_Cutoff", &light.cutOff, 1.0f, light.outerCutOff);
 
-    // 8° Row: outer cutoff input
+    // 8ï¿½ Row: outer cutoff input
     ImGui::TableNextRow();
     ImGui::TableNextColumn(); // First column: label
     ImGui::Text("Outer cutoff");
@@ -275,12 +262,6 @@ static void Insp_SpotLight(GameObject& object, SpotLight& light)
   {
     object.RemoveComponent<Light>();
     object.RemoveComponent<SpotLight>();
-
-    ShadersManager& shadersManager = ShadersManager::Get();
-    Program shaderScene = shadersManager.GetProgram("Scene");
-    Program shaderSceneShadows = shadersManager.GetProgram("SceneShadows");
-    shaderScene.SetUniform1f("u_spotLight.intensity", 0.f);
-    shaderSceneShadows.SetUniform1f("u_spotLight.intensity", 0.f);
   }
   ImGui::PopStyleColor(3);
 }
@@ -309,7 +290,7 @@ static void Insp_Transform_TableRow(StringView label, vec3f& values, f32 resetVa
   ImGui::PopStyleColor(3);
   ImGui::SameLine();
   ImGui::SetNextItemWidth(itemWidth);
-  
+
   ImGui::DragFloat("##X", &values.x, 0.1f);
   ImGui::SameLine();
 
@@ -395,7 +376,7 @@ static void Insp_ShowTextureSelector(StringView label, Texture2D& meshTexture, T
   {
     ImGui::Selectable("No texture", false);
   }
-  
+
   // Third column: reset button
   ImGui::TableNextColumn();
   if (isMeshTextureValid)
@@ -425,7 +406,7 @@ static void Insp_StaticMesh(GameObject& object, StaticMesh& staticMesh)
       TexturesManager& texManager = TexturesManager::Get();
 
       char label[16]{};
-      std::format_to_n(label, sizeof(label), "Mesh_{}", i+1);
+      std::format_to_n(label, sizeof(label), "Mesh_{}", i + 1);
       if (ImGui::TreeNode(label))
       {
         if (ImGui::BeginTable("TextureTable", 3, ImGuiTableFlags_SizingFixedFit))
@@ -437,11 +418,11 @@ static void Insp_StaticMesh(GameObject& object, StaticMesh& staticMesh)
           // Diffuse row
           ImGui::TableNextRow();
           Insp_ShowTextureSelector("Diffuse", material.diffuse, texManager.GetDefaultDiffuse());
-          
+
           // Specular row
           ImGui::TableNextRow();
           Insp_ShowTextureSelector("Specular", material.specular, texManager.GetDefaultSpecular());
-          
+
           // Normal row
           ImGui::TableNextRow();
           Insp_ShowTextureSelector("Normal", material.normal, texManager.GetDefaultNormal());
@@ -530,10 +511,10 @@ static void Insp_Animator(GameObject& object, Animator& animator)
   assert(skeleton != nullptr);
 
   const auto* animationsVector = animManager.GetSkeletonAnimations(skeleton->id);
-  
+
   const Animation* animAttached = animator.GetAttachedAnimation();
   const fs::path* animAttachedPath = nullptr;
-  if(animAttached)
+  if (animAttached)
   {
     animAttachedPath = animManager.GetAnimationPath(animAttached->id);
     ImGui::Text("Current animation: %s", animAttachedPath->string().c_str());
@@ -563,34 +544,34 @@ static void Insp_Animator(GameObject& object, Animator& animator)
 
     if (ImGui::ImageButton(reinterpret_cast<void*>(playIcon.id), ImVec2(16, 16)))
       animator.PlayAnimation();
-    
+
     ImGui::SameLine();
-    
+
     if (ImGui::ImageButton(reinterpret_cast<void*>(pauseIcon.id), ImVec2(16, 16)))
       animator.PauseAnimation();
-    
+
     ImGui::SameLine();
 
     if (ImGui::ImageButton(reinterpret_cast<void*>(restartIcon.id), ImVec2(16, 16)))
       animator.RestartAnimation();
-    
+
     ImGui::SameLine();
-    
+
     if (ImGui::Button("Unbind animation"))
       animator.SetTargetAnimation(nullptr);
 
     f32 duration = animAttached->duration;
     f32 currentTime = animator.currentTime;
     f32 progression = currentTime / duration;
-		Array<char, 8> label{};
-		std::format_to_n(label.data(), label.size(), "{}%", static_cast<u32>(progression * 100));
+    Array<char, 8> label{};
+    std::format_to_n(label.data(), label.size(), "{}%", static_cast<u32>(progression * 100));
 
     ImGui::Text("Animation progress:");
     ImGui::ProgressBar(progression, ImVec2(-1, 0), label.data());
   }
 }
 
-static void Insp_AddTransformComponent(GameObject& object) 
+static void Insp_AddTransformComponent(GameObject& object)
 {
   if (object.HasComponent<Transform>())
   {
@@ -760,24 +741,24 @@ static void Insp_ListAllComponents(GameObject& object)
     {
       switch (light->type)
       {
-      case LightType::DIRECTIONAL:
-      {
-        auto* dirLight = object.GetComponent<DirectionalLight>();
-        Insp_DirectLight(object, *dirLight);
-        break;
-      }
-      case LightType::POINT:
-      {
-        auto* pointLight = object.GetComponent<PointLight>();
-        Insp_PointLight(object, *pointLight);
-        break;
-      }
-      case LightType::SPOT:
-      {
-        auto* spotLight = object.GetComponent<SpotLight>();
-        Insp_SpotLight(object, *spotLight);
-        break;
-      }
+        case LightType::DIRECTIONAL:
+        {
+          auto* dirLight = object.GetComponent<DirectionalLight>();
+          Insp_DirectLight(object, *dirLight);
+          break;
+        }
+        case LightType::POINT:
+        {
+          auto* pointLight = object.GetComponent<PointLight>();
+          Insp_PointLight(object, *pointLight);
+          break;
+        }
+        case LightType::SPOT:
+        {
+          auto* spotLight = object.GetComponent<SpotLight>();
+          Insp_SpotLight(object, *spotLight);
+          break;
+        }
       }
     }
   }
@@ -807,7 +788,7 @@ static void Insp_NewComponentPopup(GameObject& object)
     // Add SkeletalMesh component
     // --------------------------------
     Insp_AddSkeletalMeshComponent(object);
-    
+
     ImGui::EndPopup();
   }
 }

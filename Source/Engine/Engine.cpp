@@ -305,6 +305,17 @@ static FrameBuffer CreateDepthCubeMapFbo(i32 width, i32 height)
   return fbo;
 }
 
+template<typename T>
+static std::optional<GameObject> FindEntityWithComponent(Scene& scene)
+{
+  auto view = scene.Reg().view<T>();
+  if (!view.empty())
+    return GameObject{ *view.begin(), &scene.Reg() };
+
+  return std::nullopt;
+}
+
+
 // -----------------------------------------------------
 //                PUBLIC METHODS
 // -----------------------------------------------------
@@ -351,39 +362,43 @@ void Engine::Initialize()
   // --------------------------------
   // Init UBO cameraBlock
   {
-    _uboCameraBlock = Buffer(
-      2 * sizeof(mat4f),          // Reserve memory for both projection and view matrices
-      nullptr,                    // No data
-      BufferUsage::DYNAMIC_DRAW    // Data store content will be modified repeatedly and used many times.
-    );
+    // Reserve memory for:
+    // - 1 projection matrix
+    // - 1 view matrix 
+    constexpr u32 size = sizeof(mat4f) * 2;
+    void* data = Array<mat4f, 2>{ mat4f(1.0f), mat4f(1.0f) }.data();
+    _uboCameraBlock = Buffer(size,
+                             data,  							      // Init with identity matrices
+                             BufferUsage::DYNAMIC_DRAW);// Data store content will be modified repeatedly and used many times.
+
     _uboCameraBlock.BindBase(BufferTarget::UNIFORM, 0); // "CameraBlock" to binding point 0
   }
   // Init UBO lightBlock
   {
-    DirectionalLight dl;
-    PointLight pl;
-    SpotLight sl;
-    _uboLightBlock = Buffer(
-      sizeof(dl) + sizeof(pl) + sizeof(sl), // Reserve memory for DirectionalLight, PointLight and SpotLight structures
-      nullptr,                              // No data
-      BufferUsage::DYNAMIC_DRAW              // Data store content will be modified repeatedly and used many times.
+    // Reserve memory for:
+    // - 1 DirectionalLight object 
+    // - 1 PointLight object 
+    // - 1 SpotLight object
+    constexpr u32 size = sizeof(DirectionalLight) + sizeof(PointLight) + sizeof(SpotLight);
+    _uboLightBlock = Buffer(size,
+                            nullptr,
+                            BufferUsage::DYNAMIC_DRAW // Data store content will be modified repeatedly and used many times.
     );
-    _uboLightBlock.UpdateStorage(0, sizeof(dl), reinterpret_cast<void*>(&dl));
-    _uboLightBlock.UpdateStorage(sizeof(dl), sizeof(pl), reinterpret_cast<void*>(&pl));
-    _uboLightBlock.UpdateStorage(sizeof(dl) + sizeof(pl), sizeof(sl), reinterpret_cast<void*>(&sl));
+
+    constexpr Array<char, size> zeros{};
+    _uboLightBlock.UpdateStorage(0, size, zeros.data()); // Init buffer with zeros
     _uboLightBlock.BindBase(BufferTarget::UNIFORM, 1); // "LightBlock" to binding point 1
   }
   // Init UBO BoneBlock
   {
-    Array<mat4f, SkeletalMesh::GetMaxNumBones()> bones{};
-    std::fill(bones.begin(), bones.end(), mat4f(1.0f));
-
-    _uboBoneBlock = Buffer(
-      SkeletalMesh::GetMaxNumBones() * sizeof(mat4f), // Reserve memory for 100 mat4f
-      bones.data(),                                   // Fill with mat4f(1.0f)
-      BufferUsage::STREAM_DRAW                        // Data store content will be modified repeatedly and used many times.
+    constexpr u32 size = SkeletalMesh::GetMaxNumBones() * sizeof(mat4f);
+    _uboBoneBlock = Buffer(size,
+                           nullptr,
+                           BufferUsage::STREAM_DRAW // Data store content will be modified repeatedly and used many times.
     );
-    _uboBoneBlock.BindBase(BufferTarget::UNIFORM, 2); // "BoneBlock" to binding point 2
+    constexpr Array<char, size> zeros{};
+		_uboBoneBlock.UpdateStorage(0, size, zeros.data()); // Init buffer with zeros
+    _uboBoneBlock.BindBase(BufferTarget::UNIFORM, 2);   // "BoneBlock" to binding point 2
   }
 
 
@@ -440,11 +455,6 @@ void Engine::Run()
   bool shadowMode = false;
   bool wireframeMode = false;
 
-  DirectionalLight directionalLight;
-  directionalLight.intensity = 1.0f;
-  PointLight pointLight;
-  SpotLight spotLight;
-
   // ------------------------------------------------------------------
   // -------------------------- loop section --------------------------
   // ------------------------------------------------------------------
@@ -495,22 +505,63 @@ void Engine::Run()
     mat4f cameraProj = primaryCamera.CalculatePerspective(static_cast<f32>(_viewportSize.x) / static_cast<f32>(_viewportSize.y));
     _uboCameraBlock.UpdateStorage(0, sizeof(cameraView), reinterpret_cast<void*>(&cameraView[0]));
     _uboCameraBlock.UpdateStorage(sizeof(cameraView), sizeof(cameraProj), reinterpret_cast<void*>(&cameraProj[0]));
+    
+		// Fill light block with 0s
+    {
+			constexpr u32 size = sizeof(DirectionalLight) + sizeof(PointLight) + sizeof(SpotLight);
+      constexpr Array<char, size> zeros{};
+			_uboLightBlock.UpdateStorage(0, size, zeros.data());
+    }
+    // Update light block with DirectionalLight data
+    {
+			auto e = FindEntityWithComponent<DirectionalLight>(scene);
+			if (e.has_value())
+			{
+				GameObject obj = e.value();
+        DirectionalLight* l = obj.GetComponent<DirectionalLight>();
+        _uboLightBlock.UpdateStorage(0,
+                                     sizeof(DirectionalLight),
+                                     reinterpret_cast<void*>(l));
+			}
+    }
+    // Update light block with PointLight data
+    {
+      auto e = FindEntityWithComponent<PointLight>(scene);
+      if (e.has_value())
+      {
+        GameObject obj = e.value();
+        PointLight* l = obj.GetComponent<PointLight>();
+        _uboLightBlock.UpdateStorage(sizeof(DirectionalLight),
+                                     sizeof(PointLight),
+                                     reinterpret_cast<void*>(l));
+      }
+    }
+    // Update light block with SpotLight data
+    {
+      auto e = FindEntityWithComponent<SpotLight>(scene);
+      if (e.has_value())
+      {
+        GameObject obj = e.value();
+        SpotLight* l = obj.GetComponent<SpotLight>();
+        _uboLightBlock.UpdateStorage(sizeof(DirectionalLight) + sizeof(PointLight),
+                                     sizeof(SpotLight),
+                                     reinterpret_cast<void*>(l));
+      }
+    }
 
-    directLightCamera.UpdateOrientation();
-    mat4f directLightProjection = directLightCamera.CalculateOrtho();
-    mat4f directLightView = directLightCamera.CalculateView(directionalLight.direction);
-    _uboLightBlock.UpdateStorage(0, sizeof(DirectionalLight), reinterpret_cast<void*>(&directionalLight));
-    _uboLightBlock.UpdateStorage(sizeof(DirectionalLight), sizeof(PointLight), reinterpret_cast<void*>(&pointLight));
-    _uboLightBlock.UpdateStorage(sizeof(DirectionalLight) + sizeof(PointLight), sizeof(SpotLight), reinterpret_cast<void*>(&spotLight));
 
     // -----------------------------------------------------------------------
     // -------------------------- Rendering section --------------------------
     // -----------------------------------------------------------------------
 
     /// Fill the depth map from directional light's perspective
-#if 0 
+#if 0
     fboDepthMap.Bind(GL_FRAMEBUFFER);
     {
+      directLightCamera.UpdateOrientation();
+      mat4f directLightProjection = directLightCamera.CalculateOrtho();
+      mat4f directLightView = directLightCamera.CalculateView(directionalLight.direction);
+
       glViewport(0, 0, 1024, 1024);
       glClear(GL_DEPTH_BUFFER_BIT);
       depthMapProgram.Use();
@@ -526,7 +577,7 @@ void Engine::Run()
 #endif
 
     /// Fill the depth map from point light's perspective
-#if 0 
+#if 0
     fboDepthCubeMap.Bind(GL_FRAMEBUFFER);
     {
       glViewport(0, 0, 1024, 1024);

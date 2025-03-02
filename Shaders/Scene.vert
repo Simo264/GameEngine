@@ -3,15 +3,15 @@
 layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec3 aNormal;
 layout (location = 2) in vec2 aUv;
-layout (location = 3) in vec3 aTangent;
+layout (location = 3) in vec3 aTangent; // Tangent vector used for normal mapping, defines surface direction
 
 out vec2 TexCoord;
 out vec3 Normal;
-out vec3 FragPos;
+out vec3 FragPos;           // Fragment position in world space
 out vec3 ViewPos;
-out mat3 TBN;
-out vec3 TangentViewPos;
-out vec3 TangentFragPos;
+out mat3 TBN;               // Tangent-Bitangent-Normal matrix, used for transforming vectors to tangent space
+out vec3 TangentViewPos;    // Camera position in tangent space, used for normal mapping
+out vec3 TangentFragPos;    // Fragment position in tangent space, used for normal mapping
 
 layout (std140, binding = 0) uniform CameraBlock
 {
@@ -23,20 +23,22 @@ uniform vec3 u_viewPos;
 
 void main()
 {
-  mat3 normalMatrix = mat3(transpose(inverse(u_model)));
-  vec3 N = normalize(normalMatrix * aNormal);
-  vec3 T = normalize(mat3(u_model) * aTangent);
-  T = normalize(T - dot(T, N) * N);
-  vec3 B = cross(N, T);
-  TBN = transpose(mat3(T,B,N));
+  mat3 normalMatrix = mat3(transpose(inverse(u_model))); // Removes non-uniform scaling effects
+  vec3 N = normalize(normalMatrix * aNormal);            // Transform normal to world space
 
-  FragPos = vec3(u_model * vec4(aPos, 1.0));
+  vec3 T = normalize(mat3(u_model) * aTangent); // Transform tangent to world space
+  T = normalize(T - dot(T, N) * N);             // Re-orthogonalize tangent to ensure perpendicularity to normal
+  vec3 B = cross(N, T);                         // Compute bitangent using cross product to maintain right-handed coordinate system
+  TBN = transpose(mat3(T,B,N));                 // Construct the TBN matrix to transform vectors to tangent space
+
+  FragPos = vec3(u_model * vec4(aPos, 1.0));    // Compute world-space fragment position
   TexCoord = aUv;
   ViewPos = u_viewPos;
   Normal = N;
 
-  TangentViewPos = TBN * ViewPos;
-  TangentFragPos = TBN * FragPos;
+  // Transform view position and fragment position to tangent space for normal mapping
+  TangentViewPos = TBN * ViewPos; 
+  TangentFragPos = TBN * FragPos; 
 
   gl_Position = u_projection * u_view * u_model * vec4(aPos, 1.0f);
 }
