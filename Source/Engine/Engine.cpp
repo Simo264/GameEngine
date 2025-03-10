@@ -305,6 +305,16 @@ static FrameBuffer CreateDepthCubeMapFbo(i32 width, i32 height)
   return fbo;
 }
 
+template<typename T>
+static std::optional<GameObject> FindEntityWithComponent(Scene& scene)
+{
+  auto view = scene.Reg().view<T>();
+  if (!view.empty())
+    return GameObject{ *view.begin(), &scene.Reg() };
+  
+  return std::nullopt;
+}
+
 // -----------------------------------------------------
 //                PUBLIC METHODS
 // -----------------------------------------------------
@@ -374,14 +384,12 @@ void Engine::Initialize()
                             BufferUsage::DYNAMIC_DRAW // Data store content will be modified repeatedly and used many times.
     );
 
-		constexpr Array<char, sizeof(DirectionalLight)> zeros{};
+		constexpr Array<u8, sizeof(DirectionalLight)> zeros{};
 		_uboLightBlock.UpdateStorage(0, sizeof(DirectionalLight), zeros.data()); // Init with zeros
-
     _uboLightBlock.BindBase(BufferTarget::UNIFORM, 1); // "LightBlock" to binding point 1
   }
   // Init UBO BoneBlock
   {
-		// Reserve memory for 100 mat4f
 		constexpr u32 size = SkeletalMesh::GetMaxNumBones() * sizeof(mat4f);
     _uboBoneBlock = Buffer(size,
                            nullptr,
@@ -420,8 +428,9 @@ void Engine::Run()
   Program skyboxProgram = shadersManager.GetProgram("Skybox");
   Program gridPlaneProgram = shadersManager.GetProgram("GridPlane");
   Program sceneProgram = shadersManager.GetProgram("Scene");
+  Program goochProgram = shadersManager.GetProgram("GoochShading");
 
-  constexpr bool renderInfiniteGrid = true;
+  constexpr bool renderInfiniteGrid = false;
   constexpr bool renderSkybox = false;
 
   bool normalMapMode = false;
@@ -457,32 +466,52 @@ void Engine::Run()
     primaryCamera.UpdateOrientation();
     mat4f cameraView = primaryCamera.CalculateView(primaryCamera.position + primaryCamera.GetFrontVector());
     mat4f cameraProj = primaryCamera.CalculatePerspective(static_cast<f32>(_viewportSize.x) / static_cast<f32>(_viewportSize.y));
-    _uboCameraBlock.UpdateStorage(0, 
-                                  sizeof(mat4f),
-                                  reinterpret_cast<void*>(&cameraView[0]));
-    _uboCameraBlock.UpdateStorage(sizeof(mat4f),
-                                  sizeof(mat4f),
-                                  reinterpret_cast<void*>(&cameraProj[0]));
-		// Update light block
+    
+    // Update camera UBO
     {
-			static bool flag = false;
-
-      auto view = scene.Reg().view<DirectionalLight>();
-      if (!view.empty())
-      {
-        GameObject object{ *view.begin(), &scene.Reg() };
-        DirectionalLight* light = object.GetComponent<DirectionalLight>();
-        _uboLightBlock.UpdateStorage(0, sizeof(DirectionalLight), reinterpret_cast<void*>(light));
-				flag = true;
-      }
-      else if(view.empty() && flag)
-      {
-        constexpr Array<char, sizeof(DirectionalLight)> zeros{};
-        _uboLightBlock.UpdateStorage(0, sizeof(DirectionalLight), zeros.data()); // Init with zeros
-        flag = false;
-      }
+      void* data = Array<mat4f, 2>{ cameraView, cameraProj }.data();
+      _uboCameraBlock.UpdateStorage(0, sizeof(mat4f) * 2, data);
     }
 
+    // Update light UBO
+    {
+      // Fill light block with 0s
+      {
+        const u32 size = sizeof(DirectionalLight) + sizeof(PointLight) + sizeof(SpotLight);
+        constexpr Array<u8, size> zeros{};
+        _uboLightBlock.UpdateStorage(0, size, zeros.data());
+      }
+
+      auto e = FindEntityWithComponent<DirectionalLight>(scene);
+      if (e.has_value())
+      {
+        GameObject obj = e.value();
+        DirectionalLight* light = obj.GetComponent<DirectionalLight>();
+        _uboLightBlock.UpdateStorage(0, 
+                                     sizeof(DirectionalLight), 
+                                     reinterpret_cast<void*>(light));
+      }
+
+      e = FindEntityWithComponent<PointLight>(scene);
+      if (e.has_value())
+      {
+        GameObject obj = e.value();
+        PointLight* light = obj.GetComponent<PointLight>();
+        _uboLightBlock.UpdateStorage(sizeof(DirectionalLight),
+                                     sizeof(PointLight),
+                                     reinterpret_cast<void*>(light));
+      }
+
+      e = FindEntityWithComponent<SpotLight>(scene);
+      if (e.has_value())
+      {
+        GameObject obj = e.value();
+        SpotLight* light = obj.GetComponent<SpotLight>();
+        _uboLightBlock.UpdateStorage(sizeof(DirectionalLight) + sizeof(PointLight),
+                                     sizeof(SpotLight),
+                                     reinterpret_cast<void*>(light));
+      }
+    }
 
     // -----------------------------------------------------------------------
     // -------------------------- Rendering section --------------------------
@@ -499,41 +528,31 @@ void Engine::Run()
 
       /// Render scene here
       {
-        sceneProgram.Use();
-        sceneProgram.SetUniform3f("u_viewPos", primaryCamera.position);
-        sceneProgram.SetUniform1i("u_useNormalMap", 0);
+        goochProgram.Use();
+        goochProgram.SetUniform3f("u_viewPos", primaryCamera.position);
         scene.Reg().view<StaticMesh, Transform>().each([&](auto& staticMesh, auto& transform)
         {
-          sceneProgram.SetUniformMat4f("u_model", transform.GetTransformation());
+          goochProgram.SetUniformMat4f("u_model", transform.GetTransformation());
           staticMesh.Draw(RenderMode::TRIANGLES);
         });
-      }
 
-      /// Render the infinite grid
-      if(renderInfiniteGrid)
-      {
-        gridPlaneProgram.Use();
-        Renderer::DrawArrays(RenderMode::TRIANGLES, gridPlane);
-      }
 
-      /// Draw skybox after the scene
-      if(renderSkybox)
-      {
-        skyboxProgram.Use();
-        skyboxProgram.SetUniformMat4f("u_projection", cameraProj);
-        skyboxProgram.SetUniformMat4f("u_view", mat4f(mat3f(cameraView)));
-        skyboxTexture.BindTextureUnit(0);
-        DepthTest::SetDepthFun(CompareFunc::LEQUAL);
-        Renderer::DrawArrays(RenderMode::TRIANGLES, skybox);
-        DepthTest::SetDepthFun(CompareFunc::LESS);
+        //sceneProgram.Use();
+        //sceneProgram.SetUniform3f("u_viewPos", primaryCamera.position);
+        //sceneProgram.SetUniform1i("u_useNormalMap", 0);
+        //scene.Reg().view<StaticMesh, Transform>().each([&](auto& staticMesh, auto& transform)
+        //{
+        //  sceneProgram.SetUniformMat4f("u_model", transform.GetTransformation());
+        //  staticMesh.Draw(RenderMode::TRIANGLES);
+        //});
       }
 
       // Blit multisampled buffer to normal color buffer of intermediate FBO
       _fboMultisampled.Blit(_fboIntermediate,
-        0, 0, _viewportSize.x, _viewportSize.y,
-        0, 0, _viewportSize.x, _viewportSize.y,
-        FramebufferBlitMask::COLOR_BUFFER,
-        FramebufferBlitFilter::NEAREST);
+                            0, 0, _viewportSize.x, _viewportSize.y,
+                            0, 0, _viewportSize.x, _viewportSize.y,
+                            FramebufferBlitMask::COLOR_BUFFER,
+                            FramebufferBlitFilter::NEAREST);
     }
     _fboMultisampled.Unbind(FramebufferTarget::READ_DRAW);
 
