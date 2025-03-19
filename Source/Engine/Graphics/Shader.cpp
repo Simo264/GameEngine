@@ -72,12 +72,12 @@ void Program::Delete()
   id = 0;
 }
 
-void Program::AttachShader(const Shader& shader) const
+void Program::AttachShader(Shader shader) const
 {
   glAttachShader(id, shader.id);
 }
 
-void Program::DetachShader(const Shader& shader) const
+void Program::DetachShader(Shader shader) const
 {
   glDetachShader(id, shader.id);
 }

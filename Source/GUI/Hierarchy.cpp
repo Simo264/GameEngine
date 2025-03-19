@@ -3,7 +3,6 @@
 #include "Engine/Scene.hpp"
 #include "Engine/ECS/ECS.hpp"
 #include "Engine/Utils.hpp"
-#include "Engine/Subsystems/ShadersManager.hpp"
 #include "Engine/Subsystems/TexturesManager.hpp"
 #include "Engine/Filesystem/Filesystem.hpp"
 
@@ -72,30 +71,6 @@ static void Hierarchy_ObjectMenuPopup(Scene& scene, GameObject& objSelected)
   {
     if (ImGui::MenuItem("Delete object"))
     {
-      // Unset light component
-      if (objSelected.HasComponent<Light>())
-      {
-        ShadersManager& shadersManager = ShadersManager::Get();
-        Program shaderScene = shadersManager.GetProgram("Scene");
-        Program shaderSceneShadows = shadersManager.GetProgram("SceneShadows");
-
-        if (objSelected.HasComponent<DirectionalLight>())
-        {
-          shaderScene.SetUniform1f("u_directionalLight.intensity", 0.f);
-          shaderSceneShadows.SetUniform1f("u_directionalLight.intensity", 0.f);
-        }
-        else if (objSelected.HasComponent<PointLight>())
-        {
-          shaderScene.SetUniform1f("u_pointLight.intensity", 0.f);
-          shaderSceneShadows.SetUniform1f("u_pointLight.intensity", 0.f);
-        }
-        else if (objSelected.HasComponent<SpotLight>())
-        {
-          shaderScene.SetUniform1f("u_spotLight.intensity", 0.f);
-          shaderSceneShadows.SetUniform1f("u_spotLight.intensity", 0.f);
-        }
-      }
-
       scene.DestroyObject(objSelected.id);
     }
     ImGui::EndPopup();

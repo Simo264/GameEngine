@@ -96,7 +96,7 @@ public:
    */
   void Destroy() const;
 
-  void Draw(RenderMode mode) const;
+  void Render(class Program program, RenderMode mode) const;
   
   /**
    * @brief Finds the index of a bone given its name.

@@ -90,10 +90,10 @@ public:
   void Delete();
 
   /** @brief Attaches a shader object to the program object */
-  void AttachShader(const Shader& shader) const;
+  void AttachShader(Shader shader) const;
 
   /** @brief Detaches the shader object specified from the program object */
-  void DetachShader(const Shader& shader) const;
+  void DetachShader(Shader shader) const;
 
   /**
    * @brief Links the program object specified.

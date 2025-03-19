@@ -2,6 +2,7 @@
 
 #include "Core/GL.hpp"
 #include "Core/Log/Logger.hpp"
+#include "Engine/Graphics/Shader.hpp"
 #include "Engine/Graphics/Material.hpp"
 #include "Engine/Graphics/Vertex.hpp"
 #include "Engine/Graphics/Objects/Buffer.hpp"
@@ -68,16 +69,10 @@ void StaticMesh::Destroy() const
 		meshes[i].Destroy();
 }
 
-void StaticMesh::Draw(RenderMode mode) const
+void StaticMesh::Render(Program program, RenderMode mode) const
 {
 	for (u32 i = 0; i < nrMeshes; i++)
-	{
-		auto& mesh = meshes[i];
-		mesh.material.diffuse.BindTextureUnit(0);
-		mesh.material.specular.BindTextureUnit(1);
-		mesh.material.normal.BindTextureUnit(2);
-		mesh.Draw(mode);
-	}	
+		meshes[i].Render(program, mode);
 }
 
 u32 StaticMesh::TotalVertices() const
@@ -122,9 +117,10 @@ void StaticMesh::ProcessNode(aiNode* node, const aiScene* scene)
 
 		if (scene->HasMaterials())
 		{
+			auto& manager = TexturesManager::Get();
+
 			aiString fileName;
 			aiMaterial* material = scene->mMaterials[aimesh->mMaterialIndex];
-			auto& manager = TexturesManager::Get();
 			if (material->GetTexture(aiTextureType_DIFFUSE, 0, &fileName) == aiReturn_SUCCESS)
 				mesh.material.diffuse = manager.GetOrCreateTexture(fileName.C_Str());
 			if (material->GetTexture(aiTextureType_SPECULAR, 0, &fileName) == aiReturn_SUCCESS)

@@ -2,6 +2,7 @@
 
 #include "Core/GL.hpp"
 #include "Core/Log/Logger.hpp"
+#include "Engine/Graphics/Shader.hpp"
 #include "Engine/Graphics/Material.hpp"
 #include "Engine/Graphics/Vertex.hpp"
 #include "Engine/Graphics/Objects/Buffer.hpp"
@@ -87,16 +88,10 @@ void SkeletalMesh::Destroy() const
 		meshes[i].Destroy();
 }
 
-void SkeletalMesh::Draw(RenderMode mode) const
+void SkeletalMesh::Draw(Program program, RenderMode mode) const
 {
 	for (u32 i = 0; i < nrMeshes; i++)
-	{
-		auto& mesh = meshes[i];
-		mesh.material.diffuse.BindTextureUnit(0);
-		mesh.material.specular.BindTextureUnit(1);
-		mesh.material.normal.BindTextureUnit(2);
-		mesh.Draw(mode);
-	}
+		meshes[i].Render(program, mode);
 }
 
 i32 SkeletalMesh::FindBone(StringView boneName) const

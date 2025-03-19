@@ -7,6 +7,7 @@
 #include "Engine/IniFileHandler.hpp"
 #include "Engine/Filesystem/Filesystem.hpp"
 #include "Engine/Utils.hpp"
+#include "Engine/Uniforms.hpp"
 
 constexpr char SM_FILE_CONFIG[] = "Shader_Manager.ini";
 
@@ -78,7 +79,7 @@ Shader ShadersManager::CreateShader(StringView shaderName)
 
   auto& name = _shaderNames.emplace_back();
 	name.fill(0);
-  std::strncpy(name.data(), shaderName.data(), shaderName.size());
+  std::copy(shaderName.begin(), shaderName.end(), name.begin());
   return shader;
 }
 
@@ -87,8 +88,8 @@ Program ShadersManager::GetProgram(StringView programName) const
 	assert(programName.size() < 32);
 
 	for (u32 i = 0; i < _programNames.size(); ++i)
-		if (strcmp(_programNames[i].data(), programName.data()) == 0)
-			return _programs.at(i); 
+		if (std::strcmp(_programNames[i].data(), programName.data()) == 0)
+			return _programs.at(i);
 	
   return Program{};
 }
@@ -102,7 +103,7 @@ Program ShadersManager::CreateProgram(StringView programName)
 
   auto& name = _programNames.emplace_back();
 	name.fill(0);
-  std::strncpy(name.data(), programName.data(), programName.size());
+  std::copy(programName.begin(), programName.end(), name.begin());
   return program;
 }
 
@@ -130,7 +131,7 @@ void ShadersManager::ReadConfig(IniFileHandler& conf)
   for (auto const& it : conf.GetData())
   {
     const String& section = it.first; // The program name 
-    const Program& program = CreateProgram(section);
+    Program program = CreateProgram(section);
     if (!program.IsValid())
       continue;
 
@@ -141,27 +142,27 @@ void ShadersManager::ReadConfig(IniFileHandler& conf)
     const String& fragment = conf.GetValue(section, "fragment");
     if (!vertex.empty())
     {
-      const Shader& vertShader = GetOrCreateShader(vertex);
+      Shader vertShader = GetOrCreateShader(vertex);
       program.AttachShader(vertShader);
     }
     if (!tesc.empty())
     {
-      const Shader& tescShader = GetOrCreateShader(tesc);
+      Shader tescShader = GetOrCreateShader(tesc);
       program.AttachShader(tescShader);
     }
     if (!tese.empty())
     {
-      const Shader& teseShader = GetOrCreateShader(tese);
+      Shader teseShader = GetOrCreateShader(tese);
       program.AttachShader(teseShader);
     }
     if (!geometry.empty())
     {
-      const Shader& geomShader = GetOrCreateShader(geometry);
+      Shader geomShader = GetOrCreateShader(geometry);
       program.AttachShader(geomShader);
     }
     if (!fragment.empty())
     {
-      const Shader& fragShader = GetOrCreateShader(fragment);
+      Shader fragShader = GetOrCreateShader(fragment);
       program.AttachShader(fragShader);
     }
 
@@ -173,27 +174,27 @@ void ShadersManager::ReadConfig(IniFileHandler& conf)
 void ShadersManager::SetProgramsUniforms() const
 {
   Program skyboxProg = GetProgram("Skybox");
-  skyboxProg.SetUniform1i("u_skyboxTexture", 0);
+  skyboxProg.SetUniform1i(Uniforms::skyboxTexture, 0);
 
   Program framebufferProg = GetProgram("Framebuffer");
-  framebufferProg.SetUniform1i("u_fboImageTexture", 0);
+  framebufferProg.SetUniform1i(Uniforms::fboImageTexture, 0);
 
   Program sceneProg = GetProgram("Scene");
-  sceneProg.SetUniform1i("u_useNormalMap", 0);
+  sceneProg.SetUniform1i(Uniforms::useNormalMap, 0);
   sceneProg.SetUniform1i("u_material.diffuseTexture", 0);
   sceneProg.SetUniform1i("u_material.specularTexture", 1);
   sceneProg.SetUniform1i("u_material.normalTexture", 2);
 
   Program sceneShadowsProg = GetProgram("SceneShadows");
-  sceneShadowsProg.SetUniform1i("u_useNormalMap", 0);
+  sceneShadowsProg.SetUniform1i(Uniforms::useNormalMap, 0);
   sceneShadowsProg.SetUniform1i("u_material.diffuseTexture", 0);
   sceneShadowsProg.SetUniform1i("u_material.specularTexture", 1);
   sceneShadowsProg.SetUniform1i("u_material.normalTexture", 2);
-  sceneShadowsProg.SetUniform1i("u_depthMapTexture", 10);
-  sceneShadowsProg.SetUniform1i("u_depthCubeMapTexture", 11);
+  sceneShadowsProg.SetUniform1i(Uniforms::depthMapTexture, 10);
+  sceneShadowsProg.SetUniform1i(Uniforms::depthCubeMapTexture, 11);
   
   Program skeletalAnimProg = GetProgram("SkeletalAnim");
-  skeletalAnimProg.SetUniform1i("u_useNormalMap", 0);
+  skeletalAnimProg.SetUniform1i(Uniforms::useNormalMap, 0);
   skeletalAnimProg.SetUniform1i("u_material.diffuseTexture", 0);
   skeletalAnimProg.SetUniform1i("u_material.specularTexture", 1);
   skeletalAnimProg.SetUniform1i("u_material.normalTexture", 2);

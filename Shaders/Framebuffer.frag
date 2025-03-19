@@ -16,13 +16,10 @@ uniform int u_postProcessingType;
   */
 
 
-
-
 //vec4 InversionEffect();
 //vec4 GrayscaleEffect();
 //vec4 KernelEffect();
 //vec4 BlurEffect();
-
 
 void main()
 {

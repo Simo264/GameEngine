@@ -22,7 +22,7 @@ layout (std140, binding = 0) uniform CameraBlock
 uniform mat4 u_model;
 uniform vec3 u_viewPos;
 
-/* Directional light matrices */
+// Directional light matrices
 uniform mat4 u_lightView;
 uniform mat4 u_lightProjection;
 

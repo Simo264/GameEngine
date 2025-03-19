@@ -1,6 +1,7 @@
 #include "Mesh.hpp"
 
 #include "Core/Log/Logger.hpp"
+#include "Engine/Graphics/Shader.hpp"
 #include "Engine/Subsystems/TexturesManager.hpp"
 
 // --------------------------
@@ -44,8 +45,10 @@ void Mesh::SetupAttributeLong(i32 attribindex, i32 bindingindex, VertexFormat fo
 	vao->SetAttribBinding(attribindex, bindingindex);
 	vao->SetAttribFormatLong(attribindex, format.size, format.relativeoffset);
 }
-void Mesh::Draw(RenderMode mode) const
+void Mesh::Render(Program program, RenderMode mode) const
 {
+	material.Bind(program);
+
 	if (vao->numIndices == 0)
 		Renderer::DrawArrays(mode, *vao);
 	else

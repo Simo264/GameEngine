@@ -3,12 +3,10 @@
 #include "Core/Core.hpp"
 #include "Engine/Graphics/Mesh.hpp"
 
-class Texture2D;
 class Buffer;
 struct aiScene;
 struct aiNode;
 struct aiMesh;
-struct aiMaterial;
 
 
 /**
@@ -91,7 +89,7 @@ public:
 	 */
 	void Destroy() const;
 
-	void Draw(RenderMode mode) const;
+	void Render(class Program program, RenderMode mode) const;
 
 	u32 TotalVertices() const;
 	

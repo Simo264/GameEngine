@@ -7,6 +7,7 @@
 #include "Engine/Globals.hpp"
 #include "Engine/Camera.hpp"
 #include "Engine/Scene.hpp"
+#include "Engine/Uniforms.hpp"
 
 #include "Engine/ECS/ECS.hpp"
 #include "Engine/Graphics/Vertex.hpp"
@@ -116,7 +117,7 @@ static void SetOpenGLStates()
 
   // Culling OFF
   // -----------
-  FaceCulling::DisableFaceCulling();
+  FaceCulling::EnableFaceCulling();
   FaceCulling::SetCullFace(CullFaceMode::BACK);
   FaceCulling::SetFrontFacing(FrontFaceMode::CCW);
 
@@ -359,7 +360,7 @@ void Engine::Initialize()
 
   // Initialize uniform block objects
   // --------------------------------
-  // Init UBO cameraBlock
+  // Init UBO CameraBlock
   {
     // Reserve memory for:
     // - 1 projection matrix
@@ -372,7 +373,7 @@ void Engine::Initialize()
 
     _uboCameraBlock.BindBase(BufferTarget::UNIFORM, 0); // "CameraBlock" to binding point 0
   }
-  // Init UBO lightBlock
+  // Init UBO LightBlock
   {
     // Reserve memory for:
     // - 1 DirectionalLight object 
@@ -428,6 +429,7 @@ void Engine::Run()
   Program skyboxProgram = shadersManager.GetProgram("Skybox");
   Program gridPlaneProgram = shadersManager.GetProgram("GridPlane");
   Program sceneProgram = shadersManager.GetProgram("Scene");
+  
   Program goochProgram = shadersManager.GetProgram("GoochShading");
 
   constexpr bool renderInfiniteGrid = false;
@@ -529,22 +531,12 @@ void Engine::Run()
       /// Render scene here
       {
         goochProgram.Use();
-        goochProgram.SetUniform3f("u_viewPos", primaryCamera.position);
+        goochProgram.SetUniform3f(Uniforms::viewPos, primaryCamera.position);
         scene.Reg().view<StaticMesh, Transform>().each([&](auto& staticMesh, auto& transform)
         {
-          goochProgram.SetUniformMat4f("u_model", transform.GetTransformation());
+          goochProgram.SetUniformMat4f(Uniforms::model, transform.GetTransformation());
           staticMesh.Draw(RenderMode::TRIANGLES);
         });
-
-
-        //sceneProgram.Use();
-        //sceneProgram.SetUniform3f("u_viewPos", primaryCamera.position);
-        //sceneProgram.SetUniform1i("u_useNormalMap", 0);
-        //scene.Reg().view<StaticMesh, Transform>().each([&](auto& staticMesh, auto& transform)
-        //{
-        //  sceneProgram.SetUniformMat4f("u_model", transform.GetTransformation());
-        //  staticMesh.Draw(RenderMode::TRIANGLES);
-        //});
       }
 
       // Blit multisampled buffer to normal color buffer of intermediate FBO

@@ -38,18 +38,6 @@
 // c_shaded = (1/2) * c_cool + SUM(i=1...N)[(l_i ⋅ n) * c_light_i * (s_i * c_highlight + (1 - s_i) * c_warm)]
 // Is equivalent to:
 // c_shaded = f_unlit(n, v) + SUM(i=1...N)[(l_i ⋅ n) * c_light_i * f_lit(l_i, n, v)]
-//
-// Where:
-// - c_shaded: Final color of the shaded pixel (illuminated surface).
-// - l_i: Direction of the i-th light source, normalized vector.
-// - c_light_i: Intensity of the i-th light source.
-// - s_i: Specularity parameter for the i-th light source, controlling the specular reflection.
-// - SUM: Summation over all light sources (from i = 1 to N, where N is the number of light sources in the scene).
-//
-// The overall formula calculates the shaded color by combining:
-// 1. The ambient lighting and cool color component via the funlit() function.
-// 2. The contribution of all light sources, each calculated with the f_lit() function, 
-//    which includes diffuse and specular effects.
 
 
 // ========== IN attributes ==========
@@ -140,10 +128,6 @@ vec3 f_lit(vec3 l, vec3 n, vec3 v, vec3 c_cool, vec3 c_warm, vec3 c_highlight)
 
 void main() 
 {
-  // Generic formula:
-  // c_shaded = s * c_highlight + (1 - s) * (t * c_warm + (1 - t) * c_cool)
-  //          = f_unlit(n, v) + c_light * f_lit(l, n, v)
-
   vec4 c_surface = texture(u_material.diffuseTexture, TexCoord);
   vec3 c_cool = vec3(0, 0, 0.55f) + 0.25f * c_surface.xyz;
   vec3 c_warm = vec3(1.f, 0.3f, 0.f) + 0.25f * c_surface.xyz;
@@ -154,6 +138,8 @@ void main()
   vec3 l = normalize(u_directionalLight.direction);
 
   vec3 c_light = (u_directionalLight.color * u_directionalLight.intensity);
+  
+  // Using the formula: c_shaded = f_unlit(n, v) + c_light * f_lit(l, n, v)
   vec3 c_shaded = f_unlit(c_cool) + c_light * f_lit(l, n, v, c_cool, c_warm, c_highlight);
   
   FragColor = vec4(c_shaded, 1.f);

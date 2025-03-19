@@ -38,7 +38,7 @@ public:
 	 */
 	void Destroy() const;
 	
-	void Draw(RenderMode mode) const;
+	void Render(class Program program, RenderMode mode) const;
 
 	void SetupAttributeFloat(i32 attribindex, i32 bindingindex, VertexFormat format) const;
 	void SetupAttributeInteger(i32 attribindex, i32 bindingindex, VertexFormat format) const;
