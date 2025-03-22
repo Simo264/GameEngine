@@ -9,7 +9,23 @@
 #include "Engine/Utils.hpp"
 #include "Engine/Uniforms.hpp"
 
-constexpr char SM_FILE_CONFIG[] = "Shader_Manager.ini";
+constexpr char SM_FILE_CONFIG[] = "ShadersConfig.ini";
+
+static i32 ResolveShaderType(StringView ext)
+{
+  if (ext == "vert")
+    return GL_VERTEX_SHADER;
+  if (ext == "tesc")
+    return GL_TESS_CONTROL_SHADER;
+  if (ext == "tese")
+    return GL_TESS_EVALUATION_SHADER;
+  if (ext == "geom")
+    return GL_GEOMETRY_SHADER;
+  if (ext == "frag")
+    return GL_FRAGMENT_SHADER;
+
+  throw std::runtime_error(std::format("Unknown file extension {}", ext.data()));
+}
 
 // --------------------------------------------
 //                  PUBLIC                     
@@ -20,33 +36,34 @@ void ShadersManager::Initialize()
   IniFileHandler conf((Filesystem::GetRootPath() / SM_FILE_CONFIG));
   conf.ReadData();
 
-  u32 nrShaders = Utils::CountFilesInDirectory(Filesystem::GetShadersPath());
+  u32 nrShaders = Utils::CountFilesInDirectory(Filesystem::GetShadersPath(), true);
   u32 nrPrograms = conf.GetData().size();
-  _shaders.reserve(nrShaders);
-  _programs.reserve(nrPrograms);
+	_shaders.reserve(nrShaders);
+	_programs.reserve(nrPrograms);
 
   ReadConfig(conf);
-  
-  SetProgramsUniforms();
 }
 void ShadersManager::CleanUp()
 {
   // Destoy all program objects
-  for (auto& program : _programs)
-    program.Delete();
+	for (auto& pair : _programs)
+		pair.program.Delete();
 
   // Destoy all shaders objects 
-  for (auto& shader : _shaders)
-    shader.Delete();
+	for (auto& pair : _shaders)
+    pair.shader.Delete();
 }
 
 Shader ShadersManager::GetShader(StringView shaderName) const
 {
 	assert(shaderName.size() < 32);
-  
-	for (u32 i = 0; i < _shaderNames.size(); ++i)
-		if (strcmp(_shaderNames[i].data(), shaderName.data()) == 0)
-			return _shaders.at(i);
+
+  for (const auto& pair : _shaders)
+  {
+		StringView name = pair.name.data();
+		if (name == shaderName)
+			return pair.shader;
+  }
 
   return Shader{};
 }
@@ -72,25 +89,30 @@ Shader ShadersManager::CreateShader(StringView shaderName)
   i32 shaderType = ResolveShaderType(ext);
   
   CONSOLE_TRACE("Create shader {}", shaderName.data());
-  Shader& shader = _shaders.emplace_back();
-  shader.Create(shaderType, shaderSrc);
-  if (!shader.Compile())
-    CONSOLE_ERROR("Error on compiling shader {}: {}", shaderName.data(), shader.GetShaderInfo());
-
-  auto& name = _shaderNames.emplace_back();
-	name.fill(0);
+	auto& pair = _shaders.emplace_back();
+	
+  Array<char, 32>& name = pair.name;
   std::copy(shaderName.begin(), shaderName.end(), name.begin());
-  return shader;
+
+	Shader& shader = pair.shader;
+  shader.Create(shaderType, shaderSrc);
+	if (!shader.Compile())
+		CONSOLE_ERROR("Error on compiling shader {}: {}", shaderName.data(), pair.shader.GetShaderInfo());
+
+ return shader;
 }
 
 Program ShadersManager::GetProgram(StringView programName) const
 {
 	assert(programName.size() < 32);
 
-	for (u32 i = 0; i < _programNames.size(); ++i)
-		if (std::strcmp(_programNames[i].data(), programName.data()) == 0)
-			return _programs.at(i);
-	
+  for (const auto& pair : _programs)
+  {
+		StringView name = pair.name.data();
+		if (name == programName)
+			return pair.program;
+  }
+
   return Program{};
 }
 Program ShadersManager::CreateProgram(StringView programName)
@@ -98,12 +120,14 @@ Program ShadersManager::CreateProgram(StringView programName)
 	assert(programName.size() < 32);
   
   CONSOLE_TRACE("Create program {}", programName.data());
-  Program& program = _programs.emplace_back();
+	auto& pair = _programs.emplace_back();
+	
+  Array<char, 32>& name = pair.name;
+  std::copy(programName.begin(), programName.end(), name.begin());
+	
+  Program& program = pair.program;
   program.Create();
 
-  auto& name = _programNames.emplace_back();
-	name.fill(0);
-  std::copy(programName.begin(), programName.end(), name.begin());
   return program;
 }
 
@@ -111,21 +135,6 @@ Program ShadersManager::CreateProgram(StringView programName)
 //                  PRIVATE                    
 // --------------------------------------------
 
-i32 ShadersManager::ResolveShaderType(StringView ext)
-{
-  if (ext == "vert")
-    return GL_VERTEX_SHADER;
-  if (ext == "tesc")
-    return GL_TESS_CONTROL_SHADER;
-  if (ext == "tese")
-    return GL_TESS_EVALUATION_SHADER;
-  if (ext == "geom")
-    return GL_GEOMETRY_SHADER;
-  if (ext == "frag")
-    return GL_FRAGMENT_SHADER;
-  
-  throw std::runtime_error(std::format("Unknown file extension {}", ext.data()));
-}
 void ShadersManager::ReadConfig(IniFileHandler& conf)
 {
   for (auto const& it : conf.GetData())
@@ -135,67 +144,39 @@ void ShadersManager::ReadConfig(IniFileHandler& conf)
     if (!program.IsValid())
       continue;
 
-    const String& vertex = conf.GetValue(section, "vertex");
-    const String& tesc = conf.GetValue(section, "tess_control");
-    const String& tese = conf.GetValue(section, "tess_eval");
-    const String& geometry = conf.GetValue(section, "geometry");
-    const String& fragment = conf.GetValue(section, "fragment");
-    if (!vertex.empty())
+    const String& vertexShader = conf.GetValue(section, "vertex");
+    const String& tescShader = conf.GetValue(section, "tess_control");
+    const String& teseShader = conf.GetValue(section, "tess_eval");
+    const String& geometryShader = conf.GetValue(section, "geometry");
+    const String& fragmentShader = conf.GetValue(section, "fragment");
+    if (!vertexShader.empty())
     {
-      Shader vertShader = GetOrCreateShader(vertex);
-      program.AttachShader(vertShader);
+      Shader shader = GetOrCreateShader(vertexShader);
+      program.AttachShader(shader);
     }
-    if (!tesc.empty())
+    if (!tescShader.empty())
     {
-      Shader tescShader = GetOrCreateShader(tesc);
-      program.AttachShader(tescShader);
+      Shader shader = GetOrCreateShader(tescShader);
+      program.AttachShader(shader);
     }
-    if (!tese.empty())
+    if (!teseShader.empty())
     {
-      Shader teseShader = GetOrCreateShader(tese);
-      program.AttachShader(teseShader);
+      Shader shader = GetOrCreateShader(teseShader);
+      program.AttachShader(shader);
     }
-    if (!geometry.empty())
+    if (!geometryShader.empty())
     {
-      Shader geomShader = GetOrCreateShader(geometry);
-      program.AttachShader(geomShader);
+      Shader shader = GetOrCreateShader(geometryShader);
+      program.AttachShader(shader);
     }
-    if (!fragment.empty())
+    if (!fragmentShader.empty())
     {
-      Shader fragShader = GetOrCreateShader(fragment);
-      program.AttachShader(fragShader);
+      Shader shader = GetOrCreateShader(fragmentShader);
+      program.AttachShader(shader);
     }
 
     CONSOLE_TRACE("Link program {}", section);
     if(!program.Link())
       CONSOLE_ERROR("Error on linking program '{}': {}", section, program.GetProgramInfo());
   }
-}
-void ShadersManager::SetProgramsUniforms() const
-{
-  Program skyboxProg = GetProgram("Skybox");
-  skyboxProg.SetUniform1i(Uniforms::skyboxTexture, 0);
-
-  Program framebufferProg = GetProgram("Framebuffer");
-  framebufferProg.SetUniform1i(Uniforms::fboImageTexture, 0);
-
-  Program sceneProg = GetProgram("Scene");
-  sceneProg.SetUniform1i(Uniforms::useNormalMap, 0);
-  sceneProg.SetUniform1i("u_material.diffuseTexture", 0);
-  sceneProg.SetUniform1i("u_material.specularTexture", 1);
-  sceneProg.SetUniform1i("u_material.normalTexture", 2);
-
-  Program sceneShadowsProg = GetProgram("SceneShadows");
-  sceneShadowsProg.SetUniform1i(Uniforms::useNormalMap, 0);
-  sceneShadowsProg.SetUniform1i("u_material.diffuseTexture", 0);
-  sceneShadowsProg.SetUniform1i("u_material.specularTexture", 1);
-  sceneShadowsProg.SetUniform1i("u_material.normalTexture", 2);
-  sceneShadowsProg.SetUniform1i(Uniforms::depthMapTexture, 10);
-  sceneShadowsProg.SetUniform1i(Uniforms::depthCubeMapTexture, 11);
-  
-  Program skeletalAnimProg = GetProgram("SkeletalAnim");
-  skeletalAnimProg.SetUniform1i(Uniforms::useNormalMap, 0);
-  skeletalAnimProg.SetUniform1i("u_material.diffuseTexture", 0);
-  skeletalAnimProg.SetUniform1i("u_material.specularTexture", 1);
-  skeletalAnimProg.SetUniform1i("u_material.normalTexture", 2);
 }

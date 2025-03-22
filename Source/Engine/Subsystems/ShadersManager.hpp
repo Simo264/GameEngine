@@ -44,20 +44,20 @@ private:
 	~ShadersManager() = default;
 	
 	void ReadConfig(class IniFileHandler& conf);
-	i32 ResolveShaderType(StringView ext);
-	void SetProgramsUniforms() const;
 
-	// Stores all loaded shader objects.
-	Vector<Shader> _shaders;
-	// Each index in this vector corresponds to the same index in `_shaders`,
-	// ensuring that `_shaderNames[i]` represents the name of `_shaders[i]`.
-	// The names are stored as fixed-size character arrays (`char[32]`).
-	Vector<Array<char, 32>> _shaderNames;
+	struct PairShaderName
+	{
+		Shader shader;					// Shader object
+		Array<char, 32> name{}; // Shader name
+	};
+	struct PairProgramName
+	{
+		Program program;				// Program object
+		Array<char, 32> name{}; // Program name
+	};
 
-	// Stores all loaded program objects.
-	Vector<Program> _programs;
-	// Each index in this vector corresponds to the same index in `_programs`,
-	// ensuring that `_programNames[i]` represents the name of `_programs[i]`.
-	// The names are stored as fixed-size character arrays (`char[32]`).
-	Vector<Array<char, 32>> _programNames;
+	// Stores all loaded shaders
+	Vector<PairShaderName> _shaders;
+	// Stores all loaded programs
+	Vector<PairProgramName> _programs;
 };

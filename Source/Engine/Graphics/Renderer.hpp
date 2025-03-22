@@ -26,11 +26,11 @@ namespace Renderer
 	void DrawArrays(RenderMode mode, const VertexArray& vertexArray, i32 first = 0);
 
 	/** @brief Draw multiple instances of a range of elements. */
-	void DrawArraysInstanced(RenderMode mode, const VertexArray& vertexArray, i32 nInstances, i32 first = 0);
+	//void DrawArraysInstanced(RenderMode mode, const VertexArray& vertexArray, i32 nInstances, i32 first = 0);
 
 	/** @brief Render primitives from array data. */
 	void DrawElements(RenderMode mode, const VertexArray& vertexArray, i32 offset = 0);
 
 	/** @brief Draw multiple instances of a set of elements. */
-	void DrawElementsInstanced(RenderMode mode, const VertexArray& vertexArray, i32 nInstances, i32 offset = 0);
+	//void DrawElementsInstanced(RenderMode mode, const VertexArray& vertexArray, i32 nInstances, i32 offset = 0);
 }

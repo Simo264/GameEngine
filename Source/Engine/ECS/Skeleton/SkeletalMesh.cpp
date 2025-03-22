@@ -88,7 +88,7 @@ void SkeletalMesh::Destroy() const
 		meshes[i].Destroy();
 }
 
-void SkeletalMesh::Draw(Program program, RenderMode mode) const
+void SkeletalMesh::Render(Program program, RenderMode mode) const
 {
 	for (u32 i = 0; i < nrMeshes; i++)
 		meshes[i].Render(program, mode);

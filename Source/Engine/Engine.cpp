@@ -426,11 +426,21 @@ void Engine::Run()
   WindowManager& windowManager = WindowManager::Get();
   TexturesManager& texturesManager = TexturesManager::Get();
   ShadersManager& shadersManager = ShadersManager::Get();
-  Program skyboxProgram = shadersManager.GetProgram("Skybox");
-  Program gridPlaneProgram = shadersManager.GetProgram("GridPlane");
-  Program sceneProgram = shadersManager.GetProgram("Scene");
   
+  Program gridPlaneProgram = shadersManager.GetProgram("GridPlane");
+  Program framebufferProg = shadersManager.GetProgram("Framebuffer");
+  framebufferProg.SetUniform1i(Uniforms::fboImageTexture, 0);
+  Program skyboxProgram = shadersManager.GetProgram("Skybox");
+  skyboxProgram.SetUniform1i(Uniforms::skyboxTexture, 0);
+  Program blinnPhongProgram = shadersManager.GetProgram("BlinnPhongShading");
+  blinnPhongProgram.SetUniform1i("u_material.diffuseTexture", 0);
+  blinnPhongProgram.SetUniform1i("u_material.specularTexture", 1);
+  blinnPhongProgram.SetUniform1i("u_material.normalTexture", 2);
+  blinnPhongProgram.SetUniform1i("u_usePhong", 0);
   Program goochProgram = shadersManager.GetProgram("GoochShading");
+  goochProgram.SetUniform1i("u_material.diffuseTexture", 0);
+  goochProgram.SetUniform1i("u_material.specularTexture", 1);
+  goochProgram.SetUniform1i("u_material.normalTexture", 2);
 
   constexpr bool renderInfiniteGrid = false;
   constexpr bool renderSkybox = false;
@@ -460,6 +470,15 @@ void Engine::Run()
     {
       primaryCamera.ProcessKeyboard(delta, 5.0f);
       primaryCamera.ProcessMouse(delta, 15.0f);
+
+      if (windowManager.GetKey(GLFW_KEY_0) == GLFW_PRESS)
+      {
+        blinnPhongProgram.SetUniform1i("u_usePhong", 0);
+      }
+      else if (windowManager.GetKey(GLFW_KEY_1) == GLFW_PRESS)
+      {
+        blinnPhongProgram.SetUniform1i("u_usePhong", 1);
+      }
     }
 
     // --------------------------------------------------------------------
@@ -534,8 +553,21 @@ void Engine::Run()
         goochProgram.SetUniform3f(Uniforms::viewPos, primaryCamera.position);
         scene.Reg().view<StaticMesh, Transform>().each([&](auto& staticMesh, auto& transform)
         {
+          transform.position.y = -2.0f;
+          transform.UpdateTransformation();
+
           goochProgram.SetUniformMat4f(Uniforms::model, transform.GetTransformation());
-          staticMesh.Draw(RenderMode::TRIANGLES);
+          staticMesh.Render(goochProgram, RenderMode::TRIANGLES);
+        });
+
+				blinnPhongProgram.Use();
+        blinnPhongProgram.SetUniform3f(Uniforms::viewPos, primaryCamera.position);
+        scene.Reg().view<StaticMesh, Transform>().each([&](auto& staticMesh, auto& transform) {
+          transform.position.y = 2.0f;
+          transform.UpdateTransformation();
+
+          blinnPhongProgram.SetUniformMat4f(Uniforms::model, transform.GetTransformation());
+          staticMesh.Render(blinnPhongProgram, RenderMode::TRIANGLES);
         });
       }
 
