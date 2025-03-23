@@ -1,15 +1,17 @@
   #include "ShadersManager.hpp"
 
-#include "Core/GL.hpp"
+#include "Core/OpenGL.hpp"
 #include "Core/Log/Logger.hpp"
+#include "Core/Serialization/INIParser.hpp"
+#include "Core/Serialization/JSONParser.hpp"
+#include "Core/Paths/Paths.hpp"
+
 #include "Engine/Graphics/Vertex.hpp"
 #include "Engine/Globals.hpp"
-#include "Engine/IniFileHandler.hpp"
-#include "Engine/Filesystem/Filesystem.hpp"
 #include "Engine/Utils.hpp"
 #include "Engine/Uniforms.hpp"
 
-constexpr char SM_FILE_CONFIG[] = "ShadersConfig.ini";
+constexpr char SM_FILE_CONFIG[] = "ShadersConfig.json";
 
 static i32 ResolveShaderType(StringView ext)
 {
@@ -33,15 +35,12 @@ static i32 ResolveShaderType(StringView ext)
 
 void ShadersManager::Initialize()
 {
-  IniFileHandler conf((Filesystem::GetRootPath() / SM_FILE_CONFIG));
-  conf.ReadData();
+  // u32 nrShaders = Utils::CountFilesInDirectory(Paths::GetShadersPath(), true);
+  // u32 nrPrograms = conf.GetData().size();
+	// _shaders.reserve(nrShaders);
+	// _programs.reserve(nrPrograms);
 
-  u32 nrShaders = Utils::CountFilesInDirectory(Filesystem::GetShadersPath(), true);
-  u32 nrPrograms = conf.GetData().size();
-	_shaders.reserve(nrShaders);
-	_programs.reserve(nrPrograms);
-
-  ReadConfig(conf);
+  LoadConfig((Paths::GetRootPath() / SM_FILE_CONFIG));
 }
 void ShadersManager::CleanUp()
 {
@@ -79,7 +78,7 @@ Shader ShadersManager::CreateShader(StringView shaderName)
 {
 	assert(shaderName.size() < 32);
 
-  fs::path absolute = Filesystem::GetShadersPath() / shaderName.data();
+  fs::path absolute = Paths::GetShadersPath() / shaderName.data();
   if (!fs::exists(absolute))
     throw std::runtime_error(std::format("Shader file '{}' does not exist", absolute.string()));
 
@@ -127,7 +126,6 @@ Program ShadersManager::CreateProgram(StringView programName)
 	
   Program& program = pair.program;
   program.Create();
-
   return program;
 }
 
@@ -135,48 +133,47 @@ Program ShadersManager::CreateProgram(StringView programName)
 //                  PRIVATE                    
 // --------------------------------------------
 
-void ShadersManager::ReadConfig(IniFileHandler& conf)
+void ShadersManager::LoadConfig(const fs::path& file)
 {
-  for (auto const& it : conf.GetData())
-  {
-    const String& section = it.first; // The program name 
-    Program program = CreateProgram(section);
-    if (!program.IsValid())
+  nlohmann::json data = JSONParser::ParseFile(file);
+	for (const auto& [programName, shadersJson] : data.items())
+	{
+		Program program = GetProgram(programName);
+    if (program.IsValid())
+    {
+			CONSOLE_WARN("Program '{}' already exists", programName);
       continue;
-
-    const String& vertexShader = conf.GetValue(section, "vertex");
-    const String& tescShader = conf.GetValue(section, "tess_control");
-    const String& teseShader = conf.GetValue(section, "tess_eval");
-    const String& geometryShader = conf.GetValue(section, "geometry");
-    const String& fragmentShader = conf.GetValue(section, "fragment");
-    if (!vertexShader.empty())
-    {
-      Shader shader = GetOrCreateShader(vertexShader);
-      program.AttachShader(shader);
-    }
-    if (!tescShader.empty())
-    {
-      Shader shader = GetOrCreateShader(tescShader);
-      program.AttachShader(shader);
-    }
-    if (!teseShader.empty())
-    {
-      Shader shader = GetOrCreateShader(teseShader);
-      program.AttachShader(shader);
-    }
-    if (!geometryShader.empty())
-    {
-      Shader shader = GetOrCreateShader(geometryShader);
-      program.AttachShader(shader);
-    }
-    if (!fragmentShader.empty())
-    {
-      Shader shader = GetOrCreateShader(fragmentShader);
-      program.AttachShader(shader);
     }
 
-    CONSOLE_TRACE("Link program {}", section);
-    if(!program.Link())
-      CONSOLE_ERROR("Error on linking program '{}': {}", section, program.GetProgramInfo());
-  }
+    program = CreateProgram(programName);
+
+		if (shadersJson.contains("vertex"))
+		{
+			Shader shader = GetOrCreateShader(shadersJson.at("vertex"));
+			program.AttachShader(shader);
+		}
+		if (shadersJson.contains("tess_control"))
+		{
+			Shader shader = GetOrCreateShader(shadersJson.at("tess_control"));
+			program.AttachShader(shader);
+		}
+		if (shadersJson.contains("tess_eval"))
+		{
+			Shader shader = GetOrCreateShader(shadersJson.at("tess_eval"));
+			program.AttachShader(shader);
+		}
+		if (shadersJson.contains("geometry"))
+		{
+			Shader shader = GetOrCreateShader(shadersJson.at("geometry"));
+			program.AttachShader(shader);
+		}
+		if (shadersJson.contains("fragment"))
+		{
+			Shader shader = GetOrCreateShader(shadersJson.at("fragment"));
+			program.AttachShader(shader);
+		}
+		CONSOLE_TRACE("Link program {}", programName);
+		if (!program.Link())
+			CONSOLE_ERROR("Error on linking program '{}': {}", programName, program.GetProgramInfo());
+	}
 }

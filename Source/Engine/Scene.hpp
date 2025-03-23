@@ -47,6 +47,16 @@ public:
 	/** @brief Provides access to the internal entity registry. */
 	entt::registry& Reg() { return _registry; }
 
+	template<typename T>
+	std::optional<GameObject> FindObjectWithComponent()
+	{
+		auto view = Reg().view<T>();
+		if (!view.empty())
+			return GameObject{ *view.begin(), &Reg() };
+
+		return std::nullopt;
+	}
+
 private:
 	// We can create a entt::registry to store our entities
 	entt::registry _registry;

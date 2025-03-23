@@ -1,9 +1,7 @@
 #include "VertexArray.hpp"
 
-#include "Core/GL.hpp"
+#include "Core/OpenGL.hpp"
 #include "Core/Log/Logger.hpp"
-
-inline static constexpr u32 MAX_NUM_VBO_ATTACHMENTS = 16;
 
 void VertexArray::Create()
 {
@@ -12,33 +10,20 @@ void VertexArray::Create()
 
 void VertexArray::Delete()
 {
-  u32 bufferIDs[MAX_NUM_VBO_ATTACHMENTS + 1]{};
-  u32 size = 0;
-  
-  Buffer ebo = GetElementBufferObject();
-  if(ebo.IsValid())
-    bufferIDs[size++] = ebo.id;
+	if (vbo.IsValid())
+		vbo.Delete();
 
-  for (const Buffer& buffer : vbos)
-    if (buffer.IsValid())
-      bufferIDs[size++] = buffer.id;
-    
-  glDeleteBuffers(size, bufferIDs);
+	Buffer ebo = GetElementBufferObject();
+	if (ebo.IsValid())    
+		ebo.Delete();
+
   glDeleteVertexArrays(1, &id);
-
   id = 0;
-  numVertices = 0;
-  numIndices = 0;
 }
 
 void VertexArray::Bind() const
 {
   glBindVertexArray(id);
-}
-
-void VertexArray::Unbind() const
-{
-  glBindVertexArray(0);
 }
 
 bool VertexArray::IsValid() const
@@ -58,7 +43,14 @@ void VertexArray::DisableAttribute(i32 attribindex) const
 
 void VertexArray::AttachVertexBuffer(i32 bindingindex, Buffer buffer, i32 offset, i32 stride)
 {
-  vbos.push_back(buffer);
+  if (vbo.IsValid())
+  {
+		CONSOLE_WARN("VBO already attached to VAO. Deleting previous VBO...");
+		vbo.Delete();
+  }
+
+	vbo = buffer;
+
   glVertexArrayVertexBuffer(id, bindingindex, buffer.id, offset, stride);
 }
 

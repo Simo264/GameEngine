@@ -1,12 +1,14 @@
 #include "Core/Core.hpp"
 
+#include "Core/Paths/Paths.hpp"
+#include "Core/Dialog/FileDialog.hpp"
+
 #include "Engine/Scene.hpp"
 #include "Engine/ECS/ECS.hpp"
-#include "Engine/Utils.hpp"
+
 #include "Engine/Subsystems/TexturesManager.hpp"
 #include "Engine/Subsystems/ModelsManager.hpp"
 #include "Engine/Subsystems/AnimationsManager.hpp"
-#include "Engine/Filesystem/Filesystem.hpp"
 
 #include <imgui/imgui.h>
 #include <imgui/ImGuizmo.h>
@@ -393,8 +395,6 @@ static void Insp_ShowTextureSelector(StringView label, Texture2D& meshTexture, T
 static void Insp_StaticMesh(GameObject& object, StaticMesh& staticMesh)
 {
   ImGui::Text("Nr meshes: %d", staticMesh.nrMeshes);
-  ImGui::Text("Total vertices: %d", staticMesh.TotalVertices());
-  ImGui::Text("Total indices: %d", staticMesh.TotalIndices());
 
   // View meshes with a tree
   if (ImGui::TreeNode("Material"))
@@ -447,8 +447,6 @@ static void Insp_StaticMesh(GameObject& object, StaticMesh& staticMesh)
 static void Insp_SkeletalMesh(GameObject& object, SkeletalMesh& skeleton)
 {
   ImGui::Text("Nr meshes: %d", skeleton.nrMeshes);
-  ImGui::Text("Total vertices: %d", skeleton.TotalVertices());
-  ImGui::Text("Total indices: %d", skeleton.TotalIndices());
   ImGui::Text("Nr bones: %d", skeleton.nrBones);
 
   if (ImGui::TreeNode("Material"))
@@ -622,8 +620,8 @@ static void Insp_AddStaticMeshComponent(GameObject& object)
     {
       const char* filter[] = { "*.obj", "*.glb", "*.gltf", "*.fbx" };
       u32 numFilters = sizeof(filter) / sizeof(filter[0]);
-      path = Utils::OpenFileDialog(numFilters, filter, "Static mesh file", false);
-      path = fs::relative(path, Filesystem::GetStaticModelsPath());
+      path = FileDialog::OpenFileDialog(numFilters, filter, "Static mesh file", false);
+      path = fs::relative(path, Paths::GetStaticModelsPath());
     }
     String pathStr = path.string();
 
@@ -671,8 +669,8 @@ static void Insp_AddSkeletalMeshComponent(GameObject& object)
     {
       const char* filter[] = { "*.obj", "*.glb", "*.gltf", "*.fbx" };
       constexpr u32 numFilters = sizeof(filter) / sizeof(filter[0]);
-      path = Utils::OpenFileDialog(numFilters, filter, "Skeleton mesh file", false);
-      path = fs::relative(path, Filesystem::GetSkeletalModelsPath());
+      path = FileDialog::OpenFileDialog(numFilters, filter, "Skeleton mesh file", false);
+      path = fs::relative(path, Paths::GetSkeletalModelsPath());
     }
     String pathStr = path.string();
 

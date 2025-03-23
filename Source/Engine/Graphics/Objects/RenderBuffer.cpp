@@ -1,6 +1,6 @@
 #include "RenderBuffer.hpp"
 
-#include "Core/GL.hpp"
+#include "Core/OpenGL.hpp"
 #include "Core/Log/Logger.hpp"
 
 void RenderBuffer::Create()

@@ -1,8 +1,8 @@
 #include "TexturesManager.hpp"
 
-#include "Core/GL.hpp"
+#include "Core/OpenGL.hpp"
 #include "Core/Log/Logger.hpp"
-#include "Engine/Filesystem/Filesystem.hpp"
+#include "Core/Paths/Paths.hpp"
 #include "Engine/Utils.hpp"
 
 static Texture2D CreateDefaultTexture(u8 r, u8 g, u8 b)
@@ -61,7 +61,7 @@ Texture2D TexturesManager::FindTexture(const fs::path& relative) const
 }
 Texture2D TexturesManager::CreateTexture(const fs::path& relative)
 {
-  fs::path absolute = (Filesystem::GetTexturesPath() / relative).lexically_normal();
+  fs::path absolute = (Paths::GetTexturesPath() / relative).lexically_normal();
   CONSOLE_INFO("Create new texture: {}", absolute.string());
   Texture2D& texture = _textures.emplace_back();
   texture.Create(Texture2DTarget::TEXTURE_2D);
@@ -89,7 +89,7 @@ Texture2D TexturesManager::FindIcon(const fs::path& relative) const
 }
 Texture2D TexturesManager::CreateIcon(const fs::path& relative)
 {
-  fs::path absolute = (Filesystem::GetIconsPath() / relative).lexically_normal();
+  fs::path absolute = (Paths::GetIconsPath() / relative).lexically_normal();
   CONSOLE_INFO("Create new icon: {}", absolute.string());
   Texture2D& icon = _icons.emplace_back();
   icon.Create(Texture2DTarget::TEXTURE_2D);

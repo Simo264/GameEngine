@@ -1,6 +1,6 @@
 #include "Renderer.hpp"
 
-#include "Core/GL.hpp"
+#include "Core/OpenGL.hpp"
 #include "Core/Log/Logger.hpp"
 
 #include "Engine/Globals.hpp"
@@ -8,16 +8,18 @@
 
 namespace Renderer
 {
-	void DrawArrays(RenderMode mode, const VertexArray& vertexArray, i32 first)
+	void DrawArrays(RenderMode mode, VertexArray vertexArray, u32 numVertices)
 	{
-		if (vertexArray.numVertices == 0)
+		if (numVertices == 0)
 		{
 			CONSOLE_WARN("Invalid vertices number!");
 			return;
 		}
 
+		constexpr u32 first = 0;
+
 		vertexArray.Bind();
-		glDrawArrays(static_cast<u32>(mode), first, vertexArray.numVertices);
+		glDrawArrays(static_cast<u32>(mode), first, numVertices);
 		g_drawCalls++;
 	}
 	
@@ -34,17 +36,19 @@ namespace Renderer
 	//	g_drawCalls++;
 	//}
 	
-	void DrawElements(RenderMode mode, const VertexArray& vertexArray, i32 offset)
+	void DrawElements(RenderMode mode, VertexArray vertexArray, u32 numIndices)
 	{
-		if (vertexArray.numIndices == 0)
+		if (numIndices == 0)
 		{
 			CONSOLE_WARN("Invalid indices number!");
 			return;
 		}
 
+		constexpr u32 offset = 0;
+
 		vertexArray.Bind();
 		glDrawElements(static_cast<u32>(mode), 
-									 vertexArray.numIndices, 
+									 numIndices, 
 									 GL_UNSIGNED_INT, 
 									 reinterpret_cast<void*>(offset));
 		g_drawCalls++;

@@ -1,8 +1,9 @@
 #include "Engine.hpp"
 
-#include "Core/GL.hpp"
+#include "Core/OpenGL.hpp"
 #include "Core/Math/Ext.hpp"
 #include "Core/Log/Logger.hpp"
+#include "Core/Paths/Paths.hpp"
 
 #include "Engine/Globals.hpp"
 #include "Engine/Camera.hpp"
@@ -22,14 +23,10 @@
 #include "Engine/Subsystems/TexturesManager.hpp"
 #include "Engine/Subsystems/ModelsManager.hpp"
 #include "Engine/Subsystems/AnimationsManager.hpp"
-#include "Engine/Filesystem/Filesystem.hpp"
 
 #include "GUI/ImGuiLayer.hpp"
 
 #include <GLFW/glfw3.h>
-
-#include <ft2build.h>
-#include FT_FREETYPE_H
 
 static chrono::steady_clock::time_point now{};
 static chrono::steady_clock::time_point lastFrameTime{};
@@ -92,8 +89,8 @@ static void GLAPIENTRY MessageCallback(GLenum source,
     default:                             severityStr = "Unknown"; break;
   }
   CONSOLE_ERROR("GL CALLBACK: {} type = {}, severity = {}, message = {}", sourceStr, typeStr, severityStr, message);
-  //exit(EXIT_FAILURE);
 }
+
 static void SetOpenGLStates()
 {
   // Enable debug output 
@@ -138,7 +135,6 @@ static void SetOpenGLStates()
   glClearDepth(1.0f);
   glClearStencil(0);
 }
-
 static void CalculatePerFrameTime()
 {
   frames++;
@@ -158,163 +154,48 @@ static void CalculatePerFrameTime()
     totalDeltasPerSecond = 0;
   }
 }
-static VertexArray CreateSkybox(TextureCubemap& skyboxTexture)
-{
-  constexpr f32 vertices[] = {
-    /* Position */
-    -1.0f,  1.0f, -1.0f,
-    -1.0f, -1.0f, -1.0f,
-     1.0f, -1.0f, -1.0f,
-     1.0f, -1.0f, -1.0f,
-     1.0f,  1.0f, -1.0f,
-    -1.0f,  1.0f, -1.0f,
-
-    -1.0f, -1.0f,  1.0f,
-    -1.0f, -1.0f, -1.0f,
-    -1.0f,  1.0f, -1.0f,
-    -1.0f,  1.0f, -1.0f,
-    -1.0f,  1.0f,  1.0f,
-    -1.0f, -1.0f,  1.0f,
-
-     1.0f, -1.0f, -1.0f,
-     1.0f, -1.0f,  1.0f,
-     1.0f,  1.0f,  1.0f,
-     1.0f,  1.0f,  1.0f,
-     1.0f,  1.0f, -1.0f,
-     1.0f, -1.0f, -1.0f,
-
-    -1.0f, -1.0f,  1.0f,
-    -1.0f,  1.0f,  1.0f,
-     1.0f,  1.0f,  1.0f,
-     1.0f,  1.0f,  1.0f,
-     1.0f, -1.0f,  1.0f,
-    -1.0f, -1.0f,  1.0f,
-
-    -1.0f,  1.0f, -1.0f,
-     1.0f,  1.0f, -1.0f,
-     1.0f,  1.0f,  1.0f,
-     1.0f,  1.0f,  1.0f,
-    -1.0f,  1.0f,  1.0f,
-    -1.0f,  1.0f, -1.0f,
-
-    -1.0f, -1.0f, -1.0f,
-    -1.0f, -1.0f,  1.0f,
-     1.0f, -1.0f, -1.0f,
-     1.0f, -1.0f, -1.0f,
-    -1.0f, -1.0f,  1.0f,
-     1.0f, -1.0f,  1.0f
-  };
-  Buffer vbo(sizeof(vertices), vertices, BufferUsage::STATIC_DRAW);
-  
-	VertexArray skybox;
-  skybox.Create();
-	
-  skybox.EnableAttribute(0);
-  skybox.SetAttribBinding(0, 0);
-  skybox.SetAttribFormatFLoat(0, 3, VertexAttribType::FLOAT, false, 0);
-  
-  skybox.AttachVertexBuffer(0, vbo, 0, sizeof(Vertex_P));
-  skybox.numVertices = 36;
-  skybox.numIndices = 0;
-  
-  TexturesManager& texturesManager = TexturesManager::Get();
-  Array<Texture2D, 6> images = {
-    texturesManager.GetOrCreateTexture("skybox/right.jpg"),
-    texturesManager.GetOrCreateTexture("skybox/left.jpg"),
-    texturesManager.GetOrCreateTexture("skybox/top.jpg"),
-    texturesManager.GetOrCreateTexture("skybox/bottom.jpg"),
-    texturesManager.GetOrCreateTexture("skybox/front.jpg"),
-    texturesManager.GetOrCreateTexture("skybox/back.jpg"),
-  };
-  Texture2DInternalFormat cubemapInternalFormat = images.at(0).GetInternalFormat();
-  i32 width = images.at(0).GetWidth();
-  i32 height = images.at(0).GetHeight();
-
-  skyboxTexture.Create();
-  skyboxTexture.CreateStorage(cubemapInternalFormat, width, height);
-  skyboxTexture.LoadImages(images);
-  skyboxTexture.SetParameteri(TextureParameteriName::MAG_FILTER, TextureParameteriParam::LINEAR);
-  skyboxTexture.SetParameteri(TextureParameteriName::MIN_FILTER, TextureParameteriParam::LINEAR);
-  skyboxTexture.SetParameteri(TextureParameteriName::WRAP_S, TextureParameteriParam::CLAMP_TO_EDGE);
-  skyboxTexture.SetParameteri(TextureParameteriName::WRAP_T, TextureParameteriParam::CLAMP_TO_EDGE);
-  skyboxTexture.SetParameteri(TextureParameteriName::WRAP_R, TextureParameteriParam::CLAMP_TO_EDGE);
-	return skybox;
-}
-static VertexArray CreateGridPlane()
-{
-  constexpr f32 vertices[] = {
-       1.f,  1.f, 0.f,
-      -1.f, -1.f, 0.f,
-      -1.f,  1.f, 0.f,
-      -1.f, -1.f, 0.f,
-       1.f,  1.f, 0.f,
-       1.f, -1.f, 0.f
-  };
-  Buffer gridVbo(sizeof(vertices), vertices, BufferUsage::STATIC_DRAW);
-
-	VertexArray grid; 
-  grid.Create();
-
-  grid.EnableAttribute(0);
-  grid.SetAttribBinding(0, 0);
-  grid.SetAttribFormatFLoat(0, 3, VertexAttribType::FLOAT, false, 0);
-  grid.AttachVertexBuffer(0, gridVbo, 0, 3 * sizeof(f32));
-  grid.numVertices = 6;
-  grid.numIndices = 0;
-	return grid;  
-}
-static FrameBuffer CreateDepthMapFbo(i32 width, i32 height)
-{
-  // Create a 2D texture that we'll use as the framebuffer's depth buffer
-  Texture2D depthMap;
-  depthMap.Create(Texture2DTarget::TEXTURE_2D);
-  depthMap.CreateStorage(Texture2DInternalFormat::DEPTH_COMPONENT24, width, height);
-  depthMap.SetParameteri(TextureParameteriName::COMPARE_MODE, TextureParameteriParam::COMPARE_REF_TO_TEXTURE);
-  depthMap.SetCompareFunc(CompareFunc::LEQUAL);
-  depthMap.SetParameteri(TextureParameteriName::MIN_FILTER, TextureParameteriParam::LINEAR);
-  depthMap.SetParameteri(TextureParameteriName::MAG_FILTER, TextureParameteriParam::LINEAR);
-
-  // Resolve the problem of over sampling
-  depthMap.SetParameteri(TextureParameteriName::WRAP_S, TextureParameteriParam::CLAMP_TO_BORDER);
-  depthMap.SetParameteri(TextureParameteriName::WRAP_T, TextureParameteriParam::CLAMP_TO_BORDER);
-  depthMap.SetParameterfv(TextureParameteriName::BORDER_COLOR, Array<f32, 4>{ 1.0, 1.0, 1.0, 1.0 }.data());
-
-  // With the generated depth texture we can attach it as the framebuffer's depth buffer
-  FrameBuffer fbo;
-  fbo.Create();
-  fbo.AttachTexture(FramebufferAttachment::DEPTH, depthMap.id, 0);
-  return fbo;
-}
-static FrameBuffer CreateDepthCubeMapFbo(i32 width, i32 height)
-{
-  FrameBuffer fbo;
-  fbo.Create();
-
-  TextureCubemap texture;
-  texture.Create();
-  texture.CreateStorage(Texture2DInternalFormat::DEPTH_COMPONENT24, width, height);
-  for (i32 i = 0; i < 6; i++)
-    texture.SubImage3D(0, 0, 0, i, width, height, 1, Texture3DFormat::DEPTH_COMPONENT, Texture3DType::FLOAT, nullptr);
-
-  texture.SetParameteri(TextureParameteriName::MAG_FILTER, TextureParameteriParam::LINEAR);
-  texture.SetParameteri(TextureParameteriName::MIN_FILTER, TextureParameteriParam::LINEAR);
-  texture.SetParameteri(TextureParameteriName::WRAP_S, TextureParameteriParam::CLAMP_TO_EDGE);
-  texture.SetParameteri(TextureParameteriName::WRAP_T, TextureParameteriParam::CLAMP_TO_EDGE);
-  texture.SetParameteri(TextureParameteriName::WRAP_R, TextureParameteriParam::CLAMP_TO_EDGE);
-
-  fbo.AttachTexture(FramebufferAttachment::DEPTH, texture.id, 0);
-  return fbo;
-}
-
-template<typename T>
-static std::optional<GameObject> FindEntityWithComponent(Scene& scene)
-{
-  auto view = scene.Reg().view<T>();
-  if (!view.empty())
-    return GameObject{ *view.begin(), &scene.Reg() };
-  
-  return std::nullopt;
-}
+//static FrameBuffer CreateDepthMapFbo(i32 width, i32 height)
+//{
+//  // Create a 2D texture that we'll use as the framebuffer's depth buffer
+//  Texture2D depthMap;
+//  depthMap.Create(Texture2DTarget::TEXTURE_2D);
+//  depthMap.CreateStorage(Texture2DInternalFormat::DEPTH_COMPONENT24, width, height);
+//  depthMap.SetParameteri(TextureParameteriName::COMPARE_MODE, TextureParameteriParam::COMPARE_REF_TO_TEXTURE);
+//  depthMap.SetCompareFunc(CompareFunc::LEQUAL);
+//  depthMap.SetParameteri(TextureParameteriName::MIN_FILTER, TextureParameteriParam::LINEAR);
+//  depthMap.SetParameteri(TextureParameteriName::MAG_FILTER, TextureParameteriParam::LINEAR);
+//
+//  // Resolve the problem of over sampling
+//  depthMap.SetParameteri(TextureParameteriName::WRAP_S, TextureParameteriParam::CLAMP_TO_BORDER);
+//  depthMap.SetParameteri(TextureParameteriName::WRAP_T, TextureParameteriParam::CLAMP_TO_BORDER);
+//  depthMap.SetParameterfv(TextureParameteriName::BORDER_COLOR, Array<f32, 4>{ 1.0, 1.0, 1.0, 1.0 }.data());
+//
+//  // With the generated depth texture we can attach it as the framebuffer's depth buffer
+//  FrameBuffer fbo;
+//  fbo.Create();
+//  fbo.AttachTexture(FramebufferAttachment::DEPTH, depthMap.id, 0);
+//  return fbo;
+//}
+//static FrameBuffer CreateDepthCubeMapFbo(i32 width, i32 height)
+//{
+//  FrameBuffer fbo;
+//  fbo.Create();
+//
+//  TextureCubemap texture;
+//  texture.Create();
+//  texture.CreateStorage(Texture2DInternalFormat::DEPTH_COMPONENT24, width, height);
+//  for (i32 i = 0; i < 6; i++)
+//    texture.SubImage3D(0, 0, 0, i, width, height, 1, Texture3DFormat::DEPTH_COMPONENT, Texture3DType::FLOAT, nullptr);
+//
+//  texture.SetParameteri(TextureParameteriName::MAG_FILTER, TextureParameteriParam::LINEAR);
+//  texture.SetParameteri(TextureParameteriName::MIN_FILTER, TextureParameteriParam::LINEAR);
+//  texture.SetParameteri(TextureParameteriName::WRAP_S, TextureParameteriParam::CLAMP_TO_EDGE);
+//  texture.SetParameteri(TextureParameteriName::WRAP_T, TextureParameteriParam::CLAMP_TO_EDGE);
+//  texture.SetParameteri(TextureParameteriName::WRAP_R, TextureParameteriParam::CLAMP_TO_EDGE);
+//
+//  fbo.AttachTexture(FramebufferAttachment::DEPTH, texture.id, 0);
+//  return fbo;
+//}
 
 // -----------------------------------------------------
 //                PUBLIC METHODS
@@ -351,12 +232,6 @@ void Engine::Initialize()
   // -------------------
   CONSOLE_INFO("Initializing ImGui...");
   ImGuiLayer::Get().Initialize();
-
-  // Create Framebuffer object
-  // -------------------------
-  _viewportSize = { WINDOW_WIDTH, WINDOW_HEIGHT };
-  CreateFramebuffer(4, _viewportSize.x, _viewportSize.y);
-  CreateScreenSquare();
 
   // Initialize uniform block objects
   // --------------------------------
@@ -399,25 +274,27 @@ void Engine::Initialize()
     _uboBoneBlock.BindBase(BufferTarget::UNIFORM, 2); // "BoneBlock" to binding point 2
   }
 
-
   // Set the initial OpenGL states
   // -----------------------------
   SetOpenGLStates();
 }
 void Engine::Run()
 {
-  // Create grid plane
-  VertexArray gridPlane = CreateGridPlane();
+  // Create framebuffer
+  CreateFramebuffer(4, WINDOW_WIDTH, WINDOW_HEIGHT);
+  CreateScreenSquare();
 
-  // Create skybox object
-  TextureCubemap skyboxTexture;
-  VertexArray skybox = CreateSkybox(skyboxTexture);
+	// Create grid plane mesh
+	CreateGridPlane();
+
+	// Create skybox mesh
+  TextureCubemap skyboxTexture = CreateSkybox();
 
   // Create primary camera object
   Camera primaryCamera(vec3f(7.f, 4.f, 6), vec3f(-135.0f, -25.0f, 0.f));
   primaryCamera.frustum.zFar = 100.0f;
 
-  Scene scene((Filesystem::GetRootPath() / "Scene.ini"));
+  Scene scene((Paths::GetRootPath() / "Scene.ini"));
 
   // ----------------------------------------------------------------------
   // -------------------------- Pre-loop section --------------------------
@@ -427,27 +304,21 @@ void Engine::Run()
   TexturesManager& texturesManager = TexturesManager::Get();
   ShadersManager& shadersManager = ShadersManager::Get();
   
-  Program gridPlaneProgram = shadersManager.GetProgram("GridPlane");
-  Program framebufferProg = shadersManager.GetProgram("Framebuffer");
-  framebufferProg.SetUniform1i(Uniforms::fboImageTexture, 0);
-  Program skyboxProgram = shadersManager.GetProgram("Skybox");
-  skyboxProgram.SetUniform1i(Uniforms::skyboxTexture, 0);
+  //Program gridPlaneProgram = shadersManager.GetProgram("GridPlane");
+  //Program framebufferProg = shadersManager.GetProgram("Framebuffer");
+  //framebufferProg.SetUniform1i(Uniforms::fboImageTexture, 0);
+  //Program skyboxProgram = shadersManager.GetProgram("Skybox");
+  //skyboxProgram.SetUniform1i(Uniforms::skyboxTexture, 0);
   Program blinnPhongProgram = shadersManager.GetProgram("BlinnPhongShading");
   blinnPhongProgram.SetUniform1i("u_material.diffuseTexture", 0);
   blinnPhongProgram.SetUniform1i("u_material.specularTexture", 1);
   blinnPhongProgram.SetUniform1i("u_material.normalTexture", 2);
-  blinnPhongProgram.SetUniform1i("u_usePhong", 0);
   Program goochProgram = shadersManager.GetProgram("GoochShading");
   goochProgram.SetUniform1i("u_material.diffuseTexture", 0);
   goochProgram.SetUniform1i("u_material.specularTexture", 1);
   goochProgram.SetUniform1i("u_material.normalTexture", 2);
 
-  constexpr bool renderInfiniteGrid = false;
-  constexpr bool renderSkybox = false;
-
-  bool normalMapMode = false;
-  bool shadowMode = false;
-  bool wireframeMode = false;
+  constexpr bool wireframeMode = false;
 
   // ------------------------------------------------------------------
   // -------------------------- loop section --------------------------
@@ -470,15 +341,6 @@ void Engine::Run()
     {
       primaryCamera.ProcessKeyboard(delta, 5.0f);
       primaryCamera.ProcessMouse(delta, 15.0f);
-
-      if (windowManager.GetKey(GLFW_KEY_0) == GLFW_PRESS)
-      {
-        blinnPhongProgram.SetUniform1i("u_usePhong", 0);
-      }
-      else if (windowManager.GetKey(GLFW_KEY_1) == GLFW_PRESS)
-      {
-        blinnPhongProgram.SetUniform1i("u_usePhong", 1);
-      }
     }
 
     // --------------------------------------------------------------------
@@ -503,7 +365,7 @@ void Engine::Run()
         _uboLightBlock.UpdateStorage(0, size, zeros.data());
       }
 
-      auto e = FindEntityWithComponent<DirectionalLight>(scene);
+      auto e = scene.FindObjectWithComponent<DirectionalLight>();
       if (e.has_value())
       {
         GameObject obj = e.value();
@@ -513,7 +375,7 @@ void Engine::Run()
                                      reinterpret_cast<void*>(light));
       }
 
-      e = FindEntityWithComponent<PointLight>(scene);
+      e = scene.FindObjectWithComponent<PointLight>();
       if (e.has_value())
       {
         GameObject obj = e.value();
@@ -523,7 +385,7 @@ void Engine::Run()
                                      reinterpret_cast<void*>(light));
       }
 
-      e = FindEntityWithComponent<SpotLight>(scene);
+      e = scene.FindObjectWithComponent<SpotLight>();
       if (e.has_value())
       {
         GameObject obj = e.value();
@@ -585,7 +447,6 @@ void Engine::Run()
     gui.RenderMenuBar(scene);
     GameObject& objSelected = gui.RenderHierarchy(scene);
     gui.RenderInspector(objSelected);
-
     u32 fboTexture = _fboIntermediate.textAttachments.at(0);
     gui.RenderViewport(fboTexture, objSelected, cameraView, cameraProj);
     gui.RenderTimeInfo(delta, avgTime, frameRate);
@@ -594,10 +455,9 @@ void Engine::Run()
     // Checking viewport size
     if (_viewportSize != gui.viewportSize)
     {
-      _viewportSize = gui.viewportSize;
       _fboMultisampled.Delete();
       _fboIntermediate.Delete();
-      CreateFramebuffer(4, _viewportSize.x, _viewportSize.y);
+      CreateFramebuffer(4, gui.viewportSize.x, gui.viewportSize.y);
     }
 
     // ------------------------------------------------------------------
@@ -605,20 +465,27 @@ void Engine::Run()
     // ------------------------------------------------------------------
     windowManager.SwapWindowBuffers();
   }
-
-  gridPlane.Delete();
-  skybox.Delete();
 }
 void Engine::CleanUp()
 {
+	// Destroy all framebuffers
   _fboIntermediate.Delete();
   _fboMultisampled.Delete();
-  _screenSquare.Delete();
+
+	// Destroy all meshes
+  _screenSquare.Destroy();
+  _skybox.Destroy();
+  _gridPlane.Destroy();
+
+	// Destroy all uniform block objects
   _uboCameraBlock.Delete();
   _uboLightBlock.Delete();
   _uboBoneBlock.Delete();
 
+	// Destroy ImGui context
   ImGuiLayer::Get().CleanUp();
+	
+	// clean up all managers
   ShadersManager::Get().CleanUp();
   TexturesManager::Get().CleanUp();
   ModelsManager::Get().CleanUp();
@@ -631,6 +498,7 @@ void Engine::CleanUp()
 
 void Engine::CreateFramebuffer(i32 samples, i32 width, i32 height)
 {
+  _viewportSize = { width, height };
   _fboMultisampled.Create();
 
   // Create a multisampled color attachment texture 
@@ -663,8 +531,6 @@ void Engine::CreateFramebuffer(i32 samples, i32 width, i32 height)
 }
 void Engine::CreateScreenSquare()
 {
-  _screenSquare.Create();
-
   constexpr f32 vertices[] = {
     // position    uv 
     -1.0f,  1.0f,  0.0f, 1.0f,
@@ -675,16 +541,120 @@ void Engine::CreateScreenSquare()
      1.0f,  1.0f,  1.0f, 1.0f
   };
   Buffer vbo(sizeof(vertices), vertices, BufferUsage::STATIC_DRAW);
-  _screenSquare.AttachVertexBuffer(0, vbo, 0, 4 * sizeof(f32));
-
-  _screenSquare.SetAttribFormatFLoat(0, 2, VertexAttribType::FLOAT, true, 0);
-  _screenSquare.SetAttribBinding(0, 0);
-  _screenSquare.EnableAttribute(0);
-
-  _screenSquare.SetAttribFormatFLoat(1, 2, VertexAttribType::FLOAT, true, 2 * sizeof(f32));
-  _screenSquare.SetAttribBinding(1, 0);
-  _screenSquare.EnableAttribute(1);
   
+  _screenSquare.Create();
   _screenSquare.numVertices = 6;
   _screenSquare.numIndices = 0;
+  
+  _screenSquare.vao.AttachVertexBuffer(0, vbo, 0, 4 * sizeof(f32));
+  _screenSquare.vao.SetAttribFormatFLoat(0, 2, VertexAttribType::FLOAT, true, 0);
+  _screenSquare.vao.SetAttribBinding(0, 0);
+  _screenSquare.vao.EnableAttribute(0);
+  _screenSquare.vao.SetAttribFormatFLoat(1, 2, VertexAttribType::FLOAT, true, 2 * sizeof(f32));
+  _screenSquare.vao.SetAttribBinding(1, 0);
+  _screenSquare.vao.EnableAttribute(1);
+  
+
+}
+void Engine::CreateGridPlane()
+{
+  constexpr f32 vertices[] = {
+       1.f,  1.f, 0.f,
+      -1.f, -1.f, 0.f,
+      -1.f,  1.f, 0.f,
+      -1.f, -1.f, 0.f,
+       1.f,  1.f, 0.f,
+       1.f, -1.f, 0.f
+  };
+  Buffer gridVbo(sizeof(vertices), vertices, BufferUsage::STATIC_DRAW);
+
+	_gridPlane.Create();
+  _gridPlane.numVertices = 6;
+  _gridPlane.numIndices = 0;
+
+  _gridPlane.vao.EnableAttribute(0);
+  _gridPlane.vao.SetAttribBinding(0, 0);
+  _gridPlane.vao.SetAttribFormatFLoat(0, 3, VertexAttribType::FLOAT, false, 0);
+  _gridPlane.vao.AttachVertexBuffer(0, gridVbo, 0, 3 * sizeof(f32));
+}
+TextureCubemap Engine::CreateSkybox()
+{
+  constexpr f32 vertices[] = {
+    // Position
+    -1.0f,  1.0f, -1.0f,
+    -1.0f, -1.0f, -1.0f,
+     1.0f, -1.0f, -1.0f,
+     1.0f, -1.0f, -1.0f,
+     1.0f,  1.0f, -1.0f,
+    -1.0f,  1.0f, -1.0f,
+
+    -1.0f, -1.0f,  1.0f,
+    -1.0f, -1.0f, -1.0f,
+    -1.0f,  1.0f, -1.0f,
+    -1.0f,  1.0f, -1.0f,
+    -1.0f,  1.0f,  1.0f,
+    -1.0f, -1.0f,  1.0f,
+
+     1.0f, -1.0f, -1.0f,
+     1.0f, -1.0f,  1.0f,
+     1.0f,  1.0f,  1.0f,
+     1.0f,  1.0f,  1.0f,
+     1.0f,  1.0f, -1.0f,
+     1.0f, -1.0f, -1.0f,
+
+    -1.0f, -1.0f,  1.0f,
+    -1.0f,  1.0f,  1.0f,
+     1.0f,  1.0f,  1.0f,
+     1.0f,  1.0f,  1.0f,
+     1.0f, -1.0f,  1.0f,
+    -1.0f, -1.0f,  1.0f,
+
+    -1.0f,  1.0f, -1.0f,
+     1.0f,  1.0f, -1.0f,
+     1.0f,  1.0f,  1.0f,
+     1.0f,  1.0f,  1.0f,
+    -1.0f,  1.0f,  1.0f,
+    -1.0f,  1.0f, -1.0f,
+
+    -1.0f, -1.0f, -1.0f,
+    -1.0f, -1.0f,  1.0f,
+     1.0f, -1.0f, -1.0f,
+     1.0f, -1.0f, -1.0f,
+    -1.0f, -1.0f,  1.0f,
+     1.0f, -1.0f,  1.0f
+  };
+  Buffer vbo(sizeof(vertices), vertices, BufferUsage::STATIC_DRAW);
+
+  _skybox.Create();
+  _skybox.numVertices = 36;
+  _skybox.numIndices = 0;
+
+  _skybox.vao.EnableAttribute(0);
+  _skybox.vao.SetAttribBinding(0, 0);
+  _skybox.vao.SetAttribFormatFLoat(0, 3, VertexAttribType::FLOAT, false, 0);
+  _skybox.vao.AttachVertexBuffer(0, vbo, 0, sizeof(Vertex_P));
+
+  TexturesManager& texturesManager = TexturesManager::Get();
+  Array<Texture2D, 6> images = {
+    texturesManager.GetOrCreateTexture("skybox/right.jpg"),
+    texturesManager.GetOrCreateTexture("skybox/left.jpg"),
+    texturesManager.GetOrCreateTexture("skybox/top.jpg"),
+    texturesManager.GetOrCreateTexture("skybox/bottom.jpg"),
+    texturesManager.GetOrCreateTexture("skybox/front.jpg"),
+    texturesManager.GetOrCreateTexture("skybox/back.jpg"),
+  };
+  Texture2DInternalFormat cubemapInternalFormat = images.at(0).GetInternalFormat();
+  i32 width = images.at(0).GetWidth();
+  i32 height = images.at(0).GetHeight();
+
+	TextureCubemap skyboxTexture;
+  skyboxTexture.Create();
+  skyboxTexture.CreateStorage(cubemapInternalFormat, width, height);
+  skyboxTexture.LoadImages(images);
+  skyboxTexture.SetParameteri(TextureParameteriName::MAG_FILTER, TextureParameteriParam::LINEAR);
+  skyboxTexture.SetParameteri(TextureParameteriName::MIN_FILTER, TextureParameteriParam::LINEAR);
+  skyboxTexture.SetParameteri(TextureParameteriName::WRAP_S, TextureParameteriParam::CLAMP_TO_EDGE);
+  skyboxTexture.SetParameteri(TextureParameteriName::WRAP_T, TextureParameteriParam::CLAMP_TO_EDGE);
+  skyboxTexture.SetParameteri(TextureParameteriName::WRAP_R, TextureParameteriParam::CLAMP_TO_EDGE);
+  return skyboxTexture;
 }

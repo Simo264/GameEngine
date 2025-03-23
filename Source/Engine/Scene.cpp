@@ -1,15 +1,15 @@
 #include "Scene.hpp"
 
-#include "Core/GL.hpp"
+#include "Core/OpenGL.hpp"
 #include "Core/Log/Logger.hpp"
+#include "Core/Paths/Paths.hpp"
+#include "Core/Serialization/INIParser.hpp"
 
 #include "Engine/Utils.hpp"
 #include "Engine/ECS/ECS.hpp"
-#include "Engine/IniFileHandler.hpp"
 #include "Engine/Graphics/Shader.hpp"
 #include "Engine/Subsystems/ModelsManager.hpp"
 #include "Engine/Subsystems/AnimationsManager.hpp"
-#include "Engine/Filesystem/Filesystem.hpp"
 
 // ----------------------------------- 
 //								PUBLIC							 
@@ -61,7 +61,7 @@ void Scene::Save(const fs::path& filePath)
 
 void Scene::SerializeScene(const fs::path& filePath)
 {
-	IniFileHandler conf(filePath);
+	INIParser conf(filePath);
 	for (auto [entity, tag] : Reg().view<Tag>().each())
 	{
 		GameObject object{ entity, &Reg() };
@@ -156,7 +156,7 @@ void Scene::SerializeScene(const fs::path& filePath)
 }
 void Scene::DeserializeScene(const fs::path& filePath)
 {
-	IniFileHandler conf(filePath);
+	INIParser conf(filePath);
 	conf.ReadData();
 
 	GameObject object;
@@ -175,12 +175,12 @@ void Scene::DeserializeScene(const fs::path& filePath)
 			object = CreateObject();
 		}
 
-		if (component == "Tag")
+		if (component == "tag")
 		{
 			const String& value = conf.GetValue(section, "value");
 			object.GetComponent<Tag>()->UpdateValue(value);
 		}
-		else if (component == "Transform")
+		else if (component == "transform")
 		{
 			const String& position = conf.GetValue(section, "position");
 			const String& rotation = conf.GetValue(section, "rotation");
@@ -192,7 +192,7 @@ void Scene::DeserializeScene(const fs::path& filePath)
 			transform.scale = Utils::StringToVec3f(scale);
 			transform.UpdateTransformation();
 		}
-		else if (component == "StaticMesh")
+		else if (component == "staticmesh")
 		{
 			auto& manager = ModelsManager::Get();
 			const String& strPath = conf.GetValue(section, "path");
@@ -203,7 +203,7 @@ void Scene::DeserializeScene(const fs::path& filePath)
 			StaticMesh& component = object.AddComponent<StaticMesh>();
 			staticMesh->Clone(component);
 		}
-		else if (component == "SkeletalMesh")
+		else if (component == "skeletalmesh")
 		{
 			SkeletalMesh& skmeshComponent = object.AddComponent<SkeletalMesh>();
 			Animator& animatorComponent = object.AddComponent<Animator>();
@@ -222,7 +222,7 @@ void Scene::DeserializeScene(const fs::path& filePath)
 				// E.g. skeletonPath = "Mutant/"
 				fs::path parent = relative.parent_path();
 				// E.g. skeletonPath = "D:\GameEngine\Assets\Models\Skeletal\Mutant"
-				fs::path absolute = (Filesystem::GetSkeletalModelsPath() / parent);
+				fs::path absolute = (Paths::GetSkeletalModelsPath() / parent);
 				// E.g. skeletonPath = "D:\GameEngine\Assets\Models\Skeletal\animlist.txt"
 				fs::path animlistFile = absolute / "animlist.txt";
 
@@ -255,7 +255,7 @@ void Scene::DeserializeScene(const fs::path& filePath)
 			skeleton->Clone(skmeshComponent);
 			animatorComponent.SetTargetSkeleton(skmeshComponent);
 		}
-		else if (component == "Light")
+		else if (component == "light")
 		{
 			i32 type = Utils::StringToI32(conf.GetValue(section, "type"));
 			object.AddComponent<Light>(static_cast<LightType>(type));

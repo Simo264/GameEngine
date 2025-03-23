@@ -1,6 +1,6 @@
 #include "ImGuiLayer.hpp"
 
-#include "Engine/Filesystem/Filesystem.hpp"
+#include "Core/Paths/Paths.hpp"
 #include "Engine/Globals.hpp"
 
 #include <imgui/imgui.h>
@@ -9,12 +9,12 @@ static Vector<fs::path> fontVector;
 static void LoadFontVector()
 {
   fontVector.clear();
-  for (const auto& entry : fs::recursive_directory_iterator(Filesystem::GetFontsPath())) 
+  for (const auto& entry : fs::recursive_directory_iterator(Paths::GetFontsPath())) 
   {
     if (!fs::is_regular_file(entry.path()))
       continue;
 
-    fs::path relativePath = fs::relative(entry.path(), Filesystem::GetFontsPath());
+    fs::path relativePath = fs::relative(entry.path(), Paths::GetFontsPath());
     fontVector.emplace_back(relativePath);
   }
 }

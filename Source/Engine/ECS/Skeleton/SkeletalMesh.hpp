@@ -111,10 +111,6 @@ public:
    */
   i32 FindBone(StringView boneName) const;
   
-  u32 TotalVertices() const;
-
-  u32 TotalIndices() const;
-
   /**
    * @brief The root bone node of the bone hierarchy.
    *

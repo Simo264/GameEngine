@@ -1,10 +1,9 @@
 #include "Texture2D.hpp"
 
-#include "Core/GL.hpp"
+#include "Core/OpenGL.hpp"
 #include "Core/Log/Logger.hpp"
 
-#include "Engine/Utils.hpp"
-#include "Engine/Filesystem/Filesystem.hpp"
+#include "Engine/ImageLoader.hpp"
 
 Texture2D::Texture2D(Texture2DTarget target, 
                      const fs::path& absolute)
@@ -122,7 +121,7 @@ void Texture2D::LoadImageData(const fs::path& absolute)
   i32 width, height, nChannels;
   Texture2DFormat format = Texture2DFormat::RGB;
   Texture2DInternalFormat internalFormat = Texture2DInternalFormat::RGB8;
-  u8* data = Utils::LoadImageData(absolute, width, height, nChannels);
+  u8* data = ImageLoader::LoadImageData(absolute, width, height, nChannels);
   if (data)
   {
     // From https://registry.khronos.org/OpenGL-Refpages/gl4/html/glTexStorage2D.xhtml
@@ -163,7 +162,7 @@ void Texture2D::LoadImageData(const fs::path& absolute)
   else
     CONSOLE_ERROR("Failed to load image {}", absolute.string());
 
-  Utils::FreeImageData(data);
+  ImageLoader::FreeImageData(data);
 }
 
 void Texture2D::GetTextureImage(i32 level,

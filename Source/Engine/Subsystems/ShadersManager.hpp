@@ -43,7 +43,7 @@ private:
 	ShadersManager() = default;
 	~ShadersManager() = default;
 	
-	void ReadConfig(class IniFileHandler& conf);
+	void LoadConfig(const fs::path& file);
 
 	struct PairShaderName
 	{

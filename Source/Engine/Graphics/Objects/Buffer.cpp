@@ -1,6 +1,6 @@
 #include "Buffer.hpp"
 
-#include "Core/GL.hpp"
+#include "Core/OpenGL.hpp"
 #include "Core/Log/Logger.hpp"
 
 Buffer::Buffer(u64 size, const void* data, BufferUsage usage)

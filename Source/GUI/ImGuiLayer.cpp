@@ -1,15 +1,15 @@
 #include "ImGuiLayer.hpp"
 
-#include "Core/GL.hpp"
+#include "Core/OpenGL.hpp"
+#include "Core/Serialization/INIParser.hpp"
+#include "Core/Paths/Paths.hpp"
 
 #include "Engine/Globals.hpp"
 #include "Engine/Scene.hpp"
 #include "Engine/Camera.hpp"
 #include "Engine/ECS/ECS.hpp"
-#include "Engine/IniFileHandler.hpp"
 #include "Engine/Graphics/Objects/Texture2D.hpp"
 #include "Engine/Subsystems/WindowManager.hpp"
-#include "Engine/Filesystem/Filesystem.hpp"
 
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_glfw.h>
@@ -39,12 +39,10 @@ void ImGuiLayer::Initialize()
   Styling();
 
   // Load default font
-  IniFileHandler config(Filesystem::GetRootPath() / "Configuration.ini");
-  config.ReadData();
-  g_fontFamily = config.GetValue("GUI", "font-family");
-  g_fontSize = std::atoi(config.GetValue("GUI", "font-size").c_str());
+  g_fontFamily = "OpenSans/OpenSans-Regular.ttf";
+  g_fontSize = 16;
 
-  SetFont(Filesystem::GetFontsPath() / g_fontFamily, g_fontSize);
+  SetFont(Paths::GetFontsPath() / g_fontFamily, g_fontSize);
 }
 void ImGuiLayer::CleanUp()
 {

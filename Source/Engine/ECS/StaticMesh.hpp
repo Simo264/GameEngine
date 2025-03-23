@@ -91,10 +91,6 @@ public:
 
 	void Render(class Program program, RenderMode mode) const;
 
-	u32 TotalVertices() const;
-	
-	u32 TotalIndices() const;
-
 	/** @brief List of meshes contained in the model. */
 	UniquePtr<Mesh[]> meshes;
 	u32 nrMeshes;

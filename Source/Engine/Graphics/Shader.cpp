@@ -1,7 +1,7 @@
 #include "Shader.hpp"
 #include "Core/Log/Logger.hpp"
 
-#include "Core/GL.hpp"
+#include "Core/OpenGL.hpp"
 
 
 // ------------------------------

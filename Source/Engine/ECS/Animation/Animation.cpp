@@ -1,7 +1,8 @@
 #include "Animation.hpp"
 
 #include "Core/Log/Logger.hpp"
-#include "Engine/Filesystem/Filesystem.hpp"
+#include "Core/Paths/Paths.hpp"
+
 #include "Engine/ECS/Skeleton/SkeletalMesh.hpp"
 #include "Engine/Subsystems/ModelsManager.hpp"
 
@@ -24,7 +25,7 @@ Animation::Animation(const SkeletalMesh& skeleton, const fs::path& relative) :
 {
 	// E.g. relative = "Mutant/Drunk_Walk/anim.gltf"
 	// E.g. absolute = "D:GameEngine/Assets/Models/Skeletal/Mutant/Drunk_Walk/anim.gltf"
-	fs::path absolute = (Filesystem::GetSkeletalModelsPath() / relative);
+	fs::path absolute = (Paths::GetSkeletalModelsPath() / relative);
 
 	Assimp::Importer importer;
 	const aiScene* scene = importer.ReadFile(absolute.string(), 

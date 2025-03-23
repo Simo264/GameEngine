@@ -106,7 +106,6 @@ layout (std140, binding = 1) uniform LightBlock
 
 uniform Material u_material;
 uniform vec3 u_viewPos;
-uniform int u_usePhong;
 
 void main()
 {
@@ -123,9 +122,8 @@ void main()
 
   const vec3 normal = Normal;
   const vec3 lightDir = normalize(u_directionalLight.direction);
-  float lambertian = max(dot(lightDir, normal), 0.0f);
+  const float lambertian = max(dot(lightDir, normal), 0.0f);
   float specular = 0.0f;
-
   if (lambertian > 0.0f)
   {
     vec3 viewDir = normalize(u_viewPos - FragPos);
@@ -136,13 +134,13 @@ void main()
     specular = pow(specAngle, shininess);
   
     // this is phong (for comparison)
-    if(u_usePhong != 0)
-    {
-     vec3 reflectDir = reflect(-lightDir, normal);
-     specAngle = max(dot(reflectDir, viewDir), 0.0f);
-     // note that the exponent is different here
-     specular = pow(specAngle, shininess/4.0f);
-    }
+    // if(false)
+    // {
+    //  vec3 reflectDir = reflect(-lightDir, normal);
+    //  specAngle = max(dot(reflectDir, viewDir), 0.0f);
+    //  // note that the exponent is different here
+    //  specular = pow(specAngle, shininess/4.0f);
+    // }
   }
   
   vec3 color =  ambientColor + 

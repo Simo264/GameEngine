@@ -24,19 +24,25 @@ public:
 	~Mesh() = default;
 
 	/**
-	 * @brief Creates and initializes the VertexArray for the mesh.
-	 * This method allocates a new VertexArray and initializes it, preparing the mesh for rendering. 
-	 * The VertexArray is stored in a shared pointer (`vao`) to allow multiple Mesh instances
-	 * to reference the same GPU buffers.
+	 * @brief Creates the Vertex Array Object (VAO) for the mesh.
+	 *
+	 * This method initializes the VAO for the mesh by calling the `Create()` method
+	 * on the `VertexArray` object. The VAO is used to store the state needed to supply
+	 * vertex data to the OpenGL pipeline.
+	 *
+	 * @note This method should be called before any other operations on the mesh.
 	 */
 	void Create();
 
 	/**
-	 * @brief Releases GPU resources by deleting the associated VertexArray.
-	 * This method calls `VertexArray::Delete()`, which frees all associated
-	 * vertex buffers (VBOs) and the index buffer (EBO) from the GPU.
+	 * @brief Destroys the Vertex Array Object (VAO) for the mesh.
+	 *
+	 * This method deletes the VAO associated with the mesh by calling the `Delete()` method
+	 * on the `VertexArray` object. If the VAO is valid, it will be deleted and its ID will be invalidated.
+	 *
+	 * @note After calling this method, the VAO is no longer valid and should not be used.
 	 */
-	void Destroy() const;
+	void Destroy();
 	
 	void Render(class Program program, RenderMode mode) const;
 
@@ -44,28 +50,15 @@ public:
 	void SetupAttributeInteger(i32 attribindex, i32 bindingindex, VertexFormat format) const;
 	void SetupAttributeLong(i32 attribindex, i32 bindingindex, VertexFormat format) const;
 
-	/**
-	 * @brief This shared pointer ensures that multiple Mesh instances can reference
-	 * the same VertexArray without duplicating GPU resources.
-	 * The VertexArray contains the vertex buffer objects (VBOs) and index buffers
-	 * required for rendering the mesh.
-	 *
-	 * In cloned meshes, this pointer references the original VertexArray stored
-	 * in ModelsManager to optimize memory usage and avoid redundant GPU allocations.
-	 */
-	SharedPtr<VertexArray> vao;
-
-	/**
-	 * @brief Unique material instance assigned to the mesh.
-	 *
-	 * Each Mesh has its own Material instance, which contains texture maps such as:
-	 * - Diffuse texture (`diffuse`): Defines the base color.
-	 * - Specular texture (`specular`): Controls the shininess and reflection.
-	 * - Normal texture (`normal`): Adds surface details without extra geometry.
-	 *
-	 * Even when multiple Mesh instances share the same VertexArray, they can have
-	 * independent materials, allowing customization of appearance without affecting
-	 * other instances.
-	 */
+	/** @brief Unique material instance assigned to the mesh. */
 	Material material;
+
+	/** @brief VertexArray object that stores the mesh's vertex data. */
+	VertexArray vao; 
+
+	/** @brief Number of vertices in the mesh. */
+	u32 numVertices;
+
+	/** @brief Number of indices in the mesh. */
+	u32 numIndices;
 };
