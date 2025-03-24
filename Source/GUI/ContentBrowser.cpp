@@ -1,11 +1,11 @@
 #include "Core/Core.hpp"
 #include "Core/Log/Logger.hpp"
+#include "Core/Paths/Paths.hpp"
 #include "Engine/Subsystems/TexturesManager.hpp"
-#include "Engine/Filesystem/Filesystem.hpp"
 
 #include <imgui/imgui.h>
 
-static fs::path contentBrowser_left_nodeSelected = Filesystem::GetAssetsPath();
+static fs::path contentBrowser_left_nodeSelected = Paths::GetAssetsPath();
 static fs::path contentBrowser_right_navCurrentDir = contentBrowser_left_nodeSelected;
 
 static void ContentBrowser_LeftCol_ListTree(const fs::path& currentDir)
@@ -50,7 +50,7 @@ static void ContentBrowser_RightCol_Navbar(f32 navbarHeight)
   static Texture2D iconBack = texManager.GetOrCreateIcon("back-arrow.png");
 
   // Back button
-  if (contentBrowser_right_navCurrentDir == Filesystem::GetAssetsPath())
+  if (contentBrowser_right_navCurrentDir == Paths::GetAssetsPath())
   {
     ImGui::BeginDisabled();
     ImGui::ImageButton("Back", reinterpret_cast<void*>(iconBack.id), ImVec2(16.0f, 16.0f));
@@ -97,7 +97,7 @@ static void ContentBrowser_RightCol_Thumbnails(f32 contentHeight)
 
           const fs::directory_entry& entry = *entryIt;
           const fs::path& absolutePath = entry.path();
-          const fs::path relativePath = fs::relative(absolutePath, Filesystem::GetIconsPath());
+          const fs::path relativePath = fs::relative(absolutePath, Paths::GetIconsPath());
           const fs::path filename = relativePath.filename();
           const String filenameString = filename.string();
           auto& manager = TexturesManager::Get();
@@ -116,7 +116,7 @@ static void ContentBrowser_RightCol_Thumbnails(f32 contentHeight)
             if (ext == ".png" || ext == ".jpg")
             {
               Texture2D texture{};
-              if (contentBrowser_right_navCurrentDir == Filesystem::GetIconsPath())
+              if (contentBrowser_right_navCurrentDir == Paths::GetIconsPath())
                 texture = manager.FindIcon(relativePath);
               else
                 texture = manager.FindTexture(relativePath);
@@ -169,7 +169,7 @@ void GUI_RenderContentBrowser(bool& open)
     ImGui::TableNextColumn();
     ImGui::BeginChild("LeftCol_Child", ImVec2(ImGui::GetColumnWidth(), tableHeight));
     {
-      const auto& assetsDir = Filesystem::GetAssetsPath();
+      const auto& assetsDir = Paths::GetAssetsPath();
       i32 flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_DefaultOpen;
       if (contentBrowser_left_nodeSelected == assetsDir)
         flags |= ImGuiTreeNodeFlags_Selected;

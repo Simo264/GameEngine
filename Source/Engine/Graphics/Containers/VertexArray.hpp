@@ -60,36 +60,33 @@ class VertexArray
 public:
   VertexArray() : 
     id{ 0 },
-    numIndices{ 0 },
-    numVertices{ 0 },
-    vbos{}
+		vbo{}
   {}
   ~VertexArray() = default;
 
   /**
-   * @brief Creates a new OpenGL Vertex Array Object (VAO).
-   * This method generates a new VAO using `glCreateVertexArrays()`,
-   * which is required for managing vertex attribute state and
-   * binding vertex buffers for rendering.
+   * @brief Creates a new Vertex Array Object (VAO).
    *
-   * The generated VAO ID is stored in `id` and is used for subsequent
-   * operations like attaching buffers and rendering.
+   * This method generates a new VAO and assigns it an ID. The VAO is used to store
+   * the state needed to supply vertex data to the OpenGL pipeline.
+   *
+   * @note This method should be called before any other operations on the VAO.
    */
   void Create();
 
   /**
    * @brief Deletes the Vertex Array Object (VAO) and its associated buffers.
-   * This method releases all GPU resources linked to the VAO, including:
-   * - The index buffer (EBO), if present.
-   * - All attached vertex buffers (VBOs).
+   *
+   * This method deletes the VAO and invalidates its ID. It also deletes any attached
+   * Vertex Buffer Object (VBO) and Element Buffer Object (EBO) if they are valid.
+   *
+   * @note After calling this method, the VAO and its buffers are no longer valid and should not be used.
+   *
    */
   void Delete();
 
   /** @brief Bind vertex array object. */
   void Bind() const;
-
-  /** @brief Unbind vertex array object. */
-  void Unbind() const;
 
   /**
    * @brief
@@ -105,8 +102,7 @@ public:
   void AttachElementBuffer(Buffer buffer) const;
 
   /**
-   * @brief
-   * Enable a generic vertex attribute array
+   * @brief Enable a generic vertex attribute array
    * 
    * @param attribindex: specifies the index of the generic vertex attribute to be enabled or disabled.
    */
@@ -172,8 +168,12 @@ public:
   
   bool IsValid() const;
 
-  u32 id;
-  u32 numVertices;
-  u32 numIndices;
-  Vector<Buffer> vbos;
+  /** @brief Vertex Array Object ID */
+	u32 id;
+
+  /** @brief Maximum number of Vertex Buffer attachments allowed for Vertex Array Object */
+  inline static constexpr u32 MAX_NUM_VBO_ATTACHMENTS = 16; 
+
+  /** @brief Vertex Buffer Object associated with the VAO */
+	Buffer vbo;
 };

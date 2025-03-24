@@ -1,6 +1,6 @@
 #include "Buffer.hpp"
 
-#include "Core/GL.hpp"
+#include "Core/OpenGL.hpp"
 #include "Core/Log/Logger.hpp"
 
 Buffer::Buffer(u64 size, const void* data, BufferUsage usage)
@@ -27,17 +27,17 @@ bool Buffer::IsValid() const
 
 void Buffer::CreateStorage(u64 size, const void* data, BufferUsage usage) const
 {
-	glNamedBufferData(id,
-										size,
-										data,
+	glNamedBufferData(id, 
+										size, 
+										data, 
 										static_cast<u32>(usage));
 }
 
 void Buffer::UpdateStorage(i32 offset, u32 size, const void* data) const
 {
-	glNamedBufferSubData(id,
-											 offset,
-											 size,
+	glNamedBufferSubData(id, 
+											 offset, 
+											 size, 
 											 data);
 }
 
@@ -54,7 +54,7 @@ bool Buffer::UnmapStorage() const
 void Buffer::BindBase(BufferTarget target, i32 bindingpoint) const
 {
 	glBindBufferBase(static_cast<u32>(target),
-									 bindingpoint,
+									 bindingpoint, 
 									 id);
 }
 

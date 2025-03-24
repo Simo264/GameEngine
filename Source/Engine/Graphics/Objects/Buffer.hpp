@@ -31,11 +31,11 @@ enum class BufferTarget : u32
 };
 
 /**
- * @brief Buffer Objects are OpenGL Objects that store an array of unformatted memory
+ * @brief Buffer Objects are OpenGL Objects that store an array of unformatted memory 
  * allocated by the OpenGL context.
- * These can be used to store vertex data, pixel data retrieved from images or the framebuffer,
+ * These can be used to store vertex data, pixel data retrieved from images or the framebuffer, 
  * and a variety of other things.
- *
+ * 
  * https://www.khronos.org/opengl/wiki/Buffer_Object
  */
 class Buffer
@@ -56,18 +56,18 @@ public:
 	 * @brief Create a new data store for the buffer object.
 	 * While creating the new storage, any pre-existing data store is deleted.
 	 * The new data store is created with the specified size in bytes and usage.
-	 *
-	 * @note If data is NULL, a data store of the specified size is still created,
+	 * 
+	 * @note If data is NULL, a data store of the specified size is still created, 
 	 * but its contents remain uninitialized and thus undefined.
 	 */
 	void CreateStorage(u64 size, const void* data, BufferUsage usage) const;
 
 	/**
 	 * @brief Updates a subset of the buffer object's data store.
-	 *
+	 * 
 	 * @param Offset specifies the offset (in bytes) into the buffer object's data store where data replacement will begin
 	 * @param Size specifies the size in bytes of the data store region being replaced
-	 *
+	 * 
 	 * @note If data is NULL no copy is performed and the contents of the buffer's data store become undefined.
 	 */
 	void UpdateStorage(i32 offset, u32 size, const void* data) const;

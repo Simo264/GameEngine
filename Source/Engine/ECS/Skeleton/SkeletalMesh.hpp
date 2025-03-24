@@ -96,7 +96,7 @@ public:
    */
   void Destroy() const;
 
-  void Draw(RenderMode mode) const;
+  void Render(class Program program, RenderMode mode) const;
   
   /**
    * @brief Finds the index of a bone given its name.
@@ -111,10 +111,6 @@ public:
    */
   i32 FindBone(StringView boneName) const;
   
-  u32 TotalVertices() const;
-
-  u32 TotalIndices() const;
-
   /**
    * @brief The root bone node of the bone hierarchy.
    *

@@ -1,6 +1,6 @@
 #include "DepthTest.hpp"
 
-#include "Core/GL.hpp"
+#include "Core/OpenGL.hpp"
 
 namespace DepthTest
 {

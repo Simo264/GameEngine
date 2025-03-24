@@ -1,7 +1,7 @@
 #include "ModelsManager.hpp"
 
 #include "Core/Log/Logger.hpp"
-#include "Engine/Filesystem/Filesystem.hpp"
+#include "Core/Paths/Paths.hpp"
 
 void ModelsManager::CleanUp()
 {
@@ -25,7 +25,7 @@ const StaticMesh& ModelsManager::CreateStaticMesh(const fs::path& relative)
 	u32 currentId = _staticMeshObjects.size();
 	
 	//CONSOLE_INFO("Create new static mesh {}: '{}'", staticMeshId, absolute.string());
-	fs::path absolute = (Filesystem::GetStaticModelsPath() / relative).lexically_normal();
+	fs::path absolute = (Paths::GetStaticModelsPath() / relative).lexically_normal();
 	auto& newMesh = _staticMeshObjects.emplace_back();
 	newMesh.CreateFromPath(absolute);
 	newMesh.id = currentId;
@@ -49,7 +49,7 @@ const SkeletalMesh& ModelsManager::CreateSkeletalMesh(const fs::path& relative)
 	u32 currentId = _skeletalMeshObjects.size();
 
 	//CONSOLE_INFO("Create new skeletal mesh {}: '{}'", skeletonId, absolute.string());
-	fs::path absolute = (Filesystem::GetSkeletalModelsPath() / relative).lexically_normal();
+	fs::path absolute = (Paths::GetSkeletalModelsPath() / relative).lexically_normal();
 	SkeletalMesh& skeleton = _skeletalMeshObjects.emplace_back();
 	skeleton.CreateFromFile(absolute);
 	skeleton.id = currentId;

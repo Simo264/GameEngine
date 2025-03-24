@@ -30,7 +30,6 @@ struct DirectionalLight
   vec3  direction;
   float __padding;  // Needed for std140 alignment
 };
-
 struct Attenuation
 {
 	int range;  // If an objects distance is greater than the range, the light has no effect on the object

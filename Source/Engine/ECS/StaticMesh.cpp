@@ -1,12 +1,14 @@
 #include "StaticMesh.hpp"
 
-#include "Core/GL.hpp"
+#include "Core/OpenGL.hpp"
 #include "Core/Log/Logger.hpp"
+#include "Core/Paths/Paths.hpp"
+
+#include "Engine/Graphics/Shader.hpp"
 #include "Engine/Graphics/Material.hpp"
 #include "Engine/Graphics/Vertex.hpp"
 #include "Engine/Graphics/Objects/Buffer.hpp"
 #include "Engine/Subsystems/TexturesManager.hpp"
-#include "Engine/Filesystem/Filesystem.hpp"
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -68,30 +70,10 @@ void StaticMesh::Destroy() const
 		meshes[i].Destroy();
 }
 
-void StaticMesh::Draw(RenderMode mode) const
+void StaticMesh::Render(Program program, RenderMode mode) const
 {
-	for (u32 i = 0; i < nrMeshes; i++ )
-	{
-		auto& mesh = meshes[i];
-		mesh.material.diffuse.BindTextureUnit(0);
-		mesh.material.specular.BindTextureUnit(1);
-		mesh.material.normal.BindTextureUnit(2);
-		mesh.Draw(mode);
-	}	
-}
-
-u32 StaticMesh::TotalVertices() const
-{
-	return std::reduce(meshes.get(), meshes.get() + nrMeshes, 0, [](i32 acc, const Mesh& mesh) {
-		return acc + mesh.vao->numVertices;
-	});
-}
-
-u32 StaticMesh::TotalIndices() const
-{
-	return std::reduce(meshes.get(), meshes.get() + nrMeshes, 0, [](i32 acc, const Mesh& mesh) {
-		return acc + mesh.vao->numIndices;
-		});
+	for (u32 i = 0; i < nrMeshes; i++)
+		meshes[i].Render(program, mode);
 }
 
 // ---------------------------------------------------- 
@@ -113,18 +95,19 @@ void StaticMesh::ProcessNode(aiNode* node, const aiScene* scene)
 
 		// Load vertices
 		Buffer vbo = LoadVertices(aimesh);
-		mesh.vao->AttachVertexBuffer(0, vbo, 0, sizeof(Vertex_P_N_UV_T));
-		mesh.vao->numVertices = aimesh->mNumVertices;
+		mesh.vao.AttachVertexBuffer(0, vbo, 0, sizeof(Vertex_P_N_UV_T));
+		mesh.numVertices = aimesh->mNumVertices;
 		// Load indices
 		Buffer ebo = LoadIndices(aimesh);
-		mesh.vao->AttachElementBuffer(ebo);
-		mesh.vao->numIndices = aimesh->mNumFaces * 3;
+		mesh.vao.AttachElementBuffer(ebo);
+		mesh.numIndices = aimesh->mNumFaces * 3;
 
 		if (scene->HasMaterials())
 		{
+			auto& manager = TexturesManager::Get();
+
 			aiString fileName;
 			aiMaterial* material = scene->mMaterials[aimesh->mMaterialIndex];
-			auto& manager = TexturesManager::Get();
 			if (material->GetTexture(aiTextureType_DIFFUSE, 0, &fileName) == aiReturn_SUCCESS)
 				mesh.material.diffuse = manager.GetOrCreateTexture(fileName.C_Str());
 			if (material->GetTexture(aiTextureType_SPECULAR, 0, &fileName) == aiReturn_SUCCESS)

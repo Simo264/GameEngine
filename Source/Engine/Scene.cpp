@@ -1,23 +1,328 @@
 #include "Scene.hpp"
 
-#include "Core/GL.hpp"
+#include "Core/OpenGL.hpp"
 #include "Core/Log/Logger.hpp"
+#include "Core/Paths/Paths.hpp"
+#include "Core/Serialization/YAMLParser.hpp"
 
 #include "Engine/Utils.hpp"
 #include "Engine/ECS/ECS.hpp"
-#include "Engine/IniFileHandler.hpp"
 #include "Engine/Graphics/Shader.hpp"
 #include "Engine/Subsystems/ModelsManager.hpp"
 #include "Engine/Subsystems/AnimationsManager.hpp"
-#include "Engine/Filesystem/Filesystem.hpp"
+
+static void DeserializeTag(GameObject& object, const YAML::Node& component)
+{
+	String tag = component.as<String>();
+	object.GetComponent<Tag>()->UpdateValue(tag);
+}
+static void DeserializeTransform(GameObject& object, const YAML::Node& component)
+{
+	Transform& transform = object.AddComponent<Transform>();
+	YAML::Node node = component["position"];
+	transform.position = {
+		node[0].as<f32>(),
+		node[1].as<f32>(),
+		node[2].as<f32>()
+	}; 
+	node = component["scale"];
+	transform.scale = {
+		node[0].as<f32>(),
+		node[1].as<f32>(),
+		node[2].as<f32>()
+	};
+	node = component["rotation"];
+	transform.rotation = {
+		node[0].as<f32>(),
+		node[1].as<f32>(),
+		node[2].as<f32>()
+	};
+	transform.UpdateTransformation();
+}
+static void DeserializeStaticMesh(GameObject& object, const YAML::Node& component)
+{
+	ModelsManager& modelsManager = ModelsManager::Get();
+
+	fs::path path = component["path"].as<String>();
+	const StaticMesh* staticMesh = modelsManager.FindStaticMesh(path);
+	if (!staticMesh)
+		staticMesh = &modelsManager.CreateStaticMesh(path);
+
+	StaticMesh& staticMeshComponent = object.AddComponent<StaticMesh>();
+	staticMesh->Clone(staticMeshComponent);
+}
+static void DeserializeSkeletalMesh(GameObject& object, const YAML::Node& component)
+{
+	ModelsManager& modelsManager = ModelsManager::Get();
+	AnimationsManager& animationsManager = AnimationsManager::Get();
+
+	SkeletalMesh& skeletalMeshComponent = object.AddComponent<SkeletalMesh>();
+	Animator& animatorComponent = object.AddComponent<Animator>();
+
+	// The relative path to "Assets/Models/Skeletal" (e.g. "Mutant/Mutant.gltf")
+	fs::path path = component["path"].as<String>();
+	const SkeletalMesh* skeleton = modelsManager.FindSkeletalMesh(path);
+	if (!skeleton)
+	{
+		skeleton = &modelsManager.CreateSkeletalMesh(path);
+
+		// skeletonPath = "Mutant/"
+		fs::path parent = path.parent_path();
+		// skeletonPath = "GameEngine/Assets/Models/Skeletal/Mutant"
+		fs::path absolute = (Paths::GetSkeletalModelsPath() / parent);
+		// skeletonPath = "GameEngine/Assets/Models/Skeletal/animlist.txt"
+		fs::path animlistFile = absolute / "animlist.txt";
+		
+		Vector<fs::path> relativeAnims{};
+		if (!fs::exists(animlistFile))
+		{
+			CONSOLE_WARN("{} file does not exist");
+		}
+		else
+		{
+			InputFileStream file(animlistFile);
+			// relativeAnims = [ 
+			//	"Drunk_Walk/<filename>.gltf", 
+			//	"Silly_Dancing/<filename>.gltf" 
+			// ]
+			relativeAnims.assign(
+				std::istream_iterator<fs::path>(file), 
+				std::istream_iterator<fs::path>());
+
+			// relativeAnims = [ 
+			//	"Mutant/Drunk_Walk/<filename>.gltf", 
+			//	"Mutant/Silly_Dancing/<filename>.gltf" 
+			// ]
+			for (auto& p : relativeAnims)
+				p = parent / p;
+		}
+		animationsManager.LoadAnimations(*skeleton, relativeAnims);
+	}
+
+	skeleton->Clone(skeletalMeshComponent);
+	animatorComponent.SetTargetSkeleton(skeletalMeshComponent);
+}
+static void DeserializeDirLight(GameObject& object, const YAML::Node& component)
+{
+	auto& light = object.AddComponent<DirectionalLight>();
+	YAML::Node node = component["color"];
+	light.color = {
+			node[0].as<f32>(),
+			node[1].as<f32>(),
+			node[2].as<f32>()
+	};
+	node = component["direction"];
+	light.direction = {
+			node[0].as<f32>(),
+			node[1].as<f32>(),
+			node[2].as<f32>()
+	};
+	light.intensity = component["intensity"].as<f32>();
+}
+static void DeserializePointLight(GameObject& object, const YAML::Node& component)
+{
+	auto& light = object.AddComponent<PointLight>();
+	YAML::Node node = component["color"];
+	light.color = {
+			node[0].as<f32>(),
+			node[1].as<f32>(),
+			node[2].as<f32>()
+	};
+	node = component["position"];
+	light.position = {
+			node[0].as<f32>(),
+			node[1].as<f32>(),
+			node[2].as<f32>()
+	};
+	light.intensity = component["intensity"].as<f32>();
+	light.attenuation.range = component["attenuation.range"].as<i32>();
+	light.attenuation.kl = component["attenuation.kl"].as<f32>();
+	light.attenuation.kq = component["attenuation.kq"].as<f32>();
+}
+static void DeserializeSpotLight(GameObject& object, const YAML::Node& component)
+{
+	auto& light = object.AddComponent<SpotLight>();
+	YAML::Node node = component["color"];
+	light.color = {
+			node[0].as<f32>(),
+			node[1].as<f32>(),
+			node[2].as<f32>()
+	};
+	node = component["direction"];
+	light.direction = {
+			node[0].as<f32>(),
+			node[1].as<f32>(),
+			node[2].as<f32>()
+	};
+	node = component["position"];
+	light.position = {
+			node[0].as<f32>(),
+			node[1].as<f32>(),
+			node[2].as<f32>()
+	};
+	light.intensity = component["intensity"].as<f32>();
+	light.attenuation.range = component["attenuation.range"].as<i32>();
+	light.attenuation.kl = component["attenuation.kl"].as<f32>();
+	light.attenuation.kq = component["attenuation.kq"].as<f32>();
+	light.cutOff = component["cutOff"].as<f32>();
+	light.outerCutOff = component["outerCutOff"].as<f32>();
+}
+static void DeserializeLight(GameObject& object, const YAML::Node& component)
+{
+	i32 type = component["type"].as<i32>();
+	object.AddComponent<Light>(static_cast<LightType>(type));
+	switch (static_cast<LightType>(type))
+	{
+		case LightType::DIRECTIONAL:
+			DeserializeDirLight(object, component);
+			break;
+		case LightType::POINT:
+			DeserializePointLight(object, component);
+			break;
+		case LightType::SPOT:
+			DeserializeSpotLight(object, component);
+			break;
+		default:
+			throw std::runtime_error("invalid LightType");
+	}
+}
+static UnorderedMap<String, std::function<void(GameObject&, const YAML::Node&)>> deserializationMap = 
+{
+	{ "Tag", DeserializeTag },
+	{ "Transform", DeserializeTransform },
+	{ "StaticMesh", DeserializeStaticMesh },
+	{ "SkeletalMesh", DeserializeSkeletalMesh },
+	{ "Light", DeserializeSkeletalMesh },
+};
+
+
+static void SerializeTag(YAML::Emitter& outEmitter, const Tag& tag)
+{
+	outEmitter << YAML::Key << "Tag" << YAML::Value << tag.value.data();
+}
+static void SerializeTransform(YAML::Emitter& outEmitter, const Transform& transform)
+{
+	outEmitter << YAML::Key << "Transform";
+	outEmitter << YAML::BeginMap;
+	outEmitter << YAML::Key << "position";
+	outEmitter << YAML::Flow << YAML::BeginSeq;
+	outEmitter << transform.position.x << transform.position.y << transform.position.z;
+	outEmitter << YAML::EndSeq;
+	outEmitter << YAML::Key << "scale";
+	outEmitter << YAML::Flow << YAML::BeginSeq;
+	outEmitter << transform.scale.x << transform.scale.y << transform.scale.z;
+	outEmitter << YAML::EndSeq;
+	outEmitter << YAML::Key << "rotation";
+	outEmitter << YAML::Flow << YAML::BeginSeq;
+	outEmitter << transform.rotation.x << transform.rotation.y << transform.rotation.z;
+	outEmitter << YAML::EndSeq;
+	outEmitter << YAML::EndMap;
+}
+static void SerializeStaticMesh(YAML::Emitter& outEmitter, const StaticMesh& staticMesh)
+{
+	ModelsManager& modelsManager = ModelsManager::Get();
+	const fs::path& path = *modelsManager.GetStaticMeshPath(staticMesh.id);
+	outEmitter << YAML::Key << "StaticMesh";
+	outEmitter << YAML::BeginMap;
+	outEmitter << YAML::Key << "path" << YAML::Value << path.string();
+	outEmitter << YAML::EndMap;
+}
+static void SerializeSkeletalMesh(YAML::Emitter& outEmitter, const SkeletalMesh& skeletalMesh)
+{
+	ModelsManager& modelsManager = ModelsManager::Get();
+	const fs::path& path = *modelsManager.GetSkeletalMeshPath(skeletalMesh.id);
+	outEmitter << YAML::Key << "SkeletalMesh";
+	outEmitter << YAML::BeginMap;
+	outEmitter << YAML::Key << "path" << YAML::Value << path.string();
+	outEmitter << YAML::EndMap;
+}
+static void SerializeDirectionalLight(YAML::Emitter& outEmitter, const DirectionalLight& light)
+{
+	outEmitter << YAML::Key << "color";
+	outEmitter << YAML::Flow << YAML::BeginSeq;
+	outEmitter << light.color.x << light.color.y << light.color.z;
+	outEmitter << YAML::EndSeq;
+	outEmitter << YAML::Key << "direction";
+	outEmitter << YAML::Flow << YAML::BeginSeq;
+	outEmitter << light.direction.x << light.direction.y << light.direction.z;
+	outEmitter << YAML::EndSeq;
+	outEmitter << YAML::Key << "intensity" << YAML::Value << light.intensity;
+}
+static void SerializePointLight(YAML::Emitter& outEmitter, const PointLight& light)
+{
+	outEmitter << YAML::Key << "color";
+	outEmitter << YAML::Flow << YAML::BeginSeq;
+	outEmitter << light.color.x << light.color.y << light.color.z;
+	outEmitter << YAML::EndSeq;
+	outEmitter << YAML::Key << "position";
+	outEmitter << YAML::Flow << YAML::BeginSeq;
+	outEmitter << light.position.x << light.position.y << light.position.z;
+	outEmitter << YAML::EndSeq;
+	outEmitter << YAML::Key << "intensity" << YAML::Value << light.intensity;
+	outEmitter << YAML::Key << "attenuation.range" << YAML::Value << light.attenuation.range;
+	outEmitter << YAML::Key << "attenuation.kl" << YAML::Value << light.attenuation.kl;
+	outEmitter << YAML::Key << "attenuation.kq" << YAML::Value << light.attenuation.kq;
+}
+static void SerializeSpotLight(YAML::Emitter& outEmitter, const SpotLight& light)
+{
+	outEmitter << YAML::Key << "color";
+	outEmitter << YAML::Flow << YAML::BeginSeq;
+	outEmitter << light.color.x << light.color.y << light.color.z;
+	outEmitter << YAML::EndSeq;
+	outEmitter << YAML::Key << "direction";
+	outEmitter << YAML::Flow << YAML::BeginSeq;
+	outEmitter << light.direction.x << light.direction.y << light.direction.z;
+	outEmitter << YAML::EndSeq;
+	outEmitter << YAML::Key << "position";
+	outEmitter << YAML::Flow << YAML::BeginSeq;
+	outEmitter << light.position.x << light.position.y << light.position.z;
+	outEmitter << YAML::EndSeq;
+	outEmitter << YAML::Key << "intensity" << YAML::Value << light.intensity;
+	outEmitter << YAML::Key << "attenuation.range" << YAML::Value << light.attenuation.range;
+	outEmitter << YAML::Key << "attenuation.kl" << YAML::Value << light.attenuation.kl;
+	outEmitter << YAML::Key << "attenuation.kq" << YAML::Value << light.attenuation.kq;
+	outEmitter << YAML::Key << "cutOff" << YAML::Value << light.cutOff;
+	outEmitter << YAML::Key << "outerCutOff" << YAML::Value << light.outerCutOff;
+}
+static void SerializeLight(YAML::Emitter& outEmitter, const Light& light, GameObject& object)
+{
+	outEmitter << YAML::Key << "Light";
+	outEmitter << YAML::BeginMap;
+	outEmitter << YAML::Key << "type" << YAML::Value << static_cast<i32>(light.type);
+	switch (light.type)
+	{
+		case LightType::DIRECTIONAL:
+		{
+			auto& dirLight = *object.GetComponent<DirectionalLight>();
+			SerializeDirectionalLight(outEmitter, dirLight);
+			break;
+		}
+		case LightType::POINT:
+		{
+			auto& pointLight = *object.GetComponent<PointLight>();
+			SerializePointLight(outEmitter, pointLight);
+			break;
+		}
+		case LightType::SPOT:
+		{
+			const auto& spotLight = *object.GetComponent<SpotLight>();
+			SerializeSpotLight(outEmitter, spotLight);
+			break;
+		}
+		default:
+			throw std::runtime_error("invalid LightType");
+	}
+	outEmitter << YAML::EndMap;
+}
+
 
 // ----------------------------------- 
 //								PUBLIC							 
 // -----------------------------------
 
-Scene::Scene(const fs::path& filePath)
+Scene::Scene(const fs::path& loadFrom)
 {
-	LoadFromFile(filePath);
+	LoadFromFile(loadFrom);
 }
 GameObject Scene::CreateObject(StringView objName)
 {
@@ -44,279 +349,79 @@ void Scene::Clear()
 {
 	_registry.clear();
 }
-void Scene::LoadFromFile(const fs::path& filePath)
+void Scene::LoadFromFile(const fs::path& loadFrom)
 {
-	CONSOLE_INFO("Loading scene {}...", filePath.relative_path().string());
-	DeserializeScene(filePath);
+	CONSOLE_INFO("Loading scene {}...", loadFrom.relative_path().string());
+	DeserializeScene(loadFrom);
 }
-void Scene::Save(const fs::path& filePath)
+void Scene::SaveToFile(const fs::path& out)
 {
-	CONSOLE_INFO("Saving scene {}...", filePath.relative_path().string());
-	SerializeScene(filePath);
+	CONSOLE_INFO("Saving scene {}...", out.relative_path().string());
+	SerializeScene(out);
 }
 
 // -----------------------------------
 //								PRIVATE							
 // -----------------------------------
 
-void Scene::SerializeScene(const fs::path& filePath)
+void Scene::SerializeScene(const fs::path& out)
 {
-	IniFileHandler conf(filePath);
-	for (auto [entity, tag] : Reg().view<Tag>().each())
+	ModelsManager& modelsManager = ModelsManager::Get();
+	
+	YAML::Emitter outEmitter;
+	outEmitter << YAML::BeginMap;
+	for (auto entity : Reg().view<entt::entity>())
 	{
 		GameObject object{ entity, &Reg() };
-		const u32 objectID = static_cast<u32>(object.id);
 
-		String section = std::format("Entity{}:Tag", objectID);
-		conf.Update(section, "value", tag.value.data());
+		Array<char, 32> entityName{};
+		std::format_to_n(entityName.data(), entityName.size(), "Entity{}", static_cast<u32>(object.id));
 
-		if (Transform* transform = object.GetComponent<Transform>())
-		{
-			String section = std::format("Entity{}:Transform", objectID);
-			conf.Update(section, "position", std::format("{},{},{}", transform->position.x, transform->position.y, transform->position.z));
-			conf.Update(section, "scale", std::format("{},{},{}", transform->scale.x, transform->scale.y, transform->scale.z));
-			conf.Update(section, "rotation", std::format("{},{},{}", transform->rotation.x, transform->rotation.y, transform->rotation.z));
-		}
+		outEmitter << YAML::Key << entityName.data();
+		outEmitter << YAML::BeginMap;
+		
+		Tag& tag = *object.GetComponent<Tag>();
+		SerializeTag(outEmitter, tag);
+
+		if(Transform* transform = object.GetComponent<Transform>())
+			SerializeTransform(outEmitter, *transform);
+		
 		if (StaticMesh* staticMesh = object.GetComponent<StaticMesh>())
-		{
-			auto& manager = ModelsManager::Get();
-			String section = std::format("Entity{}:StaticMesh", objectID);
-			const fs::path* path = manager.GetStaticMeshPath(staticMesh->id);
-			conf.Update(section, "path", path->string());
-		}
+			SerializeStaticMesh(outEmitter, *staticMesh);
+		
 		if (SkeletalMesh* skeleton = object.GetComponent<SkeletalMesh>())
-		{
-			auto& manager = ModelsManager::Get();
-			String section = std::format("Entity{}:SkeletalMesh", objectID);
-			const fs::path* path = manager.GetSkeletalMeshPath(skeleton->id);
-			conf.Update(section, "path", path->string());
-		}
+			SerializeSkeletalMesh(outEmitter, *skeleton);
+
 		if (Light* light = object.GetComponent<Light>())
-		{
-			String section = std::format("Entity{}:Light", objectID);
-			String type = std::to_string(static_cast<i32>(light->type));
-			conf.Update(section, "type", type);
-			switch (light->type)
-			{
-			case LightType::DIRECTIONAL:
-			{
-				auto* dirLight = object.GetComponent<DirectionalLight>();
-				String color = std::format("{},{},{}", dirLight->color.x, dirLight->color.y, dirLight->color.z);
-				String intensity = std::to_string(dirLight->intensity);
-				String direction = std::format("{},{},{}", dirLight->direction.x, dirLight->direction.y, dirLight->direction.z);
-				conf.Update(section, "color", color);
-				conf.Update(section, "intensity", intensity);
-				conf.Update(section, "direction", direction);
-				break;
-			}
-			case LightType::POINT:
-			{
-				auto* pointLight = object.GetComponent<PointLight>();
-				String color = std::format("{},{},{}", pointLight->color.x, pointLight->color.y, pointLight->color.z);
-				String intensity = std::to_string(pointLight->intensity);
-				String position = std::format("{},{},{}", pointLight->position.x, pointLight->position.y, pointLight->position.z);
-				String range = std::to_string(pointLight->attenuation.range);
-				String kl = std::to_string(pointLight->attenuation.kl);
-				String kq = std::to_string(pointLight->attenuation.kq);
-				conf.Update(section, "color", color);
-				conf.Update(section, "intensity", intensity);
-				conf.Update(section, "position", position);
-				conf.Update(section, "attenuation.range", range);
-				conf.Update(section, "attenuation.kl", kl);
-				conf.Update(section, "attenuation.kq", kq);
-				break;
-			}
-			case LightType::SPOT:
-			{
-				auto* spotLight = object.GetComponent<SpotLight>();
-				String color = std::format("{},{},{}", spotLight->color.x, spotLight->color.y, spotLight->color.z);
-				String intensity = std::to_string(spotLight->intensity);
-				String direction = std::format("{},{},{}", spotLight->direction.x, spotLight->direction.y, spotLight->direction.z);
-				String position = std::format("{},{},{}", spotLight->position.x, spotLight->position.y, spotLight->position.z);
-				String cutOff = std::to_string(spotLight->cutOff);
-				String outerCutOff = std::to_string(spotLight->outerCutOff);
-				String range = std::to_string(spotLight->attenuation.range);
-				String kl = std::to_string(spotLight->attenuation.kl);
-				String kq = std::to_string(spotLight->attenuation.kq);
-				conf.Update(section, "color", color);
-				conf.Update(section, "intensity", intensity);
-				conf.Update(section, "direction", direction);
-				conf.Update(section, "position", position);
-				conf.Update(section, "attenuation.range", range);
-				conf.Update(section, "attenuation.kl", kl);
-				conf.Update(section, "attenuation.kq", kq);
-				conf.Update(section, "cutOff", cutOff);
-				conf.Update(section, "outerCutOff", outerCutOff);
-				break;
-			}
-			}
-		}
+			SerializeLight(outEmitter, *light, object);
+
+		outEmitter << YAML::EndMap;
 	}
-	conf.Generate(false);
+	
+	outEmitter << YAML::EndMap;
+	OutputFileStream outFile(out);
+	outFile << outEmitter.c_str();
+	outFile.close();
 }
-void Scene::DeserializeScene(const fs::path& filePath)
+void Scene::DeserializeScene(const fs::path& loadFrom)
 {
-	IniFileHandler conf(filePath);
-	conf.ReadData();
-
-	GameObject object;
-	u32 currentObjectId = static_cast<u32>(entt::null);
-	for (const auto& it : conf.GetData())
+	YAML::Node scene = YAML::LoadFile(loadFrom.string());
+	for (const auto& entity : scene)
 	{
-		const String& section = it.first;
-		StringView view{ section };
-		u32 dots = view.find_first_of(':');
-		u32 objectId = std::strtoul(view.substr(6, (dots - 6)).data(), nullptr, 10);
-		StringView component = view.substr(dots + 1);
-
-		if (currentObjectId != objectId)
+		GameObject object = CreateObject();
+		
+		for (const auto& component : entity.second)
 		{
-			currentObjectId = objectId;
-			object = CreateObject();
-		}
-
-		if (component == "Tag")
-		{
-			const String& value = conf.GetValue(section, "value");
-			object.GetComponent<Tag>()->UpdateValue(value);
-		}
-		else if (component == "Transform")
-		{
-			const String& position = conf.GetValue(section, "position");
-			const String& rotation = conf.GetValue(section, "rotation");
-			const String& scale = conf.GetValue(section, "scale");
-
-			auto& transform = object.AddComponent<Transform>();
-			transform.position = Utils::StringToVec3f(position);
-			transform.rotation = Utils::StringToVec3f(rotation);
-			transform.scale = Utils::StringToVec3f(scale);
-			transform.UpdateTransformation();
-		}
-		else if (component == "StaticMesh")
-		{
-			auto& manager = ModelsManager::Get();
-			const String& strPath = conf.GetValue(section, "path");
-			const StaticMesh* staticMesh = manager.FindStaticMesh(strPath);
-			if (!staticMesh)
-				staticMesh = &manager.CreateStaticMesh(strPath);
-
-			StaticMesh& component = object.AddComponent<StaticMesh>();
-			staticMesh->Clone(component);
-		}
-		else if (component == "SkeletalMesh")
-		{
-			SkeletalMesh& skmeshComponent = object.AddComponent<SkeletalMesh>();
-			Animator& animatorComponent = object.AddComponent<Animator>();
-
-			ModelsManager& modManager = ModelsManager::Get();
-			AnimationsManager& animManager = AnimationsManager::Get();
-
-			// The relative path to "Assets/Models/Skeletal" 
-			// E.g. "Mutant/Mutant.gltf"
-			fs::path relative = conf.GetValue(section, "path");
-			const SkeletalMesh* skeleton = modManager.FindSkeletalMesh(relative);
-			if (!skeleton)
+			String componentName = component.first.as<String>();
+			auto it = deserializationMap.find(componentName);
+			if (it == deserializationMap.end())
 			{
-				skeleton = &modManager.CreateSkeletalMesh(relative);
-				
-				// E.g. skeletonPath = "Mutant/"
-				fs::path parent = relative.parent_path();
-				// E.g. skeletonPath = "D:\GameEngine\Assets\Models\Skeletal\Mutant"
-				fs::path absolute = (Filesystem::GetSkeletalModelsPath() / parent);
-				// E.g. skeletonPath = "D:\GameEngine\Assets\Models\Skeletal\animlist.txt"
-				fs::path animlistFile = absolute / "animlist.txt";
-
-				Vector<fs::path> relativeAnims{};
-				if (!fs::exists(animlistFile))
-				{
-					CONSOLE_WARN("{} file does not exist");
-				}
-				else
-				{
-					IStream file(animlistFile);
-
-					// E.g. relativeAnims = [ 
-					//	"Drunk_Walk/<filename>.gltf", 
-					//	"Silly_Dancing/<filename>.gltf" 
-					// ]
-					relativeAnims.assign(std::istream_iterator<fs::path>(file), std::istream_iterator<fs::path>());
-
-					// E.g. relativeAnims = [ 
-					//	"Mutant/Drunk_Walk/<filename>.gltf", 
-					//	"Mutant/Silly_Dancing/<filename>.gltf" 
-					// ]
-					for (auto& p : relativeAnims)
-						p = parent / p;
-				}
-
-				animManager.LoadAnimations(*skeleton, relativeAnims);
-			}
-			
-			skeleton->Clone(skmeshComponent);
-			animatorComponent.SetTargetSkeleton(skmeshComponent);
-		}
-		else if (component == "Light")
-		{
-			i32 type = Utils::StringToI32(conf.GetValue(section, "type"));
-			object.AddComponent<Light>(static_cast<LightType>(type));
-
-			switch (static_cast<LightType>(type))
-			{
-			case LightType::DIRECTIONAL:
-			{
-				const String& color = conf.GetValue(section, "color");
-				const String& intensity = conf.GetValue(section, "intensity");
-				const String& direction = conf.GetValue(section, "direction");
-				auto& light = object.AddComponent<DirectionalLight>();
-				light.color = Utils::StringToVec3f(color);
-				light.intensity = Utils::StringToF32(intensity);
-				light.direction = Utils::StringToVec3f(direction);
-				break;
-			}
-			case LightType::POINT:
-			{
-				const String& color = conf.GetValue(section, "color");
-				const String& intensity = conf.GetValue(section, "intensity");
-				const String& position = conf.GetValue(section, "position");
-				const String& range = conf.GetValue(section, "attenuation.range");
-				const String& kl = conf.GetValue(section, "attenuation.kl");
-				const String& kq = conf.GetValue(section, "attenuation.kq");
-				auto& light = object.AddComponent<PointLight>();
-				light.color = Utils::StringToVec3f(color);
-				light.intensity = Utils::StringToF32(intensity);
-				light.position = Utils::StringToVec3f(position);
-				light.attenuation.range = Utils::StringToI32(range);
-				light.attenuation.kl = Utils::StringToF32(kl);
-				light.attenuation.kq = Utils::StringToF32(kq);
-				break;
-			}
-			case LightType::SPOT:
-			{
-				const String& color = conf.GetValue(section, "color");
-				const String& intensity = conf.GetValue(section, "intensity");
-				const String& position = conf.GetValue(section, "position");
-				const String& direction = conf.GetValue(section, "direction");
-				const String& range = conf.GetValue(section, "attenuation.range");
-				const String& kl = conf.GetValue(section, "attenuation.kl");
-				const String& kq = conf.GetValue(section, "attenuation.kq");
-				const String& cutOff = conf.GetValue(section, "cutOff");
-				const String& outerCutOff = conf.GetValue(section, "outerCutOff");
-				auto& light = object.AddComponent<SpotLight>();
-				light.color = Utils::StringToVec3f(color);
-				light.intensity = Utils::StringToF32(intensity);
-				light.position = Utils::StringToVec3f(position);
-				light.direction = Utils::StringToVec3f(direction);
-				light.attenuation.range = Utils::StringToI32(range);
-				light.attenuation.kl = Utils::StringToF32(kl);
-				light.attenuation.kq = Utils::StringToF32(kq);
-				light.cutOff = Utils::StringToF32(cutOff);
-				light.outerCutOff = Utils::StringToF32(outerCutOff);
-				break;
+				CONSOLE_WARN("Invalid component found");
+				continue;
 			}
 
-			default:
-				throw std::runtime_error("error on loading scene: invalid LightType");
-			}
+			// Call the appropriate deserialisation function
+			it->second(object, component.second);
 		}
 	}
 }

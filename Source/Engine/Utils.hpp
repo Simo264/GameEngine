@@ -3,11 +3,6 @@
 #include "Core/Core.hpp"
 #include "Core/Math/Base.hpp"
 
-/**
- * @namespace Utils
- * 
- * @brief Collection of utility functions
- */
 namespace Utils
 {
 	/** @brief Converts a string to a 32-bit integer. */
@@ -32,51 +27,10 @@ namespace Utils
 	bool StringToBool(StringView str);
 
 	/**
-	 * @brief Loads image data from a file.
-	 * 
-	 * @param absolutePath Path to the image file.
-	 * @param width Reference to store the width of the image.
-	 * @param height Reference to store the height of the image.
-	 * @param nChannels Reference to store the number of channels.
-	 * 
-	 * @return Pointer to the loaded image data.
-	 */
-	u8* LoadImageData(const fs::path& absolutePath, i32& width, i32& height, i32& nChannels);
-
-	/**
-	 * @brief Frees allocated image data.
-	 * 
-	 * @param data Pointer to the image data to free.
-	 */
-	void FreeImageData(u8* data);
-
-	/**
-	 * @brief Opens a native file dialog to select files.
+	 * @brief Counts the number of files in a directory.
 	 *
-	 * This function displays an open file dialog, allowing the user to select one or multiple files
-	 * based on the specified filters and description.
-	 *
-	 * @param numFilters Number of filter patterns.
-	 * @param filter Array of filter patterns (e.g., {"*.txt", "*.png"}).
-	 * @param filterDescription Description for the filter (e.g., "Text Files").
-	 * @param multipleSelects Boolean flag indicating if multiple files can be selected.
-	 * @return A path containing the path of the selected file(s). If multiple files are selected,
-	 *         the paths are separated by '|'. Returns an empty String if the dialog is canceled.
+	 * This function counts the number of files in the specified directory. If the recursive flag is set to true,
+	 * it will count the files in all subdirectories as well.
 	 */
-	fs::path OpenFileDialog(i32 numFilters, const char* filter[], const char* filterDescription, bool multipleSelects);
-
-	/**
-	 * @brief Opens a native file dialog to save a file.
-	 *
-	 * This function displays a save file dialog, allowing the user to specify the location
-	 * and name of the file to save, based on the provided filters and description.
-	 *
-	 * @param numFilters Number of filter patterns.
-	 * @param filter Array of filter patterns (e.g., {"*.txt", "*.png"}).
-	 * @param filterDescription Description for the filter (e.g., "Text Files").
-	 * @return A path containing the path of the file to be saved. Returns an empty String if the dialog is canceled.
-	 */
-	fs::path SaveFileDialog(i32 numFilters, const char* filter[], const char* filterDescription);
-
 	u32 CountFilesInDirectory(const fs::path& directoryPath, bool recursive = false);
 };

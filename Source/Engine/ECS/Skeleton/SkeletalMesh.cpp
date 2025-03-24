@@ -1,12 +1,14 @@
 #include "SkeletalMesh.hpp"
 
-#include "Core/GL.hpp"
+#include "Core/OpenGL.hpp"
 #include "Core/Log/Logger.hpp"
+#include "Core/Paths/Paths.hpp"
+
+#include "Engine/Graphics/Shader.hpp"
 #include "Engine/Graphics/Material.hpp"
 #include "Engine/Graphics/Vertex.hpp"
 #include "Engine/Graphics/Objects/Buffer.hpp"
 #include "Engine/Subsystems/TexturesManager.hpp"
-#include "Engine/Filesystem/Filesystem.hpp"
 #include "Engine/Globals.hpp"
 
 #include <assimp/Importer.hpp>
@@ -87,16 +89,10 @@ void SkeletalMesh::Destroy() const
 		meshes[i].Destroy();
 }
 
-void SkeletalMesh::Draw(RenderMode mode) const
+void SkeletalMesh::Render(Program program, RenderMode mode) const
 {
 	for (u32 i = 0; i < nrMeshes; i++)
-	{
-		auto& mesh = meshes[i];
-		mesh.material.diffuse.BindTextureUnit(0);
-		mesh.material.specular.BindTextureUnit(1);
-		mesh.material.normal.BindTextureUnit(2);
-		mesh.Draw(mode);
-	}
+		meshes[i].Render(program, mode);
 }
 
 i32 SkeletalMesh::FindBone(StringView boneName) const
@@ -108,20 +104,6 @@ i32 SkeletalMesh::FindBone(StringView boneName) const
 			return i;
 
 	return -1;
-}
-
-u32 SkeletalMesh::TotalVertices() const
-{
-	return std::reduce(meshes.get(), meshes.get() + nrMeshes, 0, [](i32 acc, const Mesh& mesh) {
-		return acc + mesh.vao->numVertices;
-	});
-}
-
-u32 SkeletalMesh::TotalIndices() const
-{
-	return std::reduce(meshes.get(), meshes.get() + nrMeshes, 0, [](i32 acc, const Mesh& mesh) {
-		return acc + mesh.vao->numIndices;
-	});
 }
 
 // ----------------------------------------------------
@@ -147,13 +129,13 @@ void SkeletalMesh::ProcessNode(aiNode* node, const aiScene* scene)
 
 		// 1) Load vertex data
 		Buffer vbo = LoadVertices(aimesh);
-		mesh.vao->AttachVertexBuffer(0, vbo, 0, sizeof(Vertex_P_N_UV_T_B));
-		mesh.vao->numVertices = aimesh->mNumVertices;
+		mesh.vao.AttachVertexBuffer(0, vbo, 0, sizeof(Vertex_P_N_UV_T_B));
+		mesh.numVertices = aimesh->mNumVertices;
 
 		// 2) Load indices
 		Buffer ebo = LoadIndices(aimesh);
-		mesh.vao->AttachElementBuffer(ebo);
-		mesh.vao->numIndices = aimesh->mNumFaces * 3;
+		mesh.vao.AttachElementBuffer(ebo);
+		mesh.numIndices = aimesh->mNumFaces * 3;
 
 		if (scene->HasMaterials())
 		{

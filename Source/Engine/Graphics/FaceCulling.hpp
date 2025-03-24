@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Core/Core.hpp"
-#include "Engine/Graphics/OpenGLEnums.hpp"
+#include "Engine/OpenGLEnums.hpp"
 
 /**
  * https://learnopengl.com/Advanced-OpenGL/Face-culling

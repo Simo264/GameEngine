@@ -16,7 +16,51 @@
  * To use a shader, shader source code is first loaded into a shader object and then
  * compiled. A shader object corresponds to a stage in the rendering pipeline referred
  * to as its shader stage or shader type.
+ * 
+ * ===========================================================
+ *     SHADING MODELS OVERVIEW
+ * ===========================================================
+ * 
+ * Shading models can be categorized into two main groups:
+ * 1. Realistic Shading Models
+ * 2. Non-Photorealistic Rendering (NPR) Models.
+ * 
+ * ===========================================================
+ *     REALISTIC SHADING MODELS
+ * ===========================================================
+ * These models aim to simulate light behavior as accurately as possible.
+ * 
+ * 1. Classic Models (Local Illumination)
+ *    - Flat Shading: One color per triangle, sharp edges, low realism.
+ *    - Gouraud Shading: Interpolates lighting per vertex, efficient but can lose details.
+ *    - Phong Shading: Interpolates normals per fragment, smoother and more realistic.
+ * 
+ * 2. Physically Based Rendering (PBR) Models
+ *    - Blinn-Phong: An optimized version of Phong, used for specular highlights.
+ *    - Cook-Torrance: Uses microfacet distribution for complex surface reflection.
+ *    - Oren-Nayar: Extends Lambertian reflection for rough surfaces.
+ *    - Disney BRDF: A flexible shading model combining multiple techniques.
+ * 
+ * PBR models are the standard in modern game engines (e.g., Unreal Engine, Unity).
+ * 
+ * ===========================================================
+ *     NON-PHOTOREALISTIC RENDERING (NPR) MODELS
+ * ===========================================================
+ * These models focus on artistic styles rather than realism.
+ * 
+ * 1. Toon Shading (Cel Shading) – Uses flat colors and strong outlines (e.g., Zelda: Breath of the Wild).
+ * 2. Gooch Shading – Transitions from blue to yellow to enhance shape perception.
+ * 3. X-Toon Shading – Advanced toon shading with more gradient levels.
+ * 4. Hatching Shading – Simulates pencil sketching using texture overlays.
+ * 5. Silhouette Shading – Highlights model edges for blueprint-style rendering.
+ * 
+ * ===========================================================
+ *     IMPLEMENTATION IN A CUSTOM ENGINE
+ * ===========================================================
+ * - For a realistic rendering engine, focus on Phong, Blinn-Phong, or PBR.
+ * - For a flexible engine, support NPR techniques like Toon and Gooch shading.
  */
+
 class Shader
 {
 public:
@@ -90,10 +134,10 @@ public:
   void Delete();
 
   /** @brief Attaches a shader object to the program object */
-  void AttachShader(const Shader& shader) const;
+  void AttachShader(Shader shader) const;
 
   /** @brief Detaches the shader object specified from the program object */
-  void DetachShader(const Shader& shader) const;
+  void DetachShader(Shader shader) const;
 
   /**
    * @brief Links the program object specified.
