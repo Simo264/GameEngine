@@ -294,8 +294,7 @@ void Engine::Run()
   Camera primaryCamera(vec3f(7.f, 4.f, 6), vec3f(-135.0f, -25.0f, 0.f));
   primaryCamera.frustum.zFar = 100.0f;
 
-  Scene scene((Paths::GetRootPath() / "Test.yaml"));
-  //scene.SaveToFile((Paths::GetRootPath() / "Test.yaml"));
+  Scene scene((Paths::GetRootPath() / "Scene.yaml"));
 
   // ----------------------------------------------------------------------
   // -------------------------- Pre-loop section --------------------------
