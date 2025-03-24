@@ -306,11 +306,9 @@ void Engine::Run()
   TexturesManager& texturesManager = TexturesManager::Get();
   ShadersManager& shadersManager = ShadersManager::Get();
   
-  //Program gridPlaneProgram = shadersManager.GetProgram("GridPlane");
-  //Program framebufferProg = shadersManager.GetProgram("Framebuffer");
-  //framebufferProg.SetUniform1i(Uniforms::fboImageTexture, 0);
-  //Program skyboxProgram = shadersManager.GetProgram("Skybox");
-  //skyboxProgram.SetUniform1i(Uniforms::skyboxTexture, 0);
+  Program gridPlaneProgram = shadersManager.GetProgram("GridPlane");
+  Program skyboxProgram = shadersManager.GetProgram("Skybox");
+  skyboxProgram.SetUniform1i(Uniforms::skyboxTexture, 0);
   Program blinnPhongProgram = shadersManager.GetProgram("BlinnPhongShading");
   blinnPhongProgram.SetUniform1i("u_material.diffuseTexture", 0);
   blinnPhongProgram.SetUniform1i("u_material.specularTexture", 1);
@@ -360,12 +358,9 @@ void Engine::Run()
 
     // Update light UBO
     {
-      // Fill light block with 0s
-      {
-        const u32 size = sizeof(DirectionalLight) + sizeof(PointLight) + sizeof(SpotLight);
-        constexpr Array<u8, size> zeros{};
-        _uboLightBlock.UpdateStorage(0, size, zeros.data());
-      }
+      constexpr u32 size = sizeof(DirectionalLight) + sizeof(PointLight) + sizeof(SpotLight);
+      constexpr Array<u8, size> zeros{};
+      _uboLightBlock.UpdateStorage(0, size, zeros.data());
 
       auto e = scene.FindObjectWithComponent<DirectionalLight>();
       if (e.has_value())
@@ -412,6 +407,7 @@ void Engine::Run()
       glPolygonMode(GL_BACK, wireframeMode ? GL_LINE : GL_FILL);
 
       /// Render scene here
+    #if 1
       {
         goochProgram.Use();
         goochProgram.SetUniform3f(Uniforms::viewPos, primaryCamera.position);
@@ -434,6 +430,26 @@ void Engine::Run()
           staticMesh.Render(blinnPhongProgram, RenderMode::TRIANGLES);
         });
       }
+    #endif
+
+      /// Render the infinite grid
+    #if 1
+      {
+        gridPlaneProgram.Use();
+        Renderer::DrawArrays(RenderMode::TRIANGLES, _gridPlane.vao, _gridPlane.numVertices);
+      }
+    #endif
+
+      /// Draw skybox after the scene
+    #if 0
+      {
+        skyboxProgram.Use();
+        skyboxTexture.BindTextureUnit(0);
+        DepthTest::SetDepthFun(CompareFunc::LEQUAL);
+        Renderer::DrawArrays(RenderMode::TRIANGLES, _skybox.vao, _skybox.numVertices);
+        DepthTest::SetDepthFun(CompareFunc::LESS);
+      }
+    #endif
 
       // Blit multisampled buffer to normal color buffer of intermediate FBO
       _fboMultisampled.Blit(_fboIntermediate,
@@ -555,8 +571,6 @@ void Engine::CreateScreenSquare()
   _screenSquare.vao.SetAttribFormatFLoat(1, 2, VertexAttribType::FLOAT, true, 2 * sizeof(f32));
   _screenSquare.vao.SetAttribBinding(1, 0);
   _screenSquare.vao.EnableAttribute(1);
-  
-
 }
 void Engine::CreateGridPlane()
 {
@@ -573,7 +587,6 @@ void Engine::CreateGridPlane()
 	_gridPlane.Create();
   _gridPlane.numVertices = 6;
   _gridPlane.numIndices = 0;
-
   _gridPlane.vao.EnableAttribute(0);
   _gridPlane.vao.SetAttribBinding(0, 0);
   _gridPlane.vao.SetAttribFormatFLoat(0, 3, VertexAttribType::FLOAT, false, 0);

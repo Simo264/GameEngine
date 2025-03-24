@@ -24,8 +24,8 @@ vec3 UnprojectPoint(float x, float y, float z, mat4 view, mat4 projection)
 
 void main()
 {
-  NearPoint = UnprojectPoint(aPos.x, aPos.y, 0.0f, u_view, u_projection).xyz; /* Unprojecting on the near plane */ 
-  FarPoint = UnprojectPoint(aPos.x, aPos.y, 1.0f, u_view, u_projection).xyz; /* Unprojecting on the far plane */
+  NearPoint = UnprojectPoint(aPos.x, aPos.y, 0.0f, u_view, u_projection).xyz; // Unprojecting on the near plane
+  FarPoint = UnprojectPoint(aPos.x, aPos.y, 1.0f, u_view, u_projection).xyz;  // Unprojecting on the far plane
   
   View = u_view;
   Projection = u_projection;

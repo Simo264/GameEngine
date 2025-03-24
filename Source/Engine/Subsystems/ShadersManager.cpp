@@ -34,11 +34,6 @@ static i32 ResolveShaderType(StringView ext)
 
 void ShadersManager::Initialize()
 {
-  // u32 nrShaders = Utils::CountFilesInDirectory(Paths::GetShadersPath(), true);
-  // u32 nrPrograms = conf.GetData().size();
-	// _shaders.reserve(nrShaders);
-	// _programs.reserve(nrPrograms);
-
   LoadConfig((Paths::GetRootPath() / SM_FILE_CONFIG));
 }
 void ShadersManager::CleanUp()

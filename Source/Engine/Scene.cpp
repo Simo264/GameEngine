@@ -192,7 +192,7 @@ static UnorderedMap<String, std::function<void(GameObject&, const YAML::Node&)>>
 	{ "Transform", DeserializeTransform },
 	{ "StaticMesh", DeserializeStaticMesh },
 	{ "SkeletalMesh", DeserializeSkeletalMesh },
-	{ "Light", DeserializeSkeletalMesh },
+	{ "Light", DeserializeLight },
 };
 
 
