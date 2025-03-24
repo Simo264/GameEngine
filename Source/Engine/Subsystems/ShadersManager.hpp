@@ -43,7 +43,7 @@ private:
 	ShadersManager() = default;
 	~ShadersManager() = default;
 	
-	void LoadConfig(const fs::path& file);
+	void LoadConfig(const fs::path& path);
 
 	struct PairShaderName
 	{

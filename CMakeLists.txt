@@ -2,14 +2,14 @@
 
 project(GameEngine)
 
+if(MSVC)
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /NODEFAULTLIB:MSVCRT")
+endif()
+
 set(COMMON_CXX_FLAGS "${COMMON_CXX_FLAGS} -Wall -pedantic -Wextra -m64 -mavx2 -mfma -ffast-math")
 set(GLFW_BUILD_DOCS      OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS     OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES  OFF CACHE BOOL "" FORCE)
-
-# if(MSVC)
-#   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /NODEFAULTLIB:MSVCRT")
-# endif()
 
 # Add include directory path
 set(EXT_INCLUDE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/Externals/Include/)  # externals include path directory
@@ -64,5 +64,14 @@ add_executable (GameEngine
 target_link_libraries(GameEngine ${CMAKE_CURRENT_SOURCE_DIR}/Externals/Libs/glfw3.lib) 
 target_link_libraries(GameEngine ${CMAKE_CURRENT_SOURCE_DIR}/Externals/Libs/spdlogd.lib)
 target_link_libraries(GameEngine ${CMAKE_CURRENT_SOURCE_DIR}/Externals/Libs/assimp.lib)
+
+# If the build is Debug, use yaml-cppd.lib; otherwise, use yaml-cpp.lib
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+  # cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
+  target_link_libraries(GameEngine ${CMAKE_CURRENT_SOURCE_DIR}/Externals/Libs/yaml-cppd.lib)
+else()
+  # cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+  target_link_libraries(GameEngine ${CMAKE_CURRENT_SOURCE_DIR}/Externals/Libs/yaml-cpp.lib)
+endif()
 
 target_compile_features(GameEngine PRIVATE cxx_std_20)

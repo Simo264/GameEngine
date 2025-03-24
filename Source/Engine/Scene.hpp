@@ -14,13 +14,13 @@ class Scene
 {
 public:
 	Scene() = default;
-	Scene(const fs::path& filePath);
+	Scene(const fs::path& loadFrom);
 	~Scene() = default;
 
 	/** @brief Loads a scene from a file. */
-	void LoadFromFile(const fs::path& filePath);
-	/** @brief Saves the current scene to a file. */
-	void Save(const fs::path& filePath);
+	void LoadFromFile(const fs::path& loadFrom);
+	/** @brief Saves the current scene into a file. */
+	void SaveToFile(const fs::path& out);
 	
 	/**
 	 * @brief Destroys all objects in the scene and clears the registry.
@@ -61,6 +61,6 @@ private:
 	// We can create a entt::registry to store our entities
 	entt::registry _registry;
 
-	void SerializeScene(const fs::path& filePath);
-	void DeserializeScene(const fs::path& filePath);
+	void DeserializeScene(const fs::path& loadFrom);
+	void SerializeScene(const fs::path& out);
 };

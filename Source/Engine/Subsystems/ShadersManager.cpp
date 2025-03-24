@@ -2,7 +2,6 @@
 
 #include "Core/OpenGL.hpp"
 #include "Core/Log/Logger.hpp"
-#include "Core/Serialization/INIParser.hpp"
 #include "Core/Serialization/JSONParser.hpp"
 #include "Core/Paths/Paths.hpp"
 
@@ -82,7 +81,7 @@ Shader ShadersManager::CreateShader(StringView shaderName)
   if (!fs::exists(absolute))
     throw std::runtime_error(std::format("Shader file '{}' does not exist", absolute.string()));
 
-  IStream file(absolute);
+  InputFileStream file(absolute);
   String shaderSrc{ std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>() };
   StringView ext = shaderName.substr(shaderName.find_last_of('.') + 1);
   i32 shaderType = ResolveShaderType(ext);
@@ -133,9 +132,10 @@ Program ShadersManager::CreateProgram(StringView programName)
 //                  PRIVATE                    
 // --------------------------------------------
 
-void ShadersManager::LoadConfig(const fs::path& file)
+void ShadersManager::LoadConfig(const fs::path& path)
 {
-  nlohmann::json data = JSONParser::ParseFile(file);
+	InputFileStream file(path);
+  nlohmann::json data = nlohmann::json::parse(file);
 	for (const auto& [programName, shadersJson] : data.items())
 	{
 		Program program = GetProgram(programName);

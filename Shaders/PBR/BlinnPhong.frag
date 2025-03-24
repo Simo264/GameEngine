@@ -109,16 +109,16 @@ uniform vec3 u_viewPos;
 
 void main()
 {
-  if(u_directionalLight.intensity == 0.0f)
-  {
-    FragColor = vec4(vec3(0.f), 1.0f);	
-    return;
-  }
-
   const float shininess = 16.0f;
   const vec3 ambientColor = vec3(0.1f);
   const vec4 diffuseColor = texture(u_material.diffuseTexture, TexCoord);
   const vec3 specularColor = vec3(1.0f);
+
+  if(u_directionalLight.intensity == 0.0f)
+  {
+    FragColor = vec4(ambientColor, 1.0f);	
+    return;
+  }
 
   const vec3 normal = Normal;
   const vec3 lightDir = normalize(u_directionalLight.direction);

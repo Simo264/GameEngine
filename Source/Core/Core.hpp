@@ -65,10 +65,10 @@ using i64	= std::int64_t;
 using f32 = std::float_t;
 using f64 = std::double_t;
 
-using String				= std::string;
-using StringView		= std::string_view;
-using StringStream	= std::stringstream;
-using IStringStream = std::istringstream;
-using OStringStream = std::ostringstream;
-using IStream				= std::ifstream;
-using OStream				= std::ofstream;
+using String							= std::string;
+using StringView					= std::string_view;
+using StringStream				= std::stringstream;
+using InputStringStream		= std::istringstream;
+using OutputStringStream	= std::ostringstream;
+using InputFileStream			= std::ifstream;
+using OutputFileStream		= std::ofstream;

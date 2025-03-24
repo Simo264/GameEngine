@@ -53,7 +53,7 @@ struct DirectionalLight
 	f32 intensity{ 0.0f };
 	vec3f direction{ 0.0f, -1.0f, 0.0f };
 private:
-	f32 __padding{ 0.f }; /* Needed for std140 alignment */ 
+	f32 __padding{ 0.f }; // Needed for std140 alignment
 };
 
 
@@ -69,11 +69,11 @@ struct PointLight
 	f32 intensity{ 0.0f };
 	vec3f position{ 0.0f, 0.0f, 0.0f };
 private:
-	f32 __padding_1{ 0.f }; /* Needed for std140 alignment */
+	f32 __padding_1{ 0.f }; // Needed for std140 alignment 
 public:
 	Attenuation attenuation;
 private:
-	f32 __padding_2{ 0.f }; /* Needed for std140 alignment */
+	f32 __padding_2{ 0.f }; // Needed for std140 alignment 
 };
 
 /**
@@ -89,16 +89,16 @@ struct SpotLight
 	f32 intensity{ 0.0f };
 	vec3f  position{ 0.0f, 0.0f, 0.0f };
 private:
-	f32 __padding_1;  /* Needed for std140 alignment */
+	f32 __padding_1;  // Needed for std140 alignment
 public:
 	vec3f  direction{ 0.0f, -1.0f, 0.0f };
 private:
-	f32 __padding_2;  /* Needed for std140 alignment */
+	f32 __padding_2;  // Needed for std140 alignment
 public:
 	f32 cutOff{ 12.5f };
-	f32 outerCutOff{ 17.5f }; /* smoother edges */
+	f32 outerCutOff{ 17.5f }; // smoother edges
 private:
-	f32 __padding_3[2];  /* Needed for std140 alignment */
+	f32 __padding_3[2];  // Needed for std140 alignment
 public:
 	Attenuation attenuation;
 };

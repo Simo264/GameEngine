@@ -1,7 +1,6 @@
 #include "ImGuiLayer.hpp"
 
 #include "Core/OpenGL.hpp"
-#include "Core/Serialization/INIParser.hpp"
 #include "Core/Paths/Paths.hpp"
 
 #include "Engine/Globals.hpp"

@@ -42,7 +42,7 @@ void GUI_RenderMenuBar(Scene& scene, bool& openPreferences)
         const char* filters[] = { "*.ini" };
         fs::path filepath = FileDialog::SaveFileDialog(1, filters, "Save as .ini");
         
-        scene.Save(filepath);
+        scene.SaveToFile(filepath);
       }
 
       ImGui::Separator();
