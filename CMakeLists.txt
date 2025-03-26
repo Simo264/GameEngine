@@ -6,39 +6,74 @@ if(MSVC)
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /NODEFAULTLIB:MSVCRT")
 endif()
 
-set(COMMON_CXX_FLAGS "${COMMON_CXX_FLAGS} -Wall -pedantic -Wextra -m64 -mavx2 -mfma -ffast-math")
+include(FetchContent)
+set(FETCHCONTENT_BASE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Dependencies)
+set(FETCHCONTENT_QUIET FALSE)
+
+# download and build glfw
 set(GLFW_BUILD_DOCS      OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS     OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES  OFF CACHE BOOL "" FORCE)
+FetchContent_Declare(
+  glfw
+  GIT_REPOSITORY  https://github.com/glfw/glfw.git
+  GIT_PROGRESS TRUE
+)
+FetchContent_MakeAvailable(glfw)
+
+# download and build glm
+FetchContent_Declare(
+  glm
+  GIT_REPOSITORY  https://github.com/g-truc/glm.git
+  GIT_PROGRESS TRUE
+)
+FetchContent_MakeAvailable(glm)
+
+# download and build spdlog
+add_subdirectory(Dependencies/spdlog)
+
+# download and build entt
+FetchContent_Declare(
+  entt
+  GIT_REPOSITORY  https://github.com/skypjack/entt.git
+  GIT_PROGRESS TRUE
+)
+FetchContent_MakeAvailable(entt)
+
+# download and build yaml-cpp
+set(BUILD_SHARED_LIBS ON) # Generation of shared libs
+FetchContent_Declare(
+  yaml-cpp
+  GIT_REPOSITORY  https://github.com/jbeder/yaml-cpp.git
+  GIT_PROGRESS TRUE
+)
+FetchContent_MakeAvailable(yaml-cpp)
+
+# download and build assimp
+FetchContent_Declare(
+  assimp
+  GIT_REPOSITORY  https://github.com/assimp/assimp.git
+  GIT_PROGRESS TRUE
+)
+FetchContent_MakeAvailable(assimp)
+
+# tinyfiledialogs configuration
+include_directories(Dependencies/tinyfiledialogs)
+
+# stbi_image include path directory
+include_directories(Dependencies/stbi_image)
+
+# nlohmann include path directory
+include_directories(Dependencies/nlohmann)
+
+# imgui configuration
+add_subdirectory(Dependencies/imgui)
+
+# glad configuration
+include_directories(Dependencies/glad/include)
 
 # Add include directory path
-set(EXT_INCLUDE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/Externals/Include/)  # externals include path directory
-set(INT_INCLUDE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/Source/)             # internal include path directory
-include_directories(${EXT_INCLUDE_PATH})
-include_directories(${INT_INCLUDE_PATH})
-
-# List external source files
-file(GLOB_RECURSE EXTERNAL_IMGUI_SOURCES
-  ${EXT_INCLUDE_PATH}/imgui/*
-)
-set(EXTERNAL_OPENGL_SOURCE 
-  ${EXT_INCLUDE_PATH}/opengl/gl.c 
-  ${EXT_INCLUDE_PATH}/opengl/gl.h
-  ${EXT_INCLUDE_PATH}/opengl/khrplatform.h 
-)
-set(EXTERNAL_TINYFD_SOURCE 
-  ${EXT_INCLUDE_PATH}/tinyfiledialogs/tinyfiledialogs.h
-  ${EXT_INCLUDE_PATH}/tinyfiledialogs/tinyfiledialogs.c
-) 
-set(EXTERNAL_SOURCES
-  ${EXTERNAL_IMGUI_SOURCES}
-  ${EXTERNAL_OPENGL_SOURCE}
-  ${EXTERNAL_TINYFD_SOURCE}
-)
-# Group externals in filters
-source_group("Externals\\imgui"           FILES ${EXTERNAL_IMGUI_SOURCES})  
-source_group("Externals\\opengl"          FILES ${EXTERNAL_OPENGL_SOURCE})  
-source_group("Externals\\tinyfiledialogs" FILES ${EXTERNAL_TINYFD_SOURCE})
+include_directories(Source/)
 
 # List all Engine files
 file(GLOB_RECURSE ENGINE_SOURCES 
@@ -56,22 +91,28 @@ endforeach()
 
 # Link all files into executable
 add_executable (GameEngine 
+  Dependencies/glad/gl.c
+  Dependencies/tinyfiledialogs/tinyfiledialogs.c
   ${ENGINE_SOURCES}
-  ${EXTERNAL_SOURCES}
+)
+
+# Copy assimp, yaml-cpp dlls into the executable directory
+add_custom_command(TARGET GameEngine POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        $<TARGET_FILE:assimp> $<TARGET_FILE_DIR:GameEngine>
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        $<TARGET_FILE:yaml-cpp> $<TARGET_FILE_DIR:GameEngine>
 )
 
 # Linking
-target_link_libraries(GameEngine ${CMAKE_CURRENT_SOURCE_DIR}/Externals/Libs/glfw3.lib) 
-target_link_libraries(GameEngine ${CMAKE_CURRENT_SOURCE_DIR}/Externals/Libs/spdlogd.lib)
-target_link_libraries(GameEngine ${CMAKE_CURRENT_SOURCE_DIR}/Externals/Libs/assimp.lib)
-
-# If the build is Debug, use yaml-cppd.lib; otherwise, use yaml-cpp.lib
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-  # cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
-  target_link_libraries(GameEngine ${CMAKE_CURRENT_SOURCE_DIR}/Externals/Libs/yaml-cppd.lib)
-else()
-  # cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-  target_link_libraries(GameEngine ${CMAKE_CURRENT_SOURCE_DIR}/Externals/Libs/yaml-cpp.lib)
-endif()
+target_link_libraries(GameEngine 
+  glfw
+  glm::glm
+  spdlog
+  imgui
+  assimp
+  EnTT::EnTT
+  yaml-cpp::yaml-cpp
+)
 
 target_compile_features(GameEngine PRIVATE cxx_std_20)

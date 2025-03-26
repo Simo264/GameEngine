@@ -1,0 +1,10 @@
+^D:\GAMEENGINE\DEPENDENCIES\GLM-SUBBUILD\CMAKELISTS.TXT
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SD:/GameEngine/Dependencies/glm-subbuild -BD:/GameEngine/Dependencies/glm-subbuild --check-stamp-file D:/GameEngine/Dependencies/glm-subbuild/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

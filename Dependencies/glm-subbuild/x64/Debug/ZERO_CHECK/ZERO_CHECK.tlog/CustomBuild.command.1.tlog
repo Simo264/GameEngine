@@ -1,0 +1,10 @@
+^D:\GAMEENGINE\DEPENDENCIES\GLM-SUBBUILD\CMAKEFILES\8B079B66FE2E37DCCA571F9AC0135714\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SD:/GameEngine/Dependencies/glm-subbuild -BD:/GameEngine/Dependencies/glm-subbuild --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file D:/GameEngine/Dependencies/glm-subbuild/glm-populate.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
