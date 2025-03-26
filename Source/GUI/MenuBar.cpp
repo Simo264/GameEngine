@@ -6,7 +6,7 @@
 #include "Engine/Subsystems/ShadersManager.hpp"
 #include "Engine/Subsystems/WindowManager.hpp"
 
-#include <imgui/imgui.h>
+#include <imgui.h>
 
 void GUI_RenderMenuBar(Scene& scene, bool& openPreferences)
 {

@@ -1,22 +1,22 @@
-Build/**
+/Build/
 
 # glfw will be automatically downloaded with cmake
-Dependencies/glfw-src
-Dependencies/glfw-build
-Dependencies/glfw-subbuild
+/Dependencies/glfw-src/
+/Dependencies/glfw-build/
+/Dependencies/glfw-subbuild/
 # glm will be automatically downloaded with cmake
-Dependencies/glfm-src
-Dependencies/glfm-build
-Dependencies/glfm-subbuild
+/Dependencies/glfm-src/
+/Dependencies/glfm-build/
+/Dependencies/glfm-subbuild/
 # assimp will be automatically downloaded with cmake
-Dependencies/assimp-src
-Dependencies/assimp-build
-Dependencies/assimp-subbuild
+/Dependencies/assimp-src/
+/Dependencies/assimp-build/
+/Dependencies/assimp-subbuild/
 # yaml-cpp will be automatically downloaded with cmake
-Dependencies/yaml-cpp-src
-Dependencies/yaml-cpp-build
-Dependencies/yaml-cpp-subbuild
+/Dependencies/yaml-cpp-src/
+/Dependencies/yaml-cpp-build/
+/Dependencies/yaml-cpp-subbuild/
 # entt will be automatically downloaded with cmake
-Dependencies/entt-src
-Dependencies/entt-build
-Dependencies/entt-subbuild
+/Dependencies/entt-src/
+/Dependencies/entt-build/
+/Dependencies/entt-subbuild/

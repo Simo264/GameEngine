@@ -10,8 +10,8 @@
 #include "Engine/Subsystems/ModelsManager.hpp"
 #include "Engine/Subsystems/AnimationsManager.hpp"
 
-#include <imgui/imgui.h>
-#include <imgui/ImGuizmo.h>
+#include <imgui.h>
+#include <ImGuizmo.h>
 
 
 // ------------------------------------------
@@ -387,7 +387,7 @@ static void Insp_ShowTextureSelector(StringView label, Texture2D& meshTexture, T
     std::format_to_n(buttonID, sizeof(buttonID), "Reset##{}", label.data());
 
     ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.f,0.f,0.f,0.f });
-    if (ImGui::ImageButton(buttonID, reinterpret_cast<void*>(resetIcon.id), ImVec2(16.f, 16.f)))
+    if (ImGui::ImageButton(buttonID, resetIcon.id, ImVec2(16.f, 16.f)))
       meshTexture = defaultTex;
     ImGui::PopStyleColor();
   }
@@ -540,17 +540,17 @@ static void Insp_Animator(GameObject& object, Animator& animator)
     static Texture2D pauseIcon = texManager.GetOrCreateIcon("pause-button-32.png");
     static Texture2D restartIcon = texManager.GetOrCreateIcon("restart-button-32.png");
 
-    if (ImGui::ImageButton(reinterpret_cast<void*>(playIcon.id), ImVec2(16, 16)))
+    if (ImGui::ImageButton("play", playIcon.id, ImVec2(16, 16)))
       animator.PlayAnimation();
 
     ImGui::SameLine();
 
-    if (ImGui::ImageButton(reinterpret_cast<void*>(pauseIcon.id), ImVec2(16, 16)))
+    if (ImGui::ImageButton("pause", pauseIcon.id, ImVec2(16, 16)))
       animator.PauseAnimation();
 
     ImGui::SameLine();
 
-    if (ImGui::ImageButton(reinterpret_cast<void*>(restartIcon.id), ImVec2(16, 16)))
+    if (ImGui::ImageButton("restart", restartIcon.id, ImVec2(16, 16)))
       animator.RestartAnimation();
 
     ImGui::SameLine();

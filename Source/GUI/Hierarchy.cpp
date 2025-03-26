@@ -5,7 +5,7 @@
 #include "Engine/Utils.hpp"
 #include "Engine/Subsystems/TexturesManager.hpp"
 
-#include <imgui/imgui.h>
+#include <imgui.h>
 
 // ----------------------------------------------------
 //          PRIVATE          
@@ -37,7 +37,7 @@ static void Hierarchy_ListObjects(Scene& scene, GameObject& objSelected)
     ImGui::BeginGroup();
     ImGui::SetCursorPosY(ImGui::GetCursorPosY() + (ImGui::GetTextLineHeight() - 16.f) / 2);
     
-    ImGui::Image(reinterpret_cast<void*>(icon.id), ImVec2(16.f, 16.f));
+    ImGui::Image(icon.id, ImVec2(16.f, 16.f));
     ImGui::SameLine();
     
     auto& colors = ImGui::GetStyle().Colors;

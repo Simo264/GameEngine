@@ -1,3 +1,3 @@
 #pragma once
 
-#include <opengl/gl.h>
+#include <glad/gl.h>

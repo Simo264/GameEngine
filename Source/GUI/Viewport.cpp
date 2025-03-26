@@ -5,8 +5,8 @@
 
 #include "Engine/ECS/ECS.hpp"
 
-#include <imgui/imgui.h>
-#include <imgui/ImGuizmo.h>
+#include <imgui.h>
+#include <ImGuizmo.h>
 
 // ------------------------------------------
 //                  PRIVATE                  
@@ -113,7 +113,7 @@ void GUI_RenderViewport(bool& open, u32 texID, GameObject& objSelected, i32 gizm
   guiLayer.viewportFocused |= ImGui::IsWindowFocused();
 
   const ImVec2 winChildSize = ImGui::GetWindowSize();
-  ImGui::Image(reinterpret_cast<void*>(texID), winChildSize, ImVec2(0, 1), ImVec2(1, 0));
+  ImGui::Image(texID, winChildSize, ImVec2(0, 1), ImVec2(1, 0));
   if (objSelected.IsValid())
   {
     auto* transform = objSelected.GetComponent<Transform>();

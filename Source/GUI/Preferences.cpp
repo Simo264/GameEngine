@@ -3,7 +3,7 @@
 #include "Core/Paths/Paths.hpp"
 #include "Engine/Globals.hpp"
 
-#include <imgui/imgui.h>
+#include <imgui.h>
 
 static Vector<fs::path> fontVector;
 static void LoadFontVector()

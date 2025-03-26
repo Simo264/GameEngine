@@ -10,11 +10,11 @@
 #include "Engine/Graphics/Objects/Texture2D.hpp"
 #include "Engine/Subsystems/WindowManager.hpp"
 
-#include <imgui/imgui.h>
-#include <imgui/imgui_impl_glfw.h>
-#include <imgui/imgui_impl_opengl3.h>
-#include <imgui/imgui_internal.h>
-#include <imgui/ImGuizmo.h>
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
+#include <imgui_internal.h>
+#include <ImGuizmo.h>
 
 extern void GUI_RenderMenuBar(Scene& scene, bool& openPreferences);
 extern void GUI_RenderPreferencesWindow(bool& open);
@@ -53,23 +53,23 @@ void ImGuiLayer::BeginFrame()
 {
   ImGui_ImplOpenGL3_NewFrame();
   ImGui_ImplGlfw_NewFrame();
-  ImGui::Begin();
+  ImGui::NewFrame();
   ImGuizmo::BeginFrame();
 
   Docking();
 }
 void ImGuiLayer::EndFrame()
 {
-  ImGui::RenderPanel();
+  ImGui::Render();
   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
   ImGuiIO& io = ImGui::GetIO();
   if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
   {
     WindowManager& windowManager = WindowManager::Get();
-    WindowManager::Context backCurrentContext = windowManager.GetCurrentContext();
+    GLFWwindow* backupCurrentContext = windowManager.GetCurrentContext();
     ImGui::UpdatePlatformWindows();
     ImGui::RenderPlatformWindowsDefault();
-    windowManager.MakeContextCurrent(backCurrentContext);
+    windowManager.MakeContextCurrent(backupCurrentContext);
   }
 }
 void ImGuiLayer::SetFont(const fs::path& ttfFilePath, u32 fontSize) const
@@ -193,7 +193,7 @@ void ImGuiLayer::RenderDebugDepthMap(u32 texture)
   ImGui::Begin("Depth map", nullptr);
   ImGui::BeginChild("Map");
 
-  ImGui::Image(reinterpret_cast<void*>(texture), { 1024,1024 }, ImVec2(0, 1), ImVec2(1, 0));
+  ImGui::Image(texture, { 1024,1024 }, ImVec2(0, 1), ImVec2(1, 0));
 
   ImGui::EndChild();
   ImGui::End();

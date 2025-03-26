@@ -1,6 +1,6 @@
 #include "FileDialog.hpp"
 
-#include <tinyfiledialogs/tinyfiledialogs.h>
+#include <tinyfiledialogs.h>
 
 namespace FileDialog
 {

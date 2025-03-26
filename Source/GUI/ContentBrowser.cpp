@@ -3,7 +3,7 @@
 #include "Core/Paths/Paths.hpp"
 #include "Engine/Subsystems/TexturesManager.hpp"
 
-#include <imgui/imgui.h>
+#include <imgui.h>
 
 static fs::path contentBrowser_left_nodeSelected = Paths::GetAssetsPath();
 static fs::path contentBrowser_right_navCurrentDir = contentBrowser_left_nodeSelected;
@@ -53,10 +53,10 @@ static void ContentBrowser_RightCol_Navbar(f32 navbarHeight)
   if (contentBrowser_right_navCurrentDir == Paths::GetAssetsPath())
   {
     ImGui::BeginDisabled();
-    ImGui::ImageButton("Back", reinterpret_cast<void*>(iconBack.id), ImVec2(16.0f, 16.0f));
+    ImGui::ImageButton("Back", iconBack.id, ImVec2(16.0f, 16.0f));
     ImGui::EndDisabled();
   }
-  else if (ImGui::ImageButton("Back", reinterpret_cast<void*>(iconBack.id), ImVec2(16.0f, 16.0f)))
+  else if (ImGui::ImageButton("Back", iconBack.id, ImVec2(16.0f, 16.0f)))
     contentBrowser_right_navCurrentDir = contentBrowser_right_navCurrentDir.parent_path();
 
   ImGui::SameLine();
@@ -105,7 +105,7 @@ static void ContentBrowser_RightCol_Thumbnails(f32 contentHeight)
           if (entry.is_directory())
           {
             static Texture2D iconFolder = manager.GetOrCreateIcon("open-folder.png");
-            if (ImGui::ImageButton(filenameString.c_str(), reinterpret_cast<void*>(iconFolder.id), ImVec2(cellSize, cellSize)))
+            if (ImGui::ImageButton(filenameString.c_str(), iconFolder.id, ImVec2(cellSize, cellSize)))
               contentBrowser_right_navCurrentDir /= entry;
           }
           else
@@ -122,7 +122,7 @@ static void ContentBrowser_RightCol_Thumbnails(f32 contentHeight)
                 texture = manager.FindTexture(relativePath);
 
               ImGui::ImageButton(filenameString.c_str(), 
-                reinterpret_cast<void*>(texture.id), 
+                texture.id, 
                 ImVec2(cellSize, cellSize)
               );
             }
@@ -132,7 +132,7 @@ static void ContentBrowser_RightCol_Thumbnails(f32 contentHeight)
               static Texture2D iconFile = manager.GetOrCreateIcon("file.png");
               
               ImGui::ImageButton(filenameString.c_str(), 
-                reinterpret_cast<void*>(iconFile.id), 
+                iconFile.id, 
                 ImVec2(cellSize, cellSize)
               );
             }
