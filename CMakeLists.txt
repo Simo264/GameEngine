@@ -6,9 +6,6 @@ if(MSVC)
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /NODEFAULTLIB:MSVCRT")
 endif()
 
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
 include(FetchContent)
 set(FETCHCONTENT_BASE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Dependencies)
 set(FETCHCONTENT_QUIET FALSE)
@@ -118,5 +115,4 @@ target_link_libraries(GameEngine
   yaml-cpp::yaml-cpp
 )
 
-set_property(TARGET GameEngine PROPERTY CXX_STANDARD 20)
 target_compile_features(GameEngine PRIVATE cxx_std_20)
