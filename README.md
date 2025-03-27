@@ -1,5 +1,5 @@
 ﻿# How to build (Linux + GNU Makefiles)
-1. ```cmake -G "Unix MakeFiles" -S . -B Build/```
+1. ```cmake -G "Unix Makefiles" -S . -B Build/```
 2. ```make -C Build/```
 3. ```./Build/GameEngine```
 
