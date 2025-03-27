@@ -1,4 +1,7 @@
-﻿I am developing this project in a windows environment using 
+﻿# How to build
+cmake -DCMAKE_CXX_STANDARD=20 -DCMAKE_CXX_COMPILER=g++ -S . -B Build/
+
+<!-- I am developing this project in a windows environment using 
 Visual Studio Community 2022 as IDE and MSVC as C++ compiler
 
 # Build project
@@ -58,4 +61,4 @@ Visual Studio Community 2022 as IDE and MSVC as C++ compiler
     + [x] Tessellation
 - [ ] Compute shaders
 - [ ] Physically Based Bloom
-- [ ] Area Lights
+- [ ] Area Lights -->

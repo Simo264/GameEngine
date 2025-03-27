@@ -1,13 +1,14 @@
 /Build/
+/build/
 
 # glfw will be automatically downloaded with cmake
 /Dependencies/glfw-src/
 /Dependencies/glfw-build/
 /Dependencies/glfw-subbuild/
 # glm will be automatically downloaded with cmake
-/Dependencies/glfm-src/
-/Dependencies/glfm-build/
-/Dependencies/glfm-subbuild/
+/Dependencies/glm-src/
+/Dependencies/glm-build/
+/Dependencies/glm-subbuild/
 # assimp will be automatically downloaded with cmake
 /Dependencies/assimp-src/
 /Dependencies/assimp-build/
