@@ -29,9 +29,6 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(glm)
 
-# download and build spdlog
-add_subdirectory(Dependencies/spdlog)
-
 # download and build entt
 FetchContent_Declare(
   entt
@@ -41,21 +38,24 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(entt)
 
 # download and build yaml-cpp
-set(BUILD_SHARED_LIBS ON) # Generation of shared libs
+set(BUILD_SHARED_LIBS ON) # Enable build shared libs
 FetchContent_Declare(
   yaml-cpp
   GIT_REPOSITORY  https://github.com/jbeder/yaml-cpp.git
   GIT_PROGRESS TRUE
 )
 FetchContent_MakeAvailable(yaml-cpp)
+set(BUILD_SHARED_LIBS OFF) # Disable build shared libs
 
 # download and build assimp
+set(BUILD_SHARED_LIBS ON) # Enable build shared libs
 FetchContent_Declare(
   assimp
   GIT_REPOSITORY  https://github.com/assimp/assimp.git
   GIT_PROGRESS TRUE
 )
 FetchContent_MakeAvailable(assimp)
+set(BUILD_SHARED_LIBS OFF) # Disable build shared libs
 
 # tinyfiledialogs configuration
 include_directories(Dependencies/tinyfiledialogs)
@@ -65,6 +65,9 @@ include_directories(Dependencies/stbi_image)
 
 # nlohmann include path directory
 include_directories(Dependencies/nlohmann)
+
+# spdlog configuration
+add_subdirectory(Dependencies/spdlog)
 
 # imgui configuration
 add_subdirectory(Dependencies/imgui)
