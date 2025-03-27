@@ -1,6 +1,6 @@
 ﻿# How to build (Linux + GNU Makefiles)
 1. ```cmake -G "Unix Makefiles" -S . -B Build/```
-2. ```make -C Build/```
+2. ```make -j$(nproc) -C Build/```
 3. ```./Build/GameEngine```
 
 # How to build (Windows + Visual Studio 22)
