@@ -9,8 +9,8 @@ static Texture2D CreateDefaultTexture(u8 r, u8 g, u8 b)
 {
   constexpr i32 width = 1;
   constexpr i32 height = 1;
-  const u8* data = Array<u8, 3>{ r,g,b }.data();
-	
+  const u8 *data = Array<u8, 3>{r, g, b}.data();
+
   Texture2D texture;
   texture.Create(Texture2DTarget::TEXTURE_2D);
   texture.CreateStorage(Texture2DInternalFormat::RGB8, width, height);
@@ -19,16 +19,16 @@ static Texture2D CreateDefaultTexture(u8 r, u8 g, u8 b)
   texture.SetParameteri(TextureParameteriName::WRAP_T, TextureParameteriParam::REPEAT);
   texture.SetParameteri(TextureParameteriName::MIN_FILTER, TextureParameteriParam::LINEAR);
   texture.SetParameteri(TextureParameteriName::MAG_FILTER, TextureParameteriParam::LINEAR);
-	return texture;
+  return texture;
 }
 
-// ----------------------------------------------------- 
-//                    PUBLIC                             
+// -----------------------------------------------------
+//                    PUBLIC
 // -----------------------------------------------------
 
 void TexturesManager::Initialize()
 {
-	_defaultDiffuse = CreateDefaultTexture(128, 128, 255);
+  _defaultDiffuse = CreateDefaultTexture(128, 128, 255);
   _defaultSpecular = CreateDefaultTexture(0, 0, 0);
   _defaultNormal = CreateDefaultTexture(0, 0, 0);
 }
@@ -39,31 +39,31 @@ void TexturesManager::CleanUp()
   Vector<u32> texIDs;
   texIDs.reserve(totalTextures + 3);
 
-	texIDs.push_back(_defaultDiffuse.id);
+  texIDs.push_back(_defaultDiffuse.id);
   texIDs.push_back(_defaultSpecular.id);
   texIDs.push_back(_defaultNormal.id);
 
-  for(const auto& texture : _textures)
+  for (const auto &texture : _textures)
     texIDs.push_back(texture.id);
-  for (const auto& texture : _icons)
+  for (const auto &texture : _icons)
     texIDs.push_back(texture.id);
 
   glDeleteTextures(totalTextures, texIDs.data());
 }
 
-Texture2D TexturesManager::FindTexture(const fs::path& relative) const
+Texture2D TexturesManager::FindTexture(const fs::path &relative) const
 {
   for (u32 i = 0; i < _texturePaths.size(); i++)
     if (_texturePaths.at(i) == relative)
       return _textures.at(i);
-  
+
   return Texture2D{};
 }
-Texture2D TexturesManager::CreateTexture(const fs::path& relative)
+Texture2D TexturesManager::CreateTexture(const fs::path &relative)
 {
   fs::path absolute = (Paths::GetTexturesPath() / relative).lexically_normal();
   CONSOLE_INFO("Create new texture: {}", absolute.string());
-  Texture2D& texture = _textures.emplace_back();
+  Texture2D &texture = _textures.emplace_back();
   texture.Create(Texture2DTarget::TEXTURE_2D);
   texture.LoadImageData(absolute);
 
@@ -72,7 +72,7 @@ Texture2D TexturesManager::CreateTexture(const fs::path& relative)
 
   return texture;
 }
-Texture2D TexturesManager::GetOrCreateTexture(const fs::path& relative)
+Texture2D TexturesManager::GetOrCreateTexture(const fs::path &relative)
 {
   Texture2D t = FindTexture(relative);
   if (!t.IsValid())
@@ -80,18 +80,18 @@ Texture2D TexturesManager::GetOrCreateTexture(const fs::path& relative)
   return t;
 }
 
-Texture2D TexturesManager::FindIcon(const fs::path& relative) const
+Texture2D TexturesManager::FindIcon(const fs::path &relative) const
 {
   for (u32 i = 0; i < _iconPaths.size(); i++)
     if (_iconPaths.at(i) == relative)
       return _icons.at(i);
   return Texture2D{};
 }
-Texture2D TexturesManager::CreateIcon(const fs::path& relative)
+Texture2D TexturesManager::CreateIcon(const fs::path &relative)
 {
   fs::path absolute = (Paths::GetIconsPath() / relative).lexically_normal();
   CONSOLE_INFO("Create new icon: {}", absolute.string());
-  Texture2D& icon = _icons.emplace_back();
+  Texture2D &icon = _icons.emplace_back();
   icon.Create(Texture2DTarget::TEXTURE_2D);
   icon.LoadImageData(absolute);
 
@@ -99,7 +99,7 @@ Texture2D TexturesManager::CreateIcon(const fs::path& relative)
   _iconPaths.emplace_back(normalized);
   return icon;
 }
-Texture2D TexturesManager::GetOrCreateIcon(const fs::path& relative)
+Texture2D TexturesManager::GetOrCreateIcon(const fs::path &relative)
 {
   Texture2D t = FindIcon(relative);
   if (!t.IsValid())
@@ -107,10 +107,10 @@ Texture2D TexturesManager::GetOrCreateIcon(const fs::path& relative)
   return t;
 }
 
-const const fs::path* TexturesManager::GetTexturePath(u32 textureID) const
+const fs::path *TexturesManager::GetTexturePath(u32 textureID) const
 {
   for (u32 i = 0; i < _textures.size(); i++)
-    if(_textures.at(i).id == textureID)
-			return &_texturePaths.at(i);
-	return nullptr;
+    if (_textures.at(i).id == textureID)
+      return &_texturePaths.at(i);
+  return nullptr;
 }
