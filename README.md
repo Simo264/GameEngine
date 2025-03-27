@@ -1,5 +1,12 @@
-﻿# How to build
-cmake -DCMAKE_CXX_STANDARD=20 -DCMAKE_CXX_COMPILER=g++ -S . -B Build/
+﻿# How to build (Linux + GNU Makefiles)
+- ```cmake -G "Unix MakeFiles" -S . -B Build/```
+- ```make -C Build/```
+- ```./Build/GameEngine```
+
+﻿# How to build (Windows + Visual Studio 22)
+- ```cmake -G "Visual Studio 17 2022" -A x64 -S . -B Build/```
+- Open Visual Studio solution file (.sln)
+- Compile solution
 
 <!-- I am developing this project in a windows environment using 
 Visual Studio Community 2022 as IDE and MSVC as C++ compiler
