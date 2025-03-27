@@ -37,6 +37,15 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(entt)
 
+# download and build nlohmann-json
+set(BUILD_SHARED_LIBS ON) # Enable build shared libs
+FetchContent_Declare(
+  json 
+  URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
+)
+FetchContent_MakeAvailable(json)
+set(BUILD_SHARED_LIBS OFF) # Disable build shared libs
+
 # download and build yaml-cpp
 set(BUILD_SHARED_LIBS ON) # Enable build shared libs
 FetchContent_Declare(
@@ -62,9 +71,6 @@ include_directories(Dependencies/tinyfiledialogs)
 
 # stbi_image include path directory
 include_directories(Dependencies/stbi_image)
-
-# nlohmann include path directory
-include_directories(Dependencies/nlohmann)
 
 # spdlog configuration
 add_subdirectory(Dependencies/spdlog)
@@ -116,6 +122,7 @@ target_link_libraries(GameEngine
   assimp
   EnTT::EnTT
   yaml-cpp::yaml-cpp
+  nlohmann_json::nlohmann_json
 )
 
 target_compile_features(GameEngine PRIVATE cxx_std_20)

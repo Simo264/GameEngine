@@ -21,3 +21,7 @@
 /Dependencies/entt-src/
 /Dependencies/entt-build/
 /Dependencies/entt-subbuild/
+# nlohmann-jspon will be automatically downloaded with cmake
+/Dependencies/json-src/
+/Dependencies/json-build/
+/Dependencies/json-subbuild/
