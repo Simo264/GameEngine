@@ -1,12 +1,12 @@
 ﻿# How to build (Linux + GNU Makefiles)
-- ```cmake -G "Unix MakeFiles" -S . -B Build/```
-- ```make -C Build/```
-- ```./Build/GameEngine```
+1. ```cmake -G "Unix MakeFiles" -S . -B Build/```
+2. ```make -C Build/```
+3. ```./Build/GameEngine```
 
-﻿# How to build (Windows + Visual Studio 22)
-- ```cmake -G "Visual Studio 17 2022" -A x64 -S . -B Build/```
-- Open Visual Studio solution file (.sln)
-- Compile solution
+# How to build (Windows + Visual Studio 22)
+1. ```cmake -G "Visual Studio 17 2022" -A x64 -S . -B Build/```
+2. Open Visual Studio solution file (.sln)
+3. Compile solution
 
 <!-- I am developing this project in a windows environment using 
 Visual Studio Community 2022 as IDE and MSVC as C++ compiler
