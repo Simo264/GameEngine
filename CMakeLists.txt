@@ -18,7 +18,6 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(glad)
 
-
 # Download and make glfw dependency available in the project.
 set(GLFW_BUILD_DOCS      OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS     OFF CACHE BOOL "" FORCE)
@@ -45,6 +44,15 @@ FetchContent_Declare(
   GIT_PROGRESS TRUE
 )
 FetchContent_MakeAvailable(entt)
+
+# Download and make spdlog dependency available in the project.
+FetchContent_Declare(
+  spdlog
+  GIT_REPOSITORY https://github.com/gabime/spdlog.git
+  GIT_TAG v1.x
+  GIT_PROGRESS TRUE
+)
+FetchContent_MakeAvailable(spdlog)
 
 # Download and make nlohmann-json dependency available in the project.
 set(BUILD_SHARED_LIBS ON) # Enable build shared libs
@@ -81,13 +89,8 @@ include_directories(Dependencies/tinyfiledialogs)
 # stbi_image include path directory
 include_directories(Dependencies/stbi_image)
 
-# spdlog configuration
-add_subdirectory(Dependencies/spdlog)
-
 # imgui configuration
 add_subdirectory(Dependencies/imgui)
-
-
 
 # Add include directory path
 include_directories(Source/)
@@ -126,7 +129,7 @@ target_link_libraries(GameEngine
   glad  
   glfw
   glm::glm
-  spdlog
+  spdlog::spdlog
   imgui
   assimp
   EnTT::EnTT
