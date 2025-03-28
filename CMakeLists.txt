@@ -10,7 +10,16 @@ include(FetchContent)
 set(FETCHCONTENT_BASE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Dependencies)
 set(FETCHCONTENT_QUIET FALSE)
 
-# download and build glfw
+# Download and make glad dependency available in the project.
+FetchContent_Declare(
+  glad
+  GIT_REPOSITORY https://github.com/Dav1dde/glad
+  GIT_PROGRESS TRUE
+)
+FetchContent_MakeAvailable(glad)
+
+
+# Download and make glfw dependency available in the project.
 set(GLFW_BUILD_DOCS      OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS     OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES  OFF CACHE BOOL "" FORCE)
@@ -21,7 +30,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(glfw)
 
-# download and build glm
+# Download and make glm dependency available in the project.
 FetchContent_Declare(
   glm
   GIT_REPOSITORY  https://github.com/g-truc/glm.git
@@ -29,7 +38,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(glm)
 
-# download and build entt
+# Download and make entt dependency available in the project.
 FetchContent_Declare(
   entt
   GIT_REPOSITORY  https://github.com/skypjack/entt.git
@@ -37,7 +46,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(entt)
 
-# download and build nlohmann-json
+# Download and make nlohmann-json dependency available in the project.
 set(BUILD_SHARED_LIBS ON) # Enable build shared libs
 FetchContent_Declare(
   json 
@@ -46,7 +55,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(json)
 set(BUILD_SHARED_LIBS OFF) # Disable build shared libs
 
-# download and build yaml-cpp
+# Download and make yaml-cpp dependency available in the project.
 set(BUILD_SHARED_LIBS ON) # Enable build shared libs
 FetchContent_Declare(
   yaml-cpp
@@ -56,7 +65,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(yaml-cpp)
 set(BUILD_SHARED_LIBS OFF) # Disable build shared libs
 
-# download and build assimp
+# Download and make assimp dependency available in the project.
 set(BUILD_SHARED_LIBS ON) # Enable build shared libs
 FetchContent_Declare(
   assimp
@@ -78,8 +87,7 @@ add_subdirectory(Dependencies/spdlog)
 # imgui configuration
 add_subdirectory(Dependencies/imgui)
 
-# glad configuration
-include_directories(Dependencies/glad/include)
+
 
 # Add include directory path
 include_directories(Source/)
@@ -100,7 +108,7 @@ endforeach()
 
 # Link all files into executable
 add_executable (GameEngine 
-  Dependencies/glad/gl.c
+  #Dependencies/glad/gl.c
   Dependencies/tinyfiledialogs/tinyfiledialogs.c
   ${ENGINE_SOURCES}
 )
@@ -115,6 +123,7 @@ add_custom_command(TARGET GameEngine POST_BUILD
 
 # Linking
 target_link_libraries(GameEngine 
+  glad  
   glfw
   glm::glm
   spdlog

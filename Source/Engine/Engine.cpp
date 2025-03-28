@@ -447,8 +447,7 @@ void Engine::Run()
       glViewport(0, 0, _viewportSize.x, _viewportSize.y);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-      glPolygonMode(GL_FRONT, wireframeMode ? GL_LINE : GL_FILL);
-      glPolygonMode(GL_BACK, wireframeMode ? GL_LINE : GL_FILL);
+      glPolygonMode(GL_FRONT_AND_BACK, wireframeMode ? GL_LINE : GL_FILL);
 
       /// Render scene here
 #if 1

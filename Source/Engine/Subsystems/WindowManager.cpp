@@ -17,7 +17,7 @@ void WindowManager::Initialize(WindowProps props)
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
-  glfwWindowHint(GLFW_SAMPLES, 4);  // Enable 4x MSAA on GLFW frame buffer
+  glfwWindowHint(GLFW_SAMPLES, 4); // Enable 4x MSAA on GLFW frame buffer
   glfwWindowHint(GLFW_DEPTH_BITS, 24);
 
   _context = glfwCreateWindow(props.size.x, props.size.y, props.title.data(), nullptr, nullptr);
@@ -28,21 +28,19 @@ void WindowManager::Initialize(WindowProps props)
   glfwSetWindowAspectRatio(_context, props.aspectRatio.x, props.aspectRatio.y);
   glfwSwapInterval(static_cast<int>(props.vsync));
 
-  glfwSetWindowSizeCallback(_context, [](GLFWwindow* window, i32 width, i32 height) {
-    glfwSetWindowSize(window, width, height);
-  });
+  glfwSetWindowSizeCallback(_context, [](GLFWwindow *window, i32 width, i32 height)
+                            { glfwSetWindowSize(window, width, height); });
 
   // Load OpenGL functions, gladLoadGL returns the loaded version, 0 on error.
   CONSOLE_TRACE("Init OpenGL");
-  i32 version = gladLoadGL(glfwGetProcAddress);
+  i32 version = gladLoadGL();
   assert(version != 0 && "Failed to load OpenGL APIs");
-  
 }
 
 void WindowManager::CleanUp() const
 {
-  //glfwDestroyWindow(_context);
-  //glfwTerminate();
+  // glfwDestroyWindow(_context);
+  // glfwTerminate();
 }
 
 void WindowManager::PoolEvents() const
@@ -51,16 +49,16 @@ void WindowManager::PoolEvents() const
 }
 
 void WindowManager::Close() const
-{ 
+{
   glfwSetWindowShouldClose(_context, GLFW_TRUE);
 }
 
-bool WindowManager::IsOpen() const 
-{ 
-  return !glfwWindowShouldClose(_context); 
+bool WindowManager::IsOpen() const
+{
+  return !glfwWindowShouldClose(_context);
 }
 
-void WindowManager::SetWindowTitle(const char* title) const
+void WindowManager::SetWindowTitle(const char *title) const
 {
   glfwSetWindowTitle(_context, title);
 }
@@ -70,9 +68,9 @@ void WindowManager::SetWindowAspectRatio(i32 numer, i32 denom) const
   glfwSetWindowAspectRatio(_context, numer, denom);
 }
 
-void WindowManager::SwapWindowBuffers() const 
-{ 
-  glfwSwapBuffers(_context); 
+void WindowManager::SwapWindowBuffers() const
+{
+  glfwSwapBuffers(_context);
 }
 
 vec2i WindowManager::GetWindowSize() const
@@ -94,14 +92,14 @@ vec2i WindowManager::GetFramebufferSize() const
   return res;
 }
 
-i32 WindowManager::GetKey(u32 key) const 
-{ 
-  return glfwGetKey(_context, key); 
+i32 WindowManager::GetKey(u32 key) const
+{
+  return glfwGetKey(_context, key);
 }
 
-i32 WindowManager::GetMouseKey(u32 key) const 
-{ 
-  return glfwGetMouseButton(_context, key); 
+i32 WindowManager::GetMouseKey(u32 key) const
+{
+  return glfwGetMouseButton(_context, key);
 }
 
 vec2d WindowManager::GetCursorPosition() const
@@ -111,14 +109,14 @@ vec2d WindowManager::GetCursorPosition() const
   return res;
 }
 
-void WindowManager::SetCursorMode(i32 value) const 
-{ 
-  glfwSetInputMode(_context, GLFW_CURSOR, value); 
+void WindowManager::SetCursorMode(i32 value) const
+{
+  glfwSetInputMode(_context, GLFW_CURSOR, value);
 }
 
 void WindowManager::SetWindowPosition(i32 x, i32 y) const
-{ 
-  glfwSetWindowPos(_context, x, y); 
+{
+  glfwSetWindowPos(_context, x, y);
 }
 
 void WindowManager::SetWindowVsync(bool b) const
@@ -132,7 +130,7 @@ void WindowManager::MakeContextCurrent(Context context)
   _context = context;
 }
 
-const char* WindowManager::GetVersion() const
+const char *WindowManager::GetVersion() const
 {
   return glfwGetVersionString();
 }
