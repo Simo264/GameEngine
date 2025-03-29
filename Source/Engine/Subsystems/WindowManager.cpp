@@ -33,7 +33,7 @@ void WindowManager::Initialize(WindowProps props)
 
   // Load OpenGL functions, gladLoadGL returns the loaded version, 0 on error.
   CONSOLE_TRACE("Init OpenGL");
-  i32 version = gladLoadGL();
+  i32 version = gladLoadGL(glfwGetProcAddress);
   assert(version != 0 && "Failed to load OpenGL APIs");
 }
 

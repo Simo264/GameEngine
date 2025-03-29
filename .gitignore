@@ -2,10 +2,6 @@
 /build/
 imgui.ini
 
-# glad will be automatically downloaded with cmake
-/Dependencies/glad-src/
-/Dependencies/glad-build/
-/Dependencies/glad-subbuild/
 # glfw will be automatically downloaded with cmake
 /Dependencies/glfw-src/
 /Dependencies/glfw-build/

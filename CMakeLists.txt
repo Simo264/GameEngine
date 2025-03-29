@@ -7,16 +7,8 @@ if(MSVC)
 endif()
 
 include(FetchContent)
-set(FETCHCONTENT_BASE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Dependencies)
 set(FETCHCONTENT_QUIET FALSE)
-
-# Download and make glad dependency available in the project.
-FetchContent_Declare(
-  glad
-  GIT_REPOSITORY https://github.com/Dav1dde/glad
-  GIT_PROGRESS TRUE
-)
-FetchContent_MakeAvailable(glad)
+#set(FETCHCONTENT_BASE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Dependencies)
 
 # Download and make glfw dependency available in the project.
 set(GLFW_BUILD_DOCS      OFF CACHE BOOL "" FORCE)
@@ -89,6 +81,9 @@ include_directories(Dependencies/tinyfiledialogs)
 # stbi_image include path directory
 include_directories(Dependencies/stbi_image)
 
+# glad include path directory
+include_directories(Dependencies/glad/include)
+
 # imgui configuration
 add_subdirectory(Dependencies/imgui)
 
@@ -111,7 +106,7 @@ endforeach()
 
 # Link all files into executable
 add_executable (GameEngine 
-  #Dependencies/glad/gl.c
+  Dependencies/glad/src/gl.c
   Dependencies/tinyfiledialogs/tinyfiledialogs.c
   ${ENGINE_SOURCES}
 )
@@ -126,7 +121,6 @@ add_custom_command(TARGET GameEngine POST_BUILD
 
 # Linking
 target_link_libraries(GameEngine 
-  glad  
   glfw
   glm::glm
   spdlog::spdlog
