@@ -8,7 +8,6 @@ endif()
 
 include(FetchContent)
 set(FETCHCONTENT_QUIET FALSE)
-#set(FETCHCONTENT_BASE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Dependencies)
 
 # Download and make glfw dependency available in the project.
 set(GLFW_BUILD_DOCS      OFF CACHE BOOL "" FORCE)
@@ -87,48 +86,24 @@ include_directories(Dependencies/glad/include)
 # imgui configuration
 add_subdirectory(Dependencies/imgui)
 
-# Add include directory path
-include_directories(Source/)
-
-# List all Engine files
-file(GLOB_RECURSE ENGINE_SOURCES 
-  ${CMAKE_CURRENT_SOURCE_DIR}/Source/**.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/Source/**.hpp
-)
-
-# Group them in filters
-foreach(_source IN ITEMS ${ENGINE_SOURCES})
-  get_filename_component(_source_path "${_source}" PATH)
-  string(REPLACE "${CMAKE_CURRENT_SOURCE_DIR}" "" _group_path "${_source_path}")
-  string(REPLACE "/" "\\" _group_path "${_group_path}")
-  source_group("${_group_path}" FILES "${_source}")
-endforeach()
+# Include Source/ 
+add_subdirectory(Source)
 
 # Link all files into executable
-add_executable (GameEngine 
+add_executable (${PROJECT_NAME} 
   Dependencies/glad/src/gl.c
   Dependencies/tinyfiledialogs/tinyfiledialogs.c
-  ${ENGINE_SOURCES}
 )
 
 # Copy assimp, yaml-cpp dlls into the executable directory
-add_custom_command(TARGET GameEngine POST_BUILD
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        $<TARGET_FILE:assimp> $<TARGET_FILE_DIR:GameEngine>
+        $<TARGET_FILE:assimp> $<TARGET_FILE_DIR:${PROJECT_NAME}>
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        $<TARGET_FILE:yaml-cpp> $<TARGET_FILE_DIR:GameEngine>
+        $<TARGET_FILE:yaml-cpp> $<TARGET_FILE_DIR:${PROJECT_NAME}>
 )
 
 # Linking
-target_link_libraries(GameEngine 
-  glfw
-  glm::glm
-  spdlog::spdlog
-  imgui
-  assimp
-  EnTT::EnTT
-  yaml-cpp::yaml-cpp
-  nlohmann_json::nlohmann_json
+target_link_libraries(${PROJECT_NAME}
+  Engine
 )
-
-target_compile_features(GameEngine PRIVATE cxx_std_20)

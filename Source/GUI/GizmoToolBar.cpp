@@ -6,34 +6,36 @@
 #include <imgui.h>
 #include <ImGuizmo.h>
 
-void GUI_RenderTransformToolBar(vec2i viewportPos, i32& gizmode)
+void GUI_RenderTransformToolBar(vec2i viewportPos, i32 &gizmode)
 {
-  auto& texManager = TexturesManager::Get();
+  auto &texManager = TexturesManager::Get();
   static Texture2D expandIcon = texManager.GetOrCreateIcon("expand-arrows-32.png");
   static Texture2D rotateIcon = texManager.GetOrCreateIcon("rotate-32.png");
   static Texture2D scaleIcon = texManager.GetOrCreateIcon("scale-32.png");
 
-  ImGuiStyle& style = ImGui::GetStyle();
-  ImVec2 windowPos = ImVec2(viewportPos.x + 4.f, viewportPos.y + 24.f);
+  ImGuiStyle &style = ImGui::GetStyle();
+  f32 posx = static_cast<f32>(viewportPos.x);
+  f32 posy = static_cast<f32>(viewportPos.y);
+  ImVec2 windowPos = ImVec2(posx + 4.f, posy + 24.f);
 
   constexpr ImVec2 btnSize = ImVec2(32.f, 32.f);
   const ImVec2 btnPadding = style.FramePadding; // = (4,3)
   const ImVec2 effectiveBtnSize = ImVec2(
-    btnSize.x + btnPadding.x * 2,
-    btnSize.y + btnPadding.y * 2); // = (40,38)
+      btnSize.x + btnPadding.x * 2,
+      btnSize.y + btnPadding.y * 2);                // = (40,38)
   const ImVec2 windowPadding = style.WindowPadding; // = (8,8)
   static ImVec2 windowSize = ImVec2(
-    effectiveBtnSize.x + windowPadding.x * 2,
-    effectiveBtnSize.y * 3 + windowPadding.y * 3);
+      effectiveBtnSize.x + windowPadding.x * 2,
+      effectiveBtnSize.y * 3 + windowPadding.y * 3);
 
   ImGui::SetNextWindowPos(windowPos);
   ImGui::SetNextWindowSize(windowSize);
   constexpr i32 flags = ImGuiWindowFlags_NoDocking |
-    ImGuiWindowFlags_NoTitleBar |
-    ImGuiWindowFlags_NoMove |
-    ImGuiWindowFlags_NoResize |
-    ImGuiWindowFlags_NoScrollbar |
-    ImGuiWindowFlags_NoCollapse;
+                        ImGuiWindowFlags_NoTitleBar |
+                        ImGuiWindowFlags_NoMove |
+                        ImGuiWindowFlags_NoResize |
+                        ImGuiWindowFlags_NoScrollbar |
+                        ImGuiWindowFlags_NoCollapse;
   ImGui::Begin("Gizmo_Toolbar", nullptr, flags);
 
   constexpr ImVec4 btnColor = ImVec4(0.0f, 0.278f, 0.671f, 1.0f);
@@ -53,8 +55,6 @@ void GUI_RenderTransformToolBar(vec2i viewportPos, i32& gizmode)
     gizmode = ImGuizmo::OPERATION::TRANSLATE;
   if (ImGui::IsItemHovered())
     ImGui::SetTooltip("Gizmo_Translate");
-
-
 
   if (gizmode == ImGuizmo::OPERATION::ROTATE)
   {

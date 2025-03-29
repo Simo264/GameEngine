@@ -13,21 +13,20 @@
 #include <imgui.h>
 #include <ImGuizmo.h>
 
-
 // ------------------------------------------
-//                  PRIVATE                  
+//                  PRIVATE
 // ------------------------------------------
 
-static bool ButtonCentered(const char* label, ImVec2 size)
+static bool ButtonCentered(StringView label, ImVec2 size)
 {
   f32 avail = ImGui::GetContentRegionAvail().x;
   f32 off = (avail - size.x) * 0.5f;
   if (off > 0.0f)
     ImGui::SetCursorPosX(ImGui::GetCursorPosX() + off);
 
-  return ImGui::Button(label, size);
+  return ImGui::Button(label.data(), size);
 }
-static void Insp_Tag(Tag& tag)
+static void Insp_Tag(Tag &tag)
 {
   // Create a table with two columns: one for the labels and one for input
   if (ImGui::BeginTable("Tag_Table", 2, ImGuiTableFlags_SizingFixedFit))
@@ -48,7 +47,7 @@ static void Insp_Tag(Tag& tag)
 
     if (ImGui::InputText("##Value", buffer.data(), buffer.size(), ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_EnterReturnsTrue))
     {
-      StringView value{ buffer.data() };
+      StringView value{buffer.data()};
       if (value.size() > 0)
         tag.UpdateValue(value);
     }
@@ -56,25 +55,25 @@ static void Insp_Tag(Tag& tag)
     ImGui::EndTable();
   }
 }
-static void Insp_Light_ComboAttenuation(Attenuation& destAtt)
+static void Insp_Light_ComboAttenuation(Attenuation &destAtt)
 {
-  char currentAttRange[16]{};
-  std::format_to_n(currentAttRange, sizeof(currentAttRange), "{}m", destAtt.range);
-  if (ImGui::BeginCombo("##Range", currentAttRange))
+  Array<char, 16> currentAttRange{};
+  std::format_to_n(currentAttRange.begin(), currentAttRange.size(), "{}m", destAtt.range);
+  if (ImGui::BeginCombo("##Range", currentAttRange.data()))
   {
-    char label[16]{};
-    for (i32 i = 0; i < std::size(ATTENUATION_RANGES); i++)
+    Array<char, 16> label{};
+    for (u32 i = 0; i < std::size(ATTENUATION_RANGES); i++)
     {
-      const auto& attenuation = ATTENUATION_RANGES[i];
-      std::fill_n(label, sizeof(label), 0);
-      std::format_to_n(label, sizeof(label), "{}m", attenuation.range);
-      if (ImGui::Selectable(label, destAtt.range == attenuation.range))
+      const auto &attenuation = ATTENUATION_RANGES[i];
+      label.fill(0);
+      std::format_to_n(label.begin(), label.size(), "{}m", attenuation.range);
+      if (ImGui::Selectable(label.data(), destAtt.range == attenuation.range))
         destAtt = attenuation;
     }
     ImGui::EndCombo();
   }
 }
-static void Insp_DirectLight(GameObject& object, DirectionalLight& light)
+static void Insp_DirectLight(GameObject &object, DirectionalLight &light)
 {
   // Create a table with two columns: one for the labels and one for input
   if (ImGui::BeginTable("Light_Table", 2, ImGuiTableFlags_SizingFixedFit))
@@ -97,7 +96,7 @@ static void Insp_DirectLight(GameObject& object, DirectionalLight& light)
     ImGui::TableNextColumn(); // First column: label
     ImGui::Text("Color");
     ImGui::TableNextColumn(); // Second column: input
-    ImGui::ColorEdit3("##Color", reinterpret_cast<f32*>(&light.color));
+    ImGui::ColorEdit3("##Color", reinterpret_cast<f32 *>(&light.color));
 
     // 3� Row: intensity input
     ImGui::TableNextRow();
@@ -111,7 +110,7 @@ static void Insp_DirectLight(GameObject& object, DirectionalLight& light)
     ImGui::TableNextColumn(); // First column: label
     ImGui::Text("Direction");
     ImGui::TableNextColumn(); // Second column: input
-    ImGui::DragFloat3("##Direction", reinterpret_cast<f32*>(&light.direction), 0.1f, -FLT_MAX, FLT_MAX);
+    ImGui::DragFloat3("##Direction", reinterpret_cast<f32 *>(&light.direction), 0.1f, -FLT_MAX, FLT_MAX);
 
     ImGui::EndTable();
   }
@@ -127,7 +126,7 @@ static void Insp_DirectLight(GameObject& object, DirectionalLight& light)
   }
   ImGui::PopStyleColor(3);
 }
-static void Insp_PointLight(GameObject& object, PointLight& light)
+static void Insp_PointLight(GameObject &object, PointLight &light)
 {
   // Create a table with two columns: one for the labels and one for input
   if (ImGui::BeginTable("Light_Table", 2, ImGuiTableFlags_SizingFixedFit))
@@ -150,7 +149,7 @@ static void Insp_PointLight(GameObject& object, PointLight& light)
     ImGui::TableNextColumn(); // First column: label
     ImGui::Text("Color");
     ImGui::TableNextColumn(); // Second column: input
-    ImGui::ColorEdit3("##Color", reinterpret_cast<f32*>(&light.color));
+    ImGui::ColorEdit3("##Color", reinterpret_cast<f32 *>(&light.color));
 
     // 3� Row: diffuse input
     ImGui::TableNextRow();
@@ -164,7 +163,7 @@ static void Insp_PointLight(GameObject& object, PointLight& light)
     ImGui::TableNextColumn(); // First column: label
     ImGui::Text("Position");
     ImGui::TableNextColumn(); // Second column: input
-    ImGui::DragFloat3("##Position", reinterpret_cast<f32*>(&light.position), 0.1f, -FLT_MAX, FLT_MAX);
+    ImGui::DragFloat3("##Position", reinterpret_cast<f32 *>(&light.position), 0.1f, -FLT_MAX, FLT_MAX);
 
     // 5� Row: attenuation combo
     ImGui::TableNextRow();
@@ -186,7 +185,7 @@ static void Insp_PointLight(GameObject& object, PointLight& light)
   }
   ImGui::PopStyleColor(3);
 }
-static void Insp_SpotLight(GameObject& object, SpotLight& light)
+static void Insp_SpotLight(GameObject &object, SpotLight &light)
 {
   // Create a table with two columns: one for the labels and one for input
   if (ImGui::BeginTable("Light_Table", 2, ImGuiTableFlags_SizingFixedFit))
@@ -209,7 +208,7 @@ static void Insp_SpotLight(GameObject& object, SpotLight& light)
     ImGui::TableNextColumn(); // First column: label
     ImGui::Text("Color");
     ImGui::TableNextColumn(); // Second column: input
-    ImGui::ColorEdit3("##Color", reinterpret_cast<f32*>(&light.color));
+    ImGui::ColorEdit3("##Color", reinterpret_cast<f32 *>(&light.color));
 
     // 3� Row: diffuse input
     ImGui::TableNextRow();
@@ -223,14 +222,14 @@ static void Insp_SpotLight(GameObject& object, SpotLight& light)
     ImGui::TableNextColumn(); // First column: label
     ImGui::Text("Direction");
     ImGui::TableNextColumn(); // Second column: input
-    ImGui::DragFloat3("##Direction", reinterpret_cast<f32*>(&light.direction), 0.1f, -FLT_MAX, FLT_MAX);
+    ImGui::DragFloat3("##Direction", reinterpret_cast<f32 *>(&light.direction), 0.1f, -FLT_MAX, FLT_MAX);
 
     // 5� Row: position input
     ImGui::TableNextRow();
     ImGui::TableNextColumn(); // First column: label
     ImGui::Text("Position");
     ImGui::TableNextColumn(); // Second column: input
-    ImGui::DragFloat3("##Position", reinterpret_cast<f32*>(&light.position), 0.1f, -FLT_MAX, FLT_MAX);
+    ImGui::DragFloat3("##Position", reinterpret_cast<f32 *>(&light.position), 0.1f, -FLT_MAX, FLT_MAX);
 
     // 6� Row: attenuation combo
     ImGui::TableNextRow();
@@ -267,7 +266,7 @@ static void Insp_SpotLight(GameObject& object, SpotLight& light)
   }
   ImGui::PopStyleColor(3);
 }
-static void Insp_Transform_TableRow(StringView label, vec3f& values, f32 resetValue)
+static void Insp_Transform_TableRow(StringView label, vec3f &values, f32 resetValue)
 {
   ImGui::PushID(label.data());
 
@@ -277,16 +276,16 @@ static void Insp_Transform_TableRow(StringView label, vec3f& values, f32 resetVa
 
   // First column: inputs
   ImGui::TableNextColumn();
-  ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ 0, 0 });
+  ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{0, 0});
 
   f32 lineHeight = ImGui::GetFontSize() + ImGui::GetStyle().FramePadding.y * 2.0f;
-  ImVec2 buttonSize{ lineHeight + 3.0f, lineHeight };
+  ImVec2 buttonSize{lineHeight + 3.0f, lineHeight};
   f32 itemWidth = ImGui::CalcItemWidth() / 3.0f;
 
   // X value
-  ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.8f, 0.1f, 0.15f, 1.0f });
-  ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.9f, 0.2f, 0.2f, 1.0f });
-  ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.7f, 0.05f, 0.1f, 1.0f });
+  ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{0.8f, 0.1f, 0.15f, 1.0f});
+  ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{0.9f, 0.2f, 0.2f, 1.0f});
+  ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{0.7f, 0.05f, 0.1f, 1.0f});
   if (ImGui::Button("X", buttonSize))
     values.x = resetValue;
   ImGui::PopStyleColor(3);
@@ -297,9 +296,9 @@ static void Insp_Transform_TableRow(StringView label, vec3f& values, f32 resetVa
   ImGui::SameLine();
 
   // Y value
-  ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.2f, 0.7f, 0.2f, 1.0f });
-  ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.3f, 0.8f, 0.3f, 1.0f });
-  ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.1f, 0.6f, 0.1f, 1.0f });
+  ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{0.2f, 0.7f, 0.2f, 1.0f});
+  ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{0.3f, 0.8f, 0.3f, 1.0f});
+  ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{0.1f, 0.6f, 0.1f, 1.0f});
   if (ImGui::Button("Y", buttonSize))
     values.y = resetValue;
   ImGui::PopStyleColor(3);
@@ -309,9 +308,9 @@ static void Insp_Transform_TableRow(StringView label, vec3f& values, f32 resetVa
   ImGui::SameLine();
 
   // Z value
-  ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.1f, 0.25f, 0.8f, 1.0f });
-  ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.2f, 0.35f, 0.9f, 1.0f });
-  ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.05f, 0.2f, 0.7f, 1.0f });
+  ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{0.1f, 0.25f, 0.8f, 1.0f});
+  ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{0.2f, 0.35f, 0.9f, 1.0f});
+  ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{0.05f, 0.2f, 0.7f, 1.0f});
   if (ImGui::Button("Z", buttonSize))
     values.z = resetValue;
   ImGui::PopStyleColor(3);
@@ -322,7 +321,7 @@ static void Insp_Transform_TableRow(StringView label, vec3f& values, f32 resetVa
 
   ImGui::PopID();
 }
-static void Insp_Transform(GameObject& object, Transform& transform)
+static void Insp_Transform(GameObject &object, Transform &transform)
 {
   // Create a table with two columns: one for the labels and one for inputs
   if (ImGui::BeginTable("Transform_Table", 2, ImGuiTableFlags_SizingFixedFit))
@@ -355,9 +354,9 @@ static void Insp_Transform(GameObject& object, Transform& transform)
     object.RemoveComponent<Transform>();
   ImGui::PopStyleColor(3);
 }
-static void Insp_ShowTextureSelector(StringView label, Texture2D& meshTexture, Texture2D defaultTex)
+static void Insp_ShowTextureSelector(StringView label, Texture2D &meshTexture, Texture2D defaultTex)
 {
-  auto& texManager = TexturesManager::Get();
+  auto &texManager = TexturesManager::Get();
   static Texture2D resetIcon = texManager.GetOrCreateIcon("reset-arrow-16.png");
 
   bool isMeshTextureValid = meshTexture.GetWidth() != 1;
@@ -371,7 +370,7 @@ static void Insp_ShowTextureSelector(StringView label, Texture2D& meshTexture, T
   ImGui::SetNextItemWidth(ImGui::GetColumnWidth());
   if (isMeshTextureValid)
   {
-    const fs::path* texturePath = texManager.GetTexturePath(meshTexture.id);
+    const fs::path *texturePath = texManager.GetTexturePath(meshTexture.id);
     ImGui::Selectable(texturePath->string().c_str(), false);
   }
   else
@@ -383,31 +382,31 @@ static void Insp_ShowTextureSelector(StringView label, Texture2D& meshTexture, T
   ImGui::TableNextColumn();
   if (isMeshTextureValid)
   {
-    char buttonID[32]{}; // "Reset##Diffuse"
-    std::format_to_n(buttonID, sizeof(buttonID), "Reset##{}", label.data());
+    Array<char, 32> buttonID{}; // "Reset##Diffuse"
+    std::format_to_n(buttonID.begin(), buttonID.size(), "Reset##{}", label.data());
 
-    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.f,0.f,0.f,0.f });
-    if (ImGui::ImageButton(buttonID, resetIcon.id, ImVec2(16.f, 16.f)))
+    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{0.f, 0.f, 0.f, 0.f});
+    if (ImGui::ImageButton(buttonID.data(), resetIcon.id, ImVec2(16.f, 16.f)))
       meshTexture = defaultTex;
     ImGui::PopStyleColor();
   }
 }
-static void Insp_StaticMesh(GameObject& object, StaticMesh& staticMesh)
+static void Insp_StaticMesh(GameObject &object, StaticMesh &staticMesh)
 {
   ImGui::Text("Nr meshes: %d", staticMesh.nrMeshes);
 
   // View meshes with a tree
   if (ImGui::TreeNode("Material"))
   {
-    for (i32 i = 0; i < staticMesh.nrMeshes; i++)
+    for (u32 i = 0; i < staticMesh.nrMeshes; i++)
     {
-      auto& mesh = staticMesh.meshes[i];
-      Material& material = mesh.material;
-      TexturesManager& texManager = TexturesManager::Get();
+      auto &mesh = staticMesh.meshes[i];
+      Material &material = mesh.material;
+      TexturesManager &texManager = TexturesManager::Get();
 
-      char label[16]{};
-      std::format_to_n(label, sizeof(label), "Mesh_{}", i + 1);
-      if (ImGui::TreeNode(label))
+      Array<char, 16> label{};
+      std::format_to_n(label.begin(), label.size(), "Mesh_{}", i + 1);
+      if (ImGui::TreeNode(label.data()))
       {
         if (ImGui::BeginTable("TextureTable", 3, ImGuiTableFlags_SizingFixedFit))
         {
@@ -444,25 +443,25 @@ static void Insp_StaticMesh(GameObject& object, StaticMesh& staticMesh)
     object.RemoveComponent<StaticMesh>();
   ImGui::PopStyleColor(3);
 }
-static void Insp_SkeletalMesh(GameObject& object, SkeletalMesh& skeleton)
+static void Insp_SkeletalMesh(GameObject &object, SkeletalMesh &skeleton)
 {
   ImGui::Text("Nr meshes: %d", skeleton.nrMeshes);
   ImGui::Text("Nr bones: %d", skeleton.nrBones);
 
   if (ImGui::TreeNode("Material"))
   {
-    TexturesManager& texManager = TexturesManager::Get();
-    char label[16]{};
+    TexturesManager &texManager = TexturesManager::Get();
+    Array<char, 16> label{};
 
-    for (i32 i = 0; i < skeleton.nrMeshes; i++)
+    for (u32 i = 0; i < skeleton.nrMeshes; i++)
     {
-      auto& mesh = skeleton.meshes[i];
-      Material& material = mesh.material;
+      auto &mesh = skeleton.meshes[i];
+      Material &material = mesh.material;
 
-      std::fill_n(label, sizeof(label), 0);
-      std::format_to_n(label, sizeof(label), "Mesh_{}", i + 1);
+      label.fill(0);
+      std::format_to_n(label.begin(), label.size(), "Mesh_{}", i + 1);
 
-      if (ImGui::TreeNode(label))
+      if (ImGui::TreeNode(label.data()))
       {
         if (ImGui::BeginTable("TextureTable", 3, ImGuiTableFlags_SizingFixedFit))
         {
@@ -501,17 +500,17 @@ static void Insp_SkeletalMesh(GameObject& object, SkeletalMesh& skeleton)
   }
   ImGui::PopStyleColor(3);
 }
-static void Insp_Animator(GameObject& object, Animator& animator)
+static void Insp_Animator(GameObject &object, Animator &animator)
 {
-  AnimationsManager& animManager = AnimationsManager::Get();
+  AnimationsManager &animManager = AnimationsManager::Get();
 
-  SkeletalMesh* skeleton = object.GetComponent<SkeletalMesh>();
+  SkeletalMesh *skeleton = object.GetComponent<SkeletalMesh>();
   assert(skeleton != nullptr);
 
-  const auto* animationsVector = animManager.GetSkeletonAnimations(skeleton->id);
+  const auto *animationsVector = animManager.GetSkeletonAnimations(skeleton->id);
 
-  const Animation* animAttached = animator.GetAttachedAnimation();
-  const fs::path* animAttachedPath = nullptr;
+  const Animation *animAttached = animator.GetAttachedAnimation();
+  const fs::path *animAttachedPath = nullptr;
   if (animAttached)
   {
     animAttachedPath = animManager.GetAnimationPath(animAttached->id);
@@ -524,9 +523,9 @@ static void Insp_Animator(GameObject& object, Animator& animator)
 
   if (ImGui::BeginCombo("Animation list", (!animAttached ? "Select animation" : animAttachedPath->string().c_str())))
   {
-    for (const Animation& animation : *animationsVector)
+    for (const Animation &animation : *animationsVector)
     {
-      const fs::path* path = animManager.GetAnimationPath(animation.id);
+      const fs::path *path = animManager.GetAnimationPath(animation.id);
       if (ImGui::Selectable(path->string().c_str(), animAttachedPath == path))
         animator.SetTargetAnimation(&animation);
     }
@@ -535,7 +534,7 @@ static void Insp_Animator(GameObject& object, Animator& animator)
 
   if (animAttached)
   {
-    auto& texManager = TexturesManager::Get();
+    auto &texManager = TexturesManager::Get();
     static Texture2D playIcon = texManager.GetOrCreateIcon("play-button-32.png");
     static Texture2D pauseIcon = texManager.GetOrCreateIcon("pause-button-32.png");
     static Texture2D restartIcon = texManager.GetOrCreateIcon("restart-button-32.png");
@@ -569,7 +568,7 @@ static void Insp_Animator(GameObject& object, Animator& animator)
   }
 }
 
-static void Insp_AddTransformComponent(GameObject& object)
+static void Insp_AddTransformComponent(GameObject &object)
 {
   if (object.HasComponent<Transform>())
   {
@@ -580,7 +579,7 @@ static void Insp_AddTransformComponent(GameObject& object)
     object.AddComponent<Transform>();
   }
 }
-static void Insp_AddLightComponent(GameObject& object)
+static void Insp_AddLightComponent(GameObject &object)
 {
   if (object.HasComponent<Light>())
   {
@@ -606,7 +605,7 @@ static void Insp_AddLightComponent(GameObject& object)
     ImGui::EndMenu();
   }
 }
-static void Insp_AddStaticMeshComponent(GameObject& object)
+static void Insp_AddStaticMeshComponent(GameObject &object)
 {
   if (object.HasComponent<StaticMesh>())
   {
@@ -618,9 +617,13 @@ static void Insp_AddStaticMeshComponent(GameObject& object)
     static fs::path path{};
     if (ImGui::Button("Open static mesh file"))
     {
-      const char* filter[] = { "*.obj", "*.glb", "*.gltf", "*.fbx" };
-      u32 numFilters = sizeof(filter) / sizeof(filter[0]);
-      path = FileDialog::OpenFileDialog(numFilters, filter, "Static mesh file", false);
+      static const char *filter[] = {"*.obj", "*.glb", "*.gltf", "*.fbx"};
+      static constexpr i32 numFilters = sizeof(filter) / sizeof(filter[0]);
+      path = FileDialog::OpenFileDialog(
+          numFilters,
+          filter,
+          "Static mesh file",
+          false);
       path = fs::relative(path, Paths::GetStaticModelsPath());
     }
     String pathStr = path.string();
@@ -632,12 +635,12 @@ static void Insp_AddStaticMeshComponent(GameObject& object)
     {
       if (ImGui::Button("Ok"))
       {
-        auto& manager = ModelsManager::Get();
-        const auto* sMesh = manager.FindStaticMesh(path);
+        auto &manager = ModelsManager::Get();
+        const auto *sMesh = manager.FindStaticMesh(path);
         if (!sMesh)
           sMesh = &manager.CreateStaticMesh(path);
 
-        auto& component = object.AddComponent<StaticMesh>();
+        auto &component = object.AddComponent<StaticMesh>();
         sMesh->Clone(component);
         path.clear();
       }
@@ -650,12 +653,10 @@ static void Insp_AddStaticMeshComponent(GameObject& object)
     }
     ImGui::EndChild();
 
-
-
     ImGui::EndMenu();
   }
 }
-static void Insp_AddSkeletalMeshComponent(GameObject& object)
+static void Insp_AddSkeletalMeshComponent(GameObject &object)
 {
   if (object.HasComponent<SkeletalMesh>())
   {
@@ -667,9 +668,13 @@ static void Insp_AddSkeletalMeshComponent(GameObject& object)
     static fs::path path{};
     if (ImGui::Button("Open skeleton mesh file"))
     {
-      const char* filter[] = { "*.obj", "*.glb", "*.gltf", "*.fbx" };
-      constexpr u32 numFilters = sizeof(filter) / sizeof(filter[0]);
-      path = FileDialog::OpenFileDialog(numFilters, filter, "Skeleton mesh file", false);
+      static const char *filter[] = {"*.obj", "*.glb", "*.gltf", "*.fbx"};
+      static constexpr i32 numFilters = sizeof(filter) / sizeof(filter[0]);
+      path = FileDialog::OpenFileDialog(
+          numFilters,
+          filter,
+          "Skeleton mesh file",
+          false);
       path = fs::relative(path, Paths::GetSkeletalModelsPath());
     }
     String pathStr = path.string();
@@ -681,13 +686,13 @@ static void Insp_AddSkeletalMeshComponent(GameObject& object)
     {
       if (ImGui::Button("Ok"))
       {
-        auto& manager = ModelsManager::Get();
-        const auto* skeleton = manager.FindSkeletalMesh(path);
+        auto &manager = ModelsManager::Get();
+        const auto *skeleton = manager.FindSkeletalMesh(path);
         if (!skeleton)
           skeleton = &manager.CreateSkeletalMesh(path);
 
-        auto& skComponent = object.AddComponent<SkeletalMesh>();
-        auto& anComponent = object.AddComponent<Animator>();
+        auto &skComponent = object.AddComponent<SkeletalMesh>();
+        auto &anComponent = object.AddComponent<Animator>();
         skeleton->Clone(skComponent);
         anComponent.SetTargetSkeleton(skComponent);
 
@@ -706,62 +711,62 @@ static void Insp_AddSkeletalMeshComponent(GameObject& object)
   }
 }
 
-static void Insp_ListAllComponents(GameObject& object)
+static void Insp_ListAllComponents(GameObject &object)
 {
   if (ImGui::CollapsingHeader("Tag"))
   {
-    Tag* tag = object.GetComponent<Tag>();
+    Tag *tag = object.GetComponent<Tag>();
     Insp_Tag(*tag);
   }
-  if (Transform* transform = object.GetComponent<Transform>())
+  if (Transform *transform = object.GetComponent<Transform>())
   {
     if (ImGui::CollapsingHeader("Transform"))
       Insp_Transform(object, *transform);
   }
-  if (StaticMesh* staticMesh = object.GetComponent<StaticMesh>())
+  if (StaticMesh *staticMesh = object.GetComponent<StaticMesh>())
   {
     if (ImGui::CollapsingHeader("StaticMesh"))
       Insp_StaticMesh(object, *staticMesh);
   }
-  if (SkeletalMesh* skeleton = object.GetComponent<SkeletalMesh>())
+  if (SkeletalMesh *skeleton = object.GetComponent<SkeletalMesh>())
   {
     if (ImGui::CollapsingHeader("SkeletonMesh"))
       Insp_SkeletalMesh(object, *skeleton);
   }
-  if (Animator* animator = object.GetComponent<Animator>())
+  if (Animator *animator = object.GetComponent<Animator>())
   {
     if (ImGui::CollapsingHeader("Animator"))
       Insp_Animator(object, *animator);
   }
-  if (Light* light = object.GetComponent<Light>())
+  if (Light *light = object.GetComponent<Light>())
   {
     if (ImGui::CollapsingHeader("Light"))
     {
       switch (light->type)
       {
-        case LightType::DIRECTIONAL:
-        {
-          auto* dirLight = object.GetComponent<DirectionalLight>();
-          Insp_DirectLight(object, *dirLight);
-          break;
-        }
-        case LightType::POINT:
-        {
-          auto* pointLight = object.GetComponent<PointLight>();
-          Insp_PointLight(object, *pointLight);
-          break;
-        }
-        case LightType::SPOT:
-        {
-          auto* spotLight = object.GetComponent<SpotLight>();
-          Insp_SpotLight(object, *spotLight);
-          break;
-        }
+      case LightType::DIRECTIONAL:
+      {
+        auto *dirLight = object.GetComponent<DirectionalLight>();
+        Insp_DirectLight(object, *dirLight);
+        break;
+      }
+      case LightType::POINT:
+      {
+        auto *pointLight = object.GetComponent<PointLight>();
+        Insp_PointLight(object, *pointLight);
+        break;
+      }
+      case LightType::SPOT:
+      {
+        auto *spotLight = object.GetComponent<SpotLight>();
+        Insp_SpotLight(object, *spotLight);
+        break;
+      }
       }
     }
   }
 }
-static void Insp_NewComponentPopup(GameObject& object)
+static void Insp_NewComponentPopup(GameObject &object)
 {
   if (ImGui::BeginPopup("NewComponent_Popup"))
   {
@@ -791,13 +796,11 @@ static void Insp_NewComponentPopup(GameObject& object)
   }
 }
 
-
 // ------------------------------------------
-//                    PUBLIC                 
+//                    PUBLIC
 // ------------------------------------------
 
-
-void GUI_RenderInspector(bool& open, GameObject& object)
+void GUI_RenderInspector(bool &open, GameObject &object)
 {
   ImGui::Begin("Inspector", &open);
   if (object.IsValid())
@@ -815,7 +818,7 @@ void GUI_RenderInspector(bool& open, GameObject& object)
     Insp_ListAllComponents(object);
   }
 
-  // Open popup on click to "+New component" button 
+  // Open popup on click to "+New component" button
   Insp_NewComponentPopup(object);
 
   ImGui::End();

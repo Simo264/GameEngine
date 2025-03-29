@@ -8,10 +8,10 @@
 #include <imgui.h>
 
 // ----------------------------------------------------
-//          PRIVATE          
+//          PRIVATE
 // ----------------------------------------------------
 
-static bool ButtonCentered(const char* label, ImVec2 size)
+static bool ButtonCentered(const char *label, ImVec2 size)
 {
   f32 avail = ImGui::GetContentRegionAvail().x;
   f32 off = (avail - size.x) * 0.5f;
@@ -21,26 +21,26 @@ static bool ButtonCentered(const char* label, ImVec2 size)
   return ImGui::Button(label, size);
 }
 
-static void Hierarchy_ListObjects(Scene& scene, GameObject& objSelected)
+static void Hierarchy_ListObjects(Scene &scene, GameObject &objSelected)
 {
-  auto& texManager = TexturesManager::Get();
+  auto &texManager = TexturesManager::Get();
   static Texture2D icon = texManager.GetOrCreateIcon("game-object-16.png");
 
-	Array<char, 64> selectableName{};
+  Array<char, 64> selectableName{};
   for (auto [entity, tag] : scene.Reg().view<Tag>().each())
   {
-    GameObject o{ entity, &scene.Reg() };
-    
-		selectableName.fill(0);
+    GameObject o{entity, &scene.Reg()};
+
+    selectableName.fill(0);
     std::format_to_n(selectableName.data(), selectableName.size(), "{}##{}", tag.value.data(), static_cast<u32>(entity));
 
     ImGui::BeginGroup();
     ImGui::SetCursorPosY(ImGui::GetCursorPosY() + (ImGui::GetTextLineHeight() - 16.f) / 2);
-    
+
     ImGui::Image(icon.id, ImVec2(16.f, 16.f));
     ImGui::SameLine();
-    
-    auto& colors = ImGui::GetStyle().Colors;
+
+    auto &colors = ImGui::GetStyle().Colors;
     ImVec4 colorSelected = colors[ImGuiCol_FrameBgActive];
     ImVec4 colorHovered = colors[ImGuiCol_FrameBgHovered];
     ImGui::PushStyleColor(ImGuiCol_Header, colorSelected);
@@ -50,21 +50,20 @@ static void Hierarchy_ListObjects(Scene& scene, GameObject& objSelected)
     bool selected = ImGui::Selectable(selectableName.data(), objSelected.Compare(o));
     if (selected && !objSelected.Compare(o))
       objSelected = o;
-    
+
     if (
-      ImGui::IsItemHovered() &&
-      ImGui::IsMouseClicked(ImGuiMouseButton_Right) &&
-      objSelected.IsValid()
-    )
+        ImGui::IsItemHovered() &&
+        ImGui::IsMouseClicked(ImGuiMouseButton_Right) &&
+        objSelected.IsValid())
       ImGui::OpenPopup("ObjectMenu");
-    
+
     ImGui::PopStyleColor(3);
     ImGui::EndGroup();
 
     ImGui::Spacing();
   }
 }
-static void Hierarchy_ObjectMenuPopup(Scene& scene, GameObject& objSelected)
+static void Hierarchy_ObjectMenuPopup(Scene &scene, GameObject &objSelected)
 {
   if (ImGui::BeginPopup("ObjectMenu"))
   {
@@ -77,20 +76,18 @@ static void Hierarchy_ObjectMenuPopup(Scene& scene, GameObject& objSelected)
 }
 
 // ----------------------------------------------------
-//          PUBLIC           
+//          PUBLIC
 // ----------------------------------------------------
 
-void GUI_RenderHierarchy(bool& open, Scene& scene, GameObject& objSelected)
+void GUI_RenderHierarchy(bool &open, Scene &scene, GameObject &objSelected)
 {
-  static bool createNewObject = false;
-
   ImGui::Begin("Hierarchy", &open);
 
   /* "+New object" button */
   f32 btnWidth = ImGui::GetContentRegionAvail().x - 32.f;
-  if(ButtonCentered("+New object", ImVec2(btnWidth, 26.f)))
+  if (ButtonCentered("+New object", ImVec2(btnWidth, 26.f)))
     scene.CreateObject();
-  
+
   ImGui::Spacing();
   ImGui::Separator();
   ImGui::Spacing();
@@ -100,6 +97,6 @@ void GUI_RenderHierarchy(bool& open, Scene& scene, GameObject& objSelected)
 
   /* Display menu on right click object */
   Hierarchy_ObjectMenuPopup(scene, objSelected);
-  
+
   ImGui::End();
 }

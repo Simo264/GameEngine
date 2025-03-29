@@ -10,17 +10,17 @@
 class Tag
 {
 public:
-	Tag(StringView tag) 
+	Tag(StringView tag)
 	{
 		UpdateValue(tag);
 	}
-	
+
 	void UpdateValue(StringView newValue)
 	{
 		assert(newValue.size() < 32);
 
 		value.fill(0);
-		std::strncpy(value.data(), newValue.data(), newValue.size());
+		std::copy_n(newValue.begin(), value.size(), value.begin());
 	}
 
 	Array<char, 32> value;

@@ -43,9 +43,9 @@ static void GLAPIENTRY MessageCallback(GLenum source,
                                        GLenum type,
                                        GLuint id,
                                        GLenum severity,
-                                       GLsizei length,
+                                       [[maybe_unused]] GLsizei length,
                                        const GLchar *message,
-                                       const void *userParam)
+                                       [[maybe_unused]] const void *userParam)
 {
   // Ignore non-significant error/warning codes
   if (id == 131169 || id == 131185 || id == 131218 || id == 131204)
@@ -132,7 +132,9 @@ static void GLAPIENTRY MessageCallback(GLenum source,
     severityStr = "Unknown";
     break;
   }
-  CONSOLE_ERROR("GL CALLBACK: {} type = {}, severity = {}, message = {}", sourceStr, typeStr, severityStr, message);
+
+  CONSOLE_ERROR("GL CALLBACK: {} type = {}, severity = {}, message = {}",
+                sourceStr, typeStr, severityStr, message);
 }
 
 static void SetOpenGLStates()
@@ -347,7 +349,6 @@ void Engine::Run()
   // ----------------------------------------------------------------------
   ImGuiLayer &gui = ImGuiLayer::Get();
   WindowManager &windowManager = WindowManager::Get();
-  TexturesManager &texturesManager = TexturesManager::Get();
   ShadersManager &shadersManager = ShadersManager::Get();
 
   Program gridPlaneProgram = shadersManager.GetProgram("GridPlane");
@@ -383,8 +384,8 @@ void Engine::Run()
     windowManager.PoolEvents();
     if (gui.viewportFocused)
     {
-      primaryCamera.ProcessKeyboard(delta, 5.0f);
-      primaryCamera.ProcessMouse(delta, 15.0f);
+      primaryCamera.ProcessKeyboard(static_cast<f32>(delta), 5.0f);
+      primaryCamera.ProcessMouse(static_cast<f32>(delta), 15.0f);
     }
 
     // --------------------------------------------------------------------

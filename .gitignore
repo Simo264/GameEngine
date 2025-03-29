@@ -1,5 +1,6 @@
-/Build/
-/build/
+.vscode/
+Build/
+build/
 imgui.ini
 
 # glfw will be automatically downloaded with cmake

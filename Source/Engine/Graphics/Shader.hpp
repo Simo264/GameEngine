@@ -48,11 +48,11 @@
  * ===========================================================
  * These models focus on artistic styles rather than realism.
  * 
- * 1. Toon Shading (Cel Shading) – Uses flat colors and strong outlines (e.g., Zelda: Breath of the Wild).
- * 2. Gooch Shading – Transitions from blue to yellow to enhance shape perception.
- * 3. X-Toon Shading – Advanced toon shading with more gradient levels.
- * 4. Hatching Shading – Simulates pencil sketching using texture overlays.
- * 5. Silhouette Shading – Highlights model edges for blueprint-style rendering.
+ * 1. Toon Shading (Cel Shading) ï¿½ Uses flat colors and strong outlines (e.g., Zelda: Breath of the Wild).
+ * 2. Gooch Shading ï¿½ Transitions from blue to yellow to enhance shape perception.
+ * 3. X-Toon Shading ï¿½ Advanced toon shading with more gradient levels.
+ * 4. Hatching Shading ï¿½ Simulates pencil sketching using texture overlays.
+ * 5. Silhouette Shading ï¿½ Highlights model edges for blueprint-style rendering.
  * 
  * ===========================================================
  *     IMPLEMENTATION IN A CUSTOM ENGINE
@@ -163,7 +163,7 @@ public:
   i32 GetUniformLocation(StringView name) const;
 
   /** @return The index of a named uniform block */
-  i32 GetUniformBlockIndex(StringView name) const;
+  u32 GetUniformBlockIndex(StringView name) const;
 
   /** @brief Assign a binding poi32 to an active uniform block */
   void SetUniformBlockBinding(StringView blockname, i32 uniformBlockBinding) const;

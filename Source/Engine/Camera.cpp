@@ -10,12 +10,12 @@
 /* -----------------------------------------------------
  *          PUBLIC METHODS
  * -----------------------------------------------------
-*/
+ */
 
 Camera::Camera(vec3f position, vec3f orientation, f32 fov)
-	: position{ position },
-		orientation{ orientation },
-		fov{ fov }
+		: position{position},
+			orientation{orientation},
+			fov{fov}
 {
 	UpdateOrientation();
 }
@@ -56,7 +56,7 @@ mat4f Camera::CalculateOrtho() const
 
 void Camera::ProcessKeyboard(f32 delta, f32 movementSpeed)
 {
-	WindowManager& windowManager = WindowManager::Get();
+	WindowManager &windowManager = WindowManager::Get();
 
 	const f32 velocity = movementSpeed * delta;
 
@@ -93,14 +93,14 @@ void Camera::ProcessKeyboard(f32 delta, f32 movementSpeed)
 
 void Camera::ProcessMouse(f32 delta, f32 mouseSensitivity)
 {
-	WindowManager& windowManager = WindowManager::Get();
+	WindowManager &windowManager = WindowManager::Get();
 
 	if (windowManager.GetMouseKey(GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
 	{
 		vec2d mousePos = windowManager.GetCursorPosition();
 		vec2i windowSize = windowManager.GetWindowSize();
-		static f32 lastX = (f32)windowSize.x / 2.0f;
-		static f32 lastY = (f32)windowSize.y / 2.0f;
+		static f64 lastX = (f32)windowSize.x / 2.0f;
+		static f64 lastY = (f32)windowSize.y / 2.0f;
 		static bool firstMouse = true;
 		if (firstMouse)
 		{
@@ -109,18 +109,18 @@ void Camera::ProcessMouse(f32 delta, f32 mouseSensitivity)
 			firstMouse = false;
 		}
 
-		f32& yaw = orientation.x;
-		f32& pitch = orientation.y;
-		f32& roll = orientation.z;
+		f32 &yaw = orientation.x;
+		f32 &pitch = orientation.y;
+		// f32& roll = orientation.z;
 
 		const f32 velocity = mouseSensitivity * delta * 10;
-		const f32 xoffset = lastX - mousePos.x;
+		const f32 xoffset = static_cast<f32>(lastX - mousePos.x);
 		if (xoffset < 0) /* Right */
 			yaw += velocity;
 		else if (xoffset > 0) /* Left */
 			yaw -= velocity;
 
-		const f32 yoffset = lastY - mousePos.y;
+		const f64 yoffset = lastY - mousePos.y;
 		if (yoffset > 0) /* Up */
 			pitch += velocity;
 		else if (yoffset < 0) /* Down */

@@ -316,14 +316,14 @@ GameObject Scene::CreateObject(StringView objName)
 {
 	entt::entity id = _registry.create();
 
-	char defaultTag[32]{};
+	Array<char, 32> defaultTag{};
 	if (objName.empty())
-		std::format_to_n(defaultTag, sizeof(defaultTag), "Object_{}", static_cast<u32>(id));
+		std::format_to_n(defaultTag.begin(), defaultTag.size(), "Object_{}", static_cast<u32>(id));
 	else
-		std::strncpy(defaultTag, objName.data(), sizeof(defaultTag));
+		std::copy_n(objName.begin(), defaultTag.size(), defaultTag.begin());
 
 	GameObject object{id, &_registry};
-	object.AddComponent<Tag>(defaultTag);
+	object.AddComponent<Tag>(defaultTag.data());
 	return object;
 }
 void Scene::DestroyObject(entt::entity id)
@@ -354,8 +354,6 @@ void Scene::SaveToFile(const fs::path &out)
 
 void Scene::SerializeScene(const fs::path &out)
 {
-	ModelsManager &modelsManager = ModelsManager::Get();
-
 	YAML::Emitter outEmitter;
 	outEmitter << YAML::BeginMap;
 	for (auto entity : Reg().view<entt::entity>())

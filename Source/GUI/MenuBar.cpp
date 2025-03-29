@@ -8,7 +8,7 @@
 
 #include <imgui.h>
 
-void GUI_RenderMenuBar(Scene& scene, bool& openPreferences)
+void GUI_RenderMenuBar(Scene &scene)
 {
   // Render menu bar
   if (ImGui::BeginMainMenuBar())
@@ -17,13 +17,13 @@ void GUI_RenderMenuBar(Scene& scene, bool& openPreferences)
     {
       if (ImGui::MenuItem("Open"))
       {
-        static const char* filter[] = { "*.ini" };
+        static const char *filter[] = {"*.ini"};
 
         fs::path filePath = FileDialog::OpenFileDialog(1, filter, "Open scene", false);
         if (!filePath.empty())
         {
           // Unset all lights
-          ShadersManager& shadersManager = ShadersManager::Get();
+          ShadersManager &shadersManager = ShadersManager::Get();
           Program shaderScene = shadersManager.GetProgram("Scene");
           Program shaderSceneShadows = shadersManager.GetProgram("SceneShadows");
           shaderScene.SetUniform1f("u_directionalLight.intensity", 0.f);
@@ -39,9 +39,8 @@ void GUI_RenderMenuBar(Scene& scene, bool& openPreferences)
       }
       if (ImGui::MenuItem("Save as..."))
       {
-        const char* filters[] = { "*.ini" };
-        fs::path filepath = FileDialog::SaveFileDialog(1, filters, "Save as .ini");
-        
+        const char *filters[] = {"*.yaml"};
+        fs::path filepath = FileDialog::SaveFileDialog(1, filters, "Save as .yaml");
         scene.SaveToFile(filepath);
       }
 
@@ -58,9 +57,6 @@ void GUI_RenderMenuBar(Scene& scene, bool& openPreferences)
     }
     if (ImGui::BeginMenu("Window"))
     {
-      if (ImGui::MenuItem("Preferences"))
-        openPreferences = true;
-
       ImGui::EndMenu();
     }
     if (ImGui::BeginMenu("Tools"))

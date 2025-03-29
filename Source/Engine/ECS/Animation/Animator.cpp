@@ -4,34 +4,31 @@
 
 #include <stack>
 
-
 // ----------------------------------------------------
-//										PUBLIC													
+//										PUBLIC
 // ----------------------------------------------------
 
-Animator::Animator() :
-	boneTransforms{},
-	nrBoneTransforms{ 0 },
-	currentTime{ 0.f },
-	_targetSkeleton{ nullptr },
-	_targetAnimation{ nullptr },
-	_playAnimation{ false }
+Animator::Animator() : boneTransforms{},
+											 nrBoneTransforms{0},
+											 currentTime{0.f},
+											 _targetSkeleton{nullptr},
+											 _targetAnimation{nullptr},
+											 _playAnimation{false}
 {
 }
 
-
-void Animator::SetTargetSkeleton(SkeletalMesh& target)
+void Animator::SetTargetSkeleton(SkeletalMesh &target)
 {
 	if (_targetSkeleton)
 		return;
-	
+
 	_targetSkeleton = &target;
 	boneTransforms = std::make_unique<mat4f[]>(target.nrBones);
 	nrBoneTransforms = target.nrBones;
 	for (u32 i = 0; i < nrBoneTransforms; i++)
 		boneTransforms[i] = mat4f(1.0f);
 }
-void Animator::SetTargetAnimation(const Animation* target)
+void Animator::SetTargetAnimation(const Animation *target)
 {
 	_targetAnimation = target;
 	for (u32 i = 0; i < nrBoneTransforms; i++)
@@ -56,36 +53,36 @@ void Animator::UpdateAnimation(f32 dt)
 		return;
 
 	currentTime += _targetAnimation->ticksPerSecond * dt;
-	currentTime = fmod(currentTime, _targetAnimation->duration);
+	currentTime = fmodf(currentTime, _targetAnimation->duration);
 	UpdateBoneTransform(*_targetSkeleton->rootNode, mat4f(1.0f));
 }
 
-// ---------------------------------------------------- 
-//										PRIVATE														
-// ---------------------------------------------------- 
+// ----------------------------------------------------
+//										PRIVATE
+// ----------------------------------------------------
 
-void Animator::UpdateBoneTransform(const BoneNode& node, const mat4f& parentTransform)
+void Animator::UpdateBoneTransform(const BoneNode &node, const mat4f &parentTransform)
 {
-	std::stack<std::pair<const BoneNode*, mat4f>> stack;
+	std::stack<std::pair<const BoneNode *, mat4f>> stack;
 	stack.push(std::make_pair(&node, parentTransform));
 
 	while (!stack.empty())
 	{
-		auto& [currentNode, currentTransform] = stack.top();
+		auto &[currentNode, currentTransform] = stack.top();
 		stack.pop();
 
 		i32 boneIndex = currentNode->index;
 		mat4f globalTransformation = currentTransform * currentNode->bindPoseTransform;
 		if (boneIndex != -1)
 		{
-			Bone& bone = _targetSkeleton->bones[boneIndex];
+			Bone &bone = _targetSkeleton->bones[boneIndex];
 			InterpolateBone(boneIndex);
 			globalTransformation = currentTransform * bone.localTransform;
-			const mat4f& offset = bone.offset;
+			const mat4f &offset = bone.offset;
 			boneTransforms[boneIndex] = globalTransformation * offset;
 		}
 
-		for (const auto& child : currentNode->children)
+		for (const auto &child : currentNode->children)
 		{
 			stack.push(std::make_pair(&child, globalTransformation));
 		}
@@ -94,14 +91,14 @@ void Animator::UpdateBoneTransform(const BoneNode& node, const mat4f& parentTran
 
 void Animator::InterpolateBone(u32 boneIndex)
 {
-	const auto& boneKeys = _targetAnimation->bonesAnimKeys[boneIndex];
+	const auto &boneKeys = _targetAnimation->bonesAnimKeys[boneIndex];
 	mat4f translation = InterpolateBonePosition(boneKeys);
 	mat4f rotation = InterpolateBoneRotation(boneKeys);
 	mat4f scale = InterpolateBoneScale(boneKeys);
-	Bone& bone = _targetSkeleton->bones[boneIndex];
+	Bone &bone = _targetSkeleton->bones[boneIndex];
 	bone.localTransform = translation * rotation * scale;
 }
-mat4f Animator::InterpolateBonePosition(const BoneAnimationKeys& boneKeys)
+mat4f Animator::InterpolateBonePosition(const BoneAnimationKeys &boneKeys)
 {
 	if (boneKeys.nrPosKeys == 0)
 		return mat4f(1.0f);
@@ -113,7 +110,7 @@ mat4f Animator::InterpolateBonePosition(const BoneAnimationKeys& boneKeys)
 	vec3f finalPosition = glm::mix(currentKey->position, nextKey->position, scaleFactor);
 	return glm::translate(mat4f(1.0f), finalPosition);
 }
-mat4f Animator::InterpolateBoneRotation(const BoneAnimationKeys& boneKeys)
+mat4f Animator::InterpolateBoneRotation(const BoneAnimationKeys &boneKeys)
 {
 	if (boneKeys.nrRotKeys == 0)
 		return mat4f(1.0f);
@@ -126,15 +123,15 @@ mat4f Animator::InterpolateBoneRotation(const BoneAnimationKeys& boneKeys)
 	finalRotation = glm::normalize(finalRotation);
 	return glm::mat4_cast(finalRotation);
 }
-mat4f Animator::InterpolateBoneScale(const BoneAnimationKeys& boneKeys)
-{ 
+mat4f Animator::InterpolateBoneScale(const BoneAnimationKeys &boneKeys)
+{
 	if (boneKeys.nrScaleKeys == 0)
 		return mat4f(1.0f);
 	if (boneKeys.nrScaleKeys == 1)
 		return glm::scale(mat4f(1.0f), boneKeys.scaleKeys[0].scale);
 
 	const auto [currentKey, nextKey] = FindCurrentScaleKey(boneKeys);
-	f32 scaleFactor = CalculateBlendFactor(currentKey->timeStamp, nextKey->timeStamp);
+	f64 scaleFactor = CalculateBlendFactor(currentKey->timeStamp, nextKey->timeStamp);
 	vec3f finalScale = glm::mix(currentKey->scale, nextKey->scale, scaleFactor);
 	return glm::scale(mat4f(1.0f), finalScale);
 }
@@ -145,24 +142,24 @@ f32 Animator::CalculateBlendFactor(f32 prevTimestamp, f32 nextTimestamp) const
 	f32 framesDiff = nextTimestamp - prevTimestamp;
 	return midWayLength / framesDiff;
 }
-std::pair<const KeyPosition*, const KeyPosition*> Animator::FindCurrentPositionKey(const BoneAnimationKeys& boneKeys) const
+std::pair<const KeyPosition *, const KeyPosition *> Animator::FindCurrentPositionKey(const BoneAnimationKeys &boneKeys) const
 {
 	for (u32 i = 0; i < boneKeys.nrPosKeys - 1; i++)
 		if (currentTime < boneKeys.posKeys[i + 1].timeStamp)
-			return { &boneKeys.posKeys[i], &boneKeys.posKeys[i + 1] };
-	return { nullptr, nullptr };
+			return {&boneKeys.posKeys[i], &boneKeys.posKeys[i + 1]};
+	return {nullptr, nullptr};
 }
-std::pair<const KeyRotation*, const KeyRotation*> Animator::FindCurrentRotationKey(const BoneAnimationKeys& boneKeys) const
+std::pair<const KeyRotation *, const KeyRotation *> Animator::FindCurrentRotationKey(const BoneAnimationKeys &boneKeys) const
 {
 	for (u32 i = 0; i < boneKeys.nrRotKeys - 1; i++)
 		if (currentTime < boneKeys.rotKeys[i + 1].timeStamp)
-			return { &boneKeys.rotKeys[i], &boneKeys.rotKeys[i + 1] };
-	return { nullptr, nullptr };
+			return {&boneKeys.rotKeys[i], &boneKeys.rotKeys[i + 1]};
+	return {nullptr, nullptr};
 }
-std::pair<const KeyScale*, const KeyScale*>	Animator::FindCurrentScaleKey(const BoneAnimationKeys& boneKeys) const
+std::pair<const KeyScale *, const KeyScale *> Animator::FindCurrentScaleKey(const BoneAnimationKeys &boneKeys) const
 {
 	for (u32 i = 0; i < boneKeys.nrScaleKeys - 1; i++)
 		if (currentTime < boneKeys.scaleKeys[i + 1].timeStamp)
-			return { &boneKeys.scaleKeys[i], &boneKeys.scaleKeys[i + 1] };
-	return { nullptr, nullptr };
+			return {&boneKeys.scaleKeys[i], &boneKeys.scaleKeys[i + 1]};
+	return {nullptr, nullptr};
 }

@@ -17,15 +17,15 @@ struct aiMaterial;
 class SkeletalMesh
 {
 public:
-  SkeletalMesh() :
-    rootNode{},
-    meshes{},
-    bones{},
-    boneNames{},
-    nrBones{ 0 },
-    nrMeshes{ 0 },
-    id{ 0 }
-  {}
+  SkeletalMesh() : rootNode{},
+                   meshes{},
+                   bones{},
+                   boneNames{},
+                   nrBones{0},
+                   nrMeshes{0},
+                   id{0}
+  {
+  }
 
   /**
    * @brief Releases CPU-side memory used by the skeletal mesh.
@@ -40,12 +40,12 @@ public:
   ~SkeletalMesh() = default;
 
   /** @brief Move constructor */
-  SkeletalMesh(SkeletalMesh&&) noexcept = default;
-  SkeletalMesh& operator=(SkeletalMesh&&) noexcept = default;
+  SkeletalMesh(SkeletalMesh &&) noexcept = default;
+  SkeletalMesh &operator=(SkeletalMesh &&) noexcept = default;
 
   /** @brief Delete copy constructor */
-  SkeletalMesh(const SkeletalMesh&) = delete;
-  SkeletalMesh& operator=(const SkeletalMesh&) = delete;
+  SkeletalMesh(const SkeletalMesh &) = delete;
+  SkeletalMesh &operator=(const SkeletalMesh &) = delete;
 
   static constexpr u32 GetMaxNumBones()
   {
@@ -70,7 +70,7 @@ public:
    *
    * @param absolute The absolute path to the 3D model file to load.
    */
-  void CreateFromFile(const fs::path& absolute);
+  void CreateFromFile(const fs::path &absolute);
 
   /**
    * @brief Creates a copy of the current skeletal mesh, including meshes, bones, and bone names.
@@ -82,8 +82,8 @@ public:
    * @note Since VAOs and GPU buffers are shared across copies, changes to the mesh geometry will affect
    *       all copies. The bones and bone names, however, are copied independently.
    */
-  void Clone(SkeletalMesh& other) const;
-  
+  void Clone(SkeletalMesh &other) const;
+
   /**
    * @brief Frees GPU resources by destroying OpenGL buffers and VAOs for all meshes.
    *
@@ -97,7 +97,7 @@ public:
   void Destroy() const;
 
   void Render(class Program program, RenderMode mode) const;
-  
+
   /**
    * @brief Finds the index of a bone given its name.
    * This method searches for a bone in the mesh's bone list by comparing the provided name with the stored bone names.
@@ -110,7 +110,7 @@ public:
    * @return The index of the bone if found, otherwise -1.
    */
   i32 FindBone(StringView boneName) const;
-  
+
   /**
    * @brief The root bone node of the bone hierarchy.
    *
@@ -120,7 +120,7 @@ public:
    * skeleton.
    */
   SharedPtr<BoneNode> rootNode;
-  
+
   /**
    * @brief Array of bones associated with the skeletal mesh.
    *
@@ -130,13 +130,13 @@ public:
    * the same set of bones is used.
    */
   SharedPtr<Bone[]> bones;
-  
+
   /**
    * @brief Array of bone names, corresponding to the bones in the 'bones' array.
    *
    * This array stores the names of each bone. It is parallel to the 'bones'
    * array, meaning that each element in 'boneNames' corresponds to the
-   * bone at the same index in the 'bones' array. 
+   * bone at the same index in the 'bones' array.
    * The array is shared across all instances of the skeletal mesh, ensuring that
    * the same set of boneNames is used.
    */
@@ -149,7 +149,7 @@ public:
    * skeletal mesh instance.
    */
   UniquePtr<Mesh[]> meshes;
-  
+
   u32 nrMeshes;
 
   u32 nrBones;
@@ -158,9 +158,9 @@ public:
   u32 id;
 
 private:
-  void ProcessNode(aiNode* node, const aiScene* scene);
-  Buffer LoadVertices(aiMesh* aimesh);
-  Buffer LoadIndices(aiMesh* aimesh);
-  void LoadBonesAndWeights(Vector<Vertex_P_N_UV_T_B>& vertices, const aiMesh* aimesh);
-  void LoadBoneHierarchy(BoneNode& dest, const aiNode* src);
+  void ProcessNode(aiNode *node, const aiScene *scene);
+  Buffer LoadVertices(aiMesh *aimesh);
+  Buffer LoadIndices(aiMesh *aimesh);
+  void LoadBonesAndWeights(Vector<Vertex_P_N_UV_T_B> &vertices, const aiMesh *aimesh);
+  void LoadBoneHierarchy(BoneNode &dest, const aiNode *src);
 };
