@@ -4,8 +4,15 @@ namespace Paths
 {
 	const fs::path &GetRootPath()
 	{
-		// static const fs::path ROOT_PATH = fs::current_path().parent_path().lexically_normal();
-		static const fs::path ROOT_PATH = fs::current_path();
+		static auto lambda = []() {
+			fs::path currentPath = fs::current_path();
+			if (currentPath.filename() == "Build")
+				return currentPath.parent_path().lexically_normal();
+
+			return currentPath.lexically_normal();
+		};
+
+		static const fs::path ROOT_PATH = lambda();
 		return ROOT_PATH;
 	}
 
