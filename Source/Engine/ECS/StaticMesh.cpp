@@ -164,7 +164,7 @@ Buffer StaticMesh::LoadIndices(aiMesh *aimesh)
 	for (u32 i = 0; i < aimesh->mNumFaces; i++)
 	{
 		const aiFace &face = aimesh->mFaces[i];
-		for (i32 j = 0; j < face.mNumIndices; j++)
+		for (u32 j = 0; j < face.mNumIndices; j++)
 			*(ptr++) = static_cast<u32>(face.mIndices[j]);
 	}
 	buffer.UnmapStorage();

@@ -8,8 +8,8 @@ Vertex_P_N_UV_T_B::Vertex_P_N_UV_T_B()
 
 void Vertex_P_N_UV_T_B::AddBone(i32 id, f32 weight)
 {
-  i32 i = std::count_if(std::begin(boneIds), std::end(boneIds), [](u32 id)
-                        { return id != static_cast<u32>(-1); });
+  i64 i = std::count_if(std::begin(boneIds), std::end(boneIds), [](i32 boneId)
+                        { return boneId != -1; });
 
   if (i < static_cast<i32>(MAX_BONES_INFLUENCE))
   {
