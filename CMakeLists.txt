@@ -75,22 +75,37 @@ FetchContent_MakeAvailable(assimp)
 set(BUILD_SHARED_LIBS OFF) # Disable build shared libs
 
 # tinyfiledialogs configuration
-include_directories(Dependencies/tinyfiledialogs)
+include_directories(Dependencies/tinyfiledialogs/)
 
 # stbi_image include path directory
-include_directories(Dependencies/stbi_image)
+include_directories(Dependencies/stbi_image/)
 
 # glad include path directory
-include_directories(Dependencies/glad/include)
+include_directories(Dependencies/glad/include/)
 
 # imgui configuration
-add_subdirectory(Dependencies/imgui)
+add_subdirectory(Dependencies/imgui/)
 
 # Include Source/ 
-add_subdirectory(Source)
+include_directories(Source/)
+
+# List all Engine files
+file(GLOB_RECURSE engine_src 
+  ${CMAKE_CURRENT_SOURCE_DIR}/Source/**.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/Source/**.hpp
+)
+
+# Group them in filters
+foreach(_source IN ITEMS ${engine_src})
+  get_filename_component(_source_path "${_source}" PATH)
+  string(REPLACE "${CMAKE_CURRENT_SOURCE_DIR}" "" _group_path "${_source_path}")
+  string(REPLACE "/" "\\" _group_path "${_group_path}")
+  source_group("${_group_path}" FILES "${_source}")
+endforeach()
 
 # Link all files into executable
 add_executable (${PROJECT_NAME} 
+  ${engine_src}
   Dependencies/glad/src/gl.c
   Dependencies/tinyfiledialogs/tinyfiledialogs.c
 )
@@ -105,5 +120,34 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
 
 # Linking
 target_link_libraries(${PROJECT_NAME}
-  Engine
+  assimp
+  imgui
+  glfw
+  spdlog::spdlog
+  glm::glm
+  EnTT::EnTT
+  yaml-cpp::yaml-cpp
+  nlohmann_json::nlohmann_json
 )
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+  target_compile_options(${PROJECT_NAME} PRIVATE 
+    -Wextra  
+    -Wconversion
+    -Wunused
+    #-Wshadow
+    #-Wold-style-cast
+    #-Wpedantic 
+    #-Wpointer-arith 
+    #-Wcast-qual 
+    #-Wno-missing-braces
+  )
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+  # target_compile_options(${PROJECT_NAME} PRIVATE
+  #   /W4
+  #   /permissive-
+  #   /sdl
+  # )
+endif()
+
+target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)
