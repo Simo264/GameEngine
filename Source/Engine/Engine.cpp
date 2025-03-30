@@ -191,13 +191,13 @@ static void CalculatePerFrameTime()
   totalDeltasPerSecond += delta;
   timerT1 = chrono::steady_clock::now();
   f64 timer_diff = chrono::duration_cast<chrono::duration<f64>>(timerT1 - timerT0).count();
-  if (timer_diff >= 1)
+  if (timer_diff >= 1.f)
   {
     timerT0 = chrono::steady_clock::now();
     avgTime = totalDeltasPerSecond / frames;
     frameRate = frames;
     frames = 0;
-    totalDeltasPerSecond = 0;
+    totalDeltasPerSecond = 0.f;
   }
 }
 // static FrameBuffer CreateDepthMapFbo(i32 width, i32 height)

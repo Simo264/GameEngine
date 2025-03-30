@@ -320,7 +320,7 @@ GameObject Scene::CreateObject(StringView objName)
 	if (objName.empty())
 		std::format_to_n(defaultTag.begin(), defaultTag.size(), "Object_{}", static_cast<u32>(id));
 	else
-		std::copy_n(objName.begin(), defaultTag.size(), defaultTag.begin());
+		std::copy(objName.begin(), objName.end(), defaultTag.begin());
 
 	GameObject object{id, &_registry};
 	object.AddComponent<Tag>(defaultTag.data());

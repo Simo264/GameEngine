@@ -20,7 +20,7 @@ public:
 		assert(newValue.size() < 32);
 
 		value.fill(0);
-		std::copy_n(newValue.begin(), value.size(), value.begin());
+		std::copy(newValue.begin(), newValue.end(), value.begin());
 	}
 
 	Array<char, 32> value;

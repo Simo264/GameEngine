@@ -170,7 +170,6 @@ void ImGuiLayer::RenderDebug(bool shadowMode, bool normalMode, bool wireframeMod
   ImGui::TextWrapped("Wireframe mode (F9 on/F10 off): %d", wireframeMode);
   ImGui::End();
 }
-
 void ImGuiLayer::RenderDebugDepthMap(u32 texture)
 {
   ImGuiStyle &style = ImGui::GetStyle();
@@ -303,9 +302,36 @@ void ImGuiLayer::Docking()
   ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 
   ImGui::Begin("Dockspace", nullptr, windowFlags);
-
   ImGui::PopStyleVar(3);
+  
   ImGuiID dockspaceID = ImGui::GetID("Dockspace");
   ImGui::DockSpace(dockspaceID, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_PassthruCentralNode);
+  
+  // Inizializza il layout solo la prima volta
+  static bool firstTime = true;
+  if (firstTime)
+  {
+    firstTime = false;
+
+    ImGui::DockBuilderRemoveNode(dockspaceID);
+    ImGui::DockBuilderAddNode(dockspaceID, ImGuiDockNodeFlags_DockSpace);
+    ImGui::DockBuilderSetNodeSize(dockspaceID, viewport->WorkSize);
+
+    ImGuiID dockLeft = ImGui::DockBuilderSplitNode(dockspaceID, ImGuiDir_Left, 0.25f, nullptr, &dockspaceID);
+    ImGuiID dockMain = dockspaceID;
+    ImGuiID dockLeftTop;
+    ImGuiID dockLeftBottom;
+
+    // Dividiamo il dock sinistro in due: sopra (Hierarchy) e sotto (Inspector)
+    dockLeftBottom = ImGui::DockBuilderSplitNode(dockLeft, ImGuiDir_Down, 0.5f, nullptr, &dockLeftTop);
+
+    // Assegniamo le finestre ai dock
+    ImGui::DockBuilderDockWindow("Hierarchy", dockLeftTop);
+    ImGui::DockBuilderDockWindow("Inspector", dockLeftBottom);
+    ImGui::DockBuilderDockWindow("Viewport", dockMain);
+
+    ImGui::DockBuilderFinish(dockspaceID);
+  }
+
   ImGui::End();
 }
