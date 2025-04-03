@@ -40,20 +40,20 @@ static f64 totalDeltasPerSecond = 0.0f;
 static f64 avgTime = 0.0f; // The average rendering time per seconds
 
 static void GLAPIENTRY MessageCallback(GLenum source,
-                                       GLenum type,
-                                       GLuint id,
-                                       GLenum severity,
-                                       [[maybe_unused]] GLsizei length,
-                                       const GLchar *message,
-                                       [[maybe_unused]] const void *userParam)
+  GLenum type,
+  GLuint id,
+  GLenum severity,
+  [[maybe_unused]] GLsizei length,
+  const GLchar* message,
+  [[maybe_unused]] const void* userParam)
 {
   // Ignore non-significant error/warning codes
   if (id == 131169 || id == 131185 || id == 131218 || id == 131204)
     return;
 
-  const char *sourceStr;
-  const char *typeStr;
-  const char *severityStr;
+  const char* sourceStr;
+  const char* typeStr;
+  const char* severityStr;
 
   switch (source)
   {
@@ -134,7 +134,7 @@ static void GLAPIENTRY MessageCallback(GLenum source,
   }
 
   CONSOLE_ERROR("GL CALLBACK: {} type = {}, severity = {}, message = {}",
-                sourceStr, typeStr, severityStr, message);
+    sourceStr, typeStr, severityStr, message);
 }
 
 static void SetOpenGLStates()
@@ -257,12 +257,12 @@ void Engine::Initialize()
   // -------------------------
   CONSOLE_INFO("Initializing WindowManager...");
   WindowManager::Get().Initialize(WindowProps(
-      vec2i{WINDOW_WIDTH, WINDOW_HEIGHT}, // window size
-      vec2i{50, 50},                      // window pos
-      "GameEngine",                       // window title
-      vec2i{16, 9},                       // window aspect ratio
-      false                               // window v-sync
-      ));
+    vec2i{ WINDOW_WIDTH, WINDOW_HEIGHT }, // window size
+    vec2i{ 50, 50 },                      // window pos
+    "GameEngine",                       // window title
+    vec2i{ 16, 9 },                       // window aspect ratio
+    false                               // window v-sync
+  ));
 
   // Initialize shader manager
   // -------------------------
@@ -287,10 +287,10 @@ void Engine::Initialize()
     // - 1 projection matrix
     // - 1 view matrix
     constexpr u32 size = sizeof(mat4f) * 2;
-    void *data = Array<mat4f, 2>{mat4f(1.0f), mat4f(1.0f)}.data();
+    void* data = Array<mat4f, 2>{ mat4f(1.0f), mat4f(1.0f) }.data();
     _uboCameraBlock = Buffer(size,                       // Reserve memory for 2 mat4f
-                             data,                       // Init with identity matrices
-                             BufferUsage::DYNAMIC_DRAW); // Data store content will be modified repeatedly and used many times.
+      data,                       // Init with identity matrices
+      BufferUsage::DYNAMIC_DRAW); // Data store content will be modified repeatedly and used many times.
 
     _uboCameraBlock.BindBase(BufferTarget::UNIFORM, 0); // "CameraBlock" to binding point 0
   }
@@ -302,8 +302,8 @@ void Engine::Initialize()
     // - 1 SpotLight object
     constexpr u32 size = sizeof(DirectionalLight) + sizeof(PointLight) + sizeof(SpotLight);
     _uboLightBlock = Buffer(size,
-                            nullptr,
-                            BufferUsage::DYNAMIC_DRAW // Data store content will be modified repeatedly and used many times.
+      nullptr,
+      BufferUsage::DYNAMIC_DRAW // Data store content will be modified repeatedly and used many times.
     );
 
     constexpr Array<u8, sizeof(DirectionalLight)> zeros{};
@@ -314,8 +314,8 @@ void Engine::Initialize()
   {
     constexpr u32 size = SkeletalMesh::GetMaxNumBones() * sizeof(mat4f);
     _uboBoneBlock = Buffer(size,
-                           nullptr,
-                           BufferUsage::STREAM_DRAW // Data store content will be modified repeatedly and used many times.
+      nullptr,
+      BufferUsage::STREAM_DRAW // Data store content will be modified repeatedly and used many times.
     );
     constexpr Array<char, size> zeros{};
     _uboBoneBlock.UpdateStorage(0, size, zeros.data()); // Init buffer with zeros
@@ -339,17 +339,17 @@ void Engine::Run()
   TextureCubemap skyboxTexture = CreateSkybox();
 
   // Create primary camera object
-  Camera primaryCamera(vec3f(7.f, 4.f, 6), vec3f(-135.0f, -25.0f, 0.f));
-  primaryCamera.frustum.zFar = 100.0f;
+  Camera camera;
+  camera.position = vec3f(0.f, 0.f, 5.0f);
 
   Scene scene((Paths::GetRootPath() / "Scene.yaml"));
 
   // ----------------------------------------------------------------------
   // -------------------------- Pre-loop section --------------------------
   // ----------------------------------------------------------------------
-  ImGuiLayer &gui = ImGuiLayer::Get();
-  WindowManager &windowManager = WindowManager::Get();
-  ShadersManager &shadersManager = ShadersManager::Get();
+  ImGuiLayer& gui = ImGuiLayer::Get();
+  WindowManager& windowManager = WindowManager::Get();
+  ShadersManager& shadersManager = ShadersManager::Get();
 
   Program gridPlaneProgram = shadersManager.GetProgram("GridPlane");
   Program skyboxProgram = shadersManager.GetProgram("Skybox");
@@ -384,21 +384,21 @@ void Engine::Run()
     windowManager.PoolEvents();
     if (gui.viewportFocused)
     {
-      primaryCamera.ProcessKeyboard(static_cast<f32>(delta), 5.0f);
-      primaryCamera.ProcessMouse(static_cast<f32>(delta), 15.0f);
+      camera.ProcessKeyboard(static_cast<f32>(delta), 5.0f);
+      camera.ProcessMouse(static_cast<f32>(delta), 15.0f);
     }
 
     // --------------------------------------------------------------------
     // -------------------------- Update section --------------------------
     // --------------------------------------------------------------------
-    primaryCamera.UpdateOrientation();
-    mat4f cameraView = primaryCamera.CalculateView(primaryCamera.position + primaryCamera.GetFrontVector());
-    mat4f cameraProj = primaryCamera.CalculatePerspective(static_cast<f32>(_viewportSize.x) / static_cast<f32>(_viewportSize.y));
+    camera.UpdateOrientation();
+    mat4f cameraView = camera.CalculateView(camera.position + camera.GetFrontVector());
+    mat4f cameraProj = camera.CalculatePerspective(static_cast<f32>(_viewportSize.x) / static_cast<f32>(_viewportSize.y));
 
     // Update camera UBO
     {
-      void *data = Array<mat4f, 2>{cameraView, cameraProj}.data();
-      _uboCameraBlock.UpdateStorage(0, sizeof(mat4f) * 2, data);
+      auto matrices = Array<mat4f, 2>{ cameraView, cameraProj };
+      _uboCameraBlock.UpdateStorage(0, sizeof(mat4f) * 2, matrices.data());
     }
 
     // Update light UBO
@@ -411,30 +411,30 @@ void Engine::Run()
       if (e.has_value())
       {
         GameObject obj = e.value();
-        DirectionalLight *light = obj.GetComponent<DirectionalLight>();
+        DirectionalLight* light = obj.GetComponent<DirectionalLight>();
         _uboLightBlock.UpdateStorage(0,
-                                     sizeof(DirectionalLight),
-                                     reinterpret_cast<void *>(light));
+          sizeof(DirectionalLight),
+          reinterpret_cast<void*>(light));
       }
 
       e = scene.FindObjectWithComponent<PointLight>();
       if (e.has_value())
       {
         GameObject obj = e.value();
-        PointLight *light = obj.GetComponent<PointLight>();
+        PointLight* light = obj.GetComponent<PointLight>();
         _uboLightBlock.UpdateStorage(sizeof(DirectionalLight),
-                                     sizeof(PointLight),
-                                     reinterpret_cast<void *>(light));
+          sizeof(PointLight),
+          reinterpret_cast<void*>(light));
       }
 
       e = scene.FindObjectWithComponent<SpotLight>();
       if (e.has_value())
       {
         GameObject obj = e.value();
-        SpotLight *light = obj.GetComponent<SpotLight>();
+        SpotLight* light = obj.GetComponent<SpotLight>();
         _uboLightBlock.UpdateStorage(sizeof(DirectionalLight) + sizeof(PointLight),
-                                     sizeof(SpotLight),
-                                     reinterpret_cast<void *>(light));
+          sizeof(SpotLight),
+          reinterpret_cast<void*>(light));
       }
     }
 
@@ -447,36 +447,33 @@ void Engine::Run()
     {
       glViewport(0, 0, _viewportSize.x, _viewportSize.y);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
       glPolygonMode(GL_FRONT_AND_BACK, wireframeMode ? GL_LINE : GL_FILL);
 
       /// Render scene here
-#if 1
       {
         goochProgram.Use();
-        goochProgram.SetUniform3f(Uniforms::viewPos, primaryCamera.position);
-        scene.Reg().view<StaticMesh, Transform>().each([&](auto &staticMesh, auto &transform)
-                                                       {
-          transform.position.y = -2.0f;
-          transform.UpdateTransformation();
+        goochProgram.SetUniform3f(Uniforms::viewPos, camera.position);
+        scene.Reg().view<StaticMesh, Transform>().each([&](auto& staticMesh, auto& transform)
+          {
+            transform.position.y = -2.0f;
+            transform.UpdateTransformation();
 
-          goochProgram.SetUniformMat4f(Uniforms::model, transform.GetTransformation());
-          staticMesh.Render(goochProgram, RenderMode::TRIANGLES); });
+            goochProgram.SetUniformMat4f(Uniforms::model, transform.GetTransformation());
+            staticMesh.Render(goochProgram, RenderMode::TRIANGLES); });
 
         blinnPhongProgram.Use();
-        blinnPhongProgram.SetUniform3f(Uniforms::viewPos, primaryCamera.position);
-        scene.Reg().view<StaticMesh, Transform>().each([&](auto &staticMesh, auto &transform)
-                                                       {
-          transform.position.y = 2.0f;
-          transform.UpdateTransformation();
+        blinnPhongProgram.SetUniform3f(Uniforms::viewPos, camera.position);
+        scene.Reg().view<StaticMesh, Transform>().each([&](auto& staticMesh, auto& transform)
+          {
+            transform.position.y = 2.0f;
+            transform.UpdateTransformation();
 
-          blinnPhongProgram.SetUniformMat4f(Uniforms::model, transform.GetTransformation());
-          staticMesh.Render(blinnPhongProgram, RenderMode::TRIANGLES); });
+            blinnPhongProgram.SetUniformMat4f(Uniforms::model, transform.GetTransformation());
+            staticMesh.Render(blinnPhongProgram, RenderMode::TRIANGLES); });
       }
-#endif
 
       /// Render the infinite grid
-#if 1
+#if 0
       {
         gridPlaneProgram.Use();
         Renderer::DrawArrays(RenderMode::TRIANGLES, _gridPlane.vao, _gridPlane.numVertices);
@@ -496,21 +493,22 @@ void Engine::Run()
 
       // Blit multisampled buffer to normal color buffer of intermediate FBO
       _fboMultisampled.Blit(_fboIntermediate,
-                            0, 0, _viewportSize.x, _viewportSize.y,
-                            0, 0, _viewportSize.x, _viewportSize.y,
-                            FramebufferBlitMask::COLOR_BUFFER,
-                            FramebufferBlitFilter::NEAREST);
-    }
+        0, 0, _viewportSize.x, _viewportSize.y,
+        0, 0, _viewportSize.x, _viewportSize.y,
+        FramebufferBlitMask::COLOR_BUFFER,
+        FramebufferBlitFilter::NEAREST);
+      }
     _fboMultisampled.Unbind(FramebufferTarget::READ_DRAW);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     gui.RenderMenuBar(scene);
-    GameObject &objSelected = gui.RenderHierarchy(scene);
+    GameObject& objSelected = gui.RenderHierarchy(scene);
     gui.RenderInspector(objSelected);
     u32 fboTexture = _fboIntermediate.textAttachments.at(0);
     gui.RenderViewport(fboTexture, objSelected, cameraView, cameraProj);
     gui.RenderTimeInfo(delta, avgTime, frameRate);
+    //gui.RenderCameraProps(camera);
     gui.EndFrame();
 
     // Checking viewport size
@@ -525,8 +523,8 @@ void Engine::Run()
     // -------------------------- Swap buffers --------------------------
     // ------------------------------------------------------------------
     windowManager.SwapWindowBuffers();
-  }
-}
+      }
+    }
 void Engine::CleanUp()
 {
   // Destroy all framebuffers
@@ -559,7 +557,7 @@ void Engine::CleanUp()
 
 void Engine::CreateFramebuffer(i32 samples, i32 width, i32 height)
 {
-  _viewportSize = {width, height};
+  _viewportSize = { width, height };
   _fboMultisampled.Create();
 
   // Create a multisampled color attachment texture
@@ -593,13 +591,13 @@ void Engine::CreateFramebuffer(i32 samples, i32 width, i32 height)
 void Engine::CreateScreenSquare()
 {
   constexpr f32 vertices[] = {
-      // position    uv
-      -1.0f, 1.0f, 0.0f, 1.0f,
-      -1.0f, -1.0f, 0.0f, 0.0f,
-      1.0f, -1.0f, 1.0f, 0.0f,
-      -1.0f, 1.0f, 0.0f, 1.0f,
-      1.0f, -1.0f, 1.0f, 0.0f,
-      1.0f, 1.0f, 1.0f, 1.0f};
+    // position    uv
+    -1.0f, 1.0f, 0.0f, 1.0f,
+    -1.0f, -1.0f, 0.0f, 0.0f,
+    1.0f, -1.0f, 1.0f, 0.0f,
+    -1.0f, 1.0f, 0.0f, 1.0f,
+    1.0f, -1.0f, 1.0f, 0.0f,
+    1.0f, 1.0f, 1.0f, 1.0f };
   Buffer vbo(sizeof(vertices), vertices, BufferUsage::STATIC_DRAW);
 
   _screenSquare.Create();
@@ -622,7 +620,7 @@ void Engine::CreateGridPlane()
       -1.f, 1.f, 0.f,
       -1.f, -1.f, 0.f,
       1.f, 1.f, 0.f,
-      1.f, -1.f, 0.f};
+      1.f, -1.f, 0.f };
   Buffer gridVbo(sizeof(vertices), vertices, BufferUsage::STATIC_DRAW);
 
   _gridPlane.Create();
@@ -636,48 +634,48 @@ void Engine::CreateGridPlane()
 TextureCubemap Engine::CreateSkybox()
 {
   constexpr f32 vertices[] = {
-      // Position
-      -1.0f, 1.0f, -1.0f,
-      -1.0f, -1.0f, -1.0f,
-      1.0f, -1.0f, -1.0f,
-      1.0f, -1.0f, -1.0f,
-      1.0f, 1.0f, -1.0f,
-      -1.0f, 1.0f, -1.0f,
+    // Position
+    -1.0f, 1.0f, -1.0f,
+    -1.0f, -1.0f, -1.0f,
+    1.0f, -1.0f, -1.0f,
+    1.0f, -1.0f, -1.0f,
+    1.0f, 1.0f, -1.0f,
+    -1.0f, 1.0f, -1.0f,
 
-      -1.0f, -1.0f, 1.0f,
-      -1.0f, -1.0f, -1.0f,
-      -1.0f, 1.0f, -1.0f,
-      -1.0f, 1.0f, -1.0f,
-      -1.0f, 1.0f, 1.0f,
-      -1.0f, -1.0f, 1.0f,
+    -1.0f, -1.0f, 1.0f,
+    -1.0f, -1.0f, -1.0f,
+    -1.0f, 1.0f, -1.0f,
+    -1.0f, 1.0f, -1.0f,
+    -1.0f, 1.0f, 1.0f,
+    -1.0f, -1.0f, 1.0f,
 
-      1.0f, -1.0f, -1.0f,
-      1.0f, -1.0f, 1.0f,
-      1.0f, 1.0f, 1.0f,
-      1.0f, 1.0f, 1.0f,
-      1.0f, 1.0f, -1.0f,
-      1.0f, -1.0f, -1.0f,
+    1.0f, -1.0f, -1.0f,
+    1.0f, -1.0f, 1.0f,
+    1.0f, 1.0f, 1.0f,
+    1.0f, 1.0f, 1.0f,
+    1.0f, 1.0f, -1.0f,
+    1.0f, -1.0f, -1.0f,
 
-      -1.0f, -1.0f, 1.0f,
-      -1.0f, 1.0f, 1.0f,
-      1.0f, 1.0f, 1.0f,
-      1.0f, 1.0f, 1.0f,
-      1.0f, -1.0f, 1.0f,
-      -1.0f, -1.0f, 1.0f,
+    -1.0f, -1.0f, 1.0f,
+    -1.0f, 1.0f, 1.0f,
+    1.0f, 1.0f, 1.0f,
+    1.0f, 1.0f, 1.0f,
+    1.0f, -1.0f, 1.0f,
+    -1.0f, -1.0f, 1.0f,
 
-      -1.0f, 1.0f, -1.0f,
-      1.0f, 1.0f, -1.0f,
-      1.0f, 1.0f, 1.0f,
-      1.0f, 1.0f, 1.0f,
-      -1.0f, 1.0f, 1.0f,
-      -1.0f, 1.0f, -1.0f,
+    -1.0f, 1.0f, -1.0f,
+    1.0f, 1.0f, -1.0f,
+    1.0f, 1.0f, 1.0f,
+    1.0f, 1.0f, 1.0f,
+    -1.0f, 1.0f, 1.0f,
+    -1.0f, 1.0f, -1.0f,
 
-      -1.0f, -1.0f, -1.0f,
-      -1.0f, -1.0f, 1.0f,
-      1.0f, -1.0f, -1.0f,
-      1.0f, -1.0f, -1.0f,
-      -1.0f, -1.0f, 1.0f,
-      1.0f, -1.0f, 1.0f};
+    -1.0f, -1.0f, -1.0f,
+    -1.0f, -1.0f, 1.0f,
+    1.0f, -1.0f, -1.0f,
+    1.0f, -1.0f, -1.0f,
+    -1.0f, -1.0f, 1.0f,
+    1.0f, -1.0f, 1.0f };
   Buffer vbo(sizeof(vertices), vertices, BufferUsage::STATIC_DRAW);
 
   _skybox.Create();
@@ -689,7 +687,7 @@ TextureCubemap Engine::CreateSkybox()
   _skybox.vao.SetAttribFormatFLoat(0, 3, VertexAttribType::FLOAT, false, 0);
   _skybox.vao.AttachVertexBuffer(0, vbo, 0, sizeof(Vertex_P));
 
-  TexturesManager &texturesManager = TexturesManager::Get();
+  TexturesManager& texturesManager = TexturesManager::Get();
   Array<Texture2D, 6> images = {
       texturesManager.GetOrCreateTexture("skybox/right.jpg"),
       texturesManager.GetOrCreateTexture("skybox/left.jpg"),
