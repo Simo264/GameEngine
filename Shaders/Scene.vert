@@ -13,13 +13,15 @@ out mat3 TBN;               // Tangent-Bitangent-Normal matrix, used for transfo
 out vec3 TangentViewPos;    // Camera position in tangent space, used for normal mapping
 out vec3 TangentFragPos;    // Fragment position in tangent space, used for normal mapping
 
+
 layout (std140, binding = 0) uniform CameraBlock
 {
-  mat4 u_view;
-  mat4 u_projection;
+  mat4 u_cameraView;
+  mat4 u_cameraProjection;
+  vec3 u_cameraPosition;
+  float __padding;
 };
 uniform mat4 u_model;
-uniform vec3 u_viewPos;
 
 void main()
 {
@@ -33,12 +35,12 @@ void main()
 
   FragPos = vec3(u_model * vec4(aPos, 1.0));    // Compute world-space fragment position
   TexCoord = aUv;
-  ViewPos = u_viewPos;
+  ViewPos = u_cameraPosition;
   Normal = N;
 
   // Transform view position and fragment position to tangent space for normal mapping
   TangentViewPos = TBN * ViewPos; 
   TangentFragPos = TBN * FragPos; 
 
-  gl_Position = u_projection * u_view * u_model * vec4(aPos, 1.0f);
+  gl_Position = u_cameraProjection * u_cameraView * u_model * vec4(aPos, 1.0f);
 }

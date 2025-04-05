@@ -3,10 +3,7 @@
 namespace Uniforms
 {
 	static constexpr const char skyboxTexture[] = "u_skyboxTexture";
-	static constexpr const char projection[] = "u_projection";
-	static constexpr const char view[] = "u_view";
 	static constexpr const char model[] = "u_model";
-	static constexpr const char viewPos[] = "u_viewPos";
 	static constexpr const char lightView[] = "u_lightView";
 	static constexpr const char lightProjection[] = "u_lightProjection";
 	static constexpr const char useNormalMap[] = "u_useNormalMap";
@@ -14,6 +11,4 @@ namespace Uniforms
 	static constexpr const char depthCubeMapTexture[] = "u_depthCubeMapTexture";
 	static constexpr const char fboImageTexture[] = "u_fboImageTexture";
 	static constexpr const char postProcessingType[] = "u_postProcessingType";
-
-	// uniform mat4 u_lightViews[6];
 }

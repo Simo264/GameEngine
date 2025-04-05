@@ -14,13 +14,22 @@ void Gui_RenderCameraProps(Camera& camera)
 
   // Orientation
   ImGui::Text("Orientation");
-  ImGui::SliderFloat("Yaw", &camera.orientation.x, -180.0f, 180.0f);
-  ImGui::SliderFloat("Pitch", &camera.orientation.y, -90.0f, 90.0f);
-  ImGui::SliderFloat("Roll", &camera.orientation.z, -180.0f, 180.0f);
+  ImGui::SliderFloat("Yaw", &camera.orientation.x,    -180.0f, 180.0f);
+  ImGui::SliderFloat("Pitch", &camera.orientation.y,  -180.0f, 180.0f);
+  ImGui::SliderFloat("Roll", &camera.orientation.z,   -180.0f, 180.0f);
 
   // Field of View
   ImGui::Text("Field of View");
   ImGui::SliderFloat("FOV", &camera.fov, 1.0f, 120.0f);
+
+  // Near and Far Planes
+  ImGui::Text("Frustum Settings");
+  ImGui::SliderFloat("Left", &camera.frustum.left, -50.0f, 50.0f);
+  ImGui::SliderFloat("Right", &camera.frustum.right, -50.0f, 50.0f);
+  ImGui::SliderFloat("Bottom", &camera.frustum.bottom, -50.0f, 50.0f);
+  ImGui::SliderFloat("Top", &camera.frustum.top, -50.0f, 50.0f);
+  ImGui::SliderFloat("Near Plane", &camera.frustum.zNear, 0.01f, 10.0f);
+  ImGui::SliderFloat("Far Plane", &camera.frustum.zFar, 10.0f, 100.0f);
 
   camera.UpdateOrientation();
 

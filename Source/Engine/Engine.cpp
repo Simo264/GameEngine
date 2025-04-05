@@ -28,17 +28,6 @@
 
 #include <GLFW/glfw3.h>
 
-static chrono::steady_clock::time_point now{};
-static chrono::steady_clock::time_point lastFrameTime{};
-static f64 delta = 0.0f; // Time elapsed between two frames
-
-static chrono::steady_clock::time_point timerT0 = chrono::steady_clock::now();
-static chrono::steady_clock::time_point timerT1{};
-static i32 frames = 0;
-static i32 frameRate = 0; // How many frames generated per seconds
-static f64 totalDeltasPerSecond = 0.0f;
-static f64 avgTime = 0.0f; // The average rendering time per seconds
-
 static void GLAPIENTRY MessageCallback(GLenum source,
   GLenum type,
   GLuint id,
@@ -54,7 +43,6 @@ static void GLAPIENTRY MessageCallback(GLenum source,
   const char* sourceStr;
   const char* typeStr;
   const char* severityStr;
-
   switch (source)
   {
   case GL_DEBUG_SOURCE_API:
@@ -137,69 +125,6 @@ static void GLAPIENTRY MessageCallback(GLenum source,
     sourceStr, typeStr, severityStr, message);
 }
 
-static void SetOpenGLStates()
-{
-  // Enable debug output
-  // -------------------
-  glEnable(GL_DEBUG_OUTPUT);
-  glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-  glDebugMessageCallback(MessageCallback, 0);
-  glDebugMessageControl(GL_DEBUG_SOURCE_API, GL_DEBUG_TYPE_ERROR, GL_DONT_CARE, 0, nullptr, GL_TRUE);
-
-  // Depth testing ON
-  // ----------------
-  DepthTest::EnableTest();
-  DepthTest::EnableWritingBuffer();
-  DepthTest::SetDepthFun(CompareFunc::LESS);
-
-  // Stencil testing OFF
-  // -------------------
-  StencilTest::DisableTest();
-  StencilTest::SetStencilFun(CompareFunc::ALWAYS, 0, 0xFF);
-  StencilTest::SetStencilOp(StencilOpMode::KEEP, StencilOpMode::KEEP, StencilOpMode::KEEP);
-
-  // Culling OFF
-  // -----------
-  FaceCulling::EnableFaceCulling();
-  FaceCulling::SetCullFace(CullFaceMode::BACK);
-  FaceCulling::SetFrontFacing(FrontFaceMode::CCW);
-
-  // Blending OFF
-  // ------------
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-  // Gamma correction OFF
-  // --------------------
-  glDisable(GL_FRAMEBUFFER_SRGB);
-
-  // Antialising ON
-  // --------------
-  glEnable(GL_MULTISAMPLE);
-
-  glClearColor(0.15f, 0.15f, 0.15f, 1.0f);
-  glClearDepth(1.0f);
-  glClearStencil(0);
-}
-static void CalculatePerFrameTime()
-{
-  frames++;
-
-  now = chrono::steady_clock::now();
-  delta = chrono::duration_cast<chrono::duration<f64>>(now - lastFrameTime).count();
-  lastFrameTime = now;
-  totalDeltasPerSecond += delta;
-  timerT1 = chrono::steady_clock::now();
-  f64 timer_diff = chrono::duration_cast<chrono::duration<f64>>(timerT1 - timerT0).count();
-  if (timer_diff >= 1.f)
-  {
-    timerT0 = chrono::steady_clock::now();
-    avgTime = totalDeltasPerSecond / frames;
-    frameRate = frames;
-    frames = 0;
-    totalDeltasPerSecond = 0.f;
-  }
-}
 // static FrameBuffer CreateDepthMapFbo(i32 width, i32 height)
 //{
 //   // Create a 2D texture that we'll use as the framebuffer's depth buffer
@@ -279,68 +204,35 @@ void Engine::Initialize()
   CONSOLE_INFO("Initializing ImGui...");
   ImGuiLayer::Get().Initialize();
 
-  // Initialize uniform block objects
-  // --------------------------------
-  // Init UBO CameraBlock
-  {
-    // Reserve memory for:
-    // - 1 projection matrix
-    // - 1 view matrix
-    constexpr u32 size = sizeof(mat4f) * 2;
-    void* data = Array<mat4f, 2>{ mat4f(1.0f), mat4f(1.0f) }.data();
-    _uboCameraBlock = Buffer(size,                       // Reserve memory for 2 mat4f
-      data,                       // Init with identity matrices
-      BufferUsage::DYNAMIC_DRAW); // Data store content will be modified repeatedly and used many times.
-
-    _uboCameraBlock.BindBase(BufferTarget::UNIFORM, 0); // "CameraBlock" to binding point 0
-  }
-  // Init UBO LightBlock
-  {
-    // Reserve memory for:
-    // - 1 DirectionalLight object
-    // - 1 PointLight object
-    // - 1 SpotLight object
-    constexpr u32 size = sizeof(DirectionalLight) + sizeof(PointLight) + sizeof(SpotLight);
-    _uboLightBlock = Buffer(size,
-      nullptr,
-      BufferUsage::DYNAMIC_DRAW // Data store content will be modified repeatedly and used many times.
-    );
-
-    constexpr Array<u8, sizeof(DirectionalLight)> zeros{};
-    _uboLightBlock.UpdateStorage(0, sizeof(DirectionalLight), zeros.data()); // Init with zeros
-    _uboLightBlock.BindBase(BufferTarget::UNIFORM, 1);                       // "LightBlock" to binding point 1
-  }
-  // Init UBO BoneBlock
-  {
-    constexpr u32 size = SkeletalMesh::GetMaxNumBones() * sizeof(mat4f);
-    _uboBoneBlock = Buffer(size,
-      nullptr,
-      BufferUsage::STREAM_DRAW // Data store content will be modified repeatedly and used many times.
-    );
-    constexpr Array<char, size> zeros{};
-    _uboBoneBlock.UpdateStorage(0, size, zeros.data()); // Init buffer with zeros
-    _uboBoneBlock.BindBase(BufferTarget::UNIFORM, 2);   // "BoneBlock" to binding point 2
-  }
-
   // Set the initial OpenGL states
   // -----------------------------
-  SetOpenGLStates();
-}
-void Engine::Run()
-{
+  SetGLStates();
+
+  // Create UBO objects
+  // -----------------------------
+  CreateCameraUBO();  // "CameraBlock"
+  CreateLightUBO();   // "LightBlock"
+  CreateBoneUBO();    // "BoneBlock"
+
   // Create framebuffer
+  // -----------------------------
   CreateFramebuffer(4, WINDOW_WIDTH, WINDOW_HEIGHT);
   CreateScreenSquare();
 
-  // Create grid plane mesh
+  // Create grid plane
+  // -----------------------------
   CreateGridPlane();
 
-  // Create skybox mesh
+  // Initialize time
+  // -----------------------------
+  InitTime();
+}
+void Engine::Run()
+{
   TextureCubemap skyboxTexture = CreateSkybox();
 
-  // Create primary camera object
   Camera camera;
-  camera.position = vec3f(0.f, 0.f, 5.0f);
+  camera.position = vec3f(0.f, 1.f, 8.0f);
 
   Scene scene((Paths::GetRootPath() / "Scene.yaml"));
 
@@ -351,7 +243,6 @@ void Engine::Run()
   WindowManager& windowManager = WindowManager::Get();
   ShadersManager& shadersManager = ShadersManager::Get();
 
-  Program gridPlaneProgram = shadersManager.GetProgram("GridPlane");
   Program skyboxProgram = shadersManager.GetProgram("Skybox");
   skyboxProgram.SetUniform1i(Uniforms::skyboxTexture, 0);
   Program blinnPhongProgram = shadersManager.GetProgram("BlinnPhongShading");
@@ -384,8 +275,8 @@ void Engine::Run()
     windowManager.PoolEvents();
     if (gui.viewportFocused)
     {
-      camera.ProcessKeyboard(static_cast<f32>(delta), 5.0f);
-      camera.ProcessMouse(static_cast<f32>(delta), 15.0f);
+      camera.ProcessKeyboard(static_cast<f32>(_delta), 5.0f);
+      camera.ProcessMouse(static_cast<f32>(_delta), 15.0f);
     }
 
     // --------------------------------------------------------------------
@@ -398,12 +289,17 @@ void Engine::Run()
     // Update camera UBO
     {
       auto matrices = Array<mat4f, 2>{ cameraView, cameraProj };
-      _uboCameraBlock.UpdateStorage(0, sizeof(mat4f) * 2, matrices.data());
+      const vec3f& camPos = camera.position;
+      _uboCameraBlock.UpdateStorage(0, sizeof(matrices), matrices.data());
+      _uboCameraBlock.UpdateStorage(sizeof(matrices), sizeof(vec3f), &camPos);
     }
 
     // Update light UBO
     {
-      constexpr u32 size = sizeof(DirectionalLight) + sizeof(PointLight) + sizeof(SpotLight);
+      constexpr u32 size = sizeof(DirectionalLight) + 
+        sizeof(PointLight) + 
+        sizeof(SpotLight);
+
       constexpr Array<u8, size> zeros{};
       _uboLightBlock.UpdateStorage(0, size, zeros.data());
 
@@ -452,36 +348,23 @@ void Engine::Run()
       /// Render scene here
       {
         goochProgram.Use();
-        goochProgram.SetUniform3f(Uniforms::viewPos, camera.position);
         scene.Reg().view<StaticMesh, Transform>().each([&](auto& staticMesh, auto& transform)
           {
             transform.position.y = -2.0f;
             transform.UpdateTransformation();
-
             goochProgram.SetUniformMat4f(Uniforms::model, transform.GetTransformation());
             staticMesh.Render(goochProgram, RenderMode::TRIANGLES); });
 
         blinnPhongProgram.Use();
-        blinnPhongProgram.SetUniform3f(Uniforms::viewPos, camera.position);
         scene.Reg().view<StaticMesh, Transform>().each([&](auto& staticMesh, auto& transform)
           {
             transform.position.y = 2.0f;
             transform.UpdateTransformation();
-
             blinnPhongProgram.SetUniformMat4f(Uniforms::model, transform.GetTransformation());
             staticMesh.Render(blinnPhongProgram, RenderMode::TRIANGLES); });
       }
 
-      /// Render the infinite grid
-#if 0
-      {
-        gridPlaneProgram.Use();
-        Renderer::DrawArrays(RenderMode::TRIANGLES, _gridPlane.vao, _gridPlane.numVertices);
-      }
-#endif
-
       /// Draw skybox after the scene
-#if 0
       {
         skyboxProgram.Use();
         skyboxTexture.BindTextureUnit(0);
@@ -489,7 +372,6 @@ void Engine::Run()
         Renderer::DrawArrays(RenderMode::TRIANGLES, _skybox.vao, _skybox.numVertices);
         DepthTest::SetDepthFun(CompareFunc::LESS);
       }
-#endif
 
       // Blit multisampled buffer to normal color buffer of intermediate FBO
       _fboMultisampled.Blit(_fboIntermediate,
@@ -507,8 +389,8 @@ void Engine::Run()
     gui.RenderInspector(objSelected);
     u32 fboTexture = _fboIntermediate.textAttachments.at(0);
     gui.RenderViewport(fboTexture, objSelected, cameraView, cameraProj);
-    gui.RenderTimeInfo(delta, avgTime, frameRate);
-    //gui.RenderCameraProps(camera);
+    gui.RenderTimeInfo(_delta, _avgTime, _frameRate);
+    gui.RenderCameraProps(camera);
     gui.EndFrame();
 
     // Checking viewport size
@@ -523,8 +405,8 @@ void Engine::Run()
     // -------------------------- Swap buffers --------------------------
     // ------------------------------------------------------------------
     windowManager.SwapWindowBuffers();
-      }
-    }
+  }
+}
 void Engine::CleanUp()
 {
   // Destroy all framebuffers
@@ -554,6 +436,105 @@ void Engine::CleanUp()
 // -----------------------------------------------------
 //            PRIVATE METHODS
 // -----------------------------------------------------
+
+void Engine::SetGLStates() const
+{
+  // Enable debug output
+// -------------------
+  glEnable(GL_DEBUG_OUTPUT);
+  glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+  glDebugMessageCallback(MessageCallback, 0);
+  glDebugMessageControl(GL_DEBUG_SOURCE_API, GL_DEBUG_TYPE_ERROR, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+
+  // Depth testing ON
+  // ----------------
+  DepthTest::EnableTest();
+  DepthTest::EnableWritingBuffer();
+  DepthTest::SetDepthFun(CompareFunc::LESS);
+
+  // Stencil testing OFF
+  // -------------------
+  StencilTest::DisableTest();
+  StencilTest::SetStencilFun(CompareFunc::ALWAYS, 0, 0xFF);
+  StencilTest::SetStencilOp(StencilOpMode::KEEP, StencilOpMode::KEEP, StencilOpMode::KEEP);
+
+  // Culling OFF
+  // -----------
+  FaceCulling::EnableFaceCulling();
+  FaceCulling::SetCullFace(CullFaceMode::BACK);
+  FaceCulling::SetFrontFacing(FrontFaceMode::CCW);
+
+  // Blending OFF
+  // ------------
+  glDisable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+  // Gamma correction OFF
+  // --------------------
+  glDisable(GL_FRAMEBUFFER_SRGB);
+
+  // Antialising ON
+  // --------------
+  glEnable(GL_MULTISAMPLE);
+
+  glClearColor(0.15f, 0.15f, 0.15f, 1.0f);
+  glClearDepth(1.0f);
+  glClearStencil(0);
+}
+void Engine::CreateCameraUBO()
+{
+  // Reserve memory for:
+  // - 1 mat4f: camera projection
+  // - 1 mat4f: camera view
+  // - 1 vec3f: camera position
+  // - 1 float: padding
+  constexpr u32 size = 2 * sizeof(mat4f) + 
+    sizeof(vec3f) + 
+    sizeof(f32);
+
+  _uboCameraBlock = Buffer(size, nullptr, BufferUsage::DYNAMIC_DRAW);
+
+  constexpr Array<u8, size> zeros{};
+  _uboCameraBlock.UpdateStorage(0, size, zeros.data()); // Init buffer with zeros
+  _uboCameraBlock.BindBase(BufferTarget::UNIFORM, 0);
+}
+void Engine::CreateLightUBO()
+{
+  // Reserve memory for:
+  // - 1 DirectionalLight object
+  // - 1 PointLight object
+  // - 1 SpotLight object
+  constexpr u32 size = sizeof(DirectionalLight) + 
+    sizeof(PointLight) + 
+    sizeof(SpotLight);
+  
+  _uboLightBlock = Buffer(size, nullptr, BufferUsage::DYNAMIC_DRAW);
+
+  constexpr Array<u8, size> zeros{};
+  _uboLightBlock.UpdateStorage(0, size, zeros.data()); // Init buffer with zeros
+  _uboLightBlock.BindBase(BufferTarget::UNIFORM, 1);
+}
+void Engine::CreateBoneUBO()
+{
+  constexpr u32 size = SkeletalMesh::GetMaxNumBones() * sizeof(mat4f);
+  _uboBoneBlock = Buffer(size, nullptr, BufferUsage::STREAM_DRAW);
+  
+  constexpr Array<char, size> zeros{};
+  _uboBoneBlock.UpdateStorage(0, size, zeros.data()); // Init buffer with zeros
+  _uboBoneBlock.BindBase(BufferTarget::UNIFORM, 2);
+}
+void Engine::InitTime()
+{
+  _now = chrono::steady_clock::time_point{};
+  _lastFrameTime = chrono::steady_clock::time_point{};
+  _timerT0 = chrono::steady_clock::now();
+  _timerT1 = chrono::steady_clock::time_point{};
+  _frames = 0;
+  _frameRate = 0;
+  _totalDeltasPerSecond = 0.0f;
+  _avgTime = 0.0f;
+  _delta = 0.0f;
+}
 
 void Engine::CreateFramebuffer(i32 samples, i32 width, i32 height)
 {
@@ -615,21 +596,19 @@ void Engine::CreateScreenSquare()
 void Engine::CreateGridPlane()
 {
   constexpr f32 vertices[] = {
-      1.f, 1.f, 0.f,
-      -1.f, -1.f, 0.f,
-      -1.f, 1.f, 0.f,
-      -1.f, -1.f, 0.f,
-      1.f, 1.f, 0.f,
-      1.f, -1.f, 0.f };
-  Buffer gridVbo(sizeof(vertices), vertices, BufferUsage::STATIC_DRAW);
-
+    -1.0f, -1.0f, 0.0f,
+     1.0f, -1.0f, 0.0f,
+     1.0f,  1.0f, 0.0f,
+    -1.0f, -1.0f, 0.0f,
+     1.0f,  1.0f, 0.0f,
+    -1.0f,  1.0f, 0.0f,
+  };
+  Buffer vbo(sizeof(vertices), vertices, BufferUsage::STATIC_DRAW);
   _gridPlane.Create();
+  _gridPlane.SetupAttributeFloat(0, 0, VertexFormat(3, VertexAttribType::FLOAT, false, offsetof(Vertex_P, position)));
+  _gridPlane.vao.AttachVertexBuffer(0, vbo, 0, sizeof(Vertex_P));
   _gridPlane.numVertices = 6;
   _gridPlane.numIndices = 0;
-  _gridPlane.vao.EnableAttribute(0);
-  _gridPlane.vao.SetAttribBinding(0, 0);
-  _gridPlane.vao.SetAttribFormatFLoat(0, 3, VertexAttribType::FLOAT, false, 0);
-  _gridPlane.vao.AttachVertexBuffer(0, gridVbo, 0, 3 * sizeof(f32));
 }
 TextureCubemap Engine::CreateSkybox()
 {
@@ -710,4 +689,24 @@ TextureCubemap Engine::CreateSkybox()
   skyboxTexture.SetParameteri(TextureParameteriName::WRAP_T, TextureParameteriParam::CLAMP_TO_EDGE);
   skyboxTexture.SetParameteri(TextureParameteriName::WRAP_R, TextureParameteriParam::CLAMP_TO_EDGE);
   return skyboxTexture;
+}
+
+void Engine::CalculatePerFrameTime()
+{
+  _frames++;
+
+  _now = chrono::steady_clock::now();
+  _delta = chrono::duration_cast<chrono::duration<f64>>(_now - _lastFrameTime).count();
+  _lastFrameTime = _now;
+  _totalDeltasPerSecond += _delta;
+  _timerT1 = chrono::steady_clock::now();
+  f64 timer_diff = chrono::duration_cast<chrono::duration<f64>>(_timerT1 - _timerT0).count();
+  if (timer_diff >= 1.f)
+  {
+    _timerT0 = chrono::steady_clock::now();
+    _avgTime = _totalDeltasPerSecond / _frames;
+    _frameRate = _frames;
+    _frames = 0;
+    _totalDeltasPerSecond = 0.f;
+  }
 }

@@ -41,13 +41,12 @@
 //  When colors are represented as RGB values, the equation is applied separately to the three channels, allowing different coefficients for k_a, k_d, and k_s in each channel.
 
 
-
-
 // ========== IN attributes ==========
 // ===================================
 in vec2 TexCoord;
 in vec3 Normal;
 in vec3 FragPos;
+in vec3 ViewPos; 
 
 // ========== OUT attributes ==========
 // ====================================
@@ -105,7 +104,6 @@ layout (std140, binding = 1) uniform LightBlock
 };
 
 uniform Material u_material;
-uniform vec3 u_viewPos;
 
 void main()
 {
@@ -126,7 +124,7 @@ void main()
   float specular = 0.0f;
   if (lambertian > 0.0f)
   {
-    vec3 viewDir = normalize(u_viewPos - FragPos);
+    vec3 viewDir = normalize(ViewPos - FragPos);
 
     // this is blinn phong
     vec3 halfDir = normalize(lightDir + viewDir);

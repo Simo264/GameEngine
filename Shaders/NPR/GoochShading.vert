@@ -12,11 +12,12 @@ out vec3 ViewPos;
 
 layout (std140, binding = 0) uniform CameraBlock
 {
-  mat4 u_view;
-  mat4 u_projection;
+  mat4 u_cameraView;
+  mat4 u_cameraProjection;
+  vec3 u_cameraPosition;
+  float __padding;
 };
 uniform mat4 u_model;
-uniform vec3 u_viewPos;
 
 void main()
 {
@@ -27,8 +28,8 @@ void main()
 
   FragPos = vec3(u_model * p); // Compute world-space fragment position
   TexCoord = aUv;
-  ViewPos = u_viewPos;
+  ViewPos = u_cameraPosition;
   Normal = N;
 
-  gl_Position = u_projection * u_view * u_model * p;
+  gl_Position = u_cameraProjection * u_cameraView * u_model * p;
 }

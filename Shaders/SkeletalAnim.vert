@@ -17,11 +17,13 @@ out vec3 TangentFragPos;
 
 layout (std140, binding = 0) uniform CameraBlock
 {
-  mat4 u_view;
-  mat4 u_projection;
+  mat4 u_cameraView;
+  mat4 u_cameraProjection;
+  vec3 u_cameraPosition;
+  float __padding;
 };
+
 uniform mat4 u_model;
-uniform vec3 u_viewPos;
 
 const int MAX_BONES = 100;
 const int MAX_BONE_INFLUENCE = 4;
@@ -53,10 +55,10 @@ void main()
 
   FragPos = vec3(u_model * vec4(aPos, 1.0));
   TexCoord = aUv;
-  ViewPos = u_viewPos;
+  ViewPos = u_cameraPosition;
   Normal = N;
 
   TangentViewPos = TBN * ViewPos;
   TangentFragPos = TBN * FragPos;
-  gl_Position = u_projection * u_view * u_model * totalPosition;
+  gl_Position = u_cameraProjection * u_cameraView * u_model * totalPosition;
 }

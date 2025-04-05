@@ -17,21 +17,41 @@ public:
 	void CleanUp();
 
 private:
+	void SetGLStates() const;
+	void CreateCameraUBO();
+	void CreateLightUBO();
+	void CreateBoneUBO();
+	void InitTime();
+
 	void CreateFramebuffer(i32 samples, i32 width, i32 height);
 	void CreateScreenSquare();
 	void CreateGridPlane();
 	class TextureCubemap CreateSkybox();
 
+	void CalculatePerFrameTime();
+	
+
 	FrameBuffer _fboMultisampled;
 	FrameBuffer _fboIntermediate;
 
-	Buffer _uboCameraBlock;	// UBO "CameraBlock"
-	Buffer _uboLightBlock;	// UBO "LightBlock"
-	Buffer _uboBoneBlock;		// UBO "BoneBlock"
+	Buffer _uboCameraBlock;	// UBO "CameraBlock"	-> bindpoint 0
+	Buffer _uboLightBlock;	// UBO "LightBlock"		-> bindpoint 1
+	Buffer _uboBoneBlock;		// UBO "BoneBlock"		-> bindpoint 2
 
 	Mesh _screenSquare;
 	Mesh _skybox;
 	Mesh _gridPlane;
 	
 	vec2i _viewportSize;
+
+	
+	chrono::steady_clock::time_point _now;
+	chrono::steady_clock::time_point _lastFrameTime;
+	chrono::steady_clock::time_point _timerT0;
+	chrono::steady_clock::time_point _timerT1;
+	u32 _frames;
+	u32 _frameRate; // How many frames generated per seconds
+	f64 _totalDeltasPerSecond;
+	f64 _avgTime; // The average rendering time per seconds
+	f64 _delta; // Time elapsed between two frames
 };

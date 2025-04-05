@@ -16,11 +16,12 @@ out vec3 TangentFragPos;
 
 layout (std140, binding = 0) uniform CameraBlock
 {
-  mat4 u_view;
-  mat4 u_projection;
+  mat4 u_cameraView;
+  mat4 u_cameraProjection;
+  vec3 u_cameraPosition;
+  float __padding;
 };
 uniform mat4 u_model;
-uniform vec3 u_viewPos;
 
 // Directional light matrices
 uniform mat4 u_lightView;
@@ -40,9 +41,9 @@ void main()
   Normal = N;
 	FragPosLightSpace = u_lightProjection * u_lightView * vec4(FragPos, 1.0);
 
-  ViewPos = u_viewPos;
+  ViewPos = u_cameraPosition;
   TangentViewPos = TBN * ViewPos;
   TangentFragPos = TBN * FragPos;
 
-	gl_Position = u_projection * u_view * u_model * vec4(aPos, 1.0f);
+	gl_Position = u_cameraProjection * u_cameraView * u_model * vec4(aPos, 1.0f);
 }

@@ -7,10 +7,6 @@
     "vertex": "Skybox.vert",
     "fragment": "Skybox.frag"
   },
-  "GridPlane": {
-    "vertex": "GridPlane.vert",
-    "fragment": "GridPlane.frag"
-  },
   "BlinnPhongShading": {
     "vertex": "PBR/BlinnPhong.vert",
     "fragment": "PBR/BlinnPhong.frag"
