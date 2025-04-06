@@ -29,12 +29,12 @@
 #include <GLFW/glfw3.h>
 
 static void GLAPIENTRY MessageCallback(GLenum source,
-  GLenum type,
-  GLuint id,
-  GLenum severity,
-  [[maybe_unused]] GLsizei length,
-  const GLchar* message,
-  [[maybe_unused]] const void* userParam)
+                                       GLenum type,
+                                       GLuint id,
+                                       GLenum severity,
+                                       [[maybe_unused]] GLsizei length,
+                                       const GLchar* message,
+                                       [[maybe_unused]] const void* userParam)
 {
   // Ignore non-significant error/warning codes
   if (id == 131169 || id == 131185 || id == 131218 || id == 131204)
@@ -125,48 +125,6 @@ static void GLAPIENTRY MessageCallback(GLenum source,
     sourceStr, typeStr, severityStr, message);
 }
 
-// static FrameBuffer CreateDepthMapFbo(i32 width, i32 height)
-//{
-//   // Create a 2D texture that we'll use as the framebuffer's depth buffer
-//   Texture2D depthMap;
-//   depthMap.Create(Texture2DTarget::TEXTURE_2D);
-//   depthMap.CreateStorage(Texture2DInternalFormat::DEPTH_COMPONENT24, width, height);
-//   depthMap.SetParameteri(TextureParameteriName::COMPARE_MODE, TextureParameteriParam::COMPARE_REF_TO_TEXTURE);
-//   depthMap.SetCompareFunc(CompareFunc::LEQUAL);
-//   depthMap.SetParameteri(TextureParameteriName::MIN_FILTER, TextureParameteriParam::LINEAR);
-//   depthMap.SetParameteri(TextureParameteriName::MAG_FILTER, TextureParameteriParam::LINEAR);
-//
-//   // Resolve the problem of over sampling
-//   depthMap.SetParameteri(TextureParameteriName::WRAP_S, TextureParameteriParam::CLAMP_TO_BORDER);
-//   depthMap.SetParameteri(TextureParameteriName::WRAP_T, TextureParameteriParam::CLAMP_TO_BORDER);
-//   depthMap.SetParameterfv(TextureParameteriName::BORDER_COLOR, Array<f32, 4>{ 1.0, 1.0, 1.0, 1.0 }.data());
-//
-//   // With the generated depth texture we can attach it as the framebuffer's depth buffer
-//   FrameBuffer fbo;
-//   fbo.Create();
-//   fbo.AttachTexture(FramebufferAttachment::DEPTH, depthMap.id, 0);
-//   return fbo;
-// }
-// static FrameBuffer CreateDepthCubeMapFbo(i32 width, i32 height)
-//{
-//   FrameBuffer fbo;
-//   fbo.Create();
-//
-//   TextureCubemap texture;
-//   texture.Create();
-//   texture.CreateStorage(Texture2DInternalFormat::DEPTH_COMPONENT24, width, height);
-//   for (i32 i = 0; i < 6; i++)
-//     texture.SubImage3D(0, 0, 0, i, width, height, 1, Texture3DFormat::DEPTH_COMPONENT, Texture3DType::FLOAT, nullptr);
-//
-//   texture.SetParameteri(TextureParameteriName::MAG_FILTER, TextureParameteriParam::LINEAR);
-//   texture.SetParameteri(TextureParameteriName::MIN_FILTER, TextureParameteriParam::LINEAR);
-//   texture.SetParameteri(TextureParameteriName::WRAP_S, TextureParameteriParam::CLAMP_TO_EDGE);
-//   texture.SetParameteri(TextureParameteriName::WRAP_T, TextureParameteriParam::CLAMP_TO_EDGE);
-//   texture.SetParameteri(TextureParameteriName::WRAP_R, TextureParameteriParam::CLAMP_TO_EDGE);
-//
-//   fbo.AttachTexture(FramebufferAttachment::DEPTH, texture.id, 0);
-//   return fbo;
-// }
 
 // -----------------------------------------------------
 //                PUBLIC METHODS
@@ -229,7 +187,7 @@ void Engine::Initialize()
 }
 void Engine::Run()
 {
-  TextureCubemap skyboxTexture = CreateSkybox();
+  //TextureCubemap skyboxTexture = CreateSkybox();
 
   Camera camera;
   camera.position = vec3f(0.f, 1.f, 8.0f);
@@ -361,17 +319,18 @@ void Engine::Run()
             transform.position.y = 2.0f;
             transform.UpdateTransformation();
             blinnPhongProgram.SetUniformMat4f(Uniforms::model, transform.GetTransformation());
-            staticMesh.Render(blinnPhongProgram, RenderMode::TRIANGLES); });
+            staticMesh.Render(blinnPhongProgram, RenderMode::TRIANGLES); 
+        });
       }
 
       /// Draw skybox after the scene
-      {
-        skyboxProgram.Use();
-        skyboxTexture.BindTextureUnit(0);
-        DepthTest::SetDepthFun(CompareFunc::LEQUAL);
-        Renderer::DrawArrays(RenderMode::TRIANGLES, _skybox.vao, _skybox.numVertices);
-        DepthTest::SetDepthFun(CompareFunc::LESS);
-      }
+      //{
+      //  skyboxProgram.Use();
+      //  skyboxTexture.BindTextureUnit(0);
+      //  DepthTest::SetDepthFun(CompareFunc::LEQUAL);
+      //  Renderer::DrawArrays(RenderMode::TRIANGLES, _skybox.vao, _skybox.numVertices);
+      //  DepthTest::SetDepthFun(CompareFunc::LESS);
+      //}
 
       // Blit multisampled buffer to normal color buffer of intermediate FBO
       _fboMultisampled.Blit(_fboIntermediate,
@@ -390,7 +349,8 @@ void Engine::Run()
     u32 fboTexture = _fboIntermediate.textAttachments.at(0);
     gui.RenderViewport(fboTexture, objSelected, cameraView, cameraProj);
     gui.RenderTimeInfo(_delta, _avgTime, _frameRate);
-    gui.RenderCameraProps(camera);
+    gui.RenderGizmoToolBar();
+    gui.RenderCameraSettings(camera);
     gui.EndFrame();
 
     // Checking viewport size

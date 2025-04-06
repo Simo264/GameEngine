@@ -17,12 +17,11 @@
 #include <ImGuizmo.h>
 
 extern void GUI_RenderMenuBar(Scene& scene);
-extern void GUI_RenderHierarchy(bool& open, Scene& scene, GameObject& objSelected);
-extern void GUI_RenderViewport(bool& open, u32 texID, GameObject& objSelected, i32 gizmode, const mat4f& view, const mat4f& proj);
-extern void GUI_RenderInspector(bool& open, GameObject& object);
-extern void GUI_RenderContentBrowser(bool& open);
+extern void GUI_RenderHierarchy(Scene& scene, GameObject& objSelected);
+extern void GUI_RenderViewport(u32 texID, GameObject& objSelected, i32 gizmode, const mat4f& view, const mat4f& proj);
+extern void GUI_RenderInspector(GameObject& object);
 extern void GUI_RenderTransformToolBar(vec2i viewportPos, i32& gizmode);
-extern void Gui_RenderCameraProps(Camera& camera);
+extern void Gui_RenderCameraSettings(Camera& camera);
 
 // --------------------------
 //          PUBLIC
@@ -75,7 +74,7 @@ void ImGuiLayer::SetFont(const fs::path& ttfFilePath, u32 fontSize) const
 {
   ImGuiIO& io = ImGui::GetIO();
   io.Fonts->Clear();
-  io.Fonts->AddFontFromFileTTF(ttfFilePath.string().c_str(), fontSize);
+  io.Fonts->AddFontFromFileTTF(ttfFilePath.string().c_str(), static_cast<f32>(fontSize));
   io.Fonts->Build();
 
   ImGui_ImplOpenGL3_DestroyDeviceObjects();
@@ -93,31 +92,17 @@ void ImGuiLayer::RenderMenuBar(Scene& scene) const
 }
 void ImGuiLayer::RenderViewport(u32 texture, GameObject& objSelected, const mat4f& view, const mat4f& proj) const
 {
-  static bool open = true;
-  if (open)
-    GUI_RenderViewport(open, texture, objSelected, gizmode, view, proj);
+  GUI_RenderViewport(texture, objSelected, gizmode, view, proj);
 }
 GameObject& ImGuiLayer::RenderHierarchy(Scene& scene)
 {
-  static bool open = true;
   static GameObject object;
-
-  if (open)
-    GUI_RenderHierarchy(open, scene, object);
-
+  GUI_RenderHierarchy(scene, object);
   return object;
 }
 void ImGuiLayer::RenderInspector(GameObject& object)
 {
-  static bool open = true;
-  if (open)
-    GUI_RenderInspector(open, object);
-}
-void ImGuiLayer::RenderContentBrowser()
-{
-  static bool open = true;
-  if (open)
-    GUI_RenderContentBrowser(open);
+  GUI_RenderInspector(object);
 }
 void ImGuiLayer::RenderGizmoToolBar()
 {
@@ -125,10 +110,9 @@ void ImGuiLayer::RenderGizmoToolBar()
 }
 void ImGuiLayer::RenderGraphicsInfo()
 {
-  static bool open = true;
-  ImGui::Begin("Graphics info", &open);
+  ImGui::Begin("Graphics info");
 
-  auto& winManager = WindowManager::Get();
+  WindowManager& winManager = WindowManager::Get();
   static const char* glRender = reinterpret_cast<const char*>(glGetString(GL_RENDERER));
   static const char* glVersion = reinterpret_cast<const char*>(glGetString(GL_VERSION));
   static const char* glVendor = reinterpret_cast<const char*>(glGetString(GL_VENDOR));
@@ -151,7 +135,10 @@ void ImGuiLayer::RenderTimeInfo(f64 delta, f64 avg, i32 frameRate)
     ImGuiWindowFlags_NoBackground;
 
   constexpr ImVec2 windowSize{ 160.f, 100.f };
-  ImVec2 windowPos = ImVec2((viewportPos.x + viewportSize.x) - windowSize.x, viewportPos.y + 25);
+  ImVec2 windowPos = ImVec2(
+    static_cast<f32>((viewportPos.x + viewportSize.x) - windowSize.x),
+    static_cast<f32>(viewportPos.y + 25)
+  );
   ImGui::SetNextWindowPos(windowPos);
   ImGui::SetNextWindowSize(windowSize);
   ImGui::SetNextWindowBgAlpha(0.0f);
@@ -163,33 +150,9 @@ void ImGuiLayer::RenderTimeInfo(f64 delta, f64 avg, i32 frameRate)
 
   ImGui::End();
 }
-void ImGuiLayer::RenderDebug(bool shadowMode, bool normalMode, bool wireframeMode)
+void ImGuiLayer::RenderCameraSettings(Camera& camera)
 {
-  ImGui::Begin("Debug", nullptr);
-  ImGui::TextWrapped("Shadow mode (F1 on/F2 off): %d", shadowMode);
-  ImGui::TextWrapped("Normal mapping (F5 on/F6 off): %d", normalMode);
-  ImGui::TextWrapped("Wireframe mode (F9 on/F10 off): %d", wireframeMode);
-  ImGui::End();
-}
-void ImGuiLayer::RenderDebugDepthMap(u32 texture)
-{
-  ImGuiStyle& style = ImGui::GetStyle();
-  const ImVec2 paddingTmp = style.WindowPadding;
-  style.WindowPadding = { 0.0f, 0.0f };
-
-  ImGui::Begin("Depth map", nullptr);
-  ImGui::BeginChild("Map");
-
-  ImGui::Image(texture, { 1024, 1024 }, ImVec2(0, 1), ImVec2(1, 0));
-
-  ImGui::EndChild();
-  ImGui::End();
-
-  style.WindowPadding = paddingTmp;
-}
-void ImGuiLayer::RenderCameraProps(Camera& camera)
-{
-  Gui_RenderCameraProps(camera);
+  Gui_RenderCameraSettings(camera);
 }
 
 // --------------------------
@@ -312,7 +275,6 @@ void ImGuiLayer::Docking()
   ImGuiID dockspaceID = ImGui::GetID("Dockspace");
   ImGui::DockSpace(dockspaceID, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_PassthruCentralNode);
 
-  // Inizializza il layout solo la prima volta
   static bool firstTime = true;
   if (firstTime)
   {
@@ -324,14 +286,12 @@ void ImGuiLayer::Docking()
 
     ImGuiID dockLeft = ImGui::DockBuilderSplitNode(dockspaceID, ImGuiDir_Left, 0.25f, nullptr, &dockspaceID);
     ImGuiID dockMain = dockspaceID;
+    
     ImGuiID dockLeftTop;
-    ImGuiID dockLeftBottom;
+    ImGuiID dockLeftBottom = ImGui::DockBuilderSplitNode(dockLeft, ImGuiDir_Down, 0.5f, nullptr, &dockLeftTop);
 
-    // Dividiamo il dock sinistro in due: sopra (Hierarchy) e sotto (Inspector)
-    dockLeftBottom = ImGui::DockBuilderSplitNode(dockLeft, ImGuiDir_Down, 0.5f, nullptr, &dockLeftTop);
-
-    // Assegniamo le finestre ai dock
     ImGui::DockBuilderDockWindow("Hierarchy", dockLeftTop);
+    ImGui::DockBuilderDockWindow("Camera settings", dockLeftTop);
     ImGui::DockBuilderDockWindow("Inspector", dockLeftBottom);
     ImGui::DockBuilderDockWindow("Viewport", dockMain);
 

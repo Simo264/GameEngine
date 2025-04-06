@@ -93,14 +93,14 @@ static void GizmoWorldScaling(Transform& transform, const mat4f& view, const mat
 //                    PUBLIC                 
 // ------------------------------------------
 
-void GUI_RenderViewport(bool& open, u32 texID, GameObject& objSelected, i32 gizmode, const mat4f& view, const mat4f& proj)
+void GUI_RenderViewport(u32 texID, GameObject& objSelected, i32 gizmode, const mat4f& view, const mat4f& proj)
 {
   ImGuiStyle& style = ImGui::GetStyle();
   const ImVec2 paddingTmp = style.WindowPadding;
   style.WindowPadding = { 0.0f, 0.0f };
 
   // Begin main viewport
-  ImGui::Begin("Viewport", &open);
+  ImGui::Begin("Viewport");
   const ImVec2 winSize = ImGui::GetWindowSize();
   const ImVec2 winPos = ImGui::GetWindowPos();
   auto& guiLayer = ImGuiLayer::Get();

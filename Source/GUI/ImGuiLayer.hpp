@@ -84,13 +84,10 @@ public:
 	void RenderViewport(u32 texture, GameObject &objSelected, const mat4f &view, const mat4f &proj) const;
 	GameObject &RenderHierarchy(Scene &scene);
 	void RenderInspector(GameObject &object);
-	void RenderContentBrowser();
 	void RenderGizmoToolBar();
-	void RenderCameraProps(Camera &camera);
-	void RenderDebugDepthMap(u32 texture);
+	void RenderCameraSettings(Camera &camera);
 	void RenderGraphicsInfo();
 	void RenderTimeInfo(f64 delta, f64 avg, i32 frameRate);
-	void RenderDebug(bool shadowMode, bool normalMode, bool wireframeMode);
 
 	vec2i viewportSize;
 	vec2i viewportPos;
@@ -98,13 +95,10 @@ public:
 
 	i32 gizmode;
 
-	bool changeFontFamilyFlag;
-
 private:
 	ImGuiLayer() : viewportFocused{false},
 								 viewportSize{},
 								 viewportPos{},
-								 changeFontFamilyFlag{false},
 								 gizmode{-1}
 	{
 	}

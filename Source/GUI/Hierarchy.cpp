@@ -79,9 +79,9 @@ static void Hierarchy_ObjectMenuPopup(Scene &scene, GameObject &objSelected)
 //          PUBLIC
 // ----------------------------------------------------
 
-void GUI_RenderHierarchy(bool &open, Scene &scene, GameObject &objSelected)
+void GUI_RenderHierarchy(Scene &scene, GameObject &objSelected)
 {
-  ImGui::Begin("Hierarchy", &open);
+  ImGui::Begin("Hierarchy");
 
   /* "+New object" button */
   f32 btnWidth = ImGui::GetContentRegionAvail().x - 32.f;

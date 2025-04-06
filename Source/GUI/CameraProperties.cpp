@@ -2,9 +2,9 @@
 
 #include <imgui.h>
 
-void Gui_RenderCameraProps(Camera& camera)
+void Gui_RenderCameraSettings(Camera& camera)
 {
-  ImGui::Begin("Camera Settings");
+  ImGui::Begin("Camera settings");
 
   // Position
   ImGui::Text("Position");

@@ -356,7 +356,7 @@ static void Insp_Transform(GameObject &object, Transform &transform)
 }
 static void Insp_ShowTextureSelector(StringView label, Texture2D &meshTexture, Texture2D defaultTex)
 {
-  auto &texManager = TexturesManager::Get();
+  TexturesManager&texManager = TexturesManager::Get();
   static Texture2D resetIcon = texManager.GetOrCreateIcon("reset-arrow-16.png");
 
   bool isMeshTextureValid = meshTexture.GetWidth() != 1;
@@ -370,12 +370,14 @@ static void Insp_ShowTextureSelector(StringView label, Texture2D &meshTexture, T
   ImGui::SetNextItemWidth(ImGui::GetColumnWidth());
   if (isMeshTextureValid)
   {
-    const fs::path *texturePath = texManager.GetTexturePath(meshTexture.id);
+    const fs::path* texturePath = texManager.GetTexturePath(meshTexture.id);
     ImGui::Selectable(texturePath->string().c_str(), false);
   }
   else
   {
-    ImGui::Selectable("No texture", false);
+    Array<char, 32> label{};
+    std::format_to_n(label.begin(), label.size(), "No texture##{}", meshTexture.id);
+    ImGui::Selectable(label.data(), false);
   }
 
   // Third column: reset button
@@ -800,9 +802,9 @@ static void Insp_NewComponentPopup(GameObject &object)
 //                    PUBLIC
 // ------------------------------------------
 
-void GUI_RenderInspector(bool &open, GameObject &object)
+void GUI_RenderInspector(GameObject &object)
 {
-  ImGui::Begin("Inspector", &open);
+  ImGui::Begin("Inspector");
   if (object.IsValid())
   {
     // "+New component" button
