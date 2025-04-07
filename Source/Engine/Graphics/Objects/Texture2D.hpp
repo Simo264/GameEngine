@@ -154,7 +154,7 @@ public:
    *
    * @param absolute The absolute path to the image file.
    */
-  void LoadImageData(const fs::path& absolute);
+  void LoadImageData(const fs::path& absolute) const;
 
   /** @brief Create texture object */
   void Create(Texture2DTarget target);
@@ -191,7 +191,6 @@ public:
   void UpdateStorage(i32 level,
                      i32 width,
                      i32 height,
-                     Texture2DFormat format,
                      Texture2DSubImageType type, 
                      const void* pixels,
                      i32 xoffset = 0,
@@ -200,13 +199,11 @@ public:
 
   /** @brief Fills all the texture image with a constant value. */
   void ClearStorage(i32 level,
-                    Texture2DFormat format,
                     Texture2DClearImageType type,
                     const void* data) const;
   
   /** @return A texture image into pixels. */
   void GetTextureImage(i32 level,
-                       Texture2DFormat format,
                        Texture2DGetImageType type, 
                        i32 buffSize, 
                        void* pixels) const;
@@ -241,7 +238,7 @@ public:
    * into a more general format like `RGB`, `RGBA`, or `DEPTH_COMPONENT`.
    * If the internal format is unknown, a warning is issued, and `Texture2DFormat::RED` is returned as a fallback.
    */
-  Texture2DFormat GetFormat(Texture2DInternalFormat internalFormat) const;
+  Texture2DFormat GetFormat() const;
   
   /**
    * @brief Retrieves the number of color channels based on the internal texture format.
@@ -251,7 +248,7 @@ public:
    * This function determines how many color components a given internal texture format contains.
    * If the internal format is unknown, a warning is issued, and 1 is returned as a default value.
    */
-  i32 GetNumChannels(Texture2DInternalFormat internalFormat) const;
+  i32 GetNumChannels() const;
 
   bool Compare(const Texture2D& other) const { return id == other.id; }
   bool IsValid() const;

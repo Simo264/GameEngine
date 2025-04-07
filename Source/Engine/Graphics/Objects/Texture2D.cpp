@@ -67,7 +67,6 @@ void Texture2D::CreateStorageMultisampled(Texture2DInternalFormat internalFormat
 void Texture2D::UpdateStorage(i32 level,
                               i32 width,
                               i32 height,
-                              Texture2DFormat format,
                               Texture2DSubImageType type,
                               const void *pixels,
                               i32 xoffset,
@@ -79,24 +78,23 @@ void Texture2D::UpdateStorage(i32 level,
                       yoffset,
                       width,
                       height,
-                      static_cast<u32>(format),
+                      static_cast<u32>(GetFormat()),
                       static_cast<u32>(type),
                       pixels);
 }
 
 void Texture2D::ClearStorage(i32 level,
-                             Texture2DFormat format,
                              Texture2DClearImageType type,
                              const void *data) const
 {
   glClearTexImage(id,
                   level,
-                  static_cast<u32>(format),
+                  static_cast<u32>(GetFormat()),
                   static_cast<u32>(type),
                   data);
 }
 
-void Texture2D::LoadImageData(const fs::path &absolute)
+void Texture2D::LoadImageData(const fs::path &absolute) const
 {
   if (!fs::exists(absolute))
   {
@@ -119,9 +117,8 @@ void Texture2D::LoadImageData(const fs::path &absolute)
     gammaCorrection = true;
 
   i32 width, height, nChannels;
-  Texture2DFormat format = Texture2DFormat::RGB;
   Texture2DInternalFormat internalFormat = Texture2DInternalFormat::RGB8;
-  u8 *data = ImageLoader::LoadImageData(absolute, width, height, nChannels);
+  u8 *data = ImageLoader::LoadLDRImage(absolute, width, height, nChannels);
   if (data)
   {
     // From https://registry.khronos.org/OpenGL-Refpages/gl4/html/glTexStorage2D.xhtml
@@ -134,19 +131,15 @@ void Texture2D::LoadImageData(const fs::path &absolute)
     {
     case 1:
       internalFormat = Texture2DInternalFormat::R8;
-      format = Texture2DFormat::RED;
       break;
     case 2:
       internalFormat = Texture2DInternalFormat::RG8;
-      format = Texture2DFormat::RG;
       break;
     case 3:
       internalFormat = (gammaCorrection ? Texture2DInternalFormat::SRGB8 : Texture2DInternalFormat::RGB8);
-      format = Texture2DFormat::RGB;
       break;
     case 4:
       internalFormat = (gammaCorrection ? Texture2DInternalFormat::SRGB8_ALPHA8 : Texture2DInternalFormat::RGBA8);
-      format = Texture2DFormat::RGBA;
       break;
     }
 
@@ -156,7 +149,7 @@ void Texture2D::LoadImageData(const fs::path &absolute)
     SetParameteri(TextureParameteriName::MAG_FILTER, TextureParameteriParam::LINEAR);
 
     CreateStorage(internalFormat, width, height);
-    UpdateStorage(0, width, height, format, Texture2DSubImageType::UNSIGNED_BYTE, data);
+    UpdateStorage(0, width, height, Texture2DSubImageType::UNSIGNED_BYTE, data);
     GenerateMipmap();
   }
   else
@@ -166,14 +159,13 @@ void Texture2D::LoadImageData(const fs::path &absolute)
 }
 
 void Texture2D::GetTextureImage(i32 level,
-                                Texture2DFormat format,
                                 Texture2DGetImageType type,
                                 i32 buffSize,
                                 void *pixels) const
 {
   glGetTextureImage(id,
                     level,
-                    static_cast<u32>(format),
+                    static_cast<u32>(GetFormat()),
                     static_cast<u32>(type),
                     buffSize,
                     pixels);
@@ -223,8 +215,10 @@ Texture2DInternalFormat Texture2D::GetInternalFormat() const
   glGetTextureLevelParameteriv(id, 0, GL_TEXTURE_INTERNAL_FORMAT, &internalFormat);
   return static_cast<Texture2DInternalFormat>(internalFormat);
 }
-Texture2DFormat Texture2D::GetFormat(Texture2DInternalFormat internalFormat) const
+Texture2DFormat Texture2D::GetFormat() const
 {
+  Texture2DInternalFormat internalFormat = GetInternalFormat();
+
   switch (internalFormat)
   {
   case Texture2DInternalFormat::R8:
@@ -275,11 +269,14 @@ Texture2DFormat Texture2D::GetFormat(Texture2DInternalFormat internalFormat) con
   default:
     CONSOLE_WARN("Unknown internal format: {:#x} - Defaulting to Texture2DFormat::RED",
                  static_cast<u32>(internalFormat));
-    return Texture2DFormat::RED; // Valore di fallback
+    
+    return Texture2DFormat::RED;
   }
 }
-i32 Texture2D::GetNumChannels(Texture2DInternalFormat internalFormat) const
+i32 Texture2D::GetNumChannels() const
 {
+  Texture2DInternalFormat internalFormat = GetInternalFormat();
+
   switch (internalFormat)
   {
   case Texture2DInternalFormat::R8:

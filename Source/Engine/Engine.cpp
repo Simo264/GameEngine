@@ -9,6 +9,7 @@
 #include "Engine/Camera.hpp"
 #include "Engine/Scene.hpp"
 #include "Engine/Uniforms.hpp"
+#include "Engine/ImageLoader.hpp"
 
 #include "Engine/ECS/ECS.hpp"
 #include "Engine/Graphics/Vertex.hpp"
@@ -177,18 +178,12 @@ void Engine::Initialize()
   CreateFramebuffer(4, WINDOW_WIDTH, WINDOW_HEIGHT);
   CreateScreenSquare();
 
-  // Create grid plane
-  // -----------------------------
-  CreateGridPlane();
-
   // Initialize time
   // -----------------------------
   InitTime();
 }
 void Engine::Run()
 {
-  //TextureCubemap skyboxTexture = CreateSkybox();
-
   Camera camera;
   camera.position = vec3f(0.f, 1.f, 8.0f);
 
@@ -200,6 +195,7 @@ void Engine::Run()
   ImGuiLayer& gui = ImGuiLayer::Get();
   WindowManager& windowManager = WindowManager::Get();
   ShadersManager& shadersManager = ShadersManager::Get();
+  TexturesManager& texturesManager = TexturesManager::Get();
 
   Program skyboxProgram = shadersManager.GetProgram("Skybox");
   skyboxProgram.SetUniform1i(Uniforms::skyboxTexture, 0);
@@ -212,7 +208,16 @@ void Engine::Run()
   goochProgram.SetUniform1i("u_material.specularTexture", 1);
   goochProgram.SetUniform1i("u_material.normalTexture", 2);
 
-  constexpr bool wireframeMode = false;
+  //Array<Texture2D, 6> faces = {
+  //    texturesManager.GetOrCreateTexture("skybox/right.jpg"),
+  //    texturesManager.GetOrCreateTexture("skybox/left.jpg"),
+  //    texturesManager.GetOrCreateTexture("skybox/top.jpg"),
+  //    texturesManager.GetOrCreateTexture("skybox/bottom.jpg"),
+  //    texturesManager.GetOrCreateTexture("skybox/front.jpg"),
+  //    texturesManager.GetOrCreateTexture("skybox/back.jpg"),
+  //};
+  //TextureCubemap textureCubemap = CreateSkybox(faces);
+
 
   // ------------------------------------------------------------------
   // -------------------------- loop section --------------------------
@@ -301,36 +306,33 @@ void Engine::Run()
     {
       glViewport(0, 0, _viewportSize.x, _viewportSize.y);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-      glPolygonMode(GL_FRONT_AND_BACK, wireframeMode ? GL_LINE : GL_FILL);
 
       /// Render scene here
-      {
-        goochProgram.Use();
-        scene.Reg().view<StaticMesh, Transform>().each([&](auto& staticMesh, auto& transform)
-          {
-            transform.position.y = -2.0f;
-            transform.UpdateTransformation();
-            goochProgram.SetUniformMat4f(Uniforms::model, transform.GetTransformation());
-            staticMesh.Render(goochProgram, RenderMode::TRIANGLES); });
-
-        blinnPhongProgram.Use();
-        scene.Reg().view<StaticMesh, Transform>().each([&](auto& staticMesh, auto& transform)
-          {
-            transform.position.y = 2.0f;
-            transform.UpdateTransformation();
-            blinnPhongProgram.SetUniformMat4f(Uniforms::model, transform.GetTransformation());
-            staticMesh.Render(blinnPhongProgram, RenderMode::TRIANGLES); 
-        });
-      }
+      //{
+      //  goochProgram.Use();
+      //  scene.Reg().view<StaticMesh, Transform>().each([&](auto& staticMesh, auto& transform)
+      //    {
+      //      transform.position.y = -2.0f;
+      //      transform.UpdateTransformation();
+      //      goochProgram.SetUniformMat4f(Uniforms::model, transform.GetTransformation());
+      //      staticMesh.Render(goochProgram, RenderMode::TRIANGLES); });
+      //  blinnPhongProgram.Use();
+      //  scene.Reg().view<StaticMesh, Transform>().each([&](auto& staticMesh, auto& transform)
+      //    {
+      //      transform.position.y = 2.0f;
+      //      transform.UpdateTransformation();
+      //      blinnPhongProgram.SetUniformMat4f(Uniforms::model, transform.GetTransformation());
+      //      staticMesh.Render(blinnPhongProgram, RenderMode::TRIANGLES); });
+      //}
 
       /// Draw skybox after the scene
-      //{
-      //  skyboxProgram.Use();
-      //  skyboxTexture.BindTextureUnit(0);
-      //  DepthTest::SetDepthFun(CompareFunc::LEQUAL);
-      //  Renderer::DrawArrays(RenderMode::TRIANGLES, _skybox.vao, _skybox.numVertices);
-      //  DepthTest::SetDepthFun(CompareFunc::LESS);
-      //}
+      {
+        //skyboxProgram.Use();
+        //textureCubemap.BindTextureUnit(0);
+        //DepthTest::SetDepthFun(CompareFunc::LEQUAL);
+        //Renderer::DrawArrays(RenderMode::TRIANGLES, _meshCubeSkybox.vao, _meshCubeSkybox.numVertices);
+        //DepthTest::SetDepthFun(CompareFunc::LESS);
+      }
 
       // Blit multisampled buffer to normal color buffer of intermediate FBO
       _fboMultisampled.Blit(_fboIntermediate,
@@ -375,8 +377,7 @@ void Engine::CleanUp()
 
   // Destroy all meshes
   _screenSquare.Destroy();
-  _skybox.Destroy();
-  _gridPlane.Destroy();
+  _meshCubeSkybox.Destroy();
 
   // Destroy all uniform block objects
   _uboCameraBlock.Delete();
@@ -553,24 +554,7 @@ void Engine::CreateScreenSquare()
   _screenSquare.vao.SetAttribBinding(1, 0);
   _screenSquare.vao.EnableAttribute(1);
 }
-void Engine::CreateGridPlane()
-{
-  constexpr f32 vertices[] = {
-    -1.0f, -1.0f, 0.0f,
-     1.0f, -1.0f, 0.0f,
-     1.0f,  1.0f, 0.0f,
-    -1.0f, -1.0f, 0.0f,
-     1.0f,  1.0f, 0.0f,
-    -1.0f,  1.0f, 0.0f,
-  };
-  Buffer vbo(sizeof(vertices), vertices, BufferUsage::STATIC_DRAW);
-  _gridPlane.Create();
-  _gridPlane.SetupAttributeFloat(0, 0, VertexFormat(3, VertexAttribType::FLOAT, false, offsetof(Vertex_P, position)));
-  _gridPlane.vao.AttachVertexBuffer(0, vbo, 0, sizeof(Vertex_P));
-  _gridPlane.numVertices = 6;
-  _gridPlane.numIndices = 0;
-}
-TextureCubemap Engine::CreateSkybox()
+TextureCubemap Engine::CreateSkybox(const Array<Texture2D, 6>& faces)
 {
   constexpr f32 vertices[] = {
     // Position
@@ -617,32 +601,22 @@ TextureCubemap Engine::CreateSkybox()
     1.0f, -1.0f, 1.0f };
   Buffer vbo(sizeof(vertices), vertices, BufferUsage::STATIC_DRAW);
 
-  _skybox.Create();
-  _skybox.numVertices = 36;
-  _skybox.numIndices = 0;
+  _meshCubeSkybox.Create();
+  _meshCubeSkybox.numVertices = 36;
+  _meshCubeSkybox.numIndices = 0;
+  _meshCubeSkybox.vao.EnableAttribute(0);
+  _meshCubeSkybox.vao.SetAttribBinding(0, 0);
+  _meshCubeSkybox.vao.SetAttribFormatFLoat(0, 3, VertexAttribType::FLOAT, false, 0);
+  _meshCubeSkybox.vao.AttachVertexBuffer(0, vbo, 0, sizeof(Vertex_P));
 
-  _skybox.vao.EnableAttribute(0);
-  _skybox.vao.SetAttribBinding(0, 0);
-  _skybox.vao.SetAttribFormatFLoat(0, 3, VertexAttribType::FLOAT, false, 0);
-  _skybox.vao.AttachVertexBuffer(0, vbo, 0, sizeof(Vertex_P));
-
-  TexturesManager& texturesManager = TexturesManager::Get();
-  Array<Texture2D, 6> images = {
-      texturesManager.GetOrCreateTexture("skybox/right.jpg"),
-      texturesManager.GetOrCreateTexture("skybox/left.jpg"),
-      texturesManager.GetOrCreateTexture("skybox/top.jpg"),
-      texturesManager.GetOrCreateTexture("skybox/bottom.jpg"),
-      texturesManager.GetOrCreateTexture("skybox/front.jpg"),
-      texturesManager.GetOrCreateTexture("skybox/back.jpg"),
-  };
-  Texture2DInternalFormat cubemapInternalFormat = images.at(0).GetInternalFormat();
-  i32 width = images.at(0).GetWidth();
-  i32 height = images.at(0).GetHeight();
+  Texture2DInternalFormat cubemapInternalFormat = faces.at(0).GetInternalFormat();
+  i32 width = faces.at(0).GetWidth();
+  i32 height = faces.at(0).GetHeight();
 
   TextureCubemap skyboxTexture;
   skyboxTexture.Create();
   skyboxTexture.CreateStorage(cubemapInternalFormat, width, height);
-  skyboxTexture.LoadImages(images);
+  skyboxTexture.LoadImages(faces);
   skyboxTexture.SetParameteri(TextureParameteriName::MAG_FILTER, TextureParameteriParam::LINEAR);
   skyboxTexture.SetParameteri(TextureParameteriName::MIN_FILTER, TextureParameteriParam::LINEAR);
   skyboxTexture.SetParameteri(TextureParameteriName::WRAP_S, TextureParameteriParam::CLAMP_TO_EDGE);

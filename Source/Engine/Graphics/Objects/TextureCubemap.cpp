@@ -33,8 +33,6 @@ static Texture3DFormat ConvertToTexture3DFormat(Texture2DFormat format2d)
   return static_cast<Texture3DFormat>(static_cast<u32>(format2d));
 }
 
-
-
 void TextureCubemap::Create()
 {
 	glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &id);
@@ -45,10 +43,10 @@ void TextureCubemap::CreateStorage(Texture2DInternalFormat internalFormat,
                                    i32 height) const
 {
   glTextureStorage2D(id, 
-    1, 
-    static_cast<u32>(internalFormat),
-    width, 
-    height);
+                     1, 
+                     static_cast<u32>(internalFormat),
+                     width, 
+                     height);
 }
 
 void TextureCubemap::Delete()
@@ -74,19 +72,17 @@ void TextureCubemap::SubImage3D(i32 level,
                                 const void* pixels) const
 {
   glTextureSubImage3D(id,
-    level,
-    xoffset,
-    yoffset,
-    zoffset,
-    width,
-    height,
-    depth,
-    static_cast<u32>(format),
-    static_cast<u32>(type),
-    pixels);
+                      level,
+                      xoffset,
+                      yoffset,
+                      zoffset,
+                      width,
+                      height,
+                      depth,
+                      static_cast<u32>(format),
+                      static_cast<u32>(type),
+                      pixels);
 }
-
-
 
 void TextureCubemap::BindTextureUnit(i32 unit) const
 {
@@ -96,43 +92,42 @@ void TextureCubemap::BindTextureUnit(i32 unit) const
 void TextureCubemap::SetParameteri(TextureParameteriName name, 
                                    TextureParameteriParam value) const
 {
-  glTextureParameteri(
-    id,
-    static_cast<u32>(name),
-    static_cast<i32>(value));
+  glTextureParameteri(id,
+                      static_cast<u32>(name),
+                      static_cast<i32>(value));
 }
 
 void TextureCubemap::LoadImages(const Array<Texture2D, 6>& images) const
 {
   i32 width = images.at(0).GetWidth();
   i32 height = images.at(0).GetHeight();
-  Texture2DInternalFormat internalFormat = images.at(0).GetInternalFormat();
-  Texture2DFormat format2d = images.at(0).GetFormat(internalFormat);
+  Texture2DFormat format2d = images.at(0).GetFormat();
   Texture3DFormat format3d = ConvertToTexture3DFormat(format2d);
-
-  i32 nrChannels = images.at(0).GetNumChannels(internalFormat);
+  i32 nrChannels = images.at(0).GetNumChannels();
   i32 bufsize = width * height * nrChannels;
-  Vector<u8> pixels(bufsize);
+  
+  UniquePtr<u8[]> pixels = std::make_unique<u8[]>(bufsize);
+
   for (i32 i = 0; i < 6; i++)
   {
+    std::fill_n(pixels.get(), bufsize, 0);
+
     Texture2D texture = images.at(i);
-    pixels.clear();
     
     texture.GetTextureImage(0,
-      format2d,
-      Texture2DGetImageType::UNSIGNED_BYTE, 
-      bufsize, 
-      reinterpret_cast<void*>(pixels.data()));
+                            Texture2DGetImageType::UNSIGNED_BYTE, 
+                            bufsize, 
+                            reinterpret_cast<void*>(pixels.get()));
     
     SubImage3D(0,
-      0,
-      0,
-      i,
-      width,
-      height,
-      1,
-      format3d,
-      Texture3DType::UNSIGNED_BYTE,
-      reinterpret_cast<void*>(pixels.data()));
+               0,
+               0,
+               i,
+               width,
+               height,
+               1,
+               format3d,
+               Texture3DType::UNSIGNED_BYTE,
+               reinterpret_cast<void*>(pixels.get()));
   }
 }

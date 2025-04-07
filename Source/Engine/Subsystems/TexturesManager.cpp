@@ -14,7 +14,7 @@ static Texture2D CreateDefaultTexture(u8 r, u8 g, u8 b)
   Texture2D texture;
   texture.Create(Texture2DTarget::TEXTURE_2D);
   texture.CreateStorage(Texture2DInternalFormat::RGB8, width, height);
-  texture.UpdateStorage(0, width, height, Texture2DFormat::RGB, Texture2DSubImageType::UNSIGNED_BYTE, data);
+  texture.UpdateStorage(0, width, height, Texture2DSubImageType::UNSIGNED_BYTE, data);
   texture.SetParameteri(TextureParameteriName::WRAP_S, TextureParameteriParam::REPEAT);
   texture.SetParameteri(TextureParameteriName::WRAP_T, TextureParameteriParam::REPEAT);
   texture.SetParameteri(TextureParameteriName::MIN_FILTER, TextureParameteriParam::LINEAR);

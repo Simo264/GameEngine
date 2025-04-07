@@ -25,8 +25,7 @@ private:
 
 	void CreateFramebuffer(i32 samples, i32 width, i32 height);
 	void CreateScreenSquare();
-	void CreateGridPlane();
-	class TextureCubemap CreateSkybox();
+	class TextureCubemap CreateSkybox(const Array<Texture2D, 6>& faces);
 
 	void CalculatePerFrameTime();
 	
@@ -39,11 +38,9 @@ private:
 	Buffer _uboBoneBlock;		// UBO "BoneBlock"		-> bindpoint 2
 
 	Mesh _screenSquare;
-	Mesh _skybox;
-	Mesh _gridPlane;
+	Mesh _meshCubeSkybox;
 	
 	vec2i _viewportSize;
-
 	
 	chrono::steady_clock::time_point _now;
 	chrono::steady_clock::time_point _lastFrameTime;
