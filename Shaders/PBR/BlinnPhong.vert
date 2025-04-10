@@ -24,8 +24,8 @@ out vec3 TangentFragPos; // Fragment position in tangent space
 
 void main()
 {
-  mat3 normalMatrix = mat3(transpose(inverse(u_model))); // Removes non-uniform scaling effects
-  vec3 N = normalize(normalMatrix * aNormal);            // Transform normal to world space
+  mat3 normalMatrix = mat3(transpose(inverse(u_model)));  // Removes non-uniform scaling effects
+  vec3 N = normalMatrix * aNormal;                        // Transform normal to world space
 
   FragPos = vec3(u_model * vec4(aPos, 1.0)); // Compute world-space fragment position
   TexCoord = aUv;

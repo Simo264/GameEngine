@@ -131,7 +131,7 @@ void main()
   g_objectAmbientColor = g_objectDiffuseColor * 0.1f;
   g_objectSpecularColor = texture(u_material.specularTexture, TexCoord);
 
-  vec3 N = Normal;
+  vec3 N = normalize(Normal);
   vec3 V = normalize(ViewPos - FragPos);
   ivec2 normalSize = textureSize(u_material.normalTexture, 0);
   if(u_normalMapping == 1 && normalSize != ivec2(1))
