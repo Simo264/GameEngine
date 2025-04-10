@@ -206,9 +206,9 @@ void Engine::Run()
   blinnPhongProgram.SetUniform1i("u_material.specularTexture", 1);
   blinnPhongProgram.SetUniform1i("u_material.normalTexture", 2);
   Program goochProgram = shadersManager.GetProgram("GoochShading");
-  goochProgram.SetUniform1i("u_material.diffuseTexture", 0);
-  goochProgram.SetUniform1i("u_material.specularTexture", 1);
-  goochProgram.SetUniform1i("u_material.normalTexture", 2);
+  //goochProgram.SetUniform1i("u_material.diffuseTexture", 0);
+  //goochProgram.SetUniform1i("u_material.specularTexture", 1);
+  //goochProgram.SetUniform1i("u_material.normalTexture", 2);
 
   //Array<Texture2D, 6> faces = {
   //    texturesManager.GetOrCreateTexture("skybox/right.jpg"),
@@ -302,7 +302,7 @@ void Engine::Run()
       /// Render scene here
       {
         blinnPhongProgram.Use();
-        //blinnPhongProgram.SetUniform1i("u_normalMapping", normalMapping);
+        blinnPhongProgram.SetUniform1i("u_normalMapping", normalMapping);
         scene.Reg().view<StaticMesh, Transform>().each([&](auto& staticMesh, auto& transform)
           {
             transform.UpdateTransformation();

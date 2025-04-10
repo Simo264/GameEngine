@@ -1,18 +1,8 @@
-Entity6:
-  Tag: point-light
-  Light:
-    type: 1
-    color: [1, 1, 1]
-    position: [-5, 0.6, 15]
-    intensity: 0
-    attenuation.range: 7
-    attenuation.kl: 0.7
-    attenuation.kq: 1.8
 Entity5:
-  Tag: plane-1
+  Tag: plane
   Transform:
     position: [0, 0, 0]
-    scale: [10, 1, 5]
+    scale: [10, 1, 10]
     rotation: [0, 0, 0]
   StaticMesh:
     path: plane\plane.obj
@@ -24,26 +14,28 @@ Entity4:
     rotation: [0, 0, 0]
   StaticMesh:
     path: monkey\monkey.obj
-Entity3:
-  Tag: sphere
-  Transform:
-    position: [0, 2, 0]
-    scale: [1, 1, 1]
-    rotation: [0, 0, 0]
-  StaticMesh:
-    path: sphere\sphere.obj
 Entity2:
   Tag: direct-light
   Light:
     type: 0
     color: [1, 1, 1]
-    direction: [0, -1, -0.5]
+    direction: [0, -1, -1]
     intensity: 0
-Entity1:
-  Tag: plane-2
+Entity6:
+  Tag: point-light
+  Light:
+    type: 1
+    color: [1, 1, 1]
+    position: [2.5, 3, 2]
+    intensity: 1
+    attenuation.range: 20
+    attenuation.kl: 0.22
+    attenuation.kq: 0.2
+Entity0:
+  Tag: brick-wall
   Transform:
-    position: [0, 0, 15]
-    scale: [10, 1, 5]
+    position: [0, 2, 0]
+    scale: [1, 1, 1]
     rotation: [0, 0, 0]
   StaticMesh:
-    path: plane\plane.obj
+    path: stone_brick_wall_001\stone_brick_wall_001.gltf

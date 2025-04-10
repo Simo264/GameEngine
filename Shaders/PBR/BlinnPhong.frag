@@ -133,15 +133,15 @@ void main()
 
   vec3 N = Normal;
   vec3 V = normalize(ViewPos - FragPos);
-  // ivec2 normalSize = textureSize(u_material.normalTexture, 0);
-  //  if(u_normalMapping == 1 && normalSize != ivec2(1))
-  //  {
-  //    // Obtain normal from normal map in range [0,1] and
-  //    // transform normal vector to range [-1,1]
-  //    normal  = texture(u_material.normalTexture, TexCoord).xyz;
-  //    normal = normal * 2.0f - 1.0f;
-  //    viewDir = normalize(TangentViewPos - TangentFragPos);
-  //  }
+  ivec2 normalSize = textureSize(u_material.normalTexture, 0);
+  if(u_normalMapping == 1 && normalSize != ivec2(1))
+  {
+    // Obtain normal from normal map in range [0,1] and
+    // transform normal vector to range [-1,1]
+    N  = texture(u_material.normalTexture, TexCoord).xyz;
+    N = N * 2.0f - 1.0f;
+    V = normalize(TangentViewPos - TangentFragPos);
+  }
 
   vec3 color = g_objectAmbientColor.rgb;
   vec3 sumOfLights = vec3(0.f);
