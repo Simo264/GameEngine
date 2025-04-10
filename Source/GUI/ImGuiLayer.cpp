@@ -155,6 +155,22 @@ void ImGuiLayer::RenderCameraSettings(Camera& camera)
   Gui_RenderCameraSettings(camera);
 }
 
+void ImGuiLayer::RenderDebug(bool& wireframe, i32& normalMapping)
+{
+  ImGui::Begin("Debug Options");
+
+  // Checkbox per Wireframe
+  ImGui::Checkbox("Wireframe", &wireframe);
+
+  // Checkbox per Normal Mapping
+  static bool b = false;
+  ImGui::Checkbox("Normal Mapping", &b);
+
+  normalMapping = (b ? 1 : 0);
+
+  ImGui::End();
+}
+
 // --------------------------
 //          PRIVATE
 // --------------------------

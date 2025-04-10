@@ -173,6 +173,6 @@ void ShadersManager::LoadConfig(const fs::path &path)
 		}
 		CONSOLE_TRACE("Link program {}", programName);
 		if (!program.Link())
-			CONSOLE_ERROR("Error on linking program '{}': {}", programName, program.GetProgramInfo());
+			throw std::runtime_error(std::format("Error on linking program '{}': {}", programName, program.GetProgramInfo()));
 	}
 }

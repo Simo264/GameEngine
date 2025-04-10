@@ -1,34 +1,49 @@
-Entity3:
-  Tag: monkey
-  Transform:
-    position: [-3, 0, 0]
-    scale: [1, 1, 1]
-    rotation: [0, 0, 0]
-  StaticMesh:
-    path: monkey/monkey.obj
-
-Entity2:
-  Tag: sphere
-  Transform:
-    position: [3, 0, 0]
-    scale: [1, 1, 1]
-    rotation: [0, 0, 0]
-  StaticMesh:
-    path: sphere/sphere.obj
-
-Entity1:
-  Tag: cube
+Entity6:
+  Tag: point-light
+  Light:
+    type: 1
+    color: [1, 1, 1]
+    position: [-5, 0.6, 15]
+    intensity: 0
+    attenuation.range: 7
+    attenuation.kl: 0.7
+    attenuation.kq: 1.8
+Entity5:
+  Tag: plane-1
   Transform:
     position: [0, 0, 0]
+    scale: [10, 1, 5]
+    rotation: [0, 0, 0]
+  StaticMesh:
+    path: plane\plane.obj
+Entity4:
+  Tag: monkey
+  Transform:
+    position: [-3, 2, 0]
     scale: [1, 1, 1]
     rotation: [0, 0, 0]
   StaticMesh:
-    path: cube/cube.obj
-
-Entity0:
-  Tag: light
+    path: monkey\monkey.obj
+Entity3:
+  Tag: sphere
+  Transform:
+    position: [0, 2, 0]
+    scale: [1, 1, 1]
+    rotation: [0, 0, 0]
+  StaticMesh:
+    path: sphere\sphere.obj
+Entity2:
+  Tag: direct-light
   Light:
     type: 0
     color: [1, 1, 1]
-    intensity: 1.0
-    direction: [0, -1, 0]
+    direction: [0, -1, -0.5]
+    intensity: 0
+Entity1:
+  Tag: plane-2
+  Transform:
+    position: [0, 0, 15]
+    scale: [10, 1, 5]
+    rotation: [0, 0, 0]
+  StaticMesh:
+    path: plane\plane.obj

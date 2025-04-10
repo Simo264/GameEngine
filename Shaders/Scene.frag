@@ -250,8 +250,8 @@ vec3 CalculateSpotLight(SpotLight light, vec3 normal, vec3 viewDir)
   // Soft edges + intensity
   const float cutoff = cos(radians(light.cutOff));
   const float outerCutoff = cos(radians(light.outerCutOff));
-  const float theta = dot(lightDirection, normalize(-light.direction));
   const float epsilon = (cutoff - outerCutoff);
+  const float theta = dot(lightDirection, normalize(-light.direction));
   const float intensity = clamp((theta - outerCutoff) / epsilon, 0.0, 1.0);
   diffuse  *= intensity;
   specular *= intensity;

@@ -88,6 +88,7 @@ public:
 	void RenderCameraSettings(Camera &camera);
 	void RenderGraphicsInfo();
 	void RenderTimeInfo(f64 delta, f64 avg, i32 frameRate);
+	void RenderDebug(bool& wireframe, i32& normalMapping);
 
 	vec2i viewportSize;
 	vec2i viewportPos;

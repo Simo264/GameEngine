@@ -20,7 +20,6 @@ static bool ButtonCentered(const char *label, ImVec2 size)
 
   return ImGui::Button(label, size);
 }
-
 static void Hierarchy_ListObjects(Scene &scene, GameObject &objSelected)
 {
   auto &texManager = TexturesManager::Get();

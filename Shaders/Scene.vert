@@ -40,7 +40,7 @@ void main()
 
   // Transform view position and fragment position to tangent space for normal mapping
   TangentViewPos = TBN * ViewPos; 
-  TangentFragPos = TBN * FragPos; 
+  TangentFragPos = TBN * FragPos;
 
   gl_Position = u_cameraProjection * u_cameraView * u_model * vec4(aPos, 1.0f);
 }

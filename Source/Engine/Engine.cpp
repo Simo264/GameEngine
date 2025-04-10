@@ -185,7 +185,9 @@ void Engine::Initialize()
 void Engine::Run()
 {
   Camera camera;
-  camera.position = vec3f(0.f, 1.f, 8.0f);
+  camera.position = vec3f(0.f, 15.f, 30.0f);
+  camera.orientation = vec3f(-90.f, -35.f, 0.0f);
+  camera.frustum.zFar = 50.0f;
 
   Scene scene((Paths::GetRootPath() / "Scene.yaml"));
 
@@ -218,6 +220,8 @@ void Engine::Run()
   //};
   //TextureCubemap textureCubemap = CreateSkybox(faces);
 
+  bool wireframe = false;
+  i32 normalMapping = 0;
 
   // ------------------------------------------------------------------
   // -------------------------- loop section --------------------------
@@ -238,8 +242,8 @@ void Engine::Run()
     windowManager.PoolEvents();
     if (gui.viewportFocused)
     {
-      camera.ProcessKeyboard(static_cast<f32>(_delta), 5.0f);
-      camera.ProcessMouse(static_cast<f32>(_delta), 15.0f);
+      camera.ProcessKeyboard(static_cast<f32>(_delta), 10.0f);
+      camera.ProcessMouse(static_cast<f32>(_delta), 20.0f);
     }
 
     // --------------------------------------------------------------------
@@ -259,10 +263,7 @@ void Engine::Run()
 
     // Update light UBO
     {
-      constexpr u32 size = sizeof(DirectionalLight) + 
-        sizeof(PointLight) + 
-        sizeof(SpotLight);
-
+      constexpr u32 size = sizeof(DirectionalLight) + sizeof(PointLight);
       constexpr Array<u8, size> zeros{};
       _uboLightBlock.UpdateStorage(0, size, zeros.data());
 
@@ -275,7 +276,6 @@ void Engine::Run()
           sizeof(DirectionalLight),
           reinterpret_cast<void*>(light));
       }
-
       e = scene.FindObjectWithComponent<PointLight>();
       if (e.has_value())
       {
@@ -285,17 +285,8 @@ void Engine::Run()
           sizeof(PointLight),
           reinterpret_cast<void*>(light));
       }
-
-      e = scene.FindObjectWithComponent<SpotLight>();
-      if (e.has_value())
-      {
-        GameObject obj = e.value();
-        SpotLight* light = obj.GetComponent<SpotLight>();
-        _uboLightBlock.UpdateStorage(sizeof(DirectionalLight) + sizeof(PointLight),
-          sizeof(SpotLight),
-          reinterpret_cast<void*>(light));
-      }
     }
+
 
     // -----------------------------------------------------------------------
     // -------------------------- Rendering section --------------------------
@@ -306,24 +297,18 @@ void Engine::Run()
     {
       glViewport(0, 0, _viewportSize.x, _viewportSize.y);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+      glPolygonMode(GL_FRONT_AND_BACK, wireframe ? GL_LINE : GL_FILL);
 
       /// Render scene here
-      //{
-      //  goochProgram.Use();
-      //  scene.Reg().view<StaticMesh, Transform>().each([&](auto& staticMesh, auto& transform)
-      //    {
-      //      transform.position.y = -2.0f;
-      //      transform.UpdateTransformation();
-      //      goochProgram.SetUniformMat4f(Uniforms::model, transform.GetTransformation());
-      //      staticMesh.Render(goochProgram, RenderMode::TRIANGLES); });
-      //  blinnPhongProgram.Use();
-      //  scene.Reg().view<StaticMesh, Transform>().each([&](auto& staticMesh, auto& transform)
-      //    {
-      //      transform.position.y = 2.0f;
-      //      transform.UpdateTransformation();
-      //      blinnPhongProgram.SetUniformMat4f(Uniforms::model, transform.GetTransformation());
-      //      staticMesh.Render(blinnPhongProgram, RenderMode::TRIANGLES); });
-      //}
+      {
+        blinnPhongProgram.Use();
+        //blinnPhongProgram.SetUniform1i("u_normalMapping", normalMapping);
+        scene.Reg().view<StaticMesh, Transform>().each([&](auto& staticMesh, auto& transform)
+          {
+            transform.UpdateTransformation();
+            blinnPhongProgram.SetUniformMat4f(Uniforms::model, transform.GetTransformation());
+            staticMesh.Render(blinnPhongProgram, RenderMode::TRIANGLES); });
+      }
 
       /// Draw skybox after the scene
       {
@@ -353,6 +338,7 @@ void Engine::Run()
     gui.RenderTimeInfo(_delta, _avgTime, _frameRate);
     gui.RenderGizmoToolBar();
     gui.RenderCameraSettings(camera);
+    gui.RenderDebug(wireframe, normalMapping);
     gui.EndFrame();
 
     // Checking viewport size
@@ -421,7 +407,7 @@ void Engine::SetGLStates() const
 
   // Culling OFF
   // -----------
-  FaceCulling::EnableFaceCulling();
+  FaceCulling::DisableFaceCulling();
   FaceCulling::SetCullFace(CullFaceMode::BACK);
   FaceCulling::SetFrontFacing(FrontFaceMode::CCW);
 
@@ -445,8 +431,7 @@ void Engine::SetGLStates() const
 void Engine::CreateCameraUBO()
 {
   // Reserve memory for:
-  // - 1 mat4f: camera projection
-  // - 1 mat4f: camera view
+  // - 2 mat4f: camera projection + camera view
   // - 1 vec3f: camera position
   // - 1 float: padding
   constexpr u32 size = 2 * sizeof(mat4f) + 
@@ -464,11 +449,7 @@ void Engine::CreateLightUBO()
   // Reserve memory for:
   // - 1 DirectionalLight object
   // - 1 PointLight object
-  // - 1 SpotLight object
-  constexpr u32 size = sizeof(DirectionalLight) + 
-    sizeof(PointLight) + 
-    sizeof(SpotLight);
-  
+  constexpr u32 size = sizeof(DirectionalLight) + sizeof(PointLight);
   _uboLightBlock = Buffer(size, nullptr, BufferUsage::DYNAMIC_DRAW);
 
   constexpr Array<u8, size> zeros{};
@@ -480,7 +461,7 @@ void Engine::CreateBoneUBO()
   constexpr u32 size = SkeletalMesh::GetMaxNumBones() * sizeof(mat4f);
   _uboBoneBlock = Buffer(size, nullptr, BufferUsage::STREAM_DRAW);
   
-  constexpr Array<char, size> zeros{};
+  constexpr Array<u8, size> zeros{};
   _uboBoneBlock.UpdateStorage(0, size, zeros.data()); // Init buffer with zeros
   _uboBoneBlock.BindBase(BufferTarget::UNIFORM, 2);
 }

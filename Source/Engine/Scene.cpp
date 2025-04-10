@@ -132,31 +132,6 @@ static void DeserializePointLight(GameObject &object, const YAML::Node &componen
 	light.attenuation.kl = component["attenuation.kl"].as<f32>();
 	light.attenuation.kq = component["attenuation.kq"].as<f32>();
 }
-static void DeserializeSpotLight(GameObject &object, const YAML::Node &component)
-{
-	auto &light = object.AddComponent<SpotLight>();
-	YAML::Node node = component["color"];
-	light.color = {
-			node[0].as<f32>(),
-			node[1].as<f32>(),
-			node[2].as<f32>()};
-	node = component["direction"];
-	light.direction = {
-			node[0].as<f32>(),
-			node[1].as<f32>(),
-			node[2].as<f32>()};
-	node = component["position"];
-	light.position = {
-			node[0].as<f32>(),
-			node[1].as<f32>(),
-			node[2].as<f32>()};
-	light.intensity = component["intensity"].as<f32>();
-	light.attenuation.range = component["attenuation.range"].as<i32>();
-	light.attenuation.kl = component["attenuation.kl"].as<f32>();
-	light.attenuation.kq = component["attenuation.kq"].as<f32>();
-	light.cutOff = component["cutOff"].as<f32>();
-	light.outerCutOff = component["outerCutOff"].as<f32>();
-}
 static void DeserializeLight(GameObject &object, const YAML::Node &component)
 {
 	i32 type = component["type"].as<i32>();
@@ -168,9 +143,6 @@ static void DeserializeLight(GameObject &object, const YAML::Node &component)
 		break;
 	case LightType::POINT:
 		DeserializePointLight(object, component);
-		break;
-	case LightType::SPOT:
-		DeserializeSpotLight(object, component);
 		break;
 	default:
 		throw std::runtime_error("invalid LightType");
@@ -252,27 +224,6 @@ static void SerializePointLight(YAML::Emitter &outEmitter, const PointLight &lig
 	outEmitter << YAML::Key << "attenuation.kl" << YAML::Value << light.attenuation.kl;
 	outEmitter << YAML::Key << "attenuation.kq" << YAML::Value << light.attenuation.kq;
 }
-static void SerializeSpotLight(YAML::Emitter &outEmitter, const SpotLight &light)
-{
-	outEmitter << YAML::Key << "color";
-	outEmitter << YAML::Flow << YAML::BeginSeq;
-	outEmitter << light.color.x << light.color.y << light.color.z;
-	outEmitter << YAML::EndSeq;
-	outEmitter << YAML::Key << "direction";
-	outEmitter << YAML::Flow << YAML::BeginSeq;
-	outEmitter << light.direction.x << light.direction.y << light.direction.z;
-	outEmitter << YAML::EndSeq;
-	outEmitter << YAML::Key << "position";
-	outEmitter << YAML::Flow << YAML::BeginSeq;
-	outEmitter << light.position.x << light.position.y << light.position.z;
-	outEmitter << YAML::EndSeq;
-	outEmitter << YAML::Key << "intensity" << YAML::Value << light.intensity;
-	outEmitter << YAML::Key << "attenuation.range" << YAML::Value << light.attenuation.range;
-	outEmitter << YAML::Key << "attenuation.kl" << YAML::Value << light.attenuation.kl;
-	outEmitter << YAML::Key << "attenuation.kq" << YAML::Value << light.attenuation.kq;
-	outEmitter << YAML::Key << "cutOff" << YAML::Value << light.cutOff;
-	outEmitter << YAML::Key << "outerCutOff" << YAML::Value << light.outerCutOff;
-}
 static void SerializeLight(YAML::Emitter &outEmitter, const Light &light, GameObject &object)
 {
 	outEmitter << YAML::Key << "Light";
@@ -292,12 +243,7 @@ static void SerializeLight(YAML::Emitter &outEmitter, const Light &light, GameOb
 		SerializePointLight(outEmitter, pointLight);
 		break;
 	}
-	case LightType::SPOT:
-	{
-		const auto &spotLight = *object.GetComponent<SpotLight>();
-		SerializeSpotLight(outEmitter, spotLight);
-		break;
-	}
+
 	default:
 		throw std::runtime_error("invalid LightType");
 	}

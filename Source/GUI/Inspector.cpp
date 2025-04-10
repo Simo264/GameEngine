@@ -185,90 +185,9 @@ static void Insp_PointLight(GameObject &object, PointLight &light)
   }
   ImGui::PopStyleColor(3);
 }
-static void Insp_SpotLight(GameObject &object, SpotLight &light)
-{
-  // Create a table with two columns: one for the labels and one for input
-  if (ImGui::BeginTable("Light_Table", 2, ImGuiTableFlags_SizingFixedFit))
-  {
-    ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthFixed, 80.f);
-    ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthStretch);
-
-    // 1� Row: view light type
-    ImGui::TableNextRow();
-    ImGui::TableNextColumn(); // First column: label
-    ImGui::Text("Type");
-    ImGui::TableNextColumn(); // Second column: combo
-    ImGui::BeginDisabled();
-    if (ImGui::BeginCombo("##Type", "Spot"))
-      ImGui::EndCombo();
-    ImGui::EndDisabled();
-
-    // 2� Row: color input
-    ImGui::TableNextRow();
-    ImGui::TableNextColumn(); // First column: label
-    ImGui::Text("Color");
-    ImGui::TableNextColumn(); // Second column: input
-    ImGui::ColorEdit3("##Color", reinterpret_cast<f32 *>(&light.color));
-
-    // 3� Row: diffuse input
-    ImGui::TableNextRow();
-    ImGui::TableNextColumn(); // First column: label
-    ImGui::Text("Intensity");
-    ImGui::TableNextColumn(); // Second column: input
-    ImGui::SliderFloat("##Intensity", &light.intensity, 0.0f, 1.0f);
-
-    // 4� Row: direction input
-    ImGui::TableNextRow();
-    ImGui::TableNextColumn(); // First column: label
-    ImGui::Text("Direction");
-    ImGui::TableNextColumn(); // Second column: input
-    ImGui::DragFloat3("##Direction", reinterpret_cast<f32 *>(&light.direction), 0.1f, -FLT_MAX, FLT_MAX);
-
-    // 5� Row: position input
-    ImGui::TableNextRow();
-    ImGui::TableNextColumn(); // First column: label
-    ImGui::Text("Position");
-    ImGui::TableNextColumn(); // Second column: input
-    ImGui::DragFloat3("##Position", reinterpret_cast<f32 *>(&light.position), 0.1f, -FLT_MAX, FLT_MAX);
-
-    // 6� Row: attenuation combo
-    ImGui::TableNextRow();
-    ImGui::TableNextColumn(); // First column: label
-    ImGui::TextWrapped("Attenuation range");
-    ImGui::TableNextColumn(); // Second column: input
-    Insp_Light_ComboAttenuation(light.attenuation);
-
-    // 7� Row: inner cutoff input
-    ImGui::TableNextRow();
-    ImGui::TableNextColumn(); // First column: label
-    ImGui::Text("Inner cutoff");
-    ImGui::TableNextColumn(); // Second column: input
-    ImGui::SliderFloat("##Inner_Cutoff", &light.cutOff, 1.0f, light.outerCutOff);
-
-    // 8� Row: outer cutoff input
-    ImGui::TableNextRow();
-    ImGui::TableNextColumn(); // First column: label
-    ImGui::Text("Outer cutoff");
-    ImGui::TableNextColumn(); // Second column: input
-    ImGui::SliderFloat("##Outer_Cutoff", &light.outerCutOff, light.cutOff, 45.0f);
-
-    ImGui::EndTable();
-  }
-
-  ImGui::SeparatorText("Advanced");
-  ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.55f, 0.f, 0.f, 0.5f));
-  ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.45f, 0.f, 0.f, 0.5f));
-  ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.45f, 0.f, 0.f, 0.5f));
-  if (ImGui::Button("Remove component##spot_light"))
-  {
-    object.RemoveComponent<Light>();
-    object.RemoveComponent<SpotLight>();
-  }
-  ImGui::PopStyleColor(3);
-}
 static void Insp_Transform_TableRow(StringView label, vec3f &values, f32 resetValue)
 {
-  ImGui::PushID(label.data());
+  ImGui::PushID(label.data()); // label = "Position" or "Rotation" or "Scale"
 
   // First column: label
   ImGui::TableNextColumn();
@@ -291,7 +210,6 @@ static void Insp_Transform_TableRow(StringView label, vec3f &values, f32 resetVa
   ImGui::PopStyleColor(3);
   ImGui::SameLine();
   ImGui::SetNextItemWidth(itemWidth);
-
   ImGui::DragFloat("##X", &values.x, 0.1f);
   ImGui::SameLine();
 
@@ -317,8 +235,8 @@ static void Insp_Transform_TableRow(StringView label, vec3f &values, f32 resetVa
   ImGui::SameLine();
   ImGui::SetNextItemWidth(itemWidth);
   ImGui::DragFloat("##Z", &values.z, 0.1f);
+  
   ImGui::PopStyleVar();
-
   ImGui::PopID();
 }
 static void Insp_Transform(GameObject &object, Transform &transform)
@@ -599,11 +517,6 @@ static void Insp_AddLightComponent(GameObject &object)
       object.AddComponent<Light>(LightType::POINT);
       object.AddComponent<PointLight>();
     }
-    if (ImGui::MenuItem("Spot"))
-    {
-      object.AddComponent<Light>(LightType::SPOT);
-      object.AddComponent<SpotLight>();
-    }
     ImGui::EndMenu();
   }
 }
@@ -746,24 +659,18 @@ static void Insp_ListAllComponents(GameObject &object)
     {
       switch (light->type)
       {
-      case LightType::DIRECTIONAL:
-      {
-        auto *dirLight = object.GetComponent<DirectionalLight>();
-        Insp_DirectLight(object, *dirLight);
-        break;
-      }
-      case LightType::POINT:
-      {
-        auto *pointLight = object.GetComponent<PointLight>();
-        Insp_PointLight(object, *pointLight);
-        break;
-      }
-      case LightType::SPOT:
-      {
-        auto *spotLight = object.GetComponent<SpotLight>();
-        Insp_SpotLight(object, *spotLight);
-        break;
-      }
+        case LightType::DIRECTIONAL:
+        {
+          auto *dirLight = object.GetComponent<DirectionalLight>();
+          Insp_DirectLight(object, *dirLight);
+          break;
+        }
+        case LightType::POINT:
+        {
+          auto *pointLight = object.GetComponent<PointLight>();
+          Insp_PointLight(object, *pointLight);
+          break;
+        }
       }
     }
   }

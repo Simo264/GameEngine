@@ -7,15 +7,16 @@ enum class LightType : i32
 {
 	DIRECTIONAL = 0,
 	POINT = 1,
-	SPOT = 2,
+	// SPOT = 2,
 };
 
-/* https://wiki.ogre3d.org/tiki-index.php?page=-Point+Light+Attenuation */
+// https://wiki.ogre3d.org/tiki-index.php?page=-Point+Light+Attenuation
 struct Attenuation
 {
-	i32 range{ 50 };	/* If an objects distance is greater than the range, the light has no effect on the object */
-	f32 kl{ 0.09f };	/* Linear attenuation factor */
-	f32 kq{ 0.032f }; /* Quadratic attenuation factor */
+	i32 range{ 50 };			// If an objects distance is greater than the range, the light has no effect on the object
+	f32 kl{ 0.09f };			// Linear attenuation factor
+	f32 kq{ 0.032f };			// Quadratic attenuation factor
+	f32 __padding{ 0.f }; // Needed for std140 alignment
 };
 
 static constexpr Attenuation ATTENUATION_RANGES[] = {
@@ -69,36 +70,7 @@ struct PointLight
 	f32 intensity{ 0.0f };
 	vec3f position{ 0.0f, 0.0f, 0.0f };
 private:
-	f32 __padding_1{ 0.f }; // Needed for std140 alignment 
-public:
-	Attenuation attenuation;
-private:
-	f32 __padding_2{ 0.f }; // Needed for std140 alignment 
-};
-
-/**
- * @brief
- * A spotlight is a light source that is located somewhere in the environment
- * that,instead of shooting light rays in all directions, only shoots them in
- * a specific direction.
- * A good example of a spotlight would be a street lamp or a flashlight.
- */
-struct SpotLight
-{
-	vec3f  color{ 1.0f,1.0f,1.0f };
-	f32 intensity{ 0.0f };
-	vec3f  position{ 0.0f, 0.0f, 0.0f };
-private:
-	f32 __padding_1;  // Needed for std140 alignment
-public:
-	vec3f  direction{ 0.0f, -1.0f, 0.0f };
-private:
-	f32 __padding_2;  // Needed for std140 alignment
-public:
-	f32 cutOff{ 12.5f };
-	f32 outerCutOff{ 17.5f }; // smoother edges
-private:
-	f32 __padding_3[2];  // Needed for std140 alignment
+	f32 __padding{ 0.f }; // Needed for std140 alignment 
 public:
 	Attenuation attenuation;
 };
