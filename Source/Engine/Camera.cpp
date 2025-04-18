@@ -3,7 +3,7 @@
 #include "Core/Math/Ext.hpp"
 
 #include "Engine/Globals.hpp"
-#include "Engine/Subsystems/WindowManager.hpp"
+#include "Engine/Managers/WindowManager.hpp"
 
 #include <GLFW/glfw3.h>
 
@@ -56,7 +56,7 @@ mat4f Camera::CalculateOrtho() const
 
 void Camera::ProcessKeyboard(f32 delta, f32 movementSpeed)
 {
-	WindowManager &windowManager = WindowManager::Get();
+	WindowManager &windowManager = WindowManager::GetInstance();
 
 	const f32 velocity = movementSpeed * delta;
 
@@ -93,7 +93,7 @@ void Camera::ProcessKeyboard(f32 delta, f32 movementSpeed)
 
 void Camera::ProcessMouse(f32 delta, f32 mouseSensitivity)
 {
-	WindowManager &windowManager = WindowManager::Get();
+	WindowManager &windowManager = WindowManager::GetInstance();
 
 	if (windowManager.GetMouseKey(GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
 	{

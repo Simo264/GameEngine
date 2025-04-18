@@ -1,10 +1,11 @@
 #include "Core/Core.hpp"
 #include "Core/Log/Logger.hpp"
 #include "Core/Dialog/FileDialog.hpp"
+#include "Core/Paths/Paths.hpp"
 
 #include "Engine/Scene.hpp"
-#include "Engine/Subsystems/ShadersManager.hpp"
-#include "Engine/Subsystems/WindowManager.hpp"
+#include "Engine/Managers/ShadersManager.hpp"
+#include "Engine/Managers/WindowManager.hpp"
 
 #include <imgui.h>
 
@@ -17,37 +18,37 @@ void GUI_RenderMenuBar(Scene &scene)
     {
       if (ImGui::MenuItem("Open"))
       {
-        static const char *filter[] = {"*.ini"};
-
-        fs::path filePath = FileDialog::OpenFileDialog(1, filter, "Open scene", false);
+        const char *filterPatterns[] = { "*.yaml" };
+        constexpr i32 nrFilterPatterns = sizeof(filterPatterns) / sizeof(filterPatterns[0]);
+        fs::path filePath = FileDialog::OpenFileDialog("Open new scene", 
+                                                       Paths::GetRootPath(),
+                                                       nrFilterPatterns,
+                                                       filterPatterns,
+                                                       "Scene file (*yaml)",
+                                                       false);
         if (!filePath.empty())
         {
-          // Unset all lights
-          ShadersManager &shadersManager = ShadersManager::Get();
-          Program shaderScene = shadersManager.GetProgram("Scene");
-          Program shaderSceneShadows = shadersManager.GetProgram("SceneShadows");
-          shaderScene.SetUniform1f("u_directionalLight.intensity", 0.f);
-          shaderScene.SetUniform1f("u_pointLight.intensity", 0.f);
-          shaderScene.SetUniform1f("u_spotLight.intensity", 0.f);
-          shaderSceneShadows.SetUniform1f("u_directionalLight.intensity", 0.f);
-          shaderSceneShadows.SetUniform1f("u_pointLight.intensity", 0.f);
-          shaderSceneShadows.SetUniform1f("u_spotLight.intensity", 0.f);
-
           scene.Clear();
           scene.LoadFromFile(filePath);
         }
       }
       if (ImGui::MenuItem("Save as..."))
       {
-        const char *filters[] = {"*.yaml"};
-        fs::path filepath = FileDialog::SaveFileDialog(1, filters, "Save as .yaml");
-        scene.SaveToFile(filepath);
+        const char* filterPatterns[] = { "*.yaml" };
+        constexpr i32 nrFilterPatterns = sizeof(filterPatterns) / sizeof(filterPatterns[0]);
+        fs::path path = FileDialog::SaveFileDialog("Save scene",
+                                                   Paths::GetRootPath(),
+                                                   nrFilterPatterns,
+                                                   filterPatterns,
+                                                   "Scene file (*yaml)");
+        if (!path.empty())
+          scene.SaveToFile(path);
       }
 
       ImGui::Separator();
 
       if (ImGui::MenuItem("Exit"))
-        WindowManager::Get().Close();
+        WindowManager::GetInstance().Close();
 
       ImGui::EndMenu();
     }

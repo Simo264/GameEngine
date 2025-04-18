@@ -19,6 +19,7 @@ namespace Paths
 	const fs::path& GetIconsPath();
 	const fs::path& GetFontsPath();
 	const fs::path& GetModelsPath();
+	const fs::path& GetHDRIPath();
 	const fs::path& GetStaticModelsPath();
 	const fs::path& GetSkeletalModelsPath();
 }

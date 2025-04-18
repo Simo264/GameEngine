@@ -6,9 +6,9 @@
 #include "Engine/Globals.hpp"
 #include "Engine/Scene.hpp"
 #include "Engine/Camera.hpp"
-#include "Engine/ECS/ECS.hpp"
+#include "Engine/Components/Components.hpp"
 #include "Engine/Graphics/Objects/Texture2D.hpp"
-#include "Engine/Subsystems/WindowManager.hpp"
+#include "Engine/Managers/WindowManager.hpp"
 
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
@@ -29,6 +29,11 @@ extern void Gui_RenderCameraSettings(Camera& camera);
 
 void ImGuiLayer::Initialize()
 {
+  viewportFocused = false;
+  viewportSize = vec2i{};
+  viewportPos = vec2i{};
+  gizmode = -1;
+
   // Setup ImGui context
   SetupContext();
 
@@ -63,7 +68,7 @@ void ImGuiLayer::EndFrame()
   ImGuiIO& io = ImGui::GetIO();
   if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
   {
-    WindowManager& windowManager = WindowManager::Get();
+    WindowManager& windowManager = WindowManager::GetInstance();
     GLFWwindow* backupCurrentContext = windowManager.GetCurrentContext();
     ImGui::UpdatePlatformWindows();
     ImGui::RenderPlatformWindowsDefault();
@@ -112,7 +117,7 @@ void ImGuiLayer::RenderGraphicsInfo()
 {
   ImGui::Begin("Graphics info");
 
-  WindowManager& winManager = WindowManager::Get();
+  WindowManager& winManager = WindowManager::GetInstance();
   static const char* glRender = reinterpret_cast<const char*>(glGetString(GL_RENDERER));
   static const char* glVersion = reinterpret_cast<const char*>(glGetString(GL_VERSION));
   static const char* glVendor = reinterpret_cast<const char*>(glGetString(GL_VENDOR));
@@ -155,18 +160,40 @@ void ImGuiLayer::RenderCameraSettings(Camera& camera)
   Gui_RenderCameraSettings(camera);
 }
 
-void ImGuiLayer::RenderDebug(bool& wireframe, i32& normalMapping)
+void ImGuiLayer::RenderDebug(bool& wireframe, 
+                             bool& normalMapping,
+                             u32& shadingModel,
+                             f32& b,
+                             f32& y, 
+                             f32& alpha, 
+                             f32& beta)
 {
   ImGui::Begin("Debug Options");
 
-  // Checkbox per Wireframe
   ImGui::Checkbox("Wireframe", &wireframe);
 
-  // Checkbox per Normal Mapping
-  static bool b = false;
-  ImGui::Checkbox("Normal Mapping", &b);
+  const char* shadingModels[] = { "Blinn-Phong", "Gooch Shading" };
+  constexpr i32 nrModels = sizeof(shadingModels) / sizeof(shadingModels[0]);
 
-  normalMapping = (b ? 1 : 0);
+  static i32 currentShadingModel = 0;
+  if (ImGui::Combo("Shading Model", &currentShadingModel, shadingModels, nrModels))
+    shadingModel = static_cast<u32>(currentShadingModel);
+
+  switch (currentShadingModel)
+  {
+    case 0: // Blinn-Phong
+      ImGui::Text("Blinn-Phong Settings");
+      ImGui::Checkbox("Normal Mapping", &normalMapping);
+      break;
+    
+    case 1: // Gooch Shading
+      ImGui::Text("Gooch Shading Parameters");
+      ImGui::SliderFloat("b", &b, 0.0f, 1.0f);
+      ImGui::SliderFloat("y", &y, 0.0f, 1.0f);
+      ImGui::SliderFloat("alpha", &alpha, 0.0f, 1.0f);
+      ImGui::SliderFloat("beta", &beta, 0.0f, 1.0f);
+      break;
+  }
 
   ImGui::End();
 }
@@ -185,7 +212,7 @@ void ImGuiLayer::SetupContext()
   io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;     /* Enable Docking */
   io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;   /* Enable Multi-Viewport / Platform Windows */
 
-  ImGui_ImplGlfw_InitForOpenGL(WindowManager::Get().GetCurrentContext(), true);
+  ImGui_ImplGlfw_InitForOpenGL(WindowManager::GetInstance().GetCurrentContext(), true);
   ImGui_ImplOpenGL3_Init("#version 460");
 }
 void ImGuiLayer::Styling()

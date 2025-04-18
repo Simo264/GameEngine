@@ -4,11 +4,12 @@
 #include "Core/Dialog/FileDialog.hpp"
 
 #include "Engine/Scene.hpp"
-#include "Engine/ECS/ECS.hpp"
+#include "Engine/Components/Components.hpp"
 
-#include "Engine/Subsystems/TexturesManager.hpp"
-#include "Engine/Subsystems/ModelsManager.hpp"
-#include "Engine/Subsystems/AnimationsManager.hpp"
+#include "Engine/Managers/TexturesManager.hpp"
+#include "Engine/Managers/StaticMeshFactory.hpp"
+
+#include "Engine/Managers/AnimationsManager.hpp"
 
 #include <imgui.h>
 #include <ImGuizmo.h>
@@ -272,11 +273,9 @@ static void Insp_Transform(GameObject &object, Transform &transform)
     object.RemoveComponent<Transform>();
   ImGui::PopStyleColor(3);
 }
-static void Insp_ShowTextureSelector(StringView label, Texture2D &meshTexture, Texture2D defaultTex)
+static void Insp_ShowTextureSelector(StringView label, u32 meshID, Texture2D &meshTexture, Texture2D defaultTex)
 {
-  TexturesManager&texManager = TexturesManager::Get();
-  static Texture2D resetIcon = texManager.GetOrCreateIcon("reset-arrow-16.png");
-
+  TexturesManager& texManager = TexturesManager::GetInstance();
   bool isMeshTextureValid = meshTexture.GetWidth() != 1;
 
   // First column: label
@@ -289,26 +288,49 @@ static void Insp_ShowTextureSelector(StringView label, Texture2D &meshTexture, T
   if (isMeshTextureValid)
   {
     const fs::path* texturePath = texManager.GetTexturePath(meshTexture.id);
-    ImGui::Selectable(texturePath->string().c_str(), false);
+    ImGui::TextWrapped(texturePath->string().c_str());
   }
   else
-  {
-    Array<char, 32> label{};
-    std::format_to_n(label.begin(), label.size(), "No texture##{}", meshTexture.id);
-    ImGui::Selectable(label.data(), false);
-  }
+    ImGui::TextWrapped("No texture");
 
   // Third column: reset button
   ImGui::TableNextColumn();
   if (isMeshTextureValid)
   {
-    Array<char, 32> buttonID{}; // "Reset##Diffuse"
-    std::format_to_n(buttonID.begin(), buttonID.size(), "Reset##{}", label.data());
+    static Texture2D resetIcon = texManager.GetOrCreateIcon("reset-arrow-16.png");
+
+    Array<char, 64> buttonID{}; // e.g. "Reset##Mesh_1_Diffuse"
+    std::format_to(buttonID.begin(), "Reset##Mesh_{}_{}", meshID, label.data());
 
     ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{0.f, 0.f, 0.f, 0.f});
     if (ImGui::ImageButton(buttonID.data(), resetIcon.id, ImVec2(16.f, 16.f)))
       meshTexture = defaultTex;
     ImGui::PopStyleColor();
+  }
+
+
+  // "Choose texture" button
+  ImGui::TableNextRow();
+  ImGui::TableSetColumnIndex(1); // second column
+  {
+    Array<char, 64> buttonID{}; // e.g. "Reset##Mesh_1_Diffuse"
+    std::format_to(buttonID.begin(), "Choose texture##Mesh_{}_{}", meshID, label.data());
+    if (ImGui::Button(buttonID.data()))
+    {
+      const char* filterPatterns[] = { "*.png", "*.jpg" };
+      constexpr u32 nrFilterPatterns = sizeof(filterPatterns) / sizeof(filterPatterns[0]);
+      fs::path path = FileDialog::OpenFileDialog("Choose a texture for the 3D mesh",
+                                                 Paths::GetTexturesPath(),
+                                                 nrFilterPatterns,
+                                                 filterPatterns,
+                                                 "Image files (*.png, *jpg)",
+                                                 false);
+      if (!path.empty())
+      {
+        path = fs::relative(path, Paths::GetTexturesPath());
+        meshTexture = texManager.GetOrCreateTexture(path);
+      }
+    }
   }
 }
 static void Insp_StaticMesh(GameObject &object, StaticMesh &staticMesh)
@@ -320,13 +342,13 @@ static void Insp_StaticMesh(GameObject &object, StaticMesh &staticMesh)
   {
     for (u32 i = 0; i < staticMesh.nrMeshes; i++)
     {
-      auto &mesh = staticMesh.meshes[i];
+      auto &mesh = staticMesh.meshArray[i];
       Material &material = mesh.material;
-      TexturesManager &texManager = TexturesManager::Get();
+      TexturesManager &texManager = TexturesManager::GetInstance();
 
-      Array<char, 16> label{};
-      std::format_to_n(label.begin(), label.size(), "Mesh_{}", i + 1);
-      if (ImGui::TreeNode(label.data()))
+      Array<char, 32> meshLabel{};
+      std::format_to(meshLabel.begin(), "Mesh_{}", i + 1);
+      if (ImGui::TreeNode(meshLabel.data()))
       {
         if (ImGui::BeginTable("TextureTable", 3, ImGuiTableFlags_SizingFixedFit))
         {
@@ -336,15 +358,15 @@ static void Insp_StaticMesh(GameObject &object, StaticMesh &staticMesh)
 
           // Diffuse row
           ImGui::TableNextRow();
-          Insp_ShowTextureSelector("Diffuse", material.diffuse, texManager.GetDefaultDiffuse());
+          Insp_ShowTextureSelector("Diffuse", i, material.diffuse, texManager.GetDefaultDiffuse());
 
           // Specular row
           ImGui::TableNextRow();
-          Insp_ShowTextureSelector("Specular", material.specular, texManager.GetDefaultSpecular());
+          Insp_ShowTextureSelector("Specular", i, material.specular, texManager.GetDefaultSpecular());
 
           // Normal row
           ImGui::TableNextRow();
-          Insp_ShowTextureSelector("Normal", material.normal, texManager.GetDefaultNormal());
+          Insp_ShowTextureSelector("Normal", i, material.normal, texManager.GetDefaultNormal());
 
           ImGui::EndTable();
         }
@@ -370,7 +392,7 @@ static void Insp_SkeletalMesh(GameObject &object, SkeletalMesh &skeleton)
 
   if (ImGui::TreeNode("Material"))
   {
-    TexturesManager &texManager = TexturesManager::Get();
+    TexturesManager &texManager = TexturesManager::GetInstance();
     Array<char, 16> label{};
 
     for (u32 i = 0; i < skeleton.nrMeshes; i++)
@@ -391,15 +413,15 @@ static void Insp_SkeletalMesh(GameObject &object, SkeletalMesh &skeleton)
 
           // Diffuse row
           ImGui::TableNextRow();
-          Insp_ShowTextureSelector("Diffuse", material.diffuse, texManager.GetDefaultDiffuse());
+          Insp_ShowTextureSelector("Diffuse", i, material.diffuse, texManager.GetDefaultDiffuse());
 
           // Specular row
           ImGui::TableNextRow();
-          Insp_ShowTextureSelector("Specular", material.specular, texManager.GetDefaultSpecular());
+          Insp_ShowTextureSelector("Specular", i, material.specular, texManager.GetDefaultSpecular());
 
           // Normal row
           ImGui::TableNextRow();
-          Insp_ShowTextureSelector("Normal", material.normal, texManager.GetDefaultNormal());
+          Insp_ShowTextureSelector("Normal", i, material.normal, texManager.GetDefaultNormal());
 
           ImGui::EndTable();
         }
@@ -422,7 +444,7 @@ static void Insp_SkeletalMesh(GameObject &object, SkeletalMesh &skeleton)
 }
 static void Insp_Animator(GameObject &object, Animator &animator)
 {
-  AnimationsManager &animManager = AnimationsManager::Get();
+  AnimationsManager &animManager = AnimationsManager::GetInstance();
 
   SkeletalMesh *skeleton = object.GetComponent<SkeletalMesh>();
   assert(skeleton != nullptr);
@@ -454,7 +476,7 @@ static void Insp_Animator(GameObject &object, Animator &animator)
 
   if (animAttached)
   {
-    auto &texManager = TexturesManager::Get();
+    auto &texManager = TexturesManager::GetInstance();
     static Texture2D playIcon = texManager.GetOrCreateIcon("play-button-32.png");
     static Texture2D pauseIcon = texManager.GetOrCreateIcon("pause-button-32.png");
     static Texture2D restartIcon = texManager.GetOrCreateIcon("restart-button-32.png");
@@ -529,45 +551,30 @@ static void Insp_AddStaticMeshComponent(GameObject &object)
   else if (ImGui::BeginMenu("StaticMesh"))
   {
     ImGui::BeginChild("StaticMesh_Child", ImVec2(300, 100));
-    static fs::path path{};
-    if (ImGui::Button("Open static mesh file"))
+    if (ImGui::Button("Choose static mesh"))
     {
-      static const char *filter[] = {"*.obj", "*.glb", "*.gltf", "*.fbx"};
-      static constexpr i32 numFilters = sizeof(filter) / sizeof(filter[0]);
-      path = FileDialog::OpenFileDialog(
-          numFilters,
-          filter,
-          "Static mesh file",
-          false);
-      path = fs::relative(path, Paths::GetStaticModelsPath());
-    }
-    String pathStr = path.string();
+      const char *filterPatterns[] = {"*.obj", "*.glb", "*.gltf", "*.fbx"};
+      constexpr i32 nrFilterPatterns = sizeof(filterPatterns) / sizeof(filterPatterns[0]);
+      fs::path path = FileDialog::OpenFileDialog("Choose 3D model",
+                                        Paths::GetStaticModelsPath(),
+                                        nrFilterPatterns,
+                                        filterPatterns,
+                                        "3D model file (*.obj, *.glb, *.gltf, *.fbx)",
+                                        false);
 
-    ImGui::SameLine();
-    ImGui::InputText("##", pathStr.data(), pathStr.size(), ImGuiInputTextFlags_ReadOnly);
 
-    if (!path.empty())
-    {
-      if (ImGui::Button("Ok"))
+      if (!path.empty())
       {
-        auto &manager = ModelsManager::Get();
-        const auto *sMesh = manager.FindStaticMesh(path);
-        if (!sMesh)
-          sMesh = &manager.CreateStaticMesh(path);
-
-        auto &component = object.AddComponent<StaticMesh>();
-        sMesh->Clone(component);
-        path.clear();
+        fs::path relative = fs::relative(path, Paths::GetStaticModelsPath());
+        auto prototype = StaticMeshFactory::GetPrototype(relative);
+        if (!prototype)
+          prototype = StaticMeshFactory::CreatePrototype(path);
+        
+        auto& sm = object.AddComponent<StaticMesh>();
+        prototype->Copy(sm);
       }
     }
-    else
-    {
-      ImGui::BeginDisabled();
-      ImGui::Button("Ok");
-      ImGui::EndDisabled();
-    }
     ImGui::EndChild();
-
     ImGui::EndMenu();
   }
 }
@@ -580,27 +587,20 @@ static void Insp_AddSkeletalMeshComponent(GameObject &object)
   else if (ImGui::BeginMenu("SkeletonMesh"))
   {
     ImGui::BeginChild("SkeletonMesh_Child", ImVec2(300, 100));
-    static fs::path path{};
-    if (ImGui::Button("Open skeleton mesh file"))
+    if (ImGui::Button("Choose skeletal mesh"))
     {
-      static const char *filter[] = {"*.obj", "*.glb", "*.gltf", "*.fbx"};
-      static constexpr i32 numFilters = sizeof(filter) / sizeof(filter[0]);
-      path = FileDialog::OpenFileDialog(
-          numFilters,
-          filter,
-          "Skeleton mesh file",
-          false);
-      path = fs::relative(path, Paths::GetSkeletalModelsPath());
-    }
-    String pathStr = path.string();
-
-    ImGui::SameLine();
-    ImGui::InputText("##", pathStr.data(), pathStr.size(), ImGuiInputTextFlags_ReadOnly);
-
-    if (!path.empty())
-    {
-      if (ImGui::Button("Ok"))
+      const char *filterPatterns[] = {"*.obj", "*.glb", "*.gltf", "*.fbx"};
+      constexpr i32 nrFilterPatterns = sizeof(filterPatterns) / sizeof(filterPatterns[0]);
+      fs::path path = FileDialog::OpenFileDialog("Choose 3D model",
+                                                 Paths::GetSkeletalModelsPath(),
+                                                 nrFilterPatterns,
+                                                 filterPatterns,
+                                                 "3D model file (*.obj, *.glb, *.gltf, *.fbx)",
+                                                 false);
+      if (!path.empty())
       {
+        path = fs::relative(path, Paths::GetSkeletalModelsPath());
+        /* TODO:
         auto &manager = ModelsManager::Get();
         const auto *skeleton = manager.FindSkeletalMesh(path);
         if (!skeleton)
@@ -610,18 +610,11 @@ static void Insp_AddSkeletalMeshComponent(GameObject &object)
         auto &anComponent = object.AddComponent<Animator>();
         skeleton->Clone(skComponent);
         anComponent.SetTargetSkeleton(skComponent);
-
-        path.clear();
+        */
       }
     }
-    else
-    {
-      ImGui::BeginDisabled();
-      ImGui::Button("Ok");
-      ImGui::EndDisabled();
-    }
-    ImGui::EndChild();
 
+    ImGui::EndChild();
     ImGui::EndMenu();
   }
 }

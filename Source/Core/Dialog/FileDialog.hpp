@@ -5,30 +5,37 @@
 namespace FileDialog
 {
 	/**
-	 * @brief Opens a native file dialog to select files.
+	 * @brief Opens a file dialog to select one or multiple files.
 	 *
-	 * This function displays an open file dialog, allowing the user to select one or multiple files
-	 * based on the specified filters and description.
-	 *
-	 * @param numFilters Number of filter patterns.
-	 * @param filter Array of filter patterns (e.g., {"*.txt", "*.png"}).
-	 * @param filterDescription Description for the filter (e.g., "Text Files").
-	 * @param multipleSelects Boolean flag indicating if multiple files can be selected.
-	 * @return A path containing the path of the selected file(s). If multiple files are selected,
-	 *         the paths are separated by '|'. Returns an empty String if the dialog is canceled.
+	 * @param title The title of the dialog window.
+	 * @param defaultPath The initial directory or file suggestion.
+	 * @param numOfFilterPatterns The number of filter patterns provided.
+	 * @param filterPatterns An array of filter patterns (e.g., `*.txt`, `*.png`).
+	 * @param singleFilterDescription A description for the filter selection.
+	 * @param allowMultipleSelects Whether multiple file selections are allowed (true/false).
+	 * @return The selected file path as `fs::path`. Returns an empty path if no file is selected.
 	 */
-	fs::path OpenFileDialog(i32 numFilters, const char* filter[], const char* filterDescription, bool multipleSelects);
+	fs::path OpenFileDialog(const char* title,
+													const fs::path defaultPath,
+													i32 numOfFilterPatterns,
+													const char* filterPatterns[],
+													const char* singleFilterDescription,
+													bool allowMultipleSelects);
+
 
 	/**
-	 * @brief Opens a native file dialog to save a file.
+	 * @brief Opens a file dialog to save a file.
 	 *
-	 * This function displays a save file dialog, allowing the user to specify the location
-	 * and name of the file to save, based on the provided filters and description.
-	 *
-	 * @param numFilters Number of filter patterns.
-	 * @param filter Array of filter patterns (e.g., {"*.txt", "*.png"}).
-	 * @param filterDescription Description for the filter (e.g., "Text Files").
-	 * @return A path containing the path of the file to be saved. Returns an empty String if the dialog is canceled.
+	 * @param title The title of the dialog window.
+	 * @param defaultPath The initial directory or file suggestion.
+	 * @param numOfFilterPatterns The number of filter patterns provided.
+	 * @param filterPatterns An array of filter patterns (e.g., `*.txt`, `*.png`).
+	 * @param singleFilterDescription A description for the filter selection.
+	 * @return The selected file path as `fs::path`. Returns an empty path if no file is selected.
 	 */
-	fs::path SaveFileDialog(i32 numFilters, const char* filter[], const char* filterDescription);
+	fs::path SaveFileDialog(const char* title,
+													const fs::path defaultPath,
+													i32 numOfFilterPatterns, 
+													const char* filterPatterns[],
+													const char* singleFilterDescription);
 }

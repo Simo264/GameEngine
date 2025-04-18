@@ -6,10 +6,11 @@
 #include "Core/Serialization/YAMLParser.hpp"
 
 #include "Engine/Utils.hpp"
-#include "Engine/ECS/ECS.hpp"
+
 #include "Engine/Graphics/Shader.hpp"
-#include "Engine/Subsystems/ModelsManager.hpp"
-#include "Engine/Subsystems/AnimationsManager.hpp"
+#include "Engine/Components/Components.hpp"
+#include "Engine/Managers/AnimationsManager.hpp"
+#include "Engine/Managers/StaticMeshFactory.hpp"
 
 static void DeserializeTag(GameObject &object, const YAML::Node &component)
 {
@@ -38,18 +39,20 @@ static void DeserializeTransform(GameObject &object, const YAML::Node &component
 }
 static void DeserializeStaticMesh(GameObject &object, const YAML::Node &component)
 {
-	ModelsManager &modelsManager = ModelsManager::Get();
-
-	fs::path path = component["path"].as<String>();
-	const StaticMesh *staticMesh = modelsManager.FindStaticMesh(path);
-	if (!staticMesh)
-		staticMesh = &modelsManager.CreateStaticMesh(path);
-
-	StaticMesh &staticMeshComponent = object.AddComponent<StaticMesh>();
-	staticMesh->Clone(staticMeshComponent);
+	fs::path relative = component["path"].as<String>(); // relative path
+	auto prototype = StaticMeshFactory::GetPrototype(relative);
+	if (!prototype)
+	{
+		fs::path absolute = Paths::GetStaticModelsPath() / relative;
+		prototype = StaticMeshFactory::CreatePrototype(absolute);
+	}
+	
+	auto& sm = object.AddComponent<StaticMesh>();
+	prototype->Copy(sm);
 }
 static void DeserializeSkeletalMesh(GameObject &object, const YAML::Node &component)
 {
+	/* TODO:
 	ModelsManager &modelsManager = ModelsManager::Get();
 	AnimationsManager &animationsManager = AnimationsManager::Get();
 
@@ -98,6 +101,7 @@ static void DeserializeSkeletalMesh(GameObject &object, const YAML::Node &compon
 
 	skeleton->Clone(skeletalMeshComponent);
 	animatorComponent.SetTargetSkeleton(skeletalMeshComponent);
+	*/
 }
 static void DeserializeDirLight(GameObject &object, const YAML::Node &component)
 {
@@ -149,12 +153,12 @@ static void DeserializeLight(GameObject &object, const YAML::Node &component)
 	}
 }
 static UnorderedMap<String, std::function<void(GameObject &, const YAML::Node &)>> deserializationMap =
-		{
-				{"Tag", DeserializeTag},
-				{"Transform", DeserializeTransform},
-				{"StaticMesh", DeserializeStaticMesh},
-				{"SkeletalMesh", DeserializeSkeletalMesh},
-				{"Light", DeserializeLight},
+{
+	{"Tag", DeserializeTag},
+	{"Transform", DeserializeTransform},
+	{"StaticMesh", DeserializeStaticMesh},
+	{"SkeletalMesh", DeserializeSkeletalMesh},
+	{"Light", DeserializeLight},
 };
 
 static void SerializeTag(YAML::Emitter &outEmitter, const Tag &tag)
@@ -181,21 +185,22 @@ static void SerializeTransform(YAML::Emitter &outEmitter, const Transform &trans
 }
 static void SerializeStaticMesh(YAML::Emitter &outEmitter, const StaticMesh &staticMesh)
 {
-	ModelsManager &modelsManager = ModelsManager::Get();
-	const fs::path &path = *modelsManager.GetStaticMeshPath(staticMesh.id);
+	fs::path relative = StaticMeshFactory::GetPrototypePath(staticMesh.prototypeID);
 	outEmitter << YAML::Key << "StaticMesh";
 	outEmitter << YAML::BeginMap;
-	outEmitter << YAML::Key << "path" << YAML::Value << path.string();
+	outEmitter << YAML::Key << "path" << YAML::Value << relative.string();
 	outEmitter << YAML::EndMap;
 }
 static void SerializeSkeletalMesh(YAML::Emitter &outEmitter, const SkeletalMesh &skeletalMesh)
 {
+	/* TODO: 
 	ModelsManager &modelsManager = ModelsManager::Get();
 	const fs::path &path = *modelsManager.GetSkeletalMeshPath(skeletalMesh.id);
 	outEmitter << YAML::Key << "SkeletalMesh";
 	outEmitter << YAML::BeginMap;
 	outEmitter << YAML::Key << "path" << YAML::Value << path.string();
 	outEmitter << YAML::EndMap;
+	*/
 }
 static void SerializeDirectionalLight(YAML::Emitter &outEmitter, const DirectionalLight &light)
 {
@@ -260,11 +265,13 @@ Scene::Scene(const fs::path &loadFrom)
 }
 GameObject Scene::CreateObject(StringView objName)
 {
+	assert(objName.size() < 32);
+
 	entt::entity id = _registry.create();
 
 	Array<char, 32> defaultTag{};
 	if (objName.empty())
-		std::format_to_n(defaultTag.begin(), defaultTag.size(), "Object_{}", static_cast<u32>(id));
+		std::format_to(defaultTag.begin(), "Object_{}", static_cast<u32>(id));
 	else
 		std::copy(objName.begin(), objName.end(), defaultTag.begin());
 
@@ -274,10 +281,13 @@ GameObject Scene::CreateObject(StringView objName)
 }
 void Scene::DestroyObject(entt::entity id)
 {
-	if (_registry.valid(id))
-		_registry.destroy(id);
-	else
+	if (!_registry.valid(id))
+	{
 		CONSOLE_WARN("Entity id {} is not a valid object", static_cast<u32>(id));
+		return;
+	}
+
+	_registry.destroy(id);
 }
 void Scene::Clear()
 {
@@ -307,7 +317,7 @@ void Scene::SerializeScene(const fs::path &out)
 		GameObject object{entity, &Reg()};
 
 		Array<char, 32> entityName{};
-		std::format_to_n(entityName.data(), entityName.size(), "Entity{}", static_cast<u32>(object.id));
+		std::format_to(entityName.data(), "Entity{}", static_cast<u32>(object.id));
 
 		outEmitter << YAML::Key << entityName.data();
 		outEmitter << YAML::BeginMap;

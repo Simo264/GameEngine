@@ -110,10 +110,9 @@ enum class Texture2DGetImageType : u32
 };
 
 /**
- * @brief 
- * https://www.khronos.org/opengl/wiki/Texture
+ * @brief https://www.khronos.org/opengl/wiki/Texture
  * 
- * An image is defined as a single array of pixels of a certain dimensionality (1D, 2D, or 3D), 
+ * Texture2D is an image defined as a single array of pixels of 2D dimension, 
  * with a particular size, and a specific format.
  * 
  * A texture is a container of one or more images. 
@@ -138,23 +137,8 @@ enum class Texture2DGetImageType : u32
 class Texture2D
 {
 public:
-  Texture2D() : 
-    id{ 0 }
-  {}
-
-  Texture2D(Texture2DTarget target, 
-            const fs::path& absolute);
-  
+  Texture2D() : id{ 0 } {}
   ~Texture2D() = default;
-
-  /**
-   * @brief Loads image data from the specified file.
-   * This method reads the image file from the given absolute path and loads its data into memory.
-   * It is used to initialize or update the texture with the content of the image file.
-   *
-   * @param absolute The absolute path to the image file.
-   */
-  void LoadImageData(const fs::path& absolute) const;
 
   /** @brief Create texture object */
   void Create(Texture2DTarget target);
@@ -166,20 +150,15 @@ public:
   void BindTextureUnit(i32 unit) const;
 
   /** @brief Set texture parameters */
-  void SetParameteri(TextureParameteriName name, 
-                     TextureParameteriParam value) const;
-  
+  void SetParameteri(TextureParameteriName name, TextureParameteriParam value) const;
   void SetParameterfv(TextureParameteriName name, f32* values) const;
-  
   void SetCompareFunc(CompareFunc func) const;
 
   /** @brief Generate mipmaps for the texture object */
   void GenerateMipmap() const;
 
   /** @brief The storage is created here, but the contents of that storage is undefined. */
-  void CreateStorage(Texture2DInternalFormat internalFormat, 
-                     i32 width, 
-                     i32 height) const;
+  void CreateStorage(Texture2DInternalFormat internalFormat, i32 width, i32 height) const;
 
   /** @brief Specify storage for multisample texture. */
   void CreateStorageMultisampled(Texture2DInternalFormat internalFormat, 
@@ -194,63 +173,37 @@ public:
                      Texture2DSubImageType type, 
                      const void* pixels,
                      i32 xoffset = 0,
-                     i32 yoffset = 0
-                     ) const;
+                     i32 yoffset = 0) const;
 
   /** @brief Fills all the texture image with a constant value. */
-  void ClearStorage(i32 level,
-                    Texture2DClearImageType type,
-                    const void* data) const;
+  void ClearStorage(i32 level, Texture2DClearImageType type, const void* data) const;
   
   /** @return A texture image into pixels. */
-  void GetTextureImage(i32 level,
-                       Texture2DGetImageType type, 
-                       i32 buffSize, 
-                       void* pixels) const;
+  void GetTextureImage(i32 level, Texture2DGetImageType type, i32 buffSize, void* pixels) const;
 
-  /**
-   * @brief Retrieves the width of the texture.
-   * This function queries OpenGL to get the width of the texture at mip level 0.
-   * If the texture is invalid or not initialized, the returned value may be undefined.
-   */
+  /** @brief Retrieves the width of the texture at mip level 0. */
   i32 GetWidth() const;
 
-  /**
-   * @brief Retrieves the height of the texture.
-   * This function queries OpenGL to get the width of the texture at mip level 0.
-   * If the texture is invalid or not initialized, the returned value may be undefined.
-   */
+  /** @brief Retrieves the height of the texture at mip level 0.*/
   i32 GetHeight() const;
   
-  /**
-   * @brief Retrieves the internal format of the texture.
-   * This function queries OpenGL to determine the internal format of the texture at mip level 0.
-   * If the texture is invalid or not initialized, the returned value may be undefined.
-   */
+  /** @brief Retrieves the internal format of the texture at mip level 0. */
   Texture2DInternalFormat GetInternalFormat() const;
   
   /**
    * @brief Maps an internal texture format to its corresponding external format.
-   *
    * @return The corresponding `Texture2DFormat`, which represents how the texture data is stored.
-   *
-   * This function converts an internal OpenGL texture format (e.g., `RGB8`, `RGBA16F`)
-   * into a more general format like `RGB`, `RGBA`, or `DEPTH_COMPONENT`.
-   * If the internal format is unknown, a warning is issued, and `Texture2DFormat::RED` is returned as a fallback.
    */
   Texture2DFormat GetFormat() const;
   
   /**
    * @brief Retrieves the number of color channels based on the internal texture format.
-   *
    * @return The number of channels (e.g., 1 for grayscale, 3 for RGB, 4 for RGBA).
-   *
-   * This function determines how many color components a given internal texture format contains.
-   * If the internal format is unknown, a warning is issued, and 1 is returned as a default value.
    */
   i32 GetNumChannels() const;
 
   bool Compare(const Texture2D& other) const { return id == other.id; }
+  
   bool IsValid() const;
   
   u32 id;

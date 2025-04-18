@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Core/Core.hpp"
-#include "Engine/ECS/GameObject.hpp"
+#include "Engine/Components/GameObject.hpp"
 
 class GameObject;
 

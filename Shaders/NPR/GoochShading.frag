@@ -1,54 +1,51 @@
 #version 460
 
-// What is Gooch Shading? 
-// Gooch shading is a non-photorealistic rendering technique for shading objects. 
-// It is also known as "cool to warm" shading.
-// Defines two colors in conjunction with the original model color: 
-// 1. a warm color (such as red) that indicates surfaces that are facing toward the light source
-// 2. a cool color (such as blue) that indicates surfaces facing away
-// This allows shading to occur only in mid-tones so that edge lines and highlights remain visually prominent.
-// The Gooch shader is typically implemented in two passes: 
-// 1. all objects in the scene are first drawn with the "cool to warm" shading
-// 2. and in the second pass the object’s edges are rendered in black.
-//
-// Gooch Shading general formula:
-// c_shaded = s * c_highlight + (1 - s) * (t * c_warm + (1 - t) * c_cool)
-// That is equivalent to:
-// c_shaded = f_unlit(n, v) + c_light * f_lit(l, n, v)
-//
-// Where:
-// - f_unlit(n, v): this function returns the ambient lighting representing areas in shadow
-// - f_lit(l_i, n, v): calculates the direct lighting contribution from each light source.
-// - t = ((n dot l) + 1) / 2 
-//    Determines the interpolation between cool (shadowed) and warm (lit) areas.
-//    Typically implemented using lerp() or mix() functions.
-// - r = 2*(n dot l)*n - l = reflect(-l, n)
-//    Computes the reflected light vector using GLSL's reflect() function.
-// - s = clamp((100*(r dot v) - 97) , 0, 1) 
-//    Controls the specular highlight intensity
-// - c_highlight is the specular highlight color.
-// - v is the view direction (normalized vector from fragment to camera).
-// - n is the normalized surface normal.
-// - l is the normalized light direction (pointing toward the fragment).
-// - A light source does not contribute to shading if the light direction (l)
-//   forms an angle greater than 90° with the surface normal (n), meaning:
-//      If (n dot l) <= 0, the light does not affect the surface.
+/*
+  Gooch Shading - A non-photorealistic rendering (NPR) technique designed to enhance surface readability.
+ 
+  Traditional Shading of Matte Objects:
+    I = k_a*k_d + k_d*max(0, L dot N)
+  where: 
+    - I is the RGB color to be displayed for a given point on the surface
+    - k_d is the RGB diffuse reflectance at the point 
+    - k_a is the RGB ambient illumination 
+    - L is the unit vector in the direction of the light source
+    - N is the unit surface normal vector at the point
 
-// Gooch Shading Model - Complete Lighting Formula:
-// c_shaded = (1/2) * c_cool + SUM(i=1...N)[(l_i ⋅ n) * c_light_i * (s_i * c_highlight + (1 - s_i) * c_warm)]
-// Is equivalent to:
-// c_shaded = f_unlit(n, v) + SUM(i=1...N)[(l_i ⋅ n) * c_light_i * f_lit(l_i, n, v)]
+
+  Tone-based Shading of Matte Object:
+  we can generalize the classic computer graphics shading model to experiment with tones by using the 
+  cosine term (L dot N) of Equation 1 to blend between two RGB colors, k_cool and k_warm:
+    I = ((1 + L dot N)/2)*k_cool + (1 - (1 + L dot N)/2)*k_warm
+  
+  Blue and yellow tones are chosen to insure a cool to warm color transition regardless of the diffuse color of the
+  object. The blue-to-yellow tones range from a fully saturated blue:
+    - k_blue = (0, 0, b)
+    - k_yellow = (y, y, 0)
+  We can simulate undertones by a linear blend between the blue/yellow and black/object-color tones:
+    - k_cool = k_blue + alpha*k_d
+    - k_warn = k_yellow + beta*k_d
+  
+  Plugging these values into Equation 2 leaves us with four free parameters: alpha, beta, b, y.
+
+  The values for b and y will determine the strength of the overall temperature shift, and the values of 
+  alpha and beta will determine the prominence of the object color and the strength of the luminance shift.
+
+  For example: 
+    - b = 0.4f
+    - y = 0.4f
+    - alpha = 0.2f
+    - beta = 0.f
+
+*/
 
 
 // ========== IN attributes ==========
 // ===================================
 in vec2 TexCoord;
 in vec3 Normal;
-in vec3 FragPos;  
-in vec3 ViewPos;
-in mat3 TBN;
-in vec3 TangentViewPos;
-in vec3 TangentFragPos;
+in vec3 FragPos;
+in vec3 CameraPos;
 
 // ========== OUT attributes ==========
 // ====================================
@@ -62,6 +59,19 @@ struct Material
   sampler2D specularTexture;
   sampler2D normalTexture;
 };
+struct Lighting
+{
+  vec3 diffuse;
+  vec3 specular;
+};
+struct Attenuation
+{
+	int range;        // If an objects distance is greater than the range, the light has no effect on the object
+	float kl;	        // Linear attenuation factor
+	float kq;         // Quadratic attenuation factor
+  float __padding;  // Needed for std140 alignment
+};
+
 struct DirectionalLight 
 {
   vec3  color;
@@ -69,78 +79,114 @@ struct DirectionalLight
   vec3  direction;
   float __padding;  // Needed for std140 alignment
 };
-struct Attenuation
-{
-	int range;  // If an objects distance is greater than the range, the light has no effect on the object
-	float kl;	  // Linear attenuation factor
-	float kq;   // Quadratic attenuation factor
-};
 struct PointLight 
 {
   vec3  color;
   float intensity;
   vec3  position;
-  float __padding_1;  // Needed for std140 alignment
-  Attenuation attenuation;
-  float __padding_2;  // Needed for std140 alignment
-};
-struct SpotLight 
-{
-  vec3  color;
-  float intensity;
-  vec3  position;
-  float __padding_1;      // Needed for std140 alignment
-  vec3  direction;
-  float __padding_2;      // Needed for std140 alignment
-  float cutOff;
-  float outerCutOff;      // smoother edges
-  float __padding_3[2];   // Needed for std140 alignment
+  float __padding;  // Needed for std140 alignment
   Attenuation attenuation;
 };
+
 
 // ========== Uniforms ==========
 // ==============================
 layout (std140, binding = 1) uniform LightBlock
 {
-  DirectionalLight  u_directionalLight;
+  DirectionalLight  u_directLight;
   PointLight        u_pointLight;
-  SpotLight         u_spotLight;
 };
 uniform Material u_material;
 
-const float shininess = 32.0; // Controllo della specularità
+uniform float u_b, u_y, u_alpha, u_beta;
 
-vec3 f_unlit(vec3 cCool)
+const float g_shininess = 16.f;
+const float g_gammaCorrection = 2.2f;
+
+Lighting GoochShading(vec3 L, vec3 N, vec3 V, vec3 kCool, vec3 kWarm, vec3 ks);
+void CalculateAttenuation(float distance, float kl, float kq, inout Lighting lighting);
+
+void main()
 {
-  return cCool;
+  vec3 N = normalize(Normal);
+  vec3 V = normalize(CameraPos - FragPos);
+
+  vec4 kd = texture(u_material.diffuseTexture, TexCoord);
+  vec4 ka = kd * 0.1f;
+  vec4 ks = texture(u_material.specularTexture, TexCoord);
+  
+  // k_cool = k_blue + alpha*k_d
+  vec3 kBlue = vec3(0.f, 0.f, u_b);
+  vec3 kCool = kBlue + u_alpha * kd.rgb;
+  // k_warm = k_yellow + beta*k_d
+  vec3 kYellow = vec3(u_y, u_y, 0.f);
+  vec3 kWarm = kYellow + u_beta*kd.rgb;
+  
+  vec3 color = kCool;
+  
+  vec3 L;
+
+  // calculate with directional light
+  if(u_directLight.intensity > 0.f)
+  {
+    L = normalize(-u_directLight.direction);
+    Lighting I = GoochShading(L, N, V, kCool, kWarm, ks.rgb);
+    I.diffuse *= u_directLight.intensity;
+    I.specular *= u_directLight.intensity;
+    
+    color += I.diffuse + I.specular;
+  }
+
+  // calculate with point light
+  if(u_pointLight.intensity > 0.f)
+  {
+    L = normalize(u_pointLight.position - FragPos);
+    Lighting I = GoochShading(L, N, V, kCool, kWarm, ks.rgb);
+    I.diffuse *= u_pointLight.intensity;
+    I.specular *= u_pointLight.intensity;
+  
+    float distance = length(u_pointLight.position - FragPos);
+    float kl = u_pointLight.attenuation.kl;
+    float kq = u_pointLight.attenuation.kq;
+    CalculateAttenuation(distance, kl, kq, I);
+    
+    color += I.diffuse + I.specular;
+  }
+
+  color = pow(color, vec3(1.0f / g_gammaCorrection));
+  FragColor = vec4(color, 1.f);
 }
 
-vec3 f_lit(vec3 l, vec3 n, vec3 v, vec3 cCool, vec3 cWarm, vec3 cHighlight) 
+Lighting GoochShading(vec3 L, vec3 N, vec3 V, vec3 kCool, vec3 kWarm, vec3 ks)
 {
-  float t = (dot(n, l) + 1.0f) * 0.5f;  // Interpolazione tra cool e warm
-  vec3 cToon = mix(cCool, cWarm, t);
+  Lighting I;
+  I.specular = vec3(0.f);
+  
+  // I = ((1 + L dot N)/2)*k_cool + (1 - (1 + L dot N)/2)*k_warm
+  float LdotN = dot(L, N);
+  float t = (1 + LdotN) * 0.5f;
+  I.diffuse = mix(kCool, kWarm, t);
+  
+  float lambertian = max(dot(L, N), 0.0f);
+  if (lambertian > 0.0f)
+  {
+    // calculate specular
+    vec3 H = normalize(L + V);
+    float specAngle = max(dot(H, N), 0.0f);
+    float specular = pow(specAngle, g_shininess);
+    vec3 ks = vec3(1.f);
+    I.specular = ks * specular;
+  }
 
-  // Calcolo della specularità
-  vec3 r = reflect(-l, n);
-  float s = pow(max(dot(r, v), 0.0), shininess); // Controllo più morbido della specularità
-  return (s * cHighlight + (1.0 - s) * cToon);
+  return I;
 }
 
-void main() 
+void CalculateAttenuation(float distance, float kl, float kq, inout Lighting lighting)
 {
-  vec4 cSurface = texture(u_material.diffuseTexture, TexCoord);
-  vec3 cCool = vec3(0, 0, 0.55f) + 0.25f * cSurface.xyz;
-  vec3 cWarm = vec3(1.f, 0.3f, 0.f) + 0.25f * cSurface.xyz;
-  vec3 cHighlight = vec3(1.0f);
-  
-  vec3 n = normalize(Normal);
-  vec3 v = normalize(ViewPos - FragPos);
-  vec3 l = normalize(u_directionalLight.direction);
+  // https://imdoingitwrong.wordpress.com/2011/01/31/light-attenuation/ 
+  // attenuation = 1.0f / (1.0f + kl*d + kq*pow(d,2));  
 
-  vec3 cLight = (u_directionalLight.color * u_directionalLight.intensity);
-  
-  // Using the formula: c_shaded = f_unlit(n, v) + c_light * f_lit(l, n, v)
-  vec3 cShaded = f_unlit(cCool) + cLight * f_lit(l, n, v, cCool, cWarm, cHighlight);
-  
-  FragColor = vec4(cShaded, 1.f);
+  float attenuation = 1.0f / (1.0f + kl*distance + kq*pow(distance,2));
+  lighting.diffuse  *= attenuation;
+  lighting.specular *= attenuation;
 }

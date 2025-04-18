@@ -1,14 +1,14 @@
 #include "Core/Core.hpp"
 
 #include "Core/Math/Base.hpp"
-#include "Engine/Subsystems/TexturesManager.hpp"
+#include "Engine/Managers/TexturesManager.hpp"
 
 #include <imgui.h>
 #include <ImGuizmo.h>
 
 void GUI_RenderTransformToolBar(vec2i viewportPos, i32 &gizmode)
 {
-  auto &texManager = TexturesManager::Get();
+  auto &texManager = TexturesManager::GetInstance();
   static Texture2D expandIcon = texManager.GetOrCreateIcon("expand-arrows-32.png");
   static Texture2D rotateIcon = texManager.GetOrCreateIcon("rotate-32.png");
   static Texture2D scaleIcon = texManager.GetOrCreateIcon("scale-32.png");

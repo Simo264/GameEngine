@@ -60,7 +60,7 @@ class VertexArray
 public:
   VertexArray() : 
     id{ 0 },
-		vbo{}
+		vertexBuffer{}
   {}
   ~VertexArray() = default;
 
@@ -164,7 +164,7 @@ public:
    * @return A `Buffer` object containing the ID of the bound EBO. If no EBO is bound,
    *         the returned `Buffer` will have an ID of 0.
    */
-  Buffer GetElementBufferObject() const;
+  Buffer GetElementBuffer() const;
   
   bool IsValid() const;
 
@@ -175,5 +175,5 @@ public:
   inline static constexpr u32 MAX_NUM_VBO_ATTACHMENTS = 16; 
 
   /** @brief Vertex Buffer Object associated with the VAO */
-	Buffer vbo;
+	Buffer vertexBuffer;
 };

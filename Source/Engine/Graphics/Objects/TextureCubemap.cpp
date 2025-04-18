@@ -4,7 +4,7 @@
 #include "Core/Log/Logger.hpp"
 
 #include "Engine/Globals.hpp"
-#include "Engine/Subsystems/TexturesManager.hpp"
+#include "Engine/Managers/TexturesManager.hpp"
 
 static bool IsValidTexture2DFormat(Texture2DFormat format2d)
 {
@@ -106,7 +106,7 @@ void TextureCubemap::LoadImages(const Array<Texture2D, 6>& images) const
   i32 nrChannels = images.at(0).GetNumChannels();
   i32 bufsize = width * height * nrChannels;
   
-  UniquePtr<u8[]> pixels = std::make_unique<u8[]>(bufsize);
+  UniquePointer<u8[]> pixels = std::make_unique<u8[]>(bufsize);
 
   for (i32 i = 0; i < 6; i++)
   {

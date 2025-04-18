@@ -1,15 +1,7 @@
 {
-  "Framebuffer": {
-    "vertex": "Framebuffer.vert",
-    "fragment": "Framebuffer.frag"
-  },
-  "Skybox": {
-    "vertex": "Skybox.vert",
-    "fragment": "Skybox.frag"
-  },
   "BlinnPhongShading": {
-    "vertex": "PBR/BlinnPhong.vert",
-    "fragment": "PBR/BlinnPhong.frag"
+    "vertex": "BlinnPhong.vert",
+    "fragment": "BlinnPhong.frag"
   },
   "GoochShading": {
     "vertex": "NPR/GoochShading.vert",

@@ -3,8 +3,8 @@
 #include "Core/Core.hpp"
 #include "Core/Math/Base.hpp"
 
+#include "Engine/Mesh.hpp"
 #include "Engine/Graphics/Containers/FrameBuffer.hpp"
-#include "Engine/Graphics/Mesh.hpp"
 
 class Engine
 {
@@ -25,11 +25,8 @@ private:
 
 	void CreateFramebuffer(i32 samples, i32 width, i32 height);
 	void CreateScreenSquare();
-	class TextureCubemap CreateSkybox(const Array<Texture2D, 6>& faces);
-
 	void CalculatePerFrameTime();
 	
-
 	FrameBuffer _fboMultisampled;
 	FrameBuffer _fboIntermediate;
 

@@ -1,9 +1,9 @@
 #include "ImGuiLayer.hpp"
 
 #include "Engine/Scene.hpp"
-#include "Engine/ECS/ECS.hpp"
+#include "Engine/Components/Components.hpp"
 #include "Engine/Utils.hpp"
-#include "Engine/Subsystems/TexturesManager.hpp"
+#include "Engine/Managers/TexturesManager.hpp"
 
 #include <imgui.h>
 
@@ -22,7 +22,7 @@ static bool ButtonCentered(const char *label, ImVec2 size)
 }
 static void Hierarchy_ListObjects(Scene &scene, GameObject &objSelected)
 {
-  auto &texManager = TexturesManager::Get();
+  auto &texManager = TexturesManager::GetInstance();
   static Texture2D icon = texManager.GetOrCreateIcon("game-object-16.png");
 
   Array<char, 64> selectableName{};

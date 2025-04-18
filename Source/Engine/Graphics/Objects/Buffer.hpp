@@ -53,6 +53,19 @@ public:
 	void Delete();
 
 	/**
+	 * @brief Copy all or part of the data store of a buffer object to the data store of another buffer object
+	 * 
+	 * @param readBuffer Specifies the name of the source buffer object
+	 * @param readOffset Specifies the offset, in basic machine units, within the data store of the source buffer 
+	 *										object at which data will be read.
+	 * @param writeOffset Specifies the offset, in basic machine units, within the data store of the destination buffer 
+	 *										object at which data will be written.
+	 * @param size Specifies the size, in basic machine units, of the data to be copied from the source buffer 
+	 *							object to the destination buffer object.
+	 */
+	void CopyFrom(u32 readBuffer, i32 readOffset, i32 writeOffset, u32 size) const;
+
+	/**
 	 * @brief Create a new data store for the buffer object.
 	 * While creating the new storage, any pre-existing data store is deleted.
 	 * The new data store is created with the specified size in bytes and usage.
@@ -83,6 +96,12 @@ public:
 
 	/** @brief Bind a range within the buffer object to an indexed buffer target. */
 	void BindRange(BufferTarget target, i32 bindingpoint, i32 offset, u64 size) const;
+
+	/** @brief Retrieves the size, in bytes, of the buffer. */
+	i64 GetBufferSize() const;
+
+	/** @brief Retrieves the OpenGL buffer usage flag. */
+	i32 GetBufferUsage() const;
 
 	bool IsValid() const;
 

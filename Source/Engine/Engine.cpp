@@ -9,21 +9,22 @@
 #include "Engine/Camera.hpp"
 #include "Engine/Scene.hpp"
 #include "Engine/Uniforms.hpp"
-#include "Engine/ImageLoader.hpp"
+#include "Engine/Vertex.hpp"
 
-#include "Engine/ECS/ECS.hpp"
-#include "Engine/Graphics/Vertex.hpp"
+#include "Engine/Components/Components.hpp"
+
 #include "Engine/Graphics/DepthTest.hpp"
 #include "Engine/Graphics/StencilTest.hpp"
 #include "Engine/Graphics/FaceCulling.hpp"
 #include "Engine/Graphics/Objects/RenderBuffer.hpp"
 #include "Engine/Graphics/Objects/TextureCubemap.hpp"
 #include "Engine/Graphics/Renderer.hpp"
-#include "Engine/Subsystems/WindowManager.hpp"
-#include "Engine/Subsystems/ShadersManager.hpp"
-#include "Engine/Subsystems/TexturesManager.hpp"
-#include "Engine/Subsystems/ModelsManager.hpp"
-#include "Engine/Subsystems/AnimationsManager.hpp"
+
+#include "Engine/Managers/WindowManager.hpp"
+#include "Engine/Managers/ShadersManager.hpp"
+#include "Engine/Managers/TexturesManager.hpp"
+#include "Engine/Managers/StaticMeshFactory.hpp"
+#include "Engine/Managers/AnimationsManager.hpp"
 
 #include "GUI/ImGuiLayer.hpp"
 
@@ -127,6 +128,49 @@ static void GLAPIENTRY MessageCallback(GLenum source,
 }
 
 
+static void CreateCube(Mesh& cube)
+{
+  constexpr f32 cubeVertices[] = {
+    // x, y, z, nx, ny, nz, u, v, tx, ty, tz
+    -1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f,  0.0f, 0.0f,  1.0f,  0.0f,  0.0f, // V0
+     1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f,  1.0f, 0.0f,  1.0f,  0.0f,  0.0f, // V1
+     1.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f,  1.0f, 1.0f,  1.0f,  0.0f,  0.0f, // V2
+    -1.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f,  0.0f, 1.0f,  1.0f,  0.0f,  0.0f, // V3
+    -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f, -1.0f,  0.0f,  0.0f, // V4
+     1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f,  1.0f, 0.0f, -1.0f,  0.0f,  0.0f, // V5
+     1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f, -1.0f,  0.0f,  0.0f, // V6
+    -1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f,  0.0f, 1.0f, -1.0f,  0.0f,  0.0f  // V7
+  };
+  constexpr u32 cubeIndices[] = {
+    // Front face
+    0, 1, 2,  2, 3, 0,
+    // Back face
+    4, 5, 6,  6, 7, 4,
+    // Left face
+    4, 0, 3,  3, 7, 4,
+    // Right face
+    1, 5, 6,  6, 2, 1,
+    // Bottom face
+    4, 5, 1,  1, 0, 4,
+    // Top face
+    3, 2, 6,  6, 7, 3
+  };
+
+  cube.Create();
+  cube.SetupAttributeFloat(0, 0, VertexFormat(3, VertexAttribType::FLOAT, false, offsetof(Vertex_P_N_UV_T, position)));
+  cube.SetupAttributeFloat(1, 0, VertexFormat(3, VertexAttribType::FLOAT, false, offsetof(Vertex_P_N_UV_T, normal)));
+  cube.SetupAttributeFloat(2, 0, VertexFormat(2, VertexAttribType::FLOAT, false, offsetof(Vertex_P_N_UV_T, uv)));
+  cube.SetupAttributeFloat(3, 0, VertexFormat(3, VertexAttribType::FLOAT, false, offsetof(Vertex_P_N_UV_T, tangent)));
+
+  Buffer vbo(sizeof(cubeVertices), cubeVertices, BufferUsage::STATIC_DRAW);
+  Buffer ebo(sizeof(cubeIndices), cubeIndices, BufferUsage::STATIC_DRAW);
+  cube.vertexArray->AttachVertexBuffer(0, vbo, 0, sizeof(Vertex_P_N_UV_T));
+  cube.vertexArray->AttachElementBuffer(ebo);
+
+  cube.numVertices = 8;
+  cube.numIndices = 36;
+}
+
 // -----------------------------------------------------
 //                PUBLIC METHODS
 // -----------------------------------------------------
@@ -140,7 +184,7 @@ void Engine::Initialize()
   // Initialize window manager
   // -------------------------
   CONSOLE_INFO("Initializing WindowManager...");
-  WindowManager::Get().Initialize(WindowProps(
+  WindowManager::GetInstance().Initialize(WindowProps(
     vec2i{ WINDOW_WIDTH, WINDOW_HEIGHT }, // window size
     vec2i{ 50, 50 },                      // window pos
     "GameEngine",                       // window title
@@ -151,17 +195,17 @@ void Engine::Initialize()
   // Initialize shader manager
   // -------------------------
   CONSOLE_INFO("Initializing ShadersManager...");
-  ShadersManager::Get().Initialize();
+  ShadersManager::GetInstance().Initialize();
 
   // Initialize texture manager
   // --------------------------
   CONSOLE_INFO("Initializing TexturesManager...");
-  TexturesManager::Get().Initialize();
+  TexturesManager::GetInstance().Initialize();
 
   // Setup ImGui context
   // -------------------
   CONSOLE_INFO("Initializing ImGui...");
-  ImGuiLayer::Get().Initialize();
+  ImGuiLayer::GetInstance().Initialize();
 
   // Set the initial OpenGL states
   // -----------------------------
@@ -191,37 +235,32 @@ void Engine::Run()
 
   Scene scene((Paths::GetRootPath() / "Scene.yaml"));
 
+  bool wireframe = false;
+  bool normalMapping = false;
+
+  // 0: Blinn-Phong shading
+  // 1: Gooch shading
+  u32 shadingModel = 0;
+  // gooch shading attributes:
+  f32 b = 0.4f, y = 0.4f, alpha = 0.2f, beta = 0.6f;
+
   // ----------------------------------------------------------------------
   // -------------------------- Pre-loop section --------------------------
   // ----------------------------------------------------------------------
-  ImGuiLayer& gui = ImGuiLayer::Get();
-  WindowManager& windowManager = WindowManager::Get();
-  ShadersManager& shadersManager = ShadersManager::Get();
-  TexturesManager& texturesManager = TexturesManager::Get();
+  ImGuiLayer& gui = ImGuiLayer::GetInstance();
+  WindowManager& windowManager = WindowManager::GetInstance();
+  ShadersManager& shadersManager = ShadersManager::GetInstance();
+  TexturesManager& texturesManager = TexturesManager::GetInstance();
 
-  Program skyboxProgram = shadersManager.GetProgram("Skybox");
-  skyboxProgram.SetUniform1i(Uniforms::skyboxTexture, 0);
   Program blinnPhongProgram = shadersManager.GetProgram("BlinnPhongShading");
   blinnPhongProgram.SetUniform1i("u_material.diffuseTexture", 0);
   blinnPhongProgram.SetUniform1i("u_material.specularTexture", 1);
   blinnPhongProgram.SetUniform1i("u_material.normalTexture", 2);
+
   Program goochProgram = shadersManager.GetProgram("GoochShading");
-  //goochProgram.SetUniform1i("u_material.diffuseTexture", 0);
-  //goochProgram.SetUniform1i("u_material.specularTexture", 1);
-  //goochProgram.SetUniform1i("u_material.normalTexture", 2);
-
-  //Array<Texture2D, 6> faces = {
-  //    texturesManager.GetOrCreateTexture("skybox/right.jpg"),
-  //    texturesManager.GetOrCreateTexture("skybox/left.jpg"),
-  //    texturesManager.GetOrCreateTexture("skybox/top.jpg"),
-  //    texturesManager.GetOrCreateTexture("skybox/bottom.jpg"),
-  //    texturesManager.GetOrCreateTexture("skybox/front.jpg"),
-  //    texturesManager.GetOrCreateTexture("skybox/back.jpg"),
-  //};
-  //TextureCubemap textureCubemap = CreateSkybox(faces);
-
-  bool wireframe = false;
-  i32 normalMapping = 0;
+  blinnPhongProgram.SetUniform1i("u_material.diffuseTexture", 0);
+  blinnPhongProgram.SetUniform1i("u_material.specularTexture", 1);
+  blinnPhongProgram.SetUniform1i("u_material.normalTexture", 2);
 
   // ------------------------------------------------------------------
   // -------------------------- loop section --------------------------
@@ -292,43 +331,50 @@ void Engine::Run()
     // -------------------------- Rendering section --------------------------
     // -----------------------------------------------------------------------
 
-    /// Fill the framebuffer color texture
+    glPolygonMode(GL_FRONT_AND_BACK, wireframe ? GL_LINE : GL_FILL);
+
+    // Fill the framebuffer color texture
     _fboMultisampled.Bind(FramebufferTarget::READ_DRAW);
     {
       glViewport(0, 0, _viewportSize.x, _viewportSize.y);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-      glPolygonMode(GL_FRONT_AND_BACK, wireframe ? GL_LINE : GL_FILL);
 
-      /// Render scene here
+      // Render scene here
+      // ---------------------
       {
-        blinnPhongProgram.Use();
-        blinnPhongProgram.SetUniform1i("u_normalMapping", normalMapping);
-        scene.Reg().view<StaticMesh, Transform>().each([&](auto& staticMesh, auto& transform)
-          {
-            transform.UpdateTransformation();
-            blinnPhongProgram.SetUniformMat4f(Uniforms::model, transform.GetTransformation());
-            staticMesh.Render(blinnPhongProgram, RenderMode::TRIANGLES); });
-      }
+        switch (shadingModel)
+        {
+          case 0: // Blinn-Phong shading model
+            blinnPhongProgram.Use();
+            blinnPhongProgram.SetUniform1i("u_normalMapping", normalMapping ? 1 : 0);
+            
+            scene.Reg().view<StaticMesh, Transform>().each([&](auto& staticMesh, auto& transform) {
+              blinnPhongProgram.SetUniformMat4f(Uniforms::model, transform.GetTransformation());
+              staticMesh.Render(blinnPhongProgram, RenderMode::TRIANGLES); 
+            });
+            break;
 
-      /// Draw skybox after the scene
-      {
-        //skyboxProgram.Use();
-        //textureCubemap.BindTextureUnit(0);
-        //DepthTest::SetDepthFun(CompareFunc::LEQUAL);
-        //Renderer::DrawArrays(RenderMode::TRIANGLES, _meshCubeSkybox.vao, _meshCubeSkybox.numVertices);
-        //DepthTest::SetDepthFun(CompareFunc::LESS);
+          case 1: // Gooch shading model
+            goochProgram.Use();
+            goochProgram.SetUniform1f("u_b", b);
+            goochProgram.SetUniform1f("u_y", y);
+            goochProgram.SetUniform1f("u_alpha", alpha);
+            goochProgram.SetUniform1f("u_beta", beta);
+            scene.Reg().view<StaticMesh, Transform>().each([&](auto& staticMesh, auto& transform) {
+              goochProgram.SetUniformMat4f(Uniforms::model, transform.GetTransformation());
+              staticMesh.Render(goochProgram, RenderMode::TRIANGLES);
+            });
+            break;
+        }
       }
-
-      // Blit multisampled buffer to normal color buffer of intermediate FBO
-      _fboMultisampled.Blit(_fboIntermediate,
-        0, 0, _viewportSize.x, _viewportSize.y,
-        0, 0, _viewportSize.x, _viewportSize.y,
-        FramebufferBlitMask::COLOR_BUFFER,
-        FramebufferBlitFilter::NEAREST);
-      }
+    }
+    // Blit multisampled buffer to normal color buffer of intermediate FBO
+    _fboMultisampled.Blit(_fboIntermediate,
+                          0, 0, _viewportSize.x, _viewportSize.y,
+                          0, 0, _viewportSize.x, _viewportSize.y,
+                          FramebufferBlitMask::COLOR_BUFFER,
+                          FramebufferBlitFilter::NEAREST);
     _fboMultisampled.Unbind(FramebufferTarget::READ_DRAW);
-
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     gui.RenderMenuBar(scene);
     GameObject& objSelected = gui.RenderHierarchy(scene);
@@ -338,7 +384,7 @@ void Engine::Run()
     gui.RenderTimeInfo(_delta, _avgTime, _frameRate);
     gui.RenderGizmoToolBar();
     gui.RenderCameraSettings(camera);
-    gui.RenderDebug(wireframe, normalMapping);
+    gui.RenderDebug(wireframe, normalMapping, shadingModel, b, y, alpha, beta);
     gui.EndFrame();
 
     // Checking viewport size
@@ -371,13 +417,12 @@ void Engine::CleanUp()
   _uboBoneBlock.Delete();
 
   // Destroy ImGui context
-  ImGuiLayer::Get().CleanUp();
+  ImGuiLayer::GetInstance().CleanUp();
 
   // clean up all managers
-  ShadersManager::Get().CleanUp();
-  TexturesManager::Get().CleanUp();
-  ModelsManager::Get().CleanUp();
-  WindowManager::Get().CleanUp(); // !!Raise exception here
+  ShadersManager::GetInstance().CleanUp();
+  TexturesManager::GetInstance().CleanUp();
+  WindowManager::GetInstance().CleanUp(); // !!Raise exception here
 }
 
 // -----------------------------------------------------
@@ -402,19 +447,14 @@ void Engine::SetGLStates() const
   // Stencil testing OFF
   // -------------------
   StencilTest::DisableTest();
-  StencilTest::SetStencilFun(CompareFunc::ALWAYS, 0, 0xFF);
-  StencilTest::SetStencilOp(StencilOpMode::KEEP, StencilOpMode::KEEP, StencilOpMode::KEEP);
 
   // Culling OFF
   // -----------
   FaceCulling::DisableFaceCulling();
-  FaceCulling::SetCullFace(CullFaceMode::BACK);
-  FaceCulling::SetFrontFacing(FrontFaceMode::CCW);
 
   // Blending OFF
   // ------------
   glDisable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
   // Gamma correction OFF
   // --------------------
@@ -527,85 +567,14 @@ void Engine::CreateScreenSquare()
   _screenSquare.numVertices = 6;
   _screenSquare.numIndices = 0;
 
-  _screenSquare.vao.AttachVertexBuffer(0, vbo, 0, 4 * sizeof(f32));
-  _screenSquare.vao.SetAttribFormatFLoat(0, 2, VertexAttribType::FLOAT, true, 0);
-  _screenSquare.vao.SetAttribBinding(0, 0);
-  _screenSquare.vao.EnableAttribute(0);
-  _screenSquare.vao.SetAttribFormatFLoat(1, 2, VertexAttribType::FLOAT, true, 2 * sizeof(f32));
-  _screenSquare.vao.SetAttribBinding(1, 0);
-  _screenSquare.vao.EnableAttribute(1);
+  _screenSquare.vertexArray->AttachVertexBuffer(0, vbo, 0, 4 * sizeof(f32));
+  _screenSquare.vertexArray->SetAttribFormatFLoat(0, 2, VertexAttribType::FLOAT, true, 0);
+  _screenSquare.vertexArray->SetAttribBinding(0, 0);
+  _screenSquare.vertexArray->EnableAttribute(0);
+  _screenSquare.vertexArray->SetAttribFormatFLoat(1, 2, VertexAttribType::FLOAT, true, 2 * sizeof(f32));
+  _screenSquare.vertexArray->SetAttribBinding(1, 0);
+  _screenSquare.vertexArray->EnableAttribute(1);
 }
-TextureCubemap Engine::CreateSkybox(const Array<Texture2D, 6>& faces)
-{
-  constexpr f32 vertices[] = {
-    // Position
-    -1.0f, 1.0f, -1.0f,
-    -1.0f, -1.0f, -1.0f,
-    1.0f, -1.0f, -1.0f,
-    1.0f, -1.0f, -1.0f,
-    1.0f, 1.0f, -1.0f,
-    -1.0f, 1.0f, -1.0f,
-
-    -1.0f, -1.0f, 1.0f,
-    -1.0f, -1.0f, -1.0f,
-    -1.0f, 1.0f, -1.0f,
-    -1.0f, 1.0f, -1.0f,
-    -1.0f, 1.0f, 1.0f,
-    -1.0f, -1.0f, 1.0f,
-
-    1.0f, -1.0f, -1.0f,
-    1.0f, -1.0f, 1.0f,
-    1.0f, 1.0f, 1.0f,
-    1.0f, 1.0f, 1.0f,
-    1.0f, 1.0f, -1.0f,
-    1.0f, -1.0f, -1.0f,
-
-    -1.0f, -1.0f, 1.0f,
-    -1.0f, 1.0f, 1.0f,
-    1.0f, 1.0f, 1.0f,
-    1.0f, 1.0f, 1.0f,
-    1.0f, -1.0f, 1.0f,
-    -1.0f, -1.0f, 1.0f,
-
-    -1.0f, 1.0f, -1.0f,
-    1.0f, 1.0f, -1.0f,
-    1.0f, 1.0f, 1.0f,
-    1.0f, 1.0f, 1.0f,
-    -1.0f, 1.0f, 1.0f,
-    -1.0f, 1.0f, -1.0f,
-
-    -1.0f, -1.0f, -1.0f,
-    -1.0f, -1.0f, 1.0f,
-    1.0f, -1.0f, -1.0f,
-    1.0f, -1.0f, -1.0f,
-    -1.0f, -1.0f, 1.0f,
-    1.0f, -1.0f, 1.0f };
-  Buffer vbo(sizeof(vertices), vertices, BufferUsage::STATIC_DRAW);
-
-  _meshCubeSkybox.Create();
-  _meshCubeSkybox.numVertices = 36;
-  _meshCubeSkybox.numIndices = 0;
-  _meshCubeSkybox.vao.EnableAttribute(0);
-  _meshCubeSkybox.vao.SetAttribBinding(0, 0);
-  _meshCubeSkybox.vao.SetAttribFormatFLoat(0, 3, VertexAttribType::FLOAT, false, 0);
-  _meshCubeSkybox.vao.AttachVertexBuffer(0, vbo, 0, sizeof(Vertex_P));
-
-  Texture2DInternalFormat cubemapInternalFormat = faces.at(0).GetInternalFormat();
-  i32 width = faces.at(0).GetWidth();
-  i32 height = faces.at(0).GetHeight();
-
-  TextureCubemap skyboxTexture;
-  skyboxTexture.Create();
-  skyboxTexture.CreateStorage(cubemapInternalFormat, width, height);
-  skyboxTexture.LoadImages(faces);
-  skyboxTexture.SetParameteri(TextureParameteriName::MAG_FILTER, TextureParameteriParam::LINEAR);
-  skyboxTexture.SetParameteri(TextureParameteriName::MIN_FILTER, TextureParameteriParam::LINEAR);
-  skyboxTexture.SetParameteri(TextureParameteriName::WRAP_S, TextureParameteriParam::CLAMP_TO_EDGE);
-  skyboxTexture.SetParameteri(TextureParameteriName::WRAP_T, TextureParameteriParam::CLAMP_TO_EDGE);
-  skyboxTexture.SetParameteri(TextureParameteriName::WRAP_R, TextureParameteriParam::CLAMP_TO_EDGE);
-  return skyboxTexture;
-}
-
 void Engine::CalculatePerFrameTime()
 {
   _frames++;

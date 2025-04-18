@@ -3,7 +3,7 @@
 #include "Core/Math/Base.hpp"
 #include "Core/Math/Ext.hpp"
 
-#include "Engine/ECS/ECS.hpp"
+#include "Engine/Components/Components.hpp"
 
 #include <imgui.h>
 #include <ImGuizmo.h>
@@ -103,7 +103,7 @@ void GUI_RenderViewport(u32 texID, GameObject& objSelected, i32 gizmode, const m
   ImGui::Begin("Viewport");
   const ImVec2 winSize = ImGui::GetWindowSize();
   const ImVec2 winPos = ImGui::GetWindowPos();
-  auto& guiLayer = ImGuiLayer::Get();
+  auto& guiLayer = ImGuiLayer::GetInstance();
   guiLayer.viewportSize = { winSize.x, winSize.y };
   guiLayer.viewportPos = { winPos.x, winPos.y };
   guiLayer.viewportFocused = ImGui::IsWindowFocused();

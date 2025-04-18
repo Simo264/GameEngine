@@ -2,6 +2,7 @@
 
 #include "Core/Core.hpp"
 #include "Core/Math/Base.hpp"
+#include "Core/DesignPatterns/Singleton.hpp"
 
 class Camera;
 class Scene;
@@ -9,29 +10,14 @@ class GameObject;
 class Animator;
 
 /**
- *
- * @class ImGuiLayer
- *
  * @brief Manages rendering and integration of ImGui into the application
  *
  * This class implements the singleton pattern to ensure only one instance of ImGuiLayer
  * exists throughout the application.
  */
-class ImGuiLayer
+class ImGuiLayer : public Singleton<ImGuiLayer>
 {
 public:
-	/** @brief Deleted copy constructor to enforce singleton pattern. */
-	ImGuiLayer(const ImGuiLayer &) = delete;
-	/** @brief Deleted asignment constructor to enforce singleton pattern. */
-	void operator=(const ImGuiLayer &) = delete;
-
-	/** @brief Retrieves the singleton instance of ImGuiLayer. */
-	static ImGuiLayer &Get()
-	{
-		static ImGuiLayer gui;
-		return gui;
-	}
-
 	/**
 	 * @brief Initializes the ImGui context and loads the default font.
 	 *
@@ -88,7 +74,13 @@ public:
 	void RenderCameraSettings(Camera &camera);
 	void RenderGraphicsInfo();
 	void RenderTimeInfo(f64 delta, f64 avg, i32 frameRate);
-	void RenderDebug(bool& wireframe, i32& normalMapping);
+	void RenderDebug(bool& wireframe,
+									 bool& normalMapping,
+									 u32& shadingModel,
+									 f32& b,
+									 f32& y,
+									 f32& alpha,
+									 f32& beta);
 
 	vec2i viewportSize;
 	vec2i viewportPos;
@@ -97,14 +89,6 @@ public:
 	i32 gizmode;
 
 private:
-	ImGuiLayer() : viewportFocused{false},
-								 viewportSize{},
-								 viewportPos{},
-								 gizmode{-1}
-	{
-	}
-	~ImGuiLayer() = default;
-
 	void SetupContext();
 	void Styling();
 	void Docking();

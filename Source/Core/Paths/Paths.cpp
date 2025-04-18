@@ -52,6 +52,12 @@ namespace Paths
 		return MODELS_PATH;
 	}
 
+	const fs::path& GetHDRIPath()
+	{
+		static const fs::path HDRI_PATH = (GetAssetsPath() / "HDRI").lexically_normal();
+		return HDRI_PATH;
+	}
+
 	const fs::path &GetStaticModelsPath()
 	{
 		static const fs::path STATIC_MODELS_PATH = (GetModelsPath() / "Static").lexically_normal();

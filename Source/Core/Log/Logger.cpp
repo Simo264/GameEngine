@@ -3,7 +3,7 @@
 #include <spdlog/sinks/basic_file_sink.h> 
 #include <spdlog/sinks/stdout_color_sinks.h> 
 
-SharedPtr<spdlog::logger> Logger::_logger;
+SharedPointer<spdlog::logger> Logger::_logger;
 
 void Logger::Initialize()
 {

@@ -10,10 +10,10 @@ void VertexArray::Create()
 
 void VertexArray::Delete()
 {
-	if (vbo.IsValid())
-		vbo.Delete();
+	if (vertexBuffer.IsValid())
+		vertexBuffer.Delete();
 
-	Buffer ebo = GetElementBufferObject();
+	Buffer ebo = GetElementBuffer();
 	if (ebo.IsValid())    
 		ebo.Delete();
 
@@ -43,13 +43,13 @@ void VertexArray::DisableAttribute(i32 attribindex) const
 
 void VertexArray::AttachVertexBuffer(i32 bindingindex, Buffer buffer, i32 offset, i32 stride)
 {
-  if (vbo.IsValid())
+  if (vertexBuffer.IsValid())
   {
 		CONSOLE_WARN("VBO already attached to VAO. Deleting previous VBO...");
-		vbo.Delete();
+		vertexBuffer.Delete();
   }
 
-	vbo = buffer;
+	vertexBuffer = buffer;
 
   glVertexArrayVertexBuffer(id, bindingindex, buffer.id, offset, stride);
 }
@@ -95,7 +95,7 @@ void VertexArray::SetBindingDivisor(i32 bindingindex, i32 divisor) const
   glVertexArrayBindingDivisor(id, bindingindex, divisor);
 }
 
-Buffer VertexArray::GetElementBufferObject() const
+Buffer VertexArray::GetElementBuffer() const
 {
   i32 bufferId = 0;
   glGetVertexArrayiv(id, GL_ELEMENT_ARRAY_BUFFER_BINDING, &bufferId);

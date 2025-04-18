@@ -4,18 +4,20 @@
 
 namespace FileDialog
 {
-	fs::path OpenFileDialog(i32 numFilters, const char* filter[], const char* filterDescription, bool multipleSelects)
+	fs::path OpenFileDialog(const char* title,
+													const fs::path defaultPath,
+													i32 numOfFilterPatterns,
+													const char* filterPatterns[],
+													const char* singleFilterDescription,
+													bool allowMultipleSelects)
 	{
-		// Calls tinyfd_openFileDialog from tinyfiledialogs to open a file selection dialog.
-		// If multipleSelects is true, the user can select multiple files.
-		// Returns the selected file(s) path(s) or an empty String if canceled.
 		const char* filename = tinyfd_openFileDialog(
-			"Open file dialog",			// Title of the dialog window
-			nullptr,								// Default path and file (nullptr uses current directory)
-			numFilters,							// Number of filter patterns provided
-			filter,									// Array of filter patterns (e.g., *.txt, *.png)
-			filterDescription,			// Description of the selected filter type
-			(i32)multipleSelects		// Allow multiple file selections (1 = true, 0 = false)
+			title,
+			defaultPath.string().c_str(),
+			numOfFilterPatterns,
+			filterPatterns,
+			singleFilterDescription,
+			static_cast<i32>(allowMultipleSelects)
 		);
 
 		if (filename)
@@ -24,17 +26,18 @@ namespace FileDialog
 		return fs::path();
 	}
 
-	fs::path SaveFileDialog(i32 numFilters, const char* filter[], const char* filterDescription)
+	fs::path SaveFileDialog(const char* title,
+													const fs::path defaultPath,
+													i32 numOfFilterPatterns,
+													const char* filterPatterns[],
+													const char* singleFilterDescription)
 	{
-		// Calls tinyfd_saveFileDialog from tinyfiledialogs to open a save file dialog.
-		// The user can specify the name and location of the file to save.
-		// Returns the selected file path or an empty String if canceled.
 		const char* filename = tinyfd_saveFileDialog(
-			"Save file dialog",		// Title of the dialog window
-			nullptr,							// Default path and file (nullptr uses current directory)
-			numFilters,						// Number of filter patterns provided
-			filter,								// Array of filter patterns (e.g., *.txt, *.png)
-			filterDescription			// Description of the selected filter type
+			title,
+			defaultPath.string().c_str(),
+			numOfFilterPatterns,
+			filterPatterns,
+			singleFilterDescription
 		);
 
 		if (filename)

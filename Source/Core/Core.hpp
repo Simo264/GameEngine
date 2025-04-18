@@ -30,21 +30,21 @@ namespace fs = std::filesystem;
 
 /************** Containers **************/
 /****************************************/
-template <typename Type, size_t size>
-using Array = std::array<Type, size>;
-template <typename Type>
-using Vector = std::vector<Type>;
-template <typename TypeName, typename TypeVal>
-using Map = std::map<TypeName, TypeVal>;
-template <typename TypeName, typename TypeVal>
-using UnorderedMap = std::unordered_map<TypeName, TypeVal>;
+template <typename T, size_t size>
+using Array = std::array<T, size>;
+template <typename T>
+using Vector = std::vector<T>;
+template <typename T, typename TVal>
+using Map = std::map<T, TVal>;
+template <typename T, typename TVal>
+using UnorderedMap = std::unordered_map<T, TVal>;
 
 /************** Smart pointers **************/
 /********************************************/
-template <typename Type>
-using UniquePtr = std::unique_ptr<Type>;
-template <typename Type>
-using SharedPtr = std::shared_ptr<Type>;
+template <typename T>
+using UniquePointer = std::unique_ptr<T>;
+template <typename T>
+using SharedPointer = std::shared_ptr<T>;
 
 /************** Data types **************/
 /****************************************/

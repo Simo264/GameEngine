@@ -3,16 +3,6 @@
 #include "Core/OpenGL.hpp"
 #include "Core/Log/Logger.hpp"
 
-#include "Engine/ImageLoader.hpp"
-
-Texture2D::Texture2D(Texture2DTarget target,
-                     const fs::path &absolute)
-    : id{0}
-{
-  Create(target);
-  LoadImageData(absolute);
-}
-
 void Texture2D::Create(Texture2DTarget target)
 {
   glCreateTextures(static_cast<u32>(target), 1, &id);
@@ -36,32 +26,27 @@ void Texture2D::GenerateMipmap() const
   glGenerateTextureMipmap(id);
 }
 
-void Texture2D::CreateStorage(Texture2DInternalFormat internalFormat,
-                              i32 width,
-                              i32 height) const
+void Texture2D::CreateStorage(Texture2DInternalFormat internalFormat, i32 width, i32 height) const
 {
   u32 mipmapLevels = 1 + static_cast<u32>(std::floor(std::log2(std::max(width, height))));
 
-  glTextureStorage2D(
-      id,
-      mipmapLevels,
-      static_cast<u32>(internalFormat),
-      width,
-      height);
+  glTextureStorage2D(id,
+                     mipmapLevels,
+                     static_cast<u32>(internalFormat),
+                     width,
+                     height);
 }
-
 void Texture2D::CreateStorageMultisampled(Texture2DInternalFormat internalFormat,
                                           i32 samples,
                                           i32 width,
                                           i32 height) const
 {
-  glTextureStorage2DMultisample(
-      id,
-      samples,
-      static_cast<u32>(internalFormat),
-      width,
-      height,
-      true);
+  glTextureStorage2DMultisample(id,
+                                samples,
+                                static_cast<u32>(internalFormat),
+                                width,
+                                height,
+                                true);
 }
 
 void Texture2D::UpdateStorage(i32 level,
@@ -83,9 +68,7 @@ void Texture2D::UpdateStorage(i32 level,
                       pixels);
 }
 
-void Texture2D::ClearStorage(i32 level,
-                             Texture2DClearImageType type,
-                             const void *data) const
+void Texture2D::ClearStorage(i32 level, Texture2DClearImageType type, const void *data) const
 {
   glClearTexImage(id,
                   level,
@@ -94,74 +77,7 @@ void Texture2D::ClearStorage(i32 level,
                   data);
 }
 
-void Texture2D::LoadImageData(const fs::path &absolute) const
-{
-  if (!fs::exists(absolute))
-  {
-    CONSOLE_ERROR("Image file does not exist {}", absolute.string());
-    return;
-  }
-
-  // When to Apply Gamma Correction to Textures?
-  // Gamma correction is only applied to colour diffuse(albedo) textures because the colours
-  // must be interpreted in gamma space(sRGB).
-  // Other textures, such as normal, specular, metallic, roughness, are linear data and should not
-  // undergo gamma correction.
-  bool gammaCorrection = false;
-  String filename = absolute.filename().string();
-  std::transform(filename.begin(), filename.end(), filename.begin(), ::tolower);
-
-  if (filename.find("diffuse") != String::npos ||
-      filename.find("albedo") != String::npos ||
-      filename.find("basecolor") != String::npos)
-    gammaCorrection = true;
-
-  i32 width, height, nChannels;
-  Texture2DInternalFormat internalFormat = Texture2DInternalFormat::RGB8;
-  u8 *data = ImageLoader::LoadLDRImage(absolute, width, height, nChannels);
-  if (data)
-  {
-    // From https://registry.khronos.org/OpenGL-Refpages/gl4/html/glTexStorage2D.xhtml
-    // GL_RGB:         gamma correction: no;   alpha component: no
-    // GL_RGBA:        gamma correction: no;   alpha component: yes
-    // GL_SRGB:        gamma correction: yes;  alpha component: no
-    // GL_SRGB_ALPHA:  gamma correction: yes;  alpha component: yes
-
-    switch (nChannels)
-    {
-    case 1:
-      internalFormat = Texture2DInternalFormat::R8;
-      break;
-    case 2:
-      internalFormat = Texture2DInternalFormat::RG8;
-      break;
-    case 3:
-      internalFormat = (gammaCorrection ? Texture2DInternalFormat::SRGB8 : Texture2DInternalFormat::RGB8);
-      break;
-    case 4:
-      internalFormat = (gammaCorrection ? Texture2DInternalFormat::SRGB8_ALPHA8 : Texture2DInternalFormat::RGBA8);
-      break;
-    }
-
-    SetParameteri(TextureParameteriName::WRAP_S, TextureParameteriParam::REPEAT);
-    SetParameteri(TextureParameteriName::WRAP_T, TextureParameteriParam::REPEAT);
-    SetParameteri(TextureParameteriName::MIN_FILTER, TextureParameteriParam::LINEAR_MIPMAP_LINEAR);
-    SetParameteri(TextureParameteriName::MAG_FILTER, TextureParameteriParam::LINEAR);
-
-    CreateStorage(internalFormat, width, height);
-    UpdateStorage(0, width, height, Texture2DSubImageType::UNSIGNED_BYTE, data);
-    GenerateMipmap();
-  }
-  else
-    CONSOLE_ERROR("Failed to load image {}", absolute.string());
-
-  ImageLoader::FreeImageData(data);
-}
-
-void Texture2D::GetTextureImage(i32 level,
-                                Texture2DGetImageType type,
-                                i32 buffSize,
-                                void *pixels) const
+void Texture2D::GetTextureImage(i32 level, Texture2DGetImageType type, i32 buffSize, void *pixels) const
 {
   glGetTextureImage(id,
                     level,
@@ -171,30 +87,19 @@ void Texture2D::GetTextureImage(i32 level,
                     pixels);
 }
 
-void Texture2D::SetParameteri(TextureParameteriName name,
-                              TextureParameteriParam value) const
+void Texture2D::SetParameteri(TextureParameteriName name, TextureParameteriParam value) const
 {
-  glTextureParameteri(
-      id,
-      static_cast<u32>(name),
-      static_cast<i32>(value));
+  glTextureParameteri(id, static_cast<u32>(name), static_cast<i32>(value));
 }
-
-void Texture2D::SetParameterfv(TextureParameteriName name,
-                               f32 *values) const
+void Texture2D::SetParameterfv(TextureParameteriName name, f32 *values) const
 {
-  glTextureParameterfv(
-      id,
-      static_cast<u32>(name),
-      values);
+  glTextureParameterfv(id, static_cast<u32>(name), values);
 }
-
 void Texture2D::SetCompareFunc(CompareFunc func) const
 {
-  glTextureParameteri(
-      id,
-      static_cast<u32>(TextureParameteriName::COMPARE_FUNC),
-      static_cast<i32>(func));
+  glTextureParameteri(id,
+                      static_cast<u32>(TextureParameteriName::COMPARE_FUNC),
+                      static_cast<i32>(func));
 }
 
 i32 Texture2D::GetWidth() const
