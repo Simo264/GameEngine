@@ -48,8 +48,6 @@ in vec3 Normal;
 in vec3 FragPos;
 in vec3 CameraPos;
 in mat3 TBN;
-in vec3 TangentCameraPos;
-in vec3 TangentFragPos;
 
 // ========== OUT attributes ==========
 // ====================================
@@ -119,11 +117,9 @@ void main()
   ivec2 normalSize = textureSize(u_material.normalTexture, 0);
   if(u_normalMapping == 1 && normalSize != ivec2(1))
   {
-    // Obtain normal from normal map in range [0,1] and
-    // transform normal vector to range [-1,1]
-    N  = texture(u_material.normalTexture, TexCoord).xyz;
-    N = N * 2.0f - 1.0f;
-    V = normalize(TangentCameraPos - TangentFragPos);
+    N = texture(u_material.normalTexture, TexCoord).rgb;  // Obtain normal from normal map in range [0,1];
+    N = N * 2.0f - 1.0f;                                  // transform normal vector to range [-1,1];
+    N = normalize(TBN * N);                               // the resulting normal is now in world space,
   }
 
   vec3 color = ka.rgb;
@@ -161,20 +157,21 @@ void main()
 Lighting BlinnPhongLight(vec3 L, vec3 N, vec3 V, vec3 kd, vec3 ks)
 {
   Lighting I;
+  I.diffuse = vec3(0.f);
   I.specular = vec3(0.f);
 
   float lambertian = max(dot(L, N), 0.0f);
-  if (lambertian > 0.0f)
+  if (lambertian > 0.f)
   {
+    // calculate diffuse
+    I.diffuse = kd * lambertian;
+
     // calculate specular
     vec3 H = normalize(L + V);
     float specAngle = max(dot(H, N), 0.0f);
     float specular = pow(specAngle, g_shininess);
     I.specular = ks * specular;
   }
-
-  I.diffuse = kd * lambertian;
-  
   return I;
 }
 

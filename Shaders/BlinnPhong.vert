@@ -19,8 +19,6 @@ out vec3 Normal;
 out vec3 FragPos;
 out vec3 CameraPos;
 out mat3 TBN;
-out vec3 TangentCameraPos; // Camera position in tangent space
-out vec3 TangentFragPos; // Fragment position in tangent space
 
 void main()
 {
@@ -34,10 +32,8 @@ void main()
 
   vec3 T = normalize(mat3(u_model) * aTangent); // Transform tangent to world space
   T = normalize(T - dot(T, N) * N);             // Re-orthogonalize tangent to ensure perpendicularity to normal
-  vec3 B = cross(N, T);                         // Compute bitangent using cross product to maintain right-handed coordinate system
-  TBN = transpose(mat3(T,B,N));                 // Construct the TBN matrix to transform vectors to tangent space
-  TangentCameraPos = TBN * CameraPos; 
-  TangentFragPos = TBN * FragPos;
+  vec3 B = cross(N, T);                         // Compute bitangent using cross product
+  TBN = mat3(T,B,N);                            // Construct the TBN matrix
 
   gl_Position = u_cameraProjection * u_cameraView * u_model * vec4(aPos, 1.0);
 }

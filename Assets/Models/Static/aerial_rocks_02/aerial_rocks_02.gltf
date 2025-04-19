@@ -1,6 +1,6 @@
 {
   "asset": {
-    "generator": "Khronos glTF Blender I/O v1.6.16",
+    "generator": "Khronos glTF Blender I/O v1.5.17",
     "version": "2.0"
   },
   "scene": 0,
@@ -21,7 +21,7 @@
   "materials": [
     {
       "doubleSided": true,
-      "name": "stone_brick_wall_001",
+      "name": "aerial_rocks_02",
       "normalTexture": {
         "index": 0
       },
@@ -69,47 +69,47 @@
   "images": [
     {
       "mimeType": "image/jpeg",
-      "name": "stone_brick_wall_001_nor_gl_16k",
-      "uri": "stone_brick_wall_001/stone_brick_wall_001_normal.jpg"
+      "name": "aerial_rocks_02_nor_gl_4k",
+      "uri": "aerial_rocks_02/aerial_rocks_02_normal.jpg"
     },
     {
       "mimeType": "image/jpeg",
-      "name": "stone_brick_wall_001_diff_16k",
-      "uri": "stone_brick_wall_001/stone_brick_wall_001_diffuse.jpg"
+      "name": "aerial_rocks_02_diff_4k",
+      "uri": "aerial_rocks_02/aerial_rocks_02_diffuse.jpg"
     },
     {
       "mimeType": "image/jpeg",
-      "name": "stone_brick_wall_001_rough_16k",
-      "uri": "stone_brick_wall_001/stone_brick_wall_001_rough.jpg"
+      "name": "aerial_rocks_02_rough_4k",
+      "uri": "aerial_rocks_02/aerial_rocks_02_rough.jpg"
     }
   ],
   "accessors": [
     {
       "bufferView": 0,
       "componentType": 5126,
-      "count": 53920,
+      "count": 53924,
       "max": [
-        1.2677415609359741,
-        1.2792158126831055,
-        1.2645392417907715
+        25.09073257446289,
+        25.89675521850586,
+        25.424638748168945
       ],
       "min": [
-        -1.267741322517395,
-        -1.2722057104110718,
-        -1.2645491361618042
+        -25.090717315673828,
+        -26.123676300048828,
+        -25.424318313598633
       ],
       "type": "VEC3"
     },
     {
       "bufferView": 1,
       "componentType": 5126,
-      "count": 53920,
+      "count": 53924,
       "type": "VEC3"
     },
     {
       "bufferView": 2,
       "componentType": 5126,
-      "count": 53920,
+      "count": 53924,
       "type": "VEC2"
     },
     {
@@ -122,23 +122,23 @@
   "bufferViews": [
     {
       "buffer": 0,
-      "byteLength": 647040,
+      "byteLength": 647088,
       "byteOffset": 0
     },
     {
       "buffer": 0,
-      "byteLength": 647040,
-      "byteOffset": 647040
+      "byteLength": 647088,
+      "byteOffset": 647088
     },
     {
       "buffer": 0,
-      "byteLength": 431360,
-      "byteOffset": 1294080
+      "byteLength": 431392,
+      "byteOffset": 1294176
     },
     {
       "buffer": 0,
       "byteLength": 644340,
-      "byteOffset": 1725440
+      "byteOffset": 1725568
     }
   ],
   "samplers": [
@@ -149,8 +149,8 @@
   ],
   "buffers": [
     {
-      "byteLength": 2369780,
-      "uri": "stone_brick_wall_001.bin"
+      "byteLength": 2369908,
+      "uri": "aerial_rocks_02.bin"
     }
   ]
 }

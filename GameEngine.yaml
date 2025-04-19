@@ -3,7 +3,7 @@ Entity4:
   Transform:
     position: [0, 0, 0]
     scale: [1, 1, 1]
-    rotation: [0, 1258.0614, 4.3]
+    rotation: [0, 1081.8988, 4.3]
   StaticMesh:
     path: stone_brick_wall_001\stone_brick_wall_001.gltf
 Entity3:
@@ -11,7 +11,7 @@ Entity3:
   Transform:
     position: [-3, 0, 0]
     scale: [1, 1, 1]
-    rotation: [0, 1258.0615, 0]
+    rotation: [0, 1081.8989, 0]
   StaticMesh:
     path: monkey\monkey.obj
 Entity2:
@@ -36,6 +36,6 @@ Entity5:
   Transform:
     position: [3, 0, 0]
     scale: [0.05, 0.05, 0.05]
-    rotation: [0, 1258.0615, 4.3]
+    rotation: [0, 1081.8989, 4.3]
   StaticMesh:
     path: aerial_rocks_02\aerial_rocks_02.gltf

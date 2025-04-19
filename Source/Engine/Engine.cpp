@@ -229,14 +229,14 @@ void Engine::Initialize()
 void Engine::Run()
 {
   Camera camera;
-  camera.position = vec3f(0.f, 15.f, 30.0f);
-  camera.orientation = vec3f(-90.f, -35.f, 0.0f);
+  camera.position = vec3f(0.f, 5.f, 10.0f);
+  camera.orientation = vec3f(-90.f, -20.f, 0.0f);
   camera.frustum.zFar = 50.0f;
 
   Scene scene((Paths::GetRootPath() / "Scene.yaml"));
 
   bool wireframe = false;
-  bool normalMapping = false;
+  bool normalMapping = true;
 
   // 0: Blinn-Phong shading
   // 1: Gooch shading
@@ -344,11 +344,14 @@ void Engine::Run()
       {
         switch (shadingModel)
         {
+          
           case 0: // Blinn-Phong shading model
             blinnPhongProgram.Use();
             blinnPhongProgram.SetUniform1i("u_normalMapping", normalMapping ? 1 : 0);
-            
             scene.Reg().view<StaticMesh, Transform>().each([&](auto& staticMesh, auto& transform) {
+              transform.rotation.y = glfwGetTime() * 10.f;
+              transform.UpdateTransformation();
+
               blinnPhongProgram.SetUniformMat4f(Uniforms::model, transform.GetTransformation());
               staticMesh.Render(blinnPhongProgram, RenderMode::TRIANGLES); 
             });
