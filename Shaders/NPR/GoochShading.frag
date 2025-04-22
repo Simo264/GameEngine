@@ -36,7 +36,6 @@
     - y = 0.4f
     - alpha = 0.2f
     - beta = 0.f
-
 */
 
 
@@ -46,13 +45,23 @@ in vec2 TexCoord;
 in vec3 Normal;
 in vec3 FragPos;
 in vec3 CameraPos;
+in mat3 TBN;
+
 
 // ========== OUT attributes ==========
 // ====================================
-out vec4 FragColor;
+out vec4 OutColor;
 
 // ========== Structs ==========
 // =============================
+struct GoochParams
+{
+  float warmFactor; // alpha: warm contribution
+  float coolFactor; // beta: cool contribution
+  float baseCoolColor; // b: cool color base
+  float baseWarmColor; // y: warm color base
+};
+
 struct Material 
 {
   sampler2D diffuseTexture;
@@ -97,10 +106,11 @@ layout (std140, binding = 1) uniform LightBlock
   PointLight        u_pointLight;
 };
 uniform Material u_material;
+uniform int u_normalMapping; // 1 -> enabled; 0 -> disabled
+uniform GoochParams u_goochParams;
 
-uniform float u_b, u_y, u_alpha, u_beta;
 
-const float g_shininess = 16.f;
+const float g_shininess = 32.f;
 const float g_gammaCorrection = 2.2f;
 
 Lighting GoochShading(vec3 L, vec3 N, vec3 V, vec3 kCool, vec3 kWarm, vec3 ks);
@@ -108,26 +118,31 @@ void CalculateAttenuation(float distance, float kl, float kq, inout Lighting lig
 
 void main()
 {
-  vec3 N = normalize(Normal);
-  vec3 V = normalize(CameraPos - FragPos);
-
   vec4 kd = texture(u_material.diffuseTexture, TexCoord);
   vec4 ka = kd * 0.1f;
   vec4 ks = texture(u_material.specularTexture, TexCoord);
+
+  vec3 V = normalize(CameraPos - FragPos);
+  vec3 N = normalize(Normal);
+  ivec2 normalSize = textureSize(u_material.normalTexture, 0);
+  if(u_normalMapping == 1 && normalSize != ivec2(1))
+  {
+    N = texture(u_material.normalTexture, TexCoord).rgb;  // Obtain normal from normal map in range [0,1];
+    N = N * 2.0f - 1.0f;                                  // transform normal vector to range [-1,1];
+    N = normalize(TBN * N);                               // the resulting normal is now in world space,
+  }
   
   // k_cool = k_blue + alpha*k_d
-  vec3 kBlue = vec3(0.f, 0.f, u_b);
-  vec3 kCool = kBlue + u_alpha * kd.rgb;
+  vec3 kBlue = vec3(0.f, 0.f, u_goochParams.baseCoolColor);
+  vec3 kCool = kBlue + u_goochParams.coolFactor * kd.rgb;
   // k_warm = k_yellow + beta*k_d
-  vec3 kYellow = vec3(u_y, u_y, 0.f);
-  vec3 kWarm = kYellow + u_beta*kd.rgb;
+  vec3 kYellow = vec3(u_goochParams.baseWarmColor, u_goochParams.baseWarmColor, 0.f);
+  vec3 kWarm = kYellow + u_goochParams.warmFactor*kd.rgb;
   
   vec3 color = kCool;
-  
   vec3 L;
-
-  // calculate with directional light
-  if(u_directLight.intensity > 0.f)
+  
+  if(u_directLight.intensity > 0.f) // calculate with directional light
   {
     L = normalize(-u_directLight.direction);
     Lighting I = GoochShading(L, N, V, kCool, kWarm, ks.rgb);
@@ -137,8 +152,7 @@ void main()
     color += I.diffuse + I.specular;
   }
 
-  // calculate with point light
-  if(u_pointLight.intensity > 0.f)
+  if(u_pointLight.intensity > 0.f) // calculate with point light
   {
     L = normalize(u_pointLight.position - FragPos);
     Lighting I = GoochShading(L, N, V, kCool, kWarm, ks.rgb);
@@ -154,7 +168,7 @@ void main()
   }
 
   color = pow(color, vec3(1.0f / g_gammaCorrection));
-  FragColor = vec4(color, 1.f);
+  OutColor = vec4(color, 1.f);
 }
 
 Lighting GoochShading(vec3 L, vec3 N, vec3 V, vec3 kCool, vec3 kWarm, vec3 ks)

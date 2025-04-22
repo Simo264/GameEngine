@@ -3,12 +3,10 @@
 #include "Core/Paths/Paths.hpp"
 #include "Core/Dialog/FileDialog.hpp"
 
-#include "Engine/Scene.hpp"
 #include "Engine/Components/Components.hpp"
 
 #include "Engine/Managers/TexturesManager.hpp"
 #include "Engine/Managers/StaticMeshFactory.hpp"
-
 #include "Engine/Managers/AnimationsManager.hpp"
 
 #include <imgui.h>
@@ -18,7 +16,7 @@
 //                  PRIVATE
 // ------------------------------------------
 
-static bool ButtonCentered(StringView label, ImVec2 size)
+static bool Insp_ButtonCentered(StringView label, ImVec2 size)
 {
   f32 avail = ImGui::GetContentRegionAvail().x;
   f32 off = (avail - size.x) * 0.5f;
@@ -186,7 +184,9 @@ static void Insp_PointLight(GameObject &object, PointLight &light)
   }
   ImGui::PopStyleColor(3);
 }
-static void Insp_Transform_TableRow(StringView label, vec3f &values, f32 resetValue)
+static void Insp_Transform_TableRow(StringView label, 
+                                    vec3f &values, 
+                                    f32 resetValue)
 {
   ImGui::PushID(label.data()); // label = "Position" or "Rotation" or "Scale"
 
@@ -273,7 +273,10 @@ static void Insp_Transform(GameObject &object, Transform &transform)
     object.RemoveComponent<Transform>();
   ImGui::PopStyleColor(3);
 }
-static void Insp_ShowTextureSelector(StringView label, u32 meshID, Texture2D &meshTexture, Texture2D defaultTex)
+static void Insp_ShowTextureSelector(StringView label, 
+                                     u32 meshID, 
+                                     Texture2D &meshTexture, 
+                                     Texture2D defaultTex)
 {
   TexturesManager& texManager = TexturesManager::GetInstance();
   bool isMeshTextureValid = meshTexture.GetWidth() != 1;
@@ -702,14 +705,16 @@ static void Insp_NewComponentPopup(GameObject &object)
 //                    PUBLIC
 // ------------------------------------------
 
-void GUI_RenderInspector(GameObject &object)
+void GUI_Inspector(bool& open, 
+                         StringView windowName, 
+                         GameObject &object)
 {
-  ImGui::Begin("Inspector");
+  ImGui::Begin(windowName.data(), &open);
   if (object.IsValid())
   {
     // "+New component" button
     f32 btnWidth = ImGui::GetContentRegionAvail().x - 32.f;
-    if (ButtonCentered("+Add component", ImVec2(btnWidth, 26.f)))
+    if (Insp_ButtonCentered("+Add component", ImVec2(btnWidth, 26.f)))
       ImGui::OpenPopup("NewComponent_Popup");
 
     ImGui::Spacing();

@@ -4,6 +4,8 @@
 #include "Core/Math/Base.hpp"
 #include "Core/DesignPatterns/Singleton.hpp"
 
+struct GoochParams;
+class Texture2D;
 class Camera;
 class Scene;
 class GameObject;
@@ -11,85 +13,59 @@ class Animator;
 
 /**
  * @brief Manages rendering and integration of ImGui into the application
- *
- * This class implements the singleton pattern to ensure only one instance of ImGuiLayer
- * exists throughout the application.
  */
 class ImGuiLayer : public Singleton<ImGuiLayer>
 {
 public:
-	/**
-	 * @brief Initializes the ImGui context and loads the default font.
-	 *
-	 * This method sets up the ImGui context, applies custom styling,
-	 * and loads the font specified in the configuration file. It is executed
-	 * at the start of the GUI system.
-	 */
-	void Initialize();
+	/** @brief Initializes the ImGui context, styling, and font settings. */
+	void InitializeImGui();
+	/** @brief Cleans up and shuts down the ImGui context and related resources. */
+	void CleanUpImGui();
+	/** @brief Prepares a new ImGui frame and configures the dockspace. */
+	void PrepareImGuiFrame();
+	/** @brief Finalizes the current ImGui frame and handles rendering. */
+	void CompleteFrameRender();
 
-	/**
-	 * @brief Performs cleanup of the ImGui context.
-	 *
-	 * This method handles the removal and deallocation of all resources
-	 * allocated by ImGui during execution, ensuring a clean shutdown
-	 * of the GUI.
-	 */
-	void CleanUp();
 
-	/**
-	 * @brief Starts a new ImGui rendering frame.
-	 *
-	 * Prepares the ImGui context for the new drawing phase by initializing
-	 * frame buffers and starting the necessary components for GUI element handling
-	 */
-	void BeginFrame();
+	/** @brief Displays the main menu bar of the ImGui layer. */
+	void MenuBar(Scene &scene, GoochParams& goochParams) const;
+	/** @brief Displays the ImGui demo window. */
+	void ImguiDemo();
+	/** @brief Renders the ImGui viewport */
+	void Viewport(Texture2D textureImage,
+								GameObject &objSelected, 
+								const mat4f &view, 
+								const mat4f &proj) const;
+	/** @brief Displays the hierarchy view. */
+	GameObject& Hierarchy(Scene& scene);
+	/** @brief Displays the inspector view for examining a specific game object. */
+	void Inspector(GameObject& object);
+	/** @brief Renders the toolbar for user interaction */
+	void ToolBar();
+	/** @brief Renders timing information including delta time, average time, and frame rate. */
+	void TimeInfo(f64 delta, f64 avg, i32 frameRate);
+	/** @brief Displays properties and controls for a camera  */
+	void CameraProperties(Camera &camera);
+	/** @brief Displays detailed graphics information */
+	void GraphicsInfo();
 
-	/**
-	 * @brief Ends and presents the current ImGui frame.
-	 *
-	 * Completes the rendering of ImGui elements on the screen and manages
-	 * the display of platform-native windows if multi-viewport mode is enabled.
-	 */
-	void EndFrame();
-
-	/**
-	 * @brief Sets a new font for the user interface.
-	 *
-	 * @param ttfFilePath Path to the TTF file of the font to load.
-	 *
-	 * This method loads and applies a new font to the ImGui interface
-	 * using the specified file. The existing font is removed, and the new one
-	 * is built and bound to the ImGui context.
-	 *
-	 * Call before BeginFrame()!!
-	 */
-	void SetFont(const fs::path &ttfFilePath, u32 fontSize) const;
-
-	void RenderMenuBar(Scene &scene) const;
-	void RenderDemo();
-	void RenderViewport(u32 texture, GameObject &objSelected, const mat4f &view, const mat4f &proj) const;
-	GameObject &RenderHierarchy(Scene &scene);
-	void RenderInspector(GameObject &object);
-	void RenderGizmoToolBar();
-	void RenderCameraSettings(Camera &camera);
-	void RenderGraphicsInfo();
-	void RenderTimeInfo(f64 delta, f64 avg, i32 frameRate);
-	void RenderDebug(bool& wireframe,
-									 bool& normalMapping,
-									 u32& shadingModel,
-									 f32& b,
-									 f32& y,
-									 f32& alpha,
-									 f32& beta);
+	void DrawTextureDepth(Texture2D textureDepth, i32 w, i32 h);
 
 	vec2i viewportSize;
 	vec2i viewportPos;
 	bool viewportFocused;
-
 	i32 gizmode;
 
+	bool renderImGuiDemo;
+	bool renderToolbar;
+	bool renderTimeInfo;
+	bool renderHierarchy;
+	bool renderInspector;
+	bool renderCameraProperties;
+	bool renderGraphicsInfo;
+
 private:
-	void SetupContext();
-	void Styling();
-	void Docking();
+	void SetupImGuiContext();
+	void CustomizeStyle();
+	void ConfigureDockspace();
 };

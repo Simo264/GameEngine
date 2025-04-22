@@ -1,9 +1,11 @@
+#include "Viewport.hpp"
 #include "ImGuiLayer.hpp"
 
-#include "Core/Math/Base.hpp"
 #include "Core/Math/Ext.hpp"
 
+#include "Engine/Globals.hpp"
 #include "Engine/Components/Components.hpp"
+#include "Engine/Graphics/Objects/Texture2D.hpp"
 
 #include <imgui.h>
 #include <ImGuizmo.h>
@@ -12,7 +14,9 @@
 //                  PRIVATE                  
 // ------------------------------------------
 
-static void GizmoWorldTranslation(Transform& transform, const mat4f& view, const mat4f& proj)
+static void Viewport_GizmoWorldTranslation(Transform& transform,
+                                           const mat4f& view, 
+                                           const mat4f& proj)
 {
   mat4f& model = transform.GetTransformation();
   ImGuizmo::Manipulate(
@@ -35,7 +39,10 @@ static void GizmoWorldTranslation(Transform& transform, const mat4f& view, const
     transform.UpdateTransformation();
   }
 }
-static void GizmoWorldRotation(Transform& transform, const mat4f& view, const mat4f& proj)
+
+static void Viewport_GizmoWorldRotation(Transform& transform,
+                                        const mat4f& view, 
+                                        const mat4f& proj)
 {
   mat4f& model = transform.GetTransformation();
   ImGuizmo::Manipulate(
@@ -64,7 +71,10 @@ static void GizmoWorldRotation(Transform& transform, const mat4f& view, const ma
     transform.UpdateTransformation();
   }
 }
-static void GizmoWorldScaling(Transform& transform, const mat4f& view, const mat4f& proj)
+
+static void Viewport_GizmoWorldScaling(Transform& transform,
+                                       const mat4f& view, 
+                                       const mat4f& proj)
 {
   mat4f& model = transform.GetTransformation();
   ImGuizmo::Manipulate(
@@ -93,14 +103,19 @@ static void GizmoWorldScaling(Transform& transform, const mat4f& view, const mat
 //                    PUBLIC                 
 // ------------------------------------------
 
-void GUI_RenderViewport(u32 texID, GameObject& objSelected, i32 gizmode, const mat4f& view, const mat4f& proj)
+void GUI_Viewport(StringView windowName,
+                  Texture2D textureImage,
+                  GameObject& objSelected,
+                  i32 gizmode,
+                  const mat4f& view,
+                  const mat4f& proj)
 {
   ImGuiStyle& style = ImGui::GetStyle();
   const ImVec2 paddingTmp = style.WindowPadding;
   style.WindowPadding = { 0.0f, 0.0f };
 
   // Begin main viewport
-  ImGui::Begin("Viewport");
+  ImGui::Begin(windowName.data(), nullptr, ImGuiWindowFlags_NoCollapse);
   const ImVec2 winSize = ImGui::GetWindowSize();
   const ImVec2 winPos = ImGui::GetWindowPos();
   auto& guiLayer = ImGuiLayer::GetInstance();
@@ -108,12 +123,12 @@ void GUI_RenderViewport(u32 texID, GameObject& objSelected, i32 gizmode, const m
   guiLayer.viewportPos = { winPos.x, winPos.y };
   guiLayer.viewportFocused = ImGui::IsWindowFocused();
 
-  // Being child viewport
+  // Begin child viewport
   ImGui::BeginChild("Viewport_Child");
-  guiLayer.viewportFocused |= ImGui::IsWindowFocused();
-
   const ImVec2 winChildSize = ImGui::GetWindowSize();
-  ImGui::Image(texID, winChildSize, ImVec2(0, 1), ImVec2(1, 0));
+  guiLayer.viewportFocused |= ImGui::IsWindowFocused();
+  
+  ImGui::Image(textureImage.id, winChildSize, ImVec2(0, 1), ImVec2(1, 0));
   if (objSelected.IsValid())
   {
     auto* transform = objSelected.GetComponent<Transform>();
@@ -121,23 +136,22 @@ void GUI_RenderViewport(u32 texID, GameObject& objSelected, i32 gizmode, const m
     {
       ImGuizmo::SetOrthographic(false);
       ImGuizmo::SetDrawlist();
-
-      f32 windowW = ImGui::GetWindowWidth();
-      f32 windowH = ImGui::GetWindowHeight();
-      ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, windowW, windowH);
+      f32 w = ImGui::GetWindowWidth();
+      f32 h = ImGui::GetWindowHeight();
+      ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, w, h);
 
       switch (gizmode)
       {
       case ImGuizmo::OPERATION::TRANSLATE:
-        GizmoWorldTranslation(*transform, view, proj);
+        Viewport_GizmoWorldTranslation(*transform, view, proj);
         break;
 
       case ImGuizmo::OPERATION::ROTATE:
-        GizmoWorldRotation(*transform, view, proj);
+        Viewport_GizmoWorldRotation(*transform, view, proj);
         break;
 
       case ImGuizmo::OPERATION::SCALE:
-        GizmoWorldScaling(*transform, view, proj);
+        Viewport_GizmoWorldScaling(*transform, view, proj);
         break;
 
       default:
@@ -145,9 +159,9 @@ void GUI_RenderViewport(u32 texID, GameObject& objSelected, i32 gizmode, const m
       }
     }
   }
-
+    
   ImGui::EndChild();
+  
   ImGui::End();
-
   style.WindowPadding = paddingTmp;
 }

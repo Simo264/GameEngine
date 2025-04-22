@@ -38,38 +38,19 @@ enum class RenderbufferInternalFormat : u32
  * If you need to resample (such as when reading depth back in a second shader pass), use Textures instead. 
  * Renderbuffer objects also natively accommodate Multisampling (MSAA).
  */
-class RenderBuffer
+class Renderbuffer
 {
 public:
-	RenderBuffer() : 
-		id{ 0 } 
-	{}
-	~RenderBuffer() = default;
+	Renderbuffer() : id{ 0 } {}
+	~Renderbuffer() = default;
 
-	/**
-	 * @brief
-	 * Create renderbuffer objects
-	 */
+	/** @brief Create renderbuffer object */
 	void Create();
-
-	/**
-	 * @brief
-	 * Delete renderbuffer objects and invalidates the name associated with the render buffer object 
-	 */
+	/** @brief Delete renderbuffer object */
 	void Delete();
-
-	/**
-	 * @brief
-	 * Establish data storage, format and dimensions of the renderbuffer object's image.
-	 * See https://registry.khronos.org/OpenGL-Refpages/gl4/html/glRenderbufferStorage.xhtml
-	 */
+	/** @brief Establish data storage, format and dimensions of the renderbuffer object's image. */
 	void CreateStorage(RenderbufferInternalFormat internalFormat, i32 width, i32 height) const;
-
-	/**
-	 * @brief
-	 * Establish data storage, format, dimensions and sample count of the renderbuffer object's image.
-	 * See https://registry.khronos.org/OpenGL-Refpages/gl4/html/glRenderbufferStorageMultisample.xhtml
-	 */
+	/** @brief Establish data storage, format, dimensions and sample count of the renderbuffer object's image. */
 	void CreateStorageMulstisampled(RenderbufferInternalFormat internalFormat, i32 samples, i32 width, i32 height) const;
 
 	bool IsValid() const;

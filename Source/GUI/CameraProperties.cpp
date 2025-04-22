@@ -1,10 +1,13 @@
+#include "CameraProperties.hpp"
 #include "Engine/Camera.hpp"
 
 #include <imgui.h>
 
-void Gui_RenderCameraSettings(Camera& camera)
+void GUI_CameraProperties(bool& open,
+                          StringView windowName,
+                          Camera& camera)
 {
-  ImGui::Begin("Camera settings");
+  ImGui::Begin(windowName.data(), &open);
 
   // Position
   ImGui::Text("Position");

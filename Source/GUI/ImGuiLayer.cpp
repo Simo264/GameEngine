@@ -10,58 +10,71 @@
 #include "Engine/Graphics/Objects/Texture2D.hpp"
 #include "Engine/Managers/WindowManager.hpp"
 
+#include "MenuBar.hpp"
+#include "Hierarchy.hpp"
+#include "Viewport.hpp"
+#include "Inspector.hpp"
+#include "CameraProperties.hpp"
+#include "ToolBar.hpp"
+
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 #include <imgui_internal.h>
 #include <ImGuizmo.h>
 
-extern void GUI_RenderMenuBar(Scene& scene);
-extern void GUI_RenderHierarchy(Scene& scene, GameObject& objSelected);
-extern void GUI_RenderViewport(u32 texID, GameObject& objSelected, i32 gizmode, const mat4f& view, const mat4f& proj);
-extern void GUI_RenderInspector(GameObject& object);
-extern void GUI_RenderTransformToolBar(vec2i viewportPos, i32& gizmode);
-extern void Gui_RenderCameraSettings(Camera& camera);
+constexpr f32 fontSize = 16.f;
+constexpr const char* fontFamily = "OpenSans/OpenSans-Regular.ttf";
 
 // --------------------------
 //          PUBLIC
 // --------------------------
 
-void ImGuiLayer::Initialize()
+void ImGuiLayer::InitializeImGui()
 {
   viewportFocused = false;
   viewportSize = vec2i{};
   viewportPos = vec2i{};
   gizmode = -1;
 
+  renderImGuiDemo = false;
+  renderToolbar = true;
+  renderTimeInfo = true;
+  renderHierarchy = true;
+  renderInspector = true;
+  renderCameraProperties = true;
+  renderGraphicsInfo = false;
+
   // Setup ImGui context
-  SetupContext();
+  SetupImGuiContext();
 
   // Custom styling
-  Styling();
+  CustomizeStyle();
 
-  // Load default font
-  g_fontFamily = "OpenSans/OpenSans-Regular.ttf";
-  g_fontSize = 16;
-
-  SetFont(Paths::GetFontsPath() / g_fontFamily, g_fontSize);
+  // Load font
+  ImGuiIO& io = ImGui::GetIO();
+  io.Fonts->Clear();
+  io.Fonts->AddFontFromFileTTF((Paths::GetFontsPath() / fontFamily).string().c_str(), fontSize);
+  io.Fonts->Build();
+  ImGui_ImplOpenGL3_DestroyDeviceObjects();
+  ImGui_ImplOpenGL3_CreateDeviceObjects();
 }
-void ImGuiLayer::CleanUp()
+void ImGuiLayer::CleanUpImGui()
 {
   ImGui_ImplOpenGL3_Shutdown();
   ImGui_ImplGlfw_Shutdown();
   ImGui::DestroyContext();
 }
-void ImGuiLayer::BeginFrame()
+void ImGuiLayer::PrepareImGuiFrame()
 {
   ImGui_ImplOpenGL3_NewFrame();
   ImGui_ImplGlfw_NewFrame();
   ImGui::NewFrame();
   ImGuizmo::BeginFrame();
 
-  Docking();
+  ConfigureDockspace();
 }
-void ImGuiLayer::EndFrame()
+void ImGuiLayer::CompleteFrameRender()
 {
   ImGui::Render();
   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -75,64 +88,33 @@ void ImGuiLayer::EndFrame()
     windowManager.MakeContextCurrent(backupCurrentContext);
   }
 }
-void ImGuiLayer::SetFont(const fs::path& ttfFilePath, u32 fontSize) const
-{
-  ImGuiIO& io = ImGui::GetIO();
-  io.Fonts->Clear();
-  io.Fonts->AddFontFromFileTTF(ttfFilePath.string().c_str(), static_cast<f32>(fontSize));
-  io.Fonts->Build();
 
-  ImGui_ImplOpenGL3_DestroyDeviceObjects();
-  ImGui_ImplOpenGL3_CreateDeviceObjects();
-}
-void ImGuiLayer::RenderDemo()
+void ImGuiLayer::MenuBar(Scene& scene, GoochParams& goochParams) const
 {
-  static bool open = true;
-  if (open)
-    ImGui::ShowDemoWindow(&open);
+  GUI_MenuBar(scene, goochParams);
 }
-void ImGuiLayer::RenderMenuBar(Scene& scene) const
+void ImGuiLayer::ImguiDemo()
 {
-  GUI_RenderMenuBar(scene);
+  if (renderImGuiDemo)
+    ImGui::ShowDemoWindow(&renderImGuiDemo);
 }
-void ImGuiLayer::RenderViewport(u32 texture, GameObject& objSelected, const mat4f& view, const mat4f& proj) const
+void ImGuiLayer::Viewport(Texture2D textureImage,
+                          GameObject& objSelected, 
+                          const mat4f& view, 
+                          const mat4f& proj) const
 {
-  GUI_RenderViewport(texture, objSelected, gizmode, view, proj);
+  GUI_Viewport("Viewport", textureImage, objSelected, gizmode, view, proj);
 }
-GameObject& ImGuiLayer::RenderHierarchy(Scene& scene)
+void ImGuiLayer::ToolBar()
 {
-  static GameObject object;
-  GUI_RenderHierarchy(scene, object);
-  return object;
+  if (renderToolbar)
+    GUI_ToolBar(renderToolbar, viewportPos, viewportSize, gizmode);
 }
-void ImGuiLayer::RenderInspector(GameObject& object)
+void ImGuiLayer::TimeInfo(f64 delta, f64 avg, i32 frameRate)
 {
-  GUI_RenderInspector(object);
-}
-void ImGuiLayer::RenderGizmoToolBar()
-{
-  GUI_RenderTransformToolBar(viewportPos, gizmode);
-}
-void ImGuiLayer::RenderGraphicsInfo()
-{
-  ImGui::Begin("Graphics info");
+  if (!renderTimeInfo)
+    return;
 
-  WindowManager& winManager = WindowManager::GetInstance();
-  static const char* glRender = reinterpret_cast<const char*>(glGetString(GL_RENDERER));
-  static const char* glVersion = reinterpret_cast<const char*>(glGetString(GL_VERSION));
-  static const char* glVendor = reinterpret_cast<const char*>(glGetString(GL_VENDOR));
-  static const char* glsl = reinterpret_cast<const char*>(glGetString(GL_SHADING_LANGUAGE_VERSION));
-  ImGui::TextWrapped("GLFW: %s\nOpenGL renderer: %s\nOpenGL version: %s\nOpenGL vendor: %s\nOpenGL Shading Language Version: %s",
-    winManager.GetVersion(),
-    glRender,
-    glVersion,
-    glVendor,
-    glsl);
-
-  ImGui::End();
-}
-void ImGuiLayer::RenderTimeInfo(f64 delta, f64 avg, i32 frameRate)
-{
   constexpr i32 flags = ImGuiWindowFlags_NoDocking |
     ImGuiWindowFlags_NoTitleBar |
     ImGuiWindowFlags_NoResize |
@@ -140,61 +122,66 @@ void ImGuiLayer::RenderTimeInfo(f64 delta, f64 avg, i32 frameRate)
     ImGuiWindowFlags_NoBackground;
 
   constexpr ImVec2 windowSize{ 160.f, 100.f };
-  ImVec2 windowPos = ImVec2(
-    static_cast<f32>((viewportPos.x + viewportSize.x) - windowSize.x),
-    static_cast<f32>(viewportPos.y + 25)
-  );
+  ImVec2 windowPos = ImVec2(static_cast<f32>((viewportPos.x + viewportSize.x) - windowSize.x),
+                            static_cast<f32>(viewportPos.y + 25));
   ImGui::SetNextWindowPos(windowPos);
   ImGui::SetNextWindowSize(windowSize);
   ImGui::SetNextWindowBgAlpha(0.0f);
-  ImGui::Begin("Info", nullptr, flags);
-
+  ImGui::Begin("Info", &renderTimeInfo, flags);
   ImGui::TextWrapped("Time (ms): %f", delta * 1000.0f);
   ImGui::TextWrapped("Average (ms): %f", avg * 1000.0f);
   ImGui::TextWrapped("Frame rate: %d", frameRate);
-
   ImGui::End();
 }
-void ImGuiLayer::RenderCameraSettings(Camera& camera)
+
+GameObject& ImGuiLayer::Hierarchy(Scene& scene)
 {
-  Gui_RenderCameraSettings(camera);
+  static GameObject object;
+
+  if(renderHierarchy)
+    GUI_Hierarchy(renderHierarchy, scene, object);
+  
+  return object;
+}
+void ImGuiLayer::Inspector(GameObject& object)
+{
+  if(renderInspector)
+    GUI_Inspector(renderInspector, "Inspector", object);
+}
+void ImGuiLayer::CameraProperties(Camera& camera)
+{
+  if (renderCameraProperties)
+    GUI_CameraProperties(renderCameraProperties,
+                         "Camera Properties", 
+                         camera);
+}
+void ImGuiLayer::GraphicsInfo()
+{
+  if (!renderGraphicsInfo)
+    return;
+
+  constexpr i32 flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking;
+  ImGui::SetNextWindowSize(ImVec2(468, 128), ImGuiCond_Once);
+  ImGui::Begin("Graphics info", &renderGraphicsInfo, flags);
+
+  WindowManager& winManager = WindowManager::GetInstance();
+  static const char* glRender = reinterpret_cast<const char*>(glGetString(GL_RENDERER));
+  static const char* glVersion = reinterpret_cast<const char*>(glGetString(GL_VERSION));
+  static const char* glVendor = reinterpret_cast<const char*>(glGetString(GL_VENDOR));
+  static const char* glsl = reinterpret_cast<const char*>(glGetString(GL_SHADING_LANGUAGE_VERSION));
+  ImGui::TextWrapped("GLFW: %s\nOpenGL renderer: %s\nOpenGL version: %s\nOpenGL vendor: %s\nOpenGL Shading Language Version: %s",
+                     winManager.GetVersion(),
+                     glRender,
+                     glVersion,
+                     glVendor,
+                     glsl);
+  ImGui::End();
 }
 
-void ImGuiLayer::RenderDebug(bool& wireframe, 
-                             bool& normalMapping,
-                             u32& shadingModel,
-                             f32& b,
-                             f32& y, 
-                             f32& alpha, 
-                             f32& beta)
+void ImGuiLayer::DrawTextureDepth(Texture2D textureDepth, i32 w, i32 h)
 {
-  ImGui::Begin("Debug Options");
-
-  ImGui::Checkbox("Wireframe", &wireframe);
-
-  const char* shadingModels[] = { "Blinn-Phong", "Gooch Shading" };
-  constexpr i32 nrModels = sizeof(shadingModels) / sizeof(shadingModels[0]);
-
-  static i32 currentShadingModel = 0;
-  if (ImGui::Combo("Shading Model", &currentShadingModel, shadingModels, nrModels))
-    shadingModel = static_cast<u32>(currentShadingModel);
-
-  switch (currentShadingModel)
-  {
-    case 0: // Blinn-Phong
-      ImGui::Text("Blinn-Phong Settings");
-      ImGui::Checkbox("Normal Mapping", &normalMapping);
-      break;
-    
-    case 1: // Gooch Shading
-      ImGui::Text("Gooch Shading Parameters");
-      ImGui::SliderFloat("b", &b, 0.0f, 1.0f);
-      ImGui::SliderFloat("y", &y, 0.0f, 1.0f);
-      ImGui::SliderFloat("alpha", &alpha, 0.0f, 1.0f);
-      ImGui::SliderFloat("beta", &beta, 0.0f, 1.0f);
-      break;
-  }
-
+  ImGui::Begin("Depth Texture Window");
+  ImGui::Image(textureDepth.id, ImVec2(w, h), ImVec2(0, 0), ImVec2(1, 1));
   ImGui::End();
 }
 
@@ -202,7 +189,7 @@ void ImGuiLayer::RenderDebug(bool& wireframe,
 //          PRIVATE
 // --------------------------
 
-void ImGuiLayer::SetupContext()
+void ImGuiLayer::SetupImGuiContext()
 {
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
@@ -215,7 +202,7 @@ void ImGuiLayer::SetupContext()
   ImGui_ImplGlfw_InitForOpenGL(WindowManager::GetInstance().GetCurrentContext(), true);
   ImGui_ImplOpenGL3_Init("#version 460");
 }
-void ImGuiLayer::Styling()
+void ImGuiLayer::CustomizeStyle()
 {
   auto& colors = ImGui::GetStyle().Colors;
   colors[ImGuiCol_WindowBg] = ImVec4{ 0.1f, 0.1f, 0.13f, 1.0f };
@@ -292,9 +279,9 @@ void ImGuiLayer::Styling()
   style.PopupRounding = 4;
   style.ChildRounding = 4;
 }
-void ImGuiLayer::Docking()
+void ImGuiLayer::ConfigureDockspace()
 {
-  constexpr ImGuiWindowFlags windowFlags =
+  constexpr i32 windowFlags =
     ImGuiWindowFlags_NoDocking |
     ImGuiWindowFlags_NoBackground |
     ImGuiWindowFlags_NoTitleBar |
@@ -329,14 +316,15 @@ void ImGuiLayer::Docking()
 
     ImGuiID dockLeft = ImGui::DockBuilderSplitNode(dockspaceID, ImGuiDir_Left, 0.25f, nullptr, &dockspaceID);
     ImGuiID dockMain = dockspaceID;
-    
     ImGuiID dockLeftTop;
     ImGuiID dockLeftBottom = ImGui::DockBuilderSplitNode(dockLeft, ImGuiDir_Down, 0.5f, nullptr, &dockLeftTop);
+    ImGuiID dockRight = ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Right, 0.25f, nullptr, &dockMain);
 
     ImGui::DockBuilderDockWindow("Hierarchy", dockLeftTop);
-    ImGui::DockBuilderDockWindow("Camera settings", dockLeftTop);
+    ImGui::DockBuilderDockWindow("Camera Properties", dockLeftTop);
     ImGui::DockBuilderDockWindow("Inspector", dockLeftBottom);
     ImGui::DockBuilderDockWindow("Viewport", dockMain);
+    ImGui::DockBuilderDockWindow("Dear ImGui Demo", dockRight);
 
     ImGui::DockBuilderFinish(dockspaceID);
   }

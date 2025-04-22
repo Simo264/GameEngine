@@ -1,7 +1,15 @@
 #include "Core/Core.hpp"
 
-constexpr const char* DEFAULT_FONT = "OpenSans/OpenSans-Regular.ttf";
+u32 g_drawCalls = 0;
 
-u32 g_drawCalls;
-fs::path g_fontFamily = DEFAULT_FONT;
-i32 g_fontSize = 12;
+// 0: Blinn-Phong shading
+// 1: Gooch shading
+i32 g_activeShadingModel = 0;
+
+// 0: render color
+// 1: render depth
+// 2: render normals
+i32 g_renderMode = 1;
+
+bool g_renderInWireframe = false;
+bool g_renderWithNormalMapping = true;

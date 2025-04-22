@@ -6,5 +6,9 @@
   "GoochShading": {
     "vertex": "NPR/GoochShading.vert",
     "fragment": "NPR/GoochShading.frag"
+  },
+  "DepthMap": {
+    "vertex": "DepthMap.vert",
+    "fragment": "DepthMap.frag"
   }
 }

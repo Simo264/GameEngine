@@ -18,26 +18,16 @@ public:
 
 private:
 	void SetGLStates() const;
+	void InitTime();
+	void CalculatePerFrameTime();
+
 	void CreateCameraUBO();
 	void CreateLightUBO();
 	void CreateBoneUBO();
-	void InitTime();
-
-	void CreateFramebuffer(i32 samples, i32 width, i32 height);
-	void CreateScreenSquare();
-	void CalculatePerFrameTime();
-	
-	FrameBuffer _fboMultisampled;
-	FrameBuffer _fboIntermediate;
 
 	Buffer _uboCameraBlock;	// UBO "CameraBlock"	-> bindpoint 0
 	Buffer _uboLightBlock;	// UBO "LightBlock"		-> bindpoint 1
 	Buffer _uboBoneBlock;		// UBO "BoneBlock"		-> bindpoint 2
-
-	Mesh _screenSquare;
-	Mesh _meshCubeSkybox;
-	
-	vec2i _viewportSize;
 	
 	chrono::steady_clock::time_point _now;
 	chrono::steady_clock::time_point _lastFrameTime;

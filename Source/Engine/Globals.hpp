@@ -1,9 +1,16 @@
 #pragma once
 
-constexpr i32	WINDOW_WIDTH = 1600;
-constexpr i32	WINDOW_HEIGHT = 900;
-
 extern u32 g_drawCalls;
 
-extern fs::path g_fontFamily;
-extern i32 g_fontSize;
+// 0: Blinn-Phong shading
+// 1: Gooch shading
+extern i32 g_activeShadingModel;
+
+// 0: render color
+// 1: render depth
+// 2: render normals
+extern i32 g_renderMode;
+
+extern bool g_renderInWireframe;
+extern bool g_renderWithNormalMapping;
+

@@ -1,8 +1,7 @@
-#include "ImGuiLayer.hpp"
+#include "Hierarchy.hpp"
 
 #include "Engine/Scene.hpp"
 #include "Engine/Components/Components.hpp"
-#include "Engine/Utils.hpp"
 #include "Engine/Managers/TexturesManager.hpp"
 
 #include <imgui.h>
@@ -11,14 +10,14 @@
 //          PRIVATE
 // ----------------------------------------------------
 
-static bool ButtonCentered(const char *label, ImVec2 size)
+static bool Hierarchy_ButtonCentered(StringView label, ImVec2 size)
 {
   f32 avail = ImGui::GetContentRegionAvail().x;
   f32 off = (avail - size.x) * 0.5f;
   if (off > 0.0f)
     ImGui::SetCursorPosX(ImGui::GetCursorPosX() + off);
 
-  return ImGui::Button(label, size);
+  return ImGui::Button(label.data(), size);
 }
 static void Hierarchy_ListObjects(Scene &scene, GameObject &objSelected)
 {
@@ -78,23 +77,25 @@ static void Hierarchy_ObjectMenuPopup(Scene &scene, GameObject &objSelected)
 //          PUBLIC
 // ----------------------------------------------------
 
-void GUI_RenderHierarchy(Scene &scene, GameObject &objSelected)
+void GUI_Hierarchy(bool& open,
+                   Scene &scene, 
+                   GameObject &objSelected)
 {
-  ImGui::Begin("Hierarchy");
+  ImGui::Begin("Hierarchy", &open);
 
-  /* "+New object" button */
+  // "+New object" button 
   f32 btnWidth = ImGui::GetContentRegionAvail().x - 32.f;
-  if (ButtonCentered("+New object", ImVec2(btnWidth, 26.f)))
+  if (Hierarchy_ButtonCentered("+New object", ImVec2(btnWidth, 26.f)))
     scene.CreateObject();
 
   ImGui::Spacing();
   ImGui::Separator();
   ImGui::Spacing();
 
-  /* List all entities */
+  // List all entities
   Hierarchy_ListObjects(scene, objSelected);
 
-  /* Display menu on right click object */
+  // Display menu on right click object
   Hierarchy_ObjectMenuPopup(scene, objSelected);
 
   ImGui::End();

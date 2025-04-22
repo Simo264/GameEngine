@@ -26,7 +26,7 @@ void WindowManager::Initialize(WindowProps props)
   glfwMakeContextCurrent(_context);
   glfwSetWindowPos(_context, props.position.x, props.position.y);
   glfwSetWindowAspectRatio(_context, props.aspectRatio.x, props.aspectRatio.y);
-  glfwSwapInterval(static_cast<int>(props.vsync));
+  glfwSwapInterval(static_cast<i32>(props.vsync));
 
   glfwSetWindowSizeCallback(_context, [](GLFWwindow *window, i32 width, i32 height)
                             { glfwSetWindowSize(window, width, height); });
@@ -39,8 +39,8 @@ void WindowManager::Initialize(WindowProps props)
 
 void WindowManager::CleanUp() const
 {
-  // glfwDestroyWindow(_context);
-  // glfwTerminate();
+  glfwDestroyWindow(_context);
+  glfwTerminate();
 }
 
 void WindowManager::PoolEvents() const

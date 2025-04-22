@@ -100,7 +100,7 @@ layout (std140, binding = 1) uniform LightBlock
 uniform Material u_material;
 uniform int u_normalMapping; // 1 -> enabled; 0 -> disabled
 
-const float g_shininess = 16.0f;
+const float g_shininess = 32.0f;
 const float g_gammaCorrection = 2.2f; // Assume the monitor is calibrated to the sRGB color space
 
 Lighting BlinnPhongLight(vec3 L, vec3 N, vec3 V, vec3 kd, vec3 ks);
@@ -112,8 +112,8 @@ void main()
   vec4 ka = kd * 0.1f;
   vec4 ks = texture(u_material.specularTexture, TexCoord);
 
-  vec3 N = normalize(Normal);
   vec3 V = normalize(CameraPos - FragPos);
+  vec3 N = normalize(Normal);
   ivec2 normalSize = textureSize(u_material.normalTexture, 0);
   if(u_normalMapping == 1 && normalSize != ivec2(1))
   {
