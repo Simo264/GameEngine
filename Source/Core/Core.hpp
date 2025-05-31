@@ -11,7 +11,6 @@
 #include <string_view>
 #include <sstream>
 #include <vector>
-#include <list>
 
 #include <cmath>
 #include <cstdint>
@@ -20,8 +19,6 @@
 
 #include <iostream>
 #include <format>
-#include <cassert>
-#include <optional>
 
 /************** Namespaces **************/
 /****************************************/
@@ -48,8 +45,8 @@ using SharedPointer = std::shared_ptr<T>;
 
 /************** Data types **************/
 /****************************************/
-using u8 = std::uint8_t;
-using i8 = std::int8_t;
+using u8	= std::uint8_t;
+using i8	= std::int8_t;
 using u16 = std::uint16_t;
 using i16 = std::int16_t;
 using u32 = std::uint32_t;

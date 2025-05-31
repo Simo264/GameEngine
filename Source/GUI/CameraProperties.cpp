@@ -7,6 +7,7 @@ void GUI_CameraProperties(bool& open,
                           StringView windowName,
                           Camera& camera)
 {
+#if 0
   ImGui::Begin(windowName.data(), &open);
 
   // Position
@@ -37,4 +38,5 @@ void GUI_CameraProperties(bool& open,
   camera.UpdateOrientation();
 
   ImGui::End();
+#endif
 }

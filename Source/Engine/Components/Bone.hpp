@@ -12,7 +12,7 @@ struct BoneNode
 	 * It is used to reset or reference the bone's original state when needed, ensuring
 	 * accurate blending between animations or returning to the default pose.
 	 */
-	mat4f bindPoseTransform{};
+	Mat4f bindPoseTransform{};
 
 	Vector<BoneNode> children;
 
@@ -35,7 +35,7 @@ struct Bone
 	 * constant throughout the animation. This matrix is vital for skinning and vertex
 	 * transformations.
 	 */
-	mat4f offset{};
+	Mat4f offset{};
 
 	/**
 	 * @brief Current local transformation of the bone.
@@ -43,5 +43,5 @@ struct Bone
 	 * an animation. This matrix is updated dynamically as the animation progresses,
 	 * reflecting the bone's current pose.
 	 */
-	mat4f	localTransform{};
+	Mat4f	localTransform{};
 };

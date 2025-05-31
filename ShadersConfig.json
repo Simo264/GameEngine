@@ -1,14 +1,6 @@
 {
-  "BlinnPhongShading": {
-    "vertex": "BlinnPhong.vert",
-    "fragment": "BlinnPhong.frag"
-  },
-  "GoochShading": {
-    "vertex": "NPR/GoochShading.vert",
-    "fragment": "NPR/GoochShading.frag"
-  },
-  "DepthMap": {
-    "vertex": "DepthMap.vert",
-    "fragment": "DepthMap.frag"
+  "BlinnPhong": {
+    "vertex": "Phong/PhongModel.vert",
+    "fragment": "Phong/BlinnPhong.frag"
   }
 }

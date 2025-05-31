@@ -61,7 +61,6 @@ Shader ShadersManager::GetShader(StringView shaderName) const
 		if (name == shaderName)
 			return pair.shader;
 	}
-
 	return Shader{};
 }
 Shader ShadersManager::GetOrCreateShader(StringView shaderName)
@@ -85,7 +84,6 @@ Shader ShadersManager::CreateShader(StringView shaderName)
 	StringView ext = shaderName.substr(shaderName.find_last_of('.') + 1);
 	i32 shaderType = ResolveShaderType(ext);
 
-	CONSOLE_TRACE("Create shader {}", shaderName.data());
 	auto &pair = _shaders.emplace_back();
 
 	Array<char, 32> &name = pair.name;
@@ -109,16 +107,13 @@ Program ShadersManager::GetProgram(StringView programName) const
 		if (name == programName)
 			return pair.program;
 	}
-
 	return Program{};
 }
 Program ShadersManager::CreateProgram(StringView programName)
 {
 	assert(programName.size() < 32);
 
-	CONSOLE_TRACE("Create program {}", programName.data());
 	auto &pair = _programs.emplace_back();
-
 	Array<char, 32> &name = pair.name;
 	std::copy(programName.begin(), programName.end(), name.begin());
 
@@ -171,7 +166,6 @@ void ShadersManager::LoadConfig(const fs::path &path)
 			Shader shader = GetOrCreateShader(shadersJson.at("fragment").get<String>());
 			program.AttachShader(shader);
 		}
-		CONSOLE_TRACE("Link program {}", programName);
 		if (!program.Link())
 			throw std::runtime_error(std::format("Error on linking program '{}': {}", programName, program.GetProgramInfo()));
 	}

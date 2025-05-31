@@ -50,9 +50,9 @@ struct Light
  */
 struct DirectionalLight
 {
-	vec3f color{ 1.0f,1.0f,1.0f };
+	Vec3F color{ 1.0f,1.0f,1.0f };
 	f32 intensity{ 0.0f };
-	vec3f direction{ 0.0f, -1.0f, 0.0f };
+	Vec3F direction{ 0.0f, -1.0f, 0.0f };
 private:
 	f32 __padding{ 0.f }; // Needed for std140 alignment
 };
@@ -66,9 +66,9 @@ private:
  */
 struct PointLight
 {
-	vec3f color{ 1.0f,1.0f,1.0f };
+	Vec3F color{ 1.0f,1.0f,1.0f };
 	f32 intensity{ 0.0f };
-	vec3f position{ 0.0f, 0.0f, 0.0f };
+	Vec3F position{ 0.0f, 0.0f, 0.0f };
 private:
 	f32 __padding{ 0.f }; // Needed for std140 alignment 
 public:

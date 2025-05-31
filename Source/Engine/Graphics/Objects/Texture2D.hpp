@@ -1,7 +1,7 @@
 ﻿#pragma once
 
 #include "Core/Core.hpp"
-#include "Engine/OpenGLEnums.hpp"
+#include "Engine/Graphics/GLEnums.hpp"
 
 enum class Texture2DTarget : u32
 {

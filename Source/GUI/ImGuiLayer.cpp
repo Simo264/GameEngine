@@ -33,8 +33,8 @@ constexpr const char* fontFamily = "OpenSans/OpenSans-Regular.ttf";
 void ImGuiLayer::InitializeImGui()
 {
   viewportFocused = false;
-  viewportSize = vec2i{};
-  viewportPos = vec2i{};
+  viewportSize = Vec2I{};
+  viewportPos = Vec2I{};
   gizmode = -1;
 
   renderImGuiDemo = false;
@@ -89,9 +89,9 @@ void ImGuiLayer::CompleteFrameRender()
   }
 }
 
-void ImGuiLayer::MenuBar(Scene& scene, GoochParams& goochParams) const
+void ImGuiLayer::MenuBar(Scene& scene) const
 {
-  GUI_MenuBar(scene, goochParams);
+  GUI_MenuBar(scene);
 }
 void ImGuiLayer::ImguiDemo()
 {
@@ -100,8 +100,8 @@ void ImGuiLayer::ImguiDemo()
 }
 void ImGuiLayer::Viewport(Texture2D textureImage,
                           GameObject& objSelected, 
-                          const mat4f& view, 
-                          const mat4f& proj) const
+                          const Mat4f& view, 
+                          const Mat4f& proj) const
 {
   GUI_Viewport("Viewport", textureImage, objSelected, gizmode, view, proj);
 }
@@ -178,10 +178,11 @@ void ImGuiLayer::GraphicsInfo()
   ImGui::End();
 }
 
-void ImGuiLayer::DrawTextureDepth(Texture2D textureDepth, i32 w, i32 h)
+void ImGuiLayer::DebugImage(Texture2D image, i32 w, i32 h)
 {
-  ImGui::Begin("Depth Texture Window");
-  ImGui::Image(textureDepth.id, ImVec2(w, h), ImVec2(0, 0), ImVec2(1, 1));
+  ImGui::SetNextWindowSize(ImVec2(w, h));
+  ImGui::Begin("Debug image");
+  ImGui::Image(image.id, ImVec2(w, h), ImVec2(0, 1), ImVec2(1, 0));
   ImGui::End();
 }
 

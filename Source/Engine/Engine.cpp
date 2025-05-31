@@ -16,7 +16,6 @@
 #include "Engine/Graphics/StencilTest.hpp"
 #include "Engine/Graphics/FaceCulling.hpp"
 #include "Engine/Graphics/Objects/Renderbuffer.hpp"
-#include "Engine/Graphics/Objects/TextureCubemap.hpp"
 #include "Engine/Graphics/Renderer.hpp"
 
 #include "Engine/Managers/WindowManager.hpp"
@@ -25,25 +24,13 @@
 
 #include "GUI/ImGuiLayer.hpp"
 
-#include <GLFW/glfw3.h>
-
 static constexpr i32 INITIAL_WINDOW_W = 1600;
 static constexpr i32 INITIAL_WINDOW_H = 900;
+static Vec2I s_viewportSize{ INITIAL_WINDOW_W, INITIAL_WINDOW_H };
+static f32 s_aspect = static_cast<f32>(s_viewportSize.x) / static_cast<f32>(s_viewportSize.y);
+static f64 s_worldTime;
 
-static vec2i s_viewportSize{ INITIAL_WINDOW_W, INITIAL_WINDOW_H };
-
-struct GoochParams
-{
-  f32 warmFactor = 0.25f;    // alpha: warm contribution
-  f32 coolFactor = 0.50f;    // beta: cool contribution
-  f32 baseCoolColor = 0.55f; // b: cool color base
-  f32 baseWarmColor = 0.3f;  // y: warm color base
-};
-static GoochParams s_goochParams;
-
-static Framebuffer s_depthMapFramebuffer;
-static Framebuffer s_blinnPhongFramebuffer;
-static Framebuffer s_goochFramebuffer;
+static Framebuffer s_framebufferPhong;
 static Mesh s_screenQuad;
 
 static void GLAPIENTRY MessageCallback(GLenum source,
@@ -143,51 +130,26 @@ static void GLAPIENTRY MessageCallback(GLenum source,
     sourceStr, typeStr, severityStr, message);
 }
 
-static Framebuffer CreateDepthMapFramebuffer(i32 w, i32 h)
+static Mesh CreateMeshQuad()
 {
-  Texture2D depthTextureRGB;
-  depthTextureRGB.Create(Texture2DTarget::TEXTURE_2D);
-  depthTextureRGB.CreateStorage(Texture2DInternalFormat::RGB8, w, h);
-  depthTextureRGB.SetParameteri(TextureParameteriName::MIN_FILTER, TextureParameteriParam::NEAREST);
-  depthTextureRGB.SetParameteri(TextureParameteriName::MAG_FILTER, TextureParameteriParam::NEAREST);
+  constexpr Vertex_P_UV vertices[] = {
+    Vertex_P_UV{ Vec3F(-1.0f,  1.0f, 0.0f), Vec2F(0.0f, 1.0f) },
+    Vertex_P_UV{ Vec3F(-1.0f, -1.0f, 0.0f), Vec2F(0.0f, 0.0f) },
+    Vertex_P_UV{ Vec3F(1.0f,  1.0f, 0.0f),  Vec2F(1.0f, 1.0f) },
+    Vertex_P_UV{ Vec3F(1.0f, -1.0f, 0.0f),  Vec2F(1.0f, 0.0f) },
+  };
+  Buffer vbo(sizeof(vertices), vertices, BufferUsage::STATIC_DRAW);
 
-  Renderbuffer depth;
-  depth.Create();
-  depth.CreateStorage(RenderbufferInternalFormat::DEPTH_COMPONENT24, w, h);
-
-  Framebuffer framebuffer;
-  framebuffer.Create();
-  framebuffer.AttachTexture(FramebufferAttachment::COLOR_0, depthTextureRGB, 0);
-  framebuffer.AttachRenderBuffer(FramebufferAttachment::DEPTH, depth);
-  assert(framebuffer.CheckStatus() == FramebufferStatus::COMPLETE);
-  return framebuffer;
+  Mesh quad;
+  quad.Create();
+  quad.SetupAttributeFloat(0, 0, VertexFormat(3, VertexAttribType::FLOAT, false, offsetof(Vertex_P_UV, position)));
+  quad.SetupAttributeFloat(1, 0, VertexFormat(2, VertexAttribType::FLOAT, false, offsetof(Vertex_P_UV, uv)));
+  quad.vertexArray->AttachVertexBuffer(0, vbo, 0, sizeof(Vertex_P_UV));
+  return quad;
 }
-static Framebuffer CreateBlinnPhongFramebuffer(i32 w, i32 h)
-{
-	Texture2D textureColor;
-	textureColor.Create(Texture2DTarget::TEXTURE_2D);
-	textureColor.CreateStorage(Texture2DInternalFormat::RGB8, w, h);
-	textureColor.SetParameteri(TextureParameteriName::MIN_FILTER, TextureParameteriParam::LINEAR);
-	textureColor.SetParameteri(TextureParameteriName::MAG_FILTER, TextureParameteriParam::LINEAR);
-	
-  Renderbuffer depthStencil;
-  depthStencil.Create();
-  depthStencil.CreateStorage(RenderbufferInternalFormat::DEPTH24_STENCIL8, w, h);
-
-  Framebuffer framebuffer;
-  framebuffer.Create();
-	framebuffer.AttachTexture(FramebufferAttachment::COLOR_0, textureColor, 0);
-  framebuffer.AttachRenderBuffer(FramebufferAttachment::DEPTH_STENCIL, depthStencil);
-  assert(framebuffer.CheckStatus() == FramebufferStatus::COMPLETE);
-  return framebuffer;
-}
-static Framebuffer CreateGoochFramebuffer(i32 w, i32 h)
+static Framebuffer CreateFramebufferPhong(i32 w, i32 h)
 {
   // https://en.wikipedia.org/wiki/Cel_shading#Edge-detection_method
-  // 1. texture color: the scene is rendered with cel shading to a screen-sized color texture.
-  // 2. depth/stencil: depth information of the scene is rendered to a screen-sized texture
-  // 3. normals: World-space surface normals are rendered as a screen-sized texture
-
   Texture2D textureColor;
   textureColor.Create(Texture2DTarget::TEXTURE_2D);
   textureColor.CreateStorage(Texture2DInternalFormat::RGB8, w, h);
@@ -200,62 +162,26 @@ static Framebuffer CreateGoochFramebuffer(i32 w, i32 h)
 
   Framebuffer framebuffer;
   framebuffer.Create();
-  framebuffer.AttachTexture(FramebufferAttachment::COLOR_0, textureColor, 0);
+  framebuffer.AttachTexture(FramebufferAttachment::COLOR_ATTACHMENT0, textureColor, 0);
   framebuffer.AttachRenderBuffer(FramebufferAttachment::DEPTH_STENCIL, depthStencil);
+
   assert(framebuffer.CheckStatus() == FramebufferStatus::COMPLETE);
   return framebuffer;
 }
-
 static Texture2D BlinnPhongShading(Program& program, Scene& scene)
 {
-  s_blinnPhongFramebuffer.Bind(FramebufferTarget::DRAW);
+  s_framebufferPhong.Bind(FramebufferTarget::DRAW);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT); // clear buffers
 
   program.Use();
-  scene.Reg().view<StaticMesh, Transform>().each([&](auto& staticMesh, auto& transform) {
-    transform.rotation.y = glfwGetTime() * 10.f;
-    transform.UpdateTransformation();
-    program.SetUniformMat4f(Uniforms::model, transform.GetTransformation());
+  scene.Reg().view<StaticMesh, Transformation>().each([&](auto& staticMesh, auto& transform) {
+    transform.eulerAngles.y = s_worldTime * 10.f;
+    program.SetUniformMat4f(UniformLocations::MODEL, transform.GetTransformation());
     staticMesh.Render(program, RenderMode::TRIANGLES);
   });
 
-  s_blinnPhongFramebuffer.Unbind(FramebufferTarget::DRAW);
-  return s_blinnPhongFramebuffer.GetTextureAttachment(0); // returns the texture color 
-}
-static Texture2D GoochShading(Program& program, Scene& scene)
-{
-  s_goochFramebuffer.Bind(FramebufferTarget::DRAW);
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT); // clear buffers
-
-  program.Use();
-  scene.Reg().view<StaticMesh, Transform>().each([&](auto& staticMesh, auto& transform) {
-    transform.rotation.y = glfwGetTime() * 10.f;
-    transform.UpdateTransformation();
-    program.SetUniformMat4f(Uniforms::model, transform.GetTransformation());
-    staticMesh.Render(program, RenderMode::TRIANGLES);
-  });
-
-  s_goochFramebuffer.Unbind(FramebufferTarget::DRAW);
-  return s_goochFramebuffer.GetTextureAttachment(0); // returns the texture color
-}
-static Texture2D DepthMapRendering(Program& program, Scene& scene)
-{
-  s_depthMapFramebuffer.Bind(FramebufferTarget::DRAW);
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT); // clear buffers
-  
-  program.Use();
-  scene.Reg().view<StaticMesh, Transform>().each([&](auto& staticMesh, auto& transform) {
-    transform.rotation.y = glfwGetTime() * 10.f;
-    transform.UpdateTransformation();
-    program.SetUniformMat4f(Uniforms::model, transform.GetTransformation());
-    for (u32 i = 0; i < staticMesh.nrMeshes; i++)
-    {
-      auto& mesh = staticMesh.meshArray[i];
-      Renderer::DrawElements(RenderMode::TRIANGLES, *mesh.vertexArray, mesh.numIndices);
-    }
-  });
-  s_depthMapFramebuffer.Unbind(FramebufferTarget::DRAW);
-  return s_depthMapFramebuffer.GetTextureAttachment(0); // returns the depth in rgb
+  s_framebufferPhong.Unbind(FramebufferTarget::DRAW);
+  return s_framebufferPhong.GetTextureAttachment(0); // returns the texture color 
 }
 
 // -----------------------------------------------------
@@ -272,10 +198,10 @@ void Engine::Initialize()
   // -------------------------
   CONSOLE_INFO("Initializing WindowManager...");
   WindowManager::GetInstance().Initialize(WindowProps(
-    vec2i{ INITIAL_WINDOW_W, INITIAL_WINDOW_H }, // window size
-    vec2i{ 50, 50 },                      // window pos
+    Vec2I{ INITIAL_WINDOW_W, INITIAL_WINDOW_H }, // window size
+    Vec2I{ 50, 50 },                      // window pos
     "GameEngine",                         // window title
-    vec2i{ 16, 9 },                       // window aspect ratio
+    Vec2I{ 16, 9 },                       // window aspect ratio
     false                                 // window v-sync
   ));
 
@@ -300,9 +226,9 @@ void Engine::Initialize()
 
   // Create UBO objects
   // -----------------------------
-  CreateCameraUBO();  // "CameraBlock"
-  CreateLightUBO();   // "LightBlock"
-  CreateBoneUBO();    // "BoneBlock"
+  CreateCameraUBO(0); // "CameraBlock" -> 0
+  CreateLightUBO(1);  // "LightBlock" -> 1
+  CreateBoneUBO(2);   // "BonesBlock" -> 2
 
   // Initialize time
   // -----------------------------
@@ -310,14 +236,11 @@ void Engine::Initialize()
 }
 void Engine::Run()
 {
-  s_depthMapFramebuffer = CreateDepthMapFramebuffer(INITIAL_WINDOW_W, INITIAL_WINDOW_H);
-  s_blinnPhongFramebuffer = CreateBlinnPhongFramebuffer(INITIAL_WINDOW_W, INITIAL_WINDOW_H);
-  s_goochFramebuffer = CreateGoochFramebuffer(INITIAL_WINDOW_W, INITIAL_WINDOW_H);
+  s_screenQuad = CreateMeshQuad();
+  s_framebufferPhong = CreateFramebufferPhong(INITIAL_WINDOW_W, INITIAL_WINDOW_H);
 
   Camera camera;
-  camera.position = vec3f(0.f, 5.f, 10.0f);
-  camera.orientation = vec3f(-90.f, -20.f, 0.0f);
-  camera.frustum.zFar = 50.0f;
+  camera.position = Vec3F(0.f, 0.f, 10.0f);
 
   Scene scene((Paths::GetRootPath() / "Scene.yaml"));
 
@@ -327,19 +250,8 @@ void Engine::Run()
   ImGuiLayer& gui = ImGuiLayer::GetInstance();
   WindowManager& windowManager = WindowManager::GetInstance();
   ShadersManager& shadersManager = ShadersManager::GetInstance();
-  TexturesManager& texturesManager = TexturesManager::GetInstance();
-  Program depthMapProgram = shadersManager.GetProgram("DepthMap");
-  Program blinnPhongProgram = shadersManager.GetProgram("BlinnPhongShading");
-  blinnPhongProgram.SetUniform1i("u_material.diffuseTexture", 0);
-  blinnPhongProgram.SetUniform1i("u_material.specularTexture", 1);
-  blinnPhongProgram.SetUniform1i("u_material.normalTexture", 2);
-  Program goochProgram = shadersManager.GetProgram("GoochShading");
-  blinnPhongProgram.SetUniform1i("u_material.diffuseTexture", 0);
-  blinnPhongProgram.SetUniform1i("u_material.specularTexture", 1);
-  blinnPhongProgram.SetUniform1i("u_material.normalTexture", 2);
-
-  Texture2D viewportImage;
-
+  Program blinnPhongProgram = shadersManager.GetProgram("BlinnPhong");
+  
   // ------------------------------------------------------------------
   // -------------------------- loop section --------------------------
   // ------------------------------------------------------------------
@@ -352,6 +264,7 @@ void Engine::Run()
     // ----------------------------------------------------------------------------------
     CalculatePerFrameTime();
     g_drawCalls = 0;
+    s_worldTime = windowManager.GetWorldTime();
 
     // -------------------------------------------------------------------
     // -------------------------- Input section --------------------------
@@ -366,16 +279,15 @@ void Engine::Run()
     // --------------------------------------------------------------------
     // -------------------------- Update section --------------------------
     // --------------------------------------------------------------------
-    camera.UpdateOrientation();
-    mat4f cameraView = camera.CalculateView(camera.position + camera.GetFrontVector());
-    mat4f cameraProj = camera.CalculatePerspective(static_cast<f32>(s_viewportSize.x) / s_viewportSize.y);
+    Mat4f cameraView = camera.GetViewMatrix();
+    Mat4f cameraProj = camera.GetPerspectiveProjection(glm::radians(45.0f), s_aspect, 0.1f, 50.f);
 
     // Update camera UBO
     {
-      auto matrices = Array<mat4f, 2>{ cameraView, cameraProj };
-      const vec3f& camPos = camera.position;
+      auto matrices = Array<Mat4f, 2>{ cameraView, cameraProj };
+      const Vec3F& camPos = camera.position;
       _uboCameraBlock.UpdateStorage(0, sizeof(matrices), matrices.data());
-      _uboCameraBlock.UpdateStorage(sizeof(matrices), sizeof(vec3f), &camPos);
+      _uboCameraBlock.UpdateStorage(sizeof(matrices), sizeof(Vec3F), &camPos);
     }
 
     // Update light UBO
@@ -409,66 +321,29 @@ void Engine::Run()
     // -----------------------------------------------------------------------
     glPolygonMode(GL_FRONT_AND_BACK, g_renderInWireframe ? GL_LINE : GL_FILL);
     glViewport(0, 0, s_viewportSize.x, s_viewportSize.y);
-    
-    switch (g_renderMode)
-    {
-      case 0: // render color
-      { 
-        if (g_activeShadingModel == 0) // Render with Blinn-Phong shading model
-        {
-          blinnPhongProgram.SetUniform1i("u_normalMapping", g_renderWithNormalMapping ? 1 : 0);
-          viewportImage = BlinnPhongShading(blinnPhongProgram, scene);
-        }
-        else if (g_activeShadingModel == 1) // Render with Gooch shading 
-        {
-          goochProgram.SetUniform1i("u_normalMapping", g_renderWithNormalMapping ? 1 : 0);
-          goochProgram.SetUniform1f("u_goochParams.baseCoolColor", s_goochParams.baseCoolColor);
-          goochProgram.SetUniform1f("u_goochParams.baseWarmColor", s_goochParams.baseWarmColor);
-          goochProgram.SetUniform1f("u_goochParams.coolFactor", s_goochParams.coolFactor);
-          goochProgram.SetUniform1f("u_goochParams.warmFactor", s_goochParams.warmFactor);
-          viewportImage = GoochShading(blinnPhongProgram, scene);
-        }
-        break;
-      }
 
-      case 1: // render the depth map
-      {
-        depthMapProgram.SetUniform1f("u_zNear", camera.frustum.zNear);
-        depthMapProgram.SetUniform1f("u_zFar", camera.frustum.zFar);
-        viewportImage = DepthMapRendering(depthMapProgram, scene);
-        break;
-      }
+    blinnPhongProgram.SetUniform1i("u_normalMapping", static_cast<i32>(g_renderWithNormalMapping));
+    Texture2D viewportImage = BlinnPhongShading(blinnPhongProgram, scene);
 
-      case 2: // render normals
-      {
-        break;
-      }
-    }
-    
-
-    gui.MenuBar(scene, s_goochParams);
+    gui.MenuBar(scene);
     gui.ImguiDemo();
     GameObject& objSelected = gui.Hierarchy(scene);
     gui.Inspector(objSelected);
     gui.Viewport(viewportImage, objSelected, cameraView, cameraProj);
-    
     gui.ToolBar();
     gui.TimeInfo(_delta, _avgTime, _frameRate);
     gui.CameraProperties(camera);
     gui.GraphicsInfo();
+    
     gui.CompleteFrameRender();
 
     // Checking viewport size
     if (s_viewportSize != gui.viewportSize)
     {
       s_viewportSize = gui.viewportSize;
-      
-      s_depthMapFramebuffer.Delete();
-      s_depthMapFramebuffer = CreateDepthMapFramebuffer(s_viewportSize.x, s_viewportSize.y);
-      s_blinnPhongFramebuffer.Delete();
-      s_blinnPhongFramebuffer = CreateBlinnPhongFramebuffer(s_viewportSize.x, s_viewportSize.y);
-      s_goochFramebuffer.Delete();
-      s_goochFramebuffer = CreateGoochFramebuffer(s_viewportSize.x, s_viewportSize.y);
+      s_aspect = static_cast<f32>(s_viewportSize.x) / static_cast<f32>(s_viewportSize.y);
+      s_framebufferPhong.Delete();
+      s_framebufferPhong = CreateFramebufferPhong(s_viewportSize.x, s_viewportSize.y);
     }
 
     // ------------------------------------------------------------------
@@ -476,10 +351,6 @@ void Engine::Run()
     // ------------------------------------------------------------------
     windowManager.SwapWindowBuffers();
   }
-
-  s_depthMapFramebuffer.Delete();
-	s_goochFramebuffer.Delete();
-	s_blinnPhongFramebuffer.Delete();
 }
 void Engine::CleanUp()
 {
@@ -568,23 +439,23 @@ void Engine::CalculatePerFrameTime()
   }
 }
 
-void Engine::CreateCameraUBO()
+void Engine::CreateCameraUBO(i32 bindingPoint)
 {
   // Reserve memory for:
   // - 2 mat4f: camera projection + camera view
   // - 1 vec3f: camera position
   // - 1 float: padding
-  constexpr u32 size = 2 * sizeof(mat4f) +
-    sizeof(vec3f) +
+  constexpr u32 size = 2 * sizeof(Mat4f) +
+    sizeof(Vec3F) +
     sizeof(f32);
 
   _uboCameraBlock = Buffer(size, nullptr, BufferUsage::DYNAMIC_DRAW);
 
   constexpr Array<u8, size> zeros{};
   _uboCameraBlock.UpdateStorage(0, size, zeros.data()); // Init buffer with zeros
-  _uboCameraBlock.BindBase(BufferTarget::UNIFORM, 0);
+  _uboCameraBlock.BindBase(BufferTarget::UNIFORM, bindingPoint);   // CameraBlock
 }
-void Engine::CreateLightUBO()
+void Engine::CreateLightUBO(i32 bindingPoint)
 {
   // Reserve memory for:
   // - 1 DirectionalLight object
@@ -593,15 +464,15 @@ void Engine::CreateLightUBO()
   _uboLightBlock = Buffer(size, nullptr, BufferUsage::DYNAMIC_DRAW);
 
   constexpr Array<u8, size> zeros{};
-  _uboLightBlock.UpdateStorage(0, size, zeros.data()); // Init buffer with zeros
-  _uboLightBlock.BindBase(BufferTarget::UNIFORM, 1);
+  _uboLightBlock.UpdateStorage(0, size, zeros.data());
+  _uboLightBlock.BindBase(BufferTarget::UNIFORM, bindingPoint);
 }
-void Engine::CreateBoneUBO()
+void Engine::CreateBoneUBO(i32 bindingPoint)
 {
-  constexpr u32 size = SkeletalMesh::GetMaxNumBones() * sizeof(mat4f);
+  constexpr u32 size = SkeletalMesh::GetMaxNumBones() * sizeof(Mat4f);
   _uboBoneBlock = Buffer(size, nullptr, BufferUsage::STREAM_DRAW);
 
   constexpr Array<u8, size> zeros{};
-  _uboBoneBlock.UpdateStorage(0, size, zeros.data()); // Init buffer with zeros
-  _uboBoneBlock.BindBase(BufferTarget::UNIFORM, 2);
+  _uboBoneBlock.UpdateStorage(0, size, zeros.data());
+  _uboBoneBlock.BindBase(BufferTarget::UNIFORM, bindingPoint);
 }

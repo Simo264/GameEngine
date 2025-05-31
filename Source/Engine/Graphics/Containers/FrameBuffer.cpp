@@ -129,3 +129,8 @@ void Framebuffer::SetWritingColorComponents(bool r, bool g, bool b, bool a) cons
 {
 	glColorMaski(id, r, g, b, a);
 }
+
+void Framebuffer::SetDrawBuffers(u32 n, FramebufferDrawBuffer bufs[]) const
+{
+	glNamedFramebufferDrawBuffers(id, n, reinterpret_cast<const u32*>(bufs));
+}

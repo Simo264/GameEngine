@@ -15,9 +15,9 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
-static mat4f AiMatrixToGLM(const aiMatrix4x4 &matrix)
+static Mat4f AiMatrixToGLM(const aiMatrix4x4 &matrix)
 {
-	mat4f m{};
+	Mat4f m{};
 	// the a,b,c,d in assimp is the row ; the 1,2,3,4 is the column
 	m[0][0] = matrix.a1;
 	m[1][0] = matrix.a2;
@@ -178,13 +178,13 @@ Buffer SkeletalMesh::LoadVertices(aiMesh *aimesh)
 		const auto &tangent = aimesh->mTangents[i];
 
 		Vertex_P_N_UV_T_B &vertex = vertices.emplace_back();
-		vertex.position = vec3f(position.x, position.y, position.z);
+		vertex.position = Vec3F(position.x, position.y, position.z);
 		if (aimesh->HasNormals())
-			vertex.normal = vec3f(normal.x, normal.y, normal.z);
+			vertex.normal = Vec3F(normal.x, normal.y, normal.z);
 		if (aimesh->HasTextureCoords(0))
-			vertex.uv = vec2f(uv.x, uv.y);
+			vertex.uv = Vec2F(uv.x, uv.y);
 		if (aimesh->HasTangentsAndBitangents())
-			vertex.tangent = vec3f(tangent.x, tangent.y, tangent.z);
+			vertex.tangent = Vec3F(tangent.x, tangent.y, tangent.z);
 	}
 	LoadBonesAndWeights(vertices, aimesh);
 

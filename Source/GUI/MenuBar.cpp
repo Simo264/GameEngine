@@ -9,14 +9,6 @@
 
 #include <imgui.h>
 
-struct GoochParams
-{
-  f32 warmFactor;     // alpha: warm contribution
-  f32 coolFactor;     // beta: cool contribution
-  f32 baseCoolColor;  // b: cool color base
-  f32 baseWarmColor;  // y: warm color base
-};
-
 static void MenuBar_FileItemOpen(Scene& scene)
 {
   if (ImGui::MenuItem("Open"))
@@ -91,65 +83,17 @@ static void MenuBar_View()
   }
 }
 
-static void MenuBar_Shading()
-{
-  if (ImGui::BeginMenu("Shading"))
-  {
-    if (ImGui::MenuItem("Blinn-Phong", nullptr, g_activeShadingModel == 0))
-      g_activeShadingModel = 0;
-
-    if (ImGui::MenuItem("Gooch", nullptr, g_activeShadingModel == 1))
-      g_activeShadingModel = 1;
-
-    ImGui::EndMenu();
-  }
-}
-
-static void MenuBar_Edit(GoochParams& goochParams)
-{
-  if (ImGui::BeginMenu("Edit"))
-  {
-    if (ImGui::BeginMenu("Gooch Parameters", g_activeShadingModel == 1))
-    {
-      ImGui::Text("Gooch Params:");
-      ImGui::SliderFloat("Warm Factor", &goochParams.warmFactor, 0.0f, 1.0f, "Alpha: %.2f");
-      ImGui::SliderFloat("Cool Factor", &goochParams.coolFactor, 0.0f, 1.0f, "Beta: %.2f");
-      ImGui::SliderFloat("Base Cool Color", &goochParams.baseCoolColor, 0.0f, 1.0f, "B: %.2f");
-      ImGui::SliderFloat("Base Warm Color", &goochParams.baseWarmColor, 0.0f, 1.0f, "Y: %.2f");
-      ImGui::EndMenu();
-    }
-
-    ImGui::EndMenu();
-  }
-}
-
-static void MenuBar_Debug()
-{
-  if (ImGui::BeginMenu("Debug"))
-  {
-    ImGui::MenuItem("Normal map", nullptr, &g_renderWithNormalMapping);
-    ImGui::EndMenu();
-  }
-}
-
-
 // --------------------------
 //          PUBLIC
 // --------------------------
 
-void GUI_MenuBar(Scene &scene, GoochParams& goochParams)
+void GUI_MenuBar(Scene &scene)
 {
   if (ImGui::BeginMainMenuBar())
   {
     MenuBar_File(scene);
     
     MenuBar_View();
-
-    MenuBar_Shading();
-
-    MenuBar_Edit(goochParams);
-
-    MenuBar_Debug();
 
     ImGui::EndMainMenuBar();
   }

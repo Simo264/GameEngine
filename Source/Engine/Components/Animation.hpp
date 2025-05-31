@@ -12,17 +12,17 @@ struct aiNode;
 struct KeyPosition
 {
 	f32 timeStamp{};
-	vec3f position{};
+	Vec3F position{};
 };
 struct KeyRotation
 {
 	f32 timeStamp{};
-	quat orientation{};
+	Quaternion orientation{};
 };
 struct KeyScale
 {
 	f32 timeStamp{};
-	vec3f scale{};
+	Vec3F scale{};
 };
 struct BoneAnimationKeys
 {

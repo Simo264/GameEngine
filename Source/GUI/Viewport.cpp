@@ -14,88 +14,83 @@
 //                  PRIVATE                  
 // ------------------------------------------
 
-static void Viewport_GizmoWorldTranslation(Transform& transform,
-                                           const mat4f& view, 
-                                           const mat4f& proj)
+static void Viewport_GizmoWorldTranslation(Transformation& transform,
+                                           const Mat4f& view, 
+                                           const Mat4f& proj)
 {
-  mat4f& model = transform.GetTransformation();
-  ImGuizmo::Manipulate(
-    &view[0][0],
-    &proj[0][0],
-    ImGuizmo::OPERATION::TRANSLATE,
-    ImGuizmo::WORLD,
-    &model[0][0]);
+  //mat4f model = transform.GetTransformation();
+  //ImGuizmo::Manipulate(
+  //  &view[0][0],
+  //  &proj[0][0],
+  //  ImGuizmo::OPERATION::TRANSLATE,
+  //  ImGuizmo::WORLD,
+  //  &model[0][0]);
 
-  if (ImGuizmo::IsUsing())
-  {
-    vec3f translation{};
-    vec3f scale{};
-    quat  rotation{};
-    vec3f skew{};
-    vec4f perspective{};
-    glm::decompose(model, translation, rotation, scale, skew, perspective);
+  //if (ImGuizmo::IsUsing())
+  //{
+  //  vec3f translation{};
+  //  vec3f scale{};
+  //  quat  rotation{};
+  //  vec3f skew{};
+  //  vec4f perspective{};
+  //  glm::decompose(model, translation, rotation, scale, skew, perspective);
 
-    transform.position = translation;
-    transform.UpdateTransformation();
-  }
+  //  transform.Translate(translation);
+  //}
 }
 
-static void Viewport_GizmoWorldRotation(Transform& transform,
-                                        const mat4f& view, 
-                                        const mat4f& proj)
+static void Viewport_GizmoWorldRotation(Transformation& transform,
+                                        const Mat4f& view, 
+                                        const Mat4f& proj)
 {
-  mat4f& model = transform.GetTransformation();
-  ImGuizmo::Manipulate(
-    &view[0][0],
-    &proj[0][0],
-    ImGuizmo::OPERATION::ROTATE,
-    ImGuizmo::WORLD,
-    &model[0][0]);
+  //mat4f model = transform.GetTransformation();
+  //ImGuizmo::Manipulate(
+  //  &view[0][0],
+  //  &proj[0][0],
+  //  ImGuizmo::OPERATION::ROTATE,
+  //  ImGuizmo::WORLD,
+  //  &model[0][0]);
 
-  if (ImGuizmo::IsUsing())
-  {
-    vec3f translation{};
-    vec3f scale{};
-    quat  rotation{};
-    vec3f skew{};
-    vec4f perspective{};
-    glm::decompose(model, translation, rotation, scale, skew, perspective);
+  //if (ImGuizmo::IsUsing())
+  //{
+  //  vec3f translation{};
+  //  vec3f scale{};
+  //  quat  rotation{};
+  //  vec3f skew{};
+  //  vec4f perspective{};
+  //  glm::decompose(model, translation, rotation, scale, skew, perspective);
 
-    vec3f rotationDegrees = glm::eulerAngles(rotation);  /* Get vector rotation in radians */
-    rotationDegrees.x = glm::degrees(rotationDegrees.x); /* Convert it in degrees */
-    rotationDegrees.y = glm::degrees(rotationDegrees.y);
-    rotationDegrees.z = glm::degrees(rotationDegrees.z);
-    const vec3f deltaRotation = rotationDegrees - transform.rotation;
+  //  vec3f rotationDegrees = glm::eulerAngles(rotation);   /* Get vector rotation in radians */
+  //  rotationDegrees = glm::degrees(rotationDegrees);      /* Convert it in degrees */
+  //  const vec3f deltaRotation = rotationDegrees - transform.GetEulerAnglesVector();
 
-    transform.rotation += deltaRotation;
-    transform.UpdateTransformation();
-  }
+  //  transform.Rotate(transform.GetEulerAnglesVector() + deltaRotation);
+  //}
 }
 
-static void Viewport_GizmoWorldScaling(Transform& transform,
-                                       const mat4f& view, 
-                                       const mat4f& proj)
+static void Viewport_GizmoWorldScaling(Transformation& transform,
+                                       const Mat4f& view, 
+                                       const Mat4f& proj)
 {
-  mat4f& model = transform.GetTransformation();
-  ImGuizmo::Manipulate(
-    &view[0][0],
-    &proj[0][0],
-    ImGuizmo::OPERATION::SCALE,
-    ImGuizmo::WORLD,
-    &model[0][0]);
+  //mat4f model = transform.GetTransformation();
+  //ImGuizmo::Manipulate(
+  //  &view[0][0],
+  //  &proj[0][0],
+  //  ImGuizmo::OPERATION::SCALE,
+  //  ImGuizmo::WORLD,
+  //  &model[0][0]);
 
-  if (ImGuizmo::IsUsing())
-  {
-    vec3f translation{};
-    vec3f scale{};
-    quat  rotation{};
-    vec3f skew{};
-    vec4f perspective{};
-    glm::decompose(model, translation, rotation, scale, skew, perspective);
+  //if (ImGuizmo::IsUsing())
+  //{
+  //  vec3f translation{};
+  //  vec3f scale{};
+  //  quat  rotation{};
+  //  vec3f skew{};
+  //  vec4f perspective{};
+  //  glm::decompose(model, translation, rotation, scale, skew, perspective);
 
-    transform.scale = scale;
-    transform.UpdateTransformation();
-  }
+  //  transform.Scale(scale);
+  //}
 }
 
 
@@ -107,8 +102,8 @@ void GUI_Viewport(StringView windowName,
                   Texture2D textureImage,
                   GameObject& objSelected,
                   i32 gizmode,
-                  const mat4f& view,
-                  const mat4f& proj)
+                  const Mat4f& view,
+                  const Mat4f& proj)
 {
   ImGuiStyle& style = ImGui::GetStyle();
   const ImVec2 paddingTmp = style.WindowPadding;
@@ -131,7 +126,7 @@ void GUI_Viewport(StringView windowName,
   ImGui::Image(textureImage.id, winChildSize, ImVec2(0, 1), ImVec2(1, 0));
   if (objSelected.IsValid())
   {
-    auto* transform = objSelected.GetComponent<Transform>();
+    auto* transform = objSelected.GetComponent<Transformation>();
     if (transform)
     {
       ImGuizmo::SetOrthographic(false);

@@ -9,7 +9,6 @@
 
 void WindowManager::Initialize(WindowProps props)
 {
-  CONSOLE_TRACE("Init GLFW");
   i32 success = glfwInit();
   assert(success == GLFW_TRUE && "Failed to initialize GLFW library");
 
@@ -32,7 +31,6 @@ void WindowManager::Initialize(WindowProps props)
                             { glfwSetWindowSize(window, width, height); });
 
   // Load OpenGL functions, gladLoadGL returns the loaded version, 0 on error.
-  CONSOLE_TRACE("Init OpenGL");
   i32 version = gladLoadGL(glfwGetProcAddress);
   assert(version != 0 && "Failed to load OpenGL APIs");
 }
@@ -58,9 +56,9 @@ bool WindowManager::IsOpen() const
   return !glfwWindowShouldClose(_context);
 }
 
-void WindowManager::SetWindowTitle(const char *title) const
+void WindowManager::SetWindowTitle(StringView title) const
 {
-  glfwSetWindowTitle(_context, title);
+  glfwSetWindowTitle(_context, title.data());
 }
 
 void WindowManager::SetWindowAspectRatio(i32 numer, i32 denom) const
@@ -73,9 +71,9 @@ void WindowManager::SwapWindowBuffers() const
   glfwSwapBuffers(_context);
 }
 
-vec2i WindowManager::GetWindowSize() const
+Vec2I WindowManager::GetWindowSize() const
 {
-  vec2i res{};
+  Vec2I res{};
   glfwGetWindowSize(_context, &res.x, &res.y);
   return res;
 }
@@ -85,33 +83,33 @@ void WindowManager::SetWindowSize(i32 w, i32 h) const
   glfwSetWindowSize(_context, w, h);
 }
 
-vec2i WindowManager::GetFramebufferSize() const
+Vec2I WindowManager::GetFramebufferSize() const
 {
-  vec2i res{};
+  Vec2I res{};
   glfwGetFramebufferSize(_context, &res.x, &res.y);
   return res;
 }
 
-i32 WindowManager::GetKey(u32 key) const
+InputAction WindowManager::GetKey(InputKey key) const
 {
-  return glfwGetKey(_context, key);
+  return static_cast<InputAction>(glfwGetKey(_context, static_cast<i32>(key)));
 }
 
-i32 WindowManager::GetMouseKey(u32 key) const
+InputAction WindowManager::GetMouseKey(InputMouseKey key) const
 {
-  return glfwGetMouseButton(_context, key);
+  return static_cast<InputAction>(glfwGetMouseButton(_context, static_cast<i32>(key)));
 }
 
-vec2d WindowManager::GetCursorPosition() const
+Vec2D WindowManager::GetCursorPosition() const
 {
-  vec2d res{};
+  Vec2D res{};
   glfwGetCursorPos(_context, &res.x, &res.y);
   return res;
 }
 
-void WindowManager::SetCursorMode(i32 value) const
+void WindowManager::SetCursorMode(CursorMode mode) const
 {
-  glfwSetInputMode(_context, GLFW_CURSOR, value);
+  glfwSetInputMode(_context, GLFW_CURSOR, static_cast<i32>(mode));
 }
 
 void WindowManager::SetWindowPosition(i32 x, i32 y) const
@@ -135,9 +133,14 @@ const char *WindowManager::GetVersion() const
   return glfwGetVersionString();
 }
 
-vec2i WindowManager::GetWindowPos() const
+Vec2I WindowManager::GetWindowPos() const
 {
-  vec2i res{};
+  Vec2I res{};
   glfwGetWindowPos(_context, &res.x, &res.y);
   return res;
+}
+
+f64 WindowManager::GetWorldTime() const
+{
+  return glfwGetTime();
 }

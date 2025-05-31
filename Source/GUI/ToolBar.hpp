@@ -4,6 +4,6 @@
 #include "Core/Math/Base.hpp"
 
 void GUI_ToolBar(bool& open,
-                 vec2i viewportPos,
-                 vec2i viewportSize,
+                 Vec2I viewportPos,
+                 Vec2I viewportSize,
                  i32& gizmode);

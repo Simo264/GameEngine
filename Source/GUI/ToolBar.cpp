@@ -50,9 +50,9 @@ static void ToolBar_WireframeButton(StringView label,
                                     bool& wireframe,
                                     StringView tooltip)
 {
-  ImVec4 currentColor = g_renderInWireframe ? btnColor : ImGui::GetStyle().Colors[ImGuiCol_Button];
-  ImVec4 currentColorHovered = g_renderInWireframe ? btnColorHovered : ImGui::GetStyle().Colors[ImGuiCol_ButtonHovered];
-  ImVec4 currentColorActive = g_renderInWireframe ? btnColorActive : ImGui::GetStyle().Colors[ImGuiCol_ButtonActive];
+  ImVec4 currentColor = wireframe ? btnColor : ImGui::GetStyle().Colors[ImGuiCol_Button];
+  ImVec4 currentColorHovered = wireframe ? btnColorHovered : ImGui::GetStyle().Colors[ImGuiCol_ButtonHovered];
+  ImVec4 currentColorActive = wireframe ? btnColorActive : ImGui::GetStyle().Colors[ImGuiCol_ButtonActive];
   ImGui::PushStyleColor(ImGuiCol_Button, currentColor);
   ImGui::PushStyleColor(ImGuiCol_ButtonHovered, currentColorHovered);
   ImGui::PushStyleColor(ImGuiCol_ButtonActive, currentColorActive);
@@ -68,22 +68,21 @@ static void ToolBar_WireframeButton(StringView label,
   }
 }
 
-static void ToolBar_RenderingModeButton(StringView label,
-                                        Texture2D icon, 
-                                        f32 btnSize,
-                                        i32& renderingMode,
-                                        i32 mode,
-                                        StringView tooltip)
+static void ToolBar_NormalButton(StringView label, 
+                                 Texture2D icon, 
+                                 f32 btnSize, 
+                                 bool& normalMap,
+                                 StringView tooltip)
 {
-  bool isActive = (renderingMode == mode);
-  ImVec4 currentColor = isActive ? btnColorActive : ImGui::GetStyle().Colors[ImGuiCol_Button];
-  ImVec4 currentColorHovered = isActive ? btnColorHovered : ImGui::GetStyle().Colors[ImGuiCol_ButtonHovered];
-  ImVec4 currentColorActive = isActive ? btnColorActive : ImGui::GetStyle().Colors[ImGuiCol_ButtonActive];
+  ImVec4 currentColor = normalMap ? btnColor : ImGui::GetStyle().Colors[ImGuiCol_Button];
+  ImVec4 currentColorHovered = normalMap ? btnColorHovered : ImGui::GetStyle().Colors[ImGuiCol_ButtonHovered];
+  ImVec4 currentColorActive = normalMap ? btnColorActive : ImGui::GetStyle().Colors[ImGuiCol_ButtonActive];
   ImGui::PushStyleColor(ImGuiCol_Button, currentColor);
   ImGui::PushStyleColor(ImGuiCol_ButtonHovered, currentColorHovered);
   ImGui::PushStyleColor(ImGuiCol_ButtonActive, currentColorActive);
   if (ImGui::ImageButton(label.data(), icon.id, ImVec2(btnSize, btnSize)))
-    renderingMode = mode;
+    normalMap = !normalMap;
+  ImGui::PopStyleColor(3);
 
   if (ImGui::IsItemHovered())
   {
@@ -91,8 +90,6 @@ static void ToolBar_RenderingModeButton(StringView label,
     ImGui::Text(tooltip.data());
     ImGui::EndTooltip();
   }
-
-  ImGui::PopStyleColor(3);
 }
 
 // ----------------------------------------------------
@@ -100,8 +97,8 @@ static void ToolBar_RenderingModeButton(StringView label,
 // ----------------------------------------------------
 
 void GUI_ToolBar(bool& open, 
-                 vec2i viewportPos, 
-                 vec2i viewportSize,
+                 Vec2I viewportPos, 
+                 Vec2I viewportSize,
                  i32 &gizmode)
 {
   constexpr f32 btnSpacing = 2.0f;
@@ -141,27 +138,9 @@ void GUI_ToolBar(bool& open,
   
   static Texture2D wireframeIcon = texManager.GetOrCreateIcon("wireframe-icon-32.png");
   ToolBar_WireframeButton("ToolBar_Wireframe", wireframeIcon, btnSize, g_renderInWireframe, "Wireframe");
-
-  ImGui::SameLine();
-  ImGui::Dummy(ImVec2(10.f, 0));
-  ImGui::SameLine();
-
   static Texture2D textileIcon = texManager.GetOrCreateIcon("textile-icon-32.png");
-  ToolBar_RenderingModeButton("RenderingMode_Color", 
-                              textileIcon, 
-                              btnSize, 
-                              g_renderMode, 
-                              0, 
-                              "Texture color");
   ImGui::SameLine();
-
-  static Texture2D depthIcon = texManager.GetOrCreateIcon("depth-icon-32.png");
-  ToolBar_RenderingModeButton("RenderingMode_Depth", 
-                              depthIcon, 
-                              btnSize, 
-                              g_renderMode, 
-                              1,
-                              "Depth map");
+  ToolBar_WireframeButton("ToolBar_Normal", textileIcon, btnSize, g_renderWithNormalMapping, "Normal map");
 
   ImGui::PopStyleVar();
   ImGui::End();

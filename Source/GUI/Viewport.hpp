@@ -7,5 +7,5 @@ void GUI_Viewport(StringView windowName,
                   class Texture2D textureImage,
                   class GameObject& objSelected,
                   i32 gizmode,
-                  const mat4f& view,
-                  const mat4f& proj);
+                  const Mat4f& view,
+                  const Mat4f& proj);

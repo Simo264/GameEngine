@@ -12,7 +12,7 @@ layout (std140, binding = 0) uniform CameraBlock
   vec3 u_cameraPosition;
   float __padding;
 };
-uniform mat4 u_model;
+layout (location = 0) uniform mat4 u_model;
 
 out vec2 TexCoord;
 out vec3 Normal;

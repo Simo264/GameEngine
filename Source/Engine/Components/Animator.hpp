@@ -32,17 +32,17 @@ public:
 	void PauseAnimation();
 	void RestartAnimation();
 
-	UniquePointer<mat4f[]> boneTransforms;
+	UniquePointer<Mat4f[]> boneTransforms;
 	u32 nrBoneTransforms;
 	f32 currentTime;
 
 private:
-	void UpdateBoneTransform(const BoneNode &node, const mat4f &parentTransform);
+	void UpdateBoneTransform(const BoneNode &node, const Mat4f &parentTransform);
 
 	void InterpolateBone(u32 boneIndex);
-	mat4f InterpolateBonePosition(const BoneAnimationKeys &boneKeys);
-	mat4f InterpolateBoneRotation(const BoneAnimationKeys &boneKeys);
-	mat4f InterpolateBoneScale(const BoneAnimationKeys &boneKeys);
+	Mat4f InterpolateBonePosition(const BoneAnimationKeys &boneKeys);
+	Mat4f InterpolateBoneRotation(const BoneAnimationKeys &boneKeys);
+	Mat4f InterpolateBoneScale(const BoneAnimationKeys &boneKeys);
 
 	f32 CalculateBlendFactor(f32 prevTimestamp, f32 nextTimestamp) const;
 	std::pair<const KeyPosition *, const KeyPosition *> FindCurrentPositionKey(const BoneAnimationKeys &boneKeys) const;

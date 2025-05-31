@@ -23,16 +23,16 @@ void Animator::SetTargetSkeleton(SkeletalMesh &target)
 		return;
 
 	_targetSkeleton = &target;
-	boneTransforms = std::make_unique<mat4f[]>(target.nrBones);
+	boneTransforms = std::make_unique<Mat4f[]>(target.nrBones);
 	nrBoneTransforms = target.nrBones;
 	for (u32 i = 0; i < nrBoneTransforms; i++)
-		boneTransforms[i] = mat4f(1.0f);
+		boneTransforms[i] = Mat4f(1.0f);
 }
 void Animator::SetTargetAnimation(const Animation *target)
 {
 	_targetAnimation = target;
 	for (u32 i = 0; i < nrBoneTransforms; i++)
-		boneTransforms[i] = mat4f(1.0f);
+		boneTransforms[i] = Mat4f(1.0f);
 }
 
 void Animator::PlayAnimation()
@@ -54,16 +54,16 @@ void Animator::UpdateAnimation(f32 dt)
 
 	currentTime += _targetAnimation->ticksPerSecond * dt;
 	currentTime = fmodf(currentTime, _targetAnimation->duration);
-	UpdateBoneTransform(*_targetSkeleton->rootNode, mat4f(1.0f));
+	UpdateBoneTransform(*_targetSkeleton->rootNode, Mat4f(1.0f));
 }
 
 // ----------------------------------------------------
 //										PRIVATE
 // ----------------------------------------------------
 
-void Animator::UpdateBoneTransform(const BoneNode &node, const mat4f &parentTransform)
+void Animator::UpdateBoneTransform(const BoneNode &node, const Mat4f &parentTransform)
 {
-	std::stack<std::pair<const BoneNode *, mat4f>> stack;
+	std::stack<std::pair<const BoneNode *, Mat4f>> stack;
 	stack.push(std::make_pair(&node, parentTransform));
 
 	while (!stack.empty())
@@ -72,13 +72,13 @@ void Animator::UpdateBoneTransform(const BoneNode &node, const mat4f &parentTran
 		stack.pop();
 
 		i32 boneIndex = currentNode->index;
-		mat4f globalTransformation = currentTransform * currentNode->bindPoseTransform;
+		Mat4f globalTransformation = currentTransform * currentNode->bindPoseTransform;
 		if (boneIndex != -1)
 		{
 			Bone &bone = _targetSkeleton->bones[boneIndex];
 			InterpolateBone(boneIndex);
 			globalTransformation = currentTransform * bone.localTransform;
-			const mat4f &offset = bone.offset;
+			const Mat4f &offset = bone.offset;
 			boneTransforms[boneIndex] = globalTransformation * offset;
 		}
 
@@ -92,48 +92,48 @@ void Animator::UpdateBoneTransform(const BoneNode &node, const mat4f &parentTran
 void Animator::InterpolateBone(u32 boneIndex)
 {
 	const auto &boneKeys = _targetAnimation->bonesAnimKeys[boneIndex];
-	mat4f translation = InterpolateBonePosition(boneKeys);
-	mat4f rotation = InterpolateBoneRotation(boneKeys);
-	mat4f scale = InterpolateBoneScale(boneKeys);
+	Mat4f translation = InterpolateBonePosition(boneKeys);
+	Mat4f rotation = InterpolateBoneRotation(boneKeys);
+	Mat4f scale = InterpolateBoneScale(boneKeys);
 	Bone &bone = _targetSkeleton->bones[boneIndex];
 	bone.localTransform = translation * rotation * scale;
 }
-mat4f Animator::InterpolateBonePosition(const BoneAnimationKeys &boneKeys)
+Mat4f Animator::InterpolateBonePosition(const BoneAnimationKeys &boneKeys)
 {
 	if (boneKeys.nrPosKeys == 0)
-		return mat4f(1.0f);
+		return Mat4f(1.0f);
 	if (boneKeys.nrPosKeys == 1)
-		return glm::translate(mat4f(1.0f), boneKeys.posKeys[0].position);
+		return glm::translate(Mat4f(1.0f), boneKeys.posKeys[0].position);
 
 	const auto [currentKey, nextKey] = FindCurrentPositionKey(boneKeys);
 	f32 scaleFactor = CalculateBlendFactor(currentKey->timeStamp, nextKey->timeStamp);
-	vec3f finalPosition = glm::mix(currentKey->position, nextKey->position, scaleFactor);
-	return glm::translate(mat4f(1.0f), finalPosition);
+	Vec3F finalPosition = glm::mix(currentKey->position, nextKey->position, scaleFactor);
+	return glm::translate(Mat4f(1.0f), finalPosition);
 }
-mat4f Animator::InterpolateBoneRotation(const BoneAnimationKeys &boneKeys)
+Mat4f Animator::InterpolateBoneRotation(const BoneAnimationKeys &boneKeys)
 {
 	if (boneKeys.nrRotKeys == 0)
-		return mat4f(1.0f);
+		return Mat4f(1.0f);
 	if (boneKeys.nrRotKeys == 1)
 		return glm::mat4_cast(glm::normalize(boneKeys.rotKeys[0].orientation));
 
 	const auto [currentKey, nextKey] = FindCurrentRotationKey(boneKeys);
 	f32 scaleFactor = CalculateBlendFactor(currentKey->timeStamp, nextKey->timeStamp);
-	quat finalRotation = glm::slerp(currentKey->orientation, nextKey->orientation, scaleFactor);
+	Quaternion finalRotation = glm::slerp(currentKey->orientation, nextKey->orientation, scaleFactor);
 	finalRotation = glm::normalize(finalRotation);
 	return glm::mat4_cast(finalRotation);
 }
-mat4f Animator::InterpolateBoneScale(const BoneAnimationKeys &boneKeys)
+Mat4f Animator::InterpolateBoneScale(const BoneAnimationKeys &boneKeys)
 {
 	if (boneKeys.nrScaleKeys == 0)
-		return mat4f(1.0f);
+		return Mat4f(1.0f);
 	if (boneKeys.nrScaleKeys == 1)
-		return glm::scale(mat4f(1.0f), boneKeys.scaleKeys[0].scale);
+		return glm::scale(Mat4f(1.0f), boneKeys.scaleKeys[0].scale);
 
 	const auto [currentKey, nextKey] = FindCurrentScaleKey(boneKeys);
 	f64 scaleFactor = CalculateBlendFactor(currentKey->timeStamp, nextKey->timeStamp);
-	vec3f finalScale = glm::mix(currentKey->scale, nextKey->scale, scaleFactor);
-	return glm::scale(mat4f(1.0f), finalScale);
+	Vec3F finalScale = glm::mix(currentKey->scale, nextKey->scale, scaleFactor);
+	return glm::scale(Mat4f(1.0f), finalScale);
 }
 
 f32 Animator::CalculateBlendFactor(f32 prevTimestamp, f32 nextTimestamp) const

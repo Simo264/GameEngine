@@ -3,101 +3,46 @@
 #include "Core/Core.hpp"
 #include "Core/Math/Base.hpp"
 
-/**
- * @struct Frustum
- * 
- * @brief Defines the viewing frustum for a camera.
- */
-struct Frustum 
-{
-	/** @brief Left plane of the frustum */
-	f32 left{ -10.0f };
-	/** @brief Right plane of the frustum */
-	f32 right{ 10.0f };
-	/** @brief Bottom plane of the frustum */
-	f32 bottom{ -10.0f };
-	/** @brief Top plane of the frustum */
-	f32 top{ 10.0f };
-	/** @brief Near plane distance */
-	f32 zNear{ 0.1f };
-	/** @brief Far plane distance */
-	f32 zFar{ 20.0f };
-};
-
-/**
- * @class Camera
- * 
- * @brief Represents a 3D camera with position, orientation, and projection capabilities
- */
 class Camera
 {
 public:
-	/**
-	 * @brief Constructs a Camera object with specified position, orientation, and field of view.
-	 * 
-	 * @param position Initial position of the camera (default is vec3f(0.f)).
-	 * @param orientation Initial orientation of the camera as Euler angles (yaw, pitch, roll).
-	 * @param fov Field of view in degrees (default is 45.f)
-	 */
-	Camera(
-		vec3f position		= vec3f(0.f),
-		vec3f orientation = vec3f(-90.f, 0.f, 0.f),
-		f32 fov						= 45.f
-	);
-	/** @brief Default destructor for Camera */
+	Camera();
 	~Camera() = default;
 
-	/** @brief Camera position (x, y, z) */
-	vec3f position;
-	/** @brief Camera orientation as Euler angles (yaw, pitch, roll). */
-	vec3f orientation;
-	/** @brief Field of view in degrees. */
-	f32 fov;
-	/** @brief Viewing frustum of the camera */
-	Frustum frustum;
-
-	/** @brief Gets the front vector of the camera. */
-	const vec3f& GetFrontVector() { return _front; }
-	/** @brief Gets the right vector of the camera. */
-	const vec3f& GetRightVector() { return _right; }
-	/** @brief Gets the up vector of the camera. */
-	const vec3f& GetUpVector() { return _up; }
-
-	/** @brief Updates the orientation of the camera by recalculating the front, up, and right vectors. */
-	void UpdateOrientation();
+	/** @brief Computes the view matrix */
+	Mat4f GetViewMatrix() const;
 
 	/**
-	 * @brief Calculates the view matrix for the camera.
-	 * 
-	 * @param center Position where the camera is looking at.
-	 * 
-	 * @return View matrix as a mat4f.
+	 * @brief Computes a perspective projection matrix
+	 *
+	 * @param fovy   Vertical field of view in radians
+	 * @param aspect Aspect ratio of the viewport
+	 * @param n      Distance to the near clipping plane (positive)
+	 * @param f      Distance to the far clipping plane (positive)
 	 */
-	mat4f CalculateView(vec3f center) const;
-
+	Mat4f GetPerspectiveProjection(f32 fovy, f32 aspect, f32 n, f32 f) const;
+	
 	/**
-	 * @brief Calculates the perspective projection matrix for the camera.
+	 * @brief Computes an orthographic projection matrix
 	 *
-	 * @param aspect Aspect ratio of the viewport.
-	 *
-	 * @return Perspective projection matrix as a mat4f
+	 * @param l Left boundary of the view volume
+	 * @param r Right boundary of the view volume
+	 * @param b Bottom boundary of the view volume
+	 * @param t Top boundary of the view volume
+	 * @param n Distance to the near clipping plane (positive)
+	 * @param f Distance to the far clipping plane (positive)
 	 */
-	mat4f CalculatePerspective(f32 aspect) const;
+	Mat4f GetOrthographicProjection(f32 l, f32 r,
+																	f32 b, f32 t,
+																	f32 n, f32 f) const;
 
-	/**
-	 * @brief Calculates the orthographic projection matrix for the camera.
-	 *
-	 * @return Orthographic projection matrix as a mat4f.
-	 */
-	mat4f CalculateOrtho() const;
-
-	/** @brief Processes keyboard input to move the camera. */
 	void ProcessKeyboard(f32 delta, f32 movementSpeed);
-	/** @brief Processes mouse input to adjust the camera orientation. */
 	void ProcessMouse(f32 delta, f32 mouseSensitivity);
 
-private:
-	vec3f _front; // Front vector representing the direction the camera is facing
-	vec3f _up;		// Up vector representing the upward direction
-	vec3f _right; // Right vector perpendicular to the front and up vectors.
+	Vec3F GetForwardVector() const { return Quaternion(eulerAngles) * Vec3F(0, 0, -1); }
+	Vec3F GetRightVector() const { return Quaternion(eulerAngles) * Vec3F(1, 0, 0); }
+	Vec3F GetUpVector() const { return Quaternion(eulerAngles) * Vec3F(0, 1, 0); }
+
+	Vec3F position;			// the eye position vector
+	Vec3F eulerAngles;	
 };

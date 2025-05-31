@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Core/Core.hpp"
 #include "Core/Math/Base.hpp"
 
 /**
@@ -9,7 +10,7 @@
 struct Vertex_P
 {
   /** @brief Vertex position (x, y, z). */
-	vec3f position{};
+	Vec3F position{};
 };
 
 /**
@@ -19,9 +20,9 @@ struct Vertex_P
 struct Vertex_P_UV
 {
   /** @brief Vertex position (x, y, z). */
-	vec3f position{};
+	Vec3F position{};
   /** @brief Texture UV coordinates (u, v). */
-	vec2f uv{};
+	Vec2F uv{};
 };
 
 /**
@@ -31,13 +32,13 @@ struct Vertex_P_UV
 struct Vertex_P_N_UV_T
 {
   /** @brief Vertex position (x, y, z). */
-  vec3f position{};
+  Vec3F position{};
   /** @brief Vertex normal vector (x, y, z). */
-  vec3f normal{};
+  Vec3F normal{};
   /** @brief Texture UV coordinates (u, v). */
-  vec2f uv{};
+  Vec2F uv{};
   /** @brief Tangent vector (x, y, z). */
-  vec3f tangent{};
+  Vec3F tangent{};
 };
 
 /**
@@ -61,13 +62,13 @@ struct Vertex_P_N_UV_T_B
   static constexpr u32 MAX_BONES_INFLUENCE = 4;
 
   /** @brief Vertex position (x, y, z). */
-  vec3f position{};
+  Vec3F position{};
   /** @brief Vertex normal vector (x, y, z). */
-  vec3f normal{};
+  Vec3F normal{};
   /** @brief Texture UV coordinates (u, v). */
-  vec2f uv{};
+  Vec2F uv{};
   /** @brief Tangent vector (x, y, z). */
-  vec3f tangent{};
+  Vec3F tangent{};
 
   /** @brief IDs of bones affecting the vertex. */
   i32 boneIds[MAX_BONES_INFLUENCE];

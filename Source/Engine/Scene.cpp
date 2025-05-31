@@ -17,25 +17,32 @@ static void DeserializeTag(GameObject &object, const YAML::Node &component)
 	String tag = component.as<String>();
 	object.GetComponent<Tag>()->UpdateValue(tag);
 }
-static void DeserializeTransform(GameObject &object, const YAML::Node &component)
+static void DeserializeTransformation(GameObject &object, const YAML::Node &component)
 {
-	Transform &transform = object.AddComponent<Transform>();
+	Transformation& transform = object.AddComponent<Transformation>();
 	YAML::Node node = component["position"];
-	transform.position = {
-			node[0].as<f32>(),
-			node[1].as<f32>(),
-			node[2].as<f32>()};
+	Vec3F position = {
+		node[0].as<f32>(),
+		node[1].as<f32>(),
+		node[2].as<f32>()
+	};
+	transform.position = position;
+
 	node = component["scale"];
-	transform.scale = {
-			node[0].as<f32>(),
-			node[1].as<f32>(),
-			node[2].as<f32>()};
+	Vec3F scale = {
+		node[0].as<f32>(),
+		node[1].as<f32>(),
+		node[2].as<f32>()
+	};
+	transform.scale = scale;
+
 	node = component["rotation"];
-	transform.rotation = {
-			node[0].as<f32>(),
-			node[1].as<f32>(),
-			node[2].as<f32>()};
-	transform.UpdateTransformation();
+	Vec3F degrees = {
+		node[0].as<f32>(),
+		node[1].as<f32>(),
+		node[2].as<f32>()
+	};
+	transform.eulerAngles = degrees;
 }
 static void DeserializeStaticMesh(GameObject &object, const YAML::Node &component)
 {
@@ -155,7 +162,7 @@ static void DeserializeLight(GameObject &object, const YAML::Node &component)
 static UnorderedMap<String, std::function<void(GameObject &, const YAML::Node &)>> deserializationMap =
 {
 	{"Tag", DeserializeTag},
-	{"Transform", DeserializeTransform},
+	{"Transformation", DeserializeTransformation},
 	{"StaticMesh", DeserializeStaticMesh},
 	{"SkeletalMesh", DeserializeSkeletalMesh},
 	{"Light", DeserializeLight},
@@ -165,21 +172,25 @@ static void SerializeTag(YAML::Emitter &outEmitter, const Tag &tag)
 {
 	outEmitter << YAML::Key << "Tag" << YAML::Value << tag.value.data();
 }
-static void SerializeTransform(YAML::Emitter &outEmitter, const Transform &transform)
+static void SerializeTransformation(YAML::Emitter &outEmitter, const Transformation &transform)
 {
-	outEmitter << YAML::Key << "Transform";
+	auto& position = transform.position;
+	auto& scale = transform.scale;
+	auto& degrees = transform.eulerAngles;
+
+	outEmitter << YAML::Key << "Transformation";
 	outEmitter << YAML::BeginMap;
 	outEmitter << YAML::Key << "position";
 	outEmitter << YAML::Flow << YAML::BeginSeq;
-	outEmitter << transform.position.x << transform.position.y << transform.position.z;
+	outEmitter << position.x << position.y << position.z;
 	outEmitter << YAML::EndSeq;
 	outEmitter << YAML::Key << "scale";
 	outEmitter << YAML::Flow << YAML::BeginSeq;
-	outEmitter << transform.scale.x << transform.scale.y << transform.scale.z;
+	outEmitter << scale.x << scale.y << scale.z;
 	outEmitter << YAML::EndSeq;
 	outEmitter << YAML::Key << "rotation";
 	outEmitter << YAML::Flow << YAML::BeginSeq;
-	outEmitter << transform.rotation.x << transform.rotation.y << transform.rotation.z;
+	outEmitter << degrees.x << degrees.y << degrees.z;
 	outEmitter << YAML::EndSeq;
 	outEmitter << YAML::EndMap;
 }
@@ -325,8 +336,8 @@ void Scene::SerializeScene(const fs::path &out)
 		Tag &tag = *object.GetComponent<Tag>();
 		SerializeTag(outEmitter, tag);
 
-		if (Transform *transform = object.GetComponent<Transform>())
-			SerializeTransform(outEmitter, *transform);
+		if (Transformation *transform = object.GetComponent<Transformation>())
+			SerializeTransformation(outEmitter, *transform);
 
 		if (StaticMesh *staticMesh = object.GetComponent<StaticMesh>())
 			SerializeStaticMesh(outEmitter, *staticMesh);

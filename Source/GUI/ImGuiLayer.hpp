@@ -4,12 +4,10 @@
 #include "Core/Math/Base.hpp"
 #include "Core/DesignPatterns/Singleton.hpp"
 
-struct GoochParams;
 class Texture2D;
 class Camera;
 class Scene;
 class GameObject;
-class Animator;
 
 /**
  * @brief Manages rendering and integration of ImGui into the application
@@ -28,14 +26,14 @@ public:
 
 
 	/** @brief Displays the main menu bar of the ImGui layer. */
-	void MenuBar(Scene &scene, GoochParams& goochParams) const;
+	void MenuBar(Scene &scene) const;
 	/** @brief Displays the ImGui demo window. */
 	void ImguiDemo();
 	/** @brief Renders the ImGui viewport */
 	void Viewport(Texture2D textureImage,
 								GameObject &objSelected, 
-								const mat4f &view, 
-								const mat4f &proj) const;
+								const Mat4f &view, 
+								const Mat4f &proj) const;
 	/** @brief Displays the hierarchy view. */
 	GameObject& Hierarchy(Scene& scene);
 	/** @brief Displays the inspector view for examining a specific game object. */
@@ -49,10 +47,10 @@ public:
 	/** @brief Displays detailed graphics information */
 	void GraphicsInfo();
 
-	void DrawTextureDepth(Texture2D textureDepth, i32 w, i32 h);
+	void DebugImage(Texture2D image, i32 w, i32 h);
 
-	vec2i viewportSize;
-	vec2i viewportPos;
+	Vec2I viewportSize;
+	Vec2I viewportPos;
 	bool viewportFocused;
 	i32 gizmode;
 

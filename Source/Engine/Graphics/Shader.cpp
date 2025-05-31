@@ -7,10 +7,6 @@
 //      Shader
 // ------------------------------
 
-Shader::Shader() : id{0}
-{
-}
-
 void Shader::Create(i32 shaderType, StringView source)
 {
   id = glCreateShader(shaderType);
@@ -29,7 +25,6 @@ void Shader::Delete()
 bool Shader::Compile() const
 {
   glCompileShader(id);
-
   i32 success = GetParameteri(GL_COMPILE_STATUS);
   return success == GL_TRUE;
 }
@@ -53,10 +48,6 @@ const char *Shader::GetShaderInfo() const
 // ------------------------------
 //      Program
 // ------------------------------
-
-Program::Program() : id{0}
-{
-}
 
 void Program::Create()
 {
@@ -82,7 +73,6 @@ void Program::DetachShader(Shader shader) const
 bool Program::Link() const
 {
   glLinkProgram(id);
-
   i32 link = GetParameteri(GL_LINK_STATUS);
   return link == GL_TRUE;
 }
@@ -112,7 +102,6 @@ i32 Program::GetUniformLocation(StringView name) const
 {
   return glGetUniformLocation(id, name.data());
 }
-
 u32 Program::GetUniformBlockIndex(StringView name) const
 {
   return glGetUniformBlockIndex(id, name.data());
@@ -129,7 +118,6 @@ void Program::SetUniformBlockBinding(StringView blockname, i32 uniformBlockBindi
 
   glUniformBlockBinding(id, blockIndex, uniformBlockBinding);
 }
-
 void Program::SetUniform1i(StringView uniformname, i32 value) const
 {
   i32 loc = GetUniformLocation(uniformname);
@@ -141,7 +129,7 @@ void Program::SetUniform1i(StringView uniformname, i32 value) const
 
   glProgramUniform1i(id, loc, value);
 }
-void Program::SetUniform2i(StringView uniformname, const vec2i &value) const
+void Program::SetUniform2i(StringView uniformname, const Vec2I &value) const
 {
   i32 loc = GetUniformLocation(uniformname);
   if (loc == -1)
@@ -152,7 +140,7 @@ void Program::SetUniform2i(StringView uniformname, const vec2i &value) const
 
   glProgramUniform2i(id, loc, value.x, value.y);
 }
-void Program::SetUniform3i(StringView uniformname, const vec3i &value) const
+void Program::SetUniform3i(StringView uniformname, const Vec3I &value) const
 {
   i32 loc = GetUniformLocation(uniformname);
   if (loc == -1)
@@ -163,7 +151,7 @@ void Program::SetUniform3i(StringView uniformname, const vec3i &value) const
 
   glProgramUniform3i(id, loc, value.x, value.y, value.z);
 }
-void Program::SetUniform4i(StringView uniformname, const vec4i &value) const
+void Program::SetUniform4i(StringView uniformname, const Vec4I &value) const
 {
   i32 loc = GetUniformLocation(uniformname);
   if (loc == -1)
@@ -185,7 +173,7 @@ void Program::SetUniform1f(StringView uniformname, f32 value) const
 
   glProgramUniform1f(id, loc, value);
 }
-void Program::SetUniform2f(StringView uniformname, const vec2f &value) const
+void Program::SetUniform2f(StringView uniformname, const Vec2F &value) const
 {
   i32 loc = GetUniformLocation(uniformname);
   if (loc == -1)
@@ -196,7 +184,7 @@ void Program::SetUniform2f(StringView uniformname, const vec2f &value) const
 
   glProgramUniform2f(id, loc, value.x, value.y);
 }
-void Program::SetUniform3f(StringView uniformname, const vec3f &value) const
+void Program::SetUniform3f(StringView uniformname, const Vec3F &value) const
 {
   i32 loc = GetUniformLocation(uniformname);
   if (loc == -1)
@@ -207,7 +195,7 @@ void Program::SetUniform3f(StringView uniformname, const vec3f &value) const
 
   glProgramUniform3f(id, loc, value.x, value.y, value.z);
 }
-void Program::SetUniform4f(StringView uniformname, const vec4f &value) const
+void Program::SetUniform4f(StringView uniformname, const Vec4F &value) const
 {
   i32 loc = GetUniformLocation(uniformname);
   if (loc == -1)
@@ -218,7 +206,7 @@ void Program::SetUniform4f(StringView uniformname, const vec4f &value) const
 
   glProgramUniform4f(id, loc, value.x, value.y, value.z, value.w);
 }
-void Program::SetUniformMat2f(StringView uniformname, const mat2f &value, bool transpose) const
+void Program::SetUniformMat2f(StringView uniformname, const Mat2f &value, bool transpose) const
 {
   i32 loc = GetUniformLocation(uniformname);
   if (loc == -1)
@@ -229,7 +217,7 @@ void Program::SetUniformMat2f(StringView uniformname, const mat2f &value, bool t
 
   glProgramUniformMatrix2fv(id, loc, 1, transpose, &value[0][0]);
 }
-void Program::SetUniformMat3f(StringView uniformname, const mat3f &value, bool transpose) const
+void Program::SetUniformMat3f(StringView uniformname, const Mat3f &value, bool transpose) const
 {
   i32 loc = GetUniformLocation(uniformname);
   if (loc == -1)
@@ -240,7 +228,7 @@ void Program::SetUniformMat3f(StringView uniformname, const mat3f &value, bool t
 
   glProgramUniformMatrix3fv(id, loc, 1, transpose, &value[0][0]);
 }
-void Program::SetUniformMat4f(StringView uniformname, const mat4f &value, bool transpose) const
+void Program::SetUniformMat4f(StringView uniformname, const Mat4f &value, bool transpose) const
 {
   i32 loc = GetUniformLocation(uniformname);
   if (loc == -1)
@@ -249,5 +237,51 @@ void Program::SetUniformMat4f(StringView uniformname, const mat4f &value, bool t
     return;
   }
 
+  glProgramUniformMatrix4fv(id, loc, 1, transpose, &value[0][0]);
+}
+
+
+void Program::SetUniform1i(i32 loc, i32 value) const
+{
+  glProgramUniform1i(id, loc, value);
+}
+void Program::SetUniform2i(i32 loc, const Vec2I& value) const
+{
+  glProgramUniform2i(id, loc, value.x, value.y);
+}
+void Program::SetUniform3i(i32 loc, const Vec3I& value) const
+{
+  glProgramUniform3i(id, loc, value.x, value.y, value.z);
+}
+void Program::SetUniform4i(i32 loc, const Vec4I& value) const
+{
+  glProgramUniform4i(id, loc, value.x, value.y, value.z, value.w);
+}
+void Program::SetUniform1f(i32 loc, f32 value) const
+{
+  glProgramUniform1f(id, loc, value);
+}
+void Program::SetUniform2f(i32 loc, const Vec2F& value) const
+{
+  glProgramUniform2f(id, loc, value.x, value.y);
+}
+void Program::SetUniform3f(i32 loc, const Vec3F& value) const
+{
+  glProgramUniform3f(id, loc, value.x, value.y, value.z);
+}
+void Program::SetUniform4f(i32 loc, const Vec4F& value) const
+{
+  glProgramUniform4f(id, loc, value.x, value.y, value.z, value.w);
+}
+void Program::SetUniformMat2f(i32 loc, const Mat2f& value, bool transpose) const
+{
+  glProgramUniformMatrix2fv(id, loc, 1, transpose, &value[0][0]);
+}
+void Program::SetUniformMat3f(i32 loc, const Mat3f& value, bool transpose) const
+{
+  glProgramUniformMatrix3fv(id, loc, 1, transpose, &value[0][0]);
+}
+void Program::SetUniformMat4f(i32 loc, const Mat4f& value, bool transpose) const
+{
   glProgramUniformMatrix4fv(id, loc, 1, transpose, &value[0][0]);
 }

@@ -21,9 +21,9 @@ private:
 	void InitTime();
 	void CalculatePerFrameTime();
 
-	void CreateCameraUBO();
-	void CreateLightUBO();
-	void CreateBoneUBO();
+	void CreateCameraUBO(i32 bindingPoint);
+	void CreateLightUBO(i32 bindingPoint);
+	void CreateBoneUBO(i32 bindingPoint);
 
 	Buffer _uboCameraBlock;	// UBO "CameraBlock"	-> bindpoint 0
 	Buffer _uboLightBlock;	// UBO "LightBlock"		-> bindpoint 1

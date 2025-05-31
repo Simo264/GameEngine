@@ -1,6 +1,6 @@
 Entity4:
   Tag: stone-brick-wall
-  Transform:
+  Transformation:
     position: [0, 0, 0]
     scale: [1, 1, 1]
     rotation: [0, 1258.0614, 4.3]
@@ -8,7 +8,7 @@ Entity4:
     path: stone_brick_wall_001\stone_brick_wall_001.gltf
 Entity3:
   Tag: monkey
-  Transform:
+  Transformation:
     position: [-3, 0, 0]
     scale: [1, 1, 1]
     rotation: [0, 1258.0615, 0]
@@ -33,7 +33,7 @@ Entity1:
     attenuation.kq: 0.2
 Entity5:
   Tag: aerial-rocks
-  Transform:
+  Transformation:
     position: [3, 0, 0]
     scale: [0.05, 0.05, 0.05]
     rotation: [0, 1258.0615, 4.3]

@@ -12,5 +12,5 @@ public:
 	Texture2D specular;
 	Texture2D normal;
 
-	void Bind(class Program program) const;
+	void Bind() const;
 };

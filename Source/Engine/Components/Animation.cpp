@@ -72,7 +72,7 @@ void Animation::LoadBoneKeys(BoneAnimationKeys &boneKeys, const aiNodeAnim *chan
 	{
 		aiVectorKey &tmp = channel->mPositionKeys[i];
 		boneKeys.posKeys[i].timeStamp = static_cast<f32>(tmp.mTime);
-		boneKeys.posKeys[i].position = vec3f(tmp.mValue.x, tmp.mValue.y, tmp.mValue.z);
+		boneKeys.posKeys[i].position = Vec3F(tmp.mValue.x, tmp.mValue.y, tmp.mValue.z);
 	}
 
 	boneKeys.rotKeys = std::make_unique<KeyRotation[]>(channel->mNumRotationKeys);
@@ -81,7 +81,7 @@ void Animation::LoadBoneKeys(BoneAnimationKeys &boneKeys, const aiNodeAnim *chan
 	{
 		aiQuatKey &tmp = channel->mRotationKeys[i];
 		boneKeys.rotKeys[i].timeStamp = static_cast<f32>(tmp.mTime);
-		boneKeys.rotKeys[i].orientation = quat(tmp.mValue.w, tmp.mValue.x, tmp.mValue.y, tmp.mValue.z);
+		boneKeys.rotKeys[i].orientation = Quaternion(tmp.mValue.w, tmp.mValue.x, tmp.mValue.y, tmp.mValue.z);
 	}
 
 	boneKeys.scaleKeys = std::make_unique<KeyScale[]>(channel->mNumScalingKeys);
@@ -90,6 +90,6 @@ void Animation::LoadBoneKeys(BoneAnimationKeys &boneKeys, const aiNodeAnim *chan
 	{
 		aiVectorKey &tmp = channel->mScalingKeys[i];
 		boneKeys.scaleKeys[i].timeStamp = static_cast<f32>(tmp.mTime);
-		boneKeys.scaleKeys[i].scale = vec3f(tmp.mValue.x, tmp.mValue.y, tmp.mValue.z);
+		boneKeys.scaleKeys[i].scale = Vec3F(tmp.mValue.x, tmp.mValue.y, tmp.mValue.z);
 	}
 }

@@ -184,8 +184,8 @@ static void Insp_PointLight(GameObject &object, PointLight &light)
   }
   ImGui::PopStyleColor(3);
 }
-static void Insp_Transform_TableRow(StringView label, 
-                                    vec3f &values, 
+static void Insp_Transformation_TableRow(StringView label, 
+                                    Vec3F &values, 
                                     f32 resetValue)
 {
   ImGui::PushID(label.data()); // label = "Position" or "Rotation" or "Scale"
@@ -240,27 +240,25 @@ static void Insp_Transform_TableRow(StringView label,
   ImGui::PopStyleVar();
   ImGui::PopID();
 }
-static void Insp_Transform(GameObject &object, Transform &transform)
+static void Insp_Transformation(GameObject &object, Transformation& transformation)
 {
   // Create a table with two columns: one for the labels and one for inputs
-  if (ImGui::BeginTable("Transform_Table", 2, ImGuiTableFlags_SizingFixedFit))
+  if (ImGui::BeginTable("Transformation_Table", 2, ImGuiTableFlags_SizingFixedFit))
   {
     ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthFixed, 80.f);
     ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthStretch);
 
     // First row: position
     ImGui::TableNextRow();
-    Insp_Transform_TableRow("Position", transform.position, 0.f);
+    Insp_Transformation_TableRow("Position", transformation.position, 0.f);
 
     // First row: Rotation
     ImGui::TableNextRow();
-    Insp_Transform_TableRow("Rotation", transform.rotation, 0.f);
+    Insp_Transformation_TableRow("Rotation", transformation.eulerAngles, 0.f);
 
     // First row: Scale
     ImGui::TableNextRow();
-    Insp_Transform_TableRow("Scale", transform.scale, 1.f);
-
-    transform.UpdateTransformation();
+    Insp_Transformation_TableRow("Scale", transformation.scale, 1.f);
 
     ImGui::EndTable();
   }
@@ -270,7 +268,7 @@ static void Insp_Transform(GameObject &object, Transform &transform)
   ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.45f, 0.f, 0.f, 0.5f));
   ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.45f, 0.f, 0.f, 0.5f));
   if (ImGui::Button("Remove component##transform"))
-    object.RemoveComponent<Transform>();
+    object.RemoveComponent<Transformation>();
   ImGui::PopStyleColor(3);
 }
 static void Insp_ShowTextureSelector(StringView label, 
@@ -513,15 +511,15 @@ static void Insp_Animator(GameObject &object, Animator &animator)
   }
 }
 
-static void Insp_AddTransformComponent(GameObject &object)
+static void Insp_AddTransformationComponent(GameObject &object)
 {
-  if (object.HasComponent<Transform>())
+  if (object.HasComponent<Transformation>())
   {
     ImGui::Selectable("Transform", false, ImGuiSelectableFlags_Disabled);
   }
   else if (ImGui::Selectable("Transform"))
   {
-    object.AddComponent<Transform>();
+    object.AddComponent<Transformation>();
   }
 }
 static void Insp_AddLightComponent(GameObject &object)
@@ -629,10 +627,10 @@ static void Insp_ListAllComponents(GameObject &object)
     Tag *tag = object.GetComponent<Tag>();
     Insp_Tag(*tag);
   }
-  if (Transform *transform = object.GetComponent<Transform>())
+  if (Transformation *transform = object.GetComponent<Transformation>())
   {
     if (ImGui::CollapsingHeader("Transform"))
-      Insp_Transform(object, *transform);
+      Insp_Transformation(object, *transform);
   }
   if (StaticMesh *staticMesh = object.GetComponent<StaticMesh>())
   {
@@ -677,7 +675,7 @@ static void Insp_NewComponentPopup(GameObject &object)
   {
     // Add Transform component
     // --------------------------------
-    Insp_AddTransformComponent(object);
+    Insp_AddTransformationComponent(object);
 
     ImGui::Spacing();
 
