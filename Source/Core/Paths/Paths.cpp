@@ -5,20 +5,20 @@ namespace Paths
 	const fs::path &GetRootPath()
 	{
 		static auto lambda = []() {
-			fs::path currentPath = fs::current_path();
+			auto currentPath = fs::current_path();
 			if (currentPath.filename() == "Build")
 				return currentPath.parent_path().lexically_normal();
 
 			return currentPath.lexically_normal();
 		};
 
-		static const fs::path ROOT_PATH = lambda();
+		static const auto ROOT_PATH = lambda();
 		return ROOT_PATH;
 	}
 
 	const fs::path &GetShadersPath()
 	{
-		static const fs::path SHADERS_PATH = (GetRootPath() / "Shaders").lexically_normal();
+		static const auto SHADERS_PATH = (GetRootPath() / "Shaders").lexically_normal();
 		return SHADERS_PATH;
 	}
 
@@ -30,43 +30,25 @@ namespace Paths
 
 	const fs::path &GetTexturesPath()
 	{
-		static const fs::path TEXTURES_PATH = (GetAssetsPath() / "Textures").lexically_normal();
+		static const auto TEXTURES_PATH = (GetAssetsPath() / "Textures").lexically_normal();
 		return TEXTURES_PATH;
 	}
 
 	const fs::path &GetIconsPath()
 	{
-		static const fs::path ICONS_PATH = (GetAssetsPath() / "Icons").lexically_normal();
+		static const auto ICONS_PATH = (GetAssetsPath() / "Icons").lexically_normal();
 		return ICONS_PATH;
 	}
 
 	const fs::path &GetFontsPath()
 	{
-		static const fs::path FONTS_PATH = (GetAssetsPath() / "Fonts").lexically_normal();
+		static const auto FONTS_PATH = (GetAssetsPath() / "Fonts").lexically_normal();
 		return FONTS_PATH;
 	}
 
 	const fs::path &GetModelsPath()
 	{
-		static const fs::path MODELS_PATH = (GetAssetsPath() / "Models").lexically_normal();
+		static const auto MODELS_PATH = (GetAssetsPath() / "Models").lexically_normal();
 		return MODELS_PATH;
-	}
-
-	const fs::path& GetHDRIPath()
-	{
-		static const fs::path HDRI_PATH = (GetAssetsPath() / "HDRI").lexically_normal();
-		return HDRI_PATH;
-	}
-
-	const fs::path &GetStaticModelsPath()
-	{
-		static const fs::path STATIC_MODELS_PATH = (GetModelsPath() / "Static").lexically_normal();
-		return STATIC_MODELS_PATH;
-	}
-
-	const fs::path &GetSkeletalModelsPath()
-	{
-		static const fs::path SKELETAL_MODELS_PATH = (GetModelsPath() / "Skeletal").lexically_normal();
-		return SKELETAL_MODELS_PATH;
 	}
 }

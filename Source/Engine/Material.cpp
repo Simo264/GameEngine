@@ -4,7 +4,6 @@
 
 void Material::Bind() const
 {
-  diffuse.BindTextureUnit(UniformBindings::TEXTURE_COLOR);
-  specular.BindTextureUnit(UniformBindings::TEXTURE_SPECULAR);
-  normal.BindTextureUnit(UniformBindings::TEXTURE_NORMAL);
+  albedo.BindTextureUnit(10);
+  normalMap.BindTextureUnit(11);
 }

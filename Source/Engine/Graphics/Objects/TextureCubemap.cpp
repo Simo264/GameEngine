@@ -52,7 +52,7 @@ void TextureCubemap::CreateStorage(Texture2DInternalFormat internalFormat,
 void TextureCubemap::Delete()
 {
   glDeleteTextures(1, &id);
-  id = 0;
+  id = 0u;
 }
 
 bool TextureCubemap::IsValid() const
@@ -99,24 +99,22 @@ void TextureCubemap::SetParameteri(TextureParameteriName name,
 
 void TextureCubemap::LoadImages(const Array<Texture2D, 6>& images) const
 {
-  i32 width = images.at(0).GetWidth();
-  i32 height = images.at(0).GetHeight();
-  Texture2DFormat format2d = images.at(0).GetFormat();
-  Texture3DFormat format3d = ConvertToTexture3DFormat(format2d);
-  i32 nrChannels = images.at(0).GetNumChannels();
-  i32 bufsize = width * height * nrChannels;
+  auto width = images.at(0).GetWidth();
+  auto height = images.at(0).GetHeight();
+  auto format2d = images.at(0).GetFormat();
+  auto format3d = ConvertToTexture3DFormat(format2d);
+  auto nrChannels = images.at(0).GetNumChannels();
+  auto buffSize = width * height * nrChannels;
   
-  UniquePointer<u8[]> pixels = std::make_unique<u8[]>(bufsize);
-
-  for (i32 i = 0; i < 6; i++)
+  auto pixels = std::make_unique<byte[]>(buffSize);
+  for (auto i = 0u; i < 6; i++)
   {
-    std::fill_n(pixels.get(), bufsize, 0);
+    std::fill_n(pixels.get(), buffSize, static_cast<byte>(0));
 
-    Texture2D texture = images.at(i);
-    
+    auto& texture = images.at(i);
     texture.GetTextureImage(0,
                             Texture2DGetImageType::UNSIGNED_BYTE, 
-                            bufsize, 
+                            buffSize,
                             reinterpret_cast<void*>(pixels.get()));
     
     SubImage3D(0,

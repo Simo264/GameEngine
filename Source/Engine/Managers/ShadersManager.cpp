@@ -10,23 +10,7 @@
 #include "Engine/Utils.hpp"
 #include "Engine/Uniforms.hpp"
 
-constexpr char SM_FILE_CONFIG[] = "ShadersConfig.json";
-
-static i32 ResolveShaderType(StringView ext)
-{
-	if (ext == "vert")
-		return GL_VERTEX_SHADER;
-	if (ext == "tesc")
-		return GL_TESS_CONTROL_SHADER;
-	if (ext == "tese")
-		return GL_TESS_EVALUATION_SHADER;
-	if (ext == "geom")
-		return GL_GEOMETRY_SHADER;
-	if (ext == "frag")
-		return GL_FRAGMENT_SHADER;
-
-	throw std::runtime_error(std::format("Unknown file extension {}", ext.data()));
-}
+constexpr auto SM_FILE_CONFIG = "ShadersConfig.json";
 
 // --------------------------------------------
 //                  PUBLIC
@@ -38,9 +22,9 @@ void ShadersManager::Initialize()
 	if (!fs::exists(p))
 		throw std::runtime_error(std::format("{} does not exist!", p.string()));
 
-	LoadConfig(p);
+	__LoadConfig(p);
 }
-void ShadersManager::CleanUp()
+void ShadersManager::Cleanup()
 {
 	// Destoy all program objects
 	for (auto &pair : _programs)
@@ -55,46 +39,44 @@ Shader ShadersManager::GetShader(StringView shaderName) const
 {
 	assert(shaderName.size() < 32);
 
-	for (const auto &pair : _shaders)
+	for (const auto& pair : _shaders)
 	{
-		StringView name = pair.name.data();
+		auto name = StringView(pair.name.data());
 		if (name == shaderName)
 			return pair.shader;
 	}
+
 	return Shader{};
 }
-Shader ShadersManager::GetOrCreateShader(StringView shaderName)
+Shader ShadersManager::GetOrCreateShader(StringView shaderName, ShaderType type)
 {
-	Shader s = GetShader(shaderName);
+	auto s = GetShader(shaderName);
 	if (!s.IsValid())
-		s = CreateShader(shaderName);
+		s = CreateShader(shaderName, type);
 
 	return s;
 }
-Shader ShadersManager::CreateShader(StringView shaderName)
+Shader ShadersManager::CreateShader(StringView shaderName, ShaderType type)
 {
 	assert(shaderName.size() < 32);
 
-	fs::path absolute = Paths::GetShadersPath() / shaderName.data();
+	auto absolute = Paths::GetShadersPath() / shaderName.data();
 	if (!fs::exists(absolute))
 		throw std::runtime_error(std::format("Shader file '{}' does not exist", absolute.string()));
 
-	InputFileStream file(absolute);
-	String shaderSrc{std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>()};
-	StringView ext = shaderName.substr(shaderName.find_last_of('.') + 1);
-	i32 shaderType = ResolveShaderType(ext);
-
-	auto &pair = _shaders.emplace_back();
-
-	Array<char, 32> &name = pair.name;
+	auto& pairShaderName = _shaders.emplace_back();
+	auto& name = pairShaderName.name;
 	std::copy(shaderName.begin(), shaderName.end(), name.begin());
 
-	Shader &shader = pair.shader;
-	shader.Create(shaderType, shaderSrc);
-	if (!shader.Compile())
-		CONSOLE_ERROR("Error on compiling shader {}: {}", shaderName.data(), pair.shader.GetShaderInfo());
+	auto file = InputFileStream(absolute);
+	auto shaderSrc = String(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
 
-	return shader;
+	auto& shaderObj = pairShaderName.shader;
+	shaderObj.Create(type, shaderSrc);
+	if (!shaderObj.Compile())
+		CONSOLE_ERROR("Error on compiling shader {}: {}", shaderName.data(), shaderObj.GetShaderInfo());
+
+	return shaderObj;
 }
 
 Program ShadersManager::GetProgram(StringView programName) const
@@ -103,7 +85,7 @@ Program ShadersManager::GetProgram(StringView programName) const
 
 	for (const auto &pair : _programs)
 	{
-		StringView name = pair.name.data();
+		auto name = StringView(pair.name.data());
 		if (name == programName)
 			return pair.program;
 	}
@@ -113,26 +95,26 @@ Program ShadersManager::CreateProgram(StringView programName)
 {
 	assert(programName.size() < 32);
 
-	auto &pair = _programs.emplace_back();
-	Array<char, 32> &name = pair.name;
+	auto& pairProgramName = _programs.emplace_back();
+	auto& name = pairProgramName.name;
 	std::copy(programName.begin(), programName.end(), name.begin());
 
-	Program &program = pair.program;
-	program.Create();
-	return program;
+	auto& programObj = pairProgramName.program;
+	programObj.Create();
+	return programObj;
 }
 
 // --------------------------------------------
 //                  PRIVATE
 // --------------------------------------------
 
-void ShadersManager::LoadConfig(const fs::path &path)
+void ShadersManager::__LoadConfig(const fs::path &path)
 {
-	InputFileStream file(path);
-	nlohmann::json data = nlohmann::json::parse(file);
-	for (const auto &[programName, shadersJson] : data.items())
+	auto file = InputFileStream(path);
+	auto data = nlohmann::json::parse(file);
+	for (const auto& [programName, shadersJson] : data.items())
 	{
-		Program program = GetProgram(programName);
+		auto program = GetProgram(programName);
 		if (program.IsValid())
 		{
 			CONSOLE_WARN("Program '{}' already exists", programName);
@@ -140,30 +122,30 @@ void ShadersManager::LoadConfig(const fs::path &path)
 		}
 
 		program = CreateProgram(programName);
-
+		
 		if (shadersJson.contains("vertex"))
 		{
-			Shader shader = GetOrCreateShader(shadersJson.at("vertex").get<String>());
+			auto shader = GetOrCreateShader(shadersJson.at("vertex").get<String>(), ShaderType::Vertex);
 			program.AttachShader(shader);
 		}
 		if (shadersJson.contains("tess_control"))
 		{
-			Shader shader = GetOrCreateShader(shadersJson.at("tess_control").get<String>());
+			auto shader = GetOrCreateShader(shadersJson.at("tess_control").get<String>(), ShaderType::TessControl);
 			program.AttachShader(shader);
 		}
 		if (shadersJson.contains("tess_eval"))
 		{
-			Shader shader = GetOrCreateShader(shadersJson.at("tess_eval").get<String>());
+			auto shader = GetOrCreateShader(shadersJson.at("tess_eval").get<String>(), ShaderType::TessEvaluation);
 			program.AttachShader(shader);
 		}
 		if (shadersJson.contains("geometry"))
 		{
-			Shader shader = GetOrCreateShader(shadersJson.at("geometry").get<String>());
+			auto shader = GetOrCreateShader(shadersJson.at("geometry").get<String>(), ShaderType::Geometry);
 			program.AttachShader(shader);
 		}
 		if (shadersJson.contains("fragment"))
 		{
-			Shader shader = GetOrCreateShader(shadersJson.at("fragment").get<String>());
+			auto shader = GetOrCreateShader(shadersJson.at("fragment").get<String>(), ShaderType::Fragment);
 			program.AttachShader(shader);
 		}
 		if (!program.Link())

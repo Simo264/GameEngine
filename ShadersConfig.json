@@ -1,6 +1,10 @@
 {
-  "BlinnPhong": {
-    "vertex": "Phong/PhongModel.vert",
-    "fragment": "Phong/BlinnPhong.frag"
+  "GoochShading": {
+    "vertex": "Gooch.vert.glsl",
+    "fragment": "Gooch.frag.glsl"
+  },
+  "BlinnPhongShading": {
+    "vertex": "BlinnPhong.vert.glsl",
+    "fragment": "BlinnPhong.frag.glsl"
   }
 }

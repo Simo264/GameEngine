@@ -5,7 +5,7 @@
 
 #include "Engine/Importers/StaticMeshLoader.hpp"
 
-const SharedPointer<const StaticMesh> StaticMeshFactory::GetPrototype(const fs::path& relativePathToFile)
+SharedPointer<const Components::StaticMesh> StaticMeshFactory::GetPrototype(const fs::path& relativePathToFile)
 {
 	auto it = _prototypes.find(relativePathToFile);
 	if (it != _prototypes.end())
@@ -14,22 +14,20 @@ const SharedPointer<const StaticMesh> StaticMeshFactory::GetPrototype(const fs::
 	return nullptr;
 }
 
-const SharedPointer<const StaticMesh> StaticMeshFactory::CreatePrototype(const fs::path& absolutePathToFile)
+SharedPointer<const Components::StaticMesh> StaticMeshFactory::CreatePrototype(const fs::path& absolutePathToFile)
 {
-	fs::path relative = fs::relative(absolutePathToFile, Paths::GetStaticModelsPath());
-
+	auto relative = fs::relative(absolutePathToFile, Paths::GetModelsPath());
 	auto it = _prototypes.find(relative);
 	if (it != _prototypes.end())
 		return it->second;
 
-	auto [vals, success] = _prototypes.emplace(relative, std::make_shared<StaticMesh>());
-	auto& prototype = vals->second;
-	prototype->prototypeID = _prototypes.size();
+	auto newStaticMesh = std::make_shared<Components::StaticMesh>();
+	auto [vals, success] = _prototypes.emplace(relative, newStaticMesh);
+	newStaticMesh->prototypeID = _prototypes.size();
 
-	StaticMeshLoader loader;
-	loader.LoadDataFromFile(absolutePathToFile, *prototype);
-	
-	return prototype;
+	auto loader = StaticMeshLoader{};
+	loader.LoadDataFromFile(absolutePathToFile, *newStaticMesh);
+	return newStaticMesh;
 }
 
 fs::path StaticMeshFactory::GetPrototypePath(i32 prototypeID)
@@ -40,4 +38,10 @@ fs::path StaticMeshFactory::GetPrototypePath(i32 prototypeID)
 	
 	CONSOLE_WARN("Invalid prototypeID ({})", prototypeID);
 	return fs::path("none");
+}
+
+void StaticMeshFactory::Cleanup()
+{
+	for (auto& [path, staticMesh] : _prototypes)
+		staticMesh->Destroy();
 }

@@ -3,29 +3,27 @@
 #include "Core/Paths/Paths.hpp"
 #include "Core/Dialog/FileDialog.hpp"
 
+#include "Engine/Scene.hpp"
 #include "Engine/Components/Components.hpp"
 
 #include "Engine/Managers/TexturesManager.hpp"
 #include "Engine/Managers/StaticMeshFactory.hpp"
-#include "Engine/Managers/AnimationsManager.hpp"
 
 #include <imgui.h>
 #include <ImGuizmo.h>
 
-// ------------------------------------------
-//                  PRIVATE
-// ------------------------------------------
+using namespace Components;
 
 static bool Insp_ButtonCentered(StringView label, ImVec2 size)
 {
-  f32 avail = ImGui::GetContentRegionAvail().x;
-  f32 off = (avail - size.x) * 0.5f;
+  auto avail = ImGui::GetContentRegionAvail().x;
+  auto off = (avail - size.x) * 0.5f;
   if (off > 0.0f)
     ImGui::SetCursorPosX(ImGui::GetCursorPosX() + off);
 
   return ImGui::Button(label.data(), size);
 }
-static void Insp_Tag(Tag &tag)
+static void Insp_Tag(Tag& tag)
 {
   // Create a table with two columns: one for the labels and one for input
   if (ImGui::BeginTable("Tag_Table", 2, ImGuiTableFlags_SizingFixedFit))
@@ -35,18 +33,18 @@ static void Insp_Tag(Tag &tag)
 
     ImGui::TableNextRow();
 
-    // First column: label
+    // Column 1: label
     ImGui::TableNextColumn();
     ImGui::Text("Tag");
 
-    // First column: input
+    // Column 2: input
     ImGui::TableNextColumn();
-    Array<char, 64> buffer{};
+    auto buffer = Array<char, 64>{};
     std::format_to_n(buffer.data(), buffer.size(), "{}", tag.value.data());
 
     if (ImGui::InputText("##Value", buffer.data(), buffer.size(), ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_EnterReturnsTrue))
     {
-      StringView value{buffer.data()};
+      auto value = StringView(buffer.data());
       if (value.size() > 0)
         tag.UpdateValue(value);
     }
@@ -54,25 +52,96 @@ static void Insp_Tag(Tag &tag)
     ImGui::EndTable();
   }
 }
-static void Insp_Light_ComboAttenuation(Attenuation &destAtt)
+static void Insp_Light_ComboAttenuation(f32& kl, f32& kq)
 {
-  Array<char, 16> currentAttRange{};
-  std::format_to_n(currentAttRange.begin(), currentAttRange.size(), "{}m", destAtt.range);
-  if (ImGui::BeginCombo("##Range", currentAttRange.data()))
+  static auto buffer = Array<char, 64>{}; // Buffer statico riutilizzabile
+  buffer.fill(0);
+
+  // Find current selection using std::find_if with lambda
+  auto currentIt = std::find_if(ATTENUATION_RANGES.begin(), 
+                                ATTENUATION_RANGES.end(), 
+                                [kl, kq](const Array<f32, 3>& data) 
   {
-    Array<char, 16> label{};
-    for (u32 i = 0; i < std::size(ATTENUATION_RANGES); i++)
+    return std::abs(data[1] - kl) < 0.001f && std::abs(data[2] - kq) < 0.001f;
+  });
+
+  auto currentSelection = (currentIt != ATTENUATION_RANGES.end()) ?
+    std::distance(ATTENUATION_RANGES.begin(), currentIt) : -1;
+
+  // Create concise preview string
+  if (currentSelection >= 0)
+  {
+    std::snprintf(buffer.data(), buffer.size(), "Range %d", static_cast<i32>((*currentIt)[0]));
+  }
+  else
+  {
+    constexpr auto text = StringView("Custom");
+    constexpr auto len = text.length();
+    std::copy_n(text.begin(), len, buffer.begin());
+  }
+
+
+  if (ImGui::BeginCombo("##AttenuationCombo", buffer.data()))
+  {
+    // Add "Custom" option at the top
+    auto isCustomSelected = (currentSelection == -1);
+    if (ImGui::Selectable("Custom", isCustomSelected))
     {
-      const auto &attenuation = ATTENUATION_RANGES[i];
-      label.fill(0);
-      std::format_to_n(label.begin(), label.size(), "{}m", attenuation.range);
-      if (ImGui::Selectable(label.data(), destAtt.range == attenuation.range))
-        destAtt = attenuation;
+      // Don't change values, just close combo
     }
+
+    // Add separator
+    ImGui::Separator();
+
+    // Add preset options using enumerate pattern
+    auto index = 0;
+    std::for_each(ATTENUATION_RANGES.begin(), 
+                  ATTENUATION_RANGES.end(),
+                  [&](const Array<f32, 3>& data) 
+    {
+      std::snprintf(buffer.data(), 
+                    buffer.size(), 
+                    "Range %d (kl: %.3f, kq: %.4f)", 
+                    static_cast<int>(data[0]), data[1], data[2]);
+
+      auto isSelected = (currentSelection == index);
+      if (ImGui::Selectable(buffer.data(), isSelected))
+      {
+        kl = data[1];
+        kq = data[2];
+      }
+      if (isSelected)
+        ImGui::SetItemDefaultFocus();
+      
+      ++index;
+    });
+
     ImGui::EndCombo();
   }
+
+  // Show current values as text below the combo
+  ImGui::SameLine();
+  if (ImGui::Button("Edit"))
+  {
+    ImGui::OpenPopup("EditAttenuation");
+  }
+  if (ImGui::BeginPopup("EditAttenuation"))
+  {
+    ImGui::Text("Manual Attenuation Values");
+    ImGui::Separator();
+
+    ImGui::DragFloat("Linear (kl)", &kl, 0.001f, 0.0f, 2.0f, "%.4f");
+    ImGui::DragFloat("Quadratic (kq)", &kq, 0.001f, 0.0f, 2.0f, "%.6f");
+
+    if (ImGui::Button("Close"))
+    {
+      ImGui::CloseCurrentPopup();
+    }
+
+    ImGui::EndPopup();
+  }
 }
-static void Insp_DirectLight(GameObject &object, DirectionalLight &light)
+static void Insp_DirectLight(GameObject object, DirectionalLight& light)
 {
   // Create a table with two columns: one for the labels and one for input
   if (ImGui::BeginTable("Light_Table", 2, ImGuiTableFlags_SizingFixedFit))
@@ -80,9 +149,9 @@ static void Insp_DirectLight(GameObject &object, DirectionalLight &light)
     ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthFixed, 80.f);
     ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthStretch);
 
-    // 1� Row: view light type
+    // Row 1: view light type
     ImGui::TableNextRow();
-    ImGui::TableNextColumn(); // First column: label
+    ImGui::TableNextColumn(); // Column 1: label
     ImGui::Text("Type");
     ImGui::TableNextColumn(); // Second column: combo
     ImGui::BeginDisabled();
@@ -90,26 +159,26 @@ static void Insp_DirectLight(GameObject &object, DirectionalLight &light)
       ImGui::EndCombo();
     ImGui::EndDisabled();
 
-    // 2� Row: color input
+    // Row 2: color input
     ImGui::TableNextRow();
-    ImGui::TableNextColumn(); // First column: label
+    ImGui::TableNextColumn(); // Column 1: label
     ImGui::Text("Color");
-    ImGui::TableNextColumn(); // Second column: input
-    ImGui::ColorEdit3("##Color", reinterpret_cast<f32 *>(&light.color));
+    ImGui::TableNextColumn(); // Column 2: input
+    ImGui::ColorEdit3("##Color", reinterpret_cast<f32*>(&light.color));
 
-    // 3� Row: intensity input
+    // Row 3: intensity input
     ImGui::TableNextRow();
-    ImGui::TableNextColumn(); // First column: label
+    ImGui::TableNextColumn(); // Column 1: label
     ImGui::Text("Intensity");
-    ImGui::TableNextColumn(); // Second column: input
+    ImGui::TableNextColumn(); // Column 2: input
     ImGui::SliderFloat("##Intensity", &light.intensity, 0.0f, 1.0f);
 
-    // 4� Row: direction input
+    // Row 4: direction input
     ImGui::TableNextRow();
-    ImGui::TableNextColumn(); // First column: label
+    ImGui::TableNextColumn(); // Column 1: label
     ImGui::Text("Direction");
-    ImGui::TableNextColumn(); // Second column: input
-    ImGui::DragFloat3("##Direction", reinterpret_cast<f32 *>(&light.direction), 0.1f, -FLT_MAX, FLT_MAX);
+    ImGui::TableNextColumn(); // Column 2: input
+    ImGui::DragFloat3("##Direction", reinterpret_cast<f32*>(&light.direction), 0.1f, -FLT_MAX, FLT_MAX);
 
     ImGui::EndTable();
   }
@@ -125,7 +194,7 @@ static void Insp_DirectLight(GameObject &object, DirectionalLight &light)
   }
   ImGui::PopStyleColor(3);
 }
-static void Insp_PointLight(GameObject &object, PointLight &light)
+static void Insp_PointLight(GameObject object, PointLight& light)
 {
   // Create a table with two columns: one for the labels and one for input
   if (ImGui::BeginTable("Light_Table", 2, ImGuiTableFlags_SizingFixedFit))
@@ -133,43 +202,43 @@ static void Insp_PointLight(GameObject &object, PointLight &light)
     ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthFixed, 80.f);
     ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthStretch);
 
-    // 1� Row: view light type
+    // Row 1: view light type
     ImGui::TableNextRow();
-    ImGui::TableNextColumn(); // First column: label
+    ImGui::TableNextColumn(); // Column 1: label
     ImGui::Text("Type");
-    ImGui::TableNextColumn(); // Second column: combo
+    ImGui::TableNextColumn(); // Column 2: combo
     ImGui::BeginDisabled();
     if (ImGui::BeginCombo("##Type", "Point"))
       ImGui::EndCombo();
     ImGui::EndDisabled();
 
-    // 2� Row: color input
+    // Row 2: color input
     ImGui::TableNextRow();
-    ImGui::TableNextColumn(); // First column: label
+    ImGui::TableNextColumn(); // Column 1: label
     ImGui::Text("Color");
-    ImGui::TableNextColumn(); // Second column: input
+    ImGui::TableNextColumn(); // Column 2: input
     ImGui::ColorEdit3("##Color", reinterpret_cast<f32 *>(&light.color));
 
-    // 3� Row: diffuse input
+    // Row 3: diffuse input
     ImGui::TableNextRow();
-    ImGui::TableNextColumn(); // First column: label
+    ImGui::TableNextColumn(); // Column 1: label
     ImGui::Text("Intensity");
-    ImGui::TableNextColumn(); // Second column: input
+    ImGui::TableNextColumn(); // Column 2: input
     ImGui::SliderFloat("##Intensity", &light.intensity, 0.0f, 1.0f);
 
-    // 4� Row: position input
+    // Row 4: position input
     ImGui::TableNextRow();
-    ImGui::TableNextColumn(); // First column: label
+    ImGui::TableNextColumn(); // Column 1: label
     ImGui::Text("Position");
-    ImGui::TableNextColumn(); // Second column: input
+    ImGui::TableNextColumn(); // Column 2: input
     ImGui::DragFloat3("##Position", reinterpret_cast<f32 *>(&light.position), 0.1f, -FLT_MAX, FLT_MAX);
 
-    // 5� Row: attenuation combo
+    // Row 4: attenuation combo
     ImGui::TableNextRow();
-    ImGui::TableNextColumn(); // First column: label
-    ImGui::TextWrapped("Attenuation range");
-    ImGui::TableNextColumn(); /* Second column: input */
-    Insp_Light_ComboAttenuation(light.attenuation);
+    ImGui::TableNextColumn(); // Column 1: label
+    ImGui::TextWrapped("Attenuation");
+    ImGui::TableNextColumn(); // Column 2: input
+    Insp_Light_ComboAttenuation(light.kl, light.kq);
     ImGui::EndTable();
   }
 
@@ -184,23 +253,100 @@ static void Insp_PointLight(GameObject &object, PointLight &light)
   }
   ImGui::PopStyleColor(3);
 }
-static void Insp_Transformation_TableRow(StringView label, 
-                                    Vec3F &values, 
-                                    f32 resetValue)
+static void Insp_SpoLight(GameObject object, SpotLight& light)
+{
+  // Crea una tabella con due colonne per le etichette e gli input
+  if (ImGui::BeginTable("Spotlight_Table", 2, ImGuiTableFlags_SizingFixedFit))
+  {
+    ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthFixed, 80.f);
+    ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthStretch);
+
+    // Riga 1: tipo di luce (fisso su "Spot")
+    ImGui::TableNextRow();
+    ImGui::TableNextColumn(); // Colonna 1: etichetta
+    ImGui::Text("Type");
+    ImGui::TableNextColumn(); // Colonna 2: combo disabilitato
+    ImGui::BeginDisabled();
+    if (ImGui::BeginCombo("##Type", "Spot"))
+      ImGui::EndCombo();
+    ImGui::EndDisabled();
+
+    // Riga 2: input colore
+    ImGui::TableNextRow();
+    ImGui::TableNextColumn(); // Colonna 1: etichetta
+    ImGui::Text("Color");
+    ImGui::TableNextColumn(); // Colonna 2: input
+    ImGui::ColorEdit3("##Color", reinterpret_cast<f32*>(&light.color));
+
+    // Riga 3: input intensità
+    ImGui::TableNextRow();
+    ImGui::TableNextColumn(); // Colonna 1: etichetta
+    ImGui::Text("Intensity");
+    ImGui::TableNextColumn(); // Colonna 2: input
+    ImGui::SliderFloat("##Intensity", &light.intensity, 0.0f, 1.0f);
+
+    // Riga 4: input posizione
+    ImGui::TableNextRow();
+    ImGui::TableNextColumn(); // Colonna 1: etichetta
+    ImGui::Text("Position");
+    ImGui::TableNextColumn(); // Colonna 2: input
+    ImGui::DragFloat3("##Position", reinterpret_cast<f32*>(&light.position), 0.1f, -FLT_MAX, FLT_MAX);
+
+    // Riga 5: input direzione
+    ImGui::TableNextRow();
+    ImGui::TableNextColumn(); // Colonna 1: etichetta
+    ImGui::Text("Direction");
+    ImGui::TableNextColumn(); // Colonna 2: input
+    ImGui::DragFloat3("##Direction", reinterpret_cast<f32*>(&light.direction), 0.01f, -1.0f, 1.0f);
+
+    // Riga 6: attenuazione (con un combo personalizzato o slider)
+    ImGui::TableNextRow();
+    ImGui::TableNextColumn(); // Colonna 1: etichetta
+    ImGui::TextWrapped("Attenuation");
+    ImGui::TableNextColumn(); // Colonna 2: input
+    // Insp_Light_ComboAttenuation(light.kl, light.kq); // Se vuoi usare un combo
+    ImGui::DragFloat("##Linear", &light.kl, 0.001f, 0.0f, 1.0f, "Linear");
+    ImGui::DragFloat("##Quadratic", &light.kq, 0.001f, 0.0f, 1.0f, "Quadratic");
+
+    // Riga 7: angoli del cono
+    ImGui::TableNextRow();
+    ImGui::TableNextColumn(); // Colonna 1: etichetta
+    ImGui::TextWrapped("Cone Angles");
+    ImGui::TableNextColumn(); // Colonna 2: input
+    ImGui::SliderFloat("##Outer Angle", &light.thetaU, 0.0f, 90.0f, "Outer Angle (%.1f deg)");
+    ImGui::SliderFloat("##Inner Angle", &light.thetaP, 0.0f, 90.0f, "Inner Angle (%.1f deg)");
+
+    ImGui::EndTable();
+  }
+
+  // Sezione per rimuovere il componente
+  ImGui::SeparatorText("Advanced");
+  ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.55f, 0.f, 0.f, 0.5f));
+  ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.45f, 0.f, 0.f, 0.5f));
+  ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.45f, 0.f, 0.f, 0.5f));
+  if (ImGui::Button("Remove component##spot_light"))
+  {
+    object.RemoveComponent<Light>();
+    object.RemoveComponent<SpotLight>();
+  }
+  ImGui::PopStyleColor(3);
+}
+
+static void Insp_Transformation_TableRow(StringView label, Vec3F& values, f32 resetValue)
 {
   ImGui::PushID(label.data()); // label = "Position" or "Rotation" or "Scale"
 
-  // First column: label
+  // Column 1: label
   ImGui::TableNextColumn();
   ImGui::Text(label.data());
 
-  // First column: inputs
+  // Column 2: inputs
   ImGui::TableNextColumn();
   ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{0, 0});
 
-  f32 lineHeight = ImGui::GetFontSize() + ImGui::GetStyle().FramePadding.y * 2.0f;
-  ImVec2 buttonSize{lineHeight + 3.0f, lineHeight};
-  f32 itemWidth = ImGui::CalcItemWidth() / 3.0f;
+  auto lineHeight = ImGui::GetFontSize() + ImGui::GetStyle().FramePadding.y * 2.0f;
+  auto buttonSize = ImVec2{ lineHeight + 3.0f, lineHeight };
+  auto itemWidth = ImGui::CalcItemWidth() / 3.0f;
 
   // X value
   ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{0.8f, 0.1f, 0.15f, 1.0f});
@@ -240,7 +386,7 @@ static void Insp_Transformation_TableRow(StringView label,
   ImGui::PopStyleVar();
   ImGui::PopID();
 }
-static void Insp_Transformation(GameObject &object, Transformation& transformation)
+static void Insp_Transformation(GameObject object, Transform& transformation)
 {
   // Create a table with two columns: one for the labels and one for inputs
   if (ImGui::BeginTable("Transformation_Table", 2, ImGuiTableFlags_SizingFixedFit))
@@ -248,15 +394,15 @@ static void Insp_Transformation(GameObject &object, Transformation& transformati
     ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthFixed, 80.f);
     ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthStretch);
 
-    // First row: position
+    // Row 1: position
     ImGui::TableNextRow();
     Insp_Transformation_TableRow("Position", transformation.position, 0.f);
 
-    // First row: Rotation
+    // Row 2: Rotation
     ImGui::TableNextRow();
     Insp_Transformation_TableRow("Rotation", transformation.eulerAngles, 0.f);
 
-    // First row: Scale
+    // Row 3: Scale
     ImGui::TableNextRow();
     Insp_Transformation_TableRow("Scale", transformation.scale, 1.f);
 
@@ -268,39 +414,39 @@ static void Insp_Transformation(GameObject &object, Transformation& transformati
   ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.45f, 0.f, 0.f, 0.5f));
   ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.45f, 0.f, 0.f, 0.5f));
   if (ImGui::Button("Remove component##transform"))
-    object.RemoveComponent<Transformation>();
+    object.RemoveComponent<Transform>();
   ImGui::PopStyleColor(3);
 }
 static void Insp_ShowTextureSelector(StringView label, 
                                      u32 meshID, 
-                                     Texture2D &meshTexture, 
+                                     Texture2D& meshTexture, 
                                      Texture2D defaultTex)
 {
-  TexturesManager& texManager = TexturesManager::GetInstance();
-  bool isMeshTextureValid = meshTexture.GetWidth() != 1;
+  auto& texManager = TexturesManager::GetInstance();
+  auto isMeshTextureValid = meshTexture.GetWidth() != 1;
 
-  // First column: label
+  // Column 1: label
   ImGui::TableNextColumn();
   ImGui::Text(label.data());
 
-  // Second column: combo
+  // Column 2: combo
   ImGui::TableNextColumn();
   ImGui::SetNextItemWidth(ImGui::GetColumnWidth());
   if (isMeshTextureValid)
   {
-    const fs::path* texturePath = texManager.GetTexturePath(meshTexture.id);
+    auto texturePath = texManager.GetTexturePath(meshTexture.id);
     ImGui::TextWrapped(texturePath->string().c_str());
   }
   else
     ImGui::TextWrapped("No texture");
 
-  // Third column: reset button
+  // Column 3: reset button
   ImGui::TableNextColumn();
   if (isMeshTextureValid)
   {
-    static Texture2D resetIcon = texManager.GetOrCreateIcon("reset-arrow-16.png");
+    static auto resetIcon = texManager.GetOrCreateIcon("reset-arrow-16.png");
 
-    Array<char, 64> buttonID{}; // e.g. "Reset##Mesh_1_Diffuse"
+    auto buttonID = Array<char, 64>{}; // e.g. "Reset##Mesh_1_Diffuse"
     std::format_to(buttonID.begin(), "Reset##Mesh_{}_{}", meshID, label.data());
 
     ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{0.f, 0.f, 0.f, 0.f});
@@ -312,20 +458,20 @@ static void Insp_ShowTextureSelector(StringView label,
 
   // "Choose texture" button
   ImGui::TableNextRow();
-  ImGui::TableSetColumnIndex(1); // second column
+  ImGui::TableSetColumnIndex(1); // Column 2
   {
-    Array<char, 64> buttonID{}; // e.g. "Reset##Mesh_1_Diffuse"
+    auto buttonID = Array<char, 64>{}; // e.g. "Reset##Mesh_1_Diffuse"
     std::format_to(buttonID.begin(), "Choose texture##Mesh_{}_{}", meshID, label.data());
     if (ImGui::Button(buttonID.data()))
     {
       const char* filterPatterns[] = { "*.png", "*.jpg" };
-      constexpr u32 nrFilterPatterns = sizeof(filterPatterns) / sizeof(filterPatterns[0]);
-      fs::path path = FileDialog::OpenFileDialog("Choose a texture for the 3D mesh",
-                                                 Paths::GetTexturesPath(),
-                                                 nrFilterPatterns,
-                                                 filterPatterns,
-                                                 "Image files (*.png, *jpg)",
-                                                 false);
+      constexpr auto nrFilterPatterns = sizeof(filterPatterns) / sizeof(filterPatterns[0]);
+      auto path = FileDialog::OpenFileDialog("Choose a texture for the 3D mesh",
+                                             Paths::GetTexturesPath(),
+                                             nrFilterPatterns,
+                                             filterPatterns,
+                                             "Image files (*.png, *jpg)",
+                                             false);
       if (!path.empty())
       {
         path = fs::relative(path, Paths::GetTexturesPath());
@@ -334,20 +480,20 @@ static void Insp_ShowTextureSelector(StringView label,
     }
   }
 }
-static void Insp_StaticMesh(GameObject &object, StaticMesh &staticMesh)
+static void Insp_StaticMesh(GameObject object, StaticMesh& staticMesh)
 {
+  auto& texManager = TexturesManager::GetInstance();
+  
   ImGui::Text("Nr meshes: %d", staticMesh.nrMeshes);
-
   // View meshes with a tree
   if (ImGui::TreeNode("Material"))
   {
-    for (u32 i = 0; i < staticMesh.nrMeshes; i++)
+    for (auto i = 0u; i < staticMesh.nrMeshes; i++)
     {
-      auto &mesh = staticMesh.meshArray[i];
-      Material &material = mesh.material;
-      TexturesManager &texManager = TexturesManager::GetInstance();
+      auto& mesh = staticMesh.meshArray[i];
+      auto& material = mesh.material;
 
-      Array<char, 32> meshLabel{};
+      auto meshLabel = Array<char, 32>{};
       std::format_to(meshLabel.begin(), "Mesh_{}", i + 1);
       if (ImGui::TreeNode(meshLabel.data()))
       {
@@ -359,15 +505,15 @@ static void Insp_StaticMesh(GameObject &object, StaticMesh &staticMesh)
 
           // Diffuse row
           ImGui::TableNextRow();
-          Insp_ShowTextureSelector("Diffuse", i, material.diffuse, texManager.GetDefaultDiffuse());
+          Insp_ShowTextureSelector("Diffuse", i, material.albedo, texManager.GetDefaultDiffuse());
 
           // Specular row
-          ImGui::TableNextRow();
-          Insp_ShowTextureSelector("Specular", i, material.specular, texManager.GetDefaultSpecular());
+          //ImGui::TableNextRow();
+          //Insp_ShowTextureSelector("Specular", i, material.specular, texManager.GetDefaultSpecular());
 
           // Normal row
           ImGui::TableNextRow();
-          Insp_ShowTextureSelector("Normal", i, material.normal, texManager.GetDefaultNormal());
+          Insp_ShowTextureSelector("Normal", i, material.normalMap, texManager.GetDefaultNormal());
 
           ImGui::EndTable();
         }
@@ -386,143 +532,20 @@ static void Insp_StaticMesh(GameObject &object, StaticMesh &staticMesh)
     object.RemoveComponent<StaticMesh>();
   ImGui::PopStyleColor(3);
 }
-static void Insp_SkeletalMesh(GameObject &object, SkeletalMesh &skeleton)
+
+
+static void Insp_AddTransformationComponent(GameObject object)
 {
-  ImGui::Text("Nr meshes: %d", skeleton.nrMeshes);
-  ImGui::Text("Nr bones: %d", skeleton.nrBones);
-
-  if (ImGui::TreeNode("Material"))
-  {
-    TexturesManager &texManager = TexturesManager::GetInstance();
-    Array<char, 16> label{};
-
-    for (u32 i = 0; i < skeleton.nrMeshes; i++)
-    {
-      auto &mesh = skeleton.meshes[i];
-      Material &material = mesh.material;
-
-      label.fill(0);
-      std::format_to_n(label.begin(), label.size(), "Mesh_{}", i + 1);
-
-      if (ImGui::TreeNode(label.data()))
-      {
-        if (ImGui::BeginTable("TextureTable", 3, ImGuiTableFlags_SizingFixedFit))
-        {
-          ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthFixed, 48.0f);
-          ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthStretch);
-          ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthFixed, 24.0f);
-
-          // Diffuse row
-          ImGui::TableNextRow();
-          Insp_ShowTextureSelector("Diffuse", i, material.diffuse, texManager.GetDefaultDiffuse());
-
-          // Specular row
-          ImGui::TableNextRow();
-          Insp_ShowTextureSelector("Specular", i, material.specular, texManager.GetDefaultSpecular());
-
-          // Normal row
-          ImGui::TableNextRow();
-          Insp_ShowTextureSelector("Normal", i, material.normal, texManager.GetDefaultNormal());
-
-          ImGui::EndTable();
-        }
-        ImGui::TreePop();
-      }
-    }
-    ImGui::TreePop();
-  }
-
-  ImGui::SeparatorText("Advanced");
-  ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.55f, 0.f, 0.f, 0.5f));
-  ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.45f, 0.f, 0.f, 0.5f));
-  ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.45f, 0.f, 0.f, 0.5f));
-  if (ImGui::Button("Remove component##SkeletalMesh"))
-  {
-    object.RemoveComponent<SkeletalMesh>();
-    object.RemoveComponent<Animator>();
-  }
-  ImGui::PopStyleColor(3);
-}
-static void Insp_Animator(GameObject &object, Animator &animator)
-{
-  AnimationsManager &animManager = AnimationsManager::GetInstance();
-
-  SkeletalMesh *skeleton = object.GetComponent<SkeletalMesh>();
-  assert(skeleton != nullptr);
-
-  const auto *animationsVector = animManager.GetSkeletonAnimations(skeleton->id);
-
-  const Animation *animAttached = animator.GetAttachedAnimation();
-  const fs::path *animAttachedPath = nullptr;
-  if (animAttached)
-  {
-    animAttachedPath = animManager.GetAnimationPath(animAttached->id);
-    ImGui::Text("Current animation: %s", animAttachedPath->string().c_str());
-  }
-  else
-  {
-    ImGui::Text("Current animation: none");
-  }
-
-  if (ImGui::BeginCombo("Animation list", (!animAttached ? "Select animation" : animAttachedPath->string().c_str())))
-  {
-    for (const Animation &animation : *animationsVector)
-    {
-      const fs::path *path = animManager.GetAnimationPath(animation.id);
-      if (ImGui::Selectable(path->string().c_str(), animAttachedPath == path))
-        animator.SetTargetAnimation(&animation);
-    }
-    ImGui::EndCombo();
-  }
-
-  if (animAttached)
-  {
-    auto &texManager = TexturesManager::GetInstance();
-    static Texture2D playIcon = texManager.GetOrCreateIcon("play-button-32.png");
-    static Texture2D pauseIcon = texManager.GetOrCreateIcon("pause-button-32.png");
-    static Texture2D restartIcon = texManager.GetOrCreateIcon("restart-button-32.png");
-
-    if (ImGui::ImageButton("play", playIcon.id, ImVec2(16, 16)))
-      animator.PlayAnimation();
-
-    ImGui::SameLine();
-
-    if (ImGui::ImageButton("pause", pauseIcon.id, ImVec2(16, 16)))
-      animator.PauseAnimation();
-
-    ImGui::SameLine();
-
-    if (ImGui::ImageButton("restart", restartIcon.id, ImVec2(16, 16)))
-      animator.RestartAnimation();
-
-    ImGui::SameLine();
-
-    if (ImGui::Button("Unbind animation"))
-      animator.SetTargetAnimation(nullptr);
-
-    f32 duration = animAttached->duration;
-    f32 currentTime = animator.currentTime;
-    f32 progression = currentTime / duration;
-    Array<char, 8> label{};
-    std::format_to_n(label.data(), label.size(), "{}%", static_cast<u32>(progression * 100));
-
-    ImGui::Text("Animation progress:");
-    ImGui::ProgressBar(progression, ImVec2(-1, 0), label.data());
-  }
-}
-
-static void Insp_AddTransformationComponent(GameObject &object)
-{
-  if (object.HasComponent<Transformation>())
+  if (object.HasComponent<Transform>())
   {
     ImGui::Selectable("Transform", false, ImGuiSelectableFlags_Disabled);
   }
   else if (ImGui::Selectable("Transform"))
   {
-    object.AddComponent<Transformation>();
+    object.AddComponent<Transform>();
   }
 }
-static void Insp_AddLightComponent(GameObject &object)
+static void Insp_AddLightComponent(GameObject object)
 {
   if (object.HasComponent<Light>())
   {
@@ -532,18 +555,23 @@ static void Insp_AddLightComponent(GameObject &object)
   {
     if (ImGui::MenuItem("Directional"))
     {
-      object.AddComponent<Light>(LightType::DIRECTIONAL);
+      object.AddComponent<Light>(LightType::Directional);
       object.AddComponent<DirectionalLight>();
     }
     if (ImGui::MenuItem("Point"))
     {
-      object.AddComponent<Light>(LightType::POINT);
+      object.AddComponent<Light>(LightType::Point);
       object.AddComponent<PointLight>();
+    }
+    if (ImGui::MenuItem("Spot"))
+    {
+      object.AddComponent<Light>(LightType::Spot);
+      object.AddComponent<SpotLight>();
     }
     ImGui::EndMenu();
   }
 }
-static void Insp_AddStaticMeshComponent(GameObject &object)
+static void Insp_AddStaticMeshComponent(GameObject object)
 {
   if (object.HasComponent<StaticMesh>())
   {
@@ -554,22 +582,24 @@ static void Insp_AddStaticMeshComponent(GameObject &object)
     ImGui::BeginChild("StaticMesh_Child", ImVec2(300, 100));
     if (ImGui::Button("Choose static mesh"))
     {
-      const char *filterPatterns[] = {"*.obj", "*.glb", "*.gltf", "*.fbx"};
-      constexpr i32 nrFilterPatterns = sizeof(filterPatterns) / sizeof(filterPatterns[0]);
-      fs::path path = FileDialog::OpenFileDialog("Choose 3D model",
-                                        Paths::GetStaticModelsPath(),
-                                        nrFilterPatterns,
-                                        filterPatterns,
-                                        "3D model file (*.obj, *.glb, *.gltf, *.fbx)",
-                                        false);
+      const char* filterPatterns[] = { "*.obj", "*.glb", "*.gltf", "*.fbx" };
+      constexpr auto nrFilterPatterns = sizeof(filterPatterns) / sizeof(filterPatterns[0]);
+      auto path = FileDialog::OpenFileDialog("Choose 3D model",
+                                             Paths::GetModelsPath(),
+                                             nrFilterPatterns,
+                                             filterPatterns,
+                                             "3D model file (*.obj, *.glb, *.gltf, *.fbx)",
+                                             false);
 
 
       if (!path.empty())
       {
-        fs::path relative = fs::relative(path, Paths::GetStaticModelsPath());
-        auto prototype = StaticMeshFactory::GetPrototype(relative);
+        auto& instance = StaticMeshFactory::GetInstance();
+
+        auto relative = fs::relative(path, Paths::GetModelsPath());
+        auto prototype = instance.GetPrototype(relative);
         if (!prototype)
-          prototype = StaticMeshFactory::CreatePrototype(path);
+          prototype = instance.CreatePrototype(path);
         
         auto& sm = object.AddComponent<StaticMesh>();
         prototype->Copy(sm);
@@ -579,97 +609,53 @@ static void Insp_AddStaticMeshComponent(GameObject &object)
     ImGui::EndMenu();
   }
 }
-static void Insp_AddSkeletalMeshComponent(GameObject &object)
-{
-  if (object.HasComponent<SkeletalMesh>())
-  {
-    ImGui::Selectable("SkeletonMesh", false, ImGuiSelectableFlags_Disabled);
-  }
-  else if (ImGui::BeginMenu("SkeletonMesh"))
-  {
-    ImGui::BeginChild("SkeletonMesh_Child", ImVec2(300, 100));
-    if (ImGui::Button("Choose skeletal mesh"))
-    {
-      const char *filterPatterns[] = {"*.obj", "*.glb", "*.gltf", "*.fbx"};
-      constexpr i32 nrFilterPatterns = sizeof(filterPatterns) / sizeof(filterPatterns[0]);
-      fs::path path = FileDialog::OpenFileDialog("Choose 3D model",
-                                                 Paths::GetSkeletalModelsPath(),
-                                                 nrFilterPatterns,
-                                                 filterPatterns,
-                                                 "3D model file (*.obj, *.glb, *.gltf, *.fbx)",
-                                                 false);
-      if (!path.empty())
-      {
-        path = fs::relative(path, Paths::GetSkeletalModelsPath());
-        /* TODO:
-        auto &manager = ModelsManager::Get();
-        const auto *skeleton = manager.FindSkeletalMesh(path);
-        if (!skeleton)
-          skeleton = &manager.CreateSkeletalMesh(path);
 
-        auto &skComponent = object.AddComponent<SkeletalMesh>();
-        auto &anComponent = object.AddComponent<Animator>();
-        skeleton->Clone(skComponent);
-        anComponent.SetTargetSkeleton(skComponent);
-        */
-      }
-    }
-
-    ImGui::EndChild();
-    ImGui::EndMenu();
-  }
-}
-
-static void Insp_ListAllComponents(GameObject &object)
+static void Insp_ListAllComponents(GameObject object)
 {
   if (ImGui::CollapsingHeader("Tag"))
   {
-    Tag *tag = object.GetComponent<Tag>();
+    auto tag = object.GetComponent<Tag>();
     Insp_Tag(*tag);
   }
-  if (Transformation *transform = object.GetComponent<Transformation>())
+  if (auto transform = object.GetComponent<Transform>())
   {
     if (ImGui::CollapsingHeader("Transform"))
       Insp_Transformation(object, *transform);
   }
-  if (StaticMesh *staticMesh = object.GetComponent<StaticMesh>())
+  if (auto staticMesh = object.GetComponent<StaticMesh>())
   {
     if (ImGui::CollapsingHeader("StaticMesh"))
       Insp_StaticMesh(object, *staticMesh);
   }
-  if (SkeletalMesh *skeleton = object.GetComponent<SkeletalMesh>())
-  {
-    if (ImGui::CollapsingHeader("SkeletonMesh"))
-      Insp_SkeletalMesh(object, *skeleton);
-  }
-  if (Animator *animator = object.GetComponent<Animator>())
-  {
-    if (ImGui::CollapsingHeader("Animator"))
-      Insp_Animator(object, *animator);
-  }
-  if (Light *light = object.GetComponent<Light>())
+  if (auto light = object.GetComponent<Light>())
   {
     if (ImGui::CollapsingHeader("Light"))
     {
       switch (light->type)
       {
-        case LightType::DIRECTIONAL:
+        case LightType::Directional:
         {
-          auto *dirLight = object.GetComponent<DirectionalLight>();
+          auto dirLight = object.GetComponent<DirectionalLight>();
           Insp_DirectLight(object, *dirLight);
           break;
         }
-        case LightType::POINT:
+        case LightType::Point:
         {
-          auto *pointLight = object.GetComponent<PointLight>();
+          auto pointLight = object.GetComponent<PointLight>();
           Insp_PointLight(object, *pointLight);
+          break;
+        }
+        case LightType::Spot:
+        {
+          auto spotLight = object.GetComponent<SpotLight>();
+          Insp_SpoLight(object, *spotLight);
           break;
         }
       }
     }
   }
 }
-static void Insp_NewComponentPopup(GameObject &object)
+static void Insp_NewComponentPopup(GameObject object)
 {
   if (ImGui::BeginPopup("NewComponent_Popup"))
   {
@@ -689,12 +675,6 @@ static void Insp_NewComponentPopup(GameObject &object)
     // --------------------------------
     Insp_AddStaticMeshComponent(object);
 
-    ImGui::Spacing();
-
-    // Add SkeletalMesh component
-    // --------------------------------
-    Insp_AddSkeletalMeshComponent(object);
-
     ImGui::EndPopup();
   }
 }
@@ -703,15 +683,13 @@ static void Insp_NewComponentPopup(GameObject &object)
 //                    PUBLIC
 // ------------------------------------------
 
-void GUI_Inspector(bool& open, 
-                         StringView windowName, 
-                         GameObject &object)
+void GUI_Inspector(bool& open, StringView windowName, GameObject object)
 {
   ImGui::Begin(windowName.data(), &open);
   if (object.IsValid())
   {
     // "+New component" button
-    f32 btnWidth = ImGui::GetContentRegionAvail().x - 32.f;
+    auto btnWidth = ImGui::GetContentRegionAvail().x - 32.f;
     if (Insp_ButtonCentered("+Add component", ImVec2(btnWidth, 26.f)))
       ImGui::OpenPopup("NewComponent_Popup");
 

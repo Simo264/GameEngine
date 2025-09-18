@@ -11,19 +11,19 @@
 Mesh::Mesh() : 
 	material{},
 	vertexArray{},
-	numVertices{ 0 },
-	numIndices{ 0 }
+	numVertices{ 0u },
+	numIndices{ 0u }
 {
-	TexturesManager& texturesManager = TexturesManager::GetInstance();
-	material.diffuse = texturesManager.GetDefaultDiffuse();
-	material.specular = texturesManager.GetDefaultSpecular();
-	material.normal = texturesManager.GetDefaultNormal();
+	auto& texturesManager = TexturesManager::GetInstance();
+	material.albedo = texturesManager.GetDefaultDiffuse();
+	material.normalMap = texturesManager.GetDefaultNormal();
 }
 void Mesh::Create()
 {
 	vertexArray = std::make_shared<VertexArray>();
 	vertexArray->Create();
 }
+
 void Mesh::Destroy()
 {
 	if (vertexArray.use_count() == 1 && vertexArray->IsValid())
@@ -34,10 +34,10 @@ void Mesh::Destroy()
 
 void Mesh::Share(Mesh& other) const
 {
+	other.vertexArray = vertexArray;
 	other.numIndices = numIndices;
 	other.numVertices = numVertices;
 	other.material = material;
-	other.vertexArray = vertexArray;
 }
 
 void Mesh::SetupAttributeFloat(i32 attribindex, i32 bindingindex, VertexFormat format) const

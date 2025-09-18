@@ -8,11 +8,11 @@
 
 static Texture2D CreateDefaultTexture(u8 r, u8 g, u8 b)
 {
-  constexpr i32 width = 1;
-  constexpr i32 height = 1;
-  const u8 *data = Array<u8, 3>{r, g, b}.data();
+  constexpr auto width = 1;
+  constexpr auto height = 1;
+  const auto data = Array<u8, 3>{ r, g, b }.data();
 
-  Texture2D texture;
+  auto texture = Texture2D();
   texture.Create(Texture2DTarget::TEXTURE_2D);
   texture.CreateStorage(Texture2DInternalFormat::RGB8, width, height);
   texture.UpdateStorage(0, width, height, Texture2DSubImageType::UNSIGNED_BYTE, data);
@@ -29,19 +29,17 @@ static Texture2D CreateDefaultTexture(u8 r, u8 g, u8 b)
 
 void TexturesManager::Initialize()
 {
-  _defaultDiffuse = CreateDefaultTexture(128, 128, 255);
-  _defaultSpecular = CreateDefaultTexture(0, 0, 0);
+  _defaultAlbedo = CreateDefaultTexture(128, 128, 255);
   _defaultNormal = CreateDefaultTexture(0, 0, 0);
 }
-void TexturesManager::CleanUp()
+void TexturesManager::Cleanup()
 {
-  u32 totalTextures = _textures.size() + _icons.size();
+  auto totalTextures = _textures.size() + _icons.size();
 
-  Vector<u32> texIDs;
+  auto texIDs = Vector<u32>{};
   texIDs.reserve(totalTextures + 3);
 
-  texIDs.push_back(_defaultDiffuse.id);
-  texIDs.push_back(_defaultSpecular.id);
+  texIDs.push_back(_defaultAlbedo.id);
   texIDs.push_back(_defaultNormal.id);
 
   for (const auto &texture : _textures)
@@ -54,7 +52,7 @@ void TexturesManager::CleanUp()
 
 Texture2D TexturesManager::FindTexture(const fs::path &relative) const
 {
-  for (u32 i = 0; i < _texturePaths.size(); i++)
+  for (auto i = 0u; i < _texturePaths.size(); i++)
     if (_texturePaths.at(i) == relative)
       return _textures.at(i);
 
@@ -62,14 +60,14 @@ Texture2D TexturesManager::FindTexture(const fs::path &relative) const
 }
 Texture2D TexturesManager::CreateTexture(const fs::path &relative)
 {
-  fs::path absolute = (Paths::GetTexturesPath() / relative).lexically_normal();
+  auto absolute = fs::path(Paths::GetTexturesPath() / relative).lexically_normal();
   CONSOLE_INFO("Create new texture: {}", absolute.string());
   
-  ImageLoader loader;
-  u8* data = loader.LoadImageData(absolute);
+  auto loader = ImageLoader{};
+  auto data = loader.LoadImageData(absolute);
   assert(data != nullptr);
 
-  Texture2D& texture = _textures.emplace_back();
+  auto& texture = _textures.emplace_back();
   texture.Create(Texture2DTarget::TEXTURE_2D);
   texture.CreateStorage(static_cast<Texture2DInternalFormat>(loader.internalFormat), loader.width, loader.height);
   texture.UpdateStorage(0, loader.width, loader.height, Texture2DSubImageType::UNSIGNED_BYTE, data);
@@ -81,14 +79,14 @@ Texture2D TexturesManager::CreateTexture(const fs::path &relative)
 
   loader.FreeImageData(data);
 
-  fs::path normalized = relative.lexically_normal();
+  auto normalized = relative.lexically_normal();
   _texturePaths.emplace_back(normalized);
 
   return texture;
 }
 Texture2D TexturesManager::GetOrCreateTexture(const fs::path &relative)
 {
-  Texture2D t = FindTexture(relative);
+  auto t = FindTexture(relative);
   if (!t.IsValid())
     t = CreateTexture(relative);
   return t;
@@ -96,21 +94,21 @@ Texture2D TexturesManager::GetOrCreateTexture(const fs::path &relative)
 
 Texture2D TexturesManager::FindIcon(const fs::path &relative) const
 {
-  for (u32 i = 0; i < _iconPaths.size(); i++)
+  for (auto i = 0u; i < _iconPaths.size(); i++)
     if (_iconPaths.at(i) == relative)
       return _icons.at(i);
   return Texture2D{};
 }
 Texture2D TexturesManager::CreateIcon(const fs::path &relative)
 {
-  fs::path absolute = (Paths::GetIconsPath() / relative).lexically_normal();
+  auto absolute = fs::path(Paths::GetIconsPath() / relative).lexically_normal();
   CONSOLE_INFO("Create new icon: {}", absolute.string());
   
-  ImageLoader loader;
-  u8* data = loader.LoadImageData(absolute);
+  auto loader = ImageLoader{};
+  auto data = loader.LoadImageData(absolute);
   assert(data != nullptr);
   
-  Texture2D &texture = _icons.emplace_back();
+  auto& texture = _icons.emplace_back();
   texture.Create(Texture2DTarget::TEXTURE_2D);
   texture.CreateStorage(static_cast<Texture2DInternalFormat>(loader.internalFormat), loader.width, loader.height);
   texture.UpdateStorage(0, loader.width, loader.height, Texture2DSubImageType::UNSIGNED_BYTE, data);
@@ -122,13 +120,13 @@ Texture2D TexturesManager::CreateIcon(const fs::path &relative)
 
   loader.FreeImageData(data);
 
-  fs::path normalized = relative.lexically_normal();
+  auto normalized = relative.lexically_normal();
   _iconPaths.emplace_back(normalized);
   return texture;
 }
 Texture2D TexturesManager::GetOrCreateIcon(const fs::path &relative)
 {
-  Texture2D t = FindIcon(relative);
+  auto t = FindIcon(relative);
   if (!t.IsValid())
     t = CreateIcon(relative);
   return t;
@@ -136,7 +134,7 @@ Texture2D TexturesManager::GetOrCreateIcon(const fs::path &relative)
 
 const fs::path *TexturesManager::GetTexturePath(u32 textureID) const
 {
-  for (u32 i = 0; i < _textures.size(); i++)
+  for (auto i = 0u; i < _textures.size(); i++)
     if (_textures.at(i).id == textureID)
       return &_texturePaths.at(i);
   return nullptr;

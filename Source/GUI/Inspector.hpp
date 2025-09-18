@@ -2,6 +2,6 @@
 
 #include "Core/Core.hpp"
 
-void GUI_Inspector(bool& open, 
-									 StringView windowName,
-									 class GameObject& object);
+class GameObject;
+
+void GUI_Inspector(bool& open, StringView windowName, GameObject object);

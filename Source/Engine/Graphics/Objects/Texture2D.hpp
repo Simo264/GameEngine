@@ -137,7 +137,7 @@ enum class Texture2DGetImageType : u32
 class Texture2D
 {
 public:
-  Texture2D() : id{ 0 } {}
+  Texture2D() : id{ 0u } {}
   ~Texture2D() = default;
 
   /** @brief Create texture object */

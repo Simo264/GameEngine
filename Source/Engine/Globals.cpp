@@ -1,6 +1,4 @@
 #include "Core/Core.hpp"
 
-u32 g_drawCalls = 0;
-
-bool g_renderInWireframe = false;
-bool g_renderWithNormalMapping = true;
+u32 g_DrawCalls = 0u;
+bool g_RenderInWireframe = false;

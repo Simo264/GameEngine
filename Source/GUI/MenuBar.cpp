@@ -14,13 +14,13 @@ static void MenuBar_FileItemOpen(Scene& scene)
   if (ImGui::MenuItem("Open"))
   {
     const char* filterPatterns[] = { "*.yaml" };
-    constexpr i32 nrFilterPatterns = sizeof(filterPatterns) / sizeof(filterPatterns[0]);
-    fs::path filePath = FileDialog::OpenFileDialog("Open new scene",
-                                                   Paths::GetRootPath(),
-                                                   nrFilterPatterns,
-                                                   filterPatterns,
-                                                   "Scene file (*yaml)",
-                                                   false);
+    constexpr auto nrFilterPatterns = sizeof(filterPatterns) / sizeof(filterPatterns[0]);
+    auto filePath = FileDialog::OpenFileDialog("Open new scene",
+                                               Paths::GetRootPath(),
+                                               nrFilterPatterns,
+                                               filterPatterns,
+                                               "Scene file (*yaml)",
+                                               false);
     if (!filePath.empty())
     {
       scene.Clear();
@@ -33,12 +33,12 @@ static void MenuBar_FileItemSaveAs(Scene& scene)
   if (ImGui::MenuItem("Save as..."))
   {
     const char* filterPatterns[] = { "*.yaml" };
-    constexpr i32 nrFilterPatterns = sizeof(filterPatterns) / sizeof(filterPatterns[0]);
-    fs::path path = FileDialog::SaveFileDialog("Save scene",
-                                               Paths::GetRootPath(),
-                                               nrFilterPatterns,
-                                               filterPatterns,
-                                               "Scene file (*yaml)");
+    constexpr auto nrFilterPatterns = sizeof(filterPatterns) / sizeof(filterPatterns[0]);
+    auto path = FileDialog::SaveFileDialog("Save scene",
+                                           Paths::GetRootPath(),
+                                           nrFilterPatterns,
+                                           filterPatterns,
+                                           "Scene file (*yaml)");
     if (!path.empty())
       scene.SaveToFile(path);
   }

@@ -11,14 +11,12 @@ namespace FileDialog
 													const char* singleFilterDescription,
 													bool allowMultipleSelects)
 	{
-		const char* filename = tinyfd_openFileDialog(
-			title,
-			defaultPath.string().c_str(),
-			numOfFilterPatterns,
-			filterPatterns,
-			singleFilterDescription,
-			static_cast<i32>(allowMultipleSelects)
-		);
+		auto filename = tinyfd_openFileDialog(title,
+																					defaultPath.string().c_str(),
+																					numOfFilterPatterns,
+																					filterPatterns,
+																					singleFilterDescription,
+																					static_cast<i32>(allowMultipleSelects));
 
 		if (filename)
 			return fs::path(filename);
@@ -32,13 +30,11 @@ namespace FileDialog
 													const char* filterPatterns[],
 													const char* singleFilterDescription)
 	{
-		const char* filename = tinyfd_saveFileDialog(
-			title,
-			defaultPath.string().c_str(),
-			numOfFilterPatterns,
-			filterPatterns,
-			singleFilterDescription
-		);
+		auto filename = tinyfd_saveFileDialog(title,
+																					defaultPath.string().c_str(),
+																					numOfFilterPatterns,
+																					filterPatterns,
+																					singleFilterDescription);
 
 		if (filename)
 			return fs::path(filename);

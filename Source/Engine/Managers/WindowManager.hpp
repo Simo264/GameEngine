@@ -97,18 +97,13 @@ enum class InputAction : i32
 
 struct WindowProps 
 {
-  WindowProps(Vec2I size, Vec2I position, const char* title, Vec2I aspectRatio, bool vsync) :
-    size{ size },
-    position{ position },
-    title{ title },
-    aspectRatio{ aspectRatio },
-    vsync{ vsync }
-  {}
-
   Vec2I size;
   Vec2I position;
   StringView title;
   Vec2I aspectRatio;
+  i32 contextVersionMinor;
+  i32 contextVersionMajor;
+  i32 samples;
   bool vsync;
 };
 

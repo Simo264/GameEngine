@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Core/Core.hpp"
+#include "Core/DesignPatterns/Singleton.hpp"
 #include "Engine/Components/StaticMesh.hpp"
 
 /**
@@ -16,19 +17,21 @@
  * - Clone existing prototypes instead of reloading them.
  * - Provide quick access to assets using unique identifiers (prototypeID).
  */
-class StaticMeshFactory
+class StaticMeshFactory : public Singleton<StaticMeshFactory>
 {
 public:
+	void Cleanup();
+
 	/** @brief Retrieves an existing prototype if available. */
-	static const SharedPointer<const StaticMesh> GetPrototype(const fs::path& relativePathToFile);
+	SharedPointer<const Components::StaticMesh> GetPrototype(const fs::path& relativePathToFile);
 
 	/** @brief Loads a new file and creates a prototype. */
-	static const SharedPointer<const StaticMesh> CreatePrototype(const fs::path& absolutePathToFile);
+	SharedPointer<const Components::StaticMesh> CreatePrototype(const fs::path& absolutePathToFile);
 
 	/** @brief Retrieves the relative file path associated with a given prototype. */
-	static fs::path GetPrototypePath(i32 prototypeID);
+	fs::path GetPrototypePath(i32 prototypeID);
 
 private:
 	/** @brief Stores loaded static mesh prototypes mapped by relative file paths. */
-	inline static UnorderedMap<fs::path, SharedPointer<StaticMesh>> _prototypes;
+	UnorderedMap<fs::path, SharedPointer<Components::StaticMesh>> _prototypes;
 };

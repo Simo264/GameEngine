@@ -13,12 +13,12 @@ void VertexArray::Delete()
 	if (vertexBuffer.IsValid())
 		vertexBuffer.Delete();
 
-	Buffer ebo = GetElementBuffer();
+	auto ebo = GetElementBuffer();
 	if (ebo.IsValid())    
 		ebo.Delete();
 
   glDeleteVertexArrays(1, &id);
-  id = 0;
+  id = 0u;
 }
 
 void VertexArray::Bind() const
@@ -50,7 +50,6 @@ void VertexArray::AttachVertexBuffer(i32 bindingindex, Buffer buffer, i32 offset
   }
 
 	vertexBuffer = buffer;
-
   glVertexArrayVertexBuffer(id, bindingindex, buffer.id, offset, stride);
 }
 
@@ -59,25 +58,30 @@ void VertexArray::AttachElementBuffer(Buffer buffer) const
   glVertexArrayElementBuffer(id, buffer.id);
 }
 
-void VertexArray::SetAttribFormatFLoat(i32 attribindex, i32 size, VertexAttribType type, bool normalize, i32 relativeoffset) const
+void VertexArray::SetAttribFormatFLoat(i32 attribindex, 
+                                       i32 size, 
+                                       VertexAttribType type, 
+                                       bool normalize, 
+                                       i32 relativeoffset) const
 {
-  glVertexArrayAttribFormat(
-    id, 
-    attribindex, 
-    size, 
-    static_cast<u32>(type),
-    normalize, 
-    relativeoffset);
+  glVertexArrayAttribFormat(id, 
+                            attribindex, 
+                            size, 
+                            static_cast<u32>(type),
+                            normalize, 
+                            relativeoffset);
 }
 
-void VertexArray::SetAttribFormatInteger(i32 attribindex, i32 size, VertexAttribType type, i32 relativeoffset) const
+void VertexArray::SetAttribFormatInteger(i32 attribindex, 
+                                         i32 size, 
+                                         VertexAttribType type, 
+                                         i32 relativeoffset) const
 {
-  glVertexArrayAttribIFormat(
-    id, 
-    attribindex, 
-    size, 
-    static_cast<u32>(type),
-    relativeoffset);
+  glVertexArrayAttribIFormat(id, 
+                             attribindex, 
+                             size, 
+                             static_cast<u32>(type),
+                             relativeoffset);
 }
 
 void VertexArray::SetAttribFormatLong(i32 attribindex, i32 size, i32 relativeoffset) const
@@ -97,10 +101,10 @@ void VertexArray::SetBindingDivisor(i32 bindingindex, i32 divisor) const
 
 Buffer VertexArray::GetElementBuffer() const
 {
-  i32 bufferId = 0;
+  auto bufferId = 0;
   glGetVertexArrayiv(id, GL_ELEMENT_ARRAY_BUFFER_BINDING, &bufferId);
 
-  Buffer buffer{};
+  auto buffer = Buffer{};
   buffer.id = bufferId;
   return buffer;
 }

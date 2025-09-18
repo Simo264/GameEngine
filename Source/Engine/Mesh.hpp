@@ -3,8 +3,8 @@
 #include "Core/Core.hpp"
 
 #include "Engine/Graphics/Renderer.hpp"
-#include "Engine/Material.hpp"
 #include "Engine/Graphics/Containers/VertexArray.hpp"
+#include "Engine/Material.hpp"
 
 /**
  * @brief Represents a 3D mesh used in graphics rendering.
@@ -64,10 +64,6 @@ public:
 	 * It is shared between identical meshes to reduce memory usage and avoid redundant OpenGL state setup.
 	 */
 	SharedPointer<VertexArray> vertexArray;
-
-	/** @brief Number of vertices in the mesh. */
 	u32 numVertices;
-
-	/** @brief Number of indices in the mesh. */
 	u32 numIndices;
 };

@@ -5,12 +5,9 @@
 #include "Core/Paths/Paths.hpp"
 
 #include "Engine/Globals.hpp"
-#include "Engine/Camera.hpp"
 #include "Engine/Scene.hpp"
 #include "Engine/Uniforms.hpp"
 #include "Engine/Vertex.hpp"
-
-#include "Engine/Components/Components.hpp"
 
 #include "Engine/Graphics/DepthTest.hpp"
 #include "Engine/Graphics/StencilTest.hpp"
@@ -21,17 +18,14 @@
 #include "Engine/Managers/WindowManager.hpp"
 #include "Engine/Managers/ShadersManager.hpp"
 #include "Engine/Managers/TexturesManager.hpp"
+#include "Engine/Managers/StaticMeshFactory.hpp"
 
 #include "GUI/ImGuiLayer.hpp"
 
-static constexpr i32 INITIAL_WINDOW_W = 1600;
-static constexpr i32 INITIAL_WINDOW_H = 900;
-static Vec2I s_viewportSize{ INITIAL_WINDOW_W, INITIAL_WINDOW_H };
-static f32 s_aspect = static_cast<f32>(s_viewportSize.x) / static_cast<f32>(s_viewportSize.y);
-static f64 s_worldTime;
+using namespace Components;
 
-static Framebuffer s_framebufferPhong;
-static Mesh s_screenQuad;
+static constexpr auto INITIAL_WINDOW_W = 1600;
+static constexpr auto INITIAL_WINDOW_H = 900;
 
 static void GLAPIENTRY MessageCallback(GLenum source,
                                        GLenum type,
@@ -130,220 +124,218 @@ static void GLAPIENTRY MessageCallback(GLenum source,
     sourceStr, typeStr, severityStr, message);
 }
 
-static Mesh CreateMeshQuad()
-{
-  constexpr Vertex_P_UV vertices[] = {
-    Vertex_P_UV{ Vec3F(-1.0f,  1.0f, 0.0f), Vec2F(0.0f, 1.0f) },
-    Vertex_P_UV{ Vec3F(-1.0f, -1.0f, 0.0f), Vec2F(0.0f, 0.0f) },
-    Vertex_P_UV{ Vec3F(1.0f,  1.0f, 0.0f),  Vec2F(1.0f, 1.0f) },
-    Vertex_P_UV{ Vec3F(1.0f, -1.0f, 0.0f),  Vec2F(1.0f, 0.0f) },
-  };
-  Buffer vbo(sizeof(vertices), vertices, BufferUsage::STATIC_DRAW);
-
-  Mesh quad;
-  quad.Create();
-  quad.SetupAttributeFloat(0, 0, VertexFormat(3, VertexAttribType::FLOAT, false, offsetof(Vertex_P_UV, position)));
-  quad.SetupAttributeFloat(1, 0, VertexFormat(2, VertexAttribType::FLOAT, false, offsetof(Vertex_P_UV, uv)));
-  quad.vertexArray->AttachVertexBuffer(0, vbo, 0, sizeof(Vertex_P_UV));
-  return quad;
-}
-static Framebuffer CreateFramebufferPhong(i32 w, i32 h)
-{
-  // https://en.wikipedia.org/wiki/Cel_shading#Edge-detection_method
-  Texture2D textureColor;
-  textureColor.Create(Texture2DTarget::TEXTURE_2D);
-  textureColor.CreateStorage(Texture2DInternalFormat::RGB8, w, h);
-  textureColor.SetParameteri(TextureParameteriName::MIN_FILTER, TextureParameteriParam::LINEAR);
-  textureColor.SetParameteri(TextureParameteriName::MAG_FILTER, TextureParameteriParam::LINEAR);
-  
-  Renderbuffer depthStencil;
-  depthStencil.Create();
-  depthStencil.CreateStorage(RenderbufferInternalFormat::DEPTH24_STENCIL8, w, h);
-
-  Framebuffer framebuffer;
-  framebuffer.Create();
-  framebuffer.AttachTexture(FramebufferAttachment::COLOR_ATTACHMENT0, textureColor, 0);
-  framebuffer.AttachRenderBuffer(FramebufferAttachment::DEPTH_STENCIL, depthStencil);
-
-  assert(framebuffer.CheckStatus() == FramebufferStatus::COMPLETE);
-  return framebuffer;
-}
-static Texture2D BlinnPhongShading(Program& program, Scene& scene)
-{
-  s_framebufferPhong.Bind(FramebufferTarget::DRAW);
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT); // clear buffers
-
-  program.Use();
-  scene.Reg().view<StaticMesh, Transformation>().each([&](auto& staticMesh, auto& transform) {
-    transform.eulerAngles.y = s_worldTime * 10.f;
-    program.SetUniformMat4f(UniformLocations::MODEL, transform.GetTransformation());
-    staticMesh.Render(program, RenderMode::TRIANGLES);
-  });
-
-  s_framebufferPhong.Unbind(FramebufferTarget::DRAW);
-  return s_framebufferPhong.GetTextureAttachment(0); // returns the texture color 
-}
-
 // -----------------------------------------------------
 //                PUBLIC METHODS
 // -----------------------------------------------------
 
 void Engine::Initialize()
 {
-  // Initialize logger
-  // -----------------
+  // 1. Initialize logger
   Logger::Initialize();
+  CONSOLE_INFO("Logger initialized");
 
-  // Initialize window manager
-  // -------------------------
-  CONSOLE_INFO("Initializing WindowManager...");
-  WindowManager::GetInstance().Initialize(WindowProps(
-    Vec2I{ INITIAL_WINDOW_W, INITIAL_WINDOW_H }, // window size
-    Vec2I{ 50, 50 },                      // window pos
-    "GameEngine",                         // window title
-    Vec2I{ 16, 9 },                       // window aspect ratio
-    false                                 // window v-sync
-  ));
+  // 2. Initialize window manager
+  auto props = WindowProps{};
+  props.aspectRatio = Vec2I{ 16, 9 };
+  props.size = Vec2I{ INITIAL_WINDOW_W, INITIAL_WINDOW_H };
+  props.position = Vec2I{ 50, 50 };
+  props.title = "GameEngine";
+  props.vsync = false;
+  props.contextVersionMinor = 4;
+  props.contextVersionMajor = 6;
+  props.samples = 4;
+  WindowManager::GetInstance().Initialize(props);
+  CONSOLE_INFO("Window manager initialized");
 
-  // Initialize shader manager
-  // -------------------------
-  CONSOLE_INFO("Initializing ShadersManager...");
+  // 3. Initialize shader manager
   ShadersManager::GetInstance().Initialize();
+  CONSOLE_INFO("Shaders manager initialized");
 
-  // Initialize texture manager
-  // --------------------------
-  CONSOLE_INFO("Initializing TexturesManager...");
+  // 4. Initialize texture manager
   TexturesManager::GetInstance().Initialize();
+  CONSOLE_INFO("Textures manager initialized");
 
-  // Setup ImGui context
-  // -------------------
-  CONSOLE_INFO("Initializing ImGui...");
+  // 5. Setup ImGui context
   ImGuiLayer::GetInstance().InitializeImGui();
+  CONSOLE_INFO("ImGui layer initialized");
 
-  // Set the initial OpenGL states
-  // -----------------------------
-  SetGLStates();
+  // 6. Set the initial OpenGL states
+  glEnable(GL_DEBUG_OUTPUT);
+  glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+  glDebugMessageCallback(MessageCallback, 0);
+  glDebugMessageControl(GL_DEBUG_SOURCE_API, GL_DEBUG_TYPE_ERROR, GL_DONT_CARE, 0, nullptr, GL_TRUE);
 
-  // Create UBO objects
-  // -----------------------------
-  CreateCameraUBO(0); // "CameraBlock" -> 0
-  CreateLightUBO(1);  // "LightBlock" -> 1
-  CreateBoneUBO(2);   // "BonesBlock" -> 2
+  glClearColor(0.15f, 0.15f, 0.15f, 1.0f);  // specify clear values for the color buffers
+  glClearDepth(1.0f);                       // specify clear values for the depth buffer    
+  glClearStencil(0);                        // specify clear values for the stencil buffer 
+  
+  __SetInitialGLStates();
 
-  // Initialize time
-  // -----------------------------
-  InitTime();
+  // 7. Create the screen quad mesh and framebuffer
+  _MSAAFramebufferSamples = 4;
+  __CreateMSAAFramebuffer(INITIAL_WINDOW_W, INITIAL_WINDOW_H, _MSAAFramebufferSamples);
+  
+  // 8. Create the screen quad mesh
+  _screenQuad = __CreateMeshQuad();
+
+  // 9. create UBO objects
+  __CreateCameraUBO(0); // "CameraBlock" -> 0
+  __CreateLightUBO(1);  // "LightBlock" -> 1
+
+  // 10. Initialize time
+  __InitTime();
 }
+
 void Engine::Run()
 {
-  s_screenQuad = CreateMeshQuad();
-  s_framebufferPhong = CreateFramebufferPhong(INITIAL_WINDOW_W, INITIAL_WINDOW_H);
+  auto viewportSize = Vec2I{ INITIAL_WINDOW_W, INITIAL_WINDOW_H };
+  auto aspect = static_cast<f32>(viewportSize.x) / viewportSize.y;
 
-  Camera camera;
+  auto scene = Scene();
+  
+  // initialize object archetypes
+  auto& cameraArchetype = Archetype{ "Camera" }.AllowComponents<
+    Components::Camera>();
+  auto& lightSourceArchetype = Archetype{ "LightSource" }.AllowComponents<
+    Components::Light,
+    Components::DirectionalLight,
+    Components::PointLight,
+    Components::SpotLight>();
+  auto& staticMeshArchetype = Archetype{ "StaticMesh" }.AllowComponents<
+    Components::Transform,
+    Components::StaticMesh>();
+  scene.RegisterArchetype(cameraArchetype);
+  scene.RegisterArchetype(lightSourceArchetype);
+  scene.RegisterArchetype(staticMeshArchetype);
+
+  auto obj = scene.CreateObject(cameraArchetype.GetName());
+  auto& camera = obj.AddComponent<Components::Camera>();
   camera.position = Vec3F(0.f, 0.f, 10.0f);
 
-  Scene scene((Paths::GetRootPath() / "Scene.yaml"));
+  scene.LoadFromFile((Paths::GetRootPath() / "Scene.yaml"));
+
+  //auto obj = scene.FindObjectWithComponent<DirectionalLight>();
+  //auto dirLight = obj->GetComponent<DirectionalLight>();
+  //obj = scene.FindObjectWithComponent<PointLight>();
+  //auto pointLight = obj->GetComponent<PointLight>();
+  //obj = scene.FindObjectWithComponent<SpotLight>();
+  //auto spotLight = obj->GetComponent<SpotLight>();
+  //{
+  //  auto& instance = TexturesManager::GetInstance();
+  //  
+  //  obj = scene.FindObjectWithTag("plane");
+  //  auto mesh = obj->GetComponent<StaticMesh>();
+  //  mesh->meshArray[0].material.albedo = instance.GetOrCreateTexture("wood_floor_worn/wood_floor_worn_albedo.jpg");
+  //  mesh->meshArray[0].material.normalMap = instance.GetOrCreateTexture("wood_floor_worn/wood_floor_worn_normal.jpg");
+  //
+  //  obj = scene.FindObjectWithTag("monkey");
+  //  mesh = obj->GetComponent<StaticMesh>();
+  //  mesh->meshArray[0].material.albedo = instance.GetOrCreateTexture("worn-old-plastic/worn-old-plastic_albedo.png");
+  //  mesh->meshArray[0].material.normalMap = instance.GetOrCreateTexture("worn-old-plastic/worn-old-plastic_normal-ogl.png");
+  //}
 
   // ----------------------------------------------------------------------
   // -------------------------- Pre-loop section --------------------------
   // ----------------------------------------------------------------------
-  ImGuiLayer& gui = ImGuiLayer::GetInstance();
-  WindowManager& windowManager = WindowManager::GetInstance();
-  ShadersManager& shadersManager = ShadersManager::GetInstance();
-  Program blinnPhongProgram = shadersManager.GetProgram("BlinnPhong");
+  auto& guiLayer = ImGuiLayer::GetInstance();
+  auto& windowManager = WindowManager::GetInstance();
+  auto& shadersManager = ShadersManager::GetInstance();
+  auto goochProgram = shadersManager.GetProgram("GoochShading");
+  auto blinnPhongProgram = shadersManager.GetProgram("BlinnPhongShading");
   
   // ------------------------------------------------------------------
   // -------------------------- loop section --------------------------
   // ------------------------------------------------------------------
   while (windowManager.IsOpen())
   {
-    gui.PrepareImGuiFrame();
+    guiLayer.PrepareImGuiFrame();
 
     // ----------------------------------------------------------------------------------
     // -------------------------- Per-frame time logic section --------------------------
     // ----------------------------------------------------------------------------------
-    CalculatePerFrameTime();
-    g_drawCalls = 0;
-    s_worldTime = windowManager.GetWorldTime();
+    __CalculatePerFrameTime();
+    g_DrawCalls = 0u;
 
     // -------------------------------------------------------------------
     // -------------------------- Input section --------------------------
     // -------------------------------------------------------------------
     windowManager.PoolEvents();
-    if (gui.viewportFocused)
+    if (guiLayer.viewportFocused)
     {
       camera.ProcessKeyboard(static_cast<f32>(_delta), 10.0f);
-      camera.ProcessMouse(static_cast<f32>(_delta), 20.0f);
+      camera.ProcessMouseMovement(glm::radians(0.05f));
     }
 
     // --------------------------------------------------------------------
     // -------------------------- Update section --------------------------
     // --------------------------------------------------------------------
-    Mat4f cameraView = camera.GetViewMatrix();
-    Mat4f cameraProj = camera.GetPerspectiveProjection(glm::radians(45.0f), s_aspect, 0.1f, 50.f);
+    auto cameraView = camera.GetViewMatrix();
+    auto cameraProj = camera.GetPerspectiveProjection(glm::radians(45.0f), aspect, 0.1f, 50.f);
 
     // Update camera UBO
     {
-      auto matrices = Array<Mat4f, 2>{ cameraView, cameraProj };
-      const Vec3F& camPos = camera.position;
+      auto matrices = Array<Mat4F, 2>{ cameraView, cameraProj };
       _uboCameraBlock.UpdateStorage(0, sizeof(matrices), matrices.data());
-      _uboCameraBlock.UpdateStorage(sizeof(matrices), sizeof(Vec3F), &camPos);
+      _uboCameraBlock.UpdateStorage(sizeof(matrices), sizeof(Vec3F), &camera.position);
     }
 
     // Update light UBO
     {
-      constexpr u32 size = sizeof(DirectionalLight) + sizeof(PointLight);
-      constexpr Array<u8, size> zeros{};
-      _uboLightBlock.UpdateStorage(0, size, zeros.data());
-
-      auto e = scene.FindObjectWithComponent<DirectionalLight>();
-      if (e.has_value())
-      {
-        GameObject obj = e.value();
-        DirectionalLight* light = obj.GetComponent<DirectionalLight>();
-        _uboLightBlock.UpdateStorage(0,
-          sizeof(DirectionalLight),
-          reinterpret_cast<void*>(light));
-      }
-      e = scene.FindObjectWithComponent<PointLight>();
-      if (e.has_value())
-      {
-        GameObject obj = e.value();
-        PointLight* light = obj.GetComponent<PointLight>();
-        _uboLightBlock.UpdateStorage(sizeof(DirectionalLight),
-          sizeof(PointLight),
-          reinterpret_cast<void*>(light));
-      }
+      //auto offset = 0;
+      //_uboLightBlock.UpdateStorage(offset, sizeof(DirectionalLight), dirLight);
+      //offset += sizeof(DirectionalLight);
+      //_uboLightBlock.UpdateStorage(offset, sizeof(PointLight), pointLight);
+      //offset += sizeof(PointLight);
+      //_uboLightBlock.UpdateStorage(offset, sizeof(SpotLight), spotLight);
     }
 
     // -----------------------------------------------------------------------
     // -------------------------- Rendering section --------------------------
     // -----------------------------------------------------------------------
-    glPolygonMode(GL_FRONT_AND_BACK, g_renderInWireframe ? GL_LINE : GL_FILL);
-    glViewport(0, 0, s_viewportSize.x, s_viewportSize.y);
+    glPolygonMode(GL_FRONT_AND_BACK, g_RenderInWireframe ? GL_LINE : GL_FILL);
+    glViewport(0, 0, viewportSize.x, viewportSize.y);
 
-    blinnPhongProgram.SetUniform1i("u_normalMapping", static_cast<i32>(g_renderWithNormalMapping));
-    Texture2D viewportImage = BlinnPhongShading(blinnPhongProgram, scene);
+    // 1. Render on multisampled framebuffer
+    _MSAAFramebuffer.Bind(FramebufferTarget::DRAW);
+    {
+      glEnable(GL_MULTISAMPLE);
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT); // clear buffers
 
-    gui.MenuBar(scene);
-    gui.ImguiDemo();
-    GameObject& objSelected = gui.Hierarchy(scene);
-    gui.Inspector(objSelected);
-    gui.Viewport(viewportImage, objSelected, cameraView, cameraProj);
-    gui.ToolBar();
-    gui.TimeInfo(_delta, _avgTime, _frameRate);
-    gui.CameraProperties(camera);
-    gui.GraphicsInfo();
-    
-    gui.CompleteFrameRender();
+      blinnPhongProgram.Use();
+      scene.GetEntityRegistry().view<StaticMesh, Transform>().each([&](auto& staticMesh, auto& transform) {
+        blinnPhongProgram.SetUniformMat4f("u_Transform", transform.GetTransformation());
+        staticMesh.Render(blinnPhongProgram, RenderMode::TRIANGLES);
+      });
+
+      glDisable(GL_MULTISAMPLE);
+    }
+    _MSAAFramebuffer.Unbind(FramebufferTarget::DRAW);
+
+    // 2. Resolve framebuffer
+    __ResolveMSAAFramebuffer(viewportSize.x, viewportSize.y);
+
+    // 3. Get the final texture color image 
+    auto viewportImage = _MSAAFramebufferResolver.GetTextureAttachment(0); // returns the texture color 
+
+    guiLayer.MenuBar(scene);
+    guiLayer.ImguiDemo();
+    auto objSelected = guiLayer.Hierarchy(scene);
+    guiLayer.Inspector(objSelected);
+    guiLayer.Viewport(viewportImage, objSelected, cameraView, cameraProj);
+    guiLayer.ToolBar();
+    guiLayer.TimeInfo(_delta, _avgTime, _frameRate);
+    guiLayer.GraphicsInfo();
+    guiLayer.CompleteFrameRender();
 
     // Checking viewport size
-    if (s_viewportSize != gui.viewportSize)
+    if (viewportSize != guiLayer.viewportSize)
     {
-      s_viewportSize = gui.viewportSize;
-      s_aspect = static_cast<f32>(s_viewportSize.x) / static_cast<f32>(s_viewportSize.y);
-      s_framebufferPhong.Delete();
-      s_framebufferPhong = CreateFramebufferPhong(s_viewportSize.x, s_viewportSize.y);
+      viewportSize = guiLayer.viewportSize;
+      aspect = static_cast<f32>(viewportSize.x) / viewportSize.y;
+      
+      _MSAAFramebufferResolver.Delete();
+      _MSAAFramebuffer.Delete();
+      __CreateMSAAFramebuffer(viewportSize.x, viewportSize.y, _MSAAFramebufferSamples);
     }
 
     // ------------------------------------------------------------------
@@ -352,31 +344,29 @@ void Engine::Run()
     windowManager.SwapWindowBuffers();
   }
 }
-void Engine::CleanUp()
+
+void Engine::Cleanup()
 {
+  _MSAAFramebufferResolver.Delete();
+  _MSAAFramebuffer.Delete();
   _uboCameraBlock.Delete();
   _uboLightBlock.Delete();
-  _uboBoneBlock.Delete();
+  _screenQuad.Destroy();
 
   ImGuiLayer::GetInstance().CleanUpImGui();
-  ShadersManager::GetInstance().CleanUp();
-  TexturesManager::GetInstance().CleanUp();
+  StaticMeshFactory::GetInstance().Cleanup();
+  ShadersManager::GetInstance().Cleanup();
+  TexturesManager::GetInstance().Cleanup();
   WindowManager::GetInstance().CleanUp();
 }
+
 
 // -----------------------------------------------------
 //            PRIVATE METHODS
 // -----------------------------------------------------
 
-void Engine::SetGLStates() const
+void Engine::__SetInitialGLStates() const
 {
-  // Enable debug output
-  // -------------------
-  glEnable(GL_DEBUG_OUTPUT);
-  glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-  glDebugMessageCallback(MessageCallback, 0);
-  glDebugMessageControl(GL_DEBUG_SOURCE_API, GL_DEBUG_TYPE_ERROR, GL_DONT_CARE, 0, nullptr, GL_TRUE);
-
   // Depth testing ON
   // ----------------
   DepthTest::EnableTest();
@@ -402,24 +392,20 @@ void Engine::SetGLStates() const
   // Antialising OFF
   // --------------
   glDisable(GL_MULTISAMPLE);
-
-  glClearColor(0.15f, 0.15f, 0.15f, 1.0f);  // specify clear values for the color buffers
-  glClearDepth(1.0f);                       // specify clear values for the depth buffer    
-  glClearStencil(0);                        // specify clear values for the stencil buffer 
 }
-void Engine::InitTime()
+void Engine::__InitTime()
 {
   _now = chrono::steady_clock::time_point{};
   _lastFrameTime = chrono::steady_clock::time_point{};
   _timerT0 = chrono::steady_clock::now();
   _timerT1 = chrono::steady_clock::time_point{};
-  _frames = 0;
-  _frameRate = 0;
+  _frames = 0u;
+  _frameRate = 0u;
   _totalDeltasPerSecond = 0.0f;
   _avgTime = 0.0f;
   _delta = 0.0f;
 }
-void Engine::CalculatePerFrameTime()
+void Engine::__CalculatePerFrameTime()
 {
   _frames++;
 
@@ -428,7 +414,7 @@ void Engine::CalculatePerFrameTime()
   _lastFrameTime = _now;
   _totalDeltasPerSecond += _delta;
   _timerT1 = chrono::steady_clock::now();
-  f64 timer_diff = chrono::duration_cast<chrono::duration<f64>>(_timerT1 - _timerT0).count();
+  auto timer_diff = chrono::duration_cast<chrono::duration<f64>>(_timerT1 - _timerT0).count();
   if (timer_diff >= 1.f)
   {
     _timerT0 = chrono::steady_clock::now();
@@ -439,40 +425,109 @@ void Engine::CalculatePerFrameTime()
   }
 }
 
-void Engine::CreateCameraUBO(i32 bindingPoint)
+void Engine::__CreateCameraUBO(i32 bindingPoint)
 {
   // Reserve memory for:
   // - 2 mat4f: camera projection + camera view
   // - 1 vec3f: camera position
   // - 1 float: padding
-  constexpr u32 size = 2 * sizeof(Mat4f) +
-    sizeof(Vec3F) +
-    sizeof(f32);
-
+  constexpr auto size = sizeof(Mat4F)*2 + sizeof(Vec3F) + sizeof(f32); // bytes
   _uboCameraBlock = Buffer(size, nullptr, BufferUsage::DYNAMIC_DRAW);
 
-  constexpr Array<u8, size> zeros{};
-  _uboCameraBlock.UpdateStorage(0, size, zeros.data()); // Init buffer with zeros
-  _uboCameraBlock.BindBase(BufferTarget::UNIFORM, bindingPoint);   // CameraBlock
+  constexpr auto zeros = Array<byte, size>{};
+  _uboCameraBlock.UpdateStorage(0, size, zeros.data());
+  _uboCameraBlock.BindBase(BufferTarget::UNIFORM, bindingPoint);
 }
-void Engine::CreateLightUBO(i32 bindingPoint)
+void Engine::__CreateLightUBO(i32 bindingPoint)
 {
   // Reserve memory for:
   // - 1 DirectionalLight object
   // - 1 PointLight object
-  constexpr u32 size = sizeof(DirectionalLight) + sizeof(PointLight);
+  // - 1 SpotLight object
+  constexpr auto size = sizeof(DirectionalLight) + sizeof(PointLight) + sizeof(SpotLight);
   _uboLightBlock = Buffer(size, nullptr, BufferUsage::DYNAMIC_DRAW);
 
-  constexpr Array<u8, size> zeros{};
+  constexpr auto zeros = Array<byte, size>{};
   _uboLightBlock.UpdateStorage(0, size, zeros.data());
   _uboLightBlock.BindBase(BufferTarget::UNIFORM, bindingPoint);
 }
-void Engine::CreateBoneUBO(i32 bindingPoint)
-{
-  constexpr u32 size = SkeletalMesh::GetMaxNumBones() * sizeof(Mat4f);
-  _uboBoneBlock = Buffer(size, nullptr, BufferUsage::STREAM_DRAW);
 
-  constexpr Array<u8, size> zeros{};
-  _uboBoneBlock.UpdateStorage(0, size, zeros.data());
-  _uboBoneBlock.BindBase(BufferTarget::UNIFORM, bindingPoint);
+Mesh Engine::__CreateMeshQuad()
+{
+  constexpr auto vertex1 = Vertex<Position, TextureCoord>{ Vec3F(-1.0f,  1.0f, 0.0f), Vec2F(0.0f, 1.0f) };
+  constexpr auto vertex2 = Vertex<Position, TextureCoord>{ Vec3F(-1.0f, -1.0f, 0.0f), Vec2F(0.0f, 0.0f) };
+  constexpr auto vertex3 = Vertex<Position, TextureCoord>{ Vec3F(1.0f,  1.0f, 0.0f),  Vec2F(1.0f, 1.0f) };
+  constexpr auto vertex4 = Vertex<Position, TextureCoord>{ Vec3F(1.0f, -1.0f, 0.0f),  Vec2F(1.0f, 0.0f) };
+  constexpr auto vertices = Array<Vertex<Position, TextureCoord>, 4>{ vertex1,vertex2,vertex3,vertex4, };
+
+  constexpr auto stride = sizeof(vertex1);
+  constexpr auto offsetPosition = 0;
+  constexpr auto offsetTC = offsetPosition + sizeof(Position);
+  constexpr auto vertexFormat0 = VertexFormat{ 3, VertexAttribType::FLOAT, false, static_cast<i32>(offsetPosition) };
+  constexpr auto vertexFormat1 = VertexFormat{ 2, VertexAttribType::FLOAT, false, static_cast<i32>(offsetTC) };
+
+  auto vbo = Buffer(sizeof(vertices), vertices.data(), BufferUsage::STATIC_DRAW);
+  auto quad = Mesh{};
+  quad.Create();
+  quad.SetupAttributeFloat(0, 0, vertexFormat0);
+  quad.SetupAttributeFloat(1, 0, vertexFormat1);
+  quad.vertexArray->AttachVertexBuffer(0, vbo, 0, stride);
+  return quad;
+}
+void Engine::__CreateMSAAFramebuffer(i32 w, i32 h, i32 samples)
+{
+  if (_MSAAFramebuffer.IsValid())
+    CONSOLE_WARN("Warning in __CreateMSAAFramebuffer: _MSAAFramebuffer.IsValid()");
+  if (_MSAAFramebufferResolver.IsValid())
+    CONSOLE_WARN("Warning in __CreateMSAAFramebuffer: _MSAAFramebufferResolver.IsValid()");
+
+  // 1. Create the multisampled framebuffer 
+  auto msTextureColor = Texture2D{};
+  msTextureColor.Create(Texture2DTarget::TEXTURE_2D_MULTISAMPLE);
+  msTextureColor.CreateStorageMultisampled(Texture2DInternalFormat::RGB8, samples, w, h);
+  auto msDepthStencil = Renderbuffer{};
+  msDepthStencil.Create();
+  msDepthStencil.CreateStorageMulstisampled(RenderbufferInternalFormat::DEPTH24_STENCIL8, samples, w, h);
+  _MSAAFramebuffer = Framebuffer{};
+  _MSAAFramebuffer.Create();
+  _MSAAFramebuffer.AttachTexture(FramebufferAttachment::COLOR_ATTACHMENT0, msTextureColor, 0);
+  _MSAAFramebuffer.AttachRenderBuffer(FramebufferAttachment::DEPTH_STENCIL, msDepthStencil);
+  assert(_MSAAFramebuffer.CheckStatus() == FramebufferStatus::COMPLETE);
+  
+  // 2. Create the normal framebuffer 
+  _MSAAFramebufferResolver = Framebuffer{};
+  _MSAAFramebufferResolver.Create();
+  auto textureColor = Texture2D{};
+  textureColor.Create(Texture2DTarget::TEXTURE_2D);
+  textureColor.CreateStorage(Texture2DInternalFormat::RGB8, w, h);
+  textureColor.SetParameteri(TextureParameteriName::MIN_FILTER, TextureParameteriParam::LINEAR);
+  textureColor.SetParameteri(TextureParameteriName::MAG_FILTER, TextureParameteriParam::LINEAR);
+  auto depthStencil = Renderbuffer{};
+  depthStencil.Create();
+  depthStencil.CreateStorage(RenderbufferInternalFormat::DEPTH24_STENCIL8, w, h);
+  _MSAAFramebufferResolver.AttachTexture(FramebufferAttachment::COLOR_ATTACHMENT0, textureColor, 0);
+  _MSAAFramebufferResolver.AttachRenderBuffer(FramebufferAttachment::DEPTH_STENCIL, depthStencil);
+  assert(_MSAAFramebufferResolver.CheckStatus() == FramebufferStatus::COMPLETE);
+}
+void Engine::__ResolveMSAAFramebuffer(i32 w, i32 h)
+{
+  _MSAAFramebuffer.Bind(FramebufferTarget::READ);
+  _MSAAFramebufferResolver.Bind(FramebufferTarget::DRAW);
+
+  // Copy the color buffer
+  _MSAAFramebuffer.Blit(_MSAAFramebufferResolver,
+                        0, 0, w, h,     // source rect
+                        0, 0, w, h,     // dest rect
+                        FramebufferBlitMask::COLOR_BUFFER,
+                        FramebufferBlitFilter::LINEAR);
+
+  // Copy the depth/stencil buffer
+  _MSAAFramebuffer.Blit(_MSAAFramebufferResolver,
+                        0, 0, w, h,     // source rect
+                        0, 0, w, h,     // dest rect
+                        FramebufferBlitMask::DEPTH_STENCIL_BUFFER,
+                        FramebufferBlitFilter::NEAREST);  // NEAREST per depth/stencil
+
+  _MSAAFramebufferResolver.Unbind(FramebufferTarget::DRAW);
+  _MSAAFramebuffer.Unbind(FramebufferTarget::READ);
 }

@@ -2,11 +2,8 @@
 
 #include "Core/OpenGL.hpp"
 #include "Core/Log/Logger.hpp"
-#include "Engine/Components/StaticMesh.hpp"
 
-#include "Engine/Material.hpp"
 #include "Engine/Vertex.hpp"
-#include "Engine/Graphics/Objects/Buffer.hpp"
 #include "Engine/Managers/TexturesManager.hpp"
 
 #include <assimp/Importer.hpp>
@@ -17,22 +14,22 @@
 //										PUBLIC
 // ----------------------------------------------------
 
-void StaticMeshLoader::LoadDataFromFile(const fs::path& absolutePathToFile, StaticMesh& out)
+void StaticMeshLoader::LoadDataFromFile(const fs::path& absolutePathToFile, Components::StaticMesh& out)
 {
-	Assimp::Importer importer;
-	const aiScene *scene = importer.ReadFile(absolutePathToFile.string().c_str(),
-																						aiProcess_Triangulate |
-																						aiProcess_GenUVCoords |
-																						aiProcess_FlipUVs |
-																						aiProcess_CalcTangentSpace |
-																						aiProcess_JoinIdenticalVertices |
-																						aiProcess_GenSmoothNormals |
-																						aiProcess_ImproveCacheLocality |
-																						aiProcess_FindDegenerates |
-																						aiProcess_RemoveRedundantMaterials |
-																						aiProcess_FindInvalidData |
-																						aiProcess_LimitBoneWeights |
-																						aiProcess_OptimizeMeshes);
+	auto importer = Assimp::Importer{};
+	auto scene = importer.ReadFile(absolutePathToFile.string().c_str(),
+																 aiProcess_Triangulate |
+																 aiProcess_GenUVCoords |
+																 aiProcess_FlipUVs |
+																 aiProcess_CalcTangentSpace |
+																 aiProcess_JoinIdenticalVertices |
+																 aiProcess_GenSmoothNormals |
+																 aiProcess_ImproveCacheLocality |
+																 aiProcess_FindDegenerates |
+																 aiProcess_RemoveRedundantMaterials |
+																 aiProcess_FindInvalidData |
+																 aiProcess_LimitBoneWeights |
+																 aiProcess_OptimizeMeshes);
 		
 	if (!scene || !scene->mRootNode || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE)
 	{
@@ -41,54 +38,67 @@ void StaticMeshLoader::LoadDataFromFile(const fs::path& absolutePathToFile, Stat
 	}
 
 	out.meshArray = std::make_unique<Mesh[]>(scene->mNumMeshes);
-	out.nrMeshes = 0;
-	ProcessAINode(scene->mRootNode, scene, out);
+	out.nrMeshes = 0u;
+	__ProcessAINode(scene->mRootNode, scene, out);
 }
 
 // ----------------------------------------------------
 //										PRIVATE
 // ----------------------------------------------------
 
-void StaticMeshLoader::ProcessAINode(aiNode* node, const aiScene* scene, StaticMesh& out)
+void StaticMeshLoader::__ProcessAINode(aiNode* node, const aiScene* scene, Components::StaticMesh& out)
 {
-	for (u32 i = 0; i < node->mNumMeshes; i++)
+	constexpr auto vertex = Vertex<Position, Normal, TextureCoord, Tangent>{};
+	constexpr auto stride = sizeof(vertex);
+	constexpr auto offsetPosition = 0;
+	constexpr auto offsetNormal = sizeof(Position);
+	constexpr auto offsetTC = offsetNormal + sizeof(Normal);
+	constexpr auto offsetTangent = offsetTC + sizeof(TextureCoord);
+	
+	constexpr auto vertexFormat0 = VertexFormat{ 3, VertexAttribType::FLOAT, false, static_cast<i32>(offsetPosition) };
+	constexpr auto vertexFormat1 = VertexFormat{ 3, VertexAttribType::FLOAT, false, static_cast<i32>(offsetNormal) };
+	constexpr auto vertexFormat2 = VertexFormat{ 2, VertexAttribType::FLOAT, false, static_cast<i32>(offsetTC) };
+	constexpr auto vertexFormat3 = VertexFormat{ 3, VertexAttribType::FLOAT, false, static_cast<i32>(offsetTangent) };
+
+	for (auto i = 0u; i < node->mNumMeshes; i++)
 	{
-		Mesh &mesh = out.meshArray[out.nrMeshes++];
+		auto& mesh = out.meshArray[out.nrMeshes++];
 		mesh.Create();
-		mesh.SetupAttributeFloat(0, 0, VertexFormat(3, VertexAttribType::FLOAT, false, offsetof(Vertex_P_N_UV_T, position)));
-		mesh.SetupAttributeFloat(1, 0, VertexFormat(3, VertexAttribType::FLOAT, false, offsetof(Vertex_P_N_UV_T, normal)));
-		mesh.SetupAttributeFloat(2, 0, VertexFormat(2, VertexAttribType::FLOAT, false, offsetof(Vertex_P_N_UV_T, uv)));
-		mesh.SetupAttributeFloat(3, 0, VertexFormat(3, VertexAttribType::FLOAT, false, offsetof(Vertex_P_N_UV_T, tangent)));
+		mesh.SetupAttributeFloat(0, 0, vertexFormat0);
+		mesh.SetupAttributeFloat(1, 0, vertexFormat1);
+		mesh.SetupAttributeFloat(2, 0, vertexFormat2);
+		mesh.SetupAttributeFloat(3, 0, vertexFormat3);
 		
-		aiMesh *aimesh = scene->mMeshes[node->mMeshes[i]];
+		auto aimesh = scene->mMeshes[node->mMeshes[i]];
 		
 		// Load vertices
-		Buffer vbo = LoadVertices(aimesh);
-		mesh.vertexArray->AttachVertexBuffer(0, vbo, 0, sizeof(Vertex_P_N_UV_T));
+		auto vbo = __LoadVertices(aimesh);
+		mesh.vertexArray->AttachVertexBuffer(0, vbo, 0, stride);
 		mesh.numVertices = aimesh->mNumVertices;
 		// Load indices
-		Buffer ebo = LoadIndices(aimesh);
+		auto ebo = __LoadIndices(aimesh);
 		mesh.vertexArray->AttachElementBuffer(ebo);
 		mesh.numIndices = aimesh->mNumFaces * 3;
 		
 		if (scene->HasMaterials())
-			LoadMeshMaterial(scene, aimesh, mesh);
+			__LoadMeshMaterial(scene, aimesh, mesh);
 	}
 		
 	// Then do the same for each of its children
-	for (u32 i = 0; i < node->mNumChildren; i++)
-		ProcessAINode(node->mChildren[i], scene, out);
+	for (auto i = 0u; i < node->mNumChildren; i++)
+		__ProcessAINode(node->mChildren[i], scene, out);
 }
-Buffer StaticMeshLoader::LoadVertices(aiMesh* aimesh)
+Buffer StaticMeshLoader::__LoadVertices(aiMesh* aimesh)
 {
-	u64 size = aimesh->mNumVertices * sizeof(Vertex_P_N_UV_T);
+	constexpr auto vertex = Vertex<Position, Normal, TextureCoord, Tangent>{};
+	auto size = aimesh->mNumVertices * sizeof(vertex);
 
-	Buffer buffer;
+	auto buffer = Buffer{};
 	buffer.Create();
 	buffer.CreateStorage(size, nullptr, BufferUsage::STATIC_DRAW);
 
-	f32 *ptr = static_cast<f32 *>(buffer.MapStorage(BufferAccess::WRITE_ONLY));
-	for (u32 i = 0; i < aimesh->mNumVertices; i++)
+	auto ptr = static_cast<f32*>(buffer.MapStorage(BufferAccess::WRITE_ONLY));
+	for (auto i = 0u; i < aimesh->mNumVertices; i++)
 	{
 		// Position
 		*(ptr++) = static_cast<f32>(aimesh->mVertices[i].x);
@@ -98,7 +108,7 @@ Buffer StaticMeshLoader::LoadVertices(aiMesh* aimesh)
 		*(ptr++) = static_cast<f32>(aimesh->mNormals[i].x);
 		*(ptr++) = static_cast<f32>(aimesh->mNormals[i].y);
 		*(ptr++) = static_cast<f32>(aimesh->mNormals[i].z);
-		// Uv coordinates
+		// Texture coords
 		*(ptr++) = static_cast<f32>(aimesh->mTextureCoords[0][i].x);
 		*(ptr++) = static_cast<f32>(aimesh->mTextureCoords[0][i].y);
 		// Tangent
@@ -109,35 +119,37 @@ Buffer StaticMeshLoader::LoadVertices(aiMesh* aimesh)
 	buffer.UnmapStorage();
 	return buffer;
 }
-Buffer StaticMeshLoader::LoadIndices(aiMesh* aimesh)
+Buffer StaticMeshLoader::__LoadIndices(aiMesh* aimesh)
 {
-	u32 numIndices = aimesh->mNumFaces * 3;
-	u64 size = numIndices * sizeof(u32);
+	auto numIndices = aimesh->mNumFaces * 3;
+	auto size = numIndices * sizeof(u32);
 
-	Buffer buffer;
+	auto buffer = Buffer{};
 	buffer.Create();
 	buffer.CreateStorage(size, nullptr, BufferUsage::STATIC_DRAW);
 
-	u32 *ptr = static_cast<u32 *>(buffer.MapStorage(BufferAccess::WRITE_ONLY));
-	for (u32 i = 0; i < aimesh->mNumFaces; i++)
+	auto ptr = static_cast<u32 *>(buffer.MapStorage(BufferAccess::WRITE_ONLY));
+	for (auto i = 0u; i < aimesh->mNumFaces; i++)
 	{
-		const aiFace &face = aimesh->mFaces[i];
-		for (u32 j = 0; j < face.mNumIndices; j++)
+		auto& face = aimesh->mFaces[i];
+		for (auto j = 0u; j < face.mNumIndices; j++)
 			*(ptr++) = static_cast<u32>(face.mIndices[j]);
 	}
 	buffer.UnmapStorage();
 	return buffer;
 }
-void StaticMeshLoader::LoadMeshMaterial(const aiScene* scene, aiMesh* aimesh, Mesh& mesh)
+void StaticMeshLoader::__LoadMeshMaterial(const aiScene* scene, aiMesh* aimesh, Mesh& mesh)
 {
 	auto& manager = TexturesManager::GetInstance();
 
-	aiString fileName;
-	aiMaterial* material = scene->mMaterials[aimesh->mMaterialIndex];
-	if (material->GetTexture(aiTextureType_DIFFUSE, 0, &fileName) == aiReturn_SUCCESS)
-		mesh.material.diffuse = manager.GetOrCreateTexture(fileName.C_Str());
-	if (material->GetTexture(aiTextureType_SPECULAR, 0, &fileName) == aiReturn_SUCCESS)
-		mesh.material.specular = manager.GetOrCreateTexture(fileName.C_Str());
-	if (material->GetTexture(aiTextureType_NORMALS, 0, &fileName) == aiReturn_SUCCESS)
-		mesh.material.normal = manager.GetOrCreateTexture(fileName.C_Str());
+	auto fileName = aiString{};
+	auto aimaterial = scene->mMaterials[aimesh->mMaterialIndex];
+	if (aimaterial->GetTexture(aiTextureType_DIFFUSE, 0, &fileName) == aiReturn_SUCCESS)
+		mesh.material.albedo = manager.GetOrCreateTexture(fileName.C_Str());
+
+	if (aimaterial->GetTexture(aiTextureType_NORMALS, 0, &fileName) == aiReturn_SUCCESS)
+		mesh.material.normalMap = manager.GetOrCreateTexture(fileName.C_Str());
+
+	//if (aimaterial->GetTexture(aiTextureType_SPECULAR, 0, &fileName) == aiReturn_SUCCESS)
+	//	mesh.material.specular = manager.GetOrCreateTexture(fileName.C_Str());
 }

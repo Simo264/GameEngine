@@ -10,7 +10,7 @@ void Texture2D::Create(Texture2DTarget target)
 void Texture2D::Delete()
 {
   glDeleteTextures(1, &id);
-  id = 0;
+  id = 0u;
 }
 bool Texture2D::IsValid() const
 {
@@ -28,7 +28,7 @@ void Texture2D::GenerateMipmap() const
 
 void Texture2D::CreateStorage(Texture2DInternalFormat internalFormat, i32 width, i32 height) const
 {
-  u32 mipmapLevels = 1 + static_cast<u32>(std::floor(std::log2(std::max(width, height))));
+  auto mipmapLevels = 1 + static_cast<u32>(std::floor(std::log2(std::max(width, height))));
 
   glTextureStorage2D(id,
                      mipmapLevels,
@@ -104,25 +104,25 @@ void Texture2D::SetCompareFunc(CompareFunc func) const
 
 i32 Texture2D::GetWidth() const
 {
-  i32 width;
+  auto width = 0;
   glGetTextureLevelParameteriv(id, 0, GL_TEXTURE_WIDTH, &width);
   return width;
 }
 i32 Texture2D::GetHeight() const
 {
-  i32 height;
+  auto height = 0;
   glGetTextureLevelParameteriv(id, 0, GL_TEXTURE_HEIGHT, &height);
   return height;
 }
 Texture2DInternalFormat Texture2D::GetInternalFormat() const
 {
-  i32 internalFormat;
+  auto internalFormat = 0;
   glGetTextureLevelParameteriv(id, 0, GL_TEXTURE_INTERNAL_FORMAT, &internalFormat);
   return static_cast<Texture2DInternalFormat>(internalFormat);
 }
 Texture2DFormat Texture2D::GetFormat() const
 {
-  Texture2DInternalFormat internalFormat = GetInternalFormat();
+  auto internalFormat = GetInternalFormat();
 
   switch (internalFormat)
   {
@@ -180,7 +180,7 @@ Texture2DFormat Texture2D::GetFormat() const
 }
 i32 Texture2D::GetNumChannels() const
 {
-  Texture2DInternalFormat internalFormat = GetInternalFormat();
+  auto internalFormat = GetInternalFormat();
 
   switch (internalFormat)
   {

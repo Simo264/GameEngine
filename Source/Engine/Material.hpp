@@ -2,15 +2,10 @@
 
 #include "Engine/Graphics/Objects/Texture2D.hpp"
 
-class Material
+struct Material
 {
-public:
-	Material() = default;
-	~Material() = default;
-
-	Texture2D diffuse;
-	Texture2D specular;
-	Texture2D normal;
+	Texture2D albedo;
+	Texture2D normalMap;
 
 	void Bind() const;
 };

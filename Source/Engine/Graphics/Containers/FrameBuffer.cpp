@@ -10,21 +10,20 @@ void Framebuffer::Create()
 
 void Framebuffer::Delete()
 {
-	u32 size;
+	auto size = 0u;
 	if (textAttachments.size() > 0)
 	{
-		size = 0;
-		Array<u32, MAX_NUM_TEXTURE_ATTACHMENTS> ids{};
+		auto ids = Array<u32, MAX_NUM_TEXTURE_ATTACHMENTS>{};
 		for (auto& texture : textAttachments)
 			ids[size++] = texture.id;
 		glDeleteTextures(size, ids.data());
 		textAttachments.clear();
 	}
-	
+
+	size = 0u;
 	if (rboAttachments.size() > 0)
 	{
-		size = 0;
-		Array<u32, MAX_NUM_RBO_ATTACHMENTS> ids{};
+		auto ids = Array<u32, MAX_NUM_RBO_ATTACHMENTS>{};
 		for (auto& texture : textAttachments)
 			ids[size++] = texture.id;
 		glDeleteRenderbuffers(size, ids.data());
@@ -34,7 +33,7 @@ void Framebuffer::Delete()
 	if (IsValid())
 	{
 		glDeleteFramebuffers(1, &id);
-		id = 0;
+		id = 0u;
 	}
 }
 
@@ -43,7 +42,7 @@ Texture2D Framebuffer::GetTextureAttachment(u32 index)
 	if (index >= textAttachments.size() || index >= MAX_NUM_TEXTURE_ATTACHMENTS)
 	{
 		CONSOLE_WARN("Cannot get texture attachment. Index {} is out of bounds.", index);
-		return Texture2D();
+		return Texture2D{};
 	}
 	return textAttachments.at(index);
 }
@@ -53,7 +52,7 @@ Renderbuffer Framebuffer::GetRenderbufferAttachment(u32 index)
 	if (index >= rboAttachments.size() || index >= MAX_NUM_RBO_ATTACHMENTS)
 	{
 		CONSOLE_WARN("Cannot get renderbuffer attachment. Index {} is out of bounds.", index);
-		return Renderbuffer();
+		return Renderbuffer{};
 	}
 	return rboAttachments.at(index);
 }
@@ -102,27 +101,21 @@ void Framebuffer::AttachRenderBuffer(FramebufferAttachment attachment, Renderbuf
 	glNamedFramebufferRenderbuffer(id, static_cast<u32>(attachment), GL_RENDERBUFFER, renderbuffer.id);
 }
 
-void Framebuffer::Blit(
-	const Framebuffer& dest,
-	i32 srcLowerX,
-	i32 srcLowerY,
-	i32 srcUpperX,
-	i32 srcUpperY,
-	i32 destLowerX,
-	i32 destLowerY,
-	i32 destUpperX,
-	i32 destUpperY,
-	FramebufferBlitMask mask,
-	FramebufferBlitFilter filter) const
+void Framebuffer::Blit(const Framebuffer& dest,
+											 i32 srcLowerX, i32 srcLowerY,
+											 i32 srcUpperX, i32 srcUpperY,
+											 i32 destLowerX, i32 destLowerY,
+											 i32 destUpperX, i32 destUpperY,
+											 FramebufferBlitMask mask,
+											 FramebufferBlitFilter filter) const
 {
-	glBlitNamedFramebuffer(
-		id, dest.id, 
-		srcLowerX, srcLowerY, 
-		srcUpperX, srcUpperY, 
-		destLowerX, destLowerY, 
-		destUpperX, destUpperY, 
-		static_cast<u32>(mask),
-		static_cast<u32>(filter));
+	glBlitNamedFramebuffer(id, dest.id, 
+												 srcLowerX, srcLowerY, 
+												 srcUpperX, srcUpperY, 
+												 destLowerX, destLowerY, 
+												 destUpperX, destUpperY, 
+												 static_cast<u32>(mask),
+												 static_cast<u32>(filter));
 }
 
 void Framebuffer::SetWritingColorComponents(bool r, bool g, bool b, bool a) const

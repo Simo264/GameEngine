@@ -20,7 +20,7 @@ namespace Renderer
 
 		vertexArray.Bind();
 		glDrawArrays(static_cast<u32>(mode), first, numVertices);
-		g_drawCalls++;
+		g_DrawCalls++;
 	}
 	
 	//void DrawArraysInstanced(RenderMode mode, const VertexArray& vertexArray, i32 nInstances, i32 first)
@@ -51,7 +51,7 @@ namespace Renderer
 									 numIndices, 
 									 GL_UNSIGNED_INT, 
 									 reinterpret_cast<void*>(offset));
-		g_drawCalls++;
+		g_DrawCalls++;
 	}
 	
 	//void DrawElementsInstanced(RenderMode mode, const VertexArray& vertexArray, i32 nInstances, i32 offset)

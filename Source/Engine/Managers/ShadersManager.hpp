@@ -9,39 +9,39 @@
  * 
  * This class handles shader compilation, program linking, and cleanup.
  */
-class ShadersManager : public Singleton<ShadersManager >
+class ShadersManager : public Singleton<ShadersManager>
 {
 public:
 	/** @brief Load all shaders and programs. */
 	void Initialize();
 	/** @brief Destroy all shader objects and program objects. */
-	void CleanUp();
+	void Cleanup();
 
 	/** @brief Retrieve a shader by its filename. */
 	Shader GetShader(StringView shaderName) const;
-	Shader CreateShader(StringView shaderName);
-	Shader GetOrCreateShader(StringView shaderName);
+	Shader CreateShader(StringView shaderName, ShaderType type);
+	Shader GetOrCreateShader(StringView shaderName, ShaderType type);
 
 	/** @brief Retrieve a program by its name. */
 	Program GetProgram(StringView programName) const;
 	Program CreateProgram(StringView programName);
 
 private:
-	void LoadConfig(const fs::path& path);
+	void __LoadConfig(const fs::path& path);
 
-	struct PairShaderName
+	struct __PairShaderName
 	{
 		Shader shader;					// Shader object
 		Array<char, 32> name{}; // Shader name
 	};
-	struct PairProgramName
+	struct __PairProgramName
 	{
 		Program program;				// Program object
 		Array<char, 32> name{}; // Program name
 	};
 
 	// Stores all loaded shaders
-	Vector<PairShaderName> _shaders;
+	Vector<__PairShaderName> _shaders;
 	// Stores all loaded programs
-	Vector<PairProgramName> _programs;
+	Vector<__PairProgramName> _programs;
 };

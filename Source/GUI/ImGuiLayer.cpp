@@ -5,8 +5,6 @@
 
 #include "Engine/Globals.hpp"
 #include "Engine/Scene.hpp"
-#include "Engine/Camera.hpp"
-#include "Engine/Components/Components.hpp"
 #include "Engine/Graphics/Objects/Texture2D.hpp"
 #include "Engine/Managers/WindowManager.hpp"
 
@@ -14,7 +12,6 @@
 #include "Hierarchy.hpp"
 #include "Viewport.hpp"
 #include "Inspector.hpp"
-#include "CameraProperties.hpp"
 #include "ToolBar.hpp"
 
 #include <imgui.h>
@@ -23,8 +20,8 @@
 #include <imgui_internal.h>
 #include <ImGuizmo.h>
 
-constexpr f32 fontSize = 16.f;
-constexpr const char* fontFamily = "OpenSans/OpenSans-Regular.ttf";
+constexpr auto fontSize = 16.f;
+constexpr auto fontFamily = "OpenSans/OpenSans-Regular.ttf";
 
 // --------------------------
 //          PUBLIC
@@ -46,13 +43,13 @@ void ImGuiLayer::InitializeImGui()
   renderGraphicsInfo = false;
 
   // Setup ImGui context
-  SetupImGuiContext();
+  __SetupImGuiContext();
 
   // Custom styling
-  CustomizeStyle();
+  __CustomizeStyle();
 
   // Load font
-  ImGuiIO& io = ImGui::GetIO();
+  auto& io = ImGui::GetIO();
   io.Fonts->Clear();
   io.Fonts->AddFontFromFileTTF((Paths::GetFontsPath() / fontFamily).string().c_str(), fontSize);
   io.Fonts->Build();
@@ -72,17 +69,17 @@ void ImGuiLayer::PrepareImGuiFrame()
   ImGui::NewFrame();
   ImGuizmo::BeginFrame();
 
-  ConfigureDockspace();
+  __ConfigureDockspace();
 }
 void ImGuiLayer::CompleteFrameRender()
 {
   ImGui::Render();
   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-  ImGuiIO& io = ImGui::GetIO();
+  auto& io = ImGui::GetIO();
   if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
   {
-    WindowManager& windowManager = WindowManager::GetInstance();
-    GLFWwindow* backupCurrentContext = windowManager.GetCurrentContext();
+    auto& windowManager = WindowManager::GetInstance();
+    auto backupCurrentContext = windowManager.GetCurrentContext();
     ImGui::UpdatePlatformWindows();
     ImGui::RenderPlatformWindowsDefault();
     windowManager.MakeContextCurrent(backupCurrentContext);
@@ -99,9 +96,9 @@ void ImGuiLayer::ImguiDemo()
     ImGui::ShowDemoWindow(&renderImGuiDemo);
 }
 void ImGuiLayer::Viewport(Texture2D textureImage,
-                          GameObject& objSelected, 
-                          const Mat4f& view, 
-                          const Mat4f& proj) const
+                          GameObject objSelected, 
+                          const Mat4F& view, 
+                          const Mat4F& proj) const
 {
   GUI_Viewport("Viewport", textureImage, objSelected, gizmode, view, proj);
 }
@@ -121,9 +118,9 @@ void ImGuiLayer::TimeInfo(f64 delta, f64 avg, i32 frameRate)
     ImGuiWindowFlags_NoCollapse |
     ImGuiWindowFlags_NoBackground;
 
-  constexpr ImVec2 windowSize{ 160.f, 100.f };
-  ImVec2 windowPos = ImVec2(static_cast<f32>((viewportPos.x + viewportSize.x) - windowSize.x),
-                            static_cast<f32>(viewportPos.y + 25));
+  constexpr auto windowSize = ImVec2{ 160.f, 100.f };
+  auto windowPos = ImVec2(static_cast<f32>((viewportPos.x + viewportSize.x) - windowSize.x),
+                          static_cast<f32>(viewportPos.y + 25));
   ImGui::SetNextWindowPos(windowPos);
   ImGui::SetNextWindowSize(windowSize);
   ImGui::SetNextWindowBgAlpha(0.0f);
@@ -134,41 +131,33 @@ void ImGuiLayer::TimeInfo(f64 delta, f64 avg, i32 frameRate)
   ImGui::End();
 }
 
-GameObject& ImGuiLayer::Hierarchy(Scene& scene)
+GameObject ImGuiLayer::Hierarchy(Scene& scene)
 {
-  static GameObject object;
-
+  static auto object = GameObject{ INVALID_ENTITY_ID, nullptr, nullptr };
   if(renderHierarchy)
     GUI_Hierarchy(renderHierarchy, scene, object);
   
   return object;
 }
-void ImGuiLayer::Inspector(GameObject& object)
+void ImGuiLayer::Inspector(GameObject object)
 {
   if(renderInspector)
     GUI_Inspector(renderInspector, "Inspector", object);
-}
-void ImGuiLayer::CameraProperties(Camera& camera)
-{
-  if (renderCameraProperties)
-    GUI_CameraProperties(renderCameraProperties,
-                         "Camera Properties", 
-                         camera);
 }
 void ImGuiLayer::GraphicsInfo()
 {
   if (!renderGraphicsInfo)
     return;
 
-  constexpr i32 flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking;
+  constexpr auto flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking;
   ImGui::SetNextWindowSize(ImVec2(468, 128), ImGuiCond_Once);
   ImGui::Begin("Graphics info", &renderGraphicsInfo, flags);
 
-  WindowManager& winManager = WindowManager::GetInstance();
-  static const char* glRender = reinterpret_cast<const char*>(glGetString(GL_RENDERER));
-  static const char* glVersion = reinterpret_cast<const char*>(glGetString(GL_VERSION));
-  static const char* glVendor = reinterpret_cast<const char*>(glGetString(GL_VENDOR));
-  static const char* glsl = reinterpret_cast<const char*>(glGetString(GL_SHADING_LANGUAGE_VERSION));
+  auto& winManager = WindowManager::GetInstance();
+  static auto glRender = glGetString(GL_RENDERER);
+  static auto glVersion = glGetString(GL_VERSION);
+  static auto glVendor = glGetString(GL_VENDOR);
+  static auto glsl = glGetString(GL_SHADING_LANGUAGE_VERSION);
   ImGui::TextWrapped("GLFW: %s\nOpenGL renderer: %s\nOpenGL version: %s\nOpenGL vendor: %s\nOpenGL Shading Language Version: %s",
                      winManager.GetVersion(),
                      glRender,
@@ -178,23 +167,15 @@ void ImGuiLayer::GraphicsInfo()
   ImGui::End();
 }
 
-void ImGuiLayer::DebugImage(Texture2D image, i32 w, i32 h)
-{
-  ImGui::SetNextWindowSize(ImVec2(w, h));
-  ImGui::Begin("Debug image");
-  ImGui::Image(image.id, ImVec2(w, h), ImVec2(0, 1), ImVec2(1, 0));
-  ImGui::End();
-}
-
 // --------------------------
 //          PRIVATE
 // --------------------------
 
-void ImGuiLayer::SetupImGuiContext()
+void ImGuiLayer::__SetupImGuiContext()
 {
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
-  ImGuiIO& io = ImGui::GetIO();
+  auto& io = ImGui::GetIO();
   io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; /* Enable Keyboard Controls */
   io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  /* Enable Gamepad Controls */
   io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;     /* Enable Docking */
@@ -203,7 +184,7 @@ void ImGuiLayer::SetupImGuiContext()
   ImGui_ImplGlfw_InitForOpenGL(WindowManager::GetInstance().GetCurrentContext(), true);
   ImGui_ImplOpenGL3_Init("#version 460");
 }
-void ImGuiLayer::CustomizeStyle()
+void ImGuiLayer::__CustomizeStyle()
 {
   auto& colors = ImGui::GetStyle().Colors;
   colors[ImGuiCol_WindowBg] = ImVec4{ 0.1f, 0.1f, 0.13f, 1.0f };
@@ -280,9 +261,9 @@ void ImGuiLayer::CustomizeStyle()
   style.PopupRounding = 4;
   style.ChildRounding = 4;
 }
-void ImGuiLayer::ConfigureDockspace()
+void ImGuiLayer::__ConfigureDockspace()
 {
-  constexpr i32 windowFlags =
+  constexpr auto windowFlags = 
     ImGuiWindowFlags_NoDocking |
     ImGuiWindowFlags_NoBackground |
     ImGuiWindowFlags_NoTitleBar |
@@ -292,7 +273,7 @@ void ImGuiLayer::ConfigureDockspace()
     ImGuiWindowFlags_NoNavFocus |
     ImGuiWindowFlags_NoMove;
 
-  const ImGuiViewport* viewport = ImGui::GetMainViewport();
+  auto viewport = ImGui::GetMainViewport();
   ImGui::SetNextWindowPos(viewport->WorkPos);
   ImGui::SetNextWindowSize(viewport->WorkSize);
   ImGui::SetNextWindowViewport(viewport->ID);
@@ -303,10 +284,10 @@ void ImGuiLayer::ConfigureDockspace()
   ImGui::Begin("Dockspace", nullptr, windowFlags);
   ImGui::PopStyleVar(3);
 
-  ImGuiID dockspaceID = ImGui::GetID("Dockspace");
+  auto dockspaceID = ImGui::GetID("Dockspace");
   ImGui::DockSpace(dockspaceID, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_PassthruCentralNode);
 
-  static bool firstTime = true;
+  static auto firstTime = true;
   if (firstTime)
   {
     firstTime = false;
@@ -315,11 +296,11 @@ void ImGuiLayer::ConfigureDockspace()
     ImGui::DockBuilderAddNode(dockspaceID, ImGuiDockNodeFlags_DockSpace);
     ImGui::DockBuilderSetNodeSize(dockspaceID, viewport->WorkSize);
 
-    ImGuiID dockLeft = ImGui::DockBuilderSplitNode(dockspaceID, ImGuiDir_Left, 0.25f, nullptr, &dockspaceID);
-    ImGuiID dockMain = dockspaceID;
-    ImGuiID dockLeftTop;
-    ImGuiID dockLeftBottom = ImGui::DockBuilderSplitNode(dockLeft, ImGuiDir_Down, 0.5f, nullptr, &dockLeftTop);
-    ImGuiID dockRight = ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Right, 0.25f, nullptr, &dockMain);
+    auto dockLeft = ImGui::DockBuilderSplitNode(dockspaceID, ImGuiDir_Left, 0.25f, nullptr, &dockspaceID);
+    auto dockMain = dockspaceID;
+    auto dockLeftTop = ImGuiID{};
+    auto dockLeftBottom = ImGui::DockBuilderSplitNode(dockLeft, ImGuiDir_Down, 0.5f, nullptr, &dockLeftTop);
+    auto dockRight = ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Right, 0.25f, nullptr, &dockMain);
 
     ImGui::DockBuilderDockWindow("Hierarchy", dockLeftTop);
     ImGui::DockBuilderDockWindow("Camera Properties", dockLeftTop);

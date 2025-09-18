@@ -4,19 +4,17 @@
 #include "Core/Math/Ext.hpp"
 
 #include "Engine/Globals.hpp"
-#include "Engine/Components/Components.hpp"
+
+#include "Engine/Scene.hpp"
 #include "Engine/Graphics/Objects/Texture2D.hpp"
 
 #include <imgui.h>
 #include <ImGuizmo.h>
 
-// ------------------------------------------
-//                  PRIVATE                  
-// ------------------------------------------
+using namespace Components;
 
-static void Viewport_GizmoWorldTranslation(Transformation& transform,
-                                           const Mat4f& view, 
-                                           const Mat4f& proj)
+
+static void Viewport_GizmoWorldTranslation(Transform& transform, const Mat4F& view, const Mat4F& proj)
 {
   //mat4f model = transform.GetTransformation();
   //ImGuizmo::Manipulate(
@@ -39,9 +37,7 @@ static void Viewport_GizmoWorldTranslation(Transformation& transform,
   //}
 }
 
-static void Viewport_GizmoWorldRotation(Transformation& transform,
-                                        const Mat4f& view, 
-                                        const Mat4f& proj)
+static void Viewport_GizmoWorldRotation(Transform& transform, const Mat4F& view, const Mat4F& proj)
 {
   //mat4f model = transform.GetTransformation();
   //ImGuizmo::Manipulate(
@@ -68,9 +64,7 @@ static void Viewport_GizmoWorldRotation(Transformation& transform,
   //}
 }
 
-static void Viewport_GizmoWorldScaling(Transformation& transform,
-                                       const Mat4f& view, 
-                                       const Mat4f& proj)
+static void Viewport_GizmoWorldScaling(Transform& transform, const Mat4F& view, const Mat4F& proj)
 {
   //mat4f model = transform.GetTransformation();
   //ImGuizmo::Manipulate(
@@ -100,19 +94,19 @@ static void Viewport_GizmoWorldScaling(Transformation& transform,
 
 void GUI_Viewport(StringView windowName,
                   Texture2D textureImage,
-                  GameObject& objSelected,
+                  GameObject objSelected,
                   i32 gizmode,
-                  const Mat4f& view,
-                  const Mat4f& proj)
+                  const Mat4F& view,
+                  const Mat4F& proj)
 {
-  ImGuiStyle& style = ImGui::GetStyle();
-  const ImVec2 paddingTmp = style.WindowPadding;
+  auto& style = ImGui::GetStyle();
+  auto paddingTmp = style.WindowPadding;
   style.WindowPadding = { 0.0f, 0.0f };
 
   // Begin main viewport
   ImGui::Begin(windowName.data(), nullptr, ImGuiWindowFlags_NoCollapse);
-  const ImVec2 winSize = ImGui::GetWindowSize();
-  const ImVec2 winPos = ImGui::GetWindowPos();
+  auto winSize = ImGui::GetWindowSize();
+  auto winPos = ImGui::GetWindowPos();
   auto& guiLayer = ImGuiLayer::GetInstance();
   guiLayer.viewportSize = { winSize.x, winSize.y };
   guiLayer.viewportPos = { winPos.x, winPos.y };
@@ -120,19 +114,19 @@ void GUI_Viewport(StringView windowName,
 
   // Begin child viewport
   ImGui::BeginChild("Viewport_Child");
-  const ImVec2 winChildSize = ImGui::GetWindowSize();
+  auto winChildSize = ImGui::GetWindowSize();
   guiLayer.viewportFocused |= ImGui::IsWindowFocused();
   
   ImGui::Image(textureImage.id, winChildSize, ImVec2(0, 1), ImVec2(1, 0));
   if (objSelected.IsValid())
   {
-    auto* transform = objSelected.GetComponent<Transformation>();
+    auto transform = objSelected.GetComponent<Transform>();
     if (transform)
     {
       ImGuizmo::SetOrthographic(false);
       ImGuizmo::SetDrawlist();
-      f32 w = ImGui::GetWindowWidth();
-      f32 h = ImGui::GetWindowHeight();
+      auto w = ImGui::GetWindowWidth();
+      auto h = ImGui::GetWindowHeight();
       ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, w, h);
 
       switch (gizmode)

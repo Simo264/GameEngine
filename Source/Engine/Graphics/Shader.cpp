@@ -7,38 +7,38 @@
 //      Shader
 // ------------------------------
 
-void Shader::Create(i32 shaderType, StringView source)
+void Shader::Create(ShaderType type, StringView source)
 {
-  id = glCreateShader(shaderType);
+  id = glCreateShader(static_cast<i32>(type));
 
-  const char *ptr = source.data();
-  i32 size = source.size();
+  auto ptr = source.data();
+  auto size = static_cast<i32>(source.size());
   glShaderSource(id, 1, &ptr, &size);
 }
 
 void Shader::Delete()
 {
   glDeleteShader(id);
-  id = 0;
+  id = 0u;
 }
 
 bool Shader::Compile() const
 {
   glCompileShader(id);
-  i32 success = GetParameteri(GL_COMPILE_STATUS);
+  auto success = GetParameteri(GL_COMPILE_STATUS);
   return success == GL_TRUE;
 }
 
 i32 Shader::GetParameteri(i32 name) const
 {
-  i32 param;
+  auto param = 0;
   glGetShaderiv(id, name, &param);
   return param;
 }
 
-const char *Shader::GetShaderInfo() const
+const char* Shader::GetShaderInfo() const
 {
-  static Array<char, 1024> log;
+  static auto log = Array<char, 1024>{};
   log.fill(0);
 
   glGetShaderInfoLog(id, log.size(), nullptr, log.data());
@@ -57,7 +57,7 @@ void Program::Create()
 void Program::Delete()
 {
   glDeleteProgram(id);
-  id = 0;
+  id = 0u;
 }
 
 void Program::AttachShader(Shader shader) const
@@ -73,7 +73,7 @@ void Program::DetachShader(Shader shader) const
 bool Program::Link() const
 {
   glLinkProgram(id);
-  i32 link = GetParameteri(GL_LINK_STATUS);
+  auto link = GetParameteri(GL_LINK_STATUS);
   return link == GL_TRUE;
 }
 
@@ -84,14 +84,14 @@ void Program::Use() const
 
 i32 Program::GetParameteri(i32 name) const
 {
-  i32 param;
+  auto param = 0;
   glGetProgramiv(id, name, &param);
   return param;
 }
 
 const char *Program::GetProgramInfo() const
 {
-  static Array<char, 1024> log;
+  static auto log = Array<char, 1024>{};
   log.fill(0);
 
   glGetProgramInfoLog(id, log.size(), nullptr, log.data());
@@ -109,7 +109,7 @@ u32 Program::GetUniformBlockIndex(StringView name) const
 
 void Program::SetUniformBlockBinding(StringView blockname, i32 uniformBlockBinding) const
 {
-  u32 blockIndex = GetUniformBlockIndex(blockname);
+  auto blockIndex = GetUniformBlockIndex(blockname);
   if (blockIndex == GL_INVALID_INDEX)
   {
     CONSOLE_WARN("Program {}: invalid uniform block index '{}'", id, blockname);
@@ -120,7 +120,7 @@ void Program::SetUniformBlockBinding(StringView blockname, i32 uniformBlockBindi
 }
 void Program::SetUniform1i(StringView uniformname, i32 value) const
 {
-  i32 loc = GetUniformLocation(uniformname);
+  auto loc = GetUniformLocation(uniformname);
   if (loc == -1)
   {
     CONSOLE_WARN("Program {}: '{}' is not an active uniform variable", id, uniformname);
@@ -131,7 +131,7 @@ void Program::SetUniform1i(StringView uniformname, i32 value) const
 }
 void Program::SetUniform2i(StringView uniformname, const Vec2I &value) const
 {
-  i32 loc = GetUniformLocation(uniformname);
+  auto loc = GetUniformLocation(uniformname);
   if (loc == -1)
   {
     CONSOLE_WARN("Program {}: '{}' is not an active uniform variable", id, uniformname);
@@ -142,7 +142,7 @@ void Program::SetUniform2i(StringView uniformname, const Vec2I &value) const
 }
 void Program::SetUniform3i(StringView uniformname, const Vec3I &value) const
 {
-  i32 loc = GetUniformLocation(uniformname);
+  auto loc = GetUniformLocation(uniformname);
   if (loc == -1)
   {
     CONSOLE_WARN("Program {}: '{}' is not an active uniform variable", id, uniformname);
@@ -153,7 +153,7 @@ void Program::SetUniform3i(StringView uniformname, const Vec3I &value) const
 }
 void Program::SetUniform4i(StringView uniformname, const Vec4I &value) const
 {
-  i32 loc = GetUniformLocation(uniformname);
+  auto loc = GetUniformLocation(uniformname);
   if (loc == -1)
   {
     CONSOLE_WARN("Program {}: '{}' is not an active uniform variable", id, uniformname);
@@ -164,7 +164,7 @@ void Program::SetUniform4i(StringView uniformname, const Vec4I &value) const
 }
 void Program::SetUniform1f(StringView uniformname, f32 value) const
 {
-  i32 loc = GetUniformLocation(uniformname);
+  auto loc = GetUniformLocation(uniformname);
   if (loc == -1)
   {
     CONSOLE_WARN("Program {}: '{}' is not an active uniform variable", id, uniformname);
@@ -175,7 +175,7 @@ void Program::SetUniform1f(StringView uniformname, f32 value) const
 }
 void Program::SetUniform2f(StringView uniformname, const Vec2F &value) const
 {
-  i32 loc = GetUniformLocation(uniformname);
+  auto loc = GetUniformLocation(uniformname);
   if (loc == -1)
   {
     CONSOLE_WARN("Program {}: '{}' is not an active uniform variable", id, uniformname);
@@ -186,7 +186,7 @@ void Program::SetUniform2f(StringView uniformname, const Vec2F &value) const
 }
 void Program::SetUniform3f(StringView uniformname, const Vec3F &value) const
 {
-  i32 loc = GetUniformLocation(uniformname);
+  auto loc = GetUniformLocation(uniformname);
   if (loc == -1)
   {
     CONSOLE_WARN("Program {}: '{}' is not an active uniform variable", id, uniformname);
@@ -197,7 +197,7 @@ void Program::SetUniform3f(StringView uniformname, const Vec3F &value) const
 }
 void Program::SetUniform4f(StringView uniformname, const Vec4F &value) const
 {
-  i32 loc = GetUniformLocation(uniformname);
+  auto loc = GetUniformLocation(uniformname);
   if (loc == -1)
   {
     CONSOLE_WARN("Program {}: '{}' is not an active uniform variable", id, uniformname);
@@ -206,9 +206,9 @@ void Program::SetUniform4f(StringView uniformname, const Vec4F &value) const
 
   glProgramUniform4f(id, loc, value.x, value.y, value.z, value.w);
 }
-void Program::SetUniformMat2f(StringView uniformname, const Mat2f &value, bool transpose) const
+void Program::SetUniformMat2f(StringView uniformname, const Mat2F &value, bool transpose) const
 {
-  i32 loc = GetUniformLocation(uniformname);
+  auto loc = GetUniformLocation(uniformname);
   if (loc == -1)
   {
     CONSOLE_WARN("Program {}: '{}' is not an active uniform variable", id, uniformname);
@@ -217,9 +217,9 @@ void Program::SetUniformMat2f(StringView uniformname, const Mat2f &value, bool t
 
   glProgramUniformMatrix2fv(id, loc, 1, transpose, &value[0][0]);
 }
-void Program::SetUniformMat3f(StringView uniformname, const Mat3f &value, bool transpose) const
+void Program::SetUniformMat3f(StringView uniformname, const Mat3F &value, bool transpose) const
 {
-  i32 loc = GetUniformLocation(uniformname);
+  auto loc = GetUniformLocation(uniformname);
   if (loc == -1)
   {
     CONSOLE_WARN("Program {}: '{}' is not an active uniform variable", id, uniformname);
@@ -228,9 +228,9 @@ void Program::SetUniformMat3f(StringView uniformname, const Mat3f &value, bool t
 
   glProgramUniformMatrix3fv(id, loc, 1, transpose, &value[0][0]);
 }
-void Program::SetUniformMat4f(StringView uniformname, const Mat4f &value, bool transpose) const
+void Program::SetUniformMat4f(StringView uniformname, const Mat4F &value, bool transpose) const
 {
-  i32 loc = GetUniformLocation(uniformname);
+  auto loc = GetUniformLocation(uniformname);
   if (loc == -1)
   {
     CONSOLE_WARN("Program {}: '{}' is not an active uniform variable", id, uniformname);
@@ -273,15 +273,15 @@ void Program::SetUniform4f(i32 loc, const Vec4F& value) const
 {
   glProgramUniform4f(id, loc, value.x, value.y, value.z, value.w);
 }
-void Program::SetUniformMat2f(i32 loc, const Mat2f& value, bool transpose) const
+void Program::SetUniformMat2f(i32 loc, const Mat2F& value, bool transpose) const
 {
   glProgramUniformMatrix2fv(id, loc, 1, transpose, &value[0][0]);
 }
-void Program::SetUniformMat3f(i32 loc, const Mat3f& value, bool transpose) const
+void Program::SetUniformMat3f(i32 loc, const Mat3F& value, bool transpose) const
 {
   glProgramUniformMatrix3fv(id, loc, 1, transpose, &value[0][0]);
 }
-void Program::SetUniformMat4f(i32 loc, const Mat4f& value, bool transpose) const
+void Program::SetUniformMat4f(i32 loc, const Mat4F& value, bool transpose) const
 {
   glProgramUniformMatrix4fv(id, loc, 1, transpose, &value[0][0]);
 }

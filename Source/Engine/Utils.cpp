@@ -12,7 +12,7 @@ namespace Utils
 			return 0;
 		}
 
-		u32 fileCount = 0;
+		auto fileCount = 0u;
 		if (recursive)
 		{
 			for (const auto &entry : fs::recursive_directory_iterator(directoryPath))

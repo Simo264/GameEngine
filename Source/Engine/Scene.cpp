@@ -1,383 +1,178 @@
 #include "Scene.hpp"
+#include "SceneSerializer.hpp"
 
-#include "Core/OpenGL.hpp"
 #include "Core/Log/Logger.hpp"
-#include "Core/Paths/Paths.hpp"
-#include "Core/Serialization/YAMLParser.hpp"
 
-#include "Engine/Utils.hpp"
+// -----------------------------------
+//					ObjectArchetype
+// -----------------------------------
 
-#include "Engine/Graphics/Shader.hpp"
-#include "Engine/Components/Components.hpp"
-#include "Engine/Managers/AnimationsManager.hpp"
-#include "Engine/Managers/StaticMeshFactory.hpp"
-
-static void DeserializeTag(GameObject &object, const YAML::Node &component)
+void Archetype::GetAllowedComponentNames(Vector<String>& out) const
 {
-	String tag = component.as<String>();
-	object.GetComponent<Tag>()->UpdateValue(tag);
+	out = Vector<String>{};
+	for (const auto& typeIndex : _allowedComponents)
+		out.push_back(typeIndex.name());
 }
-static void DeserializeTransformation(GameObject &object, const YAML::Node &component)
+bool Archetype::IsComponentAllowed(std::type_index componentType) const
 {
-	Transformation& transform = object.AddComponent<Transformation>();
-	YAML::Node node = component["position"];
-	Vec3F position = {
-		node[0].as<f32>(),
-		node[1].as<f32>(),
-		node[2].as<f32>()
-	};
-	transform.position = position;
-
-	node = component["scale"];
-	Vec3F scale = {
-		node[0].as<f32>(),
-		node[1].as<f32>(),
-		node[2].as<f32>()
-	};
-	transform.scale = scale;
-
-	node = component["rotation"];
-	Vec3F degrees = {
-		node[0].as<f32>(),
-		node[1].as<f32>(),
-		node[2].as<f32>()
-	};
-	transform.eulerAngles = degrees;
+	return _allowedComponents.count(componentType) > 0;
 }
-static void DeserializeStaticMesh(GameObject &object, const YAML::Node &component)
+
+// -----------------------------------
+//					ArchetypeRegistry
+// -----------------------------------
+
+ArchetypeId ArchetypeRegistry::RegisterArchetype(Archetype archetype)
 {
-	fs::path relative = component["path"].as<String>(); // relative path
-	auto prototype = StaticMeshFactory::GetPrototype(relative);
-	if (!prototype)
-	{
-		fs::path absolute = Paths::GetStaticModelsPath() / relative;
-		prototype = StaticMeshFactory::CreatePrototype(absolute);
-	}
+	auto name = archetype.GetName();
+	auto id = _archetypes.size();
+
+	_archetypes.emplace_back(std::move(archetype));
+	_nameToIdMap[name] = id;
+	return id;
+}
+const Archetype* ArchetypeRegistry::GetArchetype(ArchetypeId id) const
+{
+	if (id >= _archetypes.size())
+		return nullptr;
 	
-	auto& sm = object.AddComponent<StaticMesh>();
-	prototype->Copy(sm);
+	return &_archetypes[id];
 }
-static void DeserializeSkeletalMesh(GameObject &object, const YAML::Node &component)
+const Archetype* ArchetypeRegistry::GetArchetype(StringView archName) const
 {
-	/* TODO:
-	ModelsManager &modelsManager = ModelsManager::Get();
-	AnimationsManager &animationsManager = AnimationsManager::Get();
-
-	SkeletalMesh &skeletalMeshComponent = object.AddComponent<SkeletalMesh>();
-	Animator &animatorComponent = object.AddComponent<Animator>();
-
-	// The relative path to "Assets/Models/Skeletal" (e.g. "Mutant/Mutant.gltf")
-	fs::path path = component["path"].as<String>();
-	const SkeletalMesh *skeleton = modelsManager.FindSkeletalMesh(path);
-	if (!skeleton)
-	{
-		skeleton = &modelsManager.CreateSkeletalMesh(path);
-
-		// skeletonPath = "Mutant/"
-		fs::path parent = path.parent_path();
-		// skeletonPath = "GameEngine/Assets/Models/Skeletal/Mutant"
-		fs::path absolute = (Paths::GetSkeletalModelsPath() / parent);
-		// skeletonPath = "GameEngine/Assets/Models/Skeletal/animlist.txt"
-		fs::path animlistFile = absolute / "animlist.txt";
-
-		Vector<fs::path> relativeAnims{};
-		if (!fs::exists(animlistFile))
-		{
-			CONSOLE_WARN("{} file does not exist");
-		}
-		else
-		{
-			InputFileStream file(animlistFile);
-			// relativeAnims = [
-			//	"Drunk_Walk/<filename>.gltf",
-			//	"Silly_Dancing/<filename>.gltf"
-			// ]
-			relativeAnims.assign(
-					std::istream_iterator<fs::path>(file),
-					std::istream_iterator<fs::path>());
-
-			// relativeAnims = [
-			//	"Mutant/Drunk_Walk/<filename>.gltf",
-			//	"Mutant/Silly_Dancing/<filename>.gltf"
-			// ]
-			for (auto &p : relativeAnims)
-				p = parent / p;
-		}
-		animationsManager.LoadAnimations(*skeleton, relativeAnims);
-	}
-
-	skeleton->Clone(skeletalMeshComponent);
-	animatorComponent.SetTargetSkeleton(skeletalMeshComponent);
-	*/
+	auto id = GetArchetypeId(archName.data());
+	return GetArchetype(id);
 }
-static void DeserializeDirLight(GameObject &object, const YAML::Node &component)
+ArchetypeId ArchetypeRegistry::GetArchetypeId(StringView name) const
 {
-	auto &light = object.AddComponent<DirectionalLight>();
-	YAML::Node node = component["color"];
-	light.color = {
-			node[0].as<f32>(),
-			node[1].as<f32>(),
-			node[2].as<f32>()};
-	node = component["direction"];
-	light.direction = {
-			node[0].as<f32>(),
-			node[1].as<f32>(),
-			node[2].as<f32>()};
-	light.intensity = component["intensity"].as<f32>();
+	auto it = _nameToIdMap.find(name.data());
+	if (it != _nameToIdMap.end())
+		return it->second;
+	
+	return INVALID_ARCHETYPE_ID;
 }
-static void DeserializePointLight(GameObject &object, const YAML::Node &component)
+void ArchetypeRegistry::GetAvailableArchetypeNames(Vector<String>& out) const
 {
-	auto &light = object.AddComponent<PointLight>();
-	YAML::Node node = component["color"];
-	light.color = {
-			node[0].as<f32>(),
-			node[1].as<f32>(),
-			node[2].as<f32>()};
-	node = component["position"];
-	light.position = {
-			node[0].as<f32>(),
-			node[1].as<f32>(),
-			node[2].as<f32>()};
-	light.intensity = component["intensity"].as<f32>();
-	light.attenuation.range = component["attenuation.range"].as<i32>();
-	light.attenuation.kl = component["attenuation.kl"].as<f32>();
-	light.attenuation.kq = component["attenuation.kq"].as<f32>();
-}
-static void DeserializeLight(GameObject &object, const YAML::Node &component)
-{
-	i32 type = component["type"].as<i32>();
-	object.AddComponent<Light>(static_cast<LightType>(type));
-	switch (static_cast<LightType>(type))
-	{
-	case LightType::DIRECTIONAL:
-		DeserializeDirLight(object, component);
-		break;
-	case LightType::POINT:
-		DeserializePointLight(object, component);
-		break;
-	default:
-		throw std::runtime_error("invalid LightType");
-	}
-}
-static UnorderedMap<String, std::function<void(GameObject &, const YAML::Node &)>> deserializationMap =
-{
-	{"Tag", DeserializeTag},
-	{"Transformation", DeserializeTransformation},
-	{"StaticMesh", DeserializeStaticMesh},
-	{"SkeletalMesh", DeserializeSkeletalMesh},
-	{"Light", DeserializeLight},
-};
-
-static void SerializeTag(YAML::Emitter &outEmitter, const Tag &tag)
-{
-	outEmitter << YAML::Key << "Tag" << YAML::Value << tag.value.data();
-}
-static void SerializeTransformation(YAML::Emitter &outEmitter, const Transformation &transform)
-{
-	auto& position = transform.position;
-	auto& scale = transform.scale;
-	auto& degrees = transform.eulerAngles;
-
-	outEmitter << YAML::Key << "Transformation";
-	outEmitter << YAML::BeginMap;
-	outEmitter << YAML::Key << "position";
-	outEmitter << YAML::Flow << YAML::BeginSeq;
-	outEmitter << position.x << position.y << position.z;
-	outEmitter << YAML::EndSeq;
-	outEmitter << YAML::Key << "scale";
-	outEmitter << YAML::Flow << YAML::BeginSeq;
-	outEmitter << scale.x << scale.y << scale.z;
-	outEmitter << YAML::EndSeq;
-	outEmitter << YAML::Key << "rotation";
-	outEmitter << YAML::Flow << YAML::BeginSeq;
-	outEmitter << degrees.x << degrees.y << degrees.z;
-	outEmitter << YAML::EndSeq;
-	outEmitter << YAML::EndMap;
-}
-static void SerializeStaticMesh(YAML::Emitter &outEmitter, const StaticMesh &staticMesh)
-{
-	fs::path relative = StaticMeshFactory::GetPrototypePath(staticMesh.prototypeID);
-	outEmitter << YAML::Key << "StaticMesh";
-	outEmitter << YAML::BeginMap;
-	outEmitter << YAML::Key << "path" << YAML::Value << relative.string();
-	outEmitter << YAML::EndMap;
-}
-static void SerializeSkeletalMesh(YAML::Emitter &outEmitter, const SkeletalMesh &skeletalMesh)
-{
-	/* TODO: 
-	ModelsManager &modelsManager = ModelsManager::Get();
-	const fs::path &path = *modelsManager.GetSkeletalMeshPath(skeletalMesh.id);
-	outEmitter << YAML::Key << "SkeletalMesh";
-	outEmitter << YAML::BeginMap;
-	outEmitter << YAML::Key << "path" << YAML::Value << path.string();
-	outEmitter << YAML::EndMap;
-	*/
-}
-static void SerializeDirectionalLight(YAML::Emitter &outEmitter, const DirectionalLight &light)
-{
-	outEmitter << YAML::Key << "color";
-	outEmitter << YAML::Flow << YAML::BeginSeq;
-	outEmitter << light.color.x << light.color.y << light.color.z;
-	outEmitter << YAML::EndSeq;
-	outEmitter << YAML::Key << "direction";
-	outEmitter << YAML::Flow << YAML::BeginSeq;
-	outEmitter << light.direction.x << light.direction.y << light.direction.z;
-	outEmitter << YAML::EndSeq;
-	outEmitter << YAML::Key << "intensity" << YAML::Value << light.intensity;
-}
-static void SerializePointLight(YAML::Emitter &outEmitter, const PointLight &light)
-{
-	outEmitter << YAML::Key << "color";
-	outEmitter << YAML::Flow << YAML::BeginSeq;
-	outEmitter << light.color.x << light.color.y << light.color.z;
-	outEmitter << YAML::EndSeq;
-	outEmitter << YAML::Key << "position";
-	outEmitter << YAML::Flow << YAML::BeginSeq;
-	outEmitter << light.position.x << light.position.y << light.position.z;
-	outEmitter << YAML::EndSeq;
-	outEmitter << YAML::Key << "intensity" << YAML::Value << light.intensity;
-	outEmitter << YAML::Key << "attenuation.range" << YAML::Value << light.attenuation.range;
-	outEmitter << YAML::Key << "attenuation.kl" << YAML::Value << light.attenuation.kl;
-	outEmitter << YAML::Key << "attenuation.kq" << YAML::Value << light.attenuation.kq;
-}
-static void SerializeLight(YAML::Emitter &outEmitter, const Light &light, GameObject &object)
-{
-	outEmitter << YAML::Key << "Light";
-	outEmitter << YAML::BeginMap;
-	outEmitter << YAML::Key << "type" << YAML::Value << static_cast<i32>(light.type);
-	switch (light.type)
-	{
-	case LightType::DIRECTIONAL:
-	{
-		auto &dirLight = *object.GetComponent<DirectionalLight>();
-		SerializeDirectionalLight(outEmitter, dirLight);
-		break;
-	}
-	case LightType::POINT:
-	{
-		auto &pointLight = *object.GetComponent<PointLight>();
-		SerializePointLight(outEmitter, pointLight);
-		break;
-	}
-
-	default:
-		throw std::runtime_error("invalid LightType");
-	}
-	outEmitter << YAML::EndMap;
+	out = Vector<String>{};
+	out.reserve(_archetypes.size());
+	for (const auto& archetype : _archetypes)
+		out.push_back(archetype.GetName());
 }
 
 // -----------------------------------
-//								PUBLIC
+//					Scene
 // -----------------------------------
 
-Scene::Scene(const fs::path &loadFrom)
+void Scene::LoadFromFile(const fs::path& loadFrom)
 {
-	LoadFromFile(loadFrom);
+	CONSOLE_INFO("Loading scene {}...", loadFrom.relative_path().string());
+	auto serializer = SceneSerializer{};
+	serializer.DeserializeScene(*this, loadFrom);
 }
-GameObject Scene::CreateObject(StringView objName)
+void Scene::SaveToFile(const fs::path& out)
 {
-	assert(objName.size() < 32);
-
-	entt::entity id = _registry.create();
-
-	Array<char, 32> defaultTag{};
-	if (objName.empty())
-		std::format_to(defaultTag.begin(), "Object_{}", static_cast<u32>(id));
-	else
-		std::copy(objName.begin(), objName.end(), defaultTag.begin());
-
-	GameObject object{id, &_registry};
-	object.AddComponent<Tag>(defaultTag.data());
-	return object;
+	CONSOLE_INFO("Saving scene {}...", out.relative_path().string());
+	auto serializer = SceneSerializer{};
+	serializer.SerializeScene(*this, out);
 }
 void Scene::DestroyObject(entt::entity id)
 {
-	if (!_registry.valid(id))
-	{
-		CONSOLE_WARN("Entity id {} is not a valid object", static_cast<u32>(id));
-		return;
-	}
-
-	_registry.destroy(id);
+	if (_entityRegistry.valid(id))
+		_entityRegistry.destroy(id);
 }
 void Scene::Clear()
 {
-	_registry.clear();
-}
-void Scene::LoadFromFile(const fs::path &loadFrom)
-{
-	CONSOLE_INFO("Loading scene {}...", loadFrom.relative_path().string());
-	DeserializeScene(loadFrom);
-}
-void Scene::SaveToFile(const fs::path &out)
-{
-	CONSOLE_INFO("Saving scene {}...", out.relative_path().string());
-	SerializeScene(out);
+	_entityRegistry.clear();
 }
 
-// -----------------------------------
-//								PRIVATE
-// -----------------------------------
-
-void Scene::SerializeScene(const fs::path &out)
+void Scene::RegisterArchetype(Archetype archetype)
 {
-	YAML::Emitter outEmitter;
-	outEmitter << YAML::BeginMap;
-	for (auto entity : Reg().view<entt::entity>())
+	_archetypeRegistry.RegisterArchetype(std::move(archetype));
+}
+GameObject Scene::CreateObject(StringView archetypeName)
+{
+	auto archetype = _archetypeRegistry.GetArchetype(archetypeName);
+	if (!archetype)
 	{
-		GameObject object{entity, &Reg()};
+		CONSOLE_ERROR("Unknown archetype: {}", archetypeName);
+		throw std::runtime_error("Unknown archetype");
+	}
+	
+	auto archetypeId = _archetypeRegistry.GetArchetypeId(archetype->GetName());
+	auto entity = _entityRegistry.create();
+	
+	auto object = GameObject{ entity, &_entityRegistry, archetype };
+	object.AddComponent<ArchetypeComponent>(archetypeId);
+	auto& tag = object.AddComponent<Components::Tag>();
+	tag.UpdateValue("object");
+	return object;
+}
+GameObject Scene::CreateObject(ArchetypeId archetypeId)
+{
+	auto archetype = _archetypeRegistry.GetArchetype(archetypeId);
+	if (!archetype)
+	{
+		CONSOLE_ERROR("Invalid archetype ID: {}", archetypeId);
+		throw std::runtime_error("Invalid archetype ID");
+	}
+	
+	auto entity = _entityRegistry.create();
+	auto object = GameObject{ entity, &_entityRegistry, archetype };
+	object.AddComponent<ArchetypeComponent>(archetypeId);
+	auto& tag = object.AddComponent<Components::Tag>();
+	tag.UpdateValue("object");
+	return object;
+}
 
-		Array<char, 32> entityName{};
-		std::format_to(entityName.data(), "Entity{}", static_cast<u32>(object.id));
+Optional<GameObject> Scene::FindObjectWithTag(StringView tagName)
+{
+	auto view = _entityRegistry.view<Components::Tag>();
+	for (auto entity : view)
+	{
+		auto& archetypeComponent = _entityRegistry.get<ArchetypeComponent>(entity);
+		auto archetype = _archetypeRegistry.GetArchetype(archetypeComponent.archetypeId);
 
-		outEmitter << YAML::Key << entityName.data();
-		outEmitter << YAML::BeginMap;
-
-		Tag &tag = *object.GetComponent<Tag>();
-		SerializeTag(outEmitter, tag);
-
-		if (Transformation *transform = object.GetComponent<Transformation>())
-			SerializeTransformation(outEmitter, *transform);
-
-		if (StaticMesh *staticMesh = object.GetComponent<StaticMesh>())
-			SerializeStaticMesh(outEmitter, *staticMesh);
-
-		if (SkeletalMesh *skeleton = object.GetComponent<SkeletalMesh>())
-			SerializeSkeletalMesh(outEmitter, *skeleton);
-
-		if (Light *light = object.GetComponent<Light>())
-			SerializeLight(outEmitter, *light, object);
-
-		outEmitter << YAML::EndMap;
+		auto& tag = _entityRegistry.get<Components::Tag>(entity);
+		if (tagName.compare(tag.value.data()) == 0)
+			return GameObject(entity, &_entityRegistry, archetype);
+	}
+	return std::nullopt;
+}
+void Scene::FindAllWithArchetype(ArchetypeId archetypeId, Vector<GameObject>& out)
+{
+	auto archetype = _archetypeRegistry.GetArchetype(archetypeId);
+	if (!archetype)
+	{
+		CONSOLE_ERROR("Invalid archetype id {}", archetypeId);
+		return;
 	}
 
-	outEmitter << YAML::EndMap;
-	OutputFileStream outFile(out);
-	outFile << outEmitter.c_str();
-	outFile.close();
-}
-void Scene::DeserializeScene(const fs::path &loadFrom)
-{
-	if (!fs::exists(loadFrom))
-		throw std::runtime_error(std::format("{} does not exist!", loadFrom.string()));
-
-	YAML::Node scene = YAML::LoadFile(loadFrom.string());
-	for (const auto &entity : scene)
+	out = Vector<GameObject>{};
+	auto view = _entityRegistry.view<ArchetypeComponent>();
+	for (auto entity : view)
 	{
-		GameObject object = CreateObject();
+		auto& archetypeComp = _entityRegistry.get<ArchetypeComponent>(entity);
+		auto archetypeId = archetypeComp.archetypeId;
+		if (archetypeComp.archetypeId == archetypeId)
+			out.emplace_back(entity, &_entityRegistry, archetype);
+	}
+}
+void Scene::FindAllWithArchetype(StringView archetypeName, Vector<GameObject>& out)
+{
+	auto archetype = _archetypeRegistry.GetArchetype(archetypeName);
+	if (!archetype)
+	{
+		CONSOLE_ERROR("Invalid archetype name {}", archetypeName);
+		return;
+	}
 
-		for (const auto &component : entity.second)
-		{
-			String componentName = component.first.as<String>();
-			auto it = deserializationMap.find(componentName);
-			if (it == deserializationMap.end())
-			{
-				CONSOLE_WARN("Invalid component found");
-				continue;
-			}
-
-			// Call the appropriate deserialisation function
-			it->second(object, component.second);
-		}
+	out = Vector<GameObject>{};
+	auto view = _entityRegistry.view<ArchetypeComponent>();
+	for (auto entity : view)
+	{
+		const auto& archetypeComp = _entityRegistry.get<ArchetypeComponent>(entity);
+		auto archetypeId = archetypeComp.archetypeId;
+		if (archetypeName.compare(archetype->GetName()) == 0)
+			out.emplace_back(entity, &_entityRegistry, archetype);
 	}
 }

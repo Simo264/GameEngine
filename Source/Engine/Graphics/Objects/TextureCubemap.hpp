@@ -36,7 +36,7 @@ class TextureCubemap
 {
 public:
 	TextureCubemap() : 
-    id{ 0 } 
+    id{ 0u } 
   {}
 	~TextureCubemap() = default;
 

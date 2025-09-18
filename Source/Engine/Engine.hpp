@@ -14,20 +14,24 @@ public:
 
 	void Initialize();
 	void Run();
-	void CleanUp();
+	void Cleanup();
 
 private:
-	void SetGLStates() const;
-	void InitTime();
-	void CalculatePerFrameTime();
+	void __SetInitialGLStates() const;
+	void __InitTime();
+	void __CalculatePerFrameTime();
+	void __CreateCameraUBO(i32 bindingPoint);
+	void __CreateLightUBO(i32 bindingPoint);
+	Mesh __CreateMeshQuad();
+	void __CreateMSAAFramebuffer(i32 w, i32 h, i32 samples);
+	void __ResolveMSAAFramebuffer(i32 w, i32 h);
 
-	void CreateCameraUBO(i32 bindingPoint);
-	void CreateLightUBO(i32 bindingPoint);
-	void CreateBoneUBO(i32 bindingPoint);
-
+	Framebuffer _MSAAFramebuffer;
+	Framebuffer _MSAAFramebufferResolver;
+	i32 _MSAAFramebufferSamples;
+	Mesh _screenQuad;
 	Buffer _uboCameraBlock;	// UBO "CameraBlock"	-> bindpoint 0
 	Buffer _uboLightBlock;	// UBO "LightBlock"		-> bindpoint 1
-	Buffer _uboBoneBlock;		// UBO "BoneBlock"		-> bindpoint 2
 	
 	chrono::steady_clock::time_point _now;
 	chrono::steady_clock::time_point _lastFrameTime;

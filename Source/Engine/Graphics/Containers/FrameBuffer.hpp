@@ -41,6 +41,7 @@ enum class FramebufferBlitMask : u32
 	COLOR_BUFFER = 0x00004000, // GL_COLOR_BUFFER_BIT
 	DEPTH_BUFFER = 0x00000100, // GL_DEPTH_BUFFER_BIT
 	STENCIL_BUFFER = 0x00000400, // GL_STENCIL_BUFFER_BIT
+	DEPTH_STENCIL_BUFFER = 0x00000100 | 0x00000400 
 };
 
 enum class FramebufferStatus : i32
@@ -104,7 +105,7 @@ class Framebuffer
 {
 public:
 	Framebuffer() : 
-		id{ 0 },
+		id{ 0u },
 		textAttachments{},
 		rboAttachments{}
 	{}
@@ -133,17 +134,16 @@ public:
 
 	/** @brief Copy a block of pixels from one framebuffer object to another. */
 	void Blit(const Framebuffer& dest, 
-		i32 srcLowerX,
-		i32 srcLowerY,
-		i32 srcUpperX,
-		i32 srcUpperY,
-		i32 destLowerX,
-		i32 destLowerY,
-		i32 destUpperX,
-		i32 destUpperY,
-		FramebufferBlitMask mask,
-		FramebufferBlitFilter filter
-	) const;
+						i32 srcLowerX,
+						i32 srcLowerY,
+						i32 srcUpperX,
+						i32 srcUpperY,
+						i32 destLowerX,
+						i32 destLowerY,
+						i32 destUpperX,
+						i32 destUpperY,
+						FramebufferBlitMask mask,
+						FramebufferBlitFilter filter) const;
 
 	/**
 	 * @brief Specify whether the individual color components in the frame buffer can or cannot be written.

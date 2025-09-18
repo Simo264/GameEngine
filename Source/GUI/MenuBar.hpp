@@ -1,3 +1,5 @@
 #pragma once
 
-void GUI_MenuBar(class Scene& scene);
+class Scene;
+
+void GUI_MenuBar(Scene& scene);

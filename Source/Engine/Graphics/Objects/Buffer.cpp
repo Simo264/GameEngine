@@ -17,7 +17,7 @@ void Buffer::Create()
 void Buffer::Delete()
 {
 	glDeleteBuffers(1, &id);
-	id = 0;
+	id = 0u;
 }
 
 bool Buffer::IsValid() const
@@ -69,20 +69,20 @@ void Buffer::BindRange(BufferTarget target, i32 bindingpoint, i32 offset, u64 si
 
 void Buffer::CopyFrom(u32 readBuffer, i32 readOffset, i32 writeOffset, u32 size) const
 {
-	u32 writeBuffer = this->id;
+	auto writeBuffer = this->id;
 	glCopyNamedBufferSubData(readBuffer, writeBuffer, readOffset, writeOffset, size);
 }
 
 i64 Buffer::GetBufferSize() const
 {
-	i64 size = 0;
+	auto size = static_cast<i64>(0);
 	glGetNamedBufferParameteri64v(id, GL_BUFFER_SIZE, &size);
 	return size;
 }
 
 i32 Buffer::GetBufferUsage() const
 {
-	i32 usage = GL_STATIC_DRAW;
+	auto usage = GL_STATIC_DRAW;
 	glGetNamedBufferParameteriv(id, GL_BUFFER_USAGE, &usage);
 	return usage;
 }

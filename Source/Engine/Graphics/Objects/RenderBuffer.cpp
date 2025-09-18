@@ -11,7 +11,7 @@ void Renderbuffer::Create()
 void Renderbuffer::Delete()
 {
 	glDeleteRenderbuffers(1, &id);
-	id = 0;
+	id = 0u;
 }
 
 bool Renderbuffer::IsValid() const

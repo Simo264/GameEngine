@@ -19,14 +19,13 @@ u8* ImageLoader::LoadImageData(const fs::path& absolutePathToFile)
 	// must be interpreted in gamma space(sRGB).
 	// Other textures, such as normal, specular, metallic, roughness, are linear data and should not
 	// undergo gamma correction.
-	bool gammaCorrection = false;
-	String filename = absolutePathToFile.filename().string();
+	auto gammaCorrection = false;
+	auto filename = absolutePathToFile.filename().string();
 	std::transform(filename.begin(), filename.end(), filename.begin(), ::tolower);
-	if (filename.find("diffuse") != String::npos ||
-			filename.find("albedo") != String::npos)
+	if (filename.find("diffuse") != String::npos || filename.find("albedo") != String::npos)
 		gammaCorrection = true;
 
-	u8* data = stbi_load(absolutePathToFile.string().c_str(), &width, &height, &nrChannels, 0);
+	auto data = stbi_load(absolutePathToFile.string().c_str(), &width, &height, &nrChannels, 0);
 	if (!data)
 	{
 		CONSOLE_ERROR("Failed to load image {}", absolutePathToFile.string());

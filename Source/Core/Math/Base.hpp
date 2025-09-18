@@ -17,8 +17,8 @@ using Vec3F	= glm::vec3;
 using Vec4I = glm::i32vec4;
 using Vec4F	= glm::vec4;
 
-using Mat2f = glm::mat2x2;
-using Mat3f = glm::mat3x3;
-using Mat4f = glm::mat4x4;
+using Mat2F = glm::mat2x2;
+using Mat3F = glm::mat3x3;
+using Mat4F = glm::mat4x4;
 
-using Quaternion	= glm::quat;
+using Quat	= glm::quat;

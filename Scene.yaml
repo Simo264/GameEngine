@@ -1,41 +1,63 @@
-Entity4:
-  Tag: stone-brick-wall
-  Transformation:
-    position: [0, 0, 0]
-    scale: [1, 1, 1]
-    rotation: [0, 1258.0614, 4.3]
-  StaticMesh:
-    path: stone_brick_wall_001\stone_brick_wall_001.gltf
-Entity3:
+Entity0:
+  Archetype: StaticMesh
   Tag: monkey
   Transformation:
-    position: [-3, 0, 0]
+    position: [0, 0, -5]
     scale: [1, 1, 1]
-    rotation: [0, 1258.0615, 0]
+    rotation: [0, 0, 0]
   StaticMesh:
     path: monkey\monkey.obj
+
+Entity1:
+  Archetype: StaticMesh
+  Tag: sphere
+  Transformation:
+    position: [3, 0, -5]
+    scale: [3, 3, 3]
+    rotation: [0, 0, 0]
+  StaticMesh:
+    path: metal_plate\metal_plate.gltf
+
 Entity2:
+  Archetype: StaticMesh
+  Tag: plane
+  Transformation:
+    position: [0, -1, 0]
+    scale: [5, 5, 5]
+    rotation: [0, 0, 0]
+  StaticMesh:
+    path: plane\plane.obj
+
+Entity3:
+  Archetype: LightSource
   Tag: direct light
   Light:
     type: 0
+    direction: [0, -1, 0]
     color: [1, 1, 1]
-    direction: [0, 0, -1]
-    intensity: 1
-Entity1:
+    intensity: 0
+
+Entity4:
+  Archetype: LightSource
   Tag: point light
   Light:
     type: 1
     color: [1, 1, 1]
-    position: [2.5, 3, 2]
+    position: [0, 1, 0]
     intensity: 0
-    attenuation.range: 20
-    attenuation.kl: 0.22
-    attenuation.kq: 0.2
+    kl: 0.22
+    kq: 0.2
+
 Entity5:
-  Tag: aerial-rocks
-  Transformation:
-    position: [3, 0, 0]
-    scale: [0.05, 0.05, 0.05]
-    rotation: [0, 1258.0615, 4.3]
-  StaticMesh:
-    path: aerial_rocks_02\aerial_rocks_02.gltf
+  Archetype: LightSource
+  Tag: spot light
+  Light:
+    type: 2
+    direction: [0, -1, 0]
+    position: [0, 1, 0]
+    color: [1, 1, 1]
+    intensity: 1
+    kl: 0.22
+    kq: 0.2
+    thetaU: 17.5
+    thetaP: 12.5

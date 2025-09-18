@@ -3,6 +3,16 @@
 #include "Core/Core.hpp"
 #include "Core/Math/Base.hpp"
 
+enum class ShaderType : i32
+{
+  Vertex = 0x8B31, // GL_VERTEX_SHADER
+  TessControl = 0x8E88, // GL_TESS_CONTROL_SHADER
+  TessEvaluation = 0x8E87, // GL_TESS_EVALUATION_SHADER
+  Geometry = 0x8DD9, // GL_GEOMETRY_SHADER
+  Fragment = 0x8B30  // GL_FRAGMENT_SHADER
+};
+
+
 /**
  * @brief https://registry.khronos.org/OpenGL/specs/gl/glspec46.core.pdf (chapter 7)
  * 
@@ -16,11 +26,11 @@
 class Shader
 {
 public:
-  Shader() : id{ 0 }{}
+  Shader() : id{ 0u }{}
   ~Shader() = default;
 
   /** @brief Creates an empty shader object and returns a non-zero value by which it can be referenced.*/
-  void Create(i32 shaderType, StringView source);
+  void Create(ShaderType type, StringView source);
 
   /** @brief Frees the memory and invalidates the name associated with the shader object */
   void Delete();
@@ -28,7 +38,7 @@ public:
   /** @brief Compiles the source code strings that have been stored in the shader object. */
   bool Compile() const;
 
-  /** @return A parameter from a shader object. See https://registry.khronos.org/OpenGL-Refpages/gl4/html/glGetShader.xhtml */
+  /** @return A parameter from a shader object. */
   i32 GetParameteri(i32 name) const;
 
   /** @return The information log for the specified shader object.*/
@@ -60,7 +70,7 @@ public:
 class Program
 {
 public:
-  Program() : id{ 0 } {}
+  Program() : id{ 0u } {}
   ~Program() = default;
 
   /** @brief Creates an empty program object and returns a non-zero value by which it can be referenced. */
@@ -105,9 +115,9 @@ public:
   void SetUniform2f(i32 loc, const Vec2F& value) const;
   void SetUniform3f(i32 loc, const Vec3F& value) const;
   void SetUniform4f(i32 loc, const Vec4F& value) const;
-  void SetUniformMat2f(i32 loc, const Mat2f& value, bool transpose = false) const;
-  void SetUniformMat3f(i32 loc, const Mat3f& value, bool transpose = false) const;
-  void SetUniformMat4f(i32 loc, const Mat4f& value, bool transpose = false) const;
+  void SetUniformMat2f(i32 loc, const Mat2F& value, bool transpose = false) const;
+  void SetUniformMat3f(i32 loc, const Mat3F& value, bool transpose = false) const;
+  void SetUniformMat4f(i32 loc, const Mat4F& value, bool transpose = false) const;
 
   void SetUniform1i(StringView uniformname, i32 value) const;
   void SetUniform2i(StringView uniformname, const Vec2I& value) const;
@@ -117,11 +127,11 @@ public:
   void SetUniform2f(StringView uniformname, const Vec2F& value) const;
   void SetUniform3f(StringView uniformname, const Vec3F& value) const;
   void SetUniform4f(StringView uniformname, const Vec4F& value) const;
-  void SetUniformMat2f(StringView uniformname, const Mat2f& value, bool transpose = false) const;
-  void SetUniformMat3f(StringView uniformname, const Mat3f& value, bool transpose = false) const;
-  void SetUniformMat4f(StringView uniformname, const Mat4f& value, bool transpose = false) const;
+  void SetUniformMat2f(StringView uniformname, const Mat2F& value, bool transpose = false) const;
+  void SetUniformMat3f(StringView uniformname, const Mat3F& value, bool transpose = false) const;
+  void SetUniformMat4f(StringView uniformname, const Mat4F& value, bool transpose = false) const;
 
-  bool IsValid() const { return id != 0; }
+  bool IsValid() const { return id != 0u; }
 
   u32 id;
 };

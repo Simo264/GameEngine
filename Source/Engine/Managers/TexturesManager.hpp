@@ -15,7 +15,7 @@ public:
 	/** @brief Initializes the TextureManager by creating default textures and loading additional textures and icons */
 	void Initialize();
 	/** @brief Cleans up loaded textures and icons by deleting their OpenGL references. */
-	void CleanUp();
+	void Cleanup();
 	
 	/**
 	 * @brief Finds an existing texture by its relative path.
@@ -81,8 +81,7 @@ public:
 	 */
 	Texture2D GetOrCreateIcon(const fs::path& relative);
 
-	Texture2D GetDefaultDiffuse() const { return _defaultDiffuse; }
-	Texture2D GetDefaultSpecular() const { return _defaultSpecular; }
+	Texture2D GetDefaultDiffuse() const { return _defaultAlbedo; }
 	Texture2D GetDefaultNormal() const { return _defaultNormal; }
 
 	const auto& GetTextureVector() const { return _textures; }
@@ -91,12 +90,10 @@ public:
 	const fs::path* GetTexturePath(u32 textureID) const;
 
 private:
-	// Default diffuse texture used when a mesh has no assigned diffuse texture.
+	// Default albedo texture used when a mesh has no assigned albedo texture.
 	// This texture prevents unnecessary conditional checks in the rendering loop.
 	// It is initialized as a 1x1 texture with default color (E.g. RGB: 128, 128, 255).
-	Texture2D _defaultDiffuse;
-	// It is initialized as a 1x1 texture with default values (E.g. RGB: 0, 0, 0).
-	Texture2D _defaultSpecular;
+	Texture2D _defaultAlbedo;
 	// It is initialized as a 1x1 texture with default values (E.g. RGB: 0, 0, 0).
 	Texture2D _defaultNormal;
 

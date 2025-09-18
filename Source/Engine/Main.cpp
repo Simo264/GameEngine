@@ -3,12 +3,12 @@
 
 int main()
 {
-  Engine engine;
+  auto engine = Engine{};
   try
   {
     engine.Initialize();
     engine.Run();
-    engine.CleanUp();
+    engine.Cleanup();
   }
   catch(std::runtime_error& e)
   {

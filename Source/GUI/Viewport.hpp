@@ -3,9 +3,12 @@
 #include "Core/Core.hpp"
 #include "Core/Math/Base.hpp"
 
+class Texture2D;
+class GameObject;
+
 void GUI_Viewport(StringView windowName,
-                  class Texture2D textureImage,
-                  class GameObject& objSelected,
+                  Texture2D textureImage,
+                  GameObject objSelected,
                   i32 gizmode,
-                  const Mat4f& view,
-                  const Mat4f& proj);
+                  const Mat4F& view,
+                  const Mat4F& proj);

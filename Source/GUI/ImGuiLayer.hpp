@@ -26,28 +26,24 @@ public:
 
 
 	/** @brief Displays the main menu bar of the ImGui layer. */
-	void MenuBar(Scene &scene) const;
+	void MenuBar(Scene& scene) const;
 	/** @brief Displays the ImGui demo window. */
 	void ImguiDemo();
 	/** @brief Renders the ImGui viewport */
 	void Viewport(Texture2D textureImage,
-								GameObject &objSelected, 
-								const Mat4f &view, 
-								const Mat4f &proj) const;
+								GameObject objSelected, 
+								const Mat4F& view, 
+								const Mat4F& proj) const;
 	/** @brief Displays the hierarchy view. */
-	GameObject& Hierarchy(Scene& scene);
+	GameObject Hierarchy(Scene& scene);
 	/** @brief Displays the inspector view for examining a specific game object. */
-	void Inspector(GameObject& object);
+	void Inspector(GameObject object);
 	/** @brief Renders the toolbar for user interaction */
 	void ToolBar();
 	/** @brief Renders timing information including delta time, average time, and frame rate. */
 	void TimeInfo(f64 delta, f64 avg, i32 frameRate);
-	/** @brief Displays properties and controls for a camera  */
-	void CameraProperties(Camera &camera);
 	/** @brief Displays detailed graphics information */
 	void GraphicsInfo();
-
-	void DebugImage(Texture2D image, i32 w, i32 h);
 
 	Vec2I viewportSize;
 	Vec2I viewportPos;
@@ -63,7 +59,7 @@ public:
 	bool renderGraphicsInfo;
 
 private:
-	void SetupImGuiContext();
-	void CustomizeStyle();
-	void ConfigureDockspace();
+	void __SetupImGuiContext();
+	void __CustomizeStyle();
+	void __ConfigureDockspace();
 };

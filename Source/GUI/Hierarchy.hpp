@@ -1,5 +1,8 @@
 #pragma once
 
+class Scene;
+class GameObject;
+
 void GUI_Hierarchy(bool& open,
-									 class Scene& scene,
-									 class GameObject& objSelected);
+									 Scene& scene,
+									 GameObject& objSelected);

@@ -41,7 +41,7 @@ enum class BufferTarget : u32
 class Buffer
 {
 public:
-	Buffer() : id{ 0 } {}
+	Buffer() : id{ 0u } {}
 	Buffer(u64 size, const void* data, BufferUsage usage);
 	~Buffer() = default;
 

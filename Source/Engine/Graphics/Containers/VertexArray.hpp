@@ -27,7 +27,7 @@ enum class VertexAttribType : u32
 struct VertexFormat
 {
   /** @brief Number of components per vertex attribute. Must be 1, 2, 3, 4, or GL_BGRA.*/
-  i32 size{ 0 };
+  u32 size{ 0u };
 
   /** @brief Specifies the data type of the attribute. */
   VertexAttribType type{};
@@ -59,7 +59,7 @@ class VertexArray
 {
 public:
   VertexArray() : 
-    id{ 0 },
+    id{ 0u },
 		vertexBuffer{}
   {}
   ~VertexArray() = default;
@@ -81,7 +81,6 @@ public:
    * Vertex Buffer Object (VBO) and Element Buffer Object (EBO) if they are valid.
    *
    * @note After calling this method, the VAO and its buffers are no longer valid and should not be used.
-   *
    */
   void Delete();
 
@@ -119,7 +118,11 @@ public:
    * @brief Specify the organization of vertex arrays. 
    * glVertexArrayAttribFormat should be used to describe vertex attribute layout for floating-point vertex attributes.
    */
-  void SetAttribFormatFLoat(i32 attribindex, i32 size, VertexAttribType type, bool normalize, i32 relativeoffset) const;
+  void SetAttribFormatFLoat(i32 attribindex, 
+                            i32 size, 
+                            VertexAttribType type, 
+                            bool normalize, 
+                            i32 relativeoffset) const;
   
   /**
    * @brief Specify the organization of vertex arrays. 
@@ -130,7 +133,10 @@ public:
    * 
    * You cannot use floating-point types such as GL_FLOAT or GL_DOUBLE.
    */
-  void SetAttribFormatInteger(i32 attribindex, i32 size, VertexAttribType type, i32 relativeoffset) const;
+  void SetAttribFormatInteger(i32 attribindex, 
+                              i32 size, 
+                              VertexAttribType type, 
+                              i32 relativeoffset) const;
 
   /**
    * @brief Specify the organization of vertex arrays. 

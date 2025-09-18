@@ -41,7 +41,7 @@ enum class RenderbufferInternalFormat : u32
 class Renderbuffer
 {
 public:
-	Renderbuffer() : id{ 0 } {}
+	Renderbuffer() : id{ 0u } {}
 	~Renderbuffer() = default;
 
 	/** @brief Create renderbuffer object */
