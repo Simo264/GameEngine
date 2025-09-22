@@ -2,12 +2,17 @@
 
 #include "Core/Core.hpp"
 #include "Core/Math/Base.hpp"
-#include "Core/DesignPatterns/Singleton.hpp"
+#include "Core/Singleton.hpp"
 
-class Texture2D;
-class Camera;
+#include "MenuBar.hpp"
+#include "ViewportPanel.hpp"
+#include "ToolbarPanel.hpp"
+#include "HierarchyPanel.hpp"
+#include "InspectorPanel.hpp"
+
+struct Texture2D;
 class Scene;
-class GameObject;
+class Entity;
 
 /**
  * @brief Manages rendering and integration of ImGui into the application
@@ -18,44 +23,26 @@ public:
 	/** @brief Initializes the ImGui context, styling, and font settings. */
 	void InitializeImGui();
 	/** @brief Cleans up and shuts down the ImGui context and related resources. */
-	void CleanUpImGui();
+	void CleanupImGui();
 	/** @brief Prepares a new ImGui frame and configures the dockspace. */
 	void PrepareImGuiFrame();
 	/** @brief Finalizes the current ImGui frame and handles rendering. */
 	void CompleteFrameRender();
-
-
-	/** @brief Displays the main menu bar of the ImGui layer. */
-	void MenuBar(Scene& scene) const;
 	/** @brief Displays the ImGui demo window. */
 	void ImguiDemo();
-	/** @brief Renders the ImGui viewport */
-	void Viewport(Texture2D textureImage,
-								GameObject objSelected, 
-								const Mat4F& view, 
-								const Mat4F& proj) const;
-	/** @brief Displays the hierarchy view. */
-	GameObject Hierarchy(Scene& scene);
-	/** @brief Displays the inspector view for examining a specific game object. */
-	void Inspector(GameObject object);
-	/** @brief Renders the toolbar for user interaction */
-	void ToolBar();
-	/** @brief Renders timing information including delta time, average time, and frame rate. */
-	void TimeInfo(f64 delta, f64 avg, i32 frameRate);
-	/** @brief Displays detailed graphics information */
+	
+	void DebugInfo(f64 delta, f64 avg, i32 frameRate);
+	
 	void GraphicsInfo();
 
-	Vec2I viewportSize;
-	Vec2I viewportPos;
-	bool viewportFocused;
-	i32 gizmode;
+	MenuBar menubar;
+	ViewportPanel viewport;
+	ToolbarPanel toolbar;
+	HierarchyPanel hierarchy;
+	InspectorPanel inspector;
 
 	bool renderImGuiDemo;
-	bool renderToolbar;
 	bool renderTimeInfo;
-	bool renderHierarchy;
-	bool renderInspector;
-	bool renderCameraProperties;
 	bool renderGraphicsInfo;
 
 private:

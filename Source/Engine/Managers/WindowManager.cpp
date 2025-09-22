@@ -1,10 +1,8 @@
 #include "WindowManager.hpp"
-
-#include "Core/OpenGL.hpp"
-#include "Core/Log/Logger.hpp"
-
+#include "Core/Logger.hpp"
 #include "Engine/Globals.hpp"
 
+#include <glad/gl.h>
 #include <GLFW/glfw3.h>
 
 void WindowManager::Initialize(WindowProps props)

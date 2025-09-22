@@ -12,6 +12,8 @@ enum class ShaderType : i32
   Fragment = 0x8B30  // GL_FRAGMENT_SHADER
 };
 
+constexpr auto INVALID_SHADER_ID = static_cast<u32>(-1);
+constexpr auto INVALID_PROGRAM_ID = static_cast<u32>(-1);
 
 /**
  * @brief https://registry.khronos.org/OpenGL/specs/gl/glspec46.core.pdf (chapter 7)
@@ -22,29 +24,22 @@ enum class ShaderType : i32
  * being written to the framebuffer. The programming language used for shaders is
  * described in the OpenGL Shading Language Specification.
  */
-
-class Shader
+struct Shader
 {
 public:
-  Shader() : id{ 0u }{}
-  ~Shader() = default;
+  Shader() : id{ INVALID_SHADER_ID }{}
 
   /** @brief Creates an empty shader object and returns a non-zero value by which it can be referenced.*/
   void Create(ShaderType type, StringView source);
-
   /** @brief Frees the memory and invalidates the name associated with the shader object */
-  void Delete();
-
+  void Release();
   /** @brief Compiles the source code strings that have been stored in the shader object. */
   bool Compile() const;
-
   /** @return A parameter from a shader object. */
   i32 GetParameteri(i32 name) const;
-
   /** @return The information log for the specified shader object.*/
   const char* GetShaderInfo() const;
-
-  bool IsValid() const { return id != 0; }
+  auto IsValid() const { return id != INVALID_SHADER_ID; }
 
   u32 id;
 };
@@ -67,45 +62,33 @@ public:
  * When a linked program object is made active for one of the stages, the corresponding executable code
  * is used to perform processing for that stage.
  */
-class Program
+struct Program
 {
 public:
-  Program() : id{ 0u } {}
-  ~Program() = default;
+  Program() : id{ INVALID_PROGRAM_ID } {}
 
   /** @brief Creates an empty program object and returns a non-zero value by which it can be referenced. */
   void Create();
-
   /** @brief Frees the memory and invalidates the name associated with the program object */
-  void Delete();
-
+  void Release();
   /** @brief Attaches a shader object to the program object */
   void AttachShader(Shader shader) const;
-
   /** @brief Detaches the shader object specified from the program object */
   void DetachShader(Shader shader) const;
-
   /** @brief Links the program object specified. */
   bool Link() const;
-    
   /** @return A parameter from the program object. See https://registry.khronos.org/OpenGL-Refpages/gl4/html/glGetProgram.xhtml */
   i32 GetParameteri(i32 name) const;
-
   /** @return The information log for the program object */
   const char* GetProgramInfo() const;
-
   /** @brief Installs the program object specified as part of current rendering state. */
   void Use() const;
-
   /** @return The location of a uniform variable */
   i32 GetUniformLocation(StringView name) const;
-
   /** @return The index of a named uniform block */
   u32 GetUniformBlockIndex(StringView name) const;
-
   /** @brief Assign a binding poi32 to an active uniform block */
   void SetUniformBlockBinding(StringView blockname, i32 uniformBlockBinding) const;
-
   /** @brief Specify the value of a uniform variable for the program object */
   void SetUniform1i(i32 loc, i32 value) const;
   void SetUniform2i(i32 loc, const Vec2I& value) const;
@@ -131,7 +114,7 @@ public:
   void SetUniformMat3f(StringView uniformname, const Mat3F& value, bool transpose = false) const;
   void SetUniformMat4f(StringView uniformname, const Mat4F& value, bool transpose = false) const;
 
-  bool IsValid() const { return id != 0u; }
+  auto IsValid() const { return id != INVALID_PROGRAM_ID; }
 
   u32 id;
 };

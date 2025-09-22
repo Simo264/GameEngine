@@ -1,10 +1,10 @@
 #include "SceneSerializer.hpp"
 
-#include "Core/Log/Logger.hpp"
-#include "Core/Paths/Paths.hpp"
-
-#include "Scene.hpp"
-#include "Managers/StaticMeshFactory.hpp"
+#include "Core/Logger.hpp"
+#include "Engine/Utils.hpp"
+#include "Engine/Scene.hpp"
+#include "Engine/Importers/StaticMeshLoader.hpp"
+#include "Engine/Managers/AssetsManager.hpp"
 
 using namespace Components;
 
@@ -14,13 +14,15 @@ enum class ComponentType
 };
 static ComponentType GetComponentType(StringView name)
 {
+	if (name.compare("archetype") == 0)
+		return ComponentType::Archetype;
 	if (name.compare("tag") == 0) 
 		return ComponentType::Tag;
-	if (name.compare("transformation") == 0) 
+	else if (name.compare("transformation") == 0) 
 		return ComponentType::Transformation;
-	if (name.compare("staticmesh") == 0) 
+	else if (name.compare("staticmesh") == 0)
 		return ComponentType::StaticMesh;
-	if (name.compare("light") == 0) 
+	else if (name.compare("light") == 0)
 		return ComponentType::Light;
 	
 	return ComponentType::Unknown;
@@ -30,15 +32,15 @@ void SceneSerializer::SerializeScene(Scene& scene, const fs::path& outPath)
 {
 	auto outEmitter = YAML::Emitter{};
 	outEmitter << YAML::BeginMap;
-	for (auto entity : scene.GetEntityRegistry().view<ArchetypeComponent>())
+	for (auto e : scene.GetEntityRegistry().view<ArchetypeIdentifier>())
 	{
-		auto& archetypeComp = scene.GetEntityRegistry().get<ArchetypeComponent>(entity);
+		auto& archetypeComp = scene.GetEntityRegistry().get<ArchetypeIdentifier>(e);
 		auto archetypeId = archetypeComp.archetypeId;
 		auto archetype = scene.GetArchetypeRegistry().GetArchetype(archetypeId);
-		auto object = GameObject{ entity, &scene.GetEntityRegistry(), archetype };
+		auto entity = Entity{ e, &scene.GetEntityRegistry(), archetype };
 
 		auto entityName = Array<char, 32>{};
-		std::format_to(entityName.data(), "Entity{}", static_cast<u32>(object.GetID()));
+		std::format_to(entityName.data(), "Entity{}", static_cast<u32>(e));
 
 		outEmitter << YAML::Key << entityName.data();
 		outEmitter << YAML::BeginMap;
@@ -46,17 +48,20 @@ void SceneSerializer::SerializeScene(Scene& scene, const fs::path& outPath)
 		outEmitter << YAML::Key << "Archetype";
 		outEmitter << YAML::Value << (archetype ? archetype->GetName() : "Unknown");
 
-		auto tag = *object.GetComponent<Tag>();
+		auto tag = *entity.GetComponent<Tag>();
 		__SerializeTag(outEmitter, tag);
 
-		if (auto transform = object.GetComponent<Transform>())
+		if (auto transform = entity.GetComponent<Transform>())
 			__SerializeTransformation(outEmitter, *transform);
 
-		if (auto staticMesh = object.GetComponent<StaticMesh>())
-			__SerializeStaticMesh(outEmitter, *staticMesh);
+		if (auto staticMesh = entity.GetComponent<StaticMesh>())
+		{
+			auto assetIdentifier = entity.GetComponent<AssetIdentifier>();
+			__SerializeStaticMesh(outEmitter, *staticMesh, *assetIdentifier);
+		}
 
-		if (auto light = object.GetComponent<Light>())
-			__SerializeLight(outEmitter, *light, object);
+		if (auto light = entity.GetComponent<Light>())
+			__SerializeLight(outEmitter, *light, entity);
 
 		outEmitter << YAML::EndMap;
 	}
@@ -72,24 +77,23 @@ void SceneSerializer::DeserializeScene(Scene& scene, const fs::path& fromPath)
 		throw std::runtime_error(std::format("{} does not exist!", fromPath.string()));
 
 	auto yamlScene = YAML::LoadFile(fromPath.string());
-	for (const auto& entity : yamlScene)
+	for (const auto& yamlIt : yamlScene)
 	{
-		if (!entity.second["Archetype"])
+		if (!yamlIt.second["Archetype"])
 		{
-			CONSOLE_ERROR("Missing Archetype field for entity: {}", entity.first.as<String>());
+			CONSOLE_ERROR("Missing Archetype field for entity: {}", yamlIt.first.as<String>());
 			continue;
 		}
-		auto archetypeName = entity.second["Archetype"].as<String>();
+		auto archetypeName = yamlIt.second["Archetype"].as<String>();
 		auto archetypeId = scene.GetArchetypeRegistry().GetArchetypeId(archetypeName);
 		if (archetypeId == INVALID_ARCHETYPE_ID)
 		{
-			CONSOLE_ERROR("Unknown archetype: {} for entity: {}", archetypeName, entity.first.as<String>());
+			CONSOLE_ERROR("Unknown archetype: {} for entity: {}", archetypeName, yamlIt.first.as<String>());
 			continue;
 		}
 
-		auto object = scene.CreateObject(archetypeId);
-
-		for (const auto& component : entity.second)
+		auto entity = scene.CreateEntity(archetypeId);
+		for (const auto& component : yamlIt.second)
 		{
 			auto componentName = component.first.as<String>();
 			std::transform(componentName.begin(), 
@@ -102,16 +106,16 @@ void SceneSerializer::DeserializeScene(Scene& scene, const fs::path& fromPath)
 				case ComponentType::Archetype: // do nothing
 					break;
 				case ComponentType::Tag:
-					__DeserializeTag(object, node);
+					__DeserializeTag(entity, node);
 					break;
 				case ComponentType::Transformation:
-					__DeserializeTransformation(object, node); 
+					__DeserializeTransformation(entity, node); 
 					break;
 				case ComponentType::StaticMesh:    
-					__DeserializeStaticMesh(object, node); 
+					__DeserializeStaticMesh(entity, node); 
 					break;
 				case ComponentType::Light:         
-					__DeserializeLight(object, node); 
+					__DeserializeLight(entity, node); 
 					break;
 				default: CONSOLE_WARN("Invalid component found");
 			}
@@ -119,122 +123,131 @@ void SceneSerializer::DeserializeScene(Scene& scene, const fs::path& fromPath)
 	}
 }
 
-
-void SceneSerializer::__DeserializeTag(GameObject& object, const YAML::Node& component)
+void SceneSerializer::__DeserializeTag(Entity& entity, const YAML::Node& node)
 {
-	auto tag = component.as<String>();
-	object.GetComponent<Tag>()->UpdateValue(tag);
+	auto tag = node.as<String>();
+	entity.GetComponent<Tag>()->UpdateValue(tag);
 }
-void SceneSerializer::__DeserializeTransformation(GameObject& object, const YAML::Node& component)
+void SceneSerializer::__DeserializeTransformation(Entity& entity, const YAML::Node& node)
 {
-	auto& transform = object.AddComponent<Transform>();
+	auto& transform = entity.AddComponent<Transform>();
 
-	auto positionNode = component["position"];
+	auto positionNode = node["position"];
 	transform.position = Vec3F{};
 	transform.position.x = positionNode[0].as<f32>();
 	transform.position.y = positionNode[1].as<f32>();
 	transform.position.z = positionNode[2].as<f32>();
 
-	auto scaleNode = component["scale"];
+	auto scaleNode = node["scale"];
 	transform.scale = Vec3F{};
 	transform.scale.x = scaleNode[0].as<f32>();
 	transform.scale.y = scaleNode[1].as<f32>();
 	transform.scale.z = scaleNode[2].as<f32>();
 
-	auto rotationNode = component["rotation"];
+	auto rotationNode = node["rotation"];
 	transform.eulerAngles = Vec3F{};
 	transform.eulerAngles.x = rotationNode[0].as<f32>();
 	transform.eulerAngles.y = rotationNode[1].as<f32>();
 	transform.eulerAngles.z = rotationNode[2].as<f32>();
 }
-void SceneSerializer::__DeserializeStaticMesh(GameObject& object, const YAML::Node& component)
+void SceneSerializer::__DeserializeStaticMesh(Entity& entity, const YAML::Node& node)
 {
-	auto& instance = StaticMeshFactory::GetInstance();
-
-	auto relative = component["path"].as<String>(); // relative path
-	auto prototype = instance.GetPrototype(relative);
-	if (!prototype)
+	auto relative = node["path"].as<String>();
+	auto absolute = Utils::GetModelsPath() / relative;
+	if (!fs::exists(absolute))
 	{
-		auto absolute = Paths::GetModelsPath() / relative;
-		prototype = instance.CreatePrototype(absolute);
+		auto message = std::format("file does not exist: {}", absolute.string());
+		throw std::runtime_error(message);
 	}
 
-	auto& sm = object.AddComponent<StaticMesh>();
-	prototype->Copy(sm);
+	auto& instance = AssetsManager::GetInstance();
+	auto assetId = instance.GetAssetId(absolute);
+	if(assetId == INVALID_ASSET_ID)
+		assetId = instance.RegisterAsset(absolute);
+	entity.AddComponent<AssetIdentifier>(assetId);
+
+	auto& material = entity.AddComponent<Material>();
+
+	auto& mesh = entity.AddComponent<StaticMesh>();
+	mesh.Create();
+	using Vertex = VertexLayout<Position, Normal, TextureCoord, Tangent>;
+	Vertex::SetupVertexArray(mesh.vertexArray);
+	auto loader = StaticMeshLoader{};
+	loader.LoadDataFromFile(absolute, mesh, material);
 }
-void SceneSerializer::__DeserializeDirLight(GameObject& object, const YAML::Node& component)
+void SceneSerializer::__DeserializeDirLight(Entity& entity, const YAML::Node& node)
 {
-	auto& light = object.AddComponent<DirectionalLight>();
+	auto& light = entity.AddComponent<DirectionalLight>();
 	
-	auto colorNode = component["color"];
+	auto colorNode = node["color"];
 	light.color.r = colorNode[0].as<f32>();
 	light.color.g = colorNode[1].as<f32>();
 	light.color.b = colorNode[2].as<f32>();
 
-	auto dirNode = component["direction"];
+	auto dirNode = node["direction"];
 	light.direction.x = dirNode[0].as<f32>();
 	light.direction.y = dirNode[1].as<f32>();
 	light.direction.z = dirNode[2].as<f32>();
 
-	light.intensity = component["intensity"].as<f32>();
+	light.intensity = node["intensity"].as<f32>();
 }
-void SceneSerializer::__DeserializePointLight(GameObject& object, const YAML::Node& component)
+void SceneSerializer::__DeserializePointLight(Entity& entity, const YAML::Node& node)
 {
-	auto& light = object.AddComponent<PointLight>();
+	auto& light = entity.AddComponent<PointLight>();
 
-	auto colorNode = component["color"];
+	auto colorNode = node["color"];
 	light.color.r = colorNode[0].as<f32>();
 	light.color.g = colorNode[1].as<f32>();
 	light.color.b = colorNode[2].as<f32>();
 
-	auto positionNode = component["position"];
+	auto positionNode = node["position"];
 	light.position.x = positionNode[0].as<f32>();
 	light.position.y = positionNode[1].as<f32>();
 	light.position.z = positionNode[2].as<f32>();
 
-	light.intensity = component["intensity"].as<f32>();
-	light.kl = component["kl"].as<f32>();
-	light.kq = component["kq"].as<f32>();
+	light.intensity = node["intensity"].as<f32>();
+	light.kl = node["kl"].as<f32>();
+	light.kq = node["kq"].as<f32>();
 }
-void SceneSerializer::__DeserializeSpotLight(GameObject& object, const YAML::Node& component)
+void SceneSerializer::__DeserializeSpotLight(Entity& entity, const YAML::Node& node)
 {
-	auto& light = object.AddComponent<SpotLight>();
+	auto& light = entity.AddComponent<SpotLight>();
 
-	auto colorNode = component["color"];
+	auto colorNode = node["color"];
 	light.color.r = colorNode[0].as<f32>();
 	light.color.g = colorNode[1].as<f32>();
 	light.color.b = colorNode[2].as<f32>();
 
-	auto positionNode = component["position"];
+	auto positionNode = node["position"];
 	light.position.x = positionNode[0].as<f32>();
 	light.position.y = positionNode[1].as<f32>();
 	light.position.z = positionNode[2].as<f32>();
 
-	auto directionNode = component["direction"];
+	auto directionNode = node["direction"];
 	light.direction.x = directionNode[0].as<f32>();
 	light.direction.y = directionNode[1].as<f32>();
 	light.direction.z = directionNode[2].as<f32>();
 
-	light.intensity = component["intensity"].as<f32>();
-	light.kl = component["kl"].as<f32>();
-	light.kq = component["kq"].as<f32>();
-	light.thetaU = component["thetaU"].as<f32>();
-	light.thetaP = component["thetaP"].as<f32>();
+	light.intensity = node["intensity"].as<f32>();
+	light.kl = node["kl"].as<f32>();
+	light.kq = node["kq"].as<f32>();
+	light.thetaU = node["thetaU"].as<f32>();
+	light.thetaP = node["thetaP"].as<f32>();
 }
-void SceneSerializer::__DeserializeLight(GameObject& object, const YAML::Node& component)
+void SceneSerializer::__DeserializeLight(Entity& entity, const YAML::Node& node)
 {
-	auto type = component["type"].as<i32>();
-	object.AddComponent<Light>(static_cast<LightType>(type));
+	auto type = node["type"].as<i32>();
+	entity.AddComponent<Light>(static_cast<LightType>(type));
 	switch (static_cast<LightType>(type))
 	{
 		case LightType::Directional:
-			__DeserializeDirLight(object, component);
+			__DeserializeDirLight(entity, node);
 			break;
 		case LightType::Point:
-			__DeserializePointLight(object, component);
+			__DeserializePointLight(entity, node);
 			break;
 		case LightType::Spot:
-			__DeserializeSpotLight(object, component);
+			__DeserializeSpotLight(entity, node);
 			break;
 		default:
 			throw std::runtime_error("invalid LightType");
@@ -267,10 +280,16 @@ void SceneSerializer::__SerializeTransformation(YAML::Emitter& outEmitter, const
 	outEmitter << YAML::EndSeq;
 	outEmitter << YAML::EndMap;
 }
-void SceneSerializer::__SerializeStaticMesh(YAML::Emitter& outEmitter, const StaticMesh& staticMesh)
+void SceneSerializer::__SerializeStaticMesh(YAML::Emitter& outEmitter, 
+																						const StaticMesh& staticMesh,
+																						AssetIdentifier assetIdentifier)
 {
-	auto& instance = StaticMeshFactory::GetInstance();
-	auto relative = instance.GetPrototypePath(staticMesh.prototypeID);
+	auto& instance = AssetsManager::GetInstance();
+	auto absolute = instance.GetAssetPath(assetIdentifier.assetId);
+	if (!absolute)
+		throw std::runtime_error("static mesh does not have a valid model path");
+	
+	auto relative = fs::relative(*absolute.value(), Utils::GetModelsPath());
 	outEmitter << YAML::Key << "StaticMesh";
 	outEmitter << YAML::BeginMap;
 	outEmitter << YAML::Key << "path" << YAML::Value << relative.string();
@@ -299,8 +318,8 @@ void SceneSerializer::__SerializePointLight(YAML::Emitter& outEmitter, const Poi
 	outEmitter << light.position.x << light.position.y << light.position.z;
 	outEmitter << YAML::EndSeq;
 	outEmitter << YAML::Key << "intensity" << YAML::Value << light.intensity;
-	outEmitter << YAML::Key << "attenuation.kl" << YAML::Value << light.kl;
-	outEmitter << YAML::Key << "attenuation.kq" << YAML::Value << light.kq;
+	outEmitter << YAML::Key << "kl" << YAML::Value << light.kl;
+	outEmitter << YAML::Key << "kq" << YAML::Value << light.kq;
 }
 void SceneSerializer::__SerializeSpotLight(YAML::Emitter& outEmitter, const SpotLight& light)
 {
@@ -325,7 +344,7 @@ void SceneSerializer::__SerializeSpotLight(YAML::Emitter& outEmitter, const Spot
 	outEmitter << YAML::Key << "thetaU" << YAML::Value << light.thetaU;
 	outEmitter << YAML::Key << "thetaP" << YAML::Value << light.thetaP;
 }
-void SceneSerializer::__SerializeLight(YAML::Emitter& outEmitter, const Light& light, GameObject& object)
+void SceneSerializer::__SerializeLight(YAML::Emitter& outEmitter, const Light& light, Entity& entity)
 {
 	outEmitter << YAML::Key << "Light";
 	outEmitter << YAML::BeginMap;
@@ -334,19 +353,19 @@ void SceneSerializer::__SerializeLight(YAML::Emitter& outEmitter, const Light& l
 	{
 		case LightType::Directional:
 		{
-			auto& dirLight = *object.GetComponent<DirectionalLight>();
+			auto& dirLight = *entity.GetComponent<DirectionalLight>();
 			__SerializeDirectionalLight(outEmitter, dirLight);
 			break;
 		}
 		case LightType::Point:
 		{
-			auto& pointLight = *object.GetComponent<PointLight>();
+			auto& pointLight = *entity.GetComponent<PointLight>();
 			__SerializePointLight(outEmitter, pointLight);
 			break;
 		}
 		case LightType::Spot:
 		{
-			auto& spotLight = *object.GetComponent<SpotLight>();
+			auto& spotLight = *entity.GetComponent<SpotLight>();
 			__SerializeSpotLight(outEmitter, spotLight);
 			break;
 		}

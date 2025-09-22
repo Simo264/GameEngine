@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Core/Core.hpp"
-#include "Core/DesignPatterns/Singleton.hpp"
+#include "Core/Singleton.hpp"
 #include "Core/Math/Base.hpp"
 
 enum class InputKey : i32
@@ -124,11 +124,8 @@ public:
   void CleanUp() const;
   /** @brief Processes all pending events in the GLFW event queue. */
   void PoolEvents() const;
-  /** @brief Gets the current window context associated with GLFW. */
-  Context GetCurrentContext() const { return _context; }
   /** @brief Sets the specified window context as the current one for OpenGL operations. */
   void MakeContextCurrent(Context context);
-
   /** @brief Closes the currently active window. */
   void Close() const;
   /** @brief Checks whether the window is still open. */
@@ -163,7 +160,8 @@ public:
   const char* GetVersion() const;
   /** @brief Returns the elapsed time (in seconds) since the initialization of GLFW. */
   f64 GetWorldTime() const;
-
+  /** @brief Gets the current window context associated with GLFW. */
+  auto GetCurrentContext() const { return _context; }
 private:
   /** @brief Holds the current GLFW window context associated with this manager. */
   Context _context;

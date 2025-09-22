@@ -1,143 +1,162 @@
 #include "StaticMeshLoader.hpp"
+#include "Core/Logger.hpp"
 
-#include "Core/OpenGL.hpp"
-#include "Core/Log/Logger.hpp"
-
-#include "Engine/Vertex.hpp"
+#include "Engine/Components/StaticMesh.hpp"
+#include "Engine/Components/Material.hpp"
 #include "Engine/Managers/TexturesManager.hpp"
+
+#include <glad/gl.h>
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
-// ----------------------------------------------------
-//										PUBLIC
-// ----------------------------------------------------
-
-void StaticMeshLoader::LoadDataFromFile(const fs::path& absolutePathToFile, Components::StaticMesh& out)
+void StaticMeshLoader::LoadDataFromFile(const fs::path& absolutePathToFile, 
+																				Components::StaticMesh& meshDest,
+																				Components::Material& materialDest)
 {
+	if (!meshDest.vertexArray.IsValid())
+	{
+		CONSOLE_WARN("Static mesh must be a valid object");
+		return;
+	}
+
+	constexpr auto flags = aiProcess_Triangulate |
+		aiProcess_JoinIdenticalVertices |
+		aiProcess_GenSmoothNormals |
+		aiProcess_GenUVCoords | 
+		aiProcess_CalcTangentSpace |
+		aiProcess_ImproveCacheLocality;
+	
 	auto importer = Assimp::Importer{};
-	auto scene = importer.ReadFile(absolutePathToFile.string().c_str(),
-																 aiProcess_Triangulate |
-																 aiProcess_GenUVCoords |
-																 aiProcess_FlipUVs |
-																 aiProcess_CalcTangentSpace |
-																 aiProcess_JoinIdenticalVertices |
-																 aiProcess_GenSmoothNormals |
-																 aiProcess_ImproveCacheLocality |
-																 aiProcess_FindDegenerates |
-																 aiProcess_RemoveRedundantMaterials |
-																 aiProcess_FindInvalidData |
-																 aiProcess_LimitBoneWeights |
-																 aiProcess_OptimizeMeshes);
-		
+	auto scene = importer.ReadFile(absolutePathToFile.string().c_str(), flags);
 	if (!scene || !scene->mRootNode || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE)
 	{
 		CONSOLE_ERROR("Assimp importer error: {}", importer.GetErrorString());
 		return;
 	}
-
-	out.meshArray = std::make_unique<Mesh[]>(scene->mNumMeshes);
-	out.nrMeshes = 0u;
-	__ProcessAINode(scene->mRootNode, scene, out);
-}
-
-// ----------------------------------------------------
-//										PRIVATE
-// ----------------------------------------------------
-
-void StaticMeshLoader::__ProcessAINode(aiNode* node, const aiScene* scene, Components::StaticMesh& out)
-{
-	constexpr auto vertex = Vertex<Position, Normal, TextureCoord, Tangent>{};
-	constexpr auto stride = sizeof(vertex);
-	constexpr auto offsetPosition = 0;
-	constexpr auto offsetNormal = sizeof(Position);
-	constexpr auto offsetTC = offsetNormal + sizeof(Normal);
-	constexpr auto offsetTangent = offsetTC + sizeof(TextureCoord);
+	if (scene->mNumMeshes == 0)
+	{
+		CONSOLE_ERROR("No meshes found in file.");
+		return;
+	}
+	if (scene->mNumMeshes > 1)
+		CONSOLE_WARN("File contains more than one mesh, only the first one will be loaded.");
 	
-	constexpr auto vertexFormat0 = VertexFormat{ 3, VertexAttribType::FLOAT, false, static_cast<i32>(offsetPosition) };
-	constexpr auto vertexFormat1 = VertexFormat{ 3, VertexAttribType::FLOAT, false, static_cast<i32>(offsetNormal) };
-	constexpr auto vertexFormat2 = VertexFormat{ 2, VertexAttribType::FLOAT, false, static_cast<i32>(offsetTC) };
-	constexpr auto vertexFormat3 = VertexFormat{ 3, VertexAttribType::FLOAT, false, static_cast<i32>(offsetTangent) };
+	using Vertex = Components::StaticMesh::Vertex;
+	constexpr auto stride = sizeof(Vertex);
 
-	for (auto i = 0u; i < node->mNumMeshes; i++)
+	auto aimesh = scene->mMeshes[0];
+	auto nrVertices = aimesh->mNumVertices;
+	auto size = stride * nrVertices;
+
+	// Load vertices
+	auto& vertBuffer = meshDest.vertexBuffer;
+	vertBuffer.CreateImmutableStorage(size, nullptr, BufferStorageFlags::MAP_WRITE);
+	__LoadVertices<Vertex>(vertBuffer, nrVertices, aimesh);
+	
+	// Load indices
+	auto nrIndices = static_cast<u64>(aimesh->mNumFaces * 3);
+	size = nrIndices * sizeof(u32);
+	auto& indexBuffer = meshDest.indexBuffer;
+	indexBuffer.CreateImmutableStorage(size, nullptr, BufferStorageFlags::MAP_WRITE);
+	__LoadIndices(indexBuffer, aimesh);
+
+	// Load material
+	if (scene->HasMaterials())
 	{
-		auto& mesh = out.meshArray[out.nrMeshes++];
-		mesh.Create();
-		mesh.SetupAttributeFloat(0, 0, vertexFormat0);
-		mesh.SetupAttributeFloat(1, 0, vertexFormat1);
-		mesh.SetupAttributeFloat(2, 0, vertexFormat2);
-		mesh.SetupAttributeFloat(3, 0, vertexFormat3);
-		
-		auto aimesh = scene->mMeshes[node->mMeshes[i]];
-		
-		// Load vertices
-		auto vbo = __LoadVertices(aimesh);
-		mesh.vertexArray->AttachVertexBuffer(0, vbo, 0, stride);
-		mesh.numVertices = aimesh->mNumVertices;
-		// Load indices
-		auto ebo = __LoadIndices(aimesh);
-		mesh.vertexArray->AttachElementBuffer(ebo);
-		mesh.numIndices = aimesh->mNumFaces * 3;
-		
-		if (scene->HasMaterials())
-			__LoadMeshMaterial(scene, aimesh, mesh);
+		auto& instance = TexturesManager::GetInstance();
+		auto aimaterial = scene->mMaterials[0];
+
+		// load albedo if exists
+		auto fileName = aiString{};
+		if (aimaterial->GetTexture(aiTextureType_DIFFUSE, 0, &fileName) == aiReturn_SUCCESS)
+			materialDest.albedo = instance.GetOrCreateTexture(fileName.C_Str());;
+
+		// load normal if exists
+		fileName = aiString{};
+		if (aimaterial->GetTexture(aiTextureType_NORMALS, 0, &fileName) == aiReturn_SUCCESS)
+			materialDest.normalMap = instance.GetOrCreateTexture(fileName.C_Str());
+
+
+		// Metallic/Roughness (spesso in un’unica texture)
+		// if (aimaterial->GetTexture(aiTextureType_METALNESS, 0, &fileName) == aiReturn_SUCCESS)
+		// {
+		// 	// ...
+		// }
+
+		// Emissive
+		//if (aimaterial->GetTexture(aiTextureType_EMISSIVE, 0, &fileName) == aiReturn_SUCCESS)
+		//{
+		//	// ...
+		//}
+
+		// Occlusion
+		//if (aimaterial->GetTexture(aiTextureType_LIGHTMAP, 0, &fileName) == aiReturn_SUCCESS)
+		//{
+		//	// ...
+		//}
 	}
-		
-	// Then do the same for each of its children
-	for (auto i = 0u; i < node->mNumChildren; i++)
-		__ProcessAINode(node->mChildren[i], scene, out);
+	
+	meshDest.vertexArray.AttachVertexBuffer(0, vertBuffer.id, 0, stride);
+	meshDest.vertexArray.AttachIndexBuffer(indexBuffer.id);
+	meshDest.numIndices = nrIndices;
+	meshDest.numVertices = nrVertices;
 }
-Buffer StaticMeshLoader::__LoadVertices(aiMesh* aimesh)
+
+template<typename Vertex>
+void StaticMeshLoader::__LoadVertices(Buffer& vertBuffer, u32 nrVertices, aiMesh* aimesh)
 {
-	constexpr auto vertex = Vertex<Position, Normal, TextureCoord, Tangent>{};
-	auto size = aimesh->mNumVertices * sizeof(vertex);
-
-	auto buffer = Buffer{};
-	buffer.Create();
-	buffer.CreateStorage(size, nullptr, BufferUsage::STATIC_DRAW);
-
-	auto ptr = static_cast<f32*>(buffer.MapStorage(BufferAccess::WRITE_ONLY));
-	for (auto i = 0u; i < aimesh->mNumVertices; i++)
+	auto pVertData = vertBuffer.MapStorage<Vertex>(BufferAccess::WRITE_ONLY);
+	for (auto i = 0u; i < nrVertices; i++)
 	{
-		// Position
-		*(ptr++) = static_cast<f32>(aimesh->mVertices[i].x);
-		*(ptr++) = static_cast<f32>(aimesh->mVertices[i].y);
-		*(ptr++) = static_cast<f32>(aimesh->mVertices[i].z);
-		// Normal
-		*(ptr++) = static_cast<f32>(aimesh->mNormals[i].x);
-		*(ptr++) = static_cast<f32>(aimesh->mNormals[i].y);
-		*(ptr++) = static_cast<f32>(aimesh->mNormals[i].z);
-		// Texture coords
-		*(ptr++) = static_cast<f32>(aimesh->mTextureCoords[0][i].x);
-		*(ptr++) = static_cast<f32>(aimesh->mTextureCoords[0][i].y);
-		// Tangent
-		*(ptr++) = static_cast<f32>(aimesh->mTangents[i].x);
-		*(ptr++) = static_cast<f32>(aimesh->mTangents[i].y);
-		*(ptr++) = static_cast<f32>(aimesh->mTangents[i].z);
+		pVertData[i] = Vertex{};
+		pVertData[i].position.data.x = aimesh->mVertices[i].x;
+		pVertData[i].position.data.y = aimesh->mVertices[i].y;
+		pVertData[i].position.data.z = aimesh->mVertices[i].z;
+		if (aimesh->mNormals)
+		{
+			pVertData[i].normal.data.x = aimesh->mNormals[i].x;
+			pVertData[i].normal.data.y = aimesh->mNormals[i].y;
+			pVertData[i].normal.data.z = aimesh->mNormals[i].z;
+		}
+		else
+			CONSOLE_WARN("aimesh does't have mNormals");
+
+		if (aimesh->mTextureCoords[0])
+		{
+			pVertData[i].tc.data.x = aimesh->mTextureCoords[0][i].x;
+			pVertData[i].tc.data.y = aimesh->mTextureCoords[0][i].y;
+		}
+		else
+			CONSOLE_WARN("aimesh does't have mTextureCoords");
+
+		if (aimesh->mTangents)
+		{
+			pVertData[i].tangent.data.x = aimesh->mTangents[i].x;
+			pVertData[i].tangent.data.y = aimesh->mTangents[i].y;
+			pVertData[i].tangent.data.z = aimesh->mTangents[i].z;
+		}
+		else
+			CONSOLE_WARN("aimesh does't have mTangents");
 	}
-	buffer.UnmapStorage();
-	return buffer;
+	vertBuffer.UnmapStorage();
 }
-Buffer StaticMeshLoader::__LoadIndices(aiMesh* aimesh)
+
+void StaticMeshLoader::__LoadIndices(Buffer& indexBuffer, aiMesh* aimesh)
 {
-	auto numIndices = aimesh->mNumFaces * 3;
-	auto size = numIndices * sizeof(u32);
-
-	auto buffer = Buffer{};
-	buffer.Create();
-	buffer.CreateStorage(size, nullptr, BufferUsage::STATIC_DRAW);
-
-	auto ptr = static_cast<u32 *>(buffer.MapStorage(BufferAccess::WRITE_ONLY));
+	auto pIdxData = indexBuffer.MapStorage<u32>(BufferAccess::WRITE_ONLY);
 	for (auto i = 0u; i < aimesh->mNumFaces; i++)
 	{
 		auto& face = aimesh->mFaces[i];
-		for (auto j = 0u; j < face.mNumIndices; j++)
-			*(ptr++) = static_cast<u32>(face.mIndices[j]);
+		pIdxData[i * 3 + 0] = face.mIndices[0];
+		pIdxData[i * 3 + 1] = face.mIndices[1];
+		pIdxData[i * 3 + 2] = face.mIndices[2];
 	}
-	buffer.UnmapStorage();
-	return buffer;
+	indexBuffer.UnmapStorage();
 }
+
+#if 0
 void StaticMeshLoader::__LoadMeshMaterial(const aiScene* scene, aiMesh* aimesh, Mesh& mesh)
 {
 	auto& manager = TexturesManager::GetInstance();
@@ -153,3 +172,4 @@ void StaticMeshLoader::__LoadMeshMaterial(const aiScene* scene, aiMesh* aimesh, 
 	//if (aimaterial->GetTexture(aiTextureType_SPECULAR, 0, &fileName) == aiReturn_SUCCESS)
 	//	mesh.material.specular = manager.GetOrCreateTexture(fileName.C_Str());
 }
+#endif

@@ -5,6 +5,14 @@
 
 namespace Utils
 {
+	const fs::path& GetRootPath();
+	const fs::path& GetAssetsPath();
+	const fs::path& GetShadersPath();
+	const fs::path& GetTexturesPath();
+	const fs::path& GetIconsPath();
+	const fs::path& GetFontsPath();
+	const fs::path& GetModelsPath();
+
 	/**
 	 * @brief Counts the number of files in a directory.
 	 *

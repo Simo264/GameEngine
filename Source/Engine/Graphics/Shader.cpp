@@ -1,7 +1,6 @@
 #include "Shader.hpp"
-#include "Core/Log/Logger.hpp"
-
-#include "Core/OpenGL.hpp"
+#include "Core/Logger.hpp"
+#include <glad/gl.h>
 
 // ------------------------------
 //      Shader
@@ -16,10 +15,10 @@ void Shader::Create(ShaderType type, StringView source)
   glShaderSource(id, 1, &ptr, &size);
 }
 
-void Shader::Delete()
+void Shader::Release()
 {
   glDeleteShader(id);
-  id = 0u;
+  id = INVALID_SHADER_ID;
 }
 
 bool Shader::Compile() const
@@ -54,10 +53,10 @@ void Program::Create()
   id = glCreateProgram();
 }
 
-void Program::Delete()
+void Program::Release()
 {
   glDeleteProgram(id);
-  id = 0u;
+  id = INVALID_PROGRAM_ID;
 }
 
 void Program::AttachShader(Shader shader) const

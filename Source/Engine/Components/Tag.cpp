@@ -1,5 +1,5 @@
 #include "Tag.hpp"
-#include "Core/Log/Logger.hpp"
+#include "Core/Logger.hpp"
 
 namespace Components
 {

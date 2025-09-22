@@ -13,7 +13,7 @@ public:
 	{}
 	~ImageLoader() = default;
 
-	u8* LoadImageData(const fs::path& absolutePathToFile);
+	byte* LoadImageData(const fs::path& absolutePathToFile);
 	
 	/** @brief Frees the memory allocated for image data. */
 	void FreeImageData(void* data);

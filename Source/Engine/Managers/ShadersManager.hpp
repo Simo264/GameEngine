@@ -1,13 +1,11 @@
 #pragma once
 
 #include "Core/Core.hpp"
-#include "Core/DesignPatterns/Singleton.hpp"
+#include "Core/Singleton.hpp"
 #include "Engine/Graphics/Shader.hpp"
 
 /**
  * @brief Singleton class responsible for managing shader and program objects.
- * 
- * This class handles shader compilation, program linking, and cleanup.
  */
 class ShadersManager : public Singleton<ShadersManager>
 {
@@ -40,8 +38,6 @@ private:
 		Array<char, 32> name{}; // Program name
 	};
 
-	// Stores all loaded shaders
 	Vector<__PairShaderName> _shaders;
-	// Stores all loaded programs
 	Vector<__PairProgramName> _programs;
 };

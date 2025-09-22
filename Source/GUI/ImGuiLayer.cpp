@@ -1,18 +1,12 @@
 #include "ImGuiLayer.hpp"
 
-#include "Core/OpenGL.hpp"
-#include "Core/Paths/Paths.hpp"
-
+#include "Engine/Utils.hpp"
 #include "Engine/Globals.hpp"
 #include "Engine/Scene.hpp"
-#include "Engine/Graphics/Objects/Texture2D.hpp"
+#include "Engine/Graphics/Texture2D.hpp"
 #include "Engine/Managers/WindowManager.hpp"
 
-#include "MenuBar.hpp"
-#include "Hierarchy.hpp"
-#include "Viewport.hpp"
-#include "Inspector.hpp"
-#include "ToolBar.hpp"
+#include <glad/gl.h>
 
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
@@ -29,17 +23,8 @@ constexpr auto fontFamily = "OpenSans/OpenSans-Regular.ttf";
 
 void ImGuiLayer::InitializeImGui()
 {
-  viewportFocused = false;
-  viewportSize = Vec2I{};
-  viewportPos = Vec2I{};
-  gizmode = -1;
-
   renderImGuiDemo = false;
-  renderToolbar = true;
   renderTimeInfo = true;
-  renderHierarchy = true;
-  renderInspector = true;
-  renderCameraProperties = true;
   renderGraphicsInfo = false;
 
   // Setup ImGui context
@@ -51,12 +36,12 @@ void ImGuiLayer::InitializeImGui()
   // Load font
   auto& io = ImGui::GetIO();
   io.Fonts->Clear();
-  io.Fonts->AddFontFromFileTTF((Paths::GetFontsPath() / fontFamily).string().c_str(), fontSize);
+  io.Fonts->AddFontFromFileTTF((Utils::GetFontsPath() / fontFamily).string().c_str(), fontSize);
   io.Fonts->Build();
   ImGui_ImplOpenGL3_DestroyDeviceObjects();
   ImGui_ImplOpenGL3_CreateDeviceObjects();
 }
-void ImGuiLayer::CleanUpImGui()
+void ImGuiLayer::CleanupImGui()
 {
   ImGui_ImplOpenGL3_Shutdown();
   ImGui_ImplGlfw_Shutdown();
@@ -86,28 +71,13 @@ void ImGuiLayer::CompleteFrameRender()
   }
 }
 
-void ImGuiLayer::MenuBar(Scene& scene) const
-{
-  GUI_MenuBar(scene);
-}
 void ImGuiLayer::ImguiDemo()
 {
   if (renderImGuiDemo)
     ImGui::ShowDemoWindow(&renderImGuiDemo);
 }
-void ImGuiLayer::Viewport(Texture2D textureImage,
-                          GameObject objSelected, 
-                          const Mat4F& view, 
-                          const Mat4F& proj) const
-{
-  GUI_Viewport("Viewport", textureImage, objSelected, gizmode, view, proj);
-}
-void ImGuiLayer::ToolBar()
-{
-  if (renderToolbar)
-    GUI_ToolBar(renderToolbar, viewportPos, viewportSize, gizmode);
-}
-void ImGuiLayer::TimeInfo(f64 delta, f64 avg, i32 frameRate)
+
+void ImGuiLayer::DebugInfo(f64 delta, f64 avg, i32 frameRate)
 {
   if (!renderTimeInfo)
     return;
@@ -119,8 +89,8 @@ void ImGuiLayer::TimeInfo(f64 delta, f64 avg, i32 frameRate)
     ImGuiWindowFlags_NoBackground;
 
   constexpr auto windowSize = ImVec2{ 160.f, 100.f };
-  auto windowPos = ImVec2(static_cast<f32>((viewportPos.x + viewportSize.x) - windowSize.x),
-                          static_cast<f32>(viewportPos.y + 25));
+  auto windowPos = ImVec2(static_cast<f32>((viewport.position.x + viewport.size.x) - windowSize.x),
+                          static_cast<f32>(viewport.position.y + 25));
   ImGui::SetNextWindowPos(windowPos);
   ImGui::SetNextWindowSize(windowSize);
   ImGui::SetNextWindowBgAlpha(0.0f);
@@ -128,22 +98,10 @@ void ImGuiLayer::TimeInfo(f64 delta, f64 avg, i32 frameRate)
   ImGui::TextWrapped("Time (ms): %f", delta * 1000.0f);
   ImGui::TextWrapped("Average (ms): %f", avg * 1000.0f);
   ImGui::TextWrapped("Frame rate: %d", frameRate);
+  ImGui::TextWrapped("Draw calls: %d", g_DrawCalls);
   ImGui::End();
 }
 
-GameObject ImGuiLayer::Hierarchy(Scene& scene)
-{
-  static auto object = GameObject{ INVALID_ENTITY_ID, nullptr, nullptr };
-  if(renderHierarchy)
-    GUI_Hierarchy(renderHierarchy, scene, object);
-  
-  return object;
-}
-void ImGuiLayer::Inspector(GameObject object)
-{
-  if(renderInspector)
-    GUI_Inspector(renderInspector, "Inspector", object);
-}
 void ImGuiLayer::GraphicsInfo()
 {
   if (!renderGraphicsInfo)

@@ -1,19 +1,20 @@
 #include "Scene.hpp"
 #include "SceneSerializer.hpp"
 
-#include "Core/Log/Logger.hpp"
+#include "Core/Logger.hpp"
+
 
 // -----------------------------------
-//					ObjectArchetype
+//					EntityArchetype
 // -----------------------------------
 
-void Archetype::GetAllowedComponentNames(Vector<String>& out) const
+void EntityArchetype::GetAllowedComponentNames(Vector<String>& out) const
 {
 	out = Vector<String>{};
 	for (const auto& typeIndex : _allowedComponents)
 		out.push_back(typeIndex.name());
 }
-bool Archetype::IsComponentAllowed(std::type_index componentType) const
+bool EntityArchetype::IsComponentAllowed(std::type_index componentType) const
 {
 	return _allowedComponents.count(componentType) > 0;
 }
@@ -22,28 +23,24 @@ bool Archetype::IsComponentAllowed(std::type_index componentType) const
 //					ArchetypeRegistry
 // -----------------------------------
 
-ArchetypeId ArchetypeRegistry::RegisterArchetype(Archetype archetype)
+ArchetypeId EntityArchetypeRegistry::RegisterArchetype(EntityArchetype archetype)
 {
 	auto name = archetype.GetName();
 	auto id = _archetypes.size();
 
-	_archetypes.emplace_back(std::move(archetype));
+	//_archetypes.emplace_back(std::move(archetype));
+	_archetypes.push_back(archetype);
 	_nameToIdMap[name] = id;
 	return id;
 }
-const Archetype* ArchetypeRegistry::GetArchetype(ArchetypeId id) const
+const EntityArchetype* EntityArchetypeRegistry::GetArchetype(ArchetypeId id) const
 {
 	if (id >= _archetypes.size())
 		return nullptr;
 	
 	return &_archetypes[id];
 }
-const Archetype* ArchetypeRegistry::GetArchetype(StringView archName) const
-{
-	auto id = GetArchetypeId(archName.data());
-	return GetArchetype(id);
-}
-ArchetypeId ArchetypeRegistry::GetArchetypeId(StringView name) const
+ArchetypeId EntityArchetypeRegistry::GetArchetypeId(StringView name) const
 {
 	auto it = _nameToIdMap.find(name.data());
 	if (it != _nameToIdMap.end())
@@ -51,7 +48,7 @@ ArchetypeId ArchetypeRegistry::GetArchetypeId(StringView name) const
 	
 	return INVALID_ARCHETYPE_ID;
 }
-void ArchetypeRegistry::GetAvailableArchetypeNames(Vector<String>& out) const
+void EntityArchetypeRegistry::GetArchetypeNames(Vector<String>& out) const
 {
 	out = Vector<String>{};
 	out.reserve(_archetypes.size());
@@ -75,39 +72,68 @@ void Scene::SaveToFile(const fs::path& out)
 	auto serializer = SceneSerializer{};
 	serializer.SerializeScene(*this, out);
 }
-void Scene::DestroyObject(entt::entity id)
+void Scene::DestroyEntity(EntityId id)
 {
 	if (_entityRegistry.valid(id))
 		_entityRegistry.destroy(id);
 }
 void Scene::Clear()
 {
+	Vector<u32> bufferIds;
+	Vector<u32> vertexArrayIds;
+
+	auto view = _entityRegistry.view<StaticMesh>();
+	for (auto entity : view)
+	{
+		auto& mesh = view.get<StaticMesh>(entity);
+		if (mesh.vertexArray.IsValid())
+		{
+			vertexArrayIds.push_back(mesh.vertexArray.id);
+			mesh.vertexArray.id = INVALID_VERTEXARRAY_ID;
+		}
+		if (mesh.vertexBuffer.IsValid())
+		{
+			bufferIds.push_back(mesh.vertexBuffer.id);
+			mesh.vertexBuffer.id = INVALID_BUFFER_ID;
+		}
+		if (mesh.indexBuffer.IsValid())
+		{
+			bufferIds.push_back(mesh.indexBuffer.id);
+			mesh.indexBuffer.id = INVALID_BUFFER_ID;
+		}
+	}
+
+	// Batch delete
+	if (!vertexArrayIds.empty())
+		VertexArray::DeleteArrays(vertexArrayIds.size(), vertexArrayIds.data());
+	if (!bufferIds.empty())
+		Buffer::DeleteBuffers(bufferIds.size(), bufferIds.data());
+
 	_entityRegistry.clear();
 }
 
-void Scene::RegisterArchetype(Archetype archetype)
+void Scene::RegisterArchetype(EntityArchetype archetype)
 {
-	_archetypeRegistry.RegisterArchetype(std::move(archetype));
+	_archetypeRegistry.RegisterArchetype(archetype);
 }
-GameObject Scene::CreateObject(StringView archetypeName)
+Entity Scene::CreateEntity(StringView archetypeName)
 {
-	auto archetype = _archetypeRegistry.GetArchetype(archetypeName);
+	auto archetypeId = _archetypeRegistry.GetArchetypeId(archetypeName);
+	auto archetype = _archetypeRegistry.GetArchetype(archetypeId);
 	if (!archetype)
 	{
 		CONSOLE_ERROR("Unknown archetype: {}", archetypeName);
 		throw std::runtime_error("Unknown archetype");
 	}
-	
-	auto archetypeId = _archetypeRegistry.GetArchetypeId(archetype->GetName());
-	auto entity = _entityRegistry.create();
-	
-	auto object = GameObject{ entity, &_entityRegistry, archetype };
-	object.AddComponent<ArchetypeComponent>(archetypeId);
-	auto& tag = object.AddComponent<Components::Tag>();
-	tag.UpdateValue("object");
-	return object;
+
+	auto e = _entityRegistry.create();
+	auto entity = Entity{ e, &_entityRegistry, archetype };
+	entity.AddComponent<Components::ArchetypeIdentifier>(archetypeId);
+	auto& tag = entity.AddComponent<Components::Tag>();
+	tag.UpdateValue("entity");
+	return entity;
 }
-GameObject Scene::CreateObject(ArchetypeId archetypeId)
+Entity Scene::CreateEntity(ArchetypeId archetypeId)
 {
 	auto archetype = _archetypeRegistry.GetArchetype(archetypeId);
 	if (!archetype)
@@ -116,29 +142,29 @@ GameObject Scene::CreateObject(ArchetypeId archetypeId)
 		throw std::runtime_error("Invalid archetype ID");
 	}
 	
-	auto entity = _entityRegistry.create();
-	auto object = GameObject{ entity, &_entityRegistry, archetype };
-	object.AddComponent<ArchetypeComponent>(archetypeId);
-	auto& tag = object.AddComponent<Components::Tag>();
-	tag.UpdateValue("object");
-	return object;
+	auto e = _entityRegistry.create();
+	auto entity = Entity{ e, &_entityRegistry, archetype };
+	entity.AddComponent<Components::ArchetypeIdentifier>(archetypeId);
+	auto& tag = entity.AddComponent<Components::Tag>();
+	tag.UpdateValue("entity");
+	return entity;
 }
 
-Optional<GameObject> Scene::FindObjectWithTag(StringView tagName)
+Optional<Entity> Scene::FindEntityWithTag(StringView tagName)
 {
-	auto view = _entityRegistry.view<Components::Tag>();
+	auto view = _entityRegistry.view<EntityId>();
 	for (auto entity : view)
 	{
-		auto& archetypeComponent = _entityRegistry.get<ArchetypeComponent>(entity);
+		auto& archetypeComponent = _entityRegistry.get<Components::ArchetypeIdentifier>(entity);
 		auto archetype = _archetypeRegistry.GetArchetype(archetypeComponent.archetypeId);
 
 		auto& tag = _entityRegistry.get<Components::Tag>(entity);
 		if (tagName.compare(tag.value.data()) == 0)
-			return GameObject(entity, &_entityRegistry, archetype);
+			return Entity(entity, &_entityRegistry, archetype);
 	}
 	return std::nullopt;
 }
-void Scene::FindAllWithArchetype(ArchetypeId archetypeId, Vector<GameObject>& out)
+void Scene::FindAllWithArchetype(ArchetypeId archetypeId, Vector<Entity>& out)
 {
 	auto archetype = _archetypeRegistry.GetArchetype(archetypeId);
 	if (!archetype)
@@ -147,32 +173,13 @@ void Scene::FindAllWithArchetype(ArchetypeId archetypeId, Vector<GameObject>& ou
 		return;
 	}
 
-	out = Vector<GameObject>{};
-	auto view = _entityRegistry.view<ArchetypeComponent>();
+	out = Vector<Entity>{};
+	auto view = _entityRegistry.view<EntityId>();
 	for (auto entity : view)
 	{
-		auto& archetypeComp = _entityRegistry.get<ArchetypeComponent>(entity);
-		auto archetypeId = archetypeComp.archetypeId;
-		if (archetypeComp.archetypeId == archetypeId)
+		auto& archetypeComponent = _entityRegistry.get<Components::ArchetypeIdentifier>(entity);
+		if (archetypeComponent.archetypeId == archetypeId)
 			out.emplace_back(entity, &_entityRegistry, archetype);
 	}
 }
-void Scene::FindAllWithArchetype(StringView archetypeName, Vector<GameObject>& out)
-{
-	auto archetype = _archetypeRegistry.GetArchetype(archetypeName);
-	if (!archetype)
-	{
-		CONSOLE_ERROR("Invalid archetype name {}", archetypeName);
-		return;
-	}
 
-	out = Vector<GameObject>{};
-	auto view = _entityRegistry.view<ArchetypeComponent>();
-	for (auto entity : view)
-	{
-		const auto& archetypeComp = _entityRegistry.get<ArchetypeComponent>(entity);
-		auto archetypeId = archetypeComp.archetypeId;
-		if (archetypeName.compare(archetype->GetName()) == 0)
-			out.emplace_back(entity, &_entityRegistry, archetype);
-	}
-}

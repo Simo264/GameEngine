@@ -1,40 +1,70 @@
 #pragma once
 
 #include "Core/Core.hpp"
-#include "Engine/Mesh.hpp"
-
-class Program;
+#include "Engine/Graphics/Buffer.hpp"
+#include "Engine/Graphics/VertexArray.hpp"
+#include "Engine/VertexLayout.hpp"
 
 namespace Components
 {
+	/**
+	 * @brief Represents a static mesh geometry that cannot be modified after creation.
+	 * The StaticMesh structure encapsulates vertex and index data for a 3D model.
+	 * It is called "static" to indicate that its vertex data is immutable once
+	 * created and uploaded to the GPU. This is an optimal representation for
+	 * rendering objects that do not deform, such as buildings, terrain, or static
+	 * props, as it allows for performance optimizations.
+	 */
 	struct StaticMesh
 	{
-		StaticMesh() :
-			prototypeID{ -1 },
-			meshArray{ nullptr },
-			nrMeshes{ 0u }
+		StaticMesh() : 
+			vertexArray{}, 
+			vertexBuffer{},
+			indexBuffer{},
+			numVertices{ 0u }, 
+			numIndices{ 0u } 
 		{}
+		
+		// Disable copy
+		StaticMesh(const StaticMesh&) = delete;
+		StaticMesh& operator=(const StaticMesh&) = delete;
+		// Move semantics
+		StaticMesh(StaticMesh&&) = default;
+		StaticMesh& operator=(StaticMesh&&) = default;
+		
+		using Vertex = VertexLayout<Position, Normal, TextureCoord, Tangent>;
 
-		/** @brief Move constructor */
-		StaticMesh(StaticMesh&&) noexcept = default;
-		StaticMesh& operator=(StaticMesh&&) noexcept = default;
+		/** @brief Creates VAO object, vertex buffer and index buffer objects */
+		void Create();
+		/** @brief Release GPU memory. */
+		void Release();
 
-		/** @brief Destroys all meshes associated with the static mesh. */
-		void Destroy();
+		/** @brief Method for updating data created with DYNAMIC_STORAGE */ 
+		void UpdateVertexData(u32 offset, u32 size, const void* data) const;
 
-		/** @brief Renders all meshes associated with the static mesh. */
-		void Render(Program program, RenderMode mode) const;
-
-		/** @brief Creates a copy of the current StaticMesh into another StaticMesh instance. */
+		/**
+		 * @brief Copies vertex and index data from this StaticMesh to another StaticMesh instance.
+		 * This method performs a deep copy of the mesh data by creating new immutable storage
+		 * buffers in the destination mesh and copying the vertex and index buffer contents.
+		 * It also copies the vertex and index counters.
+		 *
+		 * @param other The destination StaticMesh object that will receive the copied data
+		 *
+		 * @pre The destination StaticMesh must be in a valid state (Create() must have been called)
+		 * @pre The destination StaticMesh must have its vertex layout already configured
+		 *
+		 * @note This method does NOT call Create() on the destination mesh
+		 * @note This method does NOT configure the vertex attribute layout
+		 *
+		 * @see Create()
+		 * @see VertexLayout::SetupVertexArray()
+		 */
 		void Copy(StaticMesh& other) const;
 
-		/** @brief List of meshes contained in the model. */
-		UniquePointer<Mesh[]> meshArray;
-		u32 nrMeshes;
-
-		/** @brief Unique identifier for the prototype of the static mesh. */
-		i32 prototypeID;
+		VertexArray vertexArray;
+		Buffer vertexBuffer;
+		Buffer indexBuffer;
+		u32 numVertices;
+		u32 numIndices;
 	};
 }
-
-

@@ -12,12 +12,12 @@
 #include <map>
 #include <numeric>
 #include <optional>
+#include <set>
 #include <string>
 #include <string_view>
 #include <sstream>
 #include <typeindex>
 #include <unordered_map>
-#include <unordered_set>
 #include <vector>
 
 
@@ -35,7 +35,7 @@ using Map = std::map<T, TVal>;
 template <typename T, typename TVal>
 using UnorderedMap = std::unordered_map<T, TVal>;
 template <typename T>
-using UnorderedSet = std::unordered_set<T>;
+using Set = std::set<T>;
 
 template <typename T>
 using UniquePointer = std::unique_ptr<T>;

@@ -1,14 +1,11 @@
 #include "ShadersManager.hpp"
 
-#include "Core/OpenGL.hpp"
-#include "Core/Log/Logger.hpp"
-#include "Core/Serialization/JSONParser.hpp"
-#include "Core/Paths/Paths.hpp"
-
-#include "Engine/Vertex.hpp"
+#include "Core/Logger.hpp"
+#include "Core/JSONParser.hpp"
 #include "Engine/Globals.hpp"
 #include "Engine/Utils.hpp"
-#include "Engine/Uniforms.hpp"
+
+#include <glad/gl.h>
 
 constexpr auto SM_FILE_CONFIG = "ShadersConfig.json";
 
@@ -18,7 +15,7 @@ constexpr auto SM_FILE_CONFIG = "ShadersConfig.json";
 
 void ShadersManager::Initialize()
 {
-	auto p = (Paths::GetRootPath() / SM_FILE_CONFIG);
+	auto p = (Utils::GetRootPath() / SM_FILE_CONFIG);
 	if (!fs::exists(p))
 		throw std::runtime_error(std::format("{} does not exist!", p.string()));
 
@@ -28,11 +25,11 @@ void ShadersManager::Cleanup()
 {
 	// Destoy all program objects
 	for (auto &pair : _programs)
-		pair.program.Delete();
+		pair.program.Release();
 
 	// Destoy all shaders objects
 	for (auto &pair : _shaders)
-		pair.shader.Delete();
+		pair.shader.Release();
 }
 
 Shader ShadersManager::GetShader(StringView shaderName) const
@@ -60,7 +57,7 @@ Shader ShadersManager::CreateShader(StringView shaderName, ShaderType type)
 {
 	assert(shaderName.size() < 32);
 
-	auto absolute = Paths::GetShadersPath() / shaderName.data();
+	auto absolute = Utils::GetShadersPath() / shaderName.data();
 	if (!fs::exists(absolute))
 		throw std::runtime_error(std::format("Shader file '{}' does not exist", absolute.string()));
 

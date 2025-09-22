@@ -1,8 +1,8 @@
 #pragma once
 
 #include "Core/Core.hpp"
-#include "Core/DesignPatterns/Singleton.hpp"
-#include "Engine/Graphics/Objects/Texture2D.hpp"
+#include "Core/Singleton.hpp"
+#include "Engine/Graphics/Texture2D.hpp"
 
 /**
  * @brief Manages the loading, storage, and retrieval of textures and icons.
@@ -17,85 +17,30 @@ public:
 	/** @brief Cleans up loaded textures and icons by deleting their OpenGL references. */
 	void Cleanup();
 	
-	/**
-	 * @brief Finds an existing texture by its relative path.
-	 *
-	 * @param relative Relative path to the texture inside "Assets/Textures".
-	 * Example: "skybox/front.jpg"
-	 * 
-	 * @return The corresponding Texture2D if found, otherwise an invalid Texture2D. 
-	 * If the texture is not found, this function returns an invalid `Texture2D` object.
-	 * To verify whether the returned texture is valid, use the `IsValid()` method.
-	 */
-	Texture2D FindTexture(const fs::path& relative) const;
-	
-	/**
-	 * @brief Creates and loads a new texture from the given relative path.
-	 * If the texture does not exist, it is loaded and stored for future use.
-	 *
-	 * @param relative Relative path to the texture inside "Assets/Textures".
-	 * Example: "skybox/front.jpg"
-	 * 
-	 * @return The loaded Texture2D object.
-	 */
+	/** @brief Finds an existing texture inside "Assets/Textures" (e.g. "skybox/front.jpg") */
+	Optional<Texture2D> FindTexture(const fs::path& relative) const;
+	/** @brief Creates and loads a new texture inside "Assets/Textures" (e.g. "skybox/front.jpg") */
 	Texture2D CreateTexture(const fs::path& relative);
-	
-	/**
-	 * @brief Retrieves an existing texture or creates a new one if not found.
-	 * If the texture is already loaded, it returns the existing instance; otherwise, it creates a new one.
-	 *
-	 * @param relative Relative path to the texture inside "Assets/Textures".
-	 * Example: "skybox/front.jpg"
-	 */
+	/** @brief Retrieves an existing texture or creates a new one if not found. */
 	Texture2D GetOrCreateTexture(const fs::path& relative);
-
-	/**
-	 * @brief Finds an existing icon by its relative path.
-	 *
-	 * @param relative Relative path to the icon inside "Assets/Icons".
-	 * Example: "back-arrow.png"
-	 * 
-	 * @return The corresponding Texture2D if found, otherwise an invalid Texture2D. 
-	 * If the texture is not found, this function returns an invalid `Texture2D` object.
-	 * To verify whether the returned texture is valid, use the `IsValid()` method.
-	 */
-	Texture2D FindIcon(const fs::path& relative) const;
-
-	/**
-	 * @brief Creates and loads a new icon from the given relative path.
-	 * If the icon does not exist, it is loaded and stored for future use.
-	 *
-	 * @param relative Relative path to the icon inside "Assets/Icons".
-	 * Example: "back-arrow.png"
-	 * 
-	 * @return The loaded Texture2D object.
-	 */
+	/** @brief Finds an existing icon inside "Assets/Icons" (e.g. "back-arrow.png") */
+	Optional<Texture2D> FindIcon(const fs::path& relative) const;
+	/** @brief Creates and loads a new icon inside "Assets/Icons" (e.g. "back-arrow.png") */
 	Texture2D CreateIcon(const fs::path& relative);
-
-	/**
-	 * @brief Retrieves an existing icon or creates a new one if not found.
-	 * If the icon is already loaded, it returns the existing instance; otherwise, it creates a new one.
-	 *
-	 * @param relative Relative path to the icon inside "Assets/Icons".
-	 * Example: "back-arrow.png"
-	 */
+	/** @brief Retrieves an existing icon or creates a new one if not found. */
 	Texture2D GetOrCreateIcon(const fs::path& relative);
 
-	Texture2D GetDefaultDiffuse() const { return _defaultAlbedo; }
-	Texture2D GetDefaultNormal() const { return _defaultNormal; }
+	Optional<const fs::path*> GetTexturePath(u32 textureID) const;
 
-	const auto& GetTextureVector() const { return _textures; }
-	const auto& GetTextureIconVector() const { return _icons; }
-
-	const fs::path* GetTexturePath(u32 textureID) const;
+	Texture2D GetFallbackTexture() const { return _fallbackTexture; }
+	auto& GetTextureVector() const { return _textures; }
+	auto& GetTextureIconVector() const { return _icons; }
 
 private:
-	// Default albedo texture used when a mesh has no assigned albedo texture.
+	// Default texture used when a mesh has no assigned texture.
 	// This texture prevents unnecessary conditional checks in the rendering loop.
 	// It is initialized as a 1x1 texture with default color (E.g. RGB: 128, 128, 255).
-	Texture2D _defaultAlbedo;
-	// It is initialized as a 1x1 texture with default values (E.g. RGB: 0, 0, 0).
-	Texture2D _defaultNormal;
+	Texture2D _fallbackTexture;
 
 	// List of loaded textures 
 	Vector<Texture2D> _textures;

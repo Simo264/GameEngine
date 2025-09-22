@@ -2,7 +2,6 @@
 
 #include "Core/Core.hpp"
 #include "Core/Math/Ext.hpp"
-#include "Core/Log/Logger.hpp"
 
 
 namespace Components

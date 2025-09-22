@@ -1,12 +1,12 @@
 #include "ImageLoader.hpp"
 
-#include "Core/Log/Logger.hpp"
-#include "Engine/Graphics/Objects/Texture2D.hpp"
+#include "Core/Logger.hpp"
+#include "Engine/Graphics/Texture2D.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-u8* ImageLoader::LoadImageData(const fs::path& absolutePathToFile)
+byte* ImageLoader::LoadImageData(const fs::path& absolutePathToFile)
 {
 	if (!fs::exists(absolutePathToFile))
 	{
@@ -53,7 +53,7 @@ u8* ImageLoader::LoadImageData(const fs::path& absolutePathToFile)
 			internalFormat = static_cast<u32>(gammaCorrection ? Texture2DInternalFormat::SRGB8_ALPHA8 : Texture2DInternalFormat::RGBA8);
 			break;
 	}
-	return data;
+	return reinterpret_cast<byte*>(data);
 }
 
 void ImageLoader::FreeImageData(void* data)

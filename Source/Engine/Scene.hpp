@@ -2,31 +2,23 @@
 
 #include "Core/Core.hpp"
 #include "Components/Components.hpp"
-
 #include <entt/entt.hpp>
 
 using EntityId = entt::entity;
 using EntityRegistry = entt::registry;
-using ArchetypeId = u32;
-
 constexpr EntityId INVALID_ENTITY_ID = entt::null;
-constexpr ArchetypeId INVALID_ARCHETYPE_ID = static_cast<ArchetypeId>(-1);
 
-struct ArchetypeComponent
-{
-	ArchetypeId archetypeId;
-	ArchetypeComponent(ArchetypeId id) : archetypeId(id) {}
-};
-
-class Archetype
+class EntityArchetype
 {
 public:
-	Archetype(StringView name) : _archetypeName{ name.data() } {}
+	EntityArchetype(StringView name) : _archetypeName{ name.data() } {}
 
-	template<typename... Components>
+	template<typename... Comps>
 	auto& AllowComponents()
 	{
-		_allowedComponents = { std::type_index(typeid(Components))... };
+		_allowedComponents = { std::type_index(typeid(Comps))... };
+		_allowedComponents.insert(std::type_index(typeid(Components::ArchetypeIdentifier)));
+		_allowedComponents.insert(std::type_index(typeid(Components::Tag)));
 		return *this;
 	}
 
@@ -36,30 +28,26 @@ public:
 
 private:
 	String _archetypeName;
-	UnorderedSet<std::type_index> _allowedComponents;
+	Set<std::type_index> _allowedComponents;
 };
-class ArchetypeRegistry
+class EntityArchetypeRegistry
 {
 public:
-	ArchetypeId RegisterArchetype(Archetype archetype);
-	
-	const Archetype* GetArchetype(ArchetypeId id) const;
-	const Archetype* GetArchetype(StringView archName) const;
-	
+	ArchetypeId RegisterArchetype(EntityArchetype archetype);
 	ArchetypeId GetArchetypeId(StringView name) const;
-	
-	void GetAvailableArchetypeNames(Vector<String>& out) const;
-
-	auto GetArchetypeCount() const {return _archetypes.size(); }
+	const EntityArchetype* GetArchetype(ArchetypeId id) const;
+	void GetArchetypeNames(Vector<String>& out) const;
+	auto GetArchetypeCount() const { return _archetypes.size(); }
+	auto& GetArchetypeVector() const { return _archetypes; }
 
 private:
-	Vector<Archetype> _archetypes;
+	Vector<EntityArchetype> _archetypes;
 	UnorderedMap<String, ArchetypeId> _nameToIdMap;
 };
-class GameObject
+class Entity
 {
 public:
-	GameObject(EntityId id, EntityRegistry* entityReg, const Archetype* archetype) :
+	Entity(EntityId id, EntityRegistry* entityReg, const EntityArchetype* archetype) :
 		_id{ id }, 
 		_entityRegistry{ entityReg },
 		_archetype{ archetype }
@@ -107,68 +95,66 @@ public:
 			_archetype != nullptr &&
 			_entityRegistry->valid(_id);
 	}
-	auto Compare(const GameObject& other) const { return _id == other.GetID(); }
+	auto Compare(const Entity& other) const { return _id == other.GetID(); }
 
 private:
 	EntityId _id;
-	const Archetype* _archetype;
+	const EntityArchetype* _archetype;
 	EntityRegistry* _entityRegistry;
 };
 class Scene
 {
 public:
 	Scene() : _entityRegistry{}, _archetypeRegistry{} {}
-	~Scene() = default;
 
 	/** @brief Loads a scene from a file. */
 	void LoadFromFile(const fs::path& loadFrom);
 	/** @brief Saves the current scene into a file. */
 	void SaveToFile(const fs::path& out);
 	/** @brief unregisters the given entity in the registry and removes all its components. */
-	void DestroyObject(entt::entity id);
-	/** @brief Destroys all objects in the scene and clears the registry. */
+	void DestroyEntity(EntityId id);
+	/** @brief Destroys all entities in the scene and clears the registry. */
 	void Clear();
 
-	void RegisterArchetype(Archetype archetype);
-	GameObject CreateObject(StringView archetypeName);
-	GameObject CreateObject(ArchetypeId archetypeId);
+	void RegisterArchetype(EntityArchetype archetype);
+	Entity CreateEntity(StringView archetypeName);
+	Entity CreateEntity(ArchetypeId archetypeId);
 
 	template<typename Component>
-	Optional<GameObject> FindObjectWithComponent()
+	Optional<Entity> FindEntityWithComponent()
 	{
 		auto view = _entityRegistry.view<Component>();
 		if (view.empty())
 			return std::nullopt;
 
 		auto entity = *view.begin();
-		auto& archetypeComponent = _entityRegistry.get<ArchetypeComponent>(entity);
+		auto& archetypeComponent = _entityRegistry.get<Components::ArchetypeIdentifier>(entity);
 		auto archetypeId = archetypeComponent.archetypeId;
 		auto archetype = _archetypeRegistry.GetArchetype(archetypeId);
-		return GameObject(entity, &_entityRegistry, archetype);
+		return Entity{ entity, &_entityRegistry, archetype };
 	}
 
 	template<typename Component>
-	void FindAllObjectsWithComponent(Vector<GameObject>& out)
+	void FindAllEntitiesWithComponent(Vector<Entity>& out)
 	{
-		out = Vector<GameObject>{};
+		out = Vector<Entity>{};
 		auto view = _entityRegistry.view<Component>();
 		for (auto entity : view)
 		{
-			auto& archetypeComponent = _entityRegistry.get<ArchetypeComponent>(entity);
+			auto& archetypeComponent = _entityRegistry.get<Components::ArchetypeIdentifier>(entity);
 			auto archetypeId = archetypeComponent.archetypeId;
 			auto archetype = _archetypeRegistry.GetArchetype(archetypeId);
 			out.emplace_back(entity, &_entityRegistry, archetype);
 		}
 	}
 
-	Optional<GameObject> FindObjectWithTag(StringView tagName);
-	void FindAllWithArchetype(ArchetypeId archetypeId, Vector<GameObject>& out);
-	void FindAllWithArchetype(StringView archetypeName, Vector<GameObject>& out);
+	Optional<Entity> FindEntityWithTag(StringView tagName);
+	void FindAllWithArchetype(ArchetypeId archetypeId, Vector<Entity>& out);
 
 	auto& GetEntityRegistry() { return _entityRegistry; }
 	auto& GetArchetypeRegistry() { return _archetypeRegistry; }
 
 private:
 	EntityRegistry _entityRegistry;
-	ArchetypeRegistry _archetypeRegistry;
+	EntityArchetypeRegistry _archetypeRegistry;
 };

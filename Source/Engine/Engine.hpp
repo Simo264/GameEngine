@@ -3,8 +3,8 @@
 #include "Core/Core.hpp"
 #include "Core/Math/Base.hpp"
 
-#include "Engine/Mesh.hpp"
-#include "Engine/Graphics/Containers/FrameBuffer.hpp"
+#include "Engine/Components/StaticMesh.hpp"
+#include "Engine/Graphics/FrameBuffer.hpp"
 
 class Engine
 {
@@ -22,14 +22,14 @@ private:
 	void __CalculatePerFrameTime();
 	void __CreateCameraUBO(i32 bindingPoint);
 	void __CreateLightUBO(i32 bindingPoint);
-	Mesh __CreateMeshQuad();
+	Components::StaticMesh __CreateMeshQuad();
 	void __CreateMSAAFramebuffer(i32 w, i32 h, i32 samples);
 	void __ResolveMSAAFramebuffer(i32 w, i32 h);
 
 	Framebuffer _MSAAFramebuffer;
 	Framebuffer _MSAAFramebufferResolver;
 	i32 _MSAAFramebufferSamples;
-	Mesh _screenQuad;
+	Components::StaticMesh _screenQuad;
 	Buffer _uboCameraBlock;	// UBO "CameraBlock"	-> bindpoint 0
 	Buffer _uboLightBlock;	// UBO "LightBlock"		-> bindpoint 1
 	

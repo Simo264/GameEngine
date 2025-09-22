@@ -1,5 +1,17 @@
 #pragma once
 
+#include "Core/Core.hpp"
+
 class Scene;
 
-void GUI_MenuBar(Scene& scene);
+class MenuBar
+{
+public:
+	MenuBar(){}
+
+	void Render(Scene& scene);
+private:
+	void __RenderFileMenu(Scene& scene);
+	void __RenderViewMenu();
+};
+

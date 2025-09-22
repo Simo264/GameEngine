@@ -7,7 +7,7 @@
 
 namespace Components
 {
-	Mat4F Camera::GetViewMatrix() const
+	Mat4F Camera::CalculateViewMatrix() const
 	{
 		// Construct the camera matrix using the camera's right (u), up (v), and forward (w) vectors.
 		// The matrix represents the camera's position and orientation in world space.
@@ -33,7 +33,7 @@ namespace Components
 		M_cam = glm::transpose(M_cam); // from row-major to column-major order
 		return M_cam;
 	}
-	Mat4F Camera::GetPerspectiveProjection(f32 fovy, f32 aspect, f32 n, f32 f) const
+	Mat4F Camera::CalculatePerspectiveMatrix(f32 aspect) const
 	{
 		// Constructs a matrix that projects the view volume (frustum)
 		// defined by fovy, aspect, near, and far into the OpenGL canonical volume [-1, 1]^3. 
@@ -52,23 +52,21 @@ namespace Components
 		//   | 0,							0,						(|n|+|f|)/(|n|-|f|),	(2|f||n|)/(|n|-|f|) |
 		//   | 0,							0,						-1,										0										|
 
-		n = glm::abs(n);
-		f = glm::abs(f);
-
-		auto t = tan(fovy / 2.0f) * n;
+		auto fovY = 2.0f * glm::atan(glm::tan(glm::radians(fovH) * 0.5f) / aspect);
+		auto t = tan(fovY / 2.0f) * nearClip;
 		auto b = -t;
 		auto r = t * aspect;
 		auto l = -r;
 		auto M_per = Mat4F{
-			(2 * n) / (r - l), 0,						(r + l) / (r - l), 0,
-			0,					 (2 * n) / (t - b), (t + b) / (t - b), 0,
-			0,					 0,						(n + f) / (n - f), (2 * f * n) / (n - f),
-			0,					 0,						-1,					 0
+			(2 * nearClip) / (r - l),  0, (r + l) / (r - l), 0,
+			0, (2 * nearClip) / (t - b), (t + b) / (t - b),	0,
+			0, 0, (nearClip + farClip) / (nearClip - farClip),	(2 * farClip * nearClip) / (nearClip - farClip),
+			0, 0,	-1, 0
 		};
 		M_per = glm::transpose(M_per); // from row-major to column-major
 		return M_per;
 	}
-	Mat4F Camera::GetOrthographicProjection(f32 l, f32 r, f32 b, f32 t, f32 n, f32 f) const
+	Mat4F Camera::CalculateOrthographicMatrix(f32 l, f32 r, f32 b, f32 t) const
 	{
 		// Constructs a matrix that projects the orthographic volume 
 		// defined by left, right, bottom, top, near, and far into the OpenGL canonical volume [-1, 1]^3.
@@ -91,12 +89,13 @@ namespace Components
 		//   | 0,       0,       -2/(f-n), -(f+n)/(f-n) |
 		//   | 0,       0,       0,        1            |
 
-
+		auto n = nearClip;
+		auto f = farClip;
 		auto M_orth = Mat4F{
-			2.f / (r - l),  0,          0,          -(r + l) / (r - l),
-			0,          2.f / (t - b),  0,          -(t + b) / (t - b),
-			0,          0,         -2.f / (f - n),  -(f + n) / (f - n),
-			0,          0,          0,          1
+			2.f / (r - l), 0, 0, -(r + l) / (r - l),
+			0, 2.f / (t - b), 0, -(t + b) / (t - b),
+			0, 0, -2.f / (f - n), -(f + n) / (f - n),
+			0, 0,	0, 1
 		};
 		M_orth = glm::transpose(M_orth); // row-major to column-major order
 		return M_orth;

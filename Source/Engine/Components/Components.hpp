@@ -1,8 +1,12 @@
 #pragma once
 
 // Include all components
-#include "Camera.hpp"
+#include "ArchetypeIdentifier.hpp"
+#include "AssetIdentifier.hpp"
 #include "Tag.hpp"
-#include "Transform.hpp"
 #include "Light.hpp"
+#include "Material.hpp"
+#include "Camera.hpp"
+#include "Transform.hpp"
 #include "StaticMesh.hpp"
+
