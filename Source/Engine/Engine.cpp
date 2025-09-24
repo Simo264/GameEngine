@@ -209,33 +209,16 @@ void Engine::Run()
   scene.RegisterArchetype(lightSourceArchetype);
   scene.RegisterArchetype(staticMeshArchetype);
 
-  auto entityCam = scene.CreateEntity(cameraArchetype.GetName());
-  entityCam.GetComponent<Components::Tag>()->UpdateValue("Camera");
-  auto& camera = entityCam.AddComponent<Components::Camera>();
-  camera.position = Vec3F(0.f, 0.f, 10.0f);
-
   scene.LoadFromFile((Utils::GetRootPath() / "Scene.yaml"));
 
-  auto light = scene.FindEntityWithComponent<DirectionalLight>();
-  auto dirLight = light->GetComponent<DirectionalLight>();
-  light = scene.FindEntityWithComponent<PointLight>();
-  auto pointLight = light->GetComponent<PointLight>();
-  light = scene.FindEntityWithComponent<SpotLight>();
-  auto spotLight = light->GetComponent<SpotLight>();
-  {
-    auto& instance = TexturesManager::GetInstance();
-    auto e = scene.FindEntityWithTag("plane");
-    auto mesh = e->GetComponent<StaticMesh>();
-    auto material = e->GetComponent<Material>();
-    material->albedo = instance.GetOrCreateTexture("wood_floor_worn/wood_floor_worn_albedo.jpg");
-    material->normalMap = instance.GetOrCreateTexture("wood_floor_worn/wood_floor_worn_normal.jpg");
-    
-    e = scene.FindEntityWithTag("monkey");
-    mesh = e->GetComponent<StaticMesh>();
-    material = e->GetComponent<Material>();
-    material->albedo = instance.GetOrCreateTexture("worn-old-plastic/worn-old-plastic_albedo.png");
-    material->normalMap = instance.GetOrCreateTexture("worn-old-plastic/worn-old-plastic_normal-ogl.png");
-  }
+  auto e = scene.FindEntityWithComponent<Camera>();
+  auto camera = e->GetComponent<Camera>();
+  e = scene.FindEntityWithComponent<DirectionalLight>();
+  auto dirLight = e->GetComponent<DirectionalLight>();
+  e = scene.FindEntityWithComponent<PointLight>();
+  auto pointLight = e->GetComponent<PointLight>();
+  e = scene.FindEntityWithComponent<SpotLight>();
+  auto spotLight = e->GetComponent<SpotLight>();
 
   // ----------------------------------------------------------------------
   // -------------------------- Pre-loop section --------------------------
@@ -246,7 +229,7 @@ void Engine::Run()
   auto goochProgram = shadersManager.GetProgram("GoochShading");
   auto blinnPhongProgram = shadersManager.GetProgram("BlinnPhongShading");
   
-  RenderSystem renderSystem;
+  auto renderSystem = RenderSystem{};
   renderSystem.SetProgram(blinnPhongProgram);
 
   // ------------------------------------------------------------------
@@ -268,21 +251,21 @@ void Engine::Run()
     windowManager.PoolEvents();
     if (guiLayer.viewport.isFocused)
     {
-      camera.ProcessKeyboard(static_cast<f32>(_delta), 10.0f);
-      camera.ProcessMouseMovement(glm::radians(0.05f));
+      camera->ProcessKeyboard(static_cast<f32>(_delta), 10.0f);
+      camera->ProcessMouseMovement(0.05f);
     }
 
     // --------------------------------------------------------------------
     // -------------------------- Update section --------------------------
     // --------------------------------------------------------------------
-    auto cameraView = camera.CalculateViewMatrix();
-    auto cameraProj = camera.CalculatePerspectiveMatrix(aspect);
+    auto cameraView = camera->CalculateViewMatrix();
+    auto cameraProj = camera->CalculatePerspectiveMatrix(aspect);
 
     // Update camera UBO
     {
       auto matrices = Array<Mat4F, 2>{ cameraView, cameraProj };
       _uboCameraBlock.UpdateStorage(0, sizeof(matrices), reinterpret_cast<byte*>(matrices.data()));
-      _uboCameraBlock.UpdateStorage(sizeof(matrices), sizeof(Vec3F), reinterpret_cast<byte*>(&camera.position));
+      _uboCameraBlock.UpdateStorage(sizeof(matrices), sizeof(Vec3F), reinterpret_cast<byte*>(&camera->position));
     }
 
     // Update light UBO

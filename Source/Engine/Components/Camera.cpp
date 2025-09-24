@@ -103,15 +103,15 @@ namespace Components
 
 	Vec3F Camera::CalculateForwardVector() const
 	{
-		return Quat(eulerAngles) * Vec3F(0.f, 0.f, -1.f);
+		return Quat(glm::radians(eulerAngles)) * Vec3F(0.f, 0.f, -1.f);
 	}
 	Vec3F Camera::CalculateRightVector() const
 	{
-		return Quat(eulerAngles) * Vec3F(1.f, 0.f, 0.f);
+		return Quat(glm::radians(eulerAngles)) * Vec3F(1.f, 0.f, 0.f);
 	}
 	Vec3F Camera::CalculateUpVector() const
 	{
-		return Quat(eulerAngles) * Vec3F(0.f, 1.f, 0.f);
+		return Quat(glm::radians(eulerAngles)) * Vec3F(0.f, 1.f, 0.f);
 	}
 
 	void Camera::ProcessKeyboard(f32 delta, f32 movementSpeed)

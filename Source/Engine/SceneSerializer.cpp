@@ -10,7 +10,7 @@ using namespace Components;
 
 enum class ComponentType
 {
-	Archetype, Tag, Transformation, StaticMesh, Light, Unknown
+	Archetype, Tag, Camera, Transformation, StaticMesh, Light, Unknown
 };
 static ComponentType GetComponentType(StringView name)
 {
@@ -18,7 +18,9 @@ static ComponentType GetComponentType(StringView name)
 		return ComponentType::Archetype;
 	if (name.compare("tag") == 0) 
 		return ComponentType::Tag;
-	else if (name.compare("transformation") == 0) 
+	if (name.compare("camera") == 0)
+		return ComponentType::Camera;
+	else if (name.compare("transform") == 0) 
 		return ComponentType::Transformation;
 	else if (name.compare("staticmesh") == 0)
 		return ComponentType::StaticMesh;
@@ -51,8 +53,11 @@ void SceneSerializer::SerializeScene(Scene& scene, const fs::path& outPath)
 		auto tag = *entity.GetComponent<Tag>();
 		__SerializeTag(outEmitter, tag);
 
+		if (auto camera = entity.GetComponent<Camera>())
+			__SerializeCamera(outEmitter, *camera);
+
 		if (auto transform = entity.GetComponent<Transform>())
-			__SerializeTransformation(outEmitter, *transform);
+			__SerializeTransform(outEmitter, *transform);
 
 		if (auto staticMesh = entity.GetComponent<StaticMesh>())
 		{
@@ -108,8 +113,11 @@ void SceneSerializer::DeserializeScene(Scene& scene, const fs::path& fromPath)
 				case ComponentType::Tag:
 					__DeserializeTag(entity, node);
 					break;
+				case ComponentType::Camera:
+					__DeserializeCamera(entity, node);
+					break;
 				case ComponentType::Transformation:
-					__DeserializeTransformation(entity, node); 
+					__DeserializeTransform(entity, node); 
 					break;
 				case ComponentType::StaticMesh:    
 					__DeserializeStaticMesh(entity, node); 
@@ -123,12 +131,29 @@ void SceneSerializer::DeserializeScene(Scene& scene, const fs::path& fromPath)
 	}
 }
 
-void SceneSerializer::__DeserializeTag(Entity& entity, const YAML::Node& node)
+void SceneSerializer::__DeserializeTag(Entity& entity, const YAML::Node& node) const
 {
 	auto tag = node.as<String>();
 	entity.GetComponent<Tag>()->UpdateValue(tag);
 }
-void SceneSerializer::__DeserializeTransformation(Entity& entity, const YAML::Node& node)
+void SceneSerializer::__DeserializeCamera(Entity& entity, const YAML::Node& node) const
+{
+	auto& camera = entity.AddComponent<Camera>();
+	auto& pos = node["position"];
+	camera.position.x = pos[0].as<f32>();
+	camera.position.y = pos[1].as<f32>();
+	camera.position.z = pos[2].as<f32>();
+	
+	auto rot = node["rotation"];
+	camera.eulerAngles.x = rot[0].as<f32>();
+	camera.eulerAngles.y = rot[1].as<f32>();
+	camera.eulerAngles.z = rot[2].as<f32>();
+
+	camera.fovH = node["fovH"].as<f32>();
+	camera.nearClip = node["nearClip"].as<f32>();
+	camera.farClip = node["farClip"].as<f32>();
+}
+void SceneSerializer::__DeserializeTransform(Entity& entity, const YAML::Node& node) const
 {
 	auto& transform = entity.AddComponent<Transform>();
 
@@ -150,7 +175,7 @@ void SceneSerializer::__DeserializeTransformation(Entity& entity, const YAML::No
 	transform.eulerAngles.y = rotationNode[1].as<f32>();
 	transform.eulerAngles.z = rotationNode[2].as<f32>();
 }
-void SceneSerializer::__DeserializeStaticMesh(Entity& entity, const YAML::Node& node)
+void SceneSerializer::__DeserializeStaticMesh(Entity& entity, const YAML::Node& node) const
 {
 	auto relative = node["path"].as<String>();
 	auto absolute = Utils::GetModelsPath() / relative;
@@ -162,7 +187,7 @@ void SceneSerializer::__DeserializeStaticMesh(Entity& entity, const YAML::Node& 
 
 	auto& instance = AssetsManager::GetInstance();
 	auto assetId = instance.GetAssetId(absolute);
-	if(assetId == INVALID_ASSET_ID)
+	if (assetId == INVALID_ASSET_ID)
 		assetId = instance.RegisterAsset(absolute);
 	entity.AddComponent<AssetIdentifier>(assetId);
 
@@ -175,10 +200,10 @@ void SceneSerializer::__DeserializeStaticMesh(Entity& entity, const YAML::Node& 
 	auto loader = StaticMeshLoader{};
 	loader.LoadDataFromFile(absolute, mesh, material);
 }
-void SceneSerializer::__DeserializeDirLight(Entity& entity, const YAML::Node& node)
+void SceneSerializer::__DeserializeDirLight(Entity& entity, const YAML::Node& node) const
 {
 	auto& light = entity.AddComponent<DirectionalLight>();
-	
+
 	auto colorNode = node["color"];
 	light.color.r = colorNode[0].as<f32>();
 	light.color.g = colorNode[1].as<f32>();
@@ -191,7 +216,7 @@ void SceneSerializer::__DeserializeDirLight(Entity& entity, const YAML::Node& no
 
 	light.intensity = node["intensity"].as<f32>();
 }
-void SceneSerializer::__DeserializePointLight(Entity& entity, const YAML::Node& node)
+void SceneSerializer::__DeserializePointLight(Entity& entity, const YAML::Node& node) const
 {
 	auto& light = entity.AddComponent<PointLight>();
 
@@ -209,7 +234,7 @@ void SceneSerializer::__DeserializePointLight(Entity& entity, const YAML::Node& 
 	light.kl = node["kl"].as<f32>();
 	light.kq = node["kq"].as<f32>();
 }
-void SceneSerializer::__DeserializeSpotLight(Entity& entity, const YAML::Node& node)
+void SceneSerializer::__DeserializeSpotLight(Entity& entity, const YAML::Node& node) const
 {
 	auto& light = entity.AddComponent<SpotLight>();
 
@@ -234,7 +259,7 @@ void SceneSerializer::__DeserializeSpotLight(Entity& entity, const YAML::Node& n
 	light.thetaU = node["thetaU"].as<f32>();
 	light.thetaP = node["thetaP"].as<f32>();
 }
-void SceneSerializer::__DeserializeLight(Entity& entity, const YAML::Node& node)
+void SceneSerializer::__DeserializeLight(Entity& entity, const YAML::Node& node) const
 {
 	auto type = node["type"].as<i32>();
 	entity.AddComponent<Light>(static_cast<LightType>(type));
@@ -254,17 +279,36 @@ void SceneSerializer::__DeserializeLight(Entity& entity, const YAML::Node& node)
 	}
 }
 
-void SceneSerializer::__SerializeTag(YAML::Emitter& outEmitter, const Tag& tag)
+void SceneSerializer::__SerializeTag(YAML::Emitter& outEmitter, const Tag& tag) const
 {
 	outEmitter << YAML::Key << "Tag" << YAML::Value << tag.value.data();
 }
-void SceneSerializer::__SerializeTransformation(YAML::Emitter& outEmitter, const Transform& transform)
+void SceneSerializer::__SerializeCamera(YAML::Emitter& outEmitter, const Components::Camera& camera) const
+{
+	outEmitter << YAML::Key << "Camera";
+	outEmitter << YAML::BeginMap;
+
+	outEmitter << YAML::Key << "position" << YAML::Value << YAML::Flow << YAML::BeginSeq;
+	outEmitter << camera.position.x << camera.position.y << camera.position.z;
+	outEmitter << YAML::EndSeq;
+
+	outEmitter << YAML::Key << "rotation" << YAML::Value << YAML::Flow << YAML::BeginSeq;
+	outEmitter << camera.eulerAngles.x << camera.eulerAngles.y << camera.eulerAngles.z;
+	outEmitter << YAML::EndSeq;
+
+	outEmitter << YAML::Key << "fovH" << YAML::Value << camera.fovH;
+	outEmitter << YAML::Key << "nearClip" << YAML::Value << camera.nearClip;
+	outEmitter << YAML::Key << "farClip" << YAML::Value << camera.farClip;
+
+	outEmitter << YAML::EndMap;
+}
+void SceneSerializer::__SerializeTransform(YAML::Emitter& outEmitter, const Transform& transform) const
 {
 	auto& position = transform.position;
 	auto& scale = transform.scale;
 	auto& degrees = transform.eulerAngles;
 
-	outEmitter << YAML::Key << "Transformation";
+	outEmitter << YAML::Key << "Transform";
 	outEmitter << YAML::BeginMap;
 	outEmitter << YAML::Key << "position";
 	outEmitter << YAML::Flow << YAML::BeginSeq;
@@ -279,10 +323,10 @@ void SceneSerializer::__SerializeTransformation(YAML::Emitter& outEmitter, const
 	outEmitter << degrees.x << degrees.y << degrees.z;
 	outEmitter << YAML::EndSeq;
 	outEmitter << YAML::EndMap;
-}
+} 
 void SceneSerializer::__SerializeStaticMesh(YAML::Emitter& outEmitter, 
 																						const StaticMesh& staticMesh,
-																						AssetIdentifier assetIdentifier)
+																						AssetIdentifier assetIdentifier) const
 {
 	auto& instance = AssetsManager::GetInstance();
 	auto absolute = instance.GetAssetPath(assetIdentifier.assetId);
@@ -295,7 +339,7 @@ void SceneSerializer::__SerializeStaticMesh(YAML::Emitter& outEmitter,
 	outEmitter << YAML::Key << "path" << YAML::Value << relative.string();
 	outEmitter << YAML::EndMap;
 }
-void SceneSerializer::__SerializeDirectionalLight(YAML::Emitter& outEmitter, const DirectionalLight& light)
+void SceneSerializer::__SerializeDirectionalLight(YAML::Emitter& outEmitter, const DirectionalLight& light) const
 {
 	outEmitter << YAML::Key << "color";
 	outEmitter << YAML::Flow << YAML::BeginSeq;
@@ -307,7 +351,7 @@ void SceneSerializer::__SerializeDirectionalLight(YAML::Emitter& outEmitter, con
 	outEmitter << YAML::EndSeq;
 	outEmitter << YAML::Key << "intensity" << YAML::Value << light.intensity;
 }
-void SceneSerializer::__SerializePointLight(YAML::Emitter& outEmitter, const PointLight& light)
+void SceneSerializer::__SerializePointLight(YAML::Emitter& outEmitter, const PointLight& light) const
 {
 	outEmitter << YAML::Key << "color";
 	outEmitter << YAML::Flow << YAML::BeginSeq;
@@ -321,7 +365,7 @@ void SceneSerializer::__SerializePointLight(YAML::Emitter& outEmitter, const Poi
 	outEmitter << YAML::Key << "kl" << YAML::Value << light.kl;
 	outEmitter << YAML::Key << "kq" << YAML::Value << light.kq;
 }
-void SceneSerializer::__SerializeSpotLight(YAML::Emitter& outEmitter, const SpotLight& light)
+void SceneSerializer::__SerializeSpotLight(YAML::Emitter& outEmitter, const SpotLight& light) const
 {
 	outEmitter << YAML::Key << "color";
 	outEmitter << YAML::Flow << YAML::BeginSeq;
@@ -344,7 +388,7 @@ void SceneSerializer::__SerializeSpotLight(YAML::Emitter& outEmitter, const Spot
 	outEmitter << YAML::Key << "thetaU" << YAML::Value << light.thetaU;
 	outEmitter << YAML::Key << "thetaP" << YAML::Value << light.thetaP;
 }
-void SceneSerializer::__SerializeLight(YAML::Emitter& outEmitter, const Light& light, Entity& entity)
+void SceneSerializer::__SerializeLight(YAML::Emitter& outEmitter, const Light& light, Entity& entity) const
 {
 	outEmitter << YAML::Key << "Light";
 	outEmitter << YAML::BeginMap;

@@ -7,6 +7,7 @@
 #include <fstream>
 #include <filesystem>
 #include <format>
+#include <functional>
 #include <iostream>
 #include <limits>
 #include <map>
@@ -44,6 +45,8 @@ using SharedPointer = std::shared_ptr<T>;
 
 template <typename T>
 using Optional = std::optional<T>;
+template <typename T>
+using Function = std::function<T>;
 
 /************** Data types **************/
 /****************************************/

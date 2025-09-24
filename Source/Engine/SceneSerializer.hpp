@@ -17,19 +17,21 @@ public:
   void DeserializeScene(Scene& scene, const fs::path& fromPath);
 
 private:
-  void __SerializeTag(YAML::Emitter& out, const Tag& tag);
-  void __SerializeTransformation(YAML::Emitter& out, const Transform& transform);
-  void __SerializeStaticMesh(YAML::Emitter& out, const StaticMesh& staticMesh, AssetIdentifier assetIdentifier);
-  void __SerializeLight(YAML::Emitter& out, const Light& light, Entity& entity);
-  void __SerializeDirectionalLight(YAML::Emitter& out, const DirectionalLight& light);
-  void __SerializePointLight(YAML::Emitter& out, const PointLight& light);
-  void __SerializeSpotLight(YAML::Emitter& out, const SpotLight& light);
+  void __SerializeTag(YAML::Emitter& outEmitter, const Tag& tag) const;
+  void __SerializeCamera(YAML::Emitter& outEmitter, const Camera& camera) const;
+  void __SerializeTransform(YAML::Emitter& outEmitter, const Transform& transform) const;
+  void __SerializeStaticMesh(YAML::Emitter& outEmitter, const StaticMesh& staticMesh, AssetIdentifier assetIdentifier) const;
+  void __SerializeLight(YAML::Emitter& outEmitter, const Light& light, Entity& entity) const;
+  void __SerializeDirectionalLight(YAML::Emitter& outEmitter, const DirectionalLight& light) const;
+  void __SerializePointLight(YAML::Emitter& outEmitter, const PointLight& light) const;
+  void __SerializeSpotLight(YAML::Emitter& outEmitter, const SpotLight& light) const;
 
-  void __DeserializeTag(Entity& entity, const YAML::Node& node);
-  void __DeserializeTransformation(Entity& entity, const YAML::Node& node);
-  void __DeserializeStaticMesh(Entity& entity, const YAML::Node& node);
-  void __DeserializeLight(Entity& entity, const YAML::Node& node);
-  void __DeserializeDirLight(Entity& entity, const YAML::Node& node);
-  void __DeserializePointLight(Entity& entity, const YAML::Node& node);
-  void __DeserializeSpotLight(Entity& entity, const YAML::Node& node);
+  void __DeserializeTag(Entity& entity, const YAML::Node& node) const;
+  void __DeserializeCamera(Entity& entity, const YAML::Node& node) const;
+  void __DeserializeTransform(Entity& entity, const YAML::Node& node) const;
+  void __DeserializeStaticMesh(Entity& entity, const YAML::Node& node) const;
+  void __DeserializeLight(Entity& entity, const YAML::Node& node) const;
+  void __DeserializeDirLight(Entity& entity, const YAML::Node& node) const;
+  void __DeserializePointLight(Entity& entity, const YAML::Node& node) const;
+  void __DeserializeSpotLight(Entity& entity, const YAML::Node& node) const;
 };

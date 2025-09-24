@@ -22,7 +22,7 @@ namespace Components
 		void ProcessMouseMovement(f32 mouseSensitivity);
 
 		Vec3F position{ 0.f };
-		Vec3F eulerAngles{ 0.f };
+		Vec3F eulerAngles{ 0.f }; // in degrees
 		f32 fovH{ 60.f }; // in degrees
 		f32 nearClip{ 0.1f };
 		f32 farClip{ 50.0f };

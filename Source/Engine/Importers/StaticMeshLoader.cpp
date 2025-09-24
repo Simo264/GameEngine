@@ -63,39 +63,18 @@ void StaticMeshLoader::LoadDataFromFile(const fs::path& absolutePathToFile,
 	__LoadIndices(indexBuffer, aimesh);
 
 	// Load material
-	if (scene->HasMaterials())
+	for (auto i = 0u; i < scene->mNumMaterials; ++i)
 	{
 		auto& instance = TexturesManager::GetInstance();
-		auto aimaterial = scene->mMaterials[0];
-
-		// load albedo if exists
 		auto fileName = aiString{};
-		if (aimaterial->GetTexture(aiTextureType_DIFFUSE, 0, &fileName) == aiReturn_SUCCESS)
-			materialDest.albedo = instance.GetOrCreateTexture(fileName.C_Str());;
 
-		// load normal if exists
+		auto aimaterial = scene->mMaterials[i];
+		if (aimaterial->GetTexture(aiTextureType_DIFFUSE, 0, &fileName) == aiReturn_SUCCESS)
+			materialDest.albedo = instance.GetOrCreateTexture(fileName.C_Str());
+		
 		fileName = aiString{};
 		if (aimaterial->GetTexture(aiTextureType_NORMALS, 0, &fileName) == aiReturn_SUCCESS)
 			materialDest.normalMap = instance.GetOrCreateTexture(fileName.C_Str());
-
-
-		// Metallic/Roughness (spesso in un’unica texture)
-		// if (aimaterial->GetTexture(aiTextureType_METALNESS, 0, &fileName) == aiReturn_SUCCESS)
-		// {
-		// 	// ...
-		// }
-
-		// Emissive
-		//if (aimaterial->GetTexture(aiTextureType_EMISSIVE, 0, &fileName) == aiReturn_SUCCESS)
-		//{
-		//	// ...
-		//}
-
-		// Occlusion
-		//if (aimaterial->GetTexture(aiTextureType_LIGHTMAP, 0, &fileName) == aiReturn_SUCCESS)
-		//{
-		//	// ...
-		//}
 	}
 	
 	meshDest.vertexArray.AttachVertexBuffer(0, vertBuffer.id, 0, stride);
@@ -155,21 +134,3 @@ void StaticMeshLoader::__LoadIndices(Buffer& indexBuffer, aiMesh* aimesh)
 	}
 	indexBuffer.UnmapStorage();
 }
-
-#if 0
-void StaticMeshLoader::__LoadMeshMaterial(const aiScene* scene, aiMesh* aimesh, Mesh& mesh)
-{
-	auto& manager = TexturesManager::GetInstance();
-
-	auto fileName = aiString{};
-	auto aimaterial = scene->mMaterials[aimesh->mMaterialIndex];
-	if (aimaterial->GetTexture(aiTextureType_DIFFUSE, 0, &fileName) == aiReturn_SUCCESS)
-		mesh.material.albedo = manager.GetOrCreateTexture(fileName.C_Str());
-
-	if (aimaterial->GetTexture(aiTextureType_NORMALS, 0, &fileName) == aiReturn_SUCCESS)
-		mesh.material.normalMap = manager.GetOrCreateTexture(fileName.C_Str());
-
-	//if (aimaterial->GetTexture(aiTextureType_SPECULAR, 0, &fileName) == aiReturn_SUCCESS)
-	//	mesh.material.specular = manager.GetOrCreateTexture(fileName.C_Str());
-}
-#endif

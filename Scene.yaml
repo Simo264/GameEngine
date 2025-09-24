@@ -1,7 +1,7 @@
 Entity0:
   Archetype: StaticMesh
   Tag: monkey
-  Transformation:
+  Transform:
     position: [0, 0, -5]
     scale: [1, 1, 1]
     rotation: [0, 0, 0]
@@ -11,7 +11,7 @@ Entity0:
 Entity1:
   Archetype: StaticMesh
   Tag: sphere
-  Transformation:
+  Transform:
     position: [3, 0, -5]
     scale: [3, 3, 3]
     rotation: [0, 0, 0]
@@ -21,7 +21,7 @@ Entity1:
 Entity2:
   Archetype: StaticMesh
   Tag: plane
-  Transformation:
+  Transform:
     position: [0, -1, 0]
     scale: [5, 5, 5]
     rotation: [0, 0, 0]
@@ -61,3 +61,13 @@ Entity5:
     kq: 0.2
     thetaU: 17.5
     thetaP: 12.5
+Entity6:
+  Archetype: Camera
+  Tag: Camera
+  Camera:
+    position: [0, 0, -3]
+    rotation: [0, 0, 0]
+    fovH: 60
+    nearClip: 0.1
+    farClip: 100.0
+
