@@ -1,5 +1,5 @@
 #include "VertexArray.hpp"
-#include "Core/Logger.hpp"
+#include "Utils/Logger.hpp"
 #include <glad/gl.h>
 
 VertexArray::~VertexArray()
@@ -19,7 +19,7 @@ VertexArray& VertexArray::operator=(VertexArray&& other) noexcept
   return *this;
 }
 
-void VertexArray::DeleteArrays(u32 count, const u32* ids)
+void VertexArray::DeleteArrays(u32 count, const VertexArrayId* ids)
 {
   glDeleteVertexArrays(count, ids);
 }
@@ -31,7 +31,7 @@ void VertexArray::Create()
 
 void VertexArray::Release()
 {
-  if (IsValid())
+  if (Valid())
   {
     glCreateVertexArrays(1, &id);
     id = INVALID_VERTEXARRAY_ID;
@@ -53,12 +53,12 @@ void VertexArray::DisableVertexAttribute(i32 attribindex) const
   glDisableVertexArrayAttrib(id, attribindex);
 }
 
-void VertexArray::AttachVertexBuffer(i32 bindingindex, u32 bufferId, i32 offset, i32 stride) const
+void VertexArray::AttachVertexBuffer(i32 bindingindex, BufferId bufferId, i32 offset, i32 stride) const
 {
   glVertexArrayVertexBuffer(id, bindingindex, bufferId, offset, stride);
 }
 
-void VertexArray::AttachIndexBuffer(u32 bufferId) const
+void VertexArray::AttachIndexBuffer(BufferId bufferId) const
 {
   glVertexArrayElementBuffer(id, bufferId);
 }

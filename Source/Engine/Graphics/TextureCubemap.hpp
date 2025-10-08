@@ -1,7 +1,8 @@
 #pragma once
 
-#include "Core/Core.hpp"
-#include "Engine/Graphics/Texture2D.hpp"
+#include "Core/Types.hpp"
+#include "Core/Containers.hpp"
+#include "Texture2D.hpp"
 
 enum class Texture3DFormat : u32
 {
@@ -61,9 +62,9 @@ struct TextureCubemap
 
   void LoadImages(const Array<Texture2D, 6>& images) const;
 
-  auto IsValid() const { return id != INVALID_TEXTURE_ID; }
+  auto Valid() const { return id != INVALID_TEXTURE_ID; }
 
-	u32 id;
+	TextureId id;
 
 private:
   bool __IsValidTexture2DFormat(Texture2DFormat format2d) const;

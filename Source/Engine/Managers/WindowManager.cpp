@@ -1,5 +1,6 @@
 #include "WindowManager.hpp"
-#include "Core/Logger.hpp"
+#include "Utils/Logger.hpp"
+
 #include "Engine/Globals.hpp"
 
 #include <glad/gl.h>
@@ -10,8 +11,8 @@ void WindowManager::Initialize(WindowProps props)
   auto result = glfwInit();
   assert(result == GLFW_TRUE && "Failed to initialize GLFW library");
 
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, props.contextVersionMinor);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, props.contextVersionMajor);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, props.contextVersionMajor);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, props.contextVersionMinor);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
   glfwWindowHint(GLFW_SAMPLES, props.samples); // Enable 4x MSAA on GLFW frame buffer

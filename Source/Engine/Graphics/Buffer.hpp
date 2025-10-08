@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core/Core.hpp"
+#include "Core/Types.hpp"
 
 enum class BufferUsage : u32
 {
@@ -62,7 +62,8 @@ inline BufferMapFlags operator|(BufferMapFlags a, BufferMapFlags b)
 	return static_cast<BufferMapFlags>(static_cast<u32>(a) | static_cast<u32>(b));
 }
 
-constexpr auto INVALID_BUFFER_ID = static_cast<u32>(-1);
+using BufferId = u32;
+constexpr auto INVALID_BUFFER_ID = static_cast<BufferId>(-1);
 
 /**
  * @brief Buffer object that stores an array of unformatted memory allocated by the OpenGL context.
@@ -86,7 +87,7 @@ struct Buffer
 	}
 	Buffer& operator=(Buffer&& other) noexcept;
 
-	static void DeleteBuffers(u32 count, const u32* ids);
+	static void DeleteBuffers(u32 count, const BufferId* ids);
 
 	/** @brief Generates a new buffer ID. */
 	void Create();
@@ -119,9 +120,9 @@ struct Buffer
 	/** @brief Binds a range of the buffer to a specific binding point. */
 	void BindRange(BufferTarget target, u32 bindingpoint, i64 offset, u64 size) const;
 	/** @brief Copies data from another buffer to this buffer. */
-	void CopyFrom(u32 readBuffer, i64 readOffset, i64 writeOffset, u64 size) const;
+	void CopyFrom(BufferId readBuffer, i64 readOffset, i64 writeOffset, u64 size) const;
 	/** @brief Copies data from this buffer to another buffer. */
-	void CopyTo(u32 writeBuffer, i64 readOffset, i64 writeOffset, u64 size) const;
+	void CopyTo(BufferId writeBuffer, i64 readOffset, i64 writeOffset, u64 size) const;
 	/** @brief Returns the size of the buffer in bytes. */
 	i64 GetBufferSize() const;
 	/** @brief Returns the current usage of the buffer. */
@@ -145,9 +146,9 @@ struct Buffer
 	/** @brief Clears a sub-range of the buffer's data. */
 	void ClearSubData(u32 internalFormat, i64 offset, u64 size, u32 format, u32 type, const void* data) const;
 
-	auto IsValid() const { return id != INVALID_BUFFER_ID; }
+	auto Valid() const { return id != INVALID_BUFFER_ID; }
 
-	u32 id;
+	BufferId id;
 private:
 	void* __MapStorageImpl(BufferAccess access) const;
 	void* __MapStorageRangeImpl(i64 offset, u64 size, BufferMapFlags flags) const;

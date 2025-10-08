@@ -1,7 +1,8 @@
 #pragma once
 
-#include "Core/Core.hpp"
-#include "Core/Math/Base.hpp"
+#include "Core/Types.hpp"
+#include "Core/Strings.hpp"
+#include "Core/Math/Types.hpp"
 
 enum class ShaderType : i32
 {
@@ -12,8 +13,11 @@ enum class ShaderType : i32
   Fragment = 0x8B30  // GL_FRAGMENT_SHADER
 };
 
+using ShaderId = u32;
 constexpr auto INVALID_SHADER_ID = static_cast<u32>(-1);
-constexpr auto INVALID_PROGRAM_ID = static_cast<u32>(-1);
+
+using ProgramId = u32;
+constexpr auto INVALID_PROGRAM_ID = static_cast<ProgramId>(-1);
 
 /**
  * @brief https://registry.khronos.org/OpenGL/specs/gl/glspec46.core.pdf (chapter 7)
@@ -39,9 +43,10 @@ public:
   i32 GetParameteri(i32 name) const;
   /** @return The information log for the specified shader object.*/
   const char* GetShaderInfo() const;
-  auto IsValid() const { return id != INVALID_SHADER_ID; }
+  
+  auto Valid() const { return id != INVALID_SHADER_ID; }
 
-  u32 id;
+  ShaderId id;
 };
 
 /**
@@ -114,7 +119,7 @@ public:
   void SetUniformMat3f(StringView uniformname, const Mat3F& value, bool transpose = false) const;
   void SetUniformMat4f(StringView uniformname, const Mat4F& value, bool transpose = false) const;
 
-  auto IsValid() const { return id != INVALID_PROGRAM_ID; }
+  auto Valid() const { return id != INVALID_PROGRAM_ID; }
 
-  u32 id;
+  ProgramId id;
 };

@@ -1,24 +1,28 @@
 #include "MenuBar.hpp"
 #include "ImGuiLayer.hpp"
 
-#include "Core/FileDialog.hpp"
-#include "Engine/Utils.hpp"
-#include "Engine/Scene.hpp"
+#include "Utils/FileDialog.hpp"
+#include "Engine/Paths.hpp"
+#include "Engine/ECS/Scene.hpp"
+#include "Engine/SceneSerializer.hpp"
 #include "Engine/Managers/WindowManager.hpp"
 
 #include <imgui.h>
 
-void MenuBar::Render(Scene& scene)
+void MenuBar::Render()
 {
+  if (!_scene) 
+    return;
+
   if (ImGui::BeginMainMenuBar())
   {
-    __RenderFileMenu(scene);
+    __RenderFileMenu();
     __RenderViewMenu();
     ImGui::EndMainMenuBar();
   }
 }
 
-void MenuBar::__RenderFileMenu(Scene& scene)
+void MenuBar::__RenderFileMenu()
 {
   if (ImGui::BeginMenu("File"))
   {
@@ -27,15 +31,16 @@ void MenuBar::__RenderFileMenu(Scene& scene)
       const char* filterPatterns[] = { "*.yaml" };
       constexpr auto nrFilterPatterns = sizeof(filterPatterns) / sizeof(filterPatterns[0]);
       auto filePath = FileDialog::OpenFileDialog("Open new scene",
-                                                 Utils::GetRootPath(),
+                                                 GetRootPath(),
                                                  nrFilterPatterns,
                                                  filterPatterns,
                                                  "Scene file (*yaml)",
                                                  false);
       if (!filePath.empty())
       {
-        scene.Clear();
-        scene.LoadFromFile(filePath);
+        _scene->Clear();
+        auto serializer = SceneSerializer{ *_scene };
+        serializer.Load(filePath);
       }
     }
 
@@ -44,12 +49,15 @@ void MenuBar::__RenderFileMenu(Scene& scene)
       const char* filterPatterns[] = { "*.yaml" };
       constexpr auto nrFilterPatterns = sizeof(filterPatterns) / sizeof(filterPatterns[0]);
       auto path = FileDialog::SaveFileDialog("Save scene",
-                                             Utils::GetRootPath(),
+                                             GetRootPath(),
                                              nrFilterPatterns,
                                              filterPatterns,
                                              "Scene file (*yaml)");
       if (!path.empty())
-        scene.SaveToFile(path);
+      {
+        auto serializer = SceneSerializer{ *_scene };
+        serializer.Save(path);
+      }
     }
 
     ImGui::Separator();

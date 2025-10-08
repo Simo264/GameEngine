@@ -1,6 +1,7 @@
 ﻿#pragma once
 
-#include "Core/Core.hpp"
+#include "Core/Types.hpp"
+#include "Core/Containers.hpp"
 #include "Engine/Graphics/Texture2D.hpp"
 #include "Engine/Graphics/Renderbuffer.hpp"
 
@@ -70,8 +71,8 @@ enum class FramebufferDrawBuffer : u32
 	COLOR_ATTACHMENT8 = 0x8CE8, // GL_COLOR_ATTACHMENT8
 };
 
-constexpr auto INVALID_FRAMEBUFFER_ID = static_cast<u32>(-1);
-
+using FramebufferId = u32;
+constexpr auto INVALID_FRAMEBUFFER_ID = static_cast<FramebufferId>(-1);
 
 /**
  * @brief Framebuffer objects are a collection of attachments.
@@ -146,7 +147,7 @@ struct Framebuffer
 	 */
 	void SetDrawBuffers(u32 n, FramebufferDrawBuffer bufs[]) const;
 
-	auto IsValid() const { return id != INVALID_FRAMEBUFFER_ID; }
+	auto Valid() const { return id != INVALID_FRAMEBUFFER_ID; }
 
 	Texture2D GetTextureAttachment(u32 index);
 	Renderbuffer GetRenderbufferAttachment(u32 index);
@@ -169,5 +170,5 @@ struct Framebuffer
 	inline static constexpr i32 MAX_NUM_RBO_ATTACHMENTS = 18;
 	Vector<Renderbuffer> rboAttachments;
 
-	u32 id;
+	FramebufferId id;
 };

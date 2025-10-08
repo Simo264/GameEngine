@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core/Core.hpp"
+#include "Core/Types.hpp"
 
 enum class RenderbufferInternalFormat : u32
 {
@@ -26,7 +26,8 @@ enum class RenderbufferInternalFormat : u32
 	STENCIL_INDEX8 = 0x8D48  // GL_STENCIL_INDEX8
 };
 
-constexpr auto INVALID_RENDERBUFFER_ID = static_cast<u32>(-1);
+using RenderBufferId = u32;
+constexpr auto INVALID_RENDERBUFFER_ID = static_cast<RenderBufferId>(-1);
 
 
 /**
@@ -55,5 +56,5 @@ public:
 
 	auto IsValid() const { return id != INVALID_RENDERBUFFER_ID; }
 
-	u32 id;
+	RenderBufferId id;
 };

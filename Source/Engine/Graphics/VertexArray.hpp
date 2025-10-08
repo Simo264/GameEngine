@@ -1,6 +1,7 @@
 ﻿#pragma once
 
-#include "Core/Core.hpp"
+#include "Core/Types.hpp"
+#include "Buffer.hpp"
 
 enum class VertexAttribType : u32
 {
@@ -27,7 +28,8 @@ struct VertexFormat
   i32 relativeoffset{ 0 };
 };
 
-constexpr auto INVALID_VERTEXARRAY_ID = static_cast<u32>(-1);
+using VertexArrayId = u32;
+constexpr auto INVALID_VERTEXARRAY_ID = static_cast<VertexArrayId>(-1);
 
 /**
  * @brief A Vertex Array Object is an OpenGL Object that stores all of the state needed to supply vertex data.
@@ -48,20 +50,18 @@ struct VertexArray
   VertexArray(const VertexArray&) = delete;
   VertexArray& operator=(const VertexArray&) = delete;
 
-  static void DeleteArrays(u32 count, const u32* ids);
+  static void DeleteArrays(u32 count, const VertexArrayId* ids);
 
   /** @brief Creates a new Vertex Array Object (VAO). */
   void Create();
   /** @brief Release GPU memory. */
   void Release();
-  /** @brief Deletes the Vertex Array Object (VAO) and its associated buffers. */
-  void Delete();
   /** @brief Bind vertex array object. */
   void Bind() const;
   /** @brief Bind the vertex buffer to the binding poiint whose index is given by bindingindex */
-  void AttachVertexBuffer(i32 bindingindex, u32 bufferId, i32 offset, i32 stride) const;
+  void AttachVertexBuffer(i32 bindingindex, BufferId bufferId, i32 offset, i32 stride) const;
   /** @brief Configures element array buffer binding of a vertex array object */
-  void AttachIndexBuffer(u32 bufferId) const;
+  void AttachIndexBuffer(BufferId bufferId) const;
   /** @brief Enable a generic vertex attribute array */
   void EnableVertexAttribute(i32 attribindex) const;
   /** @brief Disable a generic vertex attribute array */
@@ -81,7 +81,7 @@ struct VertexArray
   /** @brief Modify the rate at which generic vertex attributes advance */
   void SetBindingDivisor(i32 bindingindex, i32 divisor) const;
   
-  auto IsValid() const { return id != INVALID_VERTEXARRAY_ID; }
+  auto Valid() const { return id != INVALID_VERTEXARRAY_ID; }
 
-	u32 id;
+  VertexArrayId id;
 };

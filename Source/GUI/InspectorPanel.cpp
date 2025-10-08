@@ -1,13 +1,12 @@
 ﻿#include "InspectorPanel.hpp"
-#include "Engine/Scene.hpp"
-
+#include "Engine/ECS/Scene.hpp"
 #include "Engine/Managers/TexturesManager.hpp"
-
 #include <imgui.h>
 
 using namespace Components;
 
-InspectorPanel::InspectorPanel() : isOpen{ true }
+InspectorPanel::InspectorPanel() : 
+  isOpen{ true }
 {
   auto& texManager = TexturesManager::GetInstance();
   _resetIcon = texManager.GetOrCreateIcon("reset-arrow-16.png");
@@ -15,76 +14,69 @@ InspectorPanel::InspectorPanel() : isOpen{ true }
 
 void InspectorPanel::Render(StringView windowName, Entity entity)
 {
-  if (!isOpen)
+  if (!isOpen || !_scene)
     return;
 
   ImGui::Begin(windowName.data(), &isOpen);
-  if (entity.IsValid())
-  {
-    //auto btnWidth = ImGui::GetContentRegionAvail().x - 32.f;
-    //if (__ButtonCentered("+Add component", Vec2I(btnWidth, 26.f)))
-    //  ImGui::OpenPopup("NewComponent_Popup");
-    //ImGui::Spacing();
-    //ImGui::Separator();
-    //ImGui::Spacing();
-
+  if (entity.Valid())
     __ListAllComponents(entity);
-  }
-
-  //__NewComponentPopup(entity);
 
   ImGui::End();
 }
 
 void InspectorPanel::__ListAllComponents(Entity entity)
 {
-  auto archetypeComponent = entity.GetComponent<ArchetypeIdentifier>();
-  ImGui::Text("Archetype: %s (ID %d)", entity.GetArchetype()->GetName(), archetypeComponent->archetypeId);
+  auto& archetypeComponent = _scene->GetEntityComponent<ArchetypeIdentifier>(entity);
+  auto archetypeId = archetypeComponent.archetypeId;
+  auto& archetype = _scene->GetArchetypeRegistry().GetArchetype(archetypeId);
+  auto archetypeName = archetype.GetName();
+
+  ImGui::Text("Archetype: %s (ID %d)", archetypeName, archetypeId);
   ImGui::Spacing();
 
-  auto tagComponent = entity.GetComponent<Tag>();
-  __RenderTagComponent(*tagComponent);
+  auto& tagComponent = _scene->GetEntityComponent<Tag>(entity);
+  __RenderTagComponent(tagComponent);
   ImGui::Spacing();
 
-  if (auto camera = entity.GetComponent<Camera>())
+  if (auto cameraComponent = _scene->TryGetEntityComponent<Camera>(entity))
   {
     if (ImGui::CollapsingHeader("Camera", ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick))
     {
-      __RenderCameraComponent(*camera);
+      __RenderCameraComponent(*cameraComponent);
       ImGui::Spacing();
     }
   }
-  if (auto transform = entity.GetComponent<Transform>())
+  if (auto transformComponent = _scene->TryGetEntityComponent<Transform>(entity))
   {
     if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick))
     {
-      __RenderTransformComponent(*transform);
+      __RenderTransformComponent(*transformComponent);
       ImGui::Spacing();
     }
   }
-  if (auto light = entity.GetComponent<Light>())
+  if (auto lightComponent = _scene->TryGetEntityComponent<Light>(entity))
   {
     if (ImGui::CollapsingHeader("Light", ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick))
     {
-      auto type = light->type;
+      auto type = lightComponent->type;
       switch (type)
       {
         case LightType::Directional:
         {
-          auto dirLight = entity.GetComponent<DirectionalLight>();
-          __RenderDirectionalLight(*dirLight);
+          auto& dirLightComponent = _scene->GetEntityComponent<DirectionalLight>(entity);
+          __RenderDirectionalLight(dirLightComponent);
           break;
         }
         case LightType::Point:
         {
-          auto pointLight = entity.GetComponent<PointLight>();
-          __RenderPointLight(*pointLight);
+          auto& pointLightComponent = _scene->GetEntityComponent<PointLight>(entity);
+          __RenderPointLight(pointLightComponent);
           break;
         }
         case LightType::Spot:
         {
-          auto spotLight = entity.GetComponent<SpotLight>();
-          __RenderSpotLight(*spotLight);
+          auto& spotLightComponent = _scene->GetEntityComponent<SpotLight>(entity);
+          __RenderSpotLight(spotLightComponent);
           break;
         }
         default:
@@ -93,19 +85,19 @@ void InspectorPanel::__ListAllComponents(Entity entity)
       ImGui::Spacing();
     }
   }
-  if (auto mesh = entity.GetComponent<StaticMesh>())
+  if (auto staticMeshComponent = _scene->TryGetEntityComponent<StaticMesh>(entity))
   {
     if (ImGui::CollapsingHeader("Static mesh", ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick))
     {
-      __RenderStaticMeshComponent(*mesh);
+      __RenderStaticMeshComponent(*staticMeshComponent);
       ImGui::Spacing();
     }
   }
-  if (auto material = entity.GetComponent<Material>())
+  if (auto materialComponent = _scene->TryGetEntityComponent<Material>(entity))
   {
     if (ImGui::CollapsingHeader("Material", ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick))
     {
-      __RenderMaterialComponent(*material);
+      __RenderMaterialComponent(*materialComponent);
       ImGui::Spacing();
     }
   }
@@ -131,7 +123,7 @@ void InspectorPanel::__RenderTagComponent(Tag& tagComponent) const
     }
     else
     {
-      tagComponent.UpdateValue(newTagValue);
+      tagComponent.Update(newTagValue);
     }
   }
   ImGui::PopItemWidth();
@@ -160,7 +152,7 @@ void InspectorPanel::__RenderCameraComponent(Camera& camera) const
 void InspectorPanel::__RenderStaticMeshComponent(Components::StaticMesh& mesh) const
 {
   ImGui::Text("Vertex Array:");
-  if (mesh.vertexArray.IsValid())
+  if (mesh.vertexArray.Valid())
     ImGui::BulletText("Valid: Yes");
   else
     ImGui::BulletText("Valid: No");
@@ -168,7 +160,7 @@ void InspectorPanel::__RenderStaticMeshComponent(Components::StaticMesh& mesh) c
   ImGui::Spacing();
 
   ImGui::Text("Vertex Buffer:");
-  if (mesh.vertexBuffer.IsValid())
+  if (mesh.vertexBuffer.Valid())
   {
     ImGui::BulletText("Valid: Yes");
     ImGui::BulletText("Nr vertices: %u", mesh.numVertices);
@@ -180,7 +172,7 @@ void InspectorPanel::__RenderStaticMeshComponent(Components::StaticMesh& mesh) c
   ImGui::Spacing();
 
   ImGui::Text("Index Buffer:");
-  if (mesh.indexBuffer.IsValid())
+  if (mesh.indexBuffer.Valid())
   {
     ImGui::BulletText("Valid: Yes");
     ImGui::BulletText("Num Indices: %u", mesh.numIndices);
@@ -193,7 +185,7 @@ void InspectorPanel::__RenderMaterialComponent(Components::Material& material) c
 {
   auto& instance = TexturesManager::GetInstance();
   ImGui::Text("Albedo");
-  if (material.albedo.IsValid())
+  if (material.albedo.Valid())
   {
     auto path = instance.GetTexturePath(material.albedo.id);
     if (path)
@@ -207,7 +199,7 @@ void InspectorPanel::__RenderMaterialComponent(Components::Material& material) c
     ImGui::BulletText("None");
 
   ImGui::Text("Normal map");
-  if (material.normalMap.IsValid())
+  if (material.normalMap.Valid())
   {
     auto path = instance.GetTexturePath(material.normalMap.id);
     if (path)
@@ -383,9 +375,7 @@ void InspectorPanel::__Slider1F(StringView label,
   ImGui::PopID();
 }
 
-void InspectorPanel::__ColorEdit3(StringView label, 
-                                  StringView id,
-                                  Vec4F& color) const
+void InspectorPanel::__ColorEdit3(StringView label, StringView id, Vec4F& color) const
 {
   ImGui::PushID(id.data());
   if (!label.empty())

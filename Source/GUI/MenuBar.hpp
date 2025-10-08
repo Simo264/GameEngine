@@ -1,17 +1,15 @@
 #pragma once
 
-#include "Core/Core.hpp"
+#include "PanelBase.hpp"
 
-class Scene;
-
-class MenuBar
+class MenuBar : public PanelBase
 {
 public:
-	MenuBar(){}
+	MenuBar() = default;
 
-	void Render(Scene& scene);
+	void Render();
 private:
-	void __RenderFileMenu(Scene& scene);
+	void __RenderFileMenu();
 	void __RenderViewMenu();
 };
 

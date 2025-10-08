@@ -1,11 +1,12 @@
 #pragma once
 
-
-#include "Core/Core.hpp"
-#include "Core/Math/Base.hpp"
+#include "Core/Types.hpp"
+#include "Core/Strings.hpp"
+#include "Core/Math/Types.hpp"
 #include "Engine/Graphics/Texture2D.hpp"
+#include "PanelBase.hpp"
 
-class ToolbarPanel
+class ToolbarPanel : public PanelBase
 {
 public:
 	ToolbarPanel();

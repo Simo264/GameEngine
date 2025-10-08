@@ -1,19 +1,34 @@
 #include "HierarchyPanel.hpp"
 
-#include "Core/Logger.hpp"
-#include "Core/FileDialog.hpp"
-#include "Engine/Utils.hpp"
-#include "Engine/Importers/StaticMeshLoader.hpp"
+#include "Utils/Logger.hpp"
+#include "Utils/FileDialog.hpp"
+#include "Engine/Paths.hpp"
 #include "Engine/Managers/TexturesManager.hpp"
-#include "Engine/Managers/AssetsManager.hpp"
+#include "Engine/ECS/Scene.hpp"
+#include "Engine/ECS/Builders/StaticMeshEntityBuilder.hpp"
+#include "Engine/ECS/Builders/LightSourceEntityBuilder.hpp"
 
 #include <imgui.h>
 
 using namespace Components;
 
-void HierarchyPanel::Render(Scene& scene)
+struct EntityCreationData
 {
-  if (!isOpen)
+  Tag::TagValue tag{ "entity" };
+  bool tagIsValid{ false };
+
+  const Archetype* selectedArchetype{ nullptr };
+  ArchetypeId selectedArchetypeId{ INVALID_ARCHETYPE_ID };
+
+  LightType lightType{ LightType::None };
+  fs::path modelPath{};
+};
+auto s_entityData = EntityCreationData{};
+
+
+void HierarchyPanel::Render()
+{
+  if (!isOpen || !_scene)
     return;
 
   ImGui::Begin("Hierarchy", &isOpen);
@@ -21,12 +36,12 @@ void HierarchyPanel::Render(Scene& scene)
   auto btnWidth = ImGui::GetContentRegionAvail().x - 32.f;
   if (__ButtonCentered("+New entity", Vec2I(btnWidth, 26.f)))
   {
-    _entityData = EntityCreationData{};
+    s_entityData = EntityCreationData{};
     ImGui::OpenPopup("New entity modal");
   }
   if (ImGui::BeginPopupModal("New entity modal", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
   {
-    __RenderNewEntityModal(scene);
+    __RenderNewEntityModal();
     ImGui::EndPopup();
   }
 
@@ -34,7 +49,7 @@ void HierarchyPanel::Render(Scene& scene)
   ImGui::Separator();
   ImGui::Spacing();
 
-  __RenderEntityList(scene);
+  __RenderEntityList();
 
   ImGui::End();
 }
@@ -48,14 +63,14 @@ bool HierarchyPanel::__ButtonCentered(StringView label, Vec2I size)
 
   return ImGui::Button(label.data(), ImVec2(size.x, size.y));
 }
-void HierarchyPanel::__RenderNewEntityModal(Scene& scene)
+void HierarchyPanel::__RenderNewEntityModal()
 {
   // Edit Tag
   ImGui::BeginGroup();
   ImGui::Text("Edit tag");
-  ImGui::InputText("##Tag", _entityData.tag.data(), _entityData.tag.size());
-  _entityData.tagIsValid = strlen(_entityData.tag.data()) > 0;
-  if (!_entityData.tagIsValid)
+  ImGui::InputText("##Tag", s_entityData.tag.data(), s_entityData.tag.size());
+  s_entityData.tagIsValid = strlen(s_entityData.tag.data()) > 0;
+  if (!s_entityData.tagIsValid)
   {
     ImGui::SameLine();
     ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Cannot be empty!");
@@ -69,27 +84,28 @@ void HierarchyPanel::__RenderNewEntityModal(Scene& scene)
   // Archetype selection
   ImGui::BeginGroup();
   ImGui::Text("Archetype Selection");
-  // Show all available arhcetypes
-  auto& archetypeRegistry = scene.GetArchetypeRegistry();
+  
+  // Show all available archetypes
+  auto previousSelection = s_entityData.selectedArchetypeId;
+  auto& archetypeRegistry = _scene->GetArchetypeRegistry();
   auto& availableArchetypes = archetypeRegistry.GetArchetypeVector();
-  auto previousSelection = _entityData.selectedArchetypeId;
-  for (auto& archetype : availableArchetypes)
+  for (ArchetypeId i = 0; i < availableArchetypes.size(); i++)
   {
-    auto archetypeId = archetypeRegistry.GetArchetypeId(archetype.GetName());
-    auto isSelected = (_entityData.selectedArchetypeId == archetypeId);
+    auto& archetype = archetypeRegistry.GetArchetype(i);
+
+    auto isSelected = (s_entityData.selectedArchetypeId == i);
     if (ImGui::RadioButton(archetype.GetName(), isSelected))
     {
-      _entityData.selectedArchetype = &archetype;
-      _entityData.selectedArchetypeId = archetypeId;
+      s_entityData.selectedArchetype = &archetype;
+      s_entityData.selectedArchetypeId = i;
     }
-
     ImGui::SameLine();
   }
   ImGui::EndGroup();
 
-  if (_entityData.selectedArchetypeId != INVALID_ARCHETYPE_ID)
+  if (s_entityData.selectedArchetypeId != INVALID_ARCHETYPE_ID)
   {
-    auto archetypeName = StringView(_entityData.selectedArchetype->GetName());
+    auto archetypeName = StringView(s_entityData.selectedArchetype->GetName());
     if (archetypeName.compare("LightSource") == 0)
     {
       ImGui::Spacing();
@@ -97,11 +113,11 @@ void HierarchyPanel::__RenderNewEntityModal(Scene& scene)
       ImGui::Spacing();
       ImGui::BeginGroup();
       ImGui::Text("Light Type");
-      ImGui::RadioButton("Directional", reinterpret_cast<i32*>(&_entityData.lightType), static_cast<i32>(LightType::Directional));
+      ImGui::RadioButton("Directional", reinterpret_cast<i32*>(&s_entityData.lightType), static_cast<i32>(LightType::Directional));
       ImGui::SameLine();
-      ImGui::RadioButton("Point", reinterpret_cast<i32*>(&_entityData.lightType), static_cast<i32>(LightType::Point));
+      ImGui::RadioButton("Point", reinterpret_cast<i32*>(&s_entityData.lightType), static_cast<i32>(LightType::Point));
       ImGui::SameLine();
-      ImGui::RadioButton("Spot", reinterpret_cast<i32*>(&_entityData.lightType), static_cast<i32>(LightType::Spot));
+      ImGui::RadioButton("Spot", reinterpret_cast<i32*>(&s_entityData.lightType), static_cast<i32>(LightType::Spot));
       ImGui::EndGroup();
     }
     else if (archetypeName.compare("StaticMesh") == 0)
@@ -111,18 +127,18 @@ void HierarchyPanel::__RenderNewEntityModal(Scene& scene)
       ImGui::Spacing();
       ImGui::BeginGroup();
       ImGui::Text("Mesh File");
-      ImGui::Text("%s", _entityData.modelPath.empty() ? "No file selected." : _entityData.modelPath.string().c_str());
+      ImGui::Text("%s", s_entityData.modelPath.empty() ? "No file selected." : s_entityData.modelPath.string().c_str());
       ImGui::SameLine();
       if (ImGui::Button("Choose model"))
       {
         const char* filterPatterns[] = { "*.obj", "*.glb", "*.gltf", "*.fbx" };
         constexpr auto nrFilterPatterns = sizeof(filterPatterns) / sizeof(filterPatterns[0]);
-        _entityData.modelPath = FileDialog::OpenFileDialog("Choose 3D model",
-                                                           Utils::GetModelsPath(),
-                                                           nrFilterPatterns,
-                                                           filterPatterns,
-                                                           "3D model file (*.obj, *.glb, *.gltf, *.fbx)",
-                                                           false);
+        s_entityData.modelPath = FileDialog::OpenFileDialog("Choose 3D model",
+                                                            GetModelsPath(),
+                                                            nrFilterPatterns,
+                                                            filterPatterns,
+                                                            "3D model file (*.obj, *.glb, *.gltf, *.fbx)",
+                                                            false);
       }
       ImGui::EndGroup();
     }
@@ -136,62 +152,41 @@ void HierarchyPanel::__RenderNewEntityModal(Scene& scene)
   ImGui::Separator();
   ImGui::Spacing();
 
-  auto canCreate = _entityData.tagIsValid &&
-    _entityData.selectedArchetype != nullptr &&
-    _entityData.selectedArchetypeId != INVALID_ARCHETYPE_ID &&
+  auto canCreate = s_entityData.tagIsValid &&
+    s_entityData.selectedArchetype != nullptr &&
+    s_entityData.selectedArchetypeId != INVALID_ARCHETYPE_ID &&
     (
-    (StringView(_entityData.selectedArchetype->GetName()).compare("LightSource") == 0 && _entityData.lightType != LightType::None)
+      (StringView(s_entityData.selectedArchetype->GetName()).compare("LightSource") == 0 && s_entityData.lightType != LightType::None)
     ||
-    (StringView(_entityData.selectedArchetype->GetName()).compare("StaticMesh") == 0) && !_entityData.modelPath.empty()
+      (StringView(s_entityData.selectedArchetype->GetName()).compare("StaticMesh") == 0) && !s_entityData.modelPath.empty()
     );
 
   if (canCreate)
   {
     if (ImGui::Button("Create"))
     {
-      auto archetypeName = StringView(_entityData.selectedArchetype->GetName());
-      auto newEntity = scene.CreateEntity(_entityData.selectedArchetypeId);
-      newEntity.GetComponent<Tag>()->UpdateValue(_entityData.tag.data());
+      auto archetypeName = StringView(s_entityData.selectedArchetype->GetName());
+      auto& archetypeId = s_entityData.selectedArchetypeId;
+      auto& tag = s_entityData.tag;
+
       if (archetypeName.compare("StaticMesh") == 0)
       {
-        newEntity.AddComponent<Transform>();
-
-        auto& instance = AssetsManager::GetInstance();
-        auto assetId = instance.GetAssetId(_entityData.modelPath);
-        if (assetId == INVALID_ASSET_ID)
-          assetId = instance.RegisterAsset(_entityData.modelPath);
-        newEntity.AddComponent<AssetIdentifier>(assetId);
-
-        auto& material = newEntity.AddComponent<Material>();
-
-        auto& mesh = newEntity.AddComponent<StaticMesh>();
-        mesh.Create();
-
-        using Vertex = VertexLayout<Position, Normal, TextureCoord, Tangent>;
-        Vertex::SetupVertexArray(mesh.vertexArray);
-
-        auto loader = StaticMeshLoader{};
-        loader.LoadDataFromFile(_entityData.modelPath, mesh, material);
+        auto& modelPath = s_entityData.modelPath;
+        auto builder = StaticMeshEntityBuilder{ *_scene };
+        builder.WithArchetypeIdentifier(archetypeId);
+        builder.WithTag(tag.data());
+        builder.WithModelPath(modelPath);
+        auto entity = builder.Build();
       }
       else if (archetypeName.compare("LightSource") == 0)
       {
-        newEntity.AddComponent<Light>();
-        switch (_entityData.lightType)
-        {
-          case LightType::Directional:
-            newEntity.AddComponent<DirectionalLight>();
-            break;
-          case LightType::Point:
-            newEntity.AddComponent<PointLight>();
-            break;
-          case LightType::Spot:
-            newEntity.AddComponent<SpotLight>();
-            break;
-
-          default:
-            break;
-        }
+        auto builder = LightSourceEntityBuilder{ *_scene };
+        builder.WithArchetypeIdentifier(archetypeId);
+        builder.WithTag(tag.data());
+        builder.WithLightType(s_entityData.lightType);
+        auto entity = builder.Build();
       }
+      
       ImGui::CloseCurrentPopup();
     }
   }
@@ -207,29 +202,29 @@ void HierarchyPanel::__RenderNewEntityModal(Scene& scene)
   if (ImGui::Button("Cancel"))
     ImGui::CloseCurrentPopup();
 }
-void HierarchyPanel::__RenderEntityList(Scene& scene)
+void HierarchyPanel::__RenderEntityList()
 {
   auto& texManager = TexturesManager::GetInstance();
   static auto icon = texManager.GetOrCreateIcon("game-object-16.png");
 
   auto selectableName = Array<char, 64>{};
 
-  auto& entRegistry = scene.GetEntityRegistry();
-  auto& archRegistry = scene.GetArchetypeRegistry();
-  for (auto entity : entRegistry.view<EntityId>())
+  auto& entityRegistry = _scene->GetEntityRegistry();
+  auto& archetypeRegistry = _scene->GetArchetypeRegistry();
+  for (auto e : entityRegistry.view<ArchetypeIdentifier>())
   {
-    auto& archetypeComp = entRegistry.get<ArchetypeIdentifier>(entity);
-    auto& tagComp = entRegistry.get<Tag>(entity);
-
-    auto archetype = archRegistry.GetArchetype(archetypeComp.archetypeId);
-    auto o = Entity{ entity, &scene.GetEntityRegistry(), archetype };
-
+    auto entity = Entity{ e };
+    auto& archetypeComponent =  _scene->GetEntityComponent<ArchetypeIdentifier>(entity);
+    auto archetypeId = archetypeComponent.archetypeId;
+    auto& archetype = archetypeRegistry.GetArchetype(archetypeId);
+    
+    auto& tagComponent = _scene->GetEntityComponent<Tag>(entity);
     selectableName.fill(0);
     std::format_to_n(selectableName.data(),
                      selectableName.size(),
                      "{}##{}",
-                     tagComp.value.data(),
-                     static_cast<u32>(entity));
+                     tagComponent.value.data(),
+                     static_cast<u32>(entity.Id()));
 
     ImGui::BeginGroup();
     ImGui::SetCursorPosY(ImGui::GetCursorPosY() + (ImGui::GetTextLineHeight() - 16.f) / 2);
@@ -244,13 +239,13 @@ void HierarchyPanel::__RenderEntityList(Scene& scene)
     ImGui::PushStyleColor(ImGuiCol_HeaderHovered, colorHovered);
     ImGui::PushStyleColor(ImGuiCol_HeaderActive, colorSelected);
 
-    auto isSelected = ImGui::Selectable(selectableName.data(), selectedEntity.Compare(o));
-    if (isSelected && !selectedEntity.Compare(o))
-      selectedEntity = o;
+    auto isSelected = ImGui::Selectable(selectableName.data(), target == entity);
+    if (isSelected && target != entity)
+      target = entity;
 
     if (ImGui::IsItemHovered() &&
         ImGui::IsMouseClicked(ImGuiMouseButton_Right) &&
-        selectedEntity.IsValid())
+        target.Valid())
       ImGui::OpenPopup("Entity Popup");
 
     ImGui::PopStyleColor(3);
@@ -263,8 +258,8 @@ void HierarchyPanel::__RenderEntityList(Scene& scene)
   {
     if (ImGui::MenuItem("Delete entity"))
     {
-      scene.DestroyEntity(selectedEntity.GetID());
-      selectedEntity = Entity{ INVALID_ENTITY_ID, nullptr, nullptr };
+      _scene->DestroyEntity(target.Id());
+      target = Entity{};
     }
     ImGui::EndPopup();
   }

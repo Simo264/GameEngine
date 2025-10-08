@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Core/Core.hpp"
-#include "Core/Math/Base.hpp"
+#include "Core/Types.hpp"
+#include "Core/Math/Types.hpp"
 #include "Engine/Graphics/VertexArray.hpp"
 
 struct Position

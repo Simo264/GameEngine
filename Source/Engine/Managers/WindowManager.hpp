@@ -1,8 +1,9 @@
 #pragma once
 
-#include "Core/Core.hpp"
+#include "Core/Types.hpp"
+#include "Core/Strings.hpp"
 #include "Core/Singleton.hpp"
-#include "Core/Math/Base.hpp"
+#include "Core/Math/Types.hpp"
 
 enum class InputKey : i32
 {

@@ -1,4 +1,6 @@
 #include "TextureCubemap.hpp"
+#include "Core/Memory.hpp"
+#include "Core/CoreIncludes.hpp"
 #include <glad/gl.h>
 
 void TextureCubemap::Create()

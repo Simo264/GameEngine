@@ -1,6 +1,7 @@
 #include "ImageLoader.hpp"
 
-#include "Core/Logger.hpp"
+#include "Core/Strings.hpp"
+#include "Utils/Logger.hpp"
 #include "Engine/Graphics/Texture2D.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION

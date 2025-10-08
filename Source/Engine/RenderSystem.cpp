@@ -1,7 +1,7 @@
 #include "RenderSystem.hpp"
-#include "Core/Logger.hpp"
+#include "Utils/Logger.hpp"
 
-#include "Engine/Scene.hpp"
+#include "Engine/ECS/Scene.hpp"
 #include "Engine/Graphics/RenderAPI.hpp"
 #include "Engine/Graphics/Shader.hpp"
 #include "Engine/Managers/TexturesManager.hpp"

@@ -1,6 +1,10 @@
 #pragma once
 
-#include "Core/Core.hpp"
+#include "Core/Types.hpp"
+#include "Core/Strings.hpp"
+#include "Core/Containers.hpp"
+#include "Core/FileSystem.hpp"
+
 #include "Core/Singleton.hpp"
 #include "Engine/Graphics/Shader.hpp"
 

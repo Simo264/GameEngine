@@ -1,35 +1,26 @@
 #pragma once
 
-#include "Core/Core.hpp"
-#include "Core/Math/Base.hpp"
-#include "Engine/Scene.hpp"
+#include "Core/Types.hpp"
+#include "Core/Strings.hpp"
+#include "Core/Math/Types.hpp"
+#include "Engine/ECS/Entity.hpp"
+#include "PanelBase.hpp"
 
-class HierarchyPanel
+class HierarchyPanel : public PanelBase
 {
 public:
-  HierarchyPanel() : isOpen{ true }
+  HierarchyPanel() : 
+    isOpen{ true },
+    target{}
   {}
 
-	void Render(Scene& scene);
+	void Render();
 
 	bool isOpen;
-  Entity selectedEntity{ INVALID_ENTITY_ID, nullptr, nullptr };
+  Entity target;
 
 private:
-  struct EntityCreationData
-  {
-    Array<char, 32> tag{ "entity" };
-    bool tagIsValid{ false };
-
-    const EntityArchetype* selectedArchetype{ nullptr };
-    ArchetypeId selectedArchetypeId{ INVALID_ARCHETYPE_ID };
-
-    LightType lightType{ LightType::None };
-    fs::path modelPath{};
-  };
-  EntityCreationData _entityData;
-
   bool __ButtonCentered(StringView label, Vec2I size);
-  void __RenderNewEntityModal(Scene& scene);
-  void __RenderEntityList(Scene& scene);
+  void __RenderNewEntityModal();
+  void __RenderEntityList();
 };

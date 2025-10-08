@@ -1,6 +1,7 @@
 #pragma once
 
-#include "Core/Core.hpp"
+#include "Core/Types.hpp"
+#include "Core/FileSystem.hpp"
 
 namespace Components
 {

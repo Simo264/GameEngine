@@ -1,18 +1,33 @@
 #pragma once
 
-#include "Core/Core.hpp"
-#include "Core/Math/Base.hpp"
-#include "Engine/Components/Components.hpp"
+#include "Core/Types.hpp"
+#include "Core/Strings.hpp"
+#include "Core/Containers.hpp"
+#include "Core/Math/Types.hpp"
 #include "Engine/Graphics/Texture2D.hpp"
+#include "PanelBase.hpp"
 
+namespace Components
+{
+	struct Tag;
+	struct Transform;
+	struct Camera;
+	struct StaticMesh;
+	struct Material;
+	
+	struct Light;
+	struct DirectionalLight;
+	struct PointLight;
+	struct SpotLight;
+};
+
+class Scene;
 class Entity;
-class EntityArchetype;
 
-class InspectorPanel
+class InspectorPanel : public PanelBase
 {
 public:
 	InspectorPanel();
-
 	void Render(StringView windowName, Entity entity);
 
 	bool isOpen;
@@ -61,8 +76,6 @@ private:
 	void __ColorEdit3(StringView label, 
 										StringView id, 
 										Vec4F& color) const;
-
-	
 
 	Texture2D _resetIcon;
 };

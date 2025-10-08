@@ -1,6 +1,9 @@
 #pragma once
 
-#include "Core/Core.hpp"
+#include "Core/Types.hpp"
+#include "Core/FileSystem.hpp"
+#include "Core/Functional.hpp"
+#include "Core/Containers.hpp"
 #include "Core/Singleton.hpp"
 #include "Engine/Graphics/Texture2D.hpp"
 
@@ -30,7 +33,7 @@ public:
 	/** @brief Retrieves an existing icon or creates a new one if not found. */
 	Texture2D GetOrCreateIcon(const fs::path& relative);
 
-	Optional<const fs::path*> GetTexturePath(u32 textureID) const;
+	Optional<const fs::path*> GetTexturePath(TextureId textureID) const;
 
 	Texture2D GetFallbackTexture() const { return _fallbackTexture; }
 	auto& GetTextureVector() const { return _textures; }

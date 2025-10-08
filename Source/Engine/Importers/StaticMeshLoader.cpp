@@ -1,8 +1,8 @@
 #include "StaticMeshLoader.hpp"
-#include "Core/Logger.hpp"
+#include "Utils/Logger.hpp"
 
-#include "Engine/Components/StaticMesh.hpp"
-#include "Engine/Components/Material.hpp"
+#include "Engine/ECS/Components/StaticMesh.hpp"
+#include "Engine/ECS/Components/Material.hpp"
 #include "Engine/Managers/TexturesManager.hpp"
 
 #include <glad/gl.h>
@@ -15,7 +15,7 @@ void StaticMeshLoader::LoadDataFromFile(const fs::path& absolutePathToFile,
 																				Components::StaticMesh& meshDest,
 																				Components::Material& materialDest)
 {
-	if (!meshDest.vertexArray.IsValid())
+	if (!meshDest.vertexArray.Valid())
 	{
 		CONSOLE_WARN("Static mesh must be a valid object");
 		return;
@@ -62,6 +62,11 @@ void StaticMeshLoader::LoadDataFromFile(const fs::path& absolutePathToFile,
 	indexBuffer.CreateImmutableStorage(size, nullptr, BufferStorageFlags::MAP_WRITE);
 	__LoadIndices(indexBuffer, aimesh);
 
+	meshDest.vertexArray.AttachVertexBuffer(0, vertBuffer.id, 0, stride);
+	meshDest.vertexArray.AttachIndexBuffer(indexBuffer.id);
+	meshDest.numIndices = nrIndices;
+	meshDest.numVertices = nrVertices;
+
 	// Load material
 	for (auto i = 0u; i < scene->mNumMaterials; ++i)
 	{
@@ -76,11 +81,6 @@ void StaticMeshLoader::LoadDataFromFile(const fs::path& absolutePathToFile,
 		if (aimaterial->GetTexture(aiTextureType_NORMALS, 0, &fileName) == aiReturn_SUCCESS)
 			materialDest.normalMap = instance.GetOrCreateTexture(fileName.C_Str());
 	}
-	
-	meshDest.vertexArray.AttachVertexBuffer(0, vertBuffer.id, 0, stride);
-	meshDest.vertexArray.AttachIndexBuffer(indexBuffer.id);
-	meshDest.numIndices = nrIndices;
-	meshDest.numVertices = nrVertices;
 }
 
 template<typename Vertex>

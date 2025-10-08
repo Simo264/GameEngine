@@ -1,37 +1,46 @@
 #pragma once
 
-#include "Core/Core.hpp"
-#include "Core/YAMLParser.hpp"
-#include "Components/Components.hpp"
+#include "Core/Types.hpp"
+#include "Core/Strings.hpp"
+#include "Core/FileSystem.hpp"
+#include "Engine/ECS/Types.hpp"
 
 class Scene;
 class Entity;
 
-using namespace Components;
+namespace YAML
+{
+  class Emitter;
+  class Node;
+
+  namespace detail
+  {
+    struct iterator_value;
+  };
+};
 
 class SceneSerializer
 {
 public:
-  SceneSerializer() = default;
-  void SerializeScene(Scene& scene, const fs::path& outPath);
-  void DeserializeScene(Scene& scene, const fs::path& fromPath);
+  SceneSerializer(Scene& scene) : _scene{ &scene }{}
+
+  void Save(const fs::path& absolutePath);
+  void Load(const fs::path& absolutePath);
 
 private:
-  void __SerializeTag(YAML::Emitter& outEmitter, const Tag& tag) const;
-  void __SerializeCamera(YAML::Emitter& outEmitter, const Camera& camera) const;
-  void __SerializeTransform(YAML::Emitter& outEmitter, const Transform& transform) const;
-  void __SerializeStaticMesh(YAML::Emitter& outEmitter, const StaticMesh& staticMesh, AssetIdentifier assetIdentifier) const;
-  void __SerializeLight(YAML::Emitter& outEmitter, const Light& light, Entity& entity) const;
-  void __SerializeDirectionalLight(YAML::Emitter& outEmitter, const DirectionalLight& light) const;
-  void __SerializePointLight(YAML::Emitter& outEmitter, const PointLight& light) const;
-  void __SerializeSpotLight(YAML::Emitter& outEmitter, const SpotLight& light) const;
+  void __SerializeArchetypeStaticMesh(YAML::Emitter& outEmitter, Entity entity);
+  void __SerializeArchetypeLightSource(YAML::Emitter& outEmitter, Entity entity);
+  void __SerializeArchetypeCamera(YAML::Emitter& outEmitter, Entity entity);
 
-  void __DeserializeTag(Entity& entity, const YAML::Node& node) const;
-  void __DeserializeCamera(Entity& entity, const YAML::Node& node) const;
-  void __DeserializeTransform(Entity& entity, const YAML::Node& node) const;
-  void __DeserializeStaticMesh(Entity& entity, const YAML::Node& node) const;
-  void __DeserializeLight(Entity& entity, const YAML::Node& node) const;
-  void __DeserializeDirLight(Entity& entity, const YAML::Node& node) const;
-  void __DeserializePointLight(Entity& entity, const YAML::Node& node) const;
-  void __DeserializeSpotLight(Entity& entity, const YAML::Node& node) const;
+  void __DeserializeArchetypeStaticMesh(const YAML::detail::iterator_value& yamlEntityNode,
+                                        ArchetypeId archetypeId,
+                                        StringView tag);
+  void __DeserializeArchetypeLightSource(const YAML::detail::iterator_value& yamlEntityNode,
+                                         ArchetypeId archetypeId,
+                                         StringView tag);
+  void __DeserializeArchetypeCamera(const YAML::detail::iterator_value& yamlEntityNode,
+                                    ArchetypeId archetypeId, 
+                                    StringView tag);
+  
+  Scene* _scene;
 };

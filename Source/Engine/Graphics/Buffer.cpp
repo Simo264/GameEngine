@@ -31,7 +31,7 @@ Buffer::~Buffer()
 	Release();
 }
 
-void Buffer::DeleteBuffers(u32 count, const u32* ids)
+void Buffer::DeleteBuffers(u32 count, const BufferId* ids)
 {
 	glDeleteBuffers(count, ids);
 }
@@ -43,7 +43,7 @@ void Buffer::Create()
 
 void Buffer::Release()
 {
-	if (IsValid())
+	if (Valid())
 	{
 		glDeleteBuffers(1, &id);
 		id = INVALID_BUFFER_ID;
@@ -95,12 +95,12 @@ void Buffer::BindRange(BufferTarget target, u32 bindingpoint, i64 offset, u64 si
 	glBindBufferRange(static_cast<u32>(target), bindingpoint, id, offset, size);
 }
 
-void Buffer::CopyFrom(u32 readBuffer, i64 readOffset, i64 writeOffset, u64 size) const
+void Buffer::CopyFrom(BufferId readBuffer, i64 readOffset, i64 writeOffset, u64 size) const
 {
 	glCopyNamedBufferSubData(readBuffer, id, readOffset, writeOffset, size);
 }
 
-void Buffer::CopyTo(u32 writeBuffer, i64 readOffset, i64 writeOffset, u64 size) const
+void Buffer::CopyTo(BufferId writeBuffer, i64 readOffset, i64 writeOffset, u64 size) const
 {
 	glCopyNamedBufferSubData(id, writeBuffer, readOffset, writeOffset, size);
 }

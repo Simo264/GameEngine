@@ -1,5 +1,5 @@
 ﻿#include "Engine/Engine.hpp"
-#include "Core/Logger.hpp"
+#include "Utils/Logger.hpp"
 
 int main()
 {

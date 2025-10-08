@@ -1,9 +1,11 @@
 #include "ShadersManager.hpp"
 
-#include "Core/Logger.hpp"
-#include "Core/JSONParser.hpp"
+#include "Core/FileSystem.hpp"
+
+#include "Utils/Logger.hpp"
+#include "Utils/JSONParser.hpp"
 #include "Engine/Globals.hpp"
-#include "Engine/Utils.hpp"
+#include "Engine/Paths.hpp"
 
 #include <glad/gl.h>
 
@@ -15,7 +17,7 @@ constexpr auto SM_FILE_CONFIG = "ShadersConfig.json";
 
 void ShadersManager::Initialize()
 {
-	auto p = (Utils::GetRootPath() / SM_FILE_CONFIG);
+	auto p = (GetRootPath() / SM_FILE_CONFIG);
 	if (!fs::exists(p))
 		throw std::runtime_error(std::format("{} does not exist!", p.string()));
 
@@ -48,7 +50,7 @@ Shader ShadersManager::GetShader(StringView shaderName) const
 Shader ShadersManager::GetOrCreateShader(StringView shaderName, ShaderType type)
 {
 	auto s = GetShader(shaderName);
-	if (!s.IsValid())
+	if (!s.Valid())
 		s = CreateShader(shaderName, type);
 
 	return s;
@@ -57,7 +59,7 @@ Shader ShadersManager::CreateShader(StringView shaderName, ShaderType type)
 {
 	assert(shaderName.size() < 32);
 
-	auto absolute = Utils::GetShadersPath() / shaderName.data();
+	auto absolute = GetShadersPath() / shaderName.data();
 	if (!fs::exists(absolute))
 		throw std::runtime_error(std::format("Shader file '{}' does not exist", absolute.string()));
 
@@ -112,7 +114,7 @@ void ShadersManager::__LoadConfig(const fs::path &path)
 	for (const auto& [programName, shadersJson] : data.items())
 	{
 		auto program = GetProgram(programName);
-		if (program.IsValid())
+		if (program.Valid())
 		{
 			CONSOLE_WARN("Program '{}' already exists", programName);
 			continue;

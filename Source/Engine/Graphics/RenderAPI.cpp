@@ -1,8 +1,8 @@
 #include "RenderAPI.hpp"
 
-#include "Core/Logger.hpp"
+#include "Utils/Logger.hpp"
 #include "Engine/Globals.hpp"
-#include "Engine/Scene.hpp"
+#include "Engine/ECS/Scene.hpp"
 
 #include <glad/gl.h>
 

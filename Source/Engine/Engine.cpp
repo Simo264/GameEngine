@@ -1,11 +1,11 @@
 #include "Engine.hpp"
 
-#include "Core/Logger.hpp"
+#include "Utils/Logger.hpp"
 
 #include "Engine/Globals.hpp"
-#include "Engine/Scene.hpp"
-#include "Engine/Utils.hpp"
+#include "Engine/Paths.hpp"
 
+#include "Engine/SceneSerializer.hpp"
 #include "Engine/Graphics/Renderbuffer.hpp"
 #include "Engine/Graphics/RenderAPI.hpp"
 #include "Engine/RenderSystem.hpp"
@@ -20,10 +20,10 @@
 
 using namespace Components;
 
-static constexpr auto INITIAL_WINDOW_W = 1600;
-static constexpr auto INITIAL_WINDOW_H = 900;
-static constexpr auto INITIAL_WINDOW_X = 50;
-static constexpr auto INITIAL_WINDOW_Y = 50;
+constexpr auto INITIAL_WINDOW_W = 1600;
+constexpr auto INITIAL_WINDOW_H = 900;
+constexpr auto INITIAL_WINDOW_X = 50;
+constexpr auto INITIAL_WINDOW_Y = 50;
 
 static void GLAPIENTRY MessageCallback(GLenum source,
                                        GLenum type,
@@ -128,59 +128,55 @@ static void GLAPIENTRY MessageCallback(GLenum source,
 
 void Engine::Initialize()
 {
-  // 1. Initialize logger
+  // 1. Logger (non dipende da nulla)
   Logger::Initialize();
   CONSOLE_INFO("Logger initialized");
 
-  // 2. Initialize window manager
+  // 2. Window + OpenGL context
   auto props = WindowProps{};
   props.aspectRatio = Vec2I{ 16, 9 };
   props.size = Vec2I{ INITIAL_WINDOW_W, INITIAL_WINDOW_H };
   props.position = Vec2I{ INITIAL_WINDOW_X, INITIAL_WINDOW_Y };
   props.title = "GameEngine";
   props.vsync = false;
-  props.contextVersionMinor = 4;
-  props.contextVersionMajor = 6;
+  props.contextVersionMajor = 4;
+  props.contextVersionMinor = 6;
   props.samples = 4;
   WindowManager::GetInstance().Initialize(props);
   CONSOLE_INFO("Window manager initialized");
 
-  // 3. Initialize shader manager
+  // 3. OpenGL debug (subito dopo context creation)
+  __SetupOpenGLDebug();
+  __SetupOpenGLState();
+  CONSOLE_INFO("OpenGL initialized");
+
+  // 4. Scene (prima dei manager che potrebbero dipendere da essa)
+  _scene.InitializeDefaultArchetypes();
+  CONSOLE_INFO("Scene initialized");
+
+  // 5. Resource managers
   ShadersManager::GetInstance().Initialize();
   CONSOLE_INFO("Shaders manager initialized");
 
-  // 4. Initialize texture manager
   TexturesManager::GetInstance().Initialize();
   CONSOLE_INFO("Textures manager initialized");
 
-  // 5. Setup ImGui context
-  ImGuiLayer::GetInstance().InitializeImGui();
+  // 6. Rendering resources
+  _MSAAFramebufferSamples = props.samples;  // Usa valore da props!
+  __CreateMSAAFramebuffer(INITIAL_WINDOW_W, INITIAL_WINDOW_H, _MSAAFramebufferSamples);
+  _screenQuad = __CreateMeshQuad();
+  CONSOLE_INFO("Rendering resources initialized");
+
+  // 7. Uniform buffers
+  __CreateCameraUBO(0);  // "CameraBlock" -> binding 0
+  __CreateLightUBO(1);   // "LightBlock" -> binding 1
+  CONSOLE_INFO("Uniform buffers created");
+
+  // 8. ImGui (dopo tutto il rendering setup)
+  ImGuiLayer::GetInstance().InitializeImGui(_scene);
   CONSOLE_INFO("ImGui layer initialized");
 
-  // 6. Set the initial OpenGL states
-  glEnable(GL_DEBUG_OUTPUT);
-  glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-  glDebugMessageCallback(MessageCallback, 0);
-  glDebugMessageControl(GL_DEBUG_SOURCE_API, GL_DEBUG_TYPE_ERROR, GL_DONT_CARE, 0, nullptr, GL_TRUE);
-
-  glClearColor(0.15f, 0.15f, 0.15f, 1.0f);  // specify clear values for the color buffers
-  glClearDepth(1.0f);                       // specify clear values for the depth buffer    
-  glClearStencil(0);                        // specify clear values for the stencil buffer 
-  
-  __SetInitialGLStates();
-
-  // 7. Create the screen quad mesh and framebuffer
-  _MSAAFramebufferSamples = 4;
-  __CreateMSAAFramebuffer(INITIAL_WINDOW_W, INITIAL_WINDOW_H, _MSAAFramebufferSamples);
-  
-  // 8. Create the screen quad mesh
-  _screenQuad = __CreateMeshQuad();
-
-  // 9. create UBO objects
-  __CreateCameraUBO(0); // "CameraBlock" -> 0
-  __CreateLightUBO(1);  // "LightBlock" -> 1
-
-  // 10. Initialize time
+  // 9. Time (ultimo, non dipende da nulla)
   __InitTime();
 }
 
@@ -189,36 +185,17 @@ void Engine::Run()
   auto viewportSize = Vec2I{ INITIAL_WINDOW_W, INITIAL_WINDOW_H };
   auto aspect = static_cast<f32>(viewportSize.x) / viewportSize.y;
 
-  auto scene = Scene();
-  // initialize entities archetypes
-  auto cameraArchetype = EntityArchetype{ "Camera" };
-  cameraArchetype.AllowComponents<Components::Camera>();
-  auto lightSourceArchetype = EntityArchetype{ "LightSource" };
-  lightSourceArchetype.AllowComponents<
-    Components::Light,
-    Components::DirectionalLight,
-    Components::PointLight,
-    Components::SpotLight>();
-  auto staticMeshArchetype = EntityArchetype{ "StaticMesh" };
-  staticMeshArchetype.AllowComponents<
-    Components::AssetIdentifier,
-    Components::Transform,
-    Components::StaticMesh,
-    Components::Material>();
-  scene.RegisterArchetype(cameraArchetype);
-  scene.RegisterArchetype(lightSourceArchetype);
-  scene.RegisterArchetype(staticMeshArchetype);
+  auto serializer = SceneSerializer{ _scene };
+  serializer.Load(GetRootPath() / "Scene.yaml");
 
-  scene.LoadFromFile((Utils::GetRootPath() / "Scene.yaml"));
-
-  auto e = scene.FindEntityWithComponent<Camera>();
-  auto camera = e->GetComponent<Camera>();
-  e = scene.FindEntityWithComponent<DirectionalLight>();
-  auto dirLight = e->GetComponent<DirectionalLight>();
-  e = scene.FindEntityWithComponent<PointLight>();
-  auto pointLight = e->GetComponent<PointLight>();
-  e = scene.FindEntityWithComponent<SpotLight>();
-  auto spotLight = e->GetComponent<SpotLight>();
+  auto e = _scene.FindEntityWithComponent<Camera>();
+  auto& camera = _scene.GetEntityComponent<Camera>(e.value());
+  e = _scene.FindEntityWithComponent<DirectionalLight>();
+  auto& dirLight = _scene.GetEntityComponent<DirectionalLight>(e.value());
+  e = _scene.FindEntityWithComponent<PointLight>();
+  auto& pointLight = _scene.GetEntityComponent<PointLight>(e.value());
+  e = _scene.FindEntityWithComponent<SpotLight>();
+  auto& spotLight = _scene.GetEntityComponent<SpotLight>(e.value());
 
   // ----------------------------------------------------------------------
   // -------------------------- Pre-loop section --------------------------
@@ -251,31 +228,31 @@ void Engine::Run()
     windowManager.PoolEvents();
     if (guiLayer.viewport.isFocused)
     {
-      camera->ProcessKeyboard(static_cast<f32>(_delta), 10.0f);
-      camera->ProcessMouseMovement(0.05f);
+      camera.ProcessKeyboard(static_cast<f32>(_delta), 10.0f);
+      camera.ProcessMouseMovement(0.05f);
     }
 
     // --------------------------------------------------------------------
     // -------------------------- Update section --------------------------
     // --------------------------------------------------------------------
-    auto cameraView = camera->CalculateViewMatrix();
-    auto cameraProj = camera->CalculatePerspectiveMatrix(aspect);
+    auto cameraView = camera.CalculateViewMatrix();
+    auto cameraProj = camera.CalculatePerspectiveMatrix(aspect);
 
     // Update camera UBO
     {
       auto matrices = Array<Mat4F, 2>{ cameraView, cameraProj };
       _uboCameraBlock.UpdateStorage(0, sizeof(matrices), reinterpret_cast<byte*>(matrices.data()));
-      _uboCameraBlock.UpdateStorage(sizeof(matrices), sizeof(Vec3F), reinterpret_cast<byte*>(&camera->position));
+      _uboCameraBlock.UpdateStorage(sizeof(matrices), sizeof(Vec3F), reinterpret_cast<byte*>(&camera.position));
     }
 
     // Update light UBO
     {
       auto offset = 0;
-      _uboLightBlock.UpdateStorage(offset, sizeof(DirectionalLight), reinterpret_cast<byte*>(dirLight));
+      _uboLightBlock.UpdateStorage(offset, sizeof(DirectionalLight), reinterpret_cast<byte*>(&dirLight));
       offset += sizeof(DirectionalLight);
-      _uboLightBlock.UpdateStorage(offset, sizeof(PointLight), reinterpret_cast<byte*>(pointLight));
+      _uboLightBlock.UpdateStorage(offset, sizeof(PointLight), reinterpret_cast<byte*>(&pointLight));
       offset += sizeof(PointLight);
-      _uboLightBlock.UpdateStorage(offset, sizeof(SpotLight), reinterpret_cast<byte*>(spotLight));
+      _uboLightBlock.UpdateStorage(offset, sizeof(SpotLight), reinterpret_cast<byte*>(&spotLight));
     }
 
     // -----------------------------------------------------------------------
@@ -290,7 +267,7 @@ void Engine::Run()
       glEnable(GL_MULTISAMPLE);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT); // clear buffers
       
-      renderSystem.Render(scene);
+      renderSystem.Render(_scene);
 
       glDisable(GL_MULTISAMPLE);
     }
@@ -302,11 +279,10 @@ void Engine::Run()
     // 3. Get the final texture color image 
     auto viewportImage = _MSAAFramebufferResolver.GetTextureAttachment(0); // returns the texture color 
 
-    guiLayer.menubar.Render(scene);
+    guiLayer.menubar.Render();
     guiLayer.ImguiDemo();
-    
-    guiLayer.hierarchy.Render(scene);
-    auto entitySelected = guiLayer.hierarchy.selectedEntity;
+    guiLayer.hierarchy.Render();
+    auto entitySelected = guiLayer.hierarchy.target;
     guiLayer.viewport.Render("Viewport", viewportImage, entitySelected, cameraView, cameraProj);
     guiLayer.inspector.Render("Inspector", entitySelected);
     guiLayer.toolbar.Render("Toolbar", guiLayer.viewport.position, guiLayer.viewport.size, guiLayer.viewport.gizmoOp);
@@ -335,6 +311,8 @@ void Engine::Run()
 
 void Engine::Cleanup()
 {
+  _scene.Clear();
+
   _screenQuad.Release();
   _uboCameraBlock.Release();
   _uboLightBlock.Release();
@@ -352,8 +330,19 @@ void Engine::Cleanup()
 //            PRIVATE METHODS
 // -----------------------------------------------------
 
-void Engine::__SetInitialGLStates() const
+void Engine::__SetupOpenGLDebug() const
 {
+  glEnable(GL_DEBUG_OUTPUT);
+  glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+  glDebugMessageCallback(MessageCallback, 0);
+  glDebugMessageControl(GL_DEBUG_SOURCE_API, GL_DEBUG_TYPE_ERROR, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+}
+void Engine::__SetupOpenGLState() const
+{
+  glClearColor(0.15f, 0.15f, 0.15f, 1.0f);  // specify clear values for the color buffers
+  glClearDepth(1.0f);                       // specify clear values for the depth buffer    
+  glClearStencil(0);                        // specify clear values for the stencil buffer 
+
   // Depth testing ON
   // ----------------
   RenderAPI::EnableDepthTest();
@@ -465,9 +454,9 @@ StaticMesh Engine::__CreateMeshQuad()
 }
 void Engine::__CreateMSAAFramebuffer(i32 w, i32 h, i32 samples)
 {
-  if (_MSAAFramebuffer.IsValid())
+  if (_MSAAFramebuffer.Valid())
     CONSOLE_WARN("Warning in __CreateMSAAFramebuffer: _MSAAFramebuffer.IsValid()");
-  if (_MSAAFramebufferResolver.IsValid())
+  if (_MSAAFramebufferResolver.Valid())
     CONSOLE_WARN("Warning in __CreateMSAAFramebuffer: _MSAAFramebufferResolver.IsValid()");
 
   // 1. Create the multisampled framebuffer 

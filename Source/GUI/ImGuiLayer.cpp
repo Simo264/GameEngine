@@ -1,8 +1,8 @@
 #include "ImGuiLayer.hpp"
 
-#include "Engine/Utils.hpp"
 #include "Engine/Globals.hpp"
-#include "Engine/Scene.hpp"
+#include "Engine/Paths.hpp"
+#include "Engine/ECS/Scene.hpp"
 #include "Engine/Graphics/Texture2D.hpp"
 #include "Engine/Managers/WindowManager.hpp"
 
@@ -14,14 +14,14 @@
 #include <imgui_internal.h>
 #include <ImGuizmo.h>
 
-constexpr auto fontSize = 16.f;
-constexpr auto fontFamily = "OpenSans/OpenSans-Regular.ttf";
+constexpr auto FONT_SIZE = 16.f;
+constexpr auto FONT_FAMILY = "OpenSans/OpenSans-Regular.ttf";
 
 // --------------------------
 //          PUBLIC
 // --------------------------
 
-void ImGuiLayer::InitializeImGui()
+void ImGuiLayer::InitializeImGui(Scene& scene)
 {
   renderImGuiDemo = false;
   renderTimeInfo = true;
@@ -36,10 +36,15 @@ void ImGuiLayer::InitializeImGui()
   // Load font
   auto& io = ImGui::GetIO();
   io.Fonts->Clear();
-  io.Fonts->AddFontFromFileTTF((Utils::GetFontsPath() / fontFamily).string().c_str(), fontSize);
+  io.Fonts->AddFontFromFileTTF((GetFontsPath() / FONT_FAMILY).string().c_str(), FONT_SIZE);
   io.Fonts->Build();
   ImGui_ImplOpenGL3_DestroyDeviceObjects();
   ImGui_ImplOpenGL3_CreateDeviceObjects();
+
+  viewport.SetScene(&scene);
+  toolbar.SetScene(&scene);
+  hierarchy.SetScene(&scene);
+  inspector.SetScene(&scene);
 }
 void ImGuiLayer::CleanupImGui()
 {
@@ -76,7 +81,6 @@ void ImGuiLayer::ImguiDemo()
   if (renderImGuiDemo)
     ImGui::ShowDemoWindow(&renderImGuiDemo);
 }
-
 void ImGuiLayer::DebugInfo(f64 delta, f64 avg, i32 frameRate)
 {
   if (!renderTimeInfo)
@@ -101,7 +105,6 @@ void ImGuiLayer::DebugInfo(f64 delta, f64 avg, i32 frameRate)
   ImGui::TextWrapped("Draw calls: %d", g_DrawCalls);
   ImGui::End();
 }
-
 void ImGuiLayer::GraphicsInfo()
 {
   if (!renderGraphicsInfo)

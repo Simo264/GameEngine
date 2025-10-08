@@ -1,7 +1,9 @@
 #pragma once
 
-#include "Core/Core.hpp"
-#include "Core/Math/Base.hpp"
+#include "Core/Types.hpp"
+#include "Core/Strings.hpp"
+#include "Core/Math/Types.hpp"
+#include "PanelBase.hpp"
 
 namespace Components
 {
@@ -10,7 +12,7 @@ namespace Components
 struct Texture2D;
 class Entity;
 
-class ViewportPanel
+class ViewportPanel : public PanelBase
 {
 public:
   ViewportPanel() : 
@@ -23,7 +25,7 @@ public:
   
   void Render(StringView windowName, 
               Texture2D viewportImage,
-              Entity entityTarget,
+              Entity target,
               const Mat4F& view, 
               const Mat4F& proj);
   

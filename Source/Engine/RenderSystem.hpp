@@ -1,7 +1,5 @@
 #pragma once
 
-#include "Core/Core.hpp"
-
 namespace Components
 {
   struct Material;
@@ -21,5 +19,5 @@ private:
   void __BindMaterial(const Components::Material& material);
   void __UnbindMaterial();
 
-  Program* _program = nullptr;
+  Program* _program;
 };

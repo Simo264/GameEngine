@@ -1,7 +1,7 @@
 #include "TexturesManager.hpp"
 
-#include "Core/Logger.hpp"
-#include "Engine/Utils.hpp"
+#include "Utils/Logger.hpp"
+#include "Engine/Paths.hpp"
 #include "Engine/Importers/ImageLoader.hpp"
 
 #include <glad/gl.h>
@@ -24,7 +24,7 @@ void TexturesManager::Initialize()
 void TexturesManager::Cleanup()
 {
   auto totalTextures = _textures.size() + _icons.size();
-  auto texIDs = Vector<u32>{};
+  auto texIDs = Vector<TextureId>{};
   texIDs.reserve(totalTextures + 1);
 
   texIDs.push_back(_fallbackTexture.id);
@@ -46,7 +46,7 @@ Optional<Texture2D> TexturesManager::FindTexture(const fs::path &relative) const
 }
 Texture2D TexturesManager::CreateTexture(const fs::path &relative)
 {
-  auto absolute = fs::path(Utils::GetTexturesPath() / relative).lexically_normal();
+  auto absolute = fs::path(GetTexturesPath() / relative).lexically_normal();
   CONSOLE_INFO("Create new texture: {}", absolute.string());
   
   auto loader = ImageLoader{};
@@ -88,7 +88,7 @@ Optional<Texture2D> TexturesManager::FindIcon(const fs::path &relative) const
 
 Texture2D TexturesManager::CreateIcon(const fs::path &relative)
 {
-  auto absolute = fs::path(Utils::GetIconsPath() / relative).lexically_normal();
+  auto absolute = fs::path(GetIconsPath() / relative).lexically_normal();
   auto loader = ImageLoader{};
   auto data = loader.LoadImageData(absolute);
   
@@ -116,7 +116,7 @@ Texture2D TexturesManager::GetOrCreateIcon(const fs::path &relative)
   return t.value();
 }
 
-Optional<const fs::path*> TexturesManager::GetTexturePath(u32 textureID) const
+Optional<const fs::path*> TexturesManager::GetTexturePath(TextureId textureID) const
 {
   for (auto i = 0u; i < _textures.size(); i++)
     if (_textures.at(i).id == textureID)

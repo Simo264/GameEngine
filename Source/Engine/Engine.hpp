@@ -1,23 +1,23 @@
 #pragma once
 
-#include "Core/Core.hpp"
-#include "Core/Math/Base.hpp"
+#include "Core/Types.hpp"
+#include "Core/Chrono.hpp"
 
-#include "Engine/Components/StaticMesh.hpp"
+#include "Engine/ECS/Scene.hpp"
 #include "Engine/Graphics/FrameBuffer.hpp"
 
 class Engine
 {
 public:
 	Engine() = default;
-	~Engine() = default;
 
 	void Initialize();
 	void Run();
 	void Cleanup();
 
 private:
-	void __SetInitialGLStates() const;
+	void __SetupOpenGLDebug() const;
+	void __SetupOpenGLState() const;
 	void __InitTime();
 	void __CalculatePerFrameTime();
 	void __CreateCameraUBO(i32 bindingPoint);
@@ -32,6 +32,8 @@ private:
 	Components::StaticMesh _screenQuad;
 	Buffer _uboCameraBlock;	// UBO "CameraBlock"	-> bindpoint 0
 	Buffer _uboLightBlock;	// UBO "LightBlock"		-> bindpoint 1
+	
+	Scene _scene;
 	
 	chrono::steady_clock::time_point _now;
 	chrono::steady_clock::time_point _lastFrameTime;

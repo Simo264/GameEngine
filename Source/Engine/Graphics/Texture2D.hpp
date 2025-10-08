@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "Core/Core.hpp"
+#include "Core/Types.hpp"
 
 enum class TextureParameteriName : u32
 {
@@ -140,7 +140,8 @@ enum class Texture2DGetImageType : u32
   UNSIGNED_INT_2_10_10_10_REV = 0x8368  // GL_UNSIGNED_INT_2_10_10_10_REV
 };
 
-constexpr auto INVALID_TEXTURE_ID = static_cast<u32>(-1);
+using TextureId = u32;
+constexpr auto INVALID_TEXTURE_ID = static_cast<TextureId>(-1);
 
 
 /**
@@ -218,8 +219,10 @@ struct Texture2D
   Texture2DFormat GetFormat() const;
   /** @brief Retrieves the number of color channels based on the internal texture format. */
   i32 GetNumChannels() const;
-  auto Compare(const Texture2D& other) const { return id == other.id; }
-  auto IsValid() const { return id != INVALID_TEXTURE_ID; }
   
-  u32 id;
+  auto Compare(const Texture2D& other) const { return id == other.id; }
+  
+  auto Valid() const { return id != INVALID_TEXTURE_ID; }
+  
+  TextureId id;
 };

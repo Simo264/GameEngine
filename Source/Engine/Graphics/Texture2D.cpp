@@ -1,5 +1,5 @@
 #include "Texture2D.hpp"
-#include "Core/Logger.hpp"
+#include "Utils/Logger.hpp"
 #include <glad/gl.h>
 
 void Texture2D::UnbindTextureUnit(u32 unit)

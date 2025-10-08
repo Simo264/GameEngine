@@ -1,18 +1,18 @@
 #include "ViewportPanel.hpp"
 #include "ImGuiLayer.hpp"
 
-#include "Engine/Scene.hpp"
+#include "Engine/ECS/Scene.hpp"
 
 #include <imgui.h>
 #include <ImGuizmo.h>
 
 void ViewportPanel::Render(StringView windowName,
                            Texture2D viewportImage,
-                           Entity entityTarget,
+                           Entity target,
                            const Mat4F& view,
                            const Mat4F& proj)
 {
-  if (!isOpen)
+  if (!isOpen || !_scene)
     return;
 
   auto& style = ImGui::GetStyle();
@@ -33,9 +33,9 @@ void ViewportPanel::Render(StringView windowName,
   isFocused |= ImGui::IsWindowFocused();
 
   ImGui::Image(viewportImage.id, winChildSize, ImVec2(0, 1), ImVec2(1, 0));
-  if (entityTarget.IsValid())
+  if (target.Valid())
   {
-    auto transform = entityTarget.GetComponent<Components::Transform>();
+    auto transform = _scene->TryGetEntityComponent<Components::Transform>(target);
     if (transform != nullptr)
     {
       ImGuizmo::SetOrthographic(false);

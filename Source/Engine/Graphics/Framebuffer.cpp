@@ -1,5 +1,5 @@
 #include "Framebuffer.hpp"
-#include "Core/Logger.hpp"
+#include "Utils/Logger.hpp"
 #include <glad/gl.h>
 
 void Framebuffer::Create()
@@ -29,7 +29,7 @@ void Framebuffer::Release()
 		rboAttachments.clear();
 	}
 	
-	if (IsValid())
+	if (Valid())
 	{
 		glDeleteFramebuffers(1, &id);
 		id = INVALID_FRAMEBUFFER_ID;
