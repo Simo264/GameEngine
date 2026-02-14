@@ -1,71 +1,105 @@
-﻿# How to build (Linux + GNU Makefiles)
-1. ```cmake -G "Unix Makefiles" -S . -B Build/```
-2. ```make -j$(nproc) -C Build/```
-3. ```./Build/GameEngine```
+﻿# ProtoEngine
 
-# How to build (Windows + Visual Studio 22)
-1. ```cmake -G "Visual Studio 17 2022" -A x64 -S . -B Build/```
-2. Open Visual Studio solution file (.sln)
-3. Compile solution
+A modern C++ game engine with ECS architecture, OpenGL rendering, and ImGui-based editor.
 
-<!-- I am developing this project in a windows environment using 
-Visual Studio Community 2022 as IDE and MSVC as C++ compiler
+## Features
 
-# Build project
-- cd ./GameEngine
-- mkdir Build
-- cmake -S . -B Build
+- Entity Component System (ECS) using EnTT
+- OpenGL 4.6 rendering with GLAD
+- GLFW for window and input management
+- ImGui for editor interface
+- Asset loading (images via STB Image, models via Assimp)
+- YAML-based scene serialization
+- JSON configuration support
+- Cross-platform file dialogs (TinyFileDialogs)
 
-### Current features following https://learnopengl.com/
-- Lighting
-    + [X] Colors
-    + [X] Basic lighting
-    + [X] Materials
-    + [X] Lighting maps
-    + [X] Light casters
-    + [X] Multiple lights
-- [X] Model loader with Assimp
-- Advanced OpenGL
-    + [X] Depth testin
-    + [X] Stencil testing
-    + [X] Blending
-    + [X] Face culling
-    + [X] Framebuffers
-    + [X] Cubemaps
-    + [X] Advanced data
-    + [X] Advanced GLSL
-    + [X] Geometry Shader
-    + [X] Instancing
-    + [X] Anti aliasing
-- Advanced lighting
-    + [X] Advanced lighting
-    + Shadows
-        - [X] Shadow mapping
-        - [X] Point Shadows
-    + [X] Normal mapping
-    + [X] Parallax mapping
-    + [ ] HDR
-    + [ ] Bloom
-    + [ ] Deferred Shading
-    + [ ] SSAO
-- PBR
-    + [ ] Theory
-    + [ ] Lighting
-    + IBL
-        + [ ] Diffuse irradiance
-        + [ ] Specular IBL
-- [ ] Text rendering
-- Order-independent transparency (OIT)
-    + [ ] Introduction
-    + [ ] Weighted Blended
-- [ ] Skeletal Animation
-- [ ] Cascaded Shadow Mapping
-- Scene
-    + [ ] Scene Graph
-    + [ ] Frustum Culling
-- Tessellation
-    + [x] Height Maps
-    + [x] Tessellation
-- [ ] Compute shaders
-- [ ] Physically Based Bloom
-- [ ] Area Lights -->
+## Dependencies
+
+The project uses CMake's FetchContent to automatically download and build:
+- GLFW (window management)
+- GLM (mathematics)
+- EnTT (ECS)
+- spdlog (logging)
+- nlohmann/json (JSON parsing)
+- yaml-cpp (YAML parsing)
+- Assimp (3D model loading)
+
+Static libraries built from source:
+- GLAD (OpenGL loading)
+- STB Image (image loading)
+- TinyFileDialogs (file dialogs)
+- ImGui (GUI framework)
+
+## Building
+
+### Prerequisites
+
+- CMake 3.12 or higher
+- C++20 compatible compiler
+- OpenGL development libraries
+- Wayland or X11 development libraries (for GLFW)
+
+#### Linux Package Dependencies
+
+**Fedora/RHEL-based:**
+```bash
+sudo dnf install mesa-libGL-devel
+```
+
+**Debian/Ubuntu-based:**
+```bash
+sudo apt-get install libgl1-mesa-dev
+```
+
+### Linux Build Instructions
+
+#### With Wayland (Recommended on modern Linux distributions)
+
+```bash
+# Create build directory
+mkdir -p build
+cd build
+
+# Configure with Wayland support (disables X11)
+cmake -DGLFW_BUILD_WAYLAND=ON -DGLFW_BUILD_X11=OFF ..
+
+# Build
+cmake --build . --parallel $(nproc)
+
+# Run
+./proto_engine
+```
+
+#### With X11 (Traditional Linux desktop)
+
+```bash
+# Create build directory
+mkdir -p build
+cd build
+
+# Configure with X11 support (requires X11 development packages)
+cmake -DGLFW_BUILD_WAYLAND=OFF -DGLFW_BUILD_X11=ON ..
+
+# Build
+cmake --build . --parallel $(nproc)
+
+# Run
+./proto_engine
+```
+
+#### Default configuration (automatic detection)
+
+```bash
+# Create build directory
+mkdir -p build
+cd build
+
+# Let CMake auto-detect available window system
+cmake ..
+
+# Build
+cmake --build . --parallel $(nproc)
+
+# Run
+./proto_engine
+```
